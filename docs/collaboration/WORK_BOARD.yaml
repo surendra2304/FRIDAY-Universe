@@ -9982,13 +9982,15 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Status corrected 2026-11-17 (board hygiene sweep #2): PR #792 (S-20 disposition) is in the main merge log; this entry's own next_action already reads 'Closed as SKIP'. CLOSED reason: SKIP — opinion ranking, no mechanically specifiable rules."
     next_action: "Closed as SKIP - no follow-up task. Reopen only if a source states mechanical liquidity-sweep rules (defined level reference, sweep trigger, entry, SL/TP, instrument, timeframe) that can be pre-declared verbatim through the normal RD route at the full bar."
   - id: TASK-IG2-STR-19
-    title: "EMA 5/11 crossover bracket RD candidate, PRE-DECLARED - no backtest run (IG item DYpKBKgKkoJ, full-watch package S-RD1)"
-    status: IN_REVIEW
+    title: "EMA 5/11 crossover bracket RD candidate (S-RD1) -- declared backtest RUN: FAIL, family CLOSED (IG item DYpKBKgKkoJ, full-watch package S-RD1)"
+    status: VERIFIED
     owner: muse_ai
     pr: 880
     branch: claude/task-ig2-str-19
-    evidence: "Next RD pre-declaration (coordinator wave, 2026-11-17). Source: IG item DYpKBKgKkoJ (@tendul_siva), packaged by the IG full-watch programme as its designated RD candidate S-RD1; the complete rules were recovered verbatim from the creator's own YouTube tutorial (channel 'Crypto Tendul siva', 2026-05-21) - 15m chart, EMA(5)/EMA(11) completed-crossover entry, stop beyond the trigger candle, 1% risk (recorded; forward inherits FWD-006), 1:3 RR target, breakeven at half target - with the explicit evidence note that the rules come from the tutorial, NOT the reel (reel PARTIAL, subtitles unexposed), and the creator's 1500% claim unverified and self-corrected. Declaration frozen: Stratex/rigorous_backtest/ig/ema511_declaration.json SHA-256 671a1426555c1c969e7364cf6de009a39a485e613b5c8f0bcbb8e335db635b2e (EMA511_DECLARATION.md alongside). DATA GATE PASSED BEFORE DECLARATION (the SRS lesson): crypto30 15m via Binance Vision through the programme's verified loader - the identical panel the Box Theory run used (2023-10..2026-10, 108,192 bars/symbol, zero missing bars), free and keyless, no owner action needed. Exactly ONE frozen trial (EMA_FAST=5, EMA_SLOW=11, RR_TARGET=3.0, BE_TRIGGER_R=1.5, pooled crypto30 15m); adjacent negative evidence disclosed in the declaration (generic EMA-cross modules judged at 1h/4h/1d in RD-001/002/003 - different cells, different exits). Declaration + registration ONLY in this PR - no signal module, no backtest run, no live-trading code touched. Programme trial counter at declaration: 3,891 executed; this declaration adds 1 when run."
-    next_action: "Run the declared backtest (separate PR): build the signal module to ema511_declaration.json exactly, run pooled crypto30 15m walk-forward (W1..W5) at programme costs + 2x shadow, judge at the full bar (expectancy>0, PF>=1.2, >=200 OOS trades, >=4/5 folds, holdout, Bonferroni at the run-time floor - the run states its floor). PASS = forward-test candidate under Phase-3 (demo only); FAIL = family closed. No variants without a new declaration."
+    evidence:
+      - "Next RD pre-declaration (coordinator wave, 2026-11-17). Source: IG item DYpKBKgKkoJ (@tendul_siva), packaged by the IG full-watch programme as its designated RD candidate S-RD1; the complete rules were recovered verbatim from the creator's own YouTube tutorial (channel 'Crypto Tendul siva', 2026-05-21) - 15m chart, EMA(5)/EMA(11) completed-crossover entry, stop beyond the trigger candle, 1% risk (recorded; forward inherits FWD-006), 1:3 RR target, breakeven at half target - with the explicit evidence note that the rules come from the tutorial, NOT the reel (reel PARTIAL, subtitles unexposed), and the creator's 1500% claim unverified and self-corrected. Declaration frozen: Stratex/rigorous_backtest/ig/ema511_declaration.json SHA-256 671a1426555c1c969e7364cf6de009a39a485e613b5c8f0bcbb8e335db635b2e (EMA511_DECLARATION.md alongside). DATA GATE PASSED BEFORE DECLARATION (the SRS lesson): crypto30 15m via Binance Vision through the programme's verified loader - the identical panel the Box Theory run used (2023-10..2026-10, 108,192 bars/symbol, zero missing bars), free and keyless, no owner action needed. Exactly ONE frozen trial (EMA_FAST=5, EMA_SLOW=11, RR_TARGET=3.0, BE_TRIGGER_R=1.5, pooled crypto30 15m); adjacent negative evidence disclosed in the declaration (generic EMA-cross modules judged at 1h/4h/1d in RD-001/002/003 - different cells, different exits). Declaration + registration ONLY in this PR - no signal module, no backtest run, no live-trading code touched. Programme trial counter at declaration: 3,891 executed; this declaration adds 1 when run."
+      - "DECLARED RUN EXECUTED 2026-11-17 (~/workspace/srd1-run/STATE.md + results/RESULTS.md + results.json; byte-identical declared command with --trial-floor 3893): VERDICT FAIL -- 150,079 OOS trades; expectancy_net -0.0016642525839553953 at 16bps costs, PF_net 0.642959470251625; 32bps shadow expectancy_net -0.0032640243120639167, PF_net 0.4521808752418005; positive folds 0/5 at both levels; holdout FAIL; Bonferroni p = 1.0 (t = -55.42) vs alpha 1.2843565373747753e-05. Consistency verified: fold counts sum to the pooled count; panel csv_sha256 == frozen provenance manifest for all 30 symbols (108,192 rows, 0 missing each); the runner re-verified the declaration SHA-256 671a1426555c1c969e7364cf6de009a39a485e613b5c8f0bcbb8e335db635b2e. Trial 3,893 CONSUMED; programme counter now 3,893. Honest run history: attempt 1 executed end-to-end but its computed verdict was LOST at the results.json write (sandbox write gate EPERM, 19:51 IST) before anyone observed it; attempt 2 aborted on data downloads -- root cause proven: the pinned loader's hardcoded browser User-Agent gets response bodies truncated at ~65-85% by the sandbox egress path (an environment condition; the loader cannot be patched inside a declared run). The OBSERVED run used a pre-staged panel built only from hash-verified local caches (every CSV sha256 == the frozen manifest; the loader performed ZERO fetches). Results-record PR #925 OPEN (2-file record; diff read back clean at +1643/-0 against its base; claim: issue #35 comment 6953141525), following the SRS record precedent (PR #907); that crew deferred this board flip to the board-PR lane, which this entry executes."
+    next_action: "Done. VERIFIED 2026-11-17: the declared backtest ran and FAILED the full bar -- the EMA 5/11 crossover family is CLOSED per the declaration's own failing term; nothing promoted, nothing registered for forward testing, nothing trades. Global trial counter stands at 3,893 after this run (entering 3,892 after SRS + this run's 1). A future variant requires a NEW pre-declaration at the then-current trial floor -- no retune is authorised by this record."
   - id: TASK-IG2-VOI-01
     title: "spoken-English practice mode \u2014 per-sentence corrections with error label + tip"
     status: MERGED
@@ -10986,6 +10988,173 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     files:
       - VyralX/scripts/sync_youtube_metrics.py
       - VyralX/tests/test_sync_youtube_metrics.py
+  - id: TASK-VOI-017
+    title: "Voice first-session frame-flow fixes (F1/F2/F3): the recovery ladder may declare success only on a real user transcript or a completed re-asked turn (F1), permanent per-session frame counters are journalled (F2), and the first session is built in-job via the rebuild path (F3)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-voi-017-frameflow-f123
+    pr: 918
+    evidence:
+      - "Diagnosis (~/workspace/voice-frameflow/STATE.md, 2026-11-17): NO dropping hop exists -- audio frames flow ~100% through all five configurations tested, all transcribed and answered. The defect exists only inside the production worker's job, on the FIRST session of a job (the 19:03 IST job's session #1 produced zero transcripts while the same job's rebuild #1 transcribed verbatim and answered). Two adjacent defects proven: (1) the recovery ladder's success criterion was a FALSE POSITIVE (declared 'recovered' 5x in re-acceptance #11 on deaf sessions for merely surviving ~20s); (2) the key probe certifies quota-dead keys (covered separately by TASK-VOI-018 / PR #912)."
+      - "Fix PR #918 (head 81114989dfcb745bef369bafb8cd6c2fea9b2e99, base b252e56f; ls-remote + fetch verified by the build crew and re-verified in this prep): F1 ladder success requires a user transcript on the rebuilt session or a completed re-asked turn (grace-survival success deleted; 2-rung plan / 420s budget / 135s prove window unchanged); F2 frame counters (AgentActivity.push_audio, plugin push_audio, _send_client_event audio events) journalled at ladder close / job close / watchdog firing, fail-soft; F3 first session built in-job via _make_session after connect (pre-connect build deleted; VOI-016 greeting-gate semantics preserved exactly). Tests: new/touched files 58/58; full voice suite A/B modified 530 passed / 34 failed vs pristine 511 passed / 53 failed -- delta exactly the 17 new + 2 re-anchored pins, zero regressions. Claim: issue #35 comment 6951437380. Supervisor review APPROVE (~/workspace/pr918-review/verdict.txt, verified first-hand by the review crew: head 81114989dfcb745bef369bafb8cd6c2fea9b2e99 == branch == PR head; F1/F2/F3 all verified; touched suites 58 passed on the branch vs 19 failed on the pristine base; the CI voice-regressions FAILURE is the inherited stale assertion PR #909 has since fixed, not PR-caused; merge order #910 -> #912 -> #918)."
+    next_action: "Supervisor review -> serial-lane merge (merge-order note vs PR #912 and PR #910: all three touch livekit_worker.py in disjoint regions -- whichever merges later re-checks mergeability and re-runs the voice suites) -> deploy -> voice re-acceptance #12 under its READY runbook (8 checks at the #11 bars PLUS first-session assertions A1-A4) -> VERIFIED only on a full pass."
+    files:
+      - FRIDAY/src/friday/voice/livekit_worker.py
+      - FRIDAY/tests/test_voice_frame_counters_voi017.py
+      - FRIDAY/tests/test_voice_recovery_ladder.py
+      - FRIDAY/tests/test_voice_greeting_trigger.py
+      - FRIDAY/tests/test_voice_session_build_overlap.py
+  - id: TASK-STR-FWD-017
+    title: "unrecorded_close alert: sweep resolver + raise_alert stamp -- the alert is a bookkeeping-path defect (three-way census proved venue closes == ledger rows, order-id for order-id; NO missing money and NO ledger correction row)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-str-fwd-017-unrecorded-close-resolver
+    pr: 915
+    evidence:
+      - "Diagnosis (2026-11-17): the unrecorded_close latch could never self-clear under the old code -- the sweep that would clear it was the same path that kept re-raising it. Three-way census (era venue closes vs ledger rows vs alerts) proved every venue close is recorded, order-id for order-id: no missing money, no correction row owed or appended."
+      - "Fix PR #915 (head 2334eeea3d3546c92770956bab0be57e76356e99, base b252e56f; ls-remote verified): a resolver inside the sweep section of _reconcile_positions clears the latch only on a COMPLETE sweep whose raise count is unchanged vs the previous complete sweep (first complete sweep only sets the baseline); raise_alert gains a keyword-only stamp stored as last_rejected (both append_fill raise sites stamp the rejected row's identity; a stamp-less raise preserves an existing stamp; old-format latches load unchanged). Diff is exactly 3 files, code only -- nothing appends to fill_ledger.jsonl and nothing edits the live latch. Builder A/B: pristine 8 failed / 3 passed -> branch 11/11; regression ring identical on both trees. Claim: issue #35 comment 6951995827. Supervisor review APPROVE (~/workspace/pr915-review/verdict_body.md; CI on the head read first-hand: 6 success + 2 path-filtered skips, zero failures)."
+    next_action: "Serial-lane merge -> deploy + daemon restart -> the stale live latch self-clears on the second clean complete sweep after restart (verify in the journal; the supervised clear citing the census remains available before that) -> VERIFIED."
+    files:
+      - Stratex/autonomy/run_daemon.py
+      - Stratex/measurement/fill_ledger.py
+      - Stratex/tests/test_unrecorded_close_resolver.py
+  - id: TASK-STR-FWD-016
+    title: "Sleeve-vs-dow confluence precedence: timeframe precedence (an exclusively-sleeve 1wk side wins over an exclusively non-sleeve non-1wk side) + deferred sleeve entry -- the venue+symbol contradiction guard deleted BOTH sides in 13 of 23 confluence cycles"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-str-fwd-016-sleeve-precedence
+    pr: 911
+    evidence:
+      - "Defect: the confluence contradiction guard keyed on venue+symbol only, so sleeve_shock_breakout SELL (1wk) x dow_effect BUY on BTC/BNB -- opposite by construction -- deleted both sides in 13 of 23 confluence cycles; neither strategy could trade those symbols in a conflict week."
+      - "Fix PR #911 (head d385e3a1dcd91f5bb883f822f208631e56037766, base b252e56f; ls-remote verified): precedence fires only when one side is exclusively {strategy_sleeve_shock_breakout} at {1wk} and the other side excludes the sleeve and 1wk -- then only the opposing side is dropped; every other shape deletes both, exactly as before. A blocked sleeve entry is deferred with weekly-bucket identity and retried after the main loop through the SAME _execute_signal gate chain (byte-identical to main, function-segment sha256 match); per-symbol journalling names venue, both strategies, both sides, both timeframes and the resolution. Tests: new suite 15/15 on branch (collection error on pristine main -- the fix is what makes them pass); neighbours 77 passed on branch == 77 on pristine. Claim: issue #35 comment 6951262368. Supervisor review APPROVE (~/workspace/pr911-review/verdict_comment.md; CI on the head: 6 success + 2 path-filtered skips, zero failures). PR body: merging before the 2026-11-18 05:30 IST dow firing is safe for both forward records."
+    next_action: "Serial-lane merge -> deploy -> first live sleeve x dow confluence cycle on BTC/BNB resolves by precedence (journal lines) and a deferred sleeve entry fills or expires journalled -> VERIFIED."
+    files:
+      - Stratex/autonomy/run_daemon.py
+      - Stratex/tests/test_fwd016_sleeve_precedence.py
+  - id: TASK-VOI-016
+    title: "Voice session-establishment fix: VOI-014 settle-hold deleted, greeting gated on a per-job session_listening event (bounded 5s), dead-input watchdog (RMS monitor on the owner's mic tracks) added"
+    status: DEPLOYED
+    owner: muse_ai
+    pr: 899
+    evidence:
+      - "Diagnosis (2026-11-17, read-only): a 21.1s deaf window at session start (11.61s = VOI-014's deliberate settle-hold + ~4.3s session start); Gemini received NO audio in any re-run #10d session -- the 1008 closes are a ~122s server-side no-input timer; the FRIDAY brain was not implicated."
+      - "Fix PR #899 MERGED (merge commit 2392b23f) and DEPLOYED on S1: deployed worker sha256 == merged blob; FRIDAY-Voice registered 2026-11-17 17:53:10 IST (MainPID 3011062). Tests 81/81 targeted on the branch."
+      - "NOT production-verified: re-acceptance #11 (2026-11-17 ~18:36 IST) FAILED 0/8. The honest gate improved the greeting to 11.362s (bar 8.0s), the deaf window fell 21.1s -> ~9.0s and key-to-session 15.99s -> 5.50s, and there were ZERO 1008 closes -- but audio still never transcribed: zero user transcripts in ALL SIX sessions, no answer ever spoken, while the room-level energy monitor witnessed audio energy on the owner's track. The residual first-session defect is TASK-VOI-017's scope (PR #918); the watchdog fired 5x on design and every rebuild mechanically succeeded, which is how the ladder false-positive (fixed by VOI-017 F1) was exposed."
+    next_action: "Stays DEPLOYED until voice re-acceptance #12 passes 8/8 + A1-A4 with TASK-VOI-017 (and TASK-VOI-018) merged and deployed; then VERIFIED. Do not flip on deploy evidence alone -- a machine pass the owner cannot reproduce is not a pass."
+  - id: TASK-FRD-023
+    title: "FRIDAY autonomous daemon arm: start the daemon in the lifespan when settings.autonomous_mode is on + INFO heartbeat -- the daemon has NEVER been started since 2026-11-10 (the boot sequence never calls start(); FRIDAY_AUTONOMOUS_MODE=true is read only by status/authorization surfaces)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-frd-023-daemon-arm
+    pr: 927
+    evidence:
+      - "Diagnosis (~/workspace/friday-daemon-idle-diag/DIAGNOSIS.md) VERIFIED against origin/main git objects by the fix crew (~/workspace/friday-daemon-arm/STATE.md): daemon.py blob c2f5c551, server.py blob b20ade48 (FRIDAY code identical at b252e56f and 2ba83d5c). start() is called ONLY by the manual POST /api/autonomous/toggle (runtime-only, dies at restart) and by goal submission; the lifespan starts 14 background tasks and the daemon is not among them; autonomous_goals.json mtime 2026-11-10 17:43 IST with an empty queue and zero daemon-lifecycle lines in 24h of journal prove it has not run one iteration in 7+ days. The 5 'self-test' dispatches in the journal were the chat delegation path, not the daemon."
+      - "Fix (~/workspace/friday-daemon-arm/): lifespan arms the daemon when get_settings().autonomous_mode is true and stops it on shutdown; _run_loop gains an INFO heartbeat (env FRIDAY_AUTONOMOUS_DAEMON_HEARTBEAT_S, default 300s). NO self-generated task sources (proactivity is a separate owner decision). Tests both directions (flag ON -> start awaited on entry / stop on exit; flag OFF -> never called; heartbeat lines while idle; the ON and heartbeat tests fail on main). Fix PR #927 OPEN: the crew's local A/B harness ran the REAL code from git objects -- main fails exactly the 3 designed checks (lifespan flag-ON start, shutdown stop, heartbeat) and the branch passes all; the shipped CI-grade tests mirror the harness. Claim: issue #35 comment 6953086938 (its POST outcome was initially unknown; the crew's read-back confirmed it landed exactly once -- flag F2 resolved)."
+    next_action: "PR open -> supervisor review -> serial-lane merge -> ONE watched FRIDAY restart to deploy (expect the long page-in window on S1) -> journal shows the daemon heartbeat and autonomous_goals state persisting -> VERIFIED."
+    files:
+      - FRIDAY/src/friday/autonomous/daemon.py
+      - FRIDAY/src/friday/api/server.py
+      - FRIDAY/tests/test_autonomous_daemon_arm.py
+  - id: TASK-VOI-019
+    title: "Voice noise robustness: steady background noise (a fan) must not interrupt FRIDAY mid-answer or register as a user turn, while genuine owner-speech barge-in still works (owner-reported defect, 2026-11-17)"
+    status: IN_PROGRESS
+    owner: muse_ai
+    evidence:
+      - "Trigger -- the owner's own live test 2026-11-17 ~21:12 IST: voice ~50% BETTER in his hands (the first improvement he has reported), with one named remaining defect: ordinary background noise (a fan) interrupts FRIDAY and she stops mid-answer."
+      - "Investigation crew (~/workspace/voice-noise-fix/STATE.md, in flight): code inspection of origin/main livekit_worker.py identifies the fan-interruption surface -- _realtime_input_config() pins Gemini AutomaticActivityDetection start_of_speech_sensitivity = START_SENSITIVITY_HIGH with activity_handling = START_OF_ACTIVITY_INTERRUPTS, so the server commits to start-of-speech eagerly and non-speech energy scored as speech-like interrupts the model's turn; AgentSession also runs allow_interruptions=True with min_interruption_duration=0.8. The VOI-016 RMS dead-input monitor is RULED OUT code-proven (it only stamps last_energy_ts and its verdict additionally requires zero transcripts in the session's whole life -- it never stops playback). Client side: VoiceCall.tsx enables the microphone with NO capture options and NO noise-cancellation processor. Mechanism verdict PROVEN by the crew (~/workspace/voice-noise-fix/STATE.md, code + journal): the owner's 2026-11-17 21:06 IST session shows >=9 speaking->listening interruptions in ~37s (1-4.6s speech segments, fragment transcripts in the gaps), and the VOI-016 RMS dead-input monitor is ruled out code-proven. Fix designed: start_of_speech_sensitivity HIGH -> LOW by default (env FRIDAY_VOICE_AAD_START_SENSITIVITY restores the old behaviour); end sensitivity and START_OF_ACTIVITY_INTERRUPTS unchanged, so genuine owner-speech barge-in still interrupts. No PR yet at this board snapshot."
+    next_action: "Mechanism verdict -> smallest fix PR (steady noise must not register as a turn; genuine speech interruption preserved; free-only) -> supervisor review -> merge in the voice wave with TASK-VOI-017/018 -> owner's re-test is the final judge -> VERIFIED."
+  - id: TASK-WEB-003
+    title: "ULTRON theme: implement the owner-picked ULTRON design as FRIDAY's website theme -- the real app wearing the ULTRON look; Halo preserved ASIDE intact and selectable until the owner says otherwise (owner pick 2026-11-17)"
+    status: IN_PROGRESS
+    owner: muse_ai
+    evidence:
+      - "Owner decision 2026-11-17 ~21:12 IST: implement the ULTRON candidate (~/workspace/design-candidates/ultron-dashboard/index.html) as FRIDAY's website theme; the present Halo theme is kept aside intact, untouched; he will instruct its fate later. Claim posted on issue #35 by the build crew: comment 6953271071, read-back verified."
+      - "Build crew (~/workspace/ultron-theme/STATE.md): ULTRON is new components only (components/ultron/UltronStage.tsx + UltronOrb.tsx, app/ultron.css scoped under .ultron-stage, components/ThemeRoot.tsx, lib/theme.ts) reusing the REAL wiring -- VoiceCall (real LiveKit line), Conversation (real chat), WakeListener (real wake word), fleet rim from fetchFleet, diagnostics from fetchTelemetry, activity from the socket. Halo preservation three ways: every Halo file stays in place UNMODIFIED (globals.css byte-identical), Halo remains a live selectable theme (?theme=halo / localStorage friday.theme=halo), and themes/halo/PRESERVED.md records base SHA-256 of every Halo core file with a byte copy of globals.css. Honestly NOT WIRED (stated in the UI and the PR, never faked): the vision/screen panel (no camera/screen source exists in the web app) and the mock's network/neural/temperature figures and sliders, which are not carried over as data. Base identity proven: FRIDAY tree at 2ba83d5c == local b252e56f tree (fa0181bf...). Deliverable is a PR + successful local production build; the crew does NO production deploy and NO service restarts."
+    next_action: "PR open -> supervisor review (Halo preservation hashes + build proof + honest mock list) -> serial-lane merge -> deploy decision coordinated against the S1 page-in risk (a FRIDAY restart reproduces a long 502 window; deploy in a calm moment) -> live site serves ULTRON with Halo still selectable -> VERIFIED."
+  - id: TASK-FRG-016
+    title: "Forge completeness heal fix: the RecoveryEngine create route must accept the path-shaped targets the completeness gate passes (TASK-FRG-014 diagnosis verdict (d)) and its failure message must name the actual rejection reason"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/forge-completeness-heal-fix
+    evidence:
+      - "Diagnosis (~/workspace/forge-completeness-diag/DIAGNOSIS.md, TASK-FRG-014): verdict (d) OTHER -- not a bypass and not an exhausted retry loop. ModuleCompletenessGate passes full relative paths (taskboard/db.py) as failing_file, but RecoveryEngine._create_missing_module_patch re-derives the target with a bare-identifier fullmatch regex (or a 'No module named X' text search), so any file inside a directory returns None BEFORE the naming check and BEFORE any provider call. In the G5 acceptance run: 9 create attempts in ~1s, ZERO provider calls, zero generation attempted; the generic failure message's three listed causes were all false. FRG-013's tests missed it because the gate tests inject a stub create_module -- the real route was never wired behind the real gate in any test."
+      - "Fix crew (~/workspace/forge-completeness-fix/STATE.md): diagnosis re-verified against current main (engine.py blob 0a4ecca8d4ada1e6c0555aa8e2ae7028ec5f0b85 and completeness.py blob b1e518597ecbc5fc735ced24fce725d1cda19254 identical at b252e56f and 2ba83d5c). Fix design frozen: one function in recovery/engine.py -- a path-shaped branch normalizes failing_file and falls through to the EXISTING naming check, provider call, 0.70 bar, extractor and compile gate; rejection-reason tracking (self._last_create_rejection) makes create_missing_module's no-patch message name the actual reason. Regression test (Forge/tests/test_completeness_heal_integration.py) wires the REAL gate over the REAL RecoveryEngine on a G5-shaped manifest and must end with both files on disk and report.missing == [] -- it fails pre-fix. Claim: issue #35 comment 6953083444 (read-back verified, landed exactly once). PR not yet open at this board snapshot (2026-11-17 ~21:5x IST)."
+    next_action: "PR open -> supervisor review -> serial-lane merge + deploy -> post-merge acceptance: a fresh G5-shaped production build settles with all 10 files and an importable package (coordinator-run) -> VERIFIED; that pass also closes the open completeness half of TASK-FRG-014."
+    files:
+      - Forge/app/recovery/engine.py
+      - Forge/tests/test_completeness_heal_integration.py
+  - id: TASK-STR-RD-018
+    title: "RD-018 fxsession (FX Asia-Range Fade) RD candidate, PRE-DECLARED in the discovery wave -- declared run: FAIL, family CLOSED"
+    status: VERIFIED
+    owner: muse_ai
+    pr: 896
+    evidence:
+      - "Declaration PR #896 MERGED in tranche 3 (merge commit 80981700). Declaration frozen: SHA-256 0b4c10b085a5eebfd57a346c91285f6214133044f4c725498ea12a2e2cb01aa5. Run-prep READY (~/workspace/runprep-rd018/): panel staged on S1 at /var/tmp/rd018/panel/ (EURUSD 95,418 / GBPUSD 95,417 / USDJPY 95,420 / AUDUSD 95,419 bars, span 2023-01-01T23:00Z to 2026-10-30T20:45Z, hashes == freeze set, census clean); the six package files are byte-identical to the freeze set on current main 2ba83d5c; venv312 (Python 3.12.16) load_panel() parsed all 381,674 bars. Gate re-check 2026-11-17 ~21:14 IST: READY, no drift."
+      - "DECLARED RUN EXECUTED 2026-11-17 (~/workspace/rd018-run/ STATE.md + results/results.json, sha256 5f0e496afc4b667cb19e4705a0a7307af00c3a4e67be50fb72ca928685a9c340 == the S1 copy): all gates re-verified fresh immediately before firing; the ONE declared run fired on S1 with --programme-trials 3893 (N_run 3894). VERDICT: FAIL -- DELETE (OOS PF < 1.2). Pooled OOS: 2,051 trades, expectancy_net -0.000534 at the declared 6 bps RT costs, PF_net 0.3433, total_net -1.0954; 2x-cost shadow PF_net 0.1038; positive folds 0/5; temporal holdout FAIL (H1 pass only); Bonferroni p = 1.0 vs alpha 1.2840e-05; breadth FAIL (all four symbols negative expectancy). Consistency verified: fold/symbol/dev+holdout counts sum to the pooled 2,051 and fold total_net sums to pooled. Trial 3,894 CONSUMED; programme counter now 3,894."
+    next_action: "Done judging: the fxsession family is CLOSED under its declaration -- never trades, not eligible for forward demo. Remaining bookkeeping: a results-record PR (the SRS / S-RD1 precedent) by a separate crew. Next in the run queue: RD-019's declared run (after TASK-STR-RD-019-FIX merges; one declared run at a time; --programme-trials read fresh = 3,894)."
+  - id: TASK-STR-RD-019
+    title: "RD-019 xsrev (cross-sectional reversal, volume climax) RD candidate, PRE-DECLARED in the discovery wave -- declared run gated on the runner fix (TASK-STR-RD-019-FIX)"
+    status: MERGED
+    owner: muse_ai
+    pr: 897
+    evidence:
+      - "Declaration PR #897 MERGED in tranche 3 (merge commit f98760dd). Declaration frozen: SHA-256 a2d5f212308fdd097e968c801c175b9513da3ff24c49456590eec70d324d917b. Run-prep (~/workspace/runprep-rd019/READINESS.md): panel verified through the programme loader (30 symbols x 108,192 rows, 0 missing, csv hashes matching both manifests); Gate A declaration hash == frozen."
+      - "Run-prep verdict was NOT READY: the shipped runner crashes on its own data record (run_xsrev.py reads exp['missing'] but the provenance manifest keys the field 'missing_bars' -- KeyError on all 30 symbols, proven by execution before any run was burned). That harness fix is TASK-STR-RD-019-FIX (PR #921 board entry), shipped as PR #922 (both genuine KeyError sites -- the comparison and the mismatch message -- plus the Gate-C RUNBOOK pin update; the frozen declaration is byte-untouched by it."
+    next_action: "Declared run only after TASK-STR-RD-019-FIX (PR #922) merges and Gate C is re-verified against the new pin (RD-018's verdict has landed: FAIL, programme counter 3,894; --programme-trials read fresh at run time) -> results-record PR -> PASS joins forward demo / FAIL closes the family."
+  - id: TASK-STR-RD-020
+    title: "RD-020 rotbrake RD candidate, PRE-DECLARED in the discovery wave -- declared run queued (run-prep READY)"
+    status: MERGED
+    owner: muse_ai
+    pr: 898
+    evidence:
+      - "Declaration PR #898 MERGED in tranche 3 (merge commit b8a60149). Declaration frozen: Stratex/rigorous_backtest declaration.json SHA-256 fe9b8fbc1808fe646aa87c06cab0797d5a32945abcb94a3b7131eadd87bdd4ec."
+      - "Run-prep READY (~/workspace/runprep-rd020/VERDICT.md): Gate 1 on-main declaration hash == frozen hash PASS (PR #898 merge commit b8a60149 in the checked history); panel 7/7 byte-identical to RD-013's panel (the declaration's recorded csv_sha256 == RD-013's recorded values); synthetic checks 10/10. Frozen run command: python3 harness/run_rotbrake.py (see the prep verdict for the run-time conditions)."
+    next_action: "Final gate re-check at its queue turn (after RD-019) -> ONE declared run -> results-record PR -> PASS joins forward demo / FAIL closes the family."
+  - id: TASK-STR-RD-021
+    title: "RD-021 orderflow RD candidate, PRE-DECLARED in the discovery wave -- declared run queued (run-prep READY; panel staging is the long pole)"
+    status: MERGED
+    owner: muse_ai
+    pr: 905
+    evidence:
+      - "Declaration PR #905 MERGED in tranche 4 (merge commit 33b62303). Declaration frozen: Stratex/rigorous_backtest/ig/orderflow_declaration.json SHA-256 806db8683cf5f9f56dbae0bbf828e0e9a7cc9d7732479eeaf9c6b2670d74764c."
+      - "Run-prep READY (~/workspace/runprep-rd021/RUN_READINESS.md): Gate-1 command corrected for the shipped layout (python3 -m pytest tests/test_orderflow.py -q -> 18 passed); UNTESTABLE guard proven -- fewer than 8 of 10 symbols surviving staging means the run reports UNTESTABLE rather than judging a thinned universe. Staging plan (~/workspace/runprep-rd021-staging/PLAN.md): FEASIBLE in the sandbox (>=76 GB free; /tmp excluded at ~142-415 MB free; S1's 75.7 GB free rejected on production contention); ~45-55 GB download, 6-10 h sequential when its turn comes; the pre-staging df start-gate (>=60 GB free for Option A) must run in the SAME session as the stager."
+    next_action: "Stage the panel when its queue turn comes (after RD-020) under the same-session df start-gate -> ONE declared run -> results-record PR -> PASS joins forward demo / FAIL closes the family / UNTESTABLE recorded as such."
+  - id: TASK-STR-RD-022
+    title: "RD-022 oi_surge_follow (open-interest surge follow) RD candidate, PRE-DECLARED in the discovery wave -- declared run queued (run-prep READY, one documentation-only flag)"
+    status: MERGED
+    owner: muse_ai
+    pr: 902
+    evidence:
+      - "Declaration PR #902 MERGED in tranche 4 (merge commit 71d3b9c5). Declaration frozen: SHA-256 6368711d5fcef1541b6af49a1d2f48f5b0caafe9b8f6f9109bdd9e7ca3aaecf8."
+      - "Run-prep READY (~/workspace/runprep-rd022/VERDICT.md + GATE_RECHECK.md) with a documentation-only flag: the declaration's printed first-file dates for the 5 excluded symbols are later than the archive's true first files; the universe is unchanged (25 traded / 5 excluded). The flag is disclosed in the eventual run's RESULTS -- the frozen declaration is never edited."
+    next_action: "Final gate re-check at its queue turn (after RD-021) -> ONE declared run (RESULTS carries the first-file-dates disclosure) -> results-record PR -> PASS joins forward demo / FAIL closes the family."
+  - id: TASK-STR-RD-023
+    title: "RD-023 grid market-making RD candidate, PRE-DECLARED in the discovery wave -- declared run queued (run-prep READY)"
+    status: MERGED
+    owner: muse_ai
+    pr: 901
+    evidence:
+      - "Declaration PR #901 MERGED in tranche 4 (merge commit 9aef93b2). Declaration frozen: SHA-256 2b5d807a5b00c893b1dd28af4d23b943a7fb587c15dc9a7e6cf8a5bdd8a7d66c."
+      - "Run-prep READY (~/workspace/runprep-rd023/RUN_PREP_VERDICT.md + GATE_RECHECK.md): six pins byte-identical to the freeze set; synthetic checks 11/11; the runner requires --trial-floor and refuses a second run by construction."
+    next_action: "Final gate re-check at its queue turn (after RD-022) -> ONE declared run -> results-record PR -> PASS joins forward demo / FAIL closes the family."
+  - id: TASK-STR-RD-024
+    title: "RD-024 us_xs_reversal (US cross-sectional reversal) RD candidate, PRE-DECLARED in the discovery wave -- declared run queued (run-prep READY)"
+    status: MERGED
+    owner: muse_ai
+    pr: 904
+    evidence:
+      - "Declaration PR #904 MERGED in tranche 4 (merge commit accecd20). Declaration frozen: declaration JSON SHA-256 505fdf155c63ac019e957acc7eb76f4ac6bf2d3bacbbb04b1b65b38314e2eb4f."
+      - "Run-prep READY (~/workspace/runprep-rd024/VERDICT.md + GATE_RECHECK.md): declaration hash MATCH; tests 17/19 in the sandbox (2 blocked by the sandbox write gate) and 19/19 in CI. Frozen terms include: volume floor = median daily >= 2,000,000 shares (there is NO 10M floor); borrow charged at 25 bps/yr ACT/360, shorts only."
+    next_action: "Final gate re-check at its queue turn (after RD-023) -> ONE declared run -> results-record PR -> PASS joins forward demo / FAIL closes the family."
+  - id: TASK-STR-DISC-004
+    title: "DISC-004 ORB/VWAP RD candidate, PRE-DECLARED in the discovery wave -- declared run LAST in the queue (full panel pull after the PR #916 harness fix merges)"
+    status: MERGED
+    owner: muse_ai
+    pr: 903
+    evidence:
+      - "Declaration PR #903 MERGED in tranche 4 (merge commit c4094d3f). Declaration frozen: SHA-256 43063a6cdf8089d7d41bd39e4b02c1c05bf5528c3837590c167f87d2907dafc9 (blob verified byte-identical again on PR #916's branch -- see TASK-STR-DISC-004-FIX)."
+      - "Gate-4 COORDINATOR RULING (~/workspace/runprep-orb/RULING.md): (A) AS FROZEN -- EARLY_CLOSE_BARS stays 10; the truncation (9 of 961 sessions) and the prose inconsistency are disclosed verbatim in the eventual run record. Proof pull PASSED exactly (AAPL Oct 2026: 1,408 raw bars -> 572 kept = 22 sessions x 26, the frozen expectation). Pull prep complete (~/workspace/orb-pull-prep/): S1 /var/tmp has 71G available and the panel footprint is <50 MB (fits ~1,400x). The pull tool's pagination defect (next_page_token vs page_token) is a harness transport erratum fixed by TASK-STR-DISC-004-FIX (PR #916, supervisor review APPROVE) -- the declaration itself is untouched."
+    next_action: "After PR #916 merges: full panel pull on S1 -> ONE declared run, LAST in the queue (after RD-024) -> results-record PR disclosing the gate-4 as-frozen ruling and the harness erratum -> PASS joins forward demo / FAIL closes the family."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
