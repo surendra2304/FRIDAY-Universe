@@ -203,10 +203,12 @@ WATCH_CRYPTO_MARKET_STRUCTURE = WatchDefinition(
             # the D2 fix from the 2026-11-17 shadow proof: a withdrawal
             # suspension IS a venue incident even when the venue is not a
             # named one ("Lighter suspends all withdrawals ..." scored 0).
+            # The block stem is closed (block/blocks/blocked/blocking):
+            # block\w* also matched "blockchain" (supervisor F1, PR #876).
             r"\b(exchange|binance|coinbase|kraken)\b.*\b(halt|insolvency|breach|hack|outage)\b|"
             r"\b(halt|insolvency|breach|hack|outage)\b.*\b(exchange|binance|coinbase|kraken)\b|"
-            r"\b(suspen\w*|halt\w*|paus\w*|freez\w*|frozen|block\w*)\b[^.]{0,40}\bwithdrawals?\b|"
-            r"\bwithdrawals?\b[^.]{0,40}\b(suspen\w*|halt\w*|paus\w*|frozen|block\w*)\b",
+            r"\b(suspen\w*|halt\w*|paus\w*|freez\w*|frozen|block(?:s|ed|ing)?)\b[^.]{0,40}\bwithdrawals?\b|"
+            r"\bwithdrawals?\b[^.]{0,40}\b(suspen\w*|halt\w*|paus\w*|freez\w*|frozen|block(?:s|ed|ing)?)\b",
             3,
         ),
     ),

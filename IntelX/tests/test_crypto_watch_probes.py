@@ -184,6 +184,16 @@ SHADOW_BATTERY = [
         "in USDC, while blockchain analysts traced $10.4 million in funds moved during the exploit.",
         0, False, set(),
     ),
+    # F1 (supervisor review, PR #876) — the withdrawal branches' block
+    # stem must not match "blockchain": a product launch is not a venue
+    # incident. The closed stem block(?:s|ed|ing)? keeps blocks /
+    # blocked / blocking firing while this title scores 0. On the
+    # pre-F1 branch this scored 3 via venue_incident.
+    (
+        "New blockchain withdrawals feature launches for DeFi protocol",
+        "",
+        0, False, set(),
+    ),
     # D3 — the daily roundup: was 2 via summary regulation; now
     # hard-excluded before scoring.
     (
