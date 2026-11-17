@@ -682,3 +682,134 @@ def test_produce_repairs_an_ungrounded_description_question(monkeypatch, tmp_pat
     assert len(publish_jobs) == 1
     assert "elephant" not in publish_jobs[0].description
     assert "Did you spot the" in publish_jobs[0].description
+
+
+# --------------------------------------------------------------------------- #
+# hook-length convergence — a grounded draft must not die on hook length
+# (first gated production render, 2026-11-17: hook_too_long on all 3 attempts)
+# --------------------------------------------------------------------------- #
+PRODUCTION_HOOK_DRAFT = (
+    "A driver in a yellow shirt sits in the seat, his face frozen in a "
+    "surprised expression as the world seems to pause. A woman in a pink "
+    "dress stands beside the car, watching the driver with a surprised "
+    "expression. The driver remains frozen in place, still staring ahead "
+    "with his mouth slightly open in shock. The woman in pink continues to "
+    "watch, her posture tense as she takes in the scene. The driver stays "
+    "frozen in his seat as the moment stretches on."
+)
+
+
+def test_repair_hook_length_drops_trailing_clauses_to_the_cap():
+    # The verbatim production draft whose 23-word hook sank a grounded
+    # package: the repair keeps the first clause and drops the rest.
+    repaired = vq.repair_hook_length(PRODUCTION_HOOK_DRAFT)
+    sentences = vq.split_sentences(repaired)
+    assert sentences[0] == "A driver in a yellow shirt sits in the seat."
+    assert len(sentences[0].split()) <= 18
+    # Only the first sentence changes; every later sentence is untouched.
+    assert sentences[1:] == vq.split_sentences(PRODUCTION_HOOK_DRAFT)[1:]
+    # The repair never invents: every repaired word was in the draft.
+    assert {w.strip(",.;:!?") for w in repaired.split()} <= {
+        w.strip(",.;:!?") for w in PRODUCTION_HOOK_DRAFT.split()}
+
+
+def test_repair_hook_length_leaves_compliant_and_unclaused_hooks_alone():
+    compliant = (
+        "Watch his face when the phone photo appears in bright daylight. "
+        "She laughs and runs right past him under the string lights. "
+        "He just stands there grinning with both hands over his mouth."
+    )
+    assert vq.repair_hook_length(compliant) == compliant
+    # A single-clause hook over the cap has no clause boundary to drop at:
+    # the repair returns it unchanged and the gate still rejects it —
+    # repair never truncates mid-clause into compliance.
+    unclaused = (
+        "Watch the man in the light blue shirt sitting outside in bright "
+        "daylight holding his phone up high for everyone to see clearly. "
+        "She laughs and runs right past him under the string lights. "
+        "He just stands there grinning with both hands over his mouth."
+    )
+    assert vq.repair_hook_length(unclaused) == unclaused
+    assert "hook_too_long" in kinds(
+        vq.check_structure(commentary=unclaused, record=RECORD_761))
+
+
+def test_repaired_long_hook_package_passes_every_gate():
+    commentary = (
+        "Watch his face when the phone photo appears in bright daylight, "
+        "the exact moment the photo appears on his phone. "
+        "She laughs and runs right past him under the string lights. "
+        "He just stands there grinning with both hands over his mouth."
+    )
+    title = "He Was Not Ready for That Photo Reveal"
+    description = (
+        "A daylight phone photo, a run past under the string lights, and one "
+        "priceless reaction.\n\nDid you spot the phone?\n\n#Shorts #VyralX"
+    )
+    # Before repair the ONLY defect, across every gate, is the hook length.
+    before = (
+        vq.check_consistency(commentary=commentary, title=title,
+                             description=description, record=RECORD_761)
+        + vq.check_structure(commentary=commentary, record=RECORD_761)
+        + vq.check_script_length(commentary=commentary, duration=21.0)
+    )
+    assert kinds(before) == {"hook_too_long"}
+    repaired = vq.repair_hook_length(commentary)
+    assert repaired != commentary
+    assert vq.split_sentences(repaired)[0] == (
+        "Watch his face when the phone photo appears in bright daylight."
+    )
+    assert vq.check_consistency(
+        commentary=repaired, title=title, description=description,
+        record=RECORD_761) == []
+    assert vq.check_structure(commentary=repaired, record=RECORD_761) == []
+    assert vq.check_script_length(commentary=repaired, duration=21.0) == []
+
+
+def test_produce_repairs_an_overlong_hook_and_renders(monkeypatch, tmp_path):
+    # The production failure shape (2026-11-17): every model attempt returns
+    # the same grounded package whose only defect is an over-cap hook. On
+    # the old code this skipped as script_unverifiable after three attempts;
+    # the deterministic hook repair must drive it to a render in-budget.
+    _wire_common(monkeypatch, tmp_path)
+    monkeypatch.setattr(vq, "measure_event_arc", lambda *a, **k: None)
+    monkeypatch.setattr(vr, "analyze_scene", lambda *a, **k: RECORD_761)
+    calls = []
+
+    def long_hook_editorial(*args, **kwargs):
+        calls.append(1)
+        return {
+            "commentary": (
+                "Watch his face when the phone photo appears in bright "
+                "daylight, the exact moment the photo appears on his phone. "
+                "She laughs and runs right past him under the string lights. "
+                "He just stands there grinning with both hands over his mouth."
+            ),
+            "title": "He Was Not Ready for That Photo Reveal",
+            "description": (
+                "A daylight phone photo, a run past under the string lights, "
+                "and one priceless reaction.\n\nDid you spot the phone?"
+            ),
+            "hashtags": "",
+        }
+
+    monkeypatch.setattr(vr, "generate_editorial", long_hook_editorial)
+    monkeypatch.setattr(vr, "build_scene_tracks", lambda *a, **k: {
+        "total_seconds": 19.5, "narration_path": tmp_path / "narration.wav",
+        "beats": [],
+    })
+    monkeypatch.setattr(vr, "_last_sentence_coverage", lambda *a, **k: 1.0)
+    monkeypatch.setattr(vr, "build_commentary_cues", lambda tracks, script: [
+        {"start": 0.0, "end": 2.0, "text": "Watch his face"}])
+    monkeypatch.setattr(vr, "build_music_bed", lambda path, seconds: Path(path))
+    monkeypatch.setattr(vr, "render_scene_timed", lambda *a, **k: None)
+    session = _FakeSession()
+    result = vr.produce_viral_short(_candidate(), session, publish=True)
+    assert result["status"] == "QUEUED_FOR_PUBLISH"
+    assert result["hook_repaired"] is True
+    # Repaired on the first attempt — no extra model spend was needed.
+    assert len(calls) == 1
+    assert result["narration"].startswith(
+        "Watch his face when the phone photo appears in bright daylight.")
+    publish_jobs = [o for o in session.added if type(o).__name__ == "PublishJob"]
+    assert len(publish_jobs) == 1

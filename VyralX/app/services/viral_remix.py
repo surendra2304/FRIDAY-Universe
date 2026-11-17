@@ -357,6 +357,9 @@ def generate_editorial(
         f"commentary: about {words} words of spoken voice-over, written exactly like the scripts above. "
         "Open with a hook in the first six words, then the setup, then the turn that makes it "
         "funny, then the payoff, then one short closing line. "
+        "The first sentence is the hook and it is measured on its own: at most 18 words, one "
+        "tight line. If the first beat needs more room, continue it in the second sentence - "
+        "never stretch the first sentence to cover the whole beat. "
         "Use only what the frame analysis says happens; it is the only source of truth. Never "
         "invent characters, objects, dialogue or events that are not in it. If the frame analysis "
         "is unavailable, stay generic and name no specific objects. "
@@ -1712,6 +1715,7 @@ def produce_viral_short(
     arc_info: dict[str, Any] | None = None
     gate_attempts = 0
     description_repaired = False
+    hook_repaired = False
     if gates_on:
         arc = viral_quality.measure_event_arc(
             source_path, duration, ffmpeg_bin=settings.ffmpeg_bin
@@ -1791,6 +1795,28 @@ def produce_viral_short(
                 voice_script = draft
                 editorial = {**editorial, "commentary": draft}
                 break
+            if any(
+                violation.kind == "hook_too_long" for violation in violations
+            ):
+                # A grounded draft must not die on hook length alone: a
+                # retry re-rolls a fresh beat-length sentence every time, so
+                # feedback alone never converged in production (23 words on
+                # all three attempts, 2026-11-17). Shorten the hook
+                # deterministically and re-judge the repaired draft against
+                # EVERY gate; it is accepted only on a clean pass, exactly
+                # like a model draft, and the loop otherwise runs unchanged.
+                repaired = viral_quality.repair_hook_length(draft)
+                if repaired != draft and not _gate_violations(
+                    repaired, editorial
+                ):
+                    voice_script = repaired
+                    editorial = {**editorial, "commentary": repaired}
+                    hook_repaired = True
+                    log.info(
+                        "Hook length repaired for %s on attempt %d",
+                        candidate.video_id, attempt + 1,
+                    )
+                    break
             log.info(
                 "Quality gates rejected draft %d for %s: %s",
                 attempt + 1, candidate.video_id,
@@ -2006,6 +2032,7 @@ def produce_viral_short(
             "event_arc": arc_info,
             "quality_gate_attempts": gate_attempts,
             "description_repaired": description_repaired,
+            "hook_repaired": hook_repaired,
         }),
         completed_at=utcnow(),
     )
@@ -2047,6 +2074,7 @@ def produce_viral_short(
         "event_arc": arc_info,
         "quality_gate_attempts": gate_attempts,
         "description_repaired": description_repaired,
+        "hook_repaired": hook_repaired,
     }
     # TASK-VYR-014: cross-post release bundle (render copy + per-platform
     # captions for Instagram Reels / TikTok / Facebook Reels, built from the

@@ -516,6 +516,41 @@ def repair_description_question(description: str, record: dict[str, Any]) -> str
     return repaired
 
 
+def repair_hook_length(commentary: str) -> str:
+    """Shorten an over-cap opening hook by dropping whole trailing clauses.
+
+    The structure gate caps the first sentence at 18 words (check_structure).
+    A grounded draft whose only defect is a long hook otherwise dies after
+    three model retries that re-roll the same beat-length sentence — the
+    first gated production render (2026-11-17) lost a fully grounded package
+    that way, with a 23-word hook on every attempt. Dropping trailing
+    clauses only removes words the model itself wrote, in whole grammatical
+    units, so the shortened hook stays the model's own grounded copy; the
+    caller re-runs every gate on the result, so a repair that breaks
+    grounding is still rejected. A hook with no clause boundary to drop at
+    is returned unchanged — the gate, not the repair, has the final say.
+    """
+    sentences = split_sentences(commentary)
+    if not sentences:
+        return commentary
+    hook = sentences[0]
+    if len(hook.split()) <= 18:
+        return commentary
+    clauses = re.split(r"(?<=[,;:])\s+", hook)
+    dropped = False
+    while len(clauses) > 1 and len(" ".join(clauses).split()) > 18:
+        clauses.pop()
+        dropped = True
+    if not dropped:
+        return commentary
+    shortened = " ".join(clauses).strip().rstrip(",;:").strip()
+    if not shortened or len(shortened.split()) > 18 or len(shortened.split()) < 3:
+        return commentary
+    if shortened[-1] not in ".!?":
+        shortened += "."
+    return " ".join([shortened, *sentences[1:]])
+
+
 # --------------------------------------------------------------------------- #
 # structure — hook, build, payoff; nothing repeated; no filler closers
 # --------------------------------------------------------------------------- #
