@@ -167,30 +167,48 @@ class _FakeLiveCM:
 class _FakeGenaiClient:
     """Stands in for google.genai.Client: the probe's text stage
     fails via .models, its Live stage via .aio.live.connect — each
-    stage's failure is set independently."""
+    stage's failure is set independently. Every stage invocation is
+    recorded in .calls as (stage, model) so tests can assert which
+    stage ran and which model it judged."""
 
     def __init__(self, models_exc=None, live_exc=None):
         self._models_exc = models_exc
         self._live_exc = live_exc
+        self.calls = []
 
     @property
     def models(self):
         if self._models_exc is not None:
             raise self._models_exc
-        return SimpleNamespace(generate_content=lambda **kwargs: SimpleNamespace())
+
+        def _generate_content(**kwargs):
+            self.calls.append(("text", kwargs.get("model")))
+            return SimpleNamespace()
+
+        return SimpleNamespace(generate_content=_generate_content)
 
     @property
     def aio(self):
-        live = SimpleNamespace(
-            connect=lambda model=None, config=None: _FakeLiveCM(self._live_exc)
-        )
+        def _connect(model=None, config=None):
+            self.calls.append(("live", model))
+            return _FakeLiveCM(self._live_exc)
+
+        live = SimpleNamespace(connect=_connect)
         return SimpleNamespace(live=live)
 
 
 def _patch_genai_client(monkeypatch, **kwargs):
     import google.genai as genai
 
-    monkeypatch.setattr(genai, "Client", lambda api_key: _FakeGenaiClient(**kwargs))
+    created = []
+
+    def _factory(api_key):
+        client = _FakeGenaiClient(**kwargs)
+        created.append(client)
+        return client
+
+    monkeypatch.setattr(genai, "Client", _factory)
+    return created
 
 
 def test_probe_classifies_transport_errors_as_inconclusive(monkeypatch):
@@ -226,19 +244,81 @@ def test_probe_classifies_transport_errors_as_inconclusive(monkeypatch):
         worker._probe_gemini_key_sync("k")
 
 
-def test_probe_text_quota_is_never_valid(monkeypatch):
-    """The 2026-11-17 frame-flow finding, pinned: a 429
-    RESOURCE_EXHAUSTED from the probe's text stage is a quota
-    verdict — the key is NOT valid for voice, is never certified,
-    and the Live stage is not even consulted."""
-    _patch_genai_client(
+def test_probe_text_quota_falls_through_to_live_stage(monkeypatch):
+    """TASK-VOI-020: a 429 RESOURCE_EXHAUSTED from the probe's TEXT
+    stage judges the TEXT bucket only — Gemini Live is metered
+    separately (no daily cap), and the text bucket is a per-model
+    daily allowance the keeper's own probing can drain. The probe
+    now falls through to the Live stage, whose verdict governs.
+
+    The TASK-VOI-018 invariant is preserved: the 429 itself certifies
+    NOTHING — a key is valid here only because the Live connect
+    actually succeeded. (This replaces the VOI-018 pin "a text-stage
+    429 condemns the key and the Live stage is not consulted": that
+    premise is the defect that killed re-acceptance #12, where all 5
+    keys were condemned on the text bucket's exhaustion and no Live
+    session was ever attempted.)"""
+    # text quota-dead, Live connects -> certified BY THE LIVE STAGE
+    created = _patch_genai_client(
         monkeypatch,
         models_exc=RuntimeError(
             "429 RESOURCE_EXHAUSTED: you exceeded your current quota"
         ),
     )
+    assert worker._probe_gemini_key_sync("k") is True
+    assert [stage for stage, _model in created[0].calls] == ["live"]
+
+    # text quota-dead, Live also quota-dead -> condemned, as before
+    _patch_genai_client(
+        monkeypatch,
+        models_exc=RuntimeError("429 RESOURCE_EXHAUSTED: quota"),
+        live_exc=RuntimeError("429 RESOURCE_EXHAUSTED: quota"),
+    )
     with pytest.raises(worker._ProbeQuotaExhausted):
         worker._probe_gemini_key_sync("k")
+
+    # text quota-dead, Live auth-rejects -> the key is dead
+    _patch_genai_client(
+        monkeypatch,
+        models_exc=RuntimeError("429 RESOURCE_EXHAUSTED: quota"),
+        live_exc=RuntimeError("API_KEY_INVALID"),
+    )
+    assert worker._probe_gemini_key_sync("k") is False
+
+
+def test_probe_auth_rejection_never_reaches_live_stage(monkeypatch):
+    """Auth is a property of the key, not of a bucket: a stage-1 auth
+    rejection condemns the key immediately — exactly as before
+    TASK-VOI-020, the Live stage is not consulted."""
+    created = _patch_genai_client(
+        monkeypatch, models_exc=RuntimeError("API_KEY_INVALID")
+    )
+    assert worker._probe_gemini_key_sync("k") is False
+    assert created[0].calls == []
+
+
+def test_probe_stage1_pings_the_flash_lite_catalogue_model(monkeypatch):
+    """TASK-VOI-020 (a): stage 1 draws on the Flash-Lite model's
+    bucket (documented free tier ~500 requests/day), not the voice
+    Flash model's (~20/day) — routine probing must not drain the
+    scarce bucket. The id is the fleet catalogue's Flash-Lite
+    (Inference SUPPORTED_MODELS)."""
+    created = _patch_genai_client(monkeypatch)
+    assert worker._probe_gemini_key_sync("k") is True
+    assert created[0].calls[0] == ("text", "gemini-2.5-flash-lite")
+    assert worker._PROBE_TEXT_MODEL == "gemini-2.5-flash-lite"
+
+
+def test_verified_key_cache_ttl_is_thirty_minutes():
+    """TASK-VOI-020 (c): the verified-key TTL is 1800 s (~7x fewer
+    keeper probe rounds than the old 240 s), and the cache honours
+    it — a key verified 5 minutes ago (dead under the old TTL) is
+    still trusted; one verified 31 minutes ago is not."""
+    assert worker._KEY_CACHE_TTL_S == 1800.0
+    worker._KEY_CACHE.update({"key": "k1", "ts": time.time() - 300.0})
+    assert worker._cached_gemini_key() == "k1"
+    worker._KEY_CACHE.update({"key": "k1", "ts": time.time() - 1801.0})
+    assert worker._cached_gemini_key() is None
 
 
 def test_probe_live_stage_verdicts(monkeypatch):
