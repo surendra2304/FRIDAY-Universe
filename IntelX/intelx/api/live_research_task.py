@@ -128,6 +128,46 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
     # DocumentText (the HTML extractor) is module-level since TASK-INT-009;
     # see its docstring for why the re-audit script shares it.
 
+    # TASK-INT-003 follow-up (the D2 lever, designed in the INT-003 D2
+    # root-cause investigation): originator-likely labelling. A host is
+    # originator-likely when it is an originator-class TLD host (.gov,
+    # .gov.<cc>, .edu, .int) or when the registrable domain's
+    # distinguishing label matches a content token of the query — the
+    # originator the question is about (NASA -> nasa.gov, WHO -> who.int,
+    # CrowdStrike -> crowdstrike.com, ITER -> iter.org). The label is a
+    # labelling of the ordering heuristic below, NOT a claim that it
+    # equals the rubric's hand classification; acceptance re-runs still
+    # hand-verify. (Stopword set mirrors the `terms` computation below.)
+    _query_content_tokens = {w for w in re.findall(r"\w{3,}", query.lower())} - {
+        "the", "and", "for", "what", "with", "from", "research", "summarize",
+        "explain", "how", "does", "works", "handles", "give", "highlights",
+        "cite", "actual", "source", "sources", "urls", "not", "build", "code",
+        "publish", "anything", "please", "tell", "about", "this", "that", "only", "directly", "relevant", "passages",
+        "excerpts", "answer", "question", "using", "based"}
+
+    def _registrable_label(host):
+        labels = [part for part in host.split(".") if part]
+        if len(labels) < 2:
+            return ""
+        # Common two-level public suffixes (gov.uk, co.uk, com.au, ...):
+        # the distinguishing label sits one level further left.
+        if ".".join(labels[-2:]) in {"ac.uk", "co.uk", "gov.uk", "org.uk",
+                                     "ac.in", "co.in", "gov.in", "com.au",
+                                     "net.au", "org.au", "co.jp", "co.kr",
+                                     "com.br", "com.cn", "com.hk", "com.mx",
+                                     "com.sg", "com.tw", "co.nz", "co.za"}:
+            return labels[-3] if len(labels) >= 3 else ""
+        return labels[-2]
+
+    def _originator_likely_url(raw_url):
+        host = (urlsplit(str(raw_url or "")).hostname or "").lower()
+        if not host:
+            return False
+        if host.endswith((".gov", ".edu", ".int")) or re.search(r"(^|\.)gov\.[a-z]{2}$", host):
+            return True
+        label = _registrable_label(host)
+        return bool(label) and label in _query_content_tokens
+
     # Explicit source URLs are fetched directly; they are still subject to the
     # hardened connector's SSRF, redirect, robots, MIME and byte limits.
     from types import SimpleNamespace
@@ -157,6 +197,19 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
             host = urlsplit(str(getattr(candidate, "url", "") or "")).hostname or ""
             return host == "news.google.com" or host.endswith(".news.google.com")
         results = sorted(results, key=_is_news_redirector)
+        # TASK-INT-003 follow-up (the D2 lever): mirror-image promotion.
+        # The demotion above leaves every redirector in the tail; within
+        # the non-redirector prefix only, originator-likely candidates are
+        # stable-sorted ahead of the rest, so the originator is TRIED
+        # first instead of reaching a source slot only when search rank
+        # and fetch mortality happen to align. Ordering only: same pool,
+        # same fetch, same passage filters, same max_sources cap — and a
+        # redirector can never be promoted, because the sort never
+        # crosses the split.
+        _prefix_end = next((i for i, c in enumerate(results) if _is_news_redirector(c)), len(results))
+        results = (sorted(results[:_prefix_end],
+                          key=lambda c: not _originator_likely_url(getattr(c, "url", "")))
+                   + results[_prefix_end:])
     findings, sources, failures, seen = [], [], [], set()
     seen_final_urls = set()
     source_documents = []
@@ -253,7 +306,10 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
             title = str(getattr(candidate, "title", "") or final_url)[:160]
             source = {"id": sid, "title": title, "url": final_url,
                       "retrieved_at": datetime.now(timezone.utc).isoformat(),
-                      "evidence_kind": "retrieved_document", "independently_verified": False}
+                      "evidence_kind": "retrieved_document", "independently_verified": False,
+                      # TASK-INT-003 follow-up: D2 made mechanically
+                      # measurable — see primary_source_count on the result.
+                      "originator_likely": _originator_likely_url(final_url)}
             sources.append(source)
             source_documents.append({"source_id": sid, "title": title, "url": final_url,
                                      "text": "\n".join(paragraphs)[:18_000]})
@@ -492,4 +548,10 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
             "text_response": "\n".join(lines), "briefing": briefing,
             "source_failures": failures,
             "source_diversity": source_diversity,
+            # TASK-INT-003 follow-up: the D2 inputs on every brief, counted
+            # on the final (post-synthesis-filter) source list, so an
+            # acceptance re-run scores the primary-source ratio from the
+            # envelope instead of by hand.
+            "source_count": len(sources),
+            "primary_source_count": sum(1 for s in sources if s.get("originator_likely")),
             "summary": summary}
