@@ -5,7 +5,6 @@ FastAPI initialization with lifespan lifecycle management, middleware, and route
 
 import asyncio
 import hmac
-import sys
 import warnings
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -119,20 +118,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         reaper_task = asyncio.create_task(_reaper_loop())
     except Exception as exc:
         logger.warning(f"Stale-task reconciliation not started: {exc}")
-
-    # Signal trapping for graceful shutdown in Unix/Linux container environments
-    if sys.platform != "win32":
-        import signal
-
-        loop = asyncio.get_running_loop()
-        for sig in (signal.SIGTERM, signal.SIGINT):
-            try:
-                loop.add_signal_handler(
-                    sig,
-                    lambda s=sig: logger.info(f"Received signal {s}. Triggering graceful shutdown..."),
-                )
-            except (NotImplementedError, RuntimeError):
-                pass
 
     yield
 
