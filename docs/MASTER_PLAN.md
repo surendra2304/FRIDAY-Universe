@@ -112,6 +112,28 @@ Rules:
 - Any change that raises FRIDAY's resident memory must name what it displaces; FRIDAY has no headroom.
 - Capacity work (e.g. §9's Redis/Qdrant question) is decided against this table, not against assumed hardware.
 
+Adopted 2026-11-17 (decision D-029, `docs/collaboration/DECISIONS.md`; evidence: the 2026-11-17 S1 load diagnosis; operational restatement in `docs/collaboration/LOCAL_FIRST_PIPELINE.md`):
+
+> **Production hosts are for production only.** S1 and S2 run the live fleet on ~956 MB VMs that deliver roughly one effective core (hypervisor steal plus swap page-in consume the rest; measured 2026-11-17). No non-production execution runs on either host. Prohibited on S1/S2:
+>
+> - test suites (pytest or any other) — including a suite spawned from inside a production service's own process tree or cgroup;
+> - code-generation batteries, benchmarks, and load tests;
+> - experiment workers and harnesses, including throwaway workers under `/tmp`;
+> - backtests, research runs, and data staging;
+> - interactive shells that compile, build, or run project code.
+>
+> All of the above run in the local sandbox / local staging fleet (TASK-REL-046) or in CI. Bridge `run_shell` on a production host is reserved for: (a) live-only read-only probes — health, journal, process, and venue state that exists only on the host; (b) deploys and deploy verification through Fleet CD; (c) production operations that can only execute on the host (service control, config and credential-file maintenance, on-host data repair).
+>
+> **Exceptions — production probes that must run on-host** (these measure something that exists only there; they are operations, not test execution):
+>
+> - health/liveness probes and journal reads (read-only, seconds-long);
+> - venue/account checks executed through a production daemon's own environment and credentials (e.g. Stratex broker position/balance reconciliation) — via the daemon's own surfaces or a minimal read-only check using its env, never a test harness;
+> - the deploy-time gates that are part of Fleet CD itself (health gate, Memora migration and memory-path smoke);
+> - the fleet's own scheduled production jobs (fleet backup, forward scorecard, metrics sync, the OCI capacity allocator) — production services, not auxiliary work;
+> - emergency diagnosis of a live incident: read-only first, time-boxed, stopped when the incident closes.
+>
+> If a task appears to need on-host execution and fits no exception, it goes to the coordinator, who either finds the local route or records a one-off exception in `docs/collaboration/ACTIVITY_LOG.md` **before** it runs.
+
 ## 6. Standing backlog (valid tasks; not milestone-blocking)
 
 | Task | One line |

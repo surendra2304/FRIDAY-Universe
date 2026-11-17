@@ -30,6 +30,65 @@ approval, and a merge is not a production verification. Status is still
 reported in the five honest states (implemented / tested / merged /
 deployed / production-verified).
 
+## Production hosts are for production only (off-S1/S2 execution rule, 2026-11-17)
+
+The normative rule lives in `docs/MASTER_PLAN.md` §5 (adopted as
+decision D-029). Operationally, for every crew following this pipeline:
+
+- Nothing non-production executes on S1 or S2: no test suites (pytest
+  or any other — including a suite spawned from inside a production
+  service's own process tree or cgroup), no code-generation batteries,
+  benchmarks or load tests, no experiment workers or harnesses
+  (including throwaway workers under `/tmp`), no backtests, research
+  runs or data staging, and no interactive shells that compile, build,
+  or run project code. All of it runs in the local sandbox / local
+  staging fleet or in CI.
+- Bridge `run_shell` on a production host is reserved for: (a)
+  live-only read-only probes — health, journal, process, and venue
+  state that exists only on the host; (b) deploys and deploy
+  verification through Fleet CD; (c) production operations that can
+  only execute on the host (service control, config and
+  credential-file maintenance, on-host data repair).
+
+**Exceptions — production probes that must run on-host** (these measure
+something that exists only there; they are operations, not test
+execution):
+
+- health/liveness probes and journal reads (read-only, seconds-long);
+- venue/account checks executed through a production daemon's own
+  environment and credentials (e.g. Stratex broker position/balance
+  reconciliation) — via the daemon's own surfaces or a minimal
+  read-only check using its env, never a test harness;
+- the deploy-time gates that are part of Fleet CD itself (health gate,
+  Memora migration and memory-path smoke);
+- the fleet's own scheduled production jobs (fleet backup, forward
+  scorecard, metrics sync, the OCI capacity allocator) — production
+  services, not auxiliary work;
+- emergency diagnosis of a live incident: read-only first, time-boxed,
+  stopped when the incident closes.
+
+If a task appears to need on-host execution and fits no exception, it
+goes to the coordinator, who either finds the local route or records a
+one-off exception in `docs/collaboration/ACTIVITY_LOG.md` **before** it
+runs.
+
+**Staging-exempt ≠ test-on-host.** The staging exemption below (Memora,
+IntelX, Forge, Sentinel, VyralX) exists because those agents connect to
+Oracle at startup and cannot boot in the sandbox. Their verification
+path is the bridge-probe path — short, read-only production probes
+against the live service. The exemption has never meant running their
+test suites or codegen batteries on the production host, and it does
+not now: the 2026-11-17 Forge codegen battery ran on S1 against exactly
+such an agent, and it is the kind of execution this rule prohibits.
+
+**A production service executing its own features is production.** If a
+live agent's own code path spawns work (e.g. FRIDAY's task machinery),
+that is the service behaving as designed and is governed by its own
+resource caps. But *driving* a service to execute test workloads
+through its features is test execution and is prohibited. The
+distinction is who the work serves: the owner's live use, or a crew's
+verification.
+
 ## Gate state today (2026-11-15, first full run — `staging/RESULTS_REL046.md`)
 
 - **Gated and passing:** Inference, Cortex, FRIDAY.
