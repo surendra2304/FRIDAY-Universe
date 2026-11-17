@@ -54,3 +54,19 @@ def available_capacity(entries: list[Any], lane: str = "primary") -> list[Any]:
     if lane == "fallback":
         candidates.reverse()
     return candidates
+
+
+def rotate_candidates(candidates: list[Any], start: int) -> list[Any]:
+    """Return the candidates rotated so index ``start`` (mod len) is first.
+
+    Rotation spreads a bounded per-cycle attempt budget across every
+    candidate over successive cycles instead of always spending it on the
+    first entries. Relative order is preserved; an empty or single-item
+    list is returned unchanged (as a copy).
+    """
+    if len(candidates) < 2:
+        return list(candidates)
+    offset = start % len(candidates)
+    if offset == 0:
+        return list(candidates)
+    return list(candidates[offset:]) + list(candidates[:offset])
