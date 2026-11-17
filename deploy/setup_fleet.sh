@@ -363,6 +363,28 @@ MemoryMax=200M
 WantedBy=multi-user.target
 EOF
 
+    # Swap-cap drop-ins (S2 follow-up to the board PR #2 drift fix,
+    # 2026-11-17): the Sentinel swap census of 2026-11-17 found that
+    # NO unit on Server 2 carries a swap cap — every unit reads
+    # MemorySwapMax=infinity — while Server 1 caps its heavy pagers
+    # at 192M. S2 residency at census time (VmSwap): friday-bridge
+    # ~103 MiB, VyralX ~61 MiB, Sentinel ~60 MiB, VyralX-Daemon
+    # ~42 MiB, Cortex ~28 MiB — all under 192M, so the cap binds
+    # nothing today; it bounds worst-case page-in during restarts
+    # (e.g. the Python 3.12 cutover), the same rationale as Server 1.
+    # Contents mirror the Server 1 drop-ins byte-for-byte
+    # (MemorySwapMax=192M; systemctl show reports the in-force value
+    # as 201326592). friday-bridge's and VyralX-Daemon's unit files
+    # are not written by this script — only their drop-ins are
+    # installed here, as with Stratex-Daemon on Server 1.
+    for swap_unit in friday-bridge VyralX Sentinel VyralX-Daemon Cortex; do
+        sudo install -d "/etc/systemd/system/${swap_unit}.service.d"
+        sudo tee "/etc/systemd/system/${swap_unit}.service.d/swapmax.conf" > /dev/null << EOF
+[Service]
+MemorySwapMax=192M
+EOF
+    done
+
     sudo systemctl daemon-reload
     SERVICES=("VyralX" "Sentinel" "Cortex")
     for svc in "${SERVICES[@]}"; do
