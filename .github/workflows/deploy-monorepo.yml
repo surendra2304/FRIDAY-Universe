@@ -186,7 +186,7 @@ jobs:
             # the deploy: later units are NOT restarted and keep serving
             # the previous code. This block is extracted and executed by
             # tests/test_staggered_fleet_deploy.py — keep it free of
-            # GitHub ${{ }} expressions (CHANGED_AGENTS and
+            # GitHub Actions expressions (CHANGED_AGENTS and
             # DEPLOY_FORCE_ALL are set before it) and keep
             # restart_and_gate generic; the S2 job gets the same function
             # with its own unit table in a follow-up PR.
