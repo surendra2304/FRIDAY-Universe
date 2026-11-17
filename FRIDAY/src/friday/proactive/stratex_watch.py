@@ -391,6 +391,12 @@ def _panic_flag_active(path: Path) -> bool:
         text = path.read_text(encoding="utf-8")
     except FileNotFoundError:
         return False
+    except UnicodeDecodeError as exc:
+        logger.warning(
+            f"stratex status snapshot: panic flag {path} is not valid "
+            f"UTF-8 ({exc}); failing closed (panic assumed), as Stratex does"
+        )
+        return True
     except OSError as exc:
         logger.warning(
             f"stratex status snapshot: panic flag {path} unreadable "

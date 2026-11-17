@@ -509,6 +509,27 @@ class TestReadStatusSnapshotHaltState:
             assert snap.data["panic_active"] is True, raw
             assert snap.data["kill_switch_active"] is False
 
+    def test_non_utf8_panic_file_fails_closed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # F1 (supervisor review of PR #877): bytes that are not valid
+        # UTF-8 make read_text raise UnicodeDecodeError — a ValueError,
+        # not an OSError — out of the flag read. Stratex's reader
+        # catches Exception around open+load and fails closed; the
+        # snapshot must fail closed in-function too: the flag exists,
+        # so panic is assumed and the snapshot still serves.
+        world = _World(tmp_path, monkeypatch)
+        world.write_all()
+        (world.root / "panic_state.json").write_bytes(
+            b'{"active": true, "actor": "\xff\xfe"}'
+        )
+
+        snap = sw.read_status_snapshot()
+
+        assert snap is not None
+        assert snap.data["panic_active"] is True
+        assert snap.data["kill_switch_active"] is False
+
     def test_kill_lock_trips_both_flags(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
