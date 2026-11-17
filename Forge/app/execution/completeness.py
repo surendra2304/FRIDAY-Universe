@@ -37,6 +37,9 @@ would judge an incomplete file set.
 Only importable source modules are gated. Test files belong to the
 Tester role, README/docs to the Release role and the architect; demanding
 them before the tester gate would manufacture failures, not catch them.
+(TASK-FRG-013: the run_task backstop -- which runs after the Tester
+role has finished -- opts into declared test files via
+``include_test_files``; the in-DAG gate keeps the default.)
 
 The expected set is the manifest union the modules the goal and its
 requirements state, read with ``min_paths=1`` (see expected_modules):
@@ -102,8 +105,16 @@ def _normalize(path: Any) -> str:
     return p.lstrip("/")
 
 
-def _is_expected_module(path: str) -> bool:
-    """True for an importable source module the gate is responsible for."""
+def _is_expected_module(path: str, include_test_files: bool = False) -> bool:
+    """True for an importable source module the gate is responsible for.
+
+    Test files are excluded by default: mid-build they belong to the
+    Tester role, and demanding them before the tester gate would
+    manufacture failures. TASK-FRG-013: the run_task backstop passes
+    ``include_test_files=True`` -- by then the Tester role has run, so
+    a goal/manifest-declared test file that still does not exist is a
+    layout miss like any other (G5 shipped without tests/test_api.py).
+    """
     if not path or path.endswith("/"):
         return False
     if path.startswith("docs/"):
@@ -113,11 +124,13 @@ def _is_expected_module(path: str) -> bool:
     lower = name.lower()
     if lower in _EXCLUDED_NAMES:
         return False
-    if "tests" in parts[:-1]:
-        return False
-    if lower.startswith("test_") or lower.endswith("_test.py"):
-        return False
-    if lower.endswith((".test.js", ".test.ts", ".spec.js", ".spec.ts")):
+    is_test_file = (
+        "tests" in parts[:-1]
+        or lower.startswith("test_")
+        or lower.endswith("_test.py")
+        or lower.endswith((".test.js", ".test.ts", ".spec.js", ".spec.ts"))
+    )
+    if is_test_file and not include_test_files:
         return False
     if "." not in name:
         return False
@@ -129,6 +142,7 @@ def expected_modules(
     goal: str,
     requirements: list[str] | None,
     manifest_files: list[str] | None,
+    include_test_files: bool = False,
 ) -> list[str]:
     """Modules that must exist: manifest-declared union goal-named.
 
@@ -161,7 +175,7 @@ def expected_modules(
     )
     for raw in candidates:
         path = _normalize(raw)
-        if path and _is_expected_module(path) and path not in ordered:
+        if path and _is_expected_module(path, include_test_files) and path not in ordered:
             ordered.append(path)
     return ordered
 
@@ -243,9 +257,15 @@ class ModuleCompletenessGate:
         task_id: str,
         goal: str,
         requirements: list[str] | None = None,
+        include_test_files: bool = False,
     ) -> CompletenessReport:
         fs = self.engine.fs
-        expected = expected_modules(goal, requirements, read_manifest_files(fs, task_id))
+        expected = expected_modules(
+            goal,
+            requirements,
+            read_manifest_files(fs, task_id),
+            include_test_files=include_test_files,
+        )
         if not expected:
             return CompletenessReport()
 

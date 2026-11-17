@@ -120,6 +120,16 @@ class RecoveryEngine:
             f"({diagnosis.error_message[:80]})"
         )
 
+        # TASK-FRG-013: a TEST_DEFECT diagnosis has exactly one sound
+        # repair -- the deterministic golden correction below. Every
+        # ladder route would aim at the (corroborated-correct)
+        # implementation or ask a model to invent a replacement
+        # constant, which is the failure mode being fixed.
+        if diagnosis.failure_class == FailureClass.TEST_DEFECT:
+            return await self._correct_golden_values(
+                task_id, failed_evidence, diagnosis
+            )
+
         target_file = self._resolve_target_file(task_id, diagnosis)
 
         last_message = ""
@@ -324,6 +334,167 @@ class RecoveryEngine:
                 f"[Task {task_id}] Could not record audit event '{event_type}': "
                 f"{type(exc).__name__}: {exc}"
             )
+
+    async def _correct_golden_values(
+        self,
+        task_id: str,
+        failed_evidence: VerificationEvidence,
+        diagnosis: FailureDiagnosis,
+    ) -> tuple[bool, str, RepairPatch | None]:
+        """TASK-FRG-013: deterministic correction of fabricated goldens.
+
+        The golden-value checker proved -- by executing the
+        implementation -- that specific expected literals in the
+        generated tests are invented, and recorded the computed values
+        in the evidence issues. This route replaces exactly those
+        literals with the computed values: no model is consulted, so
+        the correction cannot hallucinate a new constant. Discipline
+        mirrors the ladder: fail-closed segment verification (a file
+        that changed since the battery ran is never written), the
+        compile gate, the anti-loop guard, audit events, and a full
+        re-verification whose result is the route's verdict.
+        """
+        from app.verification.golden_values import apply_golden_corrections
+
+        records = [
+            issue
+            for issue in (failed_evidence.issues or [])
+            if isinstance(issue, dict)
+            and issue.get("kind") == "golden_value_test_defect"
+            and issue.get("file")
+            and issue.get("actual_repr")
+        ]
+        if not records:
+            return (
+                False,
+                "Golden correction: the evidence carries no correction "
+                "records; nothing deterministic to apply.",
+                None,
+            )
+        if len(records) > 64:
+            return (
+                False,
+                f"Golden correction: {len(records)} fabricated values is "
+                "beyond the deterministic route's bound (64); leaving the "
+                "failure to the standard paths.",
+                None,
+            )
+
+        by_file: dict[str, list[dict]] = {}
+        for record in records:
+            by_file.setdefault(str(record["file"]), []).append(record)
+
+        last_patch: RepairPatch | None = None
+        for target_file, file_records in by_file.items():
+            try:
+                content = self.exec_engine.fs.read_file(
+                    task_id, target_file, role="debugger"
+                )
+            except Exception as exc:
+                return (
+                    False,
+                    f"Golden correction: could not read '{target_file}' "
+                    f"({type(exc).__name__}: {exc}); no file was corrected.",
+                    last_patch,
+                )
+            corrected = apply_golden_corrections(content, file_records)
+            if corrected is None:
+                return (
+                    False,
+                    f"Golden correction: '{target_file}' changed since "
+                    "verification (a recorded segment no longer matches); "
+                    "refusing to write on stale positions.",
+                    last_patch,
+                )
+            if corrected == content:
+                continue
+            patch = RepairPatch(
+                target_file=target_file,
+                original_snippet=None,
+                replacement_snippet=corrected,
+                explanation=(
+                    "TASK-FRG-013 golden correction: replaced "
+                    f"{len(file_records)} fabricated expected literal(s) "
+                    "with the values computed by executing the "
+                    "implementation (see Golden Value Verification)."
+                ),
+                patch_type="rewrite",
+            )
+            if not self._patch_is_sound(task_id, patch):
+                return (
+                    False,
+                    f"Golden correction: corrected '{target_file}' would "
+                    "not compile; nothing written for that file.",
+                    last_patch,
+                )
+            allowed, reason = self.loop_guard.can_attempt_repair(
+                task_id=task_id,
+                failure_class=diagnosis.failure_class,
+                patch_content=patch.replacement_snippet,
+            )
+            if not allowed:
+                await self._audit(
+                    task_id,
+                    "recovery.escalated",
+                    {"reason": reason, "diagnosis": diagnosis.model_dump(mode="json")},
+                )
+                return False, f"Recovery Escalation: {reason}", last_patch
+            self.loop_guard.record_repair_attempt(
+                task_id=task_id,
+                failure_class=diagnosis.failure_class,
+                patch_content=patch.replacement_snippet,
+            )
+            await self._audit(
+                task_id,
+                "recovery.attempted",
+                {
+                    "failure_class": diagnosis.failure_class.value,
+                    "target_file": target_file,
+                    "explanation": patch.explanation,
+                    "route": "golden_correction",
+                },
+            )
+            self._remember_repair(task_id, diagnosis, patch, "golden_correction", "attempted")
+            if not self.applicator.apply_patch(task_id, patch, role="debugger"):
+                return (
+                    False,
+                    f"Golden correction: failed to write '{target_file}'.",
+                    last_patch,
+                )
+            last_patch = patch
+            logger.info(
+                f"[Task {task_id}] Golden correction applied to "
+                f"'{target_file}' ({len(file_records)} literal(s))"
+            )
+
+        if last_patch is None:
+            return False, "Golden correction: no file needed correction.", None
+
+        new_report = await self.verifier.verify_task(task_id)
+        if new_report.all_passed:
+            logger.info(
+                f"[Task {task_id}] Recovery succeeded via route "
+                "'golden_correction'! All verification checks passed."
+            )
+            self._record_repair_lesson(task_id, diagnosis, last_patch, True, "golden_correction")
+            await self._audit(
+                task_id,
+                "recovery.succeeded",
+                {"target_file": last_patch.target_file, "route": "golden_correction"},
+            )
+            return (
+                True,
+                "Recovery succeeded via route 'golden_correction'. "
+                "All checks passing.",
+                last_patch,
+            )
+        self._record_repair_lesson(task_id, diagnosis, last_patch, False, "golden_correction")
+        return (
+            False,
+            "Golden correction applied but re-verification failed: "
+            f"{new_report.failure_reasons}",
+            last_patch,
+        )
 
     async def _create_missing_module_patch(
         self, task_id: str, diagnosis: FailureDiagnosis

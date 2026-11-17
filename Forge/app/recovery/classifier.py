@@ -76,6 +76,10 @@ class FailureClass(str, Enum):
     SYNTAX_ERROR = "syntax_error"
     DEPENDENCY_MISSING = "dependency_missing"
     LOGIC_BUG = "logic_bug"
+    # TASK-FRG-013: the failure is in the generated TEST, not the code --
+    # a golden value the test author invented from recall, disproven by
+    # executing the implementation (see app/verification/golden_values).
+    TEST_DEFECT = "test_defect"
     INTEGRATION_ERROR = "integration_error"
     TIMEOUT = "timeout"
     PERMISSION_DENIED = "permission_denied"
@@ -103,6 +107,38 @@ class FailureClassifier:
 
     def classify(self, evidence: VerificationEvidence) -> FailureDiagnosis:
         text = f"{evidence.stderr}\n{evidence.stdout}"
+
+        # 0. TASK-FRG-013: the golden-value checker's failure is a TEST
+        # defect by construction -- it only fails on golden values it
+        # executed and proved fabricated, with the implementation
+        # corroborated. It must never fall through to the LOGIC_BUG
+        # reading below (its stderr names assertion-shaped text), which
+        # would aim the repair ladder at correct code.
+        if evidence.check_name == "Golden Value Verification" and any(
+            isinstance(issue, dict)
+            and issue.get("kind") == "golden_value_test_defect"
+            for issue in evidence.issues or []
+        ):
+            first_file = None
+            for issue in evidence.issues or []:
+                if isinstance(issue, dict) and issue.get("file"):
+                    first_file = str(issue["file"])
+                    break
+            return FailureDiagnosis(
+                failure_class=FailureClass.TEST_DEFECT,
+                failing_file=first_file,
+                error_message=(
+                    "Generated test carries golden value(s) disproven by "
+                    "executing the implementation; the test is the defect."
+                ),
+                stack_trace=text,
+                suggested_strategy=(
+                    "Replace each fabricated expected literal with the "
+                    "value computed by executing the implementation "
+                    "(deterministic golden correction route)."
+                ),
+                raw_evidence_summary=text[:300],
+            )
 
         # 1. Syntax Error check (AST checker or Python runtime/linter)
         is_syntax = (
