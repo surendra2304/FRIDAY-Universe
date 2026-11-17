@@ -254,12 +254,32 @@ def test_oai_route_never_turns_truncated_or_unknown_finish_into_stop(boundary, f
     assert len(boundary.calls) == 1
 
 
-def test_auto_fast_lane_budget_and_model_stay_unchanged(boundary):
+def test_auto_route_delegates_choice_without_fast_lane_clamp(boundary):
+    # DISCLOSURE (2026-11-17, Inference /v1 auto-route truncation fix):
+    # this test previously pinned the fast-lane shape for model="auto"
+    # (openai/gpt-oss-20b, max_tokens=60, reasoning_effort=low) under the
+    # name test_auto_fast_lane_budget_and_model_stay_unchanged. That
+    # shape was the defect, not a contract: the route set fast_lane=True
+    # for every "auto" caller, so the unified manager silently clamped
+    # every auto request to 60 tokens, forced the 20B model and replaced
+    # the caller's system prompt — measured live 2026-11-17 (4/4 auto
+    # probes at max_tokens=800 stopped at exactly 60 with
+    # finish_reason="length"; FRIDAY's autonomous daemon asks for 2,500
+    # tokens through this surface and received 60-token stubs). "auto"
+    # delegates the CHOICE of model; the OpenAI-compatible request
+    # schema has no fast-lane field a caller could opt in with. The fast
+    # lane survives only where a caller asks for it by name (/v1/ask
+    # with mode="fast", the FRIDAY /ask fast lane) and stays pinned
+    # there. Asserted here is the corrected delegation: the manager's
+    # normal auto resolution serves the request — for the route's
+    # system_architect role that is the manager's role default — and
+    # the caller's token budget reaches the gateway intact.
     completion(boundary, 'auto')
     r = boundary.calls[0]['request']
-    assert r.model == 'openai/gpt-oss-20b'
-    assert r.max_tokens == 60
-    assert r.extra_params['reasoning_effort'] == 'low'
+    assert r.model == 'meta-llama/llama-3.3-70b-instruct'
+    assert boundary.calls[0]['provider_name'] == 'openrouter'
+    assert boundary.calls[0]['stage_name'] == 'unified_direct'
+    assert r.max_tokens == 2400
 
 
 def test_identical_explicit_model_requests_still_reuse_cache(boundary):
