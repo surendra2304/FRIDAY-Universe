@@ -1653,6 +1653,7 @@ def produce_viral_short(
     record: dict[str, Any] | None = None
     arc_info: dict[str, Any] | None = None
     gate_attempts = 0
+    description_repaired = False
     if gates_on:
         arc = viral_quality.measure_event_arc(
             source_path, duration, ffmpeg_bin=settings.ffmpeg_bin
@@ -1701,20 +1702,17 @@ def produce_viral_short(
     )
     voice_script = ""
     if gates_on and record is not None:
-        # Check the draft against the footage; one corrective retry with the
+        # Check the draft against the footage; corrective retries with the
         # violations as feedback, then the candidate is skipped. Template
         # fallbacks go through the same gate — invented copy has no bypass.
-        violations: list[viral_quality.Violation] = []
-        for attempt in range(2):
-            gate_attempts = attempt + 1
-            draft = viral_quality.sanitize_spoken_text(
-                editorial.get("commentary") or ""
-            )
-            violations = (
+        def _gate_violations(
+            draft: str, ed: dict[str, Any]
+        ) -> list[viral_quality.Violation]:
+            return (
                 viral_quality.check_consistency(
                     commentary=draft,
-                    title=str(editorial.get("title") or ""),
-                    description=str(editorial.get("description") or ""),
+                    title=str(ed.get("title") or ""),
+                    description=str(ed.get("description") or ""),
                     record=record,
                 )
                 + viral_quality.check_structure(commentary=draft, record=record)
@@ -1722,6 +1720,15 @@ def produce_viral_short(
                     commentary=draft, duration=duration
                 )
             )
+
+        violations: list[viral_quality.Violation] = []
+        draft = ""
+        for attempt in range(3):
+            gate_attempts = attempt + 1
+            draft = viral_quality.sanitize_spoken_text(
+                editorial.get("commentary") or ""
+            )
+            violations = _gate_violations(draft, editorial)
             if not violations:
                 voice_script = draft
                 editorial = {**editorial, "commentary": draft}
@@ -1731,7 +1738,7 @@ def produce_viral_short(
                 attempt + 1, candidate.video_id,
                 "; ".join(str(v) for v in violations[:6]),
             )
-            if attempt == 0:
+            if attempt < 2:
                 editorial = generate_editorial(
                     category,
                     str(getattr(candidate, "title", "")),
@@ -1742,6 +1749,30 @@ def produce_viral_short(
                     scene=scene,
                     feedback=[violation.detail for violation in violations],
                 )
+        if not voice_script and violations and all(
+            violation.kind in {"question_ungrounded", "cta_without_question"}
+            for violation in violations
+        ):
+            # The copy itself is grounded; only the description's question
+            # is not. That one defect has a deterministic, fact-free repair
+            # (drop the ungrounded question, ask the record's own) — the
+            # staging self-test proved grounded packages die on it, and a
+            # channel whose discoveries are mostly narration-carrying
+            # cannot afford to discard them over packaging mechanics.
+            repaired = viral_quality.repair_description_question(
+                str(editorial.get("description") or ""), record
+            )
+            if repaired != str(editorial.get("description") or ""):
+                editorial = {**editorial, "description": repaired}
+                violations = _gate_violations(draft, editorial)
+                if not violations:
+                    voice_script = draft
+                    editorial = {**editorial, "commentary": draft}
+                    description_repaired = True
+                    log.info(
+                        "Description question repaired for %s",
+                        candidate.video_id,
+                    )
         if not voice_script:
             return {
                 "status": "SKIPPED", "reason": "script_unverifiable",
@@ -1903,6 +1934,7 @@ def produce_viral_short(
             "edit_mode": mode,
             "event_arc": arc_info,
             "quality_gate_attempts": gate_attempts,
+            "description_repaired": description_repaired,
         }),
         completed_at=utcnow(),
     )
@@ -1941,6 +1973,7 @@ def produce_viral_short(
         "render": str(render_path),
         "event_arc": arc_info,
         "quality_gate_attempts": gate_attempts,
+        "description_repaired": description_repaired,
     }
     log.info("Viral short ready: %s", result)
     return result

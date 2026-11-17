@@ -298,6 +298,32 @@ def test_grounded_question_uses_record_objects():
     assert vq.grounded_question({"beats": []}) == ""
 
 
+def test_repair_description_question_swaps_in_the_grounded_question():
+    description = (
+        "He sits on the floor holding a small teapot beside a woman in a "
+        "pink robe.\n\nDid you see the elephant?"
+    )
+    repaired = vq.repair_description_question(description, RECORD_721)
+    assert "elephant" not in repaired
+    assert "Did you spot the" in repaired
+    # After repair the description passes the question checks...
+    found = kinds(vq.check_consistency(description=repaired, record=RECORD_721))
+    assert "question_ungrounded" not in found
+    # ...and a grounded question already present is left exactly as written.
+    good = "A man holds a teapot.\n\nDid you spot the teapot?"
+    assert vq.repair_description_question(good, RECORD_721) == good
+
+
+def test_repair_never_edits_factual_claims_into_compliance():
+    description = "A woman in a green dress dances.\n\nDid you see the elephant?"
+    repaired = vq.repair_description_question(description, RECORD_721)
+    # The invented colour claim survives the repair untouched, so the gate
+    # still rejects the package — repair is for questions, never for facts.
+    assert "green dress" in repaired
+    found = kinds(vq.check_consistency(description=repaired, record=RECORD_721))
+    assert "unseen_colour" in found
+
+
 # --------------------------------------------------------------------------- #
 # defect 2 — cut-off endings (job 683)
 # --------------------------------------------------------------------------- #
@@ -556,7 +582,7 @@ def test_produce_skips_unverifiable_script_after_one_retry(monkeypatch, tmp_path
     result = vr.produce_viral_short(_candidate(), _FakeSession(), publish=False)
     assert result["status"] == "SKIPPED"
     assert result["reason"] == "script_unverifiable"
-    assert len(calls) == 2 and calls[1]  # the retry carried violation feedback
+    assert len(calls) == 3 and calls[1] and calls[2]  # retries carry feedback
     assert "unverified_hair" in result["violations"]
 
 
@@ -594,3 +620,42 @@ def test_produce_renders_grounded_package_with_music_bed(monkeypatch, tmp_path):
     result = vr.produce_viral_short(_candidate(), _FakeSession(), publish=False)
     assert result["status"] == "RENDERED"
     assert render_kwargs.get("music_bed_path") is not None
+
+
+def test_produce_repairs_an_ungrounded_description_question(monkeypatch, tmp_path):
+    # The staging self-test's real outcome (2026-11-17): the model's draft
+    # was fully grounded and died only on the description's question. That
+    # one defect is repaired deterministically; the video renders.
+    _wire_common(monkeypatch, tmp_path)
+    monkeypatch.setattr(vq, "measure_event_arc", lambda *a, **k: None)
+    monkeypatch.setattr(vr, "analyze_scene", lambda *a, **k: RECORD_761)
+    monkeypatch.setattr(vr, "generate_editorial", lambda *a, **k: {
+        "commentary": (
+            "Watch his face when the phone photo appears in bright daylight. "
+            "She laughs and runs right past him under the string lights. "
+            "He just stands there grinning with both hands over his mouth."
+        ),
+        "title": "He Was Not Ready for That Photo Reveal",
+        "description": (
+            "A daylight phone photo and one priceless reaction.\n\n"
+            "Did you see the elephant?"
+        ),
+        "hashtags": "",
+    })
+    monkeypatch.setattr(vr, "build_scene_tracks", lambda *a, **k: {
+        "total_seconds": 19.5, "narration_path": tmp_path / "narration.wav",
+        "beats": [],
+    })
+    monkeypatch.setattr(vr, "_last_sentence_coverage", lambda *a, **k: 1.0)
+    monkeypatch.setattr(vr, "build_commentary_cues", lambda tracks, script: [
+        {"start": 0.0, "end": 2.0, "text": "Watch his face"}])
+    monkeypatch.setattr(vr, "build_music_bed", lambda path, seconds: Path(path))
+    monkeypatch.setattr(vr, "render_scene_timed", lambda *a, **k: None)
+    session = _FakeSession()
+    result = vr.produce_viral_short(_candidate(), session, publish=True)
+    assert result["status"] == "QUEUED_FOR_PUBLISH"
+    assert result["description_repaired"] is True
+    publish_jobs = [o for o in session.added if type(o).__name__ == "PublishJob"]
+    assert len(publish_jobs) == 1
+    assert "elephant" not in publish_jobs[0].description
+    assert "Did you spot the" in publish_jobs[0].description

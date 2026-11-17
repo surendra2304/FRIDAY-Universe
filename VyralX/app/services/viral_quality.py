@@ -456,6 +456,66 @@ def _check_description_question(description: str, vocab: RecordVocabulary) -> li
     return violations
 
 
+def repair_description_question(description: str, record: dict[str, Any]) -> str:
+    """Deterministically repair a description whose only sin is its question.
+
+    Ungrounded question sentences are dropped (they ask about things the
+    footage never shows); if no grounded question survives, the record's own
+    grounded question is appended; a bare "Drop your answer below!" CTA is
+    dropped when no question remains to point at. Factual claims are NEVER
+    touched — a description with claim violations must fail the gate, not be
+    edited into compliance. Proven necessary by the TASK-VYR-014 staging
+    self-test (2026-11-17): the model's second draft was fully grounded and
+    failed only on an ungrounded description question plus a long hook —
+    discarding grounded packages over packaging mechanics starves a channel
+    whose candidate supply is already thin (11 of 12 discoveries carried
+    narration). Returns the (possibly unchanged) description.
+    """
+    text = str(description or "")
+    if "?" not in text and "drop your answer" not in text.lower():
+        return text
+    vocab = record_vocabulary(record)
+    kept_lines: list[str] = []
+    has_grounded_question = False
+    for line in text.split("\n"):
+        if not line.strip():
+            kept_lines.append("")
+            continue
+        kept_chunks: list[str] = []
+        dropped_question = False
+        for chunk in re.split(r"(?<=[.!?])\s+", line):
+            piece = chunk.strip()
+            if not piece:
+                continue
+            if "?" in piece:
+                if content_words(piece) & set(vocab.nouns):
+                    has_grounded_question = True
+                    dropped_question = False
+                    kept_chunks.append(chunk)
+                else:
+                    # Ungrounded questions are dropped, never rewritten;
+                    # their trailing CTA chunk goes with them.
+                    dropped_question = True
+                continue
+            if dropped_question and "drop your answer" in piece.lower():
+                dropped_question = False
+                continue
+            dropped_question = False
+            kept_chunks.append(chunk)
+        if kept_chunks:
+            kept_lines.append(" ".join(kept_chunks))
+    repaired = "\n".join(kept_lines).strip()
+    if not has_grounded_question:
+        question = grounded_question(record)
+        if question:
+            repaired = f"{repaired}\n\n{question}" if repaired else question
+        else:
+            repaired = re.sub(
+                r"(?im)^.*drop your answer.*$", "", repaired
+            ).strip()
+    return repaired
+
+
 # --------------------------------------------------------------------------- #
 # structure — hook, build, payoff; nothing repeated; no filler closers
 # --------------------------------------------------------------------------- #
