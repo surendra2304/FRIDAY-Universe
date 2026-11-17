@@ -279,6 +279,29 @@ def test_job721_repetition_filler_and_title_rejected():
     assert "payoff_ungrounded" in structure     # the closer is about nothing filmed
 
 
+def test_hook_length_boundary_is_calibrated_at_18_words():
+    # Exactly 18 grounded words pass; 23 fail. (Recalibrated from 14 after
+    # two grounded self-test drafts died on this rule alone.)
+    tail = (
+        "She laughs and runs right past him under the string lights. "
+        "He just stands there grinning with both hands over his mouth."
+    )
+    hook18 = (
+        "Watch the man in the light blue shirt as the phone photo "
+        "appears in bright daylight right now"
+    )
+    assert len(hook18.split()) == 18
+    assert "hook_too_long" not in kinds(vq.check_structure(
+        commentary=f"{hook18}. {tail}", record=RECORD_761))
+    hook23 = (
+        "Watch the man in the light blue shirt sitting outside in bright "
+        "daylight holding his phone up high for everyone to see clearly"
+    )
+    assert len(hook23.split()) == 23
+    assert "hook_too_long" in kinds(vq.check_structure(
+        commentary=f"{hook23}. {tail}", record=RECORD_761))
+
+
 def test_description_cta_without_question_rejected():
     description = "Two people stand in a room.\n\nDrop your answer below!"
     found = kinds(vq.check_consistency(description=description, record=RECORD_721))

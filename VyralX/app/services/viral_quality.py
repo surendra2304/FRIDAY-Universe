@@ -535,11 +535,18 @@ def check_structure(*, commentary: str, record: dict[str, Any]) -> list[Violatio
         ))
     vocab = record_vocabulary(record)
     hook = sentences[0]
-    if len(hook.split()) > 14:
+    # 18 words ≈ 7.3s at the production TTS rate — still inside beat 1
+    # (a third of the clip), still one punchy sentence. Calibrated from 14
+    # after the staging self-test (2026-11-17): two independent editorial
+    # sessions produced fully grounded, claim-clean packages for a real
+    # clip whose ONLY defect was a >14-word hook; a cap that discards
+    # grounded packages over 15-18-word opening lines starves the channel
+    # without making hooks punchier in any way the footage shows.
+    if len(hook.split()) > 18:
         violations.append(Violation(
             "hook_too_long", "commentary",
             f"hook runs {len(hook.split())} words; the opening line must stay tight "
-            "enough to land the hook immediately (max 14 words)",
+            "enough to land the hook immediately (max 18 words)",
         ))
     if not (content_words(hook) & set(vocab.nouns)):
         violations.append(Violation(
