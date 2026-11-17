@@ -14,7 +14,11 @@ Design
   deployed HEAD differs from origin/main — or whose tracked working
   tree is dirty at the current HEAD (the deploy script refuses dirty
   trees, so a dirty server strands on the next push: the neighbouring
-  D9 vector) — starts a divergence episode; only when the divergence
+  D9 vector) — or whose checkout sits on a branch other than ``main``
+  (Fleet CD fast-forwards the current checkout and never switches
+  branches, so a parked checkout strands the next push even at main's
+  own HEAD: TASK-OBS-005, and the alerts name the branch) — starts a
+  divergence episode; only when the divergence
   persists beyond the pinned threshold does it raise ONE alert through
   the existing operations alert path (``AlertEngine.process_delta``,
   which the API lifespan wires to the shared human channel). When the
@@ -106,6 +110,7 @@ class ServerDeployState(BaseModel):
     deployed_head: str | None = None
     main_head: str | None = None
     tree_clean: bool | None = None
+    branch: str | None = None
     status: DeployStatus = DeployStatus.UNKNOWN
     diverged_since: datetime | None = None
     alerted: bool = False
@@ -218,6 +223,7 @@ class DeployWatchdog:
         deployed_head: str | None,
         main_head: str | None,
         tree_clean: bool | None = None,
+        branch: str | None = None,
         now: datetime | None = None,
     ) -> ServerDeployState:
         """Fold one observation into the server's state; alert if due."""
@@ -243,6 +249,8 @@ class DeployWatchdog:
                 state.deployed_head = deployed_head
             if main_head:
                 state.main_head = main_head
+            if branch is not None:
+                state.branch = branch
             self._store.put(state)
             return state
 
@@ -250,6 +258,8 @@ class DeployWatchdog:
         state.main_head = main_head
         if tree_clean is not None:
             state.tree_clean = tree_clean
+        if branch is not None:
+            state.branch = branch
 
         diverged_reasons: list[str] = []
         if deployed_head != main_head:
@@ -261,6 +271,13 @@ class DeployWatchdog:
             diverged_reasons.append(
                 "tracked working tree is dirty (the deploy script "
                 "refuses dirty trees, stranding the next push)"
+            )
+        if state.branch is not None and state.branch != "main":
+            diverged_reasons.append(
+                f"checkout is on branch '{state.branch}', not 'main' "
+                "(Fleet CD fast-forwards the current checkout and never "
+                "switches branches, so a parked checkout strands the "
+                "next push — TASK-OBS-005)"
             )
 
         if not diverged_reasons:
@@ -276,7 +293,13 @@ class DeployWatchdog:
                     SeverityLevel.LOW,
                     f"Deploy watchdog: {server} is back in sync with "
                     f"origin/main at {_short(main_head)} with a clean "
-                    f"tree; the divergence episode is closed.",
+                    f"tree"
+                    + (
+                        f" on branch '{state.branch}'"
+                        if state.branch is not None
+                        else ""
+                    )
+                    + "; the divergence episode is closed.",
                     main_head,
                 )
             return state
@@ -298,7 +321,13 @@ class DeployWatchdog:
                 f"origin/main since {state.diverged_since.isoformat()} "
                 f"— beyond the {self._grace}s threshold (two consecutive "
                 f"checks spanning more than one Fleet CD cycle). "
-                f"Reason(s): {'; '.join(diverged_reasons)}. A merged "
+                f"Reason(s): {'; '.join(diverged_reasons)}. "
+                + (
+                    f"Checkout branch: '{state.branch}'. "
+                    if state.branch is not None
+                    else ""
+                )
+                + "A merged "
                 f"change is not live on this server; check for a "
                 f"cancelled or paths-skipped Fleet CD run (defect class "
                 f"D9).",
@@ -380,6 +409,7 @@ class DeployWatchdog:
         deployed_provider: Callable[[], str | None],
         main_provider: Callable[[], str | None],
         deployed_tree_provider: Callable[[], bool | None] | None = None,
+        deployed_branch_provider: Callable[[], str | None] | None = None,
         now: datetime | None = None,
     ) -> ServerDeployState:
         """Run one check for a server from two HEAD providers."""
@@ -400,7 +430,16 @@ class DeployWatchdog:
             except Exception as e:
                 logger.warning("deploy watchdog: tree read failed for %s: %s", server, e)
                 tree_clean = None
-        return self.observe(server, deployed, main, tree_clean=tree_clean, now=now)
+        branch: str | None = None
+        if deployed_branch_provider is not None:
+            try:
+                branch = deployed_branch_provider()
+            except Exception as e:
+                logger.warning("deploy watchdog: branch read failed for %s: %s", server, e)
+                branch = None
+        return self.observe(
+            server, deployed, main, tree_clean=tree_clean, branch=branch, now=now
+        )
 
     def status(self) -> list[ServerDeployState]:
         return self._store.all()
@@ -422,6 +461,28 @@ def git_checkout_head(checkout_path: str) -> str | None:
         return None
     sha = (out.stdout or "").strip()
     return sha if out.returncode == 0 and len(sha) >= 7 else None
+
+
+def git_checkout_branch(checkout_path: str) -> str | None:
+    """Branch a local checkout is on, or None when unreadable/detached.
+
+    TASK-OBS-005: Fleet CD fast-forwards the CURRENT checkout, so the
+    branch is part of the deployment state — a checkout parked on a
+    non-main branch strands merged work even at main's own HEAD.
+    A detached HEAD yields an empty name from git and maps to None
+    (unknown), never to a fabricated branch.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", checkout_path, "branch", "--show-current"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    name = (out.stdout or "").strip()
+    return name if out.returncode == 0 and name else None
 
 
 def git_checkout_tree_clean(checkout_path: str) -> bool | None:
@@ -491,6 +552,7 @@ async def run_deploy_watchdog(
                 lambda: git_checkout_head(checkout_path),
                 lambda: git_remote_main_head(repo_url),
                 deployed_tree_provider=lambda: git_checkout_tree_clean(checkout_path),
+                deployed_branch_provider=lambda: git_checkout_branch(checkout_path),
             )
             if state.status in (DeployStatus.DIVERGED, DeployStatus.ALERTED):
                 logger.warning(
@@ -539,6 +601,7 @@ __all__ = [
     "ServerDeployState",
     "configure_deploy_watchdog",
     "deploy_watchdog",
+    "git_checkout_branch",
     "git_checkout_head",
     "git_checkout_tree_clean",
     "git_remote_main_head",
