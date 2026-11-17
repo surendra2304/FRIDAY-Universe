@@ -123,6 +123,15 @@ class StratexPaths:
     #: Optional so existing constructions keep working; the snapshot
     #: reader derives it from the heartbeat's directory when unset.
     cloud_state: Path | None = None
+    #: <Stratex root>/panic_state.json + KILL_SWITCH_ACTIVE.lock — the
+    #: halt state (TASK-FRD-021 follow-up). These live at the Stratex
+    #: ROOT, not in the state dir: panic_state.py resolves its default
+    #: relative filenames against the process working directory and
+    #: both Stratex services run with the root as WorkingDirectory.
+    #: Optional like cloud_state; the snapshot reader derives them
+    #: from the heartbeat's directory when unset.
+    panic_state: Path | None = None
+    kill_switch_lock: Path | None = None
 
 
 def _stratex_root() -> Path | None:
@@ -151,6 +160,10 @@ def resolve_stratex_paths(root: Path | None = None) -> StratexPaths | None:
         override = (os.getenv(env_var) or "").strip()
         return Path(override) if override else state_dir / filename
 
+    def pick_root(env_var: str, filename: str) -> Path:
+        override = (os.getenv(env_var) or "").strip()
+        return Path(override) if override else root / filename
+
     return StratexPaths(
         fills=pick("STRATEX_FILL_LEDGER_FILE", "fill_ledger.jsonl"),
         tags=pick("STRATEX_POSITION_TAGS_FILE", "position_tags.jsonl"),
@@ -158,6 +171,10 @@ def resolve_stratex_paths(root: Path | None = None) -> StratexPaths | None:
         denylist=pick("STRATEX_STRATEGY_DENYLIST_FILE", "strategy_denylist.json"),
         heartbeat=state_dir / "daemon_heartbeat.json",
         cloud_state=state_dir / "cloud_portfolio_state.json",
+        panic_state=pick_root("STRATEX_PANIC_STATE_FILE", "panic_state.json"),
+        kill_switch_lock=pick_root(
+            "STRATEX_KILL_SWITCH_LOCK_FILE", "KILL_SWITCH_ACTIVE.lock"
+        ),
     )
 
 
@@ -304,10 +321,12 @@ class StatusSnapshot:
     ``data`` is shaped exactly like the result dict of Stratex's
     /v1/task/execute status summary that FRIDAY's portfolio formatter
     consumes (balance, cash_balance, current_positions,
-    unrealized_pnl, ledger_scorecard) — the same formatter renders
-    both sources, so a snapshot-served answer carries the same
-    figures as a live-served one. ``age_seconds`` is the age of the
-    freshness pulse (the daemon heartbeat) at read time.
+    unrealized_pnl, ledger_scorecard, panic_active,
+    kill_switch_active) — the same formatter renders both sources,
+    so a snapshot-served answer carries the same figures as a
+    live-served one, including the HALTED line when Stratex is
+    halted. ``age_seconds`` is the age of the freshness pulse (the
+    daemon heartbeat) at read time.
     """
 
     data: dict[str, Any]
@@ -358,6 +377,66 @@ def _scorecard_block(fills: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _panic_flag_active(path: Path) -> bool:
+    """Stratex's panic flag with panic_state.read_panic_state's semantics.
+
+    A missing file means no panic. A file that exists but cannot be
+    read or parsed (or is not a JSON object) FAILS CLOSED — panic
+    assumed — exactly as Stratex's own reader treats it: a corrupt
+    halt flag must never read as "safe" on either side of the wire.
+    Otherwise the flag is set when either schema key is truthy
+    (``active`` / ``panic_active``; every writer emits both).
+    """
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return False
+    except OSError as exc:
+        logger.warning(
+            f"stratex status snapshot: panic flag {path} unreadable "
+            f"({exc}); failing closed (panic assumed), as Stratex does"
+        )
+        return True
+    try:
+        data = json.loads(text)
+    except ValueError:
+        logger.warning(
+            f"stratex status snapshot: panic flag {path} is corrupt; "
+            "failing closed (panic assumed), as Stratex does"
+        )
+        return True
+    if not isinstance(data, dict):
+        logger.warning(
+            f"stratex status snapshot: panic flag {path} is not a JSON "
+            "object; failing closed (panic assumed), as Stratex does"
+        )
+        return True
+    return bool(data.get("active")) or bool(data.get("panic_active"))
+
+
+def _halt_flags(paths: StratexPaths) -> tuple[bool, bool]:
+    """(panic_active, kill_switch_active) as the live summary composes them.
+
+    Mirrors Stratex/api/friday_supervision._compute_engine_status_summary:
+    ``kill_switch_active`` is the lock file's existence
+    (panic_state.is_kill_switch_locked — the file's content is
+    irrelevant), and ``panic_active`` folds the lock in
+    (_real_trading_data computes is_panic_active() OR
+    is_kill_switch_locked()). The files live at the Stratex ROOT —
+    both Stratex services run with that WorkingDirectory and
+    panic_state.py resolves its default relative filenames against
+    it — not in the measurement state dir. Paths derive from the
+    heartbeat's directory when a hand-built StratexPaths leaves
+    them unset (the cloud_state pattern).
+    """
+    root = paths.heartbeat.parent.parent
+    panic_path = paths.panic_state or (root / "panic_state.json")
+    lock_path = paths.kill_switch_lock or (root / "KILL_SWITCH_ACTIVE.lock")
+    kill_switch_active = lock_path.exists()
+    panic_active = _panic_flag_active(panic_path) or kill_switch_active
+    return panic_active, kill_switch_active
+
+
 def read_status_snapshot(
     paths: StratexPaths | None = None,
     *,
@@ -379,6 +458,17 @@ def read_status_snapshot(
       are the daemon's multi-venue view — DIFFERENT numbers from
       the API engine's served figures — so the heartbeat is used
       ONLY as the pulse, never as a figure source.
+    * halt state: ``panic_state.json`` + ``KILL_SWITCH_ACTIVE.lock``
+      at the Stratex root (Stratex/panic_state.py is the single
+      source of truth for the flag; both Stratex services run with
+      the root as WorkingDirectory, so its relative defaults land
+      there). Composed exactly as the live summary composes them
+      (see _halt_flags): kill_switch_active = the lock file
+      exists; panic_active = the panic flag (missing file =
+      inactive; an unreadable/corrupt flag file FAILS CLOSED, as
+      Stratex's reader treats it) or the lock. The portfolio
+      formatter renders the HALTED line from these two flags, so
+      a snapshot-served answer says HALTED when Stratex is halted.
 
     Returns None (the caller falls back to the live query) when: no
     Stratex checkout resolves; the heartbeat is missing/corrupt,
@@ -476,12 +566,22 @@ def _read_status_snapshot(
         except (TypeError, ValueError):
             continue
 
+    panic_active, kill_switch_active = _halt_flags(paths)
+    if panic_active or kill_switch_active:
+        logger.info(
+            "stratex status snapshot: halt state active "
+            f"(panic_active={panic_active}, "
+            f"kill_switch_active={kill_switch_active})"
+        )
+
     data: dict[str, Any] = {
         "engine": "Stratex",
         "balance": round(balance, 2),
         "cash_balance": round(balance, 2),
         "current_positions": positions,
         "unrealized_pnl": round(unrealized, 2),
+        "panic_active": panic_active,
+        "kill_switch_active": kill_switch_active,
         "ledger_scorecard": _scorecard_block(fills),
     }
     return StatusSnapshot(data=data, age_seconds=age)
