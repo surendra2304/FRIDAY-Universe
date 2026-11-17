@@ -1043,6 +1043,38 @@ class StratexTradingEngine:
                     # ACTIVE forever (live evidence 2026-11-16: frozen
                     # at its last raise while the position was tracked).
                     _fl.clear_alert("untracked_position")
+                # TASK-STR-FWD-017: unrecorded_close resolver, same shape
+                # as the untracked_position clear above. Nothing ever
+                # cleared this kind, so one rejection latched it forever
+                # and later rejections silently merged into the same
+                # latch. The events that raise it — append_fill
+                # rejections and closed-without-a-row detections — are
+                # not observable by this sweep directly, but every one
+                # of them bumps the latch's raise count, so "clean" is
+                # judged on the count: unchanged since the previous
+                # COMPLETE sweep means no close went unrecorded in the
+                # interval. An incomplete sweep proves nothing and
+                # leaves the resolver untouched (never clears, baseline
+                # preserved); the first complete sweep after startup
+                # only sets the baseline, so a pre-existing latch clears
+                # on the second consecutive clean sweep.
+                if sweep_complete:
+                    _uc = _fl.active_alerts().get("unrecorded_close") or {}
+                    _uc_seen = getattr(
+                        self, "_unrecorded_close_seen_count", None
+                    )
+                    if not _uc:
+                        self._unrecorded_close_seen_count = None
+                    elif (
+                        _uc_seen is not None
+                        and int(_uc.get("count", 0) or 0) == _uc_seen
+                    ):
+                        _fl.clear_alert("unrecorded_close")
+                        self._unrecorded_close_seen_count = None
+                    else:
+                        self._unrecorded_close_seen_count = int(
+                            _uc.get("count", 0) or 0
+                        )
             except Exception as e:
                 logger.debug(f"Untracked-position sweep failed: {e}")
 
