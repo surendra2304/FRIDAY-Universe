@@ -20,18 +20,30 @@ router = APIRouter(tags=["Health & Telemetry"])
 @router.get("/health", summary="System Liveness Probe Alias")
 @router.head("/health", summary="System Liveness Probe Alias")
 async def healthz() -> dict[str, Any]:
-    """Liveness probe: verifies process is running and accepting HTTP requests."""
+    """Liveness probe: verifies process is running and accepting HTTP requests.
+
+    Process-only by design (TASK-INT-012): this handler performs NO
+    database work — no pool checkout, no query — so a liveness call
+    never pays an Oracle round trip or a stale-pool reconnect.
+    Dependency readiness (database, storage, provider) is reported
+    by /readyz, unchanged.
+
+    The `database` field is retained because FRIDAY's fleet client
+    (ask_intelx) reads it for display; it reports "not_checked" —
+    this probe does not query the database, and the value must not
+    be read as a database health signal. `status` reports process
+    liveness only, per this endpoint's contract.
+    """
     settings = get_settings()
-    db_healthy = await check_database_health()
     observed_at = datetime.now(UTC).isoformat()
     return {
-        "status": "ok" if db_healthy else "degraded",
+        "status": "ok",
         "evidence_class": "process_liveness",
         "observed_at": observed_at,
         "service": PROJECT_NAME,
         "version": __version__,
         "mock_mode": settings.MOCK_MODE,
-        "database": "ok" if db_healthy else "error",
+        "database": "not_checked",
         "timestamp": observed_at,
     }
 

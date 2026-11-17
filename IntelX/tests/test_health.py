@@ -13,7 +13,13 @@ from intelx.core.version import PROJECT_NAME, __version__
 
 @pytest.mark.asyncio
 async def test_healthz_endpoint(client: AsyncClient):
-    """Test /healthz reports operational status, version, mock_mode, and database ok."""
+    """Test /healthz reports liveness status, version, mock_mode, and database not_checked.
+
+    TASK-INT-012: /healthz is process-only liveness — it performs no
+    database query, so `database` reports "not_checked" (the field is
+    retained for FRIDAY's fleet client, which reads it for display).
+    Database readiness is asserted via /readyz, not /healthz.
+    """
     response = await client.get("/healthz")
     assert response.status_code == 200
     data = response.json()
@@ -21,7 +27,7 @@ async def test_healthz_endpoint(client: AsyncClient):
     assert data["service"] == PROJECT_NAME
     assert data["version"] == __version__
     assert data["mock_mode"] is True
-    assert data["database"] == "ok"
+    assert data["database"] == "not_checked"
     assert data["evidence_class"] == "process_liveness"
     assert "observed_at" in data
     assert "timestamp" in data

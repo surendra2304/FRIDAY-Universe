@@ -44,7 +44,7 @@ IntelX operates as a containerized microservice deployed to **Oracle Cloud Alway
 All requests accept JSON and require an Authorization header in production: `Authorization: Bearer <INTELX_API_KEY>`.
 
 ### 1. Health & Liveness Probe (`GET /healthz`)
-Verifies process health and database connectivity.
+Verifies process liveness only (TASK-INT-012): no database query is performed, and the `database` field reports `"not_checked"`. For database, storage, and provider readiness, use `GET /readyz`.
 
 ```bash
 curl -X GET "https://friday-universe.duckdns.org/intelx/healthz"
@@ -59,7 +59,7 @@ curl -X GET "https://friday-universe.duckdns.org/intelx/healthz"
   "observed_at": "2026-10-14T21:00:00.000000Z",
   "version": "2.0.0",
   "mock_mode": false,
-  "database": "ok",
+  "database": "not_checked",
   "timestamp": "2026-10-14T21:00:00.000000Z"
 }
 ```
