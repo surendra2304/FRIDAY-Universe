@@ -1,9 +1,7 @@
 import asyncio
 import json
 import os
-import signal
 import uuid
-from collections.abc import Callable
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
@@ -130,22 +128,12 @@ async def lifespan(app: FastAPI):
             interval_seconds=float(getattr(production_config, "MEMORY_TRIM_WATCHDOG_SECONDS", 30.0))
         )
     )
-    loop = asyncio.get_running_loop()
-
-    def _on_signal(sig_name: str) -> None:
-        logger.info("Received %s signal, initiating clean shutdown sequence...", sig_name)
-
-    def _signal_callback(signal_name: str) -> Callable[[], None]:
-        def callback() -> None:
-            _on_signal(signal_name)
-
-        return callback
-
-    for sig in (signal.SIGTERM, signal.SIGINT):
-        try:
-            loop.add_signal_handler(sig, _signal_callback(sig.name))
-        except (NotImplementedError, RuntimeError, AttributeError):
-            pass
+    # Do NOT install signal handlers here. uvicorn installs its own SIGTERM /
+    # SIGINT handlers before the lifespan runs; a loop.add_signal_handler()
+    # registration from the lifespan replaces uvicorn's disposition with a
+    # callback that cannot stop the server, so SIGTERM would never trigger
+    # shutdown and systemd would SIGKILL the process at TimeoutStopSec.
+    # Shutdown belongs to uvicorn; the cleanup below runs on lifespan exit.
 
     yield
 
