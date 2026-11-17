@@ -166,7 +166,18 @@ def append_fill(record: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     missing = [k for k in _FILL_REQUIRED if row.get(k) in (None, "")]
     if missing:
         logger.error(f"[MEASUREMENT] Fill rejected, missing fields {missing}: {row}")
-        raise_alert("unrecorded_close", f"fill rejected, missing {missing}: {row.get('symbol')}")
+        raise_alert(
+            "unrecorded_close",
+            f"fill rejected, missing {missing}: {row.get('symbol')}",
+            stamp={
+                "symbol": str(row.get("symbol") or ""),
+                "order_id": str(row.get("order_id") or ""),
+                "entry_order_id": str(row.get("entry_order_id") or ""),
+                "signal_id": str(row.get("signal_id") or ""),
+                "missing": [str(m) for m in missing],
+                "rejected_at": _iso(time.time()),
+            },
+        )
         return None
     now = time.time()
     row["record_type"] = "FILL"
@@ -193,7 +204,17 @@ def append_fill(record: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         _append(fill_ledger_path(), row)
     except Exception as e:
         logger.error(f"[MEASUREMENT] Fill append FAILED for {row.get('symbol')}: {e}")
-        raise_alert("unrecorded_close", f"fill append failed for {row.get('symbol')}: {e}")
+        raise_alert(
+            "unrecorded_close",
+            f"fill append failed for {row.get('symbol')}: {e}",
+            stamp={
+                "symbol": str(row.get("symbol") or ""),
+                "order_id": str(row.get("order_id") or ""),
+                "entry_order_id": str(row.get("entry_order_id") or ""),
+                "signal_id": str(row.get("signal_id") or ""),
+                "rejected_at": _iso(time.time()),
+            },
+        )
         return None
     logger.info(
         f"[MEASUREMENT] Fill recorded: {row['engine']} {row['strategy']} "
@@ -496,21 +517,36 @@ def _save_alerts(data: Dict[str, Any]) -> None:
         os.replace(tmp, path)
 
 
-def raise_alert(kind: str, detail: str) -> None:
-    """Latch an alert kind active. Logged at ERROR on first raise."""
+def raise_alert(
+    kind: str, detail: str, *, stamp: Optional[Dict[str, Any]] = None
+) -> None:
+    """Latch an alert kind active. Logged at ERROR on first raise.
+
+    ``stamp`` (TASK-STR-FWD-017): when provided, stored on the latch as
+    ``last_rejected`` so the row whose rejection raised the alert stays
+    individually attributable instead of being lost when the next raise
+    overwrites ``detail``. When omitted, an existing stamp is preserved
+    — mirroring how ``since`` is preserved. Latch files written before
+    this change carry no stamp and load unchanged.
+    """
     try:
         with _LOCK:
             data = _load_alerts()
             alerts = data.setdefault("alerts", {})
             current = alerts.get(kind) or {}
             first = not current.get("active")
-            alerts[kind] = {
+            entry = {
                 "active": True,
                 "since": current.get("since") or _iso(time.time()),
                 "updated_at": _iso(time.time()),
                 "detail": str(detail)[:500],
                 "count": int(current.get("count", 0) or 0) + 1,
             }
+            if stamp is not None:
+                entry["last_rejected"] = dict(stamp)
+            elif current.get("last_rejected") is not None:
+                entry["last_rejected"] = current["last_rejected"]
+            alerts[kind] = entry
             _save_alerts(data)
         if first:
             logger.error(f"[MEASUREMENT] ALERT {kind}: {detail}")
