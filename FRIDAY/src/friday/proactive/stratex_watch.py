@@ -49,6 +49,14 @@ named above; a source that cannot be read contributes an honest
 the morning summary) — never an invented number. This module never
 writes to Stratex state and never places, pauses or modifies a trade;
 governance stays with Stratex's daemon and forward guard.
+
+TASK-FRD-021 adds ``read_status_snapshot`` below: the same source
+files compose the status figures Stratex's /v1/task/execute summary
+serves (cloud portfolio state + fill-ledger scorecard), gated on the
+daemon heartbeat's freshness (60 s, Stratex's own telemetry bound),
+so FRIDAY's read-only portfolio answers can be served locally when
+the live round trip is the slow path. It is a pure reader — the
+caller falls back to the live query whenever it returns None.
 """
 
 from __future__ import annotations
@@ -110,6 +118,11 @@ class StratexPaths:
     alerts: Path
     denylist: Path
     heartbeat: Path
+    #: Stratex/state/cloud_portfolio_state.json — the API engine's
+    #: persisted balance/positions (TASK-FRD-021 status snapshot source).
+    #: Optional so existing constructions keep working; the snapshot
+    #: reader derives it from the heartbeat's directory when unset.
+    cloud_state: Path | None = None
 
 
 def _stratex_root() -> Path | None:
@@ -144,6 +157,7 @@ def resolve_stratex_paths(root: Path | None = None) -> StratexPaths | None:
         alerts=pick("STRATEX_MEASUREMENT_ALERTS_FILE", "measurement_alerts.json"),
         denylist=pick("STRATEX_STRATEGY_DENYLIST_FILE", "strategy_denylist.json"),
         heartbeat=state_dir / "daemon_heartbeat.json",
+        cloud_state=state_dir / "cloud_portfolio_state.json",
     )
 
 
@@ -263,6 +277,214 @@ def _fill_key(row: dict[str, Any]) -> str:
         f"fill:{row.get('entry_order_id')}|{row.get('symbol')}|"
         f"{row.get('exit_time')}"
     )
+
+
+# ---------------------------------------------------------------------------
+# status snapshot (TASK-FRD-021) — FRIDAY-side serve for read-only
+# portfolio/status questions, from the same state files this watch
+# family already reads. Stratex's /v1/task/execute status path does
+# 0-7 ms of its own work (its FRD-011 keeper snapshot) but the round
+# trip episodically walls 1-10 s on in-process contention in
+# Stratex's swapped Werkzeug process, so the delegation path serves
+# these figures locally and falls back to the live round trip
+# whenever the snapshot cannot be served truthfully.
+# ---------------------------------------------------------------------------
+
+#: Freshness bound for the status snapshot — mirrors Stratex's own
+#: telemetry hard bound (MAX_TELEMETRY_STALENESS_SECONDS = 60 s, the
+#: FRD-011 status cache's max-stale): a local view older than this
+#: is not served; the caller falls back to the live query.
+STATUS_SNAPSHOT_MAX_AGE_S = 60.0
+
+
+@dataclass(frozen=True)
+class StatusSnapshot:
+    """FRIDAY's local view of the figures Stratex's status summary serves.
+
+    ``data`` is shaped exactly like the result dict of Stratex's
+    /v1/task/execute status summary that FRIDAY's portfolio formatter
+    consumes (balance, cash_balance, current_positions,
+    unrealized_pnl, ledger_scorecard) — the same formatter renders
+    both sources, so a snapshot-served answer carries the same
+    figures as a live-served one. ``age_seconds`` is the age of the
+    freshness pulse (the daemon heartbeat) at read time.
+    """
+
+    data: dict[str, Any]
+    age_seconds: float
+
+
+def _scorecard_block(fills: list[dict[str, Any]]) -> dict[str, Any]:
+    """Fill-ledger scorecard with measurement.scorecard's arithmetic.
+
+    Mirrors Stratex/measurement/scorecard.py ``_stats()`` over ALL
+    fill rows for the fields the portfolio formatter renders
+    (trades, net_pnl, win_rate, profit_factor): trades = row count,
+    net = rounded sum of ``net_pnl or 0``, win_rate = wins/trades,
+    profit factor = gross profit / gross loss (None when no losing
+    trades). ``ledger_stats`` above deliberately differs (it skips
+    net_pnl-None rows) — it words notifications; this block must
+    match the served scorecard, so it follows the scorecard.
+    """
+
+    def stats(rows: list[dict[str, Any]]) -> dict[str, Any]:
+        nets: list[float] = []
+        for r in rows:
+            try:
+                nets.append(float(r.get("net_pnl") or 0.0))
+            except (TypeError, ValueError):
+                nets.append(0.0)
+        wins = [n for n in nets if n > 0]
+        losses = [n for n in nets if n < 0]
+        gross_profit = sum(wins)
+        gross_loss = abs(sum(losses))
+        return {
+            "trades": len(rows),
+            "net_pnl": round(sum(nets), 2),
+            "win_rate": round(len(wins) / len(rows), 4) if rows else 0.0,
+            "profit_factor": (
+                round(gross_profit / gross_loss, 3) if gross_loss > 0 else None
+            ),
+        }
+
+    by_strategy: dict[str, list[dict[str, Any]]] = {}
+    for row in fills:
+        by_strategy.setdefault(str(row.get("strategy") or "UNATTRIBUTED"), []).append(row)
+    return {
+        "totals": stats(fills),
+        "strategies": {
+            name: stats(rows) for name, rows in sorted(by_strategy.items())
+        },
+    }
+
+
+def read_status_snapshot(
+    paths: StratexPaths | None = None,
+    *,
+    now: datetime | None = None,
+) -> StatusSnapshot | None:
+    """Compose the status snapshot, or None when it cannot be served.
+
+    Sources — the files Stratex's own served status summary is
+    computed from, resolved exactly as this watch family resolves
+    them:
+
+    * balance + open positions: ``cloud_portfolio_state.json`` (the
+      API engine's ``cloud_balance`` / ``cloud_positions`` load from
+      it; the served balance is that file's ``balance``);
+    * closed trades + recorded P&L: ``fill_ledger.jsonl``, scored
+      with measurement.scorecard's arithmetic;
+    * freshness pulse: ``daemon_heartbeat.json``, rewritten by
+      Stratex-Daemon every scan cycle. The heartbeat's own figures
+      are the daemon's multi-venue view — DIFFERENT numbers from
+      the API engine's served figures — so the heartbeat is used
+      ONLY as the pulse, never as a figure source.
+
+    Returns None (the caller falls back to the live query) when: no
+    Stratex checkout resolves; the heartbeat is missing/corrupt,
+    not RUNNING, or older than STATUS_SNAPSHOT_MAX_AGE_S; the cloud
+    state is missing/corrupt or its balance is not numeric; the
+    cloud positions are not a map; or the fill ledger is unreadable.
+    An empty ledger and an empty positions map are valid (0 closed
+    trades / no open positions). Never raises.
+    """
+    try:
+        return _read_status_snapshot(paths, now=now)
+    except Exception as exc:  # a snapshot failure must never break the answer path
+        logger.warning(f"stratex status snapshot: read failed ({exc}); live fallback")
+        return None
+
+
+def _read_status_snapshot(
+    paths: StratexPaths | None,
+    *,
+    now: datetime | None = None,
+) -> StatusSnapshot | None:
+    paths = paths if paths is not None else resolve_stratex_paths()
+    if paths is None:
+        logger.info("stratex status snapshot: no Stratex checkout resolved")
+        return None
+
+    heartbeat = _read_json(paths.heartbeat)
+    if not isinstance(heartbeat, dict):
+        logger.info("stratex status snapshot: daemon heartbeat missing/unreadable")
+        return None
+    if str(heartbeat.get("status") or "") != "RUNNING":
+        logger.info(
+            "stratex status snapshot: daemon not RUNNING "
+            f"(status={heartbeat.get('status')!r})"
+        )
+        return None
+    ts_raw = heartbeat.get("updated_at")
+    ts: float | None = None
+    if isinstance(ts_raw, (int, float)):
+        ts = float(ts_raw)
+    else:
+        try:
+            ts = datetime.fromisoformat(
+                str(heartbeat.get("timestamp") or "").replace("Z", "+00:00")
+            ).timestamp()
+        except ValueError:
+            ts = None
+    if ts is None:
+        logger.info("stratex status snapshot: heartbeat carries no usable timestamp")
+        return None
+    age = (now or now_owner_tz()).timestamp() - ts
+    if age < 0:  # same-host writer/reader; a negative age is clock noise
+        age = 0.0
+    if age > STATUS_SNAPSHOT_MAX_AGE_S:
+        logger.info(
+            f"stratex status snapshot: heartbeat stale ({age:.1f}s > "
+            f"{STATUS_SNAPSHOT_MAX_AGE_S:.0f}s); live fallback"
+        )
+        return None
+
+    cloud_path = paths.cloud_state or (
+        paths.heartbeat.parent / "cloud_portfolio_state.json"
+    )
+    cloud = _read_json(cloud_path)
+    if not isinstance(cloud, dict):
+        logger.info("stratex status snapshot: cloud portfolio state missing/unreadable")
+        return None
+    try:
+        balance = float(cloud.get("balance"))
+    except (TypeError, ValueError):
+        logger.info("stratex status snapshot: cloud balance is not numeric")
+        return None
+    raw_positions = cloud.get("positions")
+    if raw_positions is None:
+        raw_positions = {}
+    if not isinstance(raw_positions, dict):
+        logger.info("stratex status snapshot: cloud positions are not a map")
+        return None
+    positions: list[dict[str, Any]] = []
+    for symbol, pdata in raw_positions.items():
+        if isinstance(pdata, dict):
+            pos = dict(pdata)
+            pos.setdefault("symbol", symbol)
+            positions.append(pos)
+
+    fills = _read_jsonl(paths.fills)
+    if fills is None:
+        logger.info("stratex status snapshot: fill ledger unreadable")
+        return None
+
+    unrealized = 0.0
+    for pos in positions:
+        try:
+            unrealized += float(pos.get("unrealized_pnl") or 0.0)
+        except (TypeError, ValueError):
+            continue
+
+    data: dict[str, Any] = {
+        "engine": "Stratex",
+        "balance": round(balance, 2),
+        "cash_balance": round(balance, 2),
+        "current_positions": positions,
+        "unrealized_pnl": round(unrealized, 2),
+        "ledger_scorecard": _scorecard_block(fills),
+    }
+    return StatusSnapshot(data=data, age_seconds=age)
 
 
 # ---------------------------------------------------------------------------
