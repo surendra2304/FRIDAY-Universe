@@ -46,6 +46,7 @@ from app.services.youtube import (
     clear_upload_success_checkpoint,
     load_upload_session_checkpoint,
     load_upload_success_checkpoint,
+    set_thumbnail,
     upload_session_checkpoint_exists,
     upload_video,
 )
@@ -463,6 +464,28 @@ def process_render_job(job_id: int) -> None:
             _heartbeat("idle")
 
 
+def _apply_job_thumbnail(job: PublishJob, video_id: str) -> bool:
+    """Attach the job's stored thumbnail after a successful upload.
+
+    Non-fatal by design: the video is already on YouTube, so a missing or
+    rejected thumbnail is logged and reported, never raised — the publish
+    job must not be marked failed over its thumbnail.
+    """
+    thumbnail_path = str(getattr(job, "thumbnail_path", "") or "").strip()
+    if not thumbnail_path:
+        return False
+    try:
+        set_thumbnail(video_id, thumbnail_path)
+    except Exception as exc:
+        log.warning(
+            "Thumbnail attach failed job_id=%s video_id=%s: %s",
+            job.id, video_id, str(exc)[:300],
+        )
+        return False
+    log.info("Thumbnail attached job_id=%s video_id=%s", job.id, video_id)
+    return True
+
+
 def process_publish_job(job_id: int) -> None:
     """Process an approved publish job with quality verification and Sentinel policy audit."""
     with SessionLocal() as db:
@@ -626,13 +649,14 @@ def process_publish_job(job_id: int) -> None:
                 description=job.description,
                 tags=json.loads(job.tags_json or "[]"),
                 privacy_status=job.privacy_status,
-                category_id=settings.youtube_category_id,
+                category_id=getattr(job, "category_id", "") or settings.youtube_category_id,
                 scheduled_at=job.scheduled_at,
                 publish_job_id=job.id,
                 upload_attempt=job.attempts,
             )
             job.youtube_video_id = video_id
             job.status = "uploaded"
+            _apply_job_thumbnail(job, video_id)
             job.error = ""
             log.info("YouTube upload completed job_id=%s video_id=%s", job.id, video_id)
             record_media_file(

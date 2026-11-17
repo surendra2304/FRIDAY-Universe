@@ -162,6 +162,9 @@ class Settings(BaseSettings):
     youtube_cookies_file: Path = Path("./data/youtube_cookies.txt")
     youtube_default_privacy: str = "private"
     youtube_category_id: str = "28"
+    # ISO 639-1 code sent as snippet.defaultLanguage/defaultAudioLanguage on
+    # upload; empty string omits the fields.
+    youtube_default_language: str = "en"
     youtube_upload_enabled: bool = False
     youtube_analytics_enabled: bool = False
 

@@ -1307,6 +1307,67 @@ def _clean_title(raw: str) -> str:
     return title[:100]
 
 
+# YouTube category ids per editorial lane: 23 = Comedy, 17 = Sports,
+# 24 = Entertainment. The worker's global fallback (settings.youtube_category_id)
+# stays for non-autopilot jobs; autopilot jobs carry the per-clip value instead.
+YOUTUBE_CATEGORY_BY_EDITORIAL = {
+    "COMEDY": "23",
+    "SPORTS": "17",
+    "VIRAL": "24",
+}
+
+_BASE_TAGS_BY_CATEGORY = {
+    "COMEDY": ["comedy", "funny", "relatable", "humor"],
+    "SPORTS": ["sports", "respect", "skills", "highlights"],
+    "VIRAL": ["viral", "trending", "wait for it", "wow"],
+}
+
+_TAG_STOPWORDS = {
+    "this", "that", "with", "from", "when", "what", "watch", "video", "clip",
+    "shorts", "short", "viral", "just", "like", "your", "you", "the", "and",
+    "for", "are", "was", "will", "cant", "wont", "didnt", "gets", "got",
+}
+
+
+def _clean_tag(raw: object) -> str:
+    tag = " ".join(str(raw or "").replace("#", " ").split()).strip(" -|:")
+    return tag[:100]
+
+
+def _derive_tags(candidate: Any, title: str, category: str) -> list[str]:
+    """Build the upload tag set from the clip itself, not one fixed list.
+
+    Order = channel anchors, the lane's base set, the source video's own
+    proven tags (Candidate.tags, harvested at discovery), then keywords from
+    the new title. Deduped case-insensitively; capped at 15 tags / 450 chars
+    total (YouTube allows 30 tags / 500 chars — headroom is deliberate).
+    """
+    ordered: list[str] = ["shorts", "vyralx"]
+    ordered += _BASE_TAGS_BY_CATEGORY.get(
+        category.upper(), _BASE_TAGS_BY_CATEGORY["VIRAL"]
+    )
+    ordered.append(category.lower())
+    for raw in getattr(candidate, "tags", None) or []:
+        ordered.append(_clean_tag(raw))
+    title_words = re.findall(r"[a-z0-9']+", str(title or "").lower())
+    ordered += [w for w in title_words if len(w) >= 4 and w not in _TAG_STOPWORDS][:5]
+
+    tags: list[str] = []
+    seen: set[str] = set()
+    total_chars = 0
+    for raw in ordered:
+        tag = _clean_tag(raw)
+        key = tag.casefold()
+        if not tag or key in seen:
+            continue
+        if len(tags) >= 15 or total_chars + len(tag) > 450:
+            break
+        seen.add(key)
+        tags.append(tag)
+        total_chars += len(tag)
+    return tags
+
+
 def build_metadata(
     candidate: Any,
     speech: SpeechReport,
@@ -1339,14 +1400,11 @@ def build_metadata(
         f"https://www.youtube.com/watch?v={candidate.video_id}\n"
         f"Commentary, subtitles and edit by VyralX."
     )
-    tags = [
-        "shorts", "comedy", "funny", "viral", "trending", category.lower(),
-        "wait for it", "relatable", "vyralx", "shorts feed",
-    ]
     return {
         "title": title,
         "description": description[:4800],
-        "tags": tags,
+        "tags": _derive_tags(candidate, title, category),
+        "category_id": YOUTUBE_CATEGORY_BY_EDITORIAL.get(category.upper(), "24"),
         "hook": hook,
         "commentary": comment,
     }
@@ -1574,6 +1632,8 @@ def produce_viral_short(
             privacy_status=str(getattr(settings, "autonomous_publish_privacy", "unlisted")),
             status="queued",
             approved_at=utcnow(),
+            thumbnail_path=str(thumbnail_path) if thumbnail_path else "",
+            category_id=str(meta.get("category_id") or ""),
         )
         db.add(publish_job)
     db.commit()
