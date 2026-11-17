@@ -19,7 +19,11 @@ DOCS = [{'source_id': 'public-one', 'title': 'Explicit fixture', 'url': 'https:/
 
 
 def result(quote=TEXT, source_id='public-one', insufficient=False):
-    return m.GroundedDraft(findings=[m.GroundedFinding(statement='Quoted delimiters remain within the field.', source_id=source_id, quote=quote)], insufficient_evidence=insufficient)
+    # TASK-REL-052: the statement must satisfy the TASK-INT-005 entailment
+    # screen (>=80% content-word coverage of the cited source text) for the
+    # SUCCESS path; the previous paraphrase scored 3/5 and correctly
+    # degraded. Statement wording is drawn from the source's own tokens.
+    return m.GroundedDraft(findings=[m.GroundedFinding(statement='Fields containing delimiters are enclosed by a quote character, preserving a comma inside a quoted field.', source_id=source_id, quote=quote)], insufficient_evidence=insufficient)
 
 
 def run(parsed, provider='inference', docs=None):
@@ -31,7 +35,10 @@ def test_source_grounded_draft_preserves_real_source_link_and_unverified_state()
     d, gateway = run(result())
     assert d['status'] == 'SUCCESS'
     assert d['quotes_verified'] is True
-    assert d['semantic_entailment_verified'] is False
+    # TASK-INT-005/009: entailment is now really screened (statement_support),
+    # so a SUCCESS draft reports semantic_entailment_verified True; the old
+    # hardcoded False was the defect INT-005 fixed.
+    assert d['semantic_entailment_verified'] is True
     assert d['question_answered'] is False
     assert d['findings'][0]['citations'][0]['source_url'] == DOCS[0]['url']
     assert 'untrusted data' in gateway.complete.call_args.kwargs['messages'][0]['content']
