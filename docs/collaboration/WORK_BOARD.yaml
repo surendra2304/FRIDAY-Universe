@@ -10390,6 +10390,25 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "A post-deploy memory-path smoke probe (capture -> search round-trip) gates the deploy health check: if the ORM path errors, the deploy fails loudly instead of reporting healthy."
       - "The remediation migration (c9d4e7a1b5f2) is applied to the production DB and the memory paths re-probe clean."
     next_action: "Systemic fix (this entry stays IN_REVIEW for it): implement the deploy-path migration step (ExecStartPre or a Fleet CD alembic upgrade) + the post-deploy capture->search smoke probe gating deploy health, as a PR. The one-off remediation is COMPLETE (see evidence) — do not re-run it. Minor follow-up: the f8a2d6c14b93 case-safety cleanup."
+  - id: TASK-MEM-010
+    title: "No durable provenance re-signing tool — MEM-005 master rotation needed a one-off script; any future rotation without one silently empties recall"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-mem-010-resign-tool
+    pr: 869
+    priority: P1
+    created_at: "2026-11-17T09:40:00+05:30"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6938382705"
+    defect: "Memora records carry HMAC-SHA256 provenance signatures keyed by the master key (core/security/provenance.py), and BOTH read paths (search_service admissibility filter + storage/vector/hybrid.py) discard records whose signature fails verification. Rotating the master key therefore invalidates every stored signature at once. When the MEM-005 live env pass rotated the master on 2026-11-17, no re-signing endpoint or maintenance routine existed in the code (grep resign/re_sign across Memora = empty), so 471 production records were re-signed by a one-off script built on the code's primitives, with Memora stopped. The capability was load-bearing — without it the rotation would have emptied recall — but it existed only as that throwaway script."
+    evidence:
+      - "THIS PR: Memora/core/security/resign.py (classification + batched re-sign on the deployed primitives verify_memory_signature/compute_memory_signature) + Memora/scripts/resign_provenance.py (operator CLI in the codebase's maintenance shape — the memory_hygiene pattern: dry-run default, apply requires BOTH --apply and MEMORA_RESIGN_APPLY=1). A CLI, not an endpoint: a store-wide master-key primitive must not sit on the network surface MEM-005 hardened; the break-glass boundary is host + env access, the same boundary the one-off ran under."
+      - "SAFETY CONTRACT (implemented + tested): the new signing key is never an input — resolve_rotation_keys refuses unless MEMORA_MASTER_KEY is set AND is the key settings resolve for provenance; the old key arrives only via MEMORA_OLD_MASTER_KEY env (never argv); old == new refuses. Per record: verifies under new -> skip (idempotency); fails new + verifies under old -> re-sign (post-resign self-verification, batch rollback on failure); verifies under NEITHER -> never force-signed, reported by id, left byte-identical (the primitive's content-hash check puts content-tampered records in this class under every key); no signature -> reported separately, never signed (signing would fabricate provenance). Per-batch commits; progress logs carry counts only — no record contents, no key material."
+      - "TESTS: Memora/tests/test_mem010_resign_provenance.py — 9 tests: dry-run counts + zero writes; apply re-signs exactly the old-key set (foreign-key, tampered and unsigned records byte-identical after); second run is a no-op (0 resigned, signatures unchanged); the three reachable key-guard refusals + happy path; the CLI env-gate (unarmed --apply falls back to dry-run; armed applies; missing old-key env exits 1). A/B: 9 passed on the branch; on pristine main the suite errors at collection (core.security.resign absent). Neighbours identical on both trees (test_cryptographic_provenance + test_memory_hygiene + test_mem005_remediation: 36 passed)."
+    acceptance:
+      - "A supported, in-repo tool re-signs exactly the records whose signatures verify under the previous master key and fail under the current one, using the codebase's own signing/verification primitives."
+      - "Records verifying under neither key (including content-tampered) and unsigned records are reported and left untouched — never force-signed; the tool is idempotent and dry-run reports counts without writing."
+      - "Running the tool requires the current MEMORA_MASTER_KEY in force (break-glass) and the old key via environment only; applying additionally requires the double gate (--apply + MEMORA_RESIGN_APPLY=1)."
+    next_action: "Coordinator: supervisor review, then merge via the serial lane. No production run is owed — the tool is exercised at the next master-key rotation (or a deliberate drill the coordinator schedules); the MEM-005 rotation itself is already complete and must NOT be re-run."
   - id: TASK-MEM-012
     title: "Memora stalls: keep the working set resident (MemorySwapMax drop-in) + move the synchronous background passes off the event loop"
     status: IN_REVIEW
