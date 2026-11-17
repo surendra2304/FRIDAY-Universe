@@ -13,7 +13,8 @@ the project's Alpaca keys are installed with the SRS execution.
 
 Usage:
   python3 run_usxsrev.py --panel-dir DIR --n-final N --out DIR
-    --panel-dir  contains panel.csv, dividends.csv, provenance.json
+    --panel-dir  contains panel.csv, dividends.csv, provenance.json,
+                 iex_panel.csv (gate check 2 companion, addendum v1)
     --n-final    the FINAL global trial counter read from the
                  rd-reconcile ledger at run time (frozen method:
                  Bonferroni alpha = 0.05 / N_final)
@@ -35,7 +36,12 @@ DECLARED_FEED = "sip"
 DECLARED_ADJUSTMENT = "split"
 DECLARED_START = "2023-01-01T00:00:00Z"
 DECLARED_END = "2026-11-01T00:00:00Z"
-VOLUME_FLOOR_MEDIAN = 2_000_000  # declaration data gate, check 2
+FEED_RATIO_MIN = 5.0  # gate check 2 AS AMENDED by USXSREV_ADDENDUM_V1.md:
+# the declaration's frozen absolute floor (median daily volume >=
+# 2,000,000) is superseded by a relative SIP-vs-IEX discriminator —
+# every symbol's SIP median daily volume must be >= FEED_RATIO_MIN x
+# its IEX median over the identical span, and so must the universe
+# aggregate. The declaration file itself is unchanged.
 GATE_KEYS = ["session_census", "sip_feed_check", "split_check",
              "cross_source_spot_check", "dividend_calendar_check"]
 
@@ -82,11 +88,34 @@ def load_and_verify(panel_dir: Path):
         if counts.get(sym) != declared_counts.get(sym):
             refuse(f"bar count for {sym} does not match provenance "
                    f"({counts.get(sym)} != {declared_counts.get(sym)})")
-    # gate check 2, enforced mechanically: median daily volume floor
+    # gate check 2, enforced mechanically, AS AMENDED by
+    # USXSREV_ADDENDUM_V1.md (relative SIP-vs-IEX discriminator,
+    # clauses (a)-(d) of its section 3)
     med_vol = raw.groupby("symbol")["volume"].median().to_dict()
-    low = [s for s, v in med_vol.items() if v < VOLUME_FLOOR_MEDIAN]
+    iex_csv = panel_dir / "iex_panel.csv"
+    if not iex_csv.exists():
+        refuse("missing iex_panel.csv (gate check 2 companion, "
+               "addendum v1)")
+    if sha256_file(iex_csv) != prov.get("iex_panel_sha256"):
+        refuse("iex_panel.csv SHA-256 does not match the provenance "
+               "record")
+    iex_raw = pd.read_csv(iex_csv)
+    iex_counts = iex_raw.groupby("symbol").size().to_dict()
+    for sym in U.UNIVERSE:
+        if iex_counts.get(sym) != counts.get(sym):
+            refuse(f"IEX bar count for {sym} does not match the SIP "
+                   f"panel ({iex_counts.get(sym)} != "
+                   f"{counts.get(sym)})")
+    iex_med = iex_raw.groupby("symbol")["volume"].median().to_dict()
+    ratios = {s: med_vol[s] / iex_med[s] for s in U.UNIVERSE}
+    low = [s for s, r in ratios.items() if r < FEED_RATIO_MIN]
     if low:
-        refuse(f"median daily volume below the SIP floor for: {low}")
+        refuse(f"SIP/IEX median-volume ratio below {FEED_RATIO_MIN} "
+               f"for: {low}")
+    agg_ratio = sum(med_vol.values()) / sum(iex_med.values())
+    if agg_ratio < FEED_RATIO_MIN:
+        refuse(f"universe aggregate SIP/IEX median-volume ratio "
+               f"{agg_ratio:.2f} below {FEED_RATIO_MIN}")
     panel: dict[str, pd.DataFrame] = {}
     for sym, g in raw.groupby("symbol"):
         df = g.copy()
