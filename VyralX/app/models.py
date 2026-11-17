@@ -159,6 +159,25 @@ class ChannelSnapshot(Base):
     fetched_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
+class BrandPitchDraft(Base):
+    """A generated brand-collaboration pitch draft (IG General B8-C3).
+
+    Drafts only: rows in this table are never sent by any code path. Sending a
+    pitch is a separate, owner-approved step that does not exist yet, so the
+    only status a draft can hold is ``draft``.
+    """
+
+    __tablename__ = "brand_pitch_drafts"
+    id: Mapped[int] = mapped_column(Integer, Identity(), primary_key=True)
+    brand_name: Mapped[str] = mapped_column(String(200))
+    template_name: Mapped[str] = mapped_column(String(80), default="brand_collab_pitch_v1")
+    subject: Mapped[str] = mapped_column(String(300), default="")
+    body: Mapped[str] = mapped_column(Text)
+    highlights_json: Mapped[str] = mapped_column(Text, default="{}")
+    status: Mapped[str] = mapped_column(String(20), default="draft")
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
 class AgentTask(Base):
     __tablename__ = "agent_tasks"
     id: Mapped[int] = mapped_column(Integer, Identity(), primary_key=True)
