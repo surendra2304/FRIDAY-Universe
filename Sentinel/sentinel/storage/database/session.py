@@ -157,12 +157,6 @@ async def init_database() -> None:
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    # Bootstrap audit / HMAC / SHA-256 surfaces in SENTINEL schema
-    try:
-        from sentinel.storage.database.bootstrap_audit_hmac_sha256 import bootstrap_audit_tables
-        await bootstrap_audit_tables(engine)
-    except Exception as exc:
-        logger.warning("Audit/HMAC/sha256 bootstrap skipped: %s", exc)
     logger.info(
         "Sentinel database schema ensured on %s (%d tables).",
         settings.database_dialect or "database",

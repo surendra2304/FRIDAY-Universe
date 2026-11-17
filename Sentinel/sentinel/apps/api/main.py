@@ -5,7 +5,6 @@ import hmac
 import html
 import json
 import os
-import signal
 import uuid
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager, suppress
@@ -260,16 +259,6 @@ async def lifespan(app: FastAPI):
                 "remote servers report via /operations/deploy-watchdog/report",
                 watchdog_grace,
             )
-
-    # Clean signal handling for SIGTERM and SIGINT
-    loop = asyncio.get_running_loop()
-
-    def _sig_handler(sig_name: str) -> None:
-        logger.info(f"Signal {sig_name} trapped: beginning 5-second graceful shutdown budget...")
-
-    for sig in (signal.SIGTERM, signal.SIGINT):
-        with suppress(NotImplementedError, RuntimeError):
-            loop.add_signal_handler(sig, lambda s=sig.name: _sig_handler(s))  # type: ignore[misc]
 
     try:
         yield
