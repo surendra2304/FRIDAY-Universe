@@ -420,7 +420,9 @@ async def test_voice_direct_desktop_command_delegates_to_local_agent(memory_db):
         asyncio.Event(),
     )
 
-    agent.process_message.assert_called_once_with("search Telugu latest movies in Chrome")
+    # TASK-REL-044: voice turns delegate with channel="voice" so they bind the
+    # voice route and never complexity-escalate to Inference.
+    agent.process_message.assert_called_once_with("search Telugu latest movies in Chrome", channel="voice")
     assert turns == [("search Telugu latest movies in Chrome", "Done.")]
     assert memory_db.get_messages(agent.conversation_id) == []
 
