@@ -18,8 +18,10 @@ assert.equal(DEFAULT_THEME, "ultron");
 
 // Only shipped themes parse; case and surrounding space never matter.
 assert.equal(parseTheme("ultron"), "ultron");
-assert.equal(parseTheme("halo"), "halo");
-assert.equal(parseTheme(" HALO "), "halo");
+// "halo" no longer ships (removed from the app 2026-11-17) — it
+// parses as nothing, like any other unshipped name.
+assert.equal(parseTheme("halo"), null);
+assert.equal(parseTheme(" HALO "), null);
 assert.equal(parseTheme("Ultron"), "ultron");
 assert.equal(parseTheme("aurora"), null);
 assert.equal(parseTheme(""), null);
@@ -27,10 +29,10 @@ assert.equal(parseTheme(null), null);
 assert.equal(parseTheme(undefined), null);
 
 // Resolution order: query beats storage beats default; junk falls through.
-assert.equal(resolveTheme("halo", "ultron"), "halo");
+assert.equal(resolveTheme("halo", "ultron"), "ultron");
 assert.equal(resolveTheme("ultron", "halo"), "ultron");
-assert.equal(resolveTheme(null, "halo"), "halo");
-assert.equal(resolveTheme("bogus", "halo"), "halo");
+assert.equal(resolveTheme(null, "halo"), "ultron");
+assert.equal(resolveTheme("bogus", "halo"), "ultron");
 assert.equal(resolveTheme("bogus", "also-bogus"), "ultron");
 assert.equal(resolveTheme(null, null), "ultron");
 assert.equal(resolveTheme(), "ultron");
@@ -43,11 +45,13 @@ assert.equal(resolveTheme(), "ultron");
     setItem: (k, v) => void backing.set(k, v),
   };
   assert.equal(loadThemePref(storage), null);
-  saveThemePref(storage, "halo");
-  assert.equal(backing.get(THEME_STORAGE_KEY), "halo");
-  assert.equal(loadThemePref(storage), "halo");
   saveThemePref(storage, "ultron");
+  assert.equal(backing.get(THEME_STORAGE_KEY), "ultron");
   assert.equal(loadThemePref(storage), "ultron");
+  // A preference persisted while Halo still shipped no longer
+  // resolves — it reads back as "no preference".
+  backing.set(THEME_STORAGE_KEY, "halo");
+  assert.equal(loadThemePref(storage), null);
 }
 
 // A storage that throws (private mode) reads as "no preference" and
@@ -62,7 +66,7 @@ assert.equal(resolveTheme(), "ultron");
     },
   };
   assert.equal(loadThemePref(hostile), null);
-  saveThemePref(hostile, "halo");
+  saveThemePref(hostile, "ultron");
 }
 
 console.log("theme.test.ts: all assertions passed");

@@ -19,7 +19,6 @@ import {
   type HostTelemetry,
 } from "@/lib/wire";
 import { getWakeArmedSnapshot, setWakeArmedPref, subscribeWakeArmed } from "@/lib/wakeWord";
-import { setThemePref } from "@/lib/theme";
 
 /* ================================================================
    The ULTRON stage (TASK-WEB-003) — FRIDAY in the command-
@@ -456,13 +455,9 @@ export function UltronStage() {
               <button type="button" className="ultron-chip" onClick={() => composerRef.current?.focus()}>
                 WRITE INSTEAD
               </button>
-              <button type="button" className="ultron-chip" onClick={() => setThemePref("halo")}>
-                SWITCH TO HALO THEME
-              </button>
             </div>
             <p className="ultron-nodata">
               The mock's autonomy / voice-rate / cursor sliders changed nothing real, so they are not carried over.
-              Halo is kept aside, whole — switching to it loses nothing.
             </p>
           </section>
         </div>
