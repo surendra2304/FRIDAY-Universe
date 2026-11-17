@@ -602,7 +602,6 @@ __all__ = [
     "configure_deploy_watchdog",
     "deploy_watchdog",
     "git_checkout_branch",
-    "git_checkout_branch",
     "git_checkout_head",
     "git_checkout_tree_clean",
     "git_remote_main_head",
