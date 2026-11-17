@@ -8,11 +8,13 @@ Orchestrates:
 """
 from __future__ import annotations
 
+import copy
 import datetime
 import os
 import time
 import signal
 import json
+import threading
 from typing import Dict, Optional
 
 from autonomy.multi_venue_engine import create_multi_venue_engine
@@ -172,6 +174,19 @@ class StratexTradingEngine:
         self.running = True
         self.last_scan = 0
         self.scan_count = 0
+        # TASK-STR-FWD-015: heartbeat pulse state. The scan loop only
+        # publishes an in-memory snapshot; a dedicated pulse thread is
+        # the sole writer of daemon_heartbeat.json during run(), so
+        # the file's freshness no longer depends on scan-cycle length.
+        # (Also lazily initialised by _heartbeat_state() for engines
+        # constructed without __init__.)
+        self.heartbeat_pulse_seconds = self._heartbeat_pulse_seconds_from_env()
+        self._heartbeat_lock = threading.Lock()
+        self._heartbeat_write_lock = threading.Lock()
+        self._heartbeat_snapshot = None
+        self._heartbeat_wake = threading.Event()
+        self._heartbeat_stop = threading.Event()
+        self._heartbeat_thread = None
         self._last_trend_manage = 0.0
         self._last_summary_date = ""
         # TASK-STR-PHASE2-001 measurement hooks (best-effort, never fatal):
@@ -2014,7 +2029,13 @@ class StratexTradingEngine:
             logger.debug(f"Denylist persist failed: {e}")
 
     # ------------------------------------------------------------------
-    # Daemon heartbeat (consumed by dashboard /health)
+    # Daemon heartbeat (consumed by dashboard /health, FRIDAY's
+    # stratex_watch snapshot gate and the forward scorecard).
+    # TASK-STR-FWD-015: during run() the scan loop only PUBLISHES an
+    # in-memory snapshot; a pulse thread is the file's sole writer,
+    # republishing that snapshot every heartbeat_pulse_seconds so
+    # file freshness means "process alive" even when a scan cycle
+    # runs for minutes under host memory pressure.
     # ------------------------------------------------------------------
     def _daemon_heartbeat_path(self) -> str:
         """Path of the daemon heartbeat file (Stratex/state/daemon_heartbeat.json).
@@ -2028,15 +2049,52 @@ class StratexTradingEngine:
         )
         return os.path.join(base, "daemon_heartbeat.json")
 
-    def _write_daemon_heartbeat(self, results=None, error=None, status="RUNNING"):
-        """Atomically rewrite the daemon heartbeat. Never raises.
+    @staticmethod
+    def _heartbeat_pulse_seconds_from_env() -> float:
+        """Pulse cadence for the heartbeat thread (TASK-STR-FWD-015).
 
-        The dashboard's /health used to infer this daemon's state from
-        state/cloud_portfolio_state.json, a file only the MT5 cTrader engine
-        writes (on trade events). This daemon never writes it, so a live,
-        evaluating daemon reported ``engine: offline`` for 12 days. The
-        heartbeat is written every scan cycle, so its freshness is direct
-        evidence that the loop is turning.
+        Default 15s: worst-case heartbeat age stays far under the
+        60s freshness bound consumers enforce (FRIDAY's snapshot
+        gate, Stratex's own MAX_TELEMETRY_STALENESS_SECONDS).
+        """
+        try:
+            value = float(os.getenv("STRATEX_HEARTBEAT_PULSE_SECONDS", "15"))
+        except (TypeError, ValueError):
+            return 15.0
+        return value if value > 0 else 15.0
+
+    def _heartbeat_state(self):
+        """Return the heartbeat lock, lazily creating the pulse state.
+
+        __init__ creates the same attributes; the lazy path exists
+        for engines constructed without __init__ (unit tests build
+        the engine with __new__). Only the main thread touches this
+        state before the pulse thread starts, so the lazy creation
+        cannot race in practice.
+        """
+        lock = getattr(self, "_heartbeat_lock", None)
+        if lock is None:
+            lock = threading.Lock()
+            self._heartbeat_lock = lock
+            self._heartbeat_write_lock = threading.Lock()
+            self._heartbeat_snapshot = None
+            self._heartbeat_wake = threading.Event()
+            self._heartbeat_stop = threading.Event()
+            self._heartbeat_thread = None
+            if getattr(self, "heartbeat_pulse_seconds", None) is None:
+                self.heartbeat_pulse_seconds = self._heartbeat_pulse_seconds_from_env()
+        return lock
+
+    def _build_daemon_heartbeat_payload(self, results=None, error=None, status="RUNNING"):
+        """Build the heartbeat payload from the daemon's current state.
+
+        Returns None (and publishes nothing) when the state cannot
+        be read. A RUNNING build stamps last_strategy_evaluation
+        with the build time: builds happen at scan-cycle boundaries
+        (or at startup), where an evaluation has just completed.
+        The pulse thread never rebuilds — it republishes the stored
+        payload — so the evaluation stamp can never be refreshed
+        without a real cycle behind it.
         """
         try:
             now_iso = datetime.datetime.utcnow().isoformat() + "Z"
@@ -2077,18 +2135,178 @@ class StratexTradingEngine:
             }
             if error is not None:
                 payload["last_error"] = str(error)[:500]
-            path = self._daemon_heartbeat_path()
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            tmp = path + ".tmp"
-            with open(tmp, "w", encoding="utf-8") as fh:
-                json.dump(payload, fh, indent=2)
-            os.replace(tmp, path)
+            return payload
         except Exception as e:
-            logger.debug(f"Daemon heartbeat write failed: {e}")
+            logger.debug(f"Daemon heartbeat build failed: {e}")
+            return None
+
+    def _write_heartbeat_payload(self, payload) -> bool:
+        """Atomically write a heartbeat payload; return success.
+
+        The single funnel for every daemon_heartbeat.json write,
+        serialised by the write lock so the tmp + os.replace
+        sequence can never interleave between writers.
+        """
+        self._heartbeat_state()
+        write_lock = getattr(self, "_heartbeat_write_lock", None)
+        if write_lock is None:
+            write_lock = self._heartbeat_write_lock = threading.Lock()
+        try:
+            with write_lock:
+                path = self._daemon_heartbeat_path()
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                tmp = path + ".tmp"
+                with open(tmp, "w", encoding="utf-8") as fh:
+                    json.dump(payload, fh, indent=2)
+                os.replace(tmp, path)
+            return True
+        except Exception as e:
+            # Warning, not debug: a heartbeat that cannot be written
+            # goes stale silently otherwise — staleness consumers
+            # cannot distinguish from a dead daemon is the failure
+            # mode TASK-STR-FWD-015 exists to remove.
+            logger.warning(f"Daemon heartbeat write failed: {e}")
+            return False
+
+    def _store_heartbeat_snapshot(self, payload) -> None:
+        """Store a payload as the pulse thread's republish source."""
+        lock = self._heartbeat_state()
+        with lock:
+            self._heartbeat_snapshot = copy.deepcopy(payload)
+
+    def _write_daemon_heartbeat(self, results=None, error=None, status="RUNNING"):
+        """Atomically rewrite the daemon heartbeat. Never raises.
+
+        The dashboard's /health used to infer this daemon's state from
+        state/cloud_portfolio_state.json, a file only the MT5 cTrader engine
+        writes (on trade events). This daemon never writes it, so a live,
+        evaluating daemon reported ``engine: offline`` for 12 days. The
+        heartbeat is written every scan cycle, so its freshness is direct
+        evidence that the loop is turning.
+
+        TASK-STR-FWD-015: this synchronous build + store + write is
+        retained for direct callers (tests, one-shot uses). The
+        running daemon instead publishes snapshots via
+        _publish_daemon_heartbeat and lets the pulse thread write.
+        """
+        payload = self._build_daemon_heartbeat_payload(
+            results=results, error=error, status=status
+        )
+        if payload is None:
+            return
+        self._store_heartbeat_snapshot(payload)
+        self._write_heartbeat_payload(payload)
+
+    def _publish_daemon_heartbeat(self, results=None, error=None, status="RUNNING"):
+        """Publish the daemon's latest state for the pulse thread.
+
+        Used by run(): the scan loop never writes the heartbeat file
+        itself — it stores the snapshot under the heartbeat lock and
+        wakes the pulse thread, which flushes promptly and then
+        keeps the file fresh on its own cadence.
+        """
+        payload = self._build_daemon_heartbeat_payload(
+            results=results, error=error, status=status
+        )
+        if payload is None:
+            return
+        self._store_heartbeat_snapshot(payload)
+        self._heartbeat_state()
+        self._heartbeat_wake.set()
+
+    def _flush_heartbeat_snapshot(self) -> bool:
+        """Write the latest published snapshot with a fresh pulse.
+
+        Only the pulse fields (timestamp / updated_at) advance;
+        every cycle field — scan_count, last_cycle,
+        last_strategy_evaluation, the risk figures, the alerts —
+        is republished verbatim from the last published snapshot,
+        so a fresh file never claims a fresher cycle than the one
+        that actually ran. Returns False when nothing has been
+        published yet: no payload is invented.
+        """
+        lock = self._heartbeat_state()
+        with lock:
+            snapshot = copy.deepcopy(self._heartbeat_snapshot)
+        if snapshot is None:
+            return False
+        now = time.time()
+        snapshot["timestamp"] = datetime.datetime.utcfromtimestamp(now).isoformat() + "Z"
+        snapshot["updated_at"] = now
+        return self._write_heartbeat_payload(snapshot)
+
+    def _heartbeat_pulse_loop(self):
+        """Pulse-thread body: keep daemon_heartbeat.json fresh.
+
+        Wakes when a snapshot is published (prompt flush), when a
+        stop is requested (final flush of the STOPPED snapshot), or
+        every heartbeat_pulse_seconds. If the loop itself dies, the
+        error is logged loudly and the thread exits — it is never
+        silently restarted, so the file going stale remains
+        detectable by consumers exactly as before this task.
+        """
+        try:
+            interval = getattr(self, "heartbeat_pulse_seconds", None)
+            if not interval or interval <= 0:
+                interval = self._heartbeat_pulse_seconds_from_env()
+            while True:
+                self._heartbeat_wake.wait(interval)
+                self._heartbeat_wake.clear()
+                self._flush_heartbeat_snapshot()
+                if self._heartbeat_stop.is_set():
+                    break
+        except Exception:
+            logger.error(
+                "[STRATEX] Heartbeat pulse thread died; "
+                "daemon_heartbeat.json will go stale until the daemon restarts",
+                exc_info=True,
+            )
+
+    def _start_heartbeat_pulse(self):
+        """Start the heartbeat pulse thread (idempotent)."""
+        self._heartbeat_state()
+        thread = getattr(self, "_heartbeat_thread", None)
+        if thread is not None and thread.is_alive():
+            return
+        self._heartbeat_stop.clear()
+        thread = threading.Thread(
+            target=self._heartbeat_pulse_loop,
+            name="stratex-heartbeat-pulse",
+            daemon=True,
+        )
+        self._heartbeat_thread = thread
+        thread.start()
+
+    def _stop_heartbeat_pulse(self):
+        """Stop the pulse thread after a final snapshot flush.
+
+        run() publishes the STOPPED snapshot first; the pulse
+        thread flushes it before exiting and is joined here. If the
+        thread cannot stop in time, the final snapshot is flushed
+        from the calling thread instead, so the STOPPED write is
+        never lost.
+        """
+        self._heartbeat_state()
+        thread = getattr(self, "_heartbeat_thread", None)
+        if thread is None:
+            return
+        self._heartbeat_stop.set()
+        self._heartbeat_wake.set()
+        thread.join(timeout=5.0)
+        if thread.is_alive():
+            logger.warning(
+                "[STRATEX] Heartbeat pulse thread did not stop within 5s; "
+                "flushing the final heartbeat from the main thread"
+            )
+            self._flush_heartbeat_snapshot()
 
     def run(self):
         """Main trading loop."""
         logger.info(f"[STRATEX] Trading engine started - scanning every {self.scan_interval}s")
+
+        # TASK-STR-FWD-015: the pulse thread owns heartbeat writes
+        # from here on; the loop below only publishes snapshots.
+        self._start_heartbeat_pulse()
 
         # Startup heartbeat: the daemon is alive from here on, even before
         # the first (slowest) scan cycle completes.
@@ -2096,7 +2314,7 @@ class StratexTradingEngine:
             self._last_risk_summary = self.engine.get_risk_summary()
         except Exception:
             self._last_risk_summary = None
-        self._write_daemon_heartbeat()
+        self._publish_daemon_heartbeat()
 
         while self.running:
             try:
@@ -2108,7 +2326,7 @@ class StratexTradingEngine:
                 if results["executed"] > 0:
                     logger.info(f"[STRATEX] Cycle {self.scan_count}: {results}")
 
-                self._write_daemon_heartbeat(results=results)
+                self._publish_daemon_heartbeat(results=results)
 
                 # Sleep for remainder of interval
                 elapsed = time.time() - cycle_start
@@ -2120,10 +2338,11 @@ class StratexTradingEngine:
                 break
             except Exception as e:
                 logger.error(f"[STRATEX] Loop error: {e}", exc_info=True)
-                self._write_daemon_heartbeat(error=e, status="ERROR")
+                self._publish_daemon_heartbeat(error=e, status="ERROR")
                 time.sleep(5)
 
-        self._write_daemon_heartbeat(status="STOPPED")
+        self._publish_daemon_heartbeat(status="STOPPED")
+        self._stop_heartbeat_pulse()
 
 
 def main() -> None:
