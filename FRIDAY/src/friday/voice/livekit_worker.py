@@ -586,8 +586,9 @@ def _gemini_pool_keys() -> list[str]:
     subset whenever at least one key was healthy. The pool's health view
     tracks chat generateContent quota (the REL-010 benching); a key
     benched for chat can still hold a Gemini Live session, and the voice
-    probe counts quota/5xx answers as key-valid anyway — benching must
-    not shrink the voice candidate set. On 2026-11-15 the boot warm-up
+    probe judges every candidate against the Live bucket directly
+    (2026-11-17 key-probe fix) — benching must not shrink the voice
+    candidate set. On 2026-11-15 the boot warm-up
     saw 1 candidate and the owner's call saw 3, of FRIDAY's 5 keys.
     """
     try:
@@ -812,39 +813,147 @@ _PROBE_TRANSPORT_MARKERS = (
 )
 
 
+class _ProbeQuotaExhausted(Exception):
+    """The probe JUDGED the key quota-exhausted for voice purposes
+    (429 / RESOURCE_EXHAUSTED, from either probe stage). Distinct from
+    an auth rejection (the key is bad) and from _ProbeInconclusive
+    (the probe could not judge): a quota verdict is a judgement — the
+    key must not be selected, must not be offered as tentative, and
+    must never be cached as the verified key. The resolver cools it
+    down at the back of the rotation (2026-11-17 key-probe fix: the
+    frame-flow diagnosis caught the pre-fix probe counting a 429
+    RESOURCE_EXHAUSTED as VALID and caching the key process-wide)."""
+
+
+# Quota-class failure markers: Google judged the key and refused it
+# for quota. Auth markers are checked first (existing precedence),
+# quota before transport (a 429 is a judgement, not a non-answer).
+_PROBE_QUOTA_MARKERS = (
+    "429", "resource_exhausted", "resource exhausted", "quota",
+)
+
+# Auth-class failure markers: the key itself is bad.
+_PROBE_AUTH_MARKERS = (
+    "api_key_invalid", "api key not valid", "401", "403", "permission",
+)
+
+
+def _classify_probe_error(exc: BaseException) -> str:
+    """Bucket a probe-stage failure: 'rejected' (auth — the key is
+    bad), 'quota' (429 / RESOURCE_EXHAUSTED — the key is quota-dead
+    for voice), 'transport' (Google never got to judge the key), or
+    'other' (an API-level answer that is none of those — the key
+    authenticated and the next stage decides)."""
+    text = f"{type(exc).__name__}: {exc}".lower()
+    if any(m in text for m in _PROBE_AUTH_MARKERS):
+        return "rejected"
+    if any(m in text for m in _PROBE_QUOTA_MARKERS):
+        return "quota"
+    if any(m in text for m in _PROBE_TRANSPORT_MARKERS):
+        return "transport"
+    return "other"
+
+
+def _probe_gemini_live_sync(key: str, client) -> bool:
+    """Stage 2 of the key probe: open a minimal Gemini Live session on
+    this key and close it again immediately. Reuses stage 1's client —
+    one client construction per probe.
+
+    A text generateContent answer can never certify a key for voice:
+    Gemini Live draws on a SEPARATE quota bucket, and the frame-flow
+    diagnosis (2026-11-17) caught the pre-fix probe counting a 429
+    RESOURCE_EXHAUSTED from the text model as a valid voice key and
+    caching it process-wide. The only honest probe of Live
+    availability is a Live connect. It runs on the bare Gemini API —
+    no LiveKit room, no participant — so it costs a few seconds of
+    Gemini Live session time per probe and ZERO LiveKit
+    participant-minutes; and it only runs while the keeper/resolver
+    is selecting a key (cache cold, near expiry, or keyless), never
+    per job on a warm cache.
+
+    Same verdict contract as _probe_gemini_key_sync: True = a Live
+    session connected; False = auth-rejected; _ProbeQuotaExhausted =
+    quota-dead for voice; _ProbeInconclusive = Live could not be
+    verified (a transport failure, or any unclassified error — an
+    unverifiable key is unjudged, never certified)."""
+    try:
+
+        async def _open_close() -> None:
+            async with client.aio.live.connect(
+                model=_voice_model(),
+                config={"response_modalities": ["AUDIO"]},
+            ):
+                return None
+
+        asyncio.run(_open_close())
+        return True
+    except Exception as exc:
+        text = f"{type(exc).__name__}: {exc}".lower()
+        verdict = _classify_probe_error(exc)
+        if verdict == "rejected":
+            logger.info("gemini live probe rejected: %s", text[:180])
+            return False
+        if verdict == "quota":
+            logger.info("gemini live probe quota-exhausted: %s", text[:180])
+            raise _ProbeQuotaExhausted(text[:180]) from None
+        if verdict == "transport":
+            logger.info("gemini live probe inconclusive (transport): %s", text[:180])
+            raise _ProbeInconclusive(text[:180]) from None
+        logger.info("gemini live probe inconclusive (unclassified): %s", text[:180])
+        raise _ProbeInconclusive(text[:180]) from None
+
+
 def _probe_gemini_key_sync(key: str) -> bool:
-    """One tiny real request: does Google accept this key?
+    """Probe one key for VOICE: can it hold a Gemini Live session?
 
     Building a RealtimeModel with a dead key SUCCEEDS and only fails at
     connect time — the exact silent-mute failure the live probe caught
-    (worker joins, publishes a track, zero frames). So the Gemini path is
-    only chosen after a key proves itself with a cheap generateContent.
-    Any API-level answer that is not an auth failure (API_KEY_INVALID /
-    401 / 403) counts as a working key — a model-not-found or a 503 with
-    valid auth still means the key is alive.
+    (worker joins, publishes a track, zero frames). So the Gemini path
+    is only chosen after a key proves itself.
 
-    TASK-VOI-005: a TRANSPORT failure (the request never reached Google —
-    the 2026-11-15 owner call's probes died this way under host load)
-    raises _ProbeInconclusive instead of being folded into either
-    verdict: the key is unjudged, not dead and not proven.
+    Two stages (2026-11-17 key-probe fix). Stage 1 is the cheap text
+    ping: it classifies auth rejections (the key is bad), transport
+    failures (the key is unjudged — TASK-VOI-005's _ProbeInconclusive),
+    and quota refusals. Stage 2 (_probe_gemini_live_sync) opens and
+    closes a minimal Live session: Live quota is a separate bucket
+    from text quota, so only a Live connect can certify a key for
+    voice. The pre-fix probe counted ANY non-auth text answer — a 429
+    RESOURCE_EXHAUSTED included — as a valid voice key and cached it
+    process-wide (frame-flow diagnosis, 2026-11-17 19:05 IST).
+
+    Verdicts: True = a Live session connected on this key;
+    False = auth-rejected; _ProbeQuotaExhausted = quota-dead for
+    voice (NEVER valid, never cached as verified — the resolver cools
+    the key down at the back of the rotation); _ProbeInconclusive =
+    the probe could not judge the key.
     """
+    client = None
     try:
         from google import genai
 
         client = genai.Client(api_key=key)
         client.models.generate_content(model="gemini-3.8-flash", contents="ping")
-        return True
     except Exception as exc:
         text = f"{type(exc).__name__}: {exc}".lower()
-        if any(m in text for m in ("api_key_invalid", "api key not valid", "401", "403", "permission")):
+        verdict = _classify_probe_error(exc)
+        if verdict == "rejected":
             logger.info("gemini key probe rejected: %s", text[:180])
             return False
-        if any(m in text for m in _PROBE_TRANSPORT_MARKERS):
+        if verdict == "quota":
+            logger.info("gemini key probe quota-exhausted: %s", text[:180])
+            raise _ProbeQuotaExhausted(text[:180]) from None
+        if verdict == "transport":
             logger.info("gemini key probe inconclusive (transport): %s", text[:180])
             raise _ProbeInconclusive(text[:180]) from None
-        # quota or model errors mean the key itself is valid
-        logger.info("gemini key probe non-auth result (key counts as valid): %s", text[:180])
-        return True
+        # Any other API-level answer (a 503, a model error) means the
+        # key authenticated; the Live stage decides voice validity.
+        logger.info(
+            "gemini key probe: text stage answered (%s); judging by the Live stage",
+            text[:180],
+        )
+    if client is None:
+        raise _ProbeInconclusive("gemini key probe: client construction failed")
+    return _probe_gemini_live_sync(key, client)
 
 
 # ---- TASK-VOI-003: verified-key cache + single-flight resolution ----
@@ -867,8 +976,12 @@ _KEY_CACHE: dict = {
     "tentative_key": None,
     "tentative_ts": 0.0,
 }
+# Key-probe fix (2026-11-17): per-key quota cooldown — key -> unix ts
+# until which a quota-judged key stays at the back of the rotation.
+_KEY_QUOTA_COOLDOWN_UNTIL: dict = {}
 _KEY_CACHE_TTL_S = 240.0  # trust a verified key for 4 minutes
 _KEY_NEGATIVE_TTL_S = 30.0  # after a failed round, wait 30 s before re-probing
+_KEY_QUOTA_COOLDOWN_S = 300.0  # a quota-judged key cools down this long (key-probe fix)
 _KEY_PROBE_DEADLINE_S = 45.0  # one shared budget for the whole sequential round
 # TASK-VOI-005: one candidate gets at most this long. The pre-fix round
 # had only the shared deadline and BROKE on the first timeout, so one
@@ -912,6 +1025,18 @@ def _key_resolution_cooling_down() -> bool:
     return bool(failed_ts) and (time.time() - failed_ts) <= _KEY_NEGATIVE_TTL_S
 
 
+def _key_quota_cooling(key: str) -> bool:
+    """True while a key sits in quota cooldown (the back of the
+    rotation): a probe judged it quota-exhausted for voice, so it is
+    not probed again — and never selected — until the cooldown
+    lapses (2026-11-17 key-probe fix)."""
+    return time.time() < float(_KEY_QUOTA_COOLDOWN_UNTIL.get(key) or 0.0)
+
+
+def _note_key_quota(key: str) -> None:
+    _KEY_QUOTA_COOLDOWN_UNTIL[key] = time.time() + _KEY_QUOTA_COOLDOWN_S
+
+
 def _resolve_gemini_key_sync(refresh: bool = False) -> "str | None":
     """One blocking resolution round. Runs in a worker thread under the
     single-flight lock — never on a job's event loop.
@@ -940,6 +1065,14 @@ def _resolve_gemini_key_sync(refresh: bool = False) -> "str | None":
     slow — or errors, and the TASK-VOI-004 recovery ladder rebuilds on
     Gemini. Only a round where every candidate was auth-rejected (or
     no keys exist) is a hard failure and earns the negative cache.
+
+    Key-probe fix (2026-11-17): a candidate judged QUOTA-EXHAUSTED
+    (429 / RESOURCE_EXHAUSTED from either probe stage) is neither
+    verified, nor tentative, nor auth-rejected: it is cooled down
+    (_KEY_QUOTA_COOLDOWN_S) at the back of the rotation and the round
+    moves on; candidates still in cooldown are skipped without a
+    probe. A round where every candidate is quota-dead or rejected
+    is a hard failure, like the all-rejected round.
 
     TASK-VOI-010: ``refresh=True`` is the key keeper's pre-expiry
     round. It probes DESPITE a still-valid cached key so the cache is
@@ -971,6 +1104,7 @@ def _resolve_gemini_key_sync(refresh: bool = False) -> "str | None":
         deadline = time.time() + _KEY_PROBE_DEADLINE_S
         first_unjudged: "str | None" = None
         n_rejected = 0
+        n_quota = 0
         # Two workers, still strictly sequential submission: candidates
         # are submitted and awaited one at a time, in order — but an
         # abandoned (timed-out) probe keeps its thread until it returns,
@@ -983,6 +1117,12 @@ def _resolve_gemini_key_sync(refresh: bool = False) -> "str | None":
         executor = ThreadPoolExecutor(max_workers=2)
         try:
             for key in candidates:
+                if _key_quota_cooling(key):
+                    # Quota-judged earlier (key-probe fix): back of
+                    # the rotation — skipped without spending a probe
+                    # until its cooldown lapses.
+                    n_quota += 1
+                    continue
                 remaining = deadline - time.time()
                 if remaining <= 0:
                     break
@@ -990,6 +1130,17 @@ def _resolve_gemini_key_sync(refresh: bool = False) -> "str | None":
                 future = executor.submit(_probe_gemini_key_sync, key)
                 try:
                     valid = future.result(timeout=budget)
+                except _ProbeQuotaExhausted:
+                    # Judged quota-dead for voice: never selected,
+                    # never tentative — cooled down at the back of
+                    # the rotation and the round moves on.
+                    _note_key_quota(key)
+                    n_quota += 1
+                    logger.info(
+                        "gemini key probe: candidate quota-exhausted for "
+                        "voice; cooling it down, trying next"
+                    )
+                    continue
                 except _ProbeInconclusive:
                     if first_unjudged is None:
                         first_unjudged = key
@@ -1015,6 +1166,7 @@ def _resolve_gemini_key_sync(refresh: bool = False) -> "str | None":
                 if valid:
                     _KEY_CACHE["key"] = key
                     _KEY_CACHE["ts"] = time.time()
+                    _KEY_QUOTA_COOLDOWN_UNTIL.pop(key, None)
                     _KEY_CACHE["failed_ts"] = 0.0
                     _KEY_CACHE["tentative_key"] = None
                     _KEY_CACHE["tentative_ts"] = 0.0
@@ -1053,7 +1205,9 @@ def _resolve_gemini_key_sync(refresh: bool = False) -> "str | None":
             return refresh_fallback
         _KEY_CACHE["failed_ts"] = time.time()
         logger.info(
-            "gemini key resolution: no valid key among %d candidates", len(candidates)
+            "gemini key resolution: no valid key among %d candidates "
+            "(%d auth-rejected, %d quota-exhausted)",
+            len(candidates), n_rejected, n_quota,
         )
         return None
 
