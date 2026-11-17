@@ -1,13 +1,18 @@
-/* Theme selection for the FRIDAY stage — TASK-WEB-003 (2026-11-17).
+/* Theme selection for the FRIDAY stage — TASK-WEB-003 (2026-11-17),
+ * amended 2026-11-17 (Halo removal): ULTRON is the only theme.
  *
- * Two themes ship in this app:
+ * One theme ships in this app:
  *   "ultron" — the command-dashboard theme the owner picked on
- *              2026-11-17 (components/ultron/UltronStage.tsx). DEFAULT.
- *   "halo"   — the previous theme (components/stage/Stage.tsx), kept
- *              aside intact at the owner's instruction; he will say
- *              later what happens to it. It is NOT deleted, stubbed
- *              or restyled: selecting it renders the original stage
- *              exactly as it shipped under TASK-WEB-002.
+ *              2026-11-17 (components/ultron/UltronStage.tsx). DEFAULT
+ *              and sole theme.
+ *
+ * The previous theme, "halo", was removed from the app the same day
+ * on the owner's clarification: "keep aside" meant the Halo website
+ * stored aside in workspace storage
+ * (~/workspace/design-candidates/halo-website-aside/), not kept
+ * selectable in the live site. A "halo" value arriving via a link
+ * or a persisted preference no longer resolves — it falls through
+ * to the default like any other unrecognised value.
  *
  * Pure and import-free, in the style of lib/wakeWord.ts: the resolver
  * is testable with plain Node (lib/theme.test.ts) and nothing touches
@@ -20,9 +25,9 @@
  * An unrecognised value never resolves — it falls through to the next
  * source, so a typo'd link still lands on the default theme. */
 
-export type ThemeName = "ultron" | "halo";
+export type ThemeName = "ultron";
 
-export const THEMES: readonly ThemeName[] = ["ultron", "halo"];
+export const THEMES: readonly ThemeName[] = ["ultron"];
 
 export const DEFAULT_THEME: ThemeName = "ultron";
 
