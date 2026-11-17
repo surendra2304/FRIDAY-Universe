@@ -33,6 +33,26 @@ the gate. The gate's unambiguous-only property is unchanged — every
 content word must still match the leading hit — and the negative
 cases below pin it (absent subject; subject mentioned but no
 favorite-fact of that shape).
+
+Leg check (coordinator follow-up, 2026-11-17): the latency-forensics
+crew established that the gem turn's 10 hits were the LOCAL leg's
+(Memora was stalled ~51 s; the search never reached its access log;
+FRIDAY's client waited the full 15 s recall_timeout on the dead
+remote leg), while the colour turn's 9 hits came from the REMOTE
+leg. The legs are NOT what the gate keys on: _recall_locally's rows
+carry the same content_text field the gate reads (plus importance /
+final_score / owner_name, which the gate never reads), the recall
+block always consumes recall_memories' merged list, and the gate's
+ranking/composition inputs are text-only. Fed a merged-shaped hit
+set, pristine _dispatch_command reproduces b4's settled reply
+exactly; fed the local-leg shape (last test below) it does the
+same. The outcome follows the SUBJECT WORD, not the leg: "color"
+(5 letters) survived the length filter, "gem" did not. Interaction
+with TASK-FRD-020 (PR #864, recall_join_deadline): after it lands, a
+stalled-Memora recall returns the local answer in ~5 s instead of
+15 s — the gate then composes from local-only hits, so it MUST fire
+on them when unambiguous (pinned below); without this fix, #864
+would return the wrong (chai) answer faster.
 """
 
 from __future__ import annotations
@@ -162,6 +182,44 @@ def test_recall_absent_subject_stays_a_list(monkeypatch):
     assert meta.get("memory_recall") is True
     assert "spoken_summary" not in meta
     assert "fact" not in meta
+
+
+def _local_leg_hits(*texts):
+    """Hits in the exact shape _recall_locally returns (the local
+    leg of recall_memories): same content_text key, plus the fields
+    the gate never reads. Ordered as the local leg orders them —
+    its own (final_score, importance) sort puts the two-keyword
+    alexandrite fact ahead of the one-keyword chai line."""
+    rows = []
+    for i, t in enumerate(texts):
+        rows.append({
+            "id": 1000 + i,
+            "content_text": t,
+            "memory_type": "episodic",
+            "importance": 0.95,
+            "created_at": "2026-11-17T00:26:29Z",
+            "owner_name": "friday",
+            "final_score": 0.22 if "alexandrite" in t else 0.11,
+        })
+    return rows
+
+
+def test_recall_gate_fires_on_a_local_leg_only_draw(monkeypatch):
+    # The re-run #8 gem turn's actual provenance shape: Memora
+    # stalled, the draw is local-leg only. The gate must fire on
+    # local-only hits when they are unambiguous — after TASK-FRD-020
+    # bounds the remote join, this is the shape a stalled-Memora
+    # recall returns. (On pristine main the gate's own re-ranking
+    # still tops the chai line and composes it — leg or no leg.)
+    result = _dispatch(
+        monkeypatch,
+        _local_leg_hits(GEM, CHAI, ZQ, TEAL_CLEAN),
+        "What is my favorite gem?",
+    )
+    assert result["metadata"].get("spoken_summary") == (
+        "Your favorite gem is alexandrite."
+    )
+    assert result["metadata"].get("fact") == "My favorite gem is alexandrite."
 
 
 def test_recall_subject_mentioned_without_a_fact_stays_a_list(monkeypatch):
