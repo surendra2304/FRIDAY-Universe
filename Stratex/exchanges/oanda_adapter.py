@@ -272,12 +272,32 @@ class OandaExchangeAdapter(BaseExchange):
 
     def get_positions(self) -> List[UnifiedPosition]:
         """Get open positions from OANDA."""
+        positions = self.get_positions_or_none()
+        return positions if positions is not None else []
+
+    def get_positions_or_none(self) -> Optional[List[UnifiedPosition]]:
+        """Positions, or None when the state is unknown (no creds / failed request).
+
+        An empty list means the account is genuinely flat.
+        TASK-STR-FWD-014: mirrors the BinanceFuturesAdapter contract.
+        Callers that must distinguish "flat" from "unknown" — the
+        daemon's untracked-position sweep above all — use this
+        variant. Before it existed, the sweep fell back to
+        get_positions(), whose [] on a FAILED account read is
+        indistinguishable from a flat account, so a complete-looking
+        sweep cleared the untracked_position alert during an OANDA
+        outage (live evidence 2026-11-17: the alert cleared at
+        03:27Z inside the 03:07Z venue_unhealthy window while
+        OANDA trade 470 was still open and untracked).
+        """
         if not self.api_key or not self.account_id:
-            return []
+            logger.warning("[OANDA] No credentials configured; positions unknown")
+            return None
 
         data = self._get_account()
         if not data or "account" not in data:
-            return []
+            logger.warning("[OANDA] Account read failed; positions unknown")
+            return None
 
         positions = []
         for pos in data["account"].get("positions", []):
