@@ -39,19 +39,30 @@ _COLUMNS: tuple[tuple[str, object], ...] = (
 )
 
 
+def _table_names(inspector) -> set[str]:
+    # TASK-MEM-009: Oracle reports unquoted identifiers in UPPERCASE, so
+    # every inspector name is normalised to lowercase before comparison
+    # (the style 08e9adb56879 already uses for columns/indexes/checks).
+    # Without this, the already-created path below saw every column as
+    # missing on Oracle and tried to re-add them (ORA-01430) — the
+    # reason this revision had to be stamped, not executed, in the
+    # 2026-11-17 production remediation.
+    return {name.lower() for name in inspector.get_table_names()}
+
+
 def _existing() -> set[str]:
     """Column names currently present on context_snapshots, or set() if absent."""
     inspector = sa.inspect(op.get_bind())
-    if "context_snapshots" not in inspector.get_table_names():
+    if "context_snapshots" not in _table_names(inspector):
         return set()
-    return {c["name"] for c in inspector.get_columns("context_snapshots")}
+    return {c["name"].lower() for c in inspector.get_columns("context_snapshots")}
 
 
 def _existing_indexes() -> set[str]:
     inspector = sa.inspect(op.get_bind())
-    if "context_snapshots" not in inspector.get_table_names():
+    if "context_snapshots" not in _table_names(inspector):
         return set()
-    return {ix["name"] for ix in inspector.get_indexes("context_snapshots")}
+    return {(ix["name"] or "").lower() for ix in inspector.get_indexes("context_snapshots")}
 
 
 def upgrade() -> None:

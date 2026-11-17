@@ -86,13 +86,40 @@ jobs:
             
             CHANGED_AGENTS=$(git diff --name-only $OLD_REV HEAD 2>/dev/null | awk -F/ '{print $1}' | sort -u)
             echo "Changed folders detected: $CHANGED_AGENTS"
-            
+
+            # ── TASK-MEM-009 pre-restart migration gate ─────────────────────
+            # Nothing in the deploy path ran Alembic, so on 2026-11-17 a
+            # merged migration (PR #831) stayed unapplied and every Memora
+            # memory path failed for ~1.5h while /health stayed green. When
+            # this run will restart Memora (the same condition the restart
+            # loop below uses), apply migrations FIRST, from the checkout
+            # this run just pinned: a migration failure aborts the deploy
+            # here, before any service restarts, with the fleet still
+            # running the previous code in memory. The runner is the same
+            # script the unit's ExecStartPre invokes (setup_fleet.sh); it
+            # logs before/after revisions and exits non-zero on failure.
+            if echo "$CHANGED_AGENTS" | grep -qw "Memora" || echo "$CHANGED_AGENTS" | grep -Eqw "mesh|deploy|scripts" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              if [ "$(systemctl show Memora.service --property=LoadState --value)" = loaded ]; then
+                echo "=== Applying Memora database migrations (TASK-MEM-009) ==="
+                MEMORA_PY=$(systemctl cat Memora.service 2>/dev/null | grep -E '^ExecStart=' | head -1 | sed 's/^ExecStart=//' | awk '{print $1}' || true)
+                if [ -z "$MEMORA_PY" ] || [ "${MEMORA_PY:0:1}" = "{" ] || [ ! -x "$MEMORA_PY" ]; then
+                  MEMORA_PY="/opt/friday_universe/venv/bin/python"
+                fi
+                if ! "$MEMORA_PY" /opt/friday_universe/Memora/scripts/run_migrations.py; then
+                  echo "::error::Memora migration step FAILED — aborting deploy BEFORE any service restart; the fleet keeps running the previous code. Fix the migration and re-deploy."
+                  exit 1
+                fi
+              fi
+            fi
+
             SERVER1_AGENTS=("FRIDAY" "Inference" "Memora" "Stratex" "IntelX" "Futuris" "Forge")
+            RESTARTED_AGENTS=""
             for AGENT in "${SERVER1_AGENTS[@]}"; do
               if echo "$CHANGED_AGENTS" | grep -qw "$AGENT" || echo "$CHANGED_AGENTS" | grep -Eqw "mesh|deploy|scripts" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
                 if [ "$(systemctl show "${AGENT}.service" --property=LoadState --value)" = loaded ]; then
                   echo "=== Restarting ${AGENT}.service ==="
                   sudo systemctl restart "${AGENT}.service"
+                  RESTARTED_AGENTS="$RESTARTED_AGENTS $AGENT"
                   sudo systemctl is-active "${AGENT}.service" || echo "${AGENT} is not running"
                 else
                   echo "=== ${AGENT}.service not registered yet. Code pulled cleanly. ==="
@@ -191,6 +218,29 @@ jobs:
               exit 1
             fi
             echo "=== Health gate passed on Server 1 ==="
+
+            # ── TASK-MEM-009 post-deploy memory-path smoke ──────────────────
+            # /health does not exercise the memory_records ORM: on 2026-11-17
+            # a merged-but-unapplied migration left every Memora memory path
+            # broken for ~1.5h while the health gate above stayed green. When
+            # this run restarted Memora, prove the real path — a capture ->
+            # search round-trip as an authenticated identity, with the probe
+            # record cleaned up — before calling the deploy good. The probe
+            # checks response bodies, not just HTTP status: a schema-behind
+            # Memora answers capture with HTTP 200 and stored:false.
+            if echo " $RESTARTED_AGENTS " | grep -qw "Memora"; then
+              echo "=== Memora memory-path smoke probe ==="
+              MEMORA_PY=$(systemctl cat Memora.service 2>/dev/null | grep -E '^ExecStart=' | head -1 | sed 's/^ExecStart=//' | awk '{print $1}' || true)
+              if [ -z "$MEMORA_PY" ] || [ "${MEMORA_PY:0:1}" = "{" ] || [ ! -x "$MEMORA_PY" ]; then
+                MEMORA_PY="/opt/friday_universe/venv/bin/python"
+              fi
+              if "$MEMORA_PY" Memora/scripts/smoke_memory_path.py; then
+                echo "    Memora: memory-path smoke PASSED"
+              else
+                echo "::error::Memora memory-path smoke FAILED after deploy — the memory path is broken even though /health passed; run scripts/rollback_deploy.sh <last-good-sha> or the 'Fleet Rollback' workflow"
+                exit 1
+              fi
+            fi
 
   deploy-server2:
     name: Deploy Specialist Fleet (Server 2)
