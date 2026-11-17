@@ -1,0 +1,128 @@
+# RUNBOOK — TASK-STR-RD-019 declared run (family xs_reversal_volclimax_1d)
+
+The ONE declared backtest run for the volume-climax-conditioned
+cross-sectional reversal family. **Do not run until every gate below
+passes.** A declared run is executed exactly once; the runner refuses
+to re-run into an output directory that already holds RESULTS.md.
+
+Frozen declaration: `xsrev_declaration.json`
+SHA-256 `ffc3c573071ee8014d99d125cbc08551b39f47fb756696e603124b81e86f31f1`
+(workspace copies: `~/workspace/str-xsrev/xsrev_declaration.json` +
+`XSREV_DECLARATION.md`; the differentiation paragraph is byte-identical
+in both — paragraph SHA-256
+`3adfb213394f783f4490674ed29c94c59d75be6e1a648cc724aba695773c1af3`).
+
+## Gate A — declaration on main, hash matching
+
+The declaring PR (a separate step, not part of the prep task) must
+have merged the declaration to origin/main at:
+
+```
+Stratex/rigorous_backtest/rd19/xsrev_declaration.json
+Stratex/rigorous_backtest/rd19/XSREV_DECLARATION.md
+```
+
+Verify from a FRESH checkout of origin/main (never the shared local
+clone's working tree):
+
+```
+sha256sum Stratex/rigorous_backtest/rd19/xsrev_declaration.json
+# must print ffc3c573071ee8014d99d125cbc08551b39f47fb756696e603124b81e86f31f1
+```
+
+The runner re-verifies this hash itself and aborts on any mismatch.
+
+## Gate B — queue ahead concluded
+
+The programme runs ONE declared run at a time — the coordinator
+fires runs one at a time, in queue order. Ahead of this family in
+the declared queue: **SRS** (TASK-IG2-STR-14, School Run Strategy),
+then **S-RD1** (TASK-IG2-STR-19, EMA 5/11), then **RD-018**
+(TASK-STR-RD-018, FX Asia-range fade). All three must have concluded
+(verdict recorded) before this run starts. This family's Bonferroni
+floor already charges for the SRS + S-RD1 cells ahead of it, and the
+run-time ledger read picks up the RD-018 cell if it has run (see the
+run command).
+
+## Gate C — harness pinned and tests green
+
+The harness in `~/workspace/str-xsrev/harness/` must hash to:
+
+```
+xsrev.py      48280584f5469c82b862d27b5a359b7b655e678775c469270a7a40b6a3940c9e
+run_xsrev.py  2f60a42edf439a0f0086be23debfdcb26a210912eb7508c5a9d30381a58b8234
+test_xsrev.py ac19a8813f9852bb88042687d532fb604354d2b222d5374109b3dc3d280e1535
+```
+
+And the synthetic tests must pass against those exact files:
+
+```
+cd ~/workspace/str-xsrev/harness
+PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -p no:cacheprovider -q test_xsrev.py
+# expected: 20 passed
+```
+
+Any hash drift means the code no longer matches what was declared
+and reviewed — stop, do not run, escalate to the coordinator.
+
+## Panel
+
+Default: the S-RD1 run-prep verified panel
+(`~/workspace/srd1-runprep/panel/`, provenance
+`~/workspace/srd1-runprep/panel_provenance.json`, SHA-256
+`1eeea5cdad831cc0338c41f4cb7aaf684cf9d80fecbd6fa19f645652bb464517`).
+The runner verifies every symbol against that provenance (108,192
+rows, 0 missing, csv_sha256) and aborts on any mismatch, then asserts
+the declared aggregation yields exactly 1,127 daily bars per symbol.
+
+Fallback (only if the local panel is gone): regenerate with the
+programme's own loader from Binance Vision (free) into the same
+layout, regenerate the provenance manifest, and cross-check all 30
+csv_sha256 against `Stratex/rigorous_backtest/ig/box_theory_provenance.json`
+on origin/main before running. Any mismatch → stop.
+
+## The run (exactly one)
+
+Compute the trial floor FIRST from the global trial ledger at run
+time: `N_global = max(ledger entering N, 3893) + 1` (minimum 3894;
+α ≤ 0.05/N_global ≤ 1.2840e-05). Then, from a fresh origin/main
+checkout:
+
+```
+cd ~/workspace/str-xsrev/harness
+python3 run_xsrev.py \
+  --repo <fresh origin/main checkout> \
+  --trial-floor <N_global computed above> \
+  --out ~/workspace/str-xsrev/run-output
+```
+
+(--panel-dir and --expected-provenance default to the S-RD1 run-prep
+paths above; pass them explicitly if the panel lives elsewhere.)
+
+## Verdict rules (from the frozen declaration — no discretion)
+
+- Pooled OOS trades at programme costs < 200 → the verdict is
+  exactly **"insufficient OOS trades"** (neither proven nor
+  disproven). This is a live structural possibility — ~212 signal
+  bars total, gated subset — and was declared up front.
+- PASS requires ALL of: check_bar (expectancy > 0, PF ≥ 1.2,
+  ≥ 200 OOS trades, ≥ 4/5 positive folds) AND holdout_check AND
+  Bonferroni p < α, at programme costs (16 bps) AND at the 2×
+  shadow (32 bps). PASS means forward-test CANDIDATE only — the
+  Phase-3 bar (≥100 forward trades, ≥8 weeks on demo, FWD-006
+  sizing) still applies before anything trades.
+- Anything else → FAIL; the family closes (strict OOS PF < 1.2
+  components delete the family per the programme rule).
+
+## Recording (after the run)
+
+1. RESULTS.md + results.json + trades JSONs land in --out.
+2. Board: TASK-STR-RD-019 updated with the verdict + evidence via
+   the coordinator's board PR.
+3. Issue #35: ONE completion comment with the verdict and the real
+   numbers (check-before-post; body_json as a JSON string; read
+   back exactly one copy).
+4. The results files are proposed alongside the declaration at
+   `Stratex/rigorous_backtest/rd19/` via PR. No merge without the
+   coordinator's review. DEMO only; nothing here authorises live
+   trading.
