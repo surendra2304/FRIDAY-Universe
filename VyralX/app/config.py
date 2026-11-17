@@ -84,6 +84,15 @@ class Settings(BaseSettings):
     # follows the channel's existing commentary/attribution model instead.
     viral_source_policy: str = Field(default="transformative", max_length=40)
     viral_channel_handles: str = Field(default="", max_length=1200)
+    # TASK-VYR-014 quality gates: when True (the default) the autopilot path
+    # fails closed — no structured vision record, a static clip, or copy whose
+    # claims/structure/length fail the footage checks means the candidate is
+    # skipped instead of uploaded. The flag exists as an emergency kill
+    # switch only; the owner's 2026-11-17 order is that the gates stay on.
+    viral_quality_gates_enabled: bool = True
+    # A real synthesized music bed under every commentary render (the old
+    # renders claimed [music] in captions with no music audible).
+    viral_music_bed_enabled: bool = True
     inference_generation_path: str = "/v1/task/execute"
     inference_timeout_seconds: int = 60
     # Frame analysis: the commentary must describe what the clip actually shows,
