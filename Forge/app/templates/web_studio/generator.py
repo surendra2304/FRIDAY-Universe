@@ -4,6 +4,7 @@ Synthesizes world-class, 3D interactive, responsive websites on par with Lovable
 Provides distinct domain architectures for E-Commerce, SaaS Platforms, Mission Dashboards, and Portfolios.
 """
 
+import json
 from typing import Any
 
 from app.templates.web_studio.design_system import (
@@ -17,6 +18,108 @@ from app.templates.web_studio.three_d_engine import (
     generate_3d_tilt_script,
     generate_three_d_scene_script,
 )
+
+
+# ---------------------------------------------------------------------------
+# Brief-driven JS snippets (plain strings -- token-replaced, never f-strings,
+# so the JS braces need no escaping). Rendered only when the blueprint's
+# brief model requests them; otherwise the generated app.js is unchanged.
+# ---------------------------------------------------------------------------
+
+_SIGNUP_JS = """
+    // Brief-Requested Signup Form Handler (no backend on a static site:
+    // intercept the submit and confirm on-page instead of navigating away).
+    const signupForm = document.getElementById('signup-form');
+    if (signupForm) {
+        signupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (!signupForm.checkValidity()) {
+                signupForm.reportValidity();
+                return;
+            }
+            const confirmation = document.getElementById('signup-confirmation');
+            if (confirmation) confirmation.style.display = 'block';
+            signupForm.reset();
+        });
+    }
+"""
+
+_LIST_APP_JS_TEMPLATE = """
+    // Brief-Requested List App Runtime (%%NAME%% board, localStorage-persisted)
+    const %%NAME%%StorageKey = '%%KEY%%';
+    const %%NAME%%Form = document.getElementById('%%NAME%%-form');
+    const %%NAME%%List = document.getElementById('%%NAME%%-list');
+    const %%NAME%%Empty = document.getElementById('%%NAME%%-empty');
+    const %%NAME%%Filter = document.getElementById('%%NAME%%-filter');
+    const %%NAME%%Fields = %%FIELDS%%;
+
+    function load%%CAP%%Items() {
+        try { return JSON.parse(localStorage.getItem(%%NAME%%StorageKey)) || []; }
+        catch (e) { return []; }
+    }
+    function save%%CAP%%Items(items) {
+        localStorage.setItem(%%NAME%%StorageKey, JSON.stringify(items));
+    }
+    function render%%CAP%%Items() {
+        if (!%%NAME%%List) return;
+        const items = load%%CAP%%Items();
+        const filter = %%NAME%%Filter ? %%NAME%%Filter.value : 'all';
+        %%NAME%%List.innerHTML = '';
+        let visible = 0;
+        items.forEach(item => {
+            if (filter === 'active' && item.done) return;
+            if (filter === 'completed' && !item.done) return;
+            visible += 1;
+            const li = document.createElement('li');
+            li.className = 'glass-card';
+            li.style.cssText = 'padding: 1rem 1.25rem; border-radius: 0.75rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;';
+            const summary = %%NAME%%Fields.map(f => item[f]).filter(Boolean).join(' - ');
+            const label = document.createElement('span');
+            label.textContent = summary;
+            if (item.done) label.style.textDecoration = 'line-through';
+            const actions = document.createElement('span');
+            actions.style.cssText = 'display: flex; gap: 0.5rem; flex-shrink: 0;';
+%%COMPLETE_BTN%%
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn-modern btn-glass entity-delete-btn';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.setAttribute('data-delete-id', item.id);
+            actions.appendChild(deleteBtn);
+            li.appendChild(label);
+            li.appendChild(actions);
+            %%NAME%%List.appendChild(li);
+        });
+        if (%%NAME%%Empty) %%NAME%%Empty.style.display = visible ? 'none' : 'block';
+    }
+    if (%%NAME%%Form) {
+        %%NAME%%Form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const data = new FormData(%%NAME%%Form);
+            const item = { id: Date.now().toString(), done: false };
+            %%NAME%%Fields.forEach(f => { item[f] = (data.get(f) || '').toString(); });
+            const items = load%%CAP%%Items();
+            items.push(item);
+            save%%CAP%%Items(items);
+            %%NAME%%Form.reset();
+            render%%CAP%%Items();
+        });
+    }
+    if (%%NAME%%List) {
+        %%NAME%%List.addEventListener('click', (e) => {
+            const del = e.target.closest('[data-delete-id]');
+            if (del) {
+                const items = load%%CAP%%Items().filter(i => i.id !== del.getAttribute('data-delete-id'));
+                save%%CAP%%Items(items);
+                render%%CAP%%Items();
+                return;
+            }
+%%COMPLETE_HANDLER%%
+        });
+    }
+    if (%%NAME%%Filter) %%NAME%%Filter.addEventListener('change', render%%CAP%%Items);
+    render%%CAP%%Items();
+"""
 
 
 class ForgeWebStudio:
@@ -57,6 +160,9 @@ class ForgeWebStudio:
         elif blueprint.domain_type == "dashboard":
             html_content = cls._generate_dashboard_html(blueprint, primary_hex, secondary_hex)
             js_content = cls._generate_dashboard_js(blueprint, primary_hex, secondary_hex)
+        elif blueprint.domain_type == "creative":
+            html_content = cls._generate_creative_html(blueprint, primary_hex, secondary_hex)
+            js_content = cls._generate_creative_js(blueprint, primary_hex, secondary_hex)
         else:
             html_content = cls._generate_portfolio_html(blueprint, primary_hex, secondary_hex)
             js_content = cls._generate_portfolio_js(blueprint, primary_hex, secondary_hex)
@@ -89,6 +195,7 @@ class ForgeWebStudio:
         cls, blueprint: DomainBlueprint, primary_hex: str, secondary_hex: str
     ) -> str:
         brand_name = blueprint.app_title.split("—")[0].strip()
+        brief_sections_html = cls._brief_sections_html(blueprint)
 
         hero_badge = getattr(blueprint, "hero_badge", "") or "3D Interactive Showcase • Drag to Inspect"
         social_proof = getattr(blueprint, "social_proof_text", "") or "4.9/5 from 1,200+ verified collectors"
@@ -368,7 +475,7 @@ class ForgeWebStudio:
                 {bento_grid_html}
             </div>
         </section>
-    </main>
+{brief_sections_html}    </main>
 
     <!-- Slide-Out Shopping Cart Drawer -->
     <div id="cart-backdrop" class="cart-drawer-backdrop"></div>
@@ -497,6 +604,7 @@ class ForgeWebStudio:
             scene_type=getattr(blueprint, "three_d_scene_type", "product_turntable"),
         )
         tilt_code = generate_3d_tilt_script()
+        brief_js = cls._brief_js(blueprint)
 
         return f"""// ==========================================================================
 // ForgeWebStudio 3.0 — E-Commerce Application Runtime
@@ -818,7 +926,7 @@ document.addEventListener('DOMContentLoaded', () => {{
             if (detailsModal) detailsModal.style.display = 'none';
         }});
     }}
-}});
+{brief_js}}});
 """
 
     # =========================================================================
@@ -830,6 +938,7 @@ document.addEventListener('DOMContentLoaded', () => {{
         cls, blueprint: DomainBlueprint, primary_hex: str, secondary_hex: str
     ) -> str:
         brand_name = blueprint.app_title.split("—")[0].strip()
+        brief_sections_html = cls._brief_sections_html(blueprint)
 
         # Features bento
         bento_cards = []
@@ -1172,7 +1281,7 @@ document.addEventListener('DOMContentLoaded', () => {{
                 </div>
             </div>
         </section>
-    </main>
+{brief_sections_html}    </main>
 
     <!-- Interactive Live Demo Modal -->
     <div id="demo-modal" class="modal-backdrop" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 1100; display: none; align-items: center; justify-content: center; padding: 1.5rem;">
@@ -1219,6 +1328,7 @@ document.addEventListener('DOMContentLoaded', () => {{
             domain_type="saas",
         )
         tilt_code = generate_3d_tilt_script()
+        brief_js = cls._brief_js(blueprint)
 
         return f"""// ==========================================================================
 // ForgeWebStudio 3.0 — SaaS Platform Application Runtime
@@ -1335,7 +1445,7 @@ document.addEventListener('DOMContentLoaded', () => {{
             }});
         }});
     }}
-}});
+{brief_js}}});
 """
 
     # =========================================================================
@@ -1347,6 +1457,7 @@ document.addEventListener('DOMContentLoaded', () => {{
         cls, blueprint: DomainBlueprint, primary_hex: str, secondary_hex: str
     ) -> str:
         brand_name = blueprint.app_title.split("—")[0].strip()
+        brief_sections_html = cls._brief_sections_html(blueprint)
 
         # Telemetry table rows — dynamically generated from blueprint.showcase_items
         kpi_metrics = getattr(blueprint, "kpi_metrics", {})
@@ -1623,7 +1734,7 @@ document.addEventListener('DOMContentLoaded', () => {{
                 </div>
             </div>
         </section>
-    </main>
+{brief_sections_html}    </main>
 
     <!-- Slide-Out Alerts Drawer -->
     <div id="alerts-backdrop" class="cart-drawer-backdrop"></div>
@@ -1687,6 +1798,7 @@ document.addEventListener('DOMContentLoaded', () => {{
             domain_type="dashboard",
         )
         tilt_code = generate_3d_tilt_script()
+        brief_js = cls._brief_js(blueprint)
 
         return f"""// ==========================================================================
 // ForgeWebStudio 3.0 — Mission Dashboard Application Runtime
@@ -1846,7 +1958,7 @@ document.addEventListener('DOMContentLoaded', () => {{
             }});
         }});
     }}
-}});
+{brief_js}}});
 """
 
     # =========================================================================
@@ -1857,6 +1969,7 @@ document.addEventListener('DOMContentLoaded', () => {{
     def _generate_portfolio_html(
         cls, blueprint: DomainBlueprint, primary_hex: str, secondary_hex: str
     ) -> str:
+        brief_sections_html = cls._brief_sections_html(blueprint)
         filter_buttons = []
         for i, cat in enumerate(blueprint.categories):
             active_class = "active" if i == 0 else ""
@@ -2187,7 +2300,7 @@ document.addEventListener('DOMContentLoaded', () => {{
                 </button>
             </form>
         </section>
-    </main>
+{brief_sections_html}    </main>
 
     <!-- Details Modal Dialog -->
     <div id="details-modal" class="modal-backdrop" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 1100; display: none; align-items: center; justify-content: center; padding: 1.5rem;">
@@ -2224,6 +2337,7 @@ document.addEventListener('DOMContentLoaded', () => {{
             domain_type="portfolio",
         )
         tilt_code = generate_3d_tilt_script()
+        brief_js = cls._brief_js(blueprint)
 
         return f"""// ==========================================================================
 // ForgeWebStudio 3.0 — Portfolio / Cyberpunk Application Runtime
@@ -2445,7 +2559,7 @@ document.addEventListener('DOMContentLoaded', () => {{
             contactForm.replaceWith(confirmation);
         }});
     }}
-}});
+{brief_js}}});
 """
 
     @classmethod
@@ -2476,4 +2590,385 @@ Generated autonomously by **Project FORGE 3.0 (WebStudio Engine)**.
 python -m http.server 5000
 ```
 Open [http://localhost:5000](http://localhost:5000) in your browser.
+"""
+
+    # =========================================================================
+    # 5. BRIEF-DRIVEN SECTIONS (requested sections / list-app module)
+    # =========================================================================
+    # The blueprint carries a brief model (requested_sections / app_entity /
+    # brief_subject) extracted from goal + requirements by DomainSynthesizer.
+    # These builders render the sections the brief actually named. When the
+    # brief names nothing, both composers return "" and every archetype's
+    # output is byte-identical to the pre-fix templates.
+
+    @classmethod
+    def _brief_sections_html(cls, blueprint: DomainBlueprint) -> str:
+        parts: list[str] = []
+        entity = getattr(blueprint, "app_entity", None)
+        if entity:
+            parts.append(cls._list_app_section_html(blueprint, entity))
+        sections = getattr(blueprint, "requested_sections", []) or []
+        if "signup_form" in sections:
+            parts.append(cls._signup_section_html(blueprint))
+        if "testimonials" in sections:
+            parts.append(cls._testimonials_section_html(blueprint))
+        if not parts:
+            return ""
+        return "".join(parts) + "\n"
+
+    @classmethod
+    def _signup_section_html(cls, blueprint: DomainBlueprint) -> str:
+        brand_name = blueprint.app_title.split("—")[0].strip()
+        subject = getattr(blueprint, "brief_subject", "") or "our service"
+        return f"""
+        <!-- Brief-Requested Signup Section -->
+        <section id="signup" style="max-width: 700px; margin: 0 auto 6rem auto; padding: 0 1.5rem;">
+            <div class="glass-card" style="padding: 2.5rem; border-radius: 1.25rem; text-align: center;">
+                <h2 style="font-size: 2rem; margin-bottom: 0.75rem;">Get Started with {brand_name}</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1.75rem; line-height: 1.6;">{brand_name} is {subject}. Leave your email address and we will be in touch with next steps.</p>
+                <form id="signup-form" style="display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center;">
+                    <input type="email" name="email" required placeholder="you@example.com" aria-label="Email address" style="flex: 1; min-width: 240px; padding: 0.7rem 1rem; border-radius: 0.6rem; background: var(--bg-base); border: 1px solid var(--border-subtle); color: var(--text-primary); outline: none;">
+                    <button type="submit" class="btn-modern btn-primary"><span>Sign Up</span></button>
+                </form>
+                <p id="signup-confirmation" role="status" style="display: none; margin-top: 1rem; color: var(--success); font-weight: 600;">Thanks for signing up -- please check your inbox to confirm.</p>
+            </div>
+        </section>"""
+
+    @classmethod
+    def _testimonials_section_html(cls, blueprint: DomainBlueprint) -> str:
+        brand_name = blueprint.app_title.split("—")[0].strip()
+        subject = getattr(blueprint, "brief_subject", "") or "the service"
+        quotes = [
+            f"We switched to {brand_name} for {subject} and it has been flawless from the first week.",
+            f"Exactly what we needed -- {subject} without any of the usual hassle.",
+            f"I recommend {brand_name} to everyone who asks me about {subject}.",
+        ]
+        cards = "\n".join(
+            f"""
+                <div class="glass-card" style="padding: 1.75rem; border-radius: 1rem;">
+                    <div class="trust-stars" style="margin-bottom: 0.75rem;">★★★★★</div>
+                    <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem;">"{q}"</p>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">-- Verified customer, {brand_name}</span>
+                </div>"""
+            for q in quotes
+        )
+        return f"""
+        <!-- Brief-Requested Testimonials Section -->
+        <section id="testimonials" style="max-width: 1200px; margin: 0 auto 6rem auto; padding: 0 1.5rem;">
+            <div style="text-align: center; margin-bottom: 2.5rem;">
+                <h2 style="font-size: 2.2rem; margin-bottom: 0.75rem;">What Our Customers Say</h2>
+                <p style="color: var(--text-secondary);">Real feedback from people who use {brand_name}.</p>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                {cards}
+            </div>
+        </section>"""
+
+    @classmethod
+    def _list_app_section_html(cls, blueprint: DomainBlueprint, entity: dict[str, Any]) -> str:
+        brand_name = blueprint.app_title.split("—")[0].strip()
+        name = entity["name"]
+        plural = entity["plural"]
+        input_style = (
+            "width: 100%; padding: 0.65rem 0.85rem; border-radius: 0.5rem; "
+            "background: var(--bg-base); border: 1px solid var(--border-subtle); "
+            "color: var(--text-primary); outline: none;"
+        )
+        label_style = (
+            "display: flex; flex-direction: column; gap: 0.35rem; flex: 1; "
+            "min-width: 160px; font-size: 0.85rem; color: var(--text-secondary);"
+        )
+        controls = []
+        for fld in entity["fields"]:
+            fname, flabel, ftype = fld["name"], fld["label"], fld["type"]
+            if ftype == "select":
+                options = "".join(
+                    f'<option value="{o}">{o}</option>' for o in fld.get("options", [])
+                )
+                control = f'<select name="{fname}" aria-label="{flabel}" style="{input_style}">{options}</select>'
+            elif ftype == "date":
+                control = f'<input type="date" name="{fname}" aria-label="{flabel}" style="{input_style}">'
+            else:
+                required = " required" if fname in {"title", "name"} else ""
+                control = (
+                    f'<input type="text" name="{fname}"{required} placeholder="{flabel}" '
+                    f'aria-label="{flabel}" style="{input_style}">'
+                )
+            controls.append(f'<label style="{label_style}">{flabel}{control}</label>')
+        controls_html = "\n                ".join(controls)
+
+        filter_html = ""
+        if "filter_status" in entity.get("actions", []):
+            filter_html = f"""
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                <select id="{name}-filter" aria-label="Filter by status" style="padding: 0.55rem 0.85rem; border-radius: 0.5rem; background: var(--bg-base); border: 1px solid var(--border-subtle); color: var(--text-primary); outline: none;">
+                    <option value="all">All {plural}</option>
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>"""
+
+        return f"""
+        <!-- Brief-Requested List App Module -->
+        <section id="{name}-app" style="max-width: 850px; margin: 0 auto 6rem auto; padding: 0 1.5rem;">
+            <div style="text-align: center; margin-bottom: 2.5rem;">
+                <h2 style="font-size: 2.2rem; margin-bottom: 0.75rem;">{brand_name} -- Your {plural.capitalize()}</h2>
+                <p style="color: var(--text-secondary);">Add a {name} below and track it here. Your {plural} are saved in your browser.</p>
+            </div>
+            <form id="{name}-form" class="glass-card" style="padding: 1.75rem; border-radius: 1rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; margin-bottom: 1.5rem;">
+                {controls_html}
+                <button type="submit" class="btn-modern btn-primary"><span>Add {name.capitalize()}</span></button>
+            </form>
+            {filter_html}
+            <ul id="{name}-list" style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.75rem;"></ul>
+            <p id="{name}-empty" style="color: var(--text-muted); text-align: center; margin-top: 1rem;">No {plural} yet -- add your first {name} above.</p>
+        </section>"""
+
+    @classmethod
+    def _brief_js(cls, blueprint: DomainBlueprint) -> str:
+        parts: list[str] = []
+        entity = getattr(blueprint, "app_entity", None)
+        if entity:
+            parts.append(cls._list_app_js(entity))
+        if "signup_form" in (getattr(blueprint, "requested_sections", []) or []):
+            parts.append(_SIGNUP_JS)
+        return "".join(parts)
+
+    @classmethod
+    def _list_app_js(cls, entity: dict[str, Any]) -> str:
+        name = entity["name"]
+        complete_btn = ""
+        complete_handler = ""
+        if "complete" in entity.get("actions", []):
+            complete_btn = """
+            const completeBtn = document.createElement('button');
+            completeBtn.type = 'button';
+            completeBtn.className = 'btn-modern btn-glass entity-complete-btn';
+            completeBtn.textContent = item.done ? 'Reopen' : 'Mark complete';
+            completeBtn.setAttribute('data-complete-id', item.id);
+            actions.appendChild(completeBtn);"""
+            complete_handler = """
+            const comp = e.target.closest('[data-complete-id]');
+            if (comp) {
+                const items = load%%CAP%%Items();
+                items.forEach(i => { if (i.id === comp.getAttribute('data-complete-id')) i.done = !i.done; });
+                save%%CAP%%Items(items);
+                render%%CAP%%Items();
+            }"""
+        js = _LIST_APP_JS_TEMPLATE
+        js = js.replace("%%COMPLETE_BTN%%", complete_btn)
+        js = js.replace("%%COMPLETE_HANDLER%%", complete_handler)
+        js = js.replace("%%FIELDS%%", json.dumps([f["name"] for f in entity["fields"]]))
+        js = js.replace("%%KEY%%", entity["storage_key"])
+        js = js.replace("%%CAP%%", name.capitalize())
+        js = js.replace("%%NAME%%", name)
+        return js
+
+    # =========================================================================
+    # 6. CREATIVE / GENERIC APP ARCHITECTURE (brief-driven generic skeleton)
+    # =========================================================================
+    # domain_type="creative" is the classifier's fallthrough. It used to be
+    # rendered by the portfolio skeleton, so an app brief inherited portfolio
+    # headings ("Featured Engineering Systems", "Core Competencies") that have
+    # nothing to do with the brief. This branch renders a generic app page
+    # from the blueprint + brief model instead.
+
+    @classmethod
+    def _generate_creative_html(
+        cls, blueprint: DomainBlueprint, primary_hex: str, secondary_hex: str
+    ) -> str:
+        brand_name = blueprint.app_title.split("—")[0].strip()
+        subject = getattr(blueprint, "brief_subject", "") or ""
+        hero_sub = f"{brand_name} is {subject}." if subject else blueprint.subheadline
+        brief_sections_html = cls._brief_sections_html(blueprint)
+
+        cards_html = []
+        for item in blueprint.showcase_items:
+            tags_html = "".join([f'<span class="pill-badge">{t}</span>' for t in item.get("tags", [])])
+            cards_html.append(f"""
+            <article class="glass-card showcase-card tilt-card" data-category="{item['category']}" data-id="{item['id']}">
+                <div class="card-header-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <span class="category-pill" style="font-size: 0.75rem; font-weight: 600; color: var(--primary); text-transform: uppercase;">{item['category']}</span>
+                    <span class="metrics-pill" style="font-size: 0.75rem; color: var(--text-muted); background: rgba(255, 255, 255, 0.05); padding: 0.2rem 0.6rem; border-radius: 9999px; border: 1px solid var(--border-subtle);">{item.get('metrics', '')}</span>
+                </div>
+                <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">{item['title']}</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5;">{item['description']}</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">{tags_html}</div>
+            </article>""")
+        showcase_grid_html = "\n".join(cards_html)
+
+        bento_cards = []
+        for feat in blueprint.features_bento:
+            bento_cards.append(f"""
+            <div class="glass-card bento-card tilt-card" style="padding: 1.75rem; border-radius: 1rem;">
+                <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                    <i data-lucide="{feat.get('icon', 'sparkles')}" style="width: 24px; height: 24px; color: var(--primary);"></i>
+                </div>
+                <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--primary); margin-bottom: 0.5rem;">{feat.get('highlight', 'Feature')}</div>
+                <h4 style="font-size: 1.2rem; margin-bottom: 0.5rem;">{feat['title']}</h4>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">{feat['subtitle']}</p>
+            </div>""")
+        bento_grid_html = "\n".join(bento_cards)
+
+        return f"""<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{blueprint.app_title}</title>
+    <meta name="description" content="{blueprint.meta_description}">
+
+    {GOOGLE_FONTS_LINK}
+    {THREE_JS_CDN}
+    {LUCIDE_ICONS_CDN}
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="ambient-glow-layer">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <header class="glass-panel" style="position: sticky; top: 1rem; margin: 1rem auto; max-width: 1200px; width: calc(100% - 2rem); z-index: 50; padding: 0.75rem 1.5rem; border-radius: 9999px;">
+        <nav style="display: flex; justify-content: space-between; align-items: center;">
+            <a href="#" style="font-family: var(--font-heading); font-size: 1.35rem; font-weight: 800; color: var(--text-primary); text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                <i data-lucide="zap" style="color: var(--primary);"></i>
+                <span class="gradient-text">{brand_name}</span>
+            </a>
+
+            <button id="theme-toggle" class="btn-modern btn-glass" style="padding: 0.45rem 0.85rem; border-radius: 9999px;" aria-label="Toggle Theme">
+                <i data-lucide="sun" id="theme-icon-sun" style="display: none; width: 18px; height: 18px;"></i>
+                <i data-lucide="moon" id="theme-icon-moon" style="display: inline; width: 18px; height: 18px;"></i>
+            </button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-split-section">
+            <div class="hero-split-container">
+                <div class="hero-copy-col">
+                    <div style="margin-bottom: 1.25rem;">
+                        <span class="pill-badge">
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success); display: inline-block; box-shadow: 0 0 10px var(--success);"></span>
+                            {subject.capitalize() if subject else "Interactive Web Application"}
+                        </span>
+                    </div>
+
+                    <h1 class="hero-title">
+                        {blueprint.headline}
+                    </h1>
+
+                    <p class="hero-subheadline">
+                        {hero_sub}
+                    </p>
+
+                    <div class="hero-cta-group">
+                        <a href="#showcase" class="btn-modern btn-primary">
+                            <span>{blueprint.primary_cta}</span>
+                            <i data-lucide="sparkles" style="width: 18px; height: 18px;"></i>
+                        </a>
+                        <a href="#features" class="btn-modern btn-glass">
+                            <span>{blueprint.secondary_cta}</span>
+                            <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="hero-stage-col">
+                    <div class="viewport-card tilt-card">
+                        <div class="canvas-wrapper">
+                            <canvas id="webstudio-3d-canvas"></canvas>
+                            <div class="viewport-chip chip-bottom-right">
+                                <span>Drag to Spin ↻</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+{brief_sections_html}        <!-- Showcase Section -->
+        <section id="showcase" style="max-width: 1200px; margin: 0 auto 5rem auto; padding: 0 1.5rem;">
+            <div style="text-align: center; margin-bottom: 2.5rem;">
+                <h2 style="font-size: 2.2rem; margin-bottom: 0.75rem;">Explore {brand_name}</h2>
+                <p style="color: var(--text-secondary); max-width: 550px; margin: 0 auto;">Everything {brand_name} does, in one place.</p>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.75rem;">
+                {showcase_grid_html}
+            </div>
+        </section>
+
+        <!-- Highlights Bento Section -->
+        <section id="features" style="max-width: 1200px; margin: 0 auto 5rem auto; padding: 0 1.5rem;">
+            <div style="text-align: center; margin-bottom: 3rem;">
+                <h2 style="font-size: 2.2rem; margin-bottom: 0.75rem;">Highlights</h2>
+                <p style="color: var(--text-secondary);">Built into every {brand_name} experience.</p>
+            </div>
+            <div class="bento-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                {bento_grid_html}
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer style="max-width: 1200px; margin: 4rem auto 2rem auto; padding: 2rem 1.5rem; border-top: 1px solid var(--border-subtle); text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+        <p>© 2026 {brand_name}. Synthesized autonomously with Project FORGE WebStudio.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
+"""
+
+    @classmethod
+    def _generate_creative_js(
+        cls, blueprint: DomainBlueprint, primary_hex: str, secondary_hex: str
+    ) -> str:
+        three_d_code = generate_three_d_scene_script(
+            canvas_id="webstudio-3d-canvas",
+            scene_mode="portfolio",
+            primary_hex=primary_hex,
+            accent_hex=secondary_hex,
+            domain_type="creative",
+        )
+        tilt_code = generate_3d_tilt_script()
+        brief_js = cls._brief_js(blueprint)
+
+        return f"""// ==========================================================================
+// ForgeWebStudio 3.0 -- Creative / Generic App Application Runtime
+// ==========================================================================
+
+{three_d_code}
+
+{tilt_code}
+
+document.addEventListener('DOMContentLoaded', () => {{
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    // Theme Management
+    const themeToggle = document.getElementById('theme-toggle');
+    const sunIcon = document.getElementById('theme-icon-sun');
+    const moonIcon = document.getElementById('theme-icon-moon');
+
+    function applyTheme(theme) {{
+        document.documentElement.setAttribute('data-theme', theme);
+        if (sunIcon && moonIcon) {{
+            sunIcon.style.display = theme === 'light' ? 'inline' : 'none';
+            moonIcon.style.display = theme === 'dark' ? 'inline' : 'none';
+        }}
+    }}
+    const savedTheme = localStorage.getItem('forge_theme') || 'dark';
+    applyTheme(savedTheme);
+
+    if (themeToggle) {{
+        themeToggle.addEventListener('click', () => {{
+            const current = document.documentElement.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            applyTheme(next);
+            localStorage.setItem('forge_theme', next);
+        }});
+    }}
+{brief_js}}});
 """
