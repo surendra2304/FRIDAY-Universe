@@ -10570,6 +10570,26 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "COORDINATION: growth crew owns metadata/thumbnails/analytics (TASK-VYR-014 touches build_metadata only for the grounded fallback question, hashtag dedupe and the record= parameter; merges stay serial). Uploads remain PAUSED (vyralx-autopilot.timer disabled by the deletion crew) until the coordinator watches the self-test render and orders re-enable. The 5 public videos and the daemon lane are untouched by this task."
     blockers: []
     next_action: "Supervisor review of PR #884, then serial-lane merge; coordinator watches the self-test render (path in the issue #35 completion comment) and alone orders the autopilot timer re-enabled. Follow-ups if the render passes: none for this task - flip to VERIFIED after merge + deploy + one production cycle observed."
+  - id: TASK-INT-012
+    title: "IntelX /healthz hygiene: process-only liveness (no per-call Oracle query); /readyz unchanged"
+    owner: muse_ai
+    status: IN_REVIEW
+    pr: 888
+    branch: claude/task-int-012-healthz-liveness
+    created_at: "2026-11-17T12:00:00+05:30"
+    updated_at: "2026-11-17T12:00:00+05:30"
+    files:
+      - "IntelX/intelx/api/v1/health.py"
+      - "IntelX/tests/test_health.py"
+      - "IntelX/tests/test_healthz_liveness.py"
+      - "IntelX/README.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    evidence:
+      - "Diagnosis (~/workspace/intelx-latency/STATE.md): IntelX's ~6.9s health latency is swap page-in of an idle process (PROVEN: the no-DB /api/v1/version endpoint paid 8.32s cold); the warm /healthz cost of 0.08-0.21s was the handler's own work - pool checkout + pre-ping + SELECT 1 FROM DUAL against cloud Oracle ADB on EVERY call. This task is HYGIENE ONLY (removes the warm round trips + stale-pool reconnect exposure); it is NOT the latency cure - the cure is the MemorySwapMax swap-cap treatment / ARM headroom, tracked separately."
+      - "Consumer census before any change (origin/main 64ca017a; 17 consumers read in code): every gating consumer (Fleet CD post-deploy health gate in deploy-monorepo.yml, scripts/fleet_health_watcher.py, Sentinel fleet_audit_pipeline, fleet-live-validation.yml, IntelX Docker HEALTHCHECK) reads the HTTP status code ONLY - and /healthz returns HTTP 200 even with the DB down today, so none of them receives a database signal today. Body readers: FRIDAY fleet probe + cognition mesh probe + mesh keepalive read `status` as peer self-description (field retained; it now reports liveness, the endpoint's documented contract); FRIDAY ask_intelx reads `database` for DISPLAY only and never branches on it (field retained as \"not_checked\", set from a non-query source). The real DB readiness signal lives at /readyz, unchanged."
+      - "Change: the healthz handler no longer awaits check_database_health(); status=\"ok\" (process liveness), database=\"not_checked\"; response key set identical {status, evidence_class, observed_at, service, version, mock_mode, database, timestamp}; HTTP 200 + HEAD + /health alias unchanged; /readyz and /metrics byte-identical to main (diff-verified). README health section corrected to match."
+      - "Tests: new IntelX/tests/test_healthz_liveness.py (5 tests - spy on the health module's check_database_health asserts ZERO calls for /healthz and /health; 200/ok/not_checked with the DB check forced down; exact consumer key-set pin; /readyz still exercises the check exactly once and reports connected). test_health.py healthz assertion updated database ok -> not_checked. Local A/B via standalone harness (real handler file loaded with stubbed intelx deps, mounted at root + /api/v1 exactly as production): branch 13/13 PASS; pristine main fails exactly the 5 new-behaviour checks, neighbours identical. Full repo suite = CI on this PR."
+    next_action: "Supervisor review -> serial-lane merge. Post-merge: no config change; semantics go live when IntelX restarts on the new code via normal Fleet CD. Flip VERIFIED after deploy + a production /healthz read-back showing database=not_checked."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
