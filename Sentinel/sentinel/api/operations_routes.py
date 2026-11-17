@@ -52,6 +52,7 @@ class DeployWatchdogReport(BaseModel):
     server: str
     deployed_head: str
     tree_clean: bool | None = None
+    branch: str | None = None
 
 
 @operations_router.get("/alerts")
@@ -162,5 +163,6 @@ async def report_deployed_head(request: DeployWatchdogReport) -> dict[str, Any]:
         lambda: request.deployed_head,
         lambda: git_remote_main_head(repo_url),
         deployed_tree_provider=lambda: request.tree_clean,
+        deployed_branch_provider=lambda: request.branch,
     )
     return state.model_dump(mode="json")
