@@ -1335,6 +1335,30 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
+def _start_sensitivity():
+    """Gemini start-of-speech sensitivity for the realtime config
+    (TASK-VOI-018). Pure — unit-tested.
+
+    Default LOW (env FRIDAY_VOICE_AAD_START_SENSITIVITY=high restores
+    the pre-VOI-018 behaviour): LOW is the documented setting for
+    noisy environments — the server demands stronger speech evidence
+    before committing to a start-of-speech, so steady background
+    noise (a fan) and low-level room audio no longer register as a
+    user turn and interrupt the agent mid-answer. Genuine barge-in
+    is close-mic, full-level speech and still commits; the 200 ms
+    prefix padding preserves its first syllable. Any value other
+    than "high" (including junk) resolves to LOW — the safe side
+    for this defect. Returns None when the genai SDK lacks the
+    sensitivity enum (the caller then builds no config at all).
+    """
+    if genai_types is None:
+        return None
+    raw = (os.getenv("FRIDAY_VOICE_AAD_START_SENSITIVITY") or "").strip().lower()
+    if raw == "high":
+        return genai_types.StartSensitivity.START_SENSITIVITY_HIGH
+    return genai_types.StartSensitivity.START_SENSITIVITY_LOW
+
+
 def _realtime_input_config():
     """RealtimeInputConfig pinning Gemini's automatic activity detection.
 
@@ -1344,10 +1368,18 @@ def _realtime_input_config():
     and turn finalization. Google's configuration guidance is to pin
     all four explicitly. Shipped values (each env-overridable):
 
-    - start_of_speech_sensitivity HIGH: the server commits to
-      start-of-speech eagerly, so a user speaking DURING playback
-      raises Gemini's `interrupted` signal promptly instead of being
-      absorbed under the agent's own audio tail.
+    - start_of_speech_sensitivity LOW (TASK-VOI-018; env
+      FRIDAY_VOICE_AAD_START_SENSITIVITY=high restores the VOI-012
+      value): VOI-012 shipped HIGH so a barge-in would raise Gemini's
+      `interrupted` signal promptly — but the owner's 2026-11-17 live
+      test showed the cost: ordinary background noise (a fan)
+      registered as user turns and stopped FRIDAY mid-answer at a
+      1–4 s cadence (journal: >=9 speaking->listening flips in ~37 s,
+      fragment transcripts in the gaps). LOW demands stronger speech
+      evidence before a start-of-speech commits, so steady noise no
+      longer interrupts; real speech still does (activity_handling
+      below is unchanged, and prefix padding keeps the first
+      syllable of a genuine barge-in).
     - activity_handling START_OF_ACTIVITY_INTERRUPTS: stated
       explicitly (it is the API default) so the interrupt contract
       does not drift with plugin/API defaults: detected user activity
@@ -1370,9 +1402,7 @@ def _realtime_input_config():
         return None
     try:
         aad = genai_types.AutomaticActivityDetection(
-            start_of_speech_sensitivity=(
-                genai_types.StartSensitivity.START_SENSITIVITY_HIGH
-            ),
+            start_of_speech_sensitivity=_start_sensitivity(),
             end_of_speech_sensitivity=(
                 genai_types.EndSensitivity.END_SENSITIVITY_HIGH
             ),
