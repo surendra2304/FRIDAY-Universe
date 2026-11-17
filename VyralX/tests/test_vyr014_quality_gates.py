@@ -398,6 +398,16 @@ def test_eventful_frames_pass_the_arc_gate():
 # --------------------------------------------------------------------------- #
 # vision record coercion (the record is the only source of truth)
 # --------------------------------------------------------------------------- #
+def test_record_pass_respects_provider_image_cap():
+    # Proven on the production host (2026-11-17, staging self-test): the
+    # vision provider rejects >3 images per request with HTTP 400 "Too many
+    # images provided. This model supports up to 3 images" — a six-frame
+    # record pass made EVERY candidate skip as vision_unavailable.
+    from app.services.scene_analysis import _RECORD_POSITIONS
+    assert sum(len(positions) for positions in _RECORD_POSITIONS) <= 3
+    assert len(_RECORD_POSITIONS) == 3  # one frame per beat
+
+
 def test_coerce_record_validates_and_pads():
     payload = {
         "beats": [

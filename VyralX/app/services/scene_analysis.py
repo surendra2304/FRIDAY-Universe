@@ -9,7 +9,8 @@ Two passes live here:
 * :func:`describe_scene` — the original free-text pass (three frames, three
   numbered lines). Kept for callers that only need prose.
 * :func:`analyze_scene` — the structured vision record the quality gates
-  consume (TASK-VYR-014): six frames, two per beat, returned as strict JSON
+  consume (TASK-VYR-014): three frames, one per beat (the provider caps a
+  request at 3 images), returned as strict JSON
   with per-beat setting, time of day, subjects (hair, clothing, posture,
   action, emotion, eyes), objects and a summary, plus the clip's event arc.
   Unlike the free-text pass it is NOT best-effort: it returns ``None`` on any
@@ -142,13 +143,19 @@ def describe_scene(source_path: Path | str, duration: float) -> str:
 # and clothing are the visible, checkable attributes.
 # --------------------------------------------------------------------------- #
 
-# Two frames per beat (the beat anchors are 15% / 50% / 85% of the clip, the
-# same anchors the scene-timed renderer narrates against).
-_RECORD_POSITIONS = ((0.08, 0.22), (0.43, 0.57), (0.78, 0.92))
+# One frame per beat, at the beat anchors (15% / 50% / 85% of the clip —
+# the same anchors the scene-timed renderer narrates against). The vision
+# provider's hard cap is 3 images per request (proven on the production
+# host 2026-11-17: a six-frame request is rejected with HTTP 400 "Too many
+# images provided. This model supports up to 3 images"), so the record
+# pass sends exactly three. The event-arc measurement in viral_quality
+# samples ten frames independently, so motion evidence does not depend on
+# this pass.
+_RECORD_POSITIONS = ((0.15,), (0.50,), (0.85,))
 
 _RECORD_PROMPT = (
-    "These six frames are sampled from one short vertical clip, in order. "
-    "Frames 1-2 are the START beat, frames 3-4 the MIDDLE beat, frames 5-6 "
+    "These three frames are sampled from one short vertical clip, in "
+    "order. Frame 1 is the START beat, frame 2 the MIDDLE beat, frame 3 "
     "the END beat. Describe ONLY what is visible - never guess a joke, a "
     "line of dialogue, a motive, or any detail that is not in the frames. "
     "Never describe a person's race, ethnicity or skin colour; describe "
@@ -167,7 +174,7 @@ _RECORD_PROMPT = (
     '"event_arc": "one sentence: what changes from the start beat to the end beat", '
     '"static": false}\n'
     "Exactly three beats. Set \"static\" to true only if essentially nothing "
-    "changes across all six frames. Set a field to \"unknown\" whenever the "
+    "changes across all three frames. Set a field to \"unknown\" whenever the "
     "frames do not show it clearly - an honest unknown is far better than a "
     "guess, because every word of the narration will be checked against "
     "this record."
