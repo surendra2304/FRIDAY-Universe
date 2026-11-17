@@ -761,7 +761,9 @@ class OrchestratorCore:
 
         return task, executed_nodes
 
-    async def _module_completeness(self, task_id: str, task: TaskEntity):
+    async def _module_completeness(
+        self, task_id: str, task: TaskEntity, include_test_files: bool = False
+    ):
         """Run the TASK-FRG-010 module completeness gate for a task.
 
         Returns the gate's report, or None when the gate itself could not
@@ -777,6 +779,7 @@ class OrchestratorCore:
                 task_id,
                 goal=task.goal or "",
                 requirements=list(task.requirements or []),
+                include_test_files=include_test_files,
             )
         except Exception as exc:
             logger.error(
@@ -852,29 +855,63 @@ class OrchestratorCore:
         # goal/manifest modules that the create route cannot produce
         # fails here, naming them, instead of being judged on an
         # incomplete file set.
-        if task.state == TaskState.COMPLETED:
-            completeness = await self._module_completeness(task_id, task)
+        #
+        # TASK-FRG-013: the backstop used to run only when the DAG ended
+        # COMPLETED. The FRG-009 battery's G5 is the counterexample: its
+        # DAG ended FAILED (its gates failed over the incomplete set --
+        # taskboard/db.py, api.py and cli.py were never written), so the
+        # backstop never ran, nothing healed or named the missing
+        # modules, and the build settled as a battery PARTIAL_FAILURE
+        # whose only sign of the real defect was a pytest collection
+        # error. The backstop therefore also runs for FAILED tasks: the
+        # gate still heals what it can, and whatever remains missing is
+        # recorded under the completeness name -- without overwriting
+        # the failed task's original error. The backstop also includes
+        # goal/manifest-declared TEST files (include_test_files): the
+        # Tester role has finished by now, so a declared test file that
+        # still does not exist (G5's tests/test_api.py) is a layout
+        # miss like any other.
+        if task.state in (TaskState.COMPLETED, TaskState.FAILED):
+            completeness = await self._module_completeness(
+                task_id, task, include_test_files=True
+            )
             if completeness is not None and completeness.missing:
                 reason = completeness.failure_message()
-                task = await self.lifecycle.transition(
-                    task_id=task_id,
-                    to_state=TaskState.FAILED,
-                    reason=reason,
-                    error_message=reason,
-                    progress_percentage=100,
-                )
-                await self.store.record_event(
-                    task_id=task_id,
-                    event_type="task.failed",
-                    payload={
-                        "reason": reason,
-                        "module_completeness_gate": True,
-                        "missing_modules": completeness.missing,
-                    },
-                )
-                production_monitor.record_task_event("failed")
-                await _finalize_tracker(task_id, success=False)
-                return task
+                if task.state == TaskState.FAILED:
+                    logger.error(
+                        f"[Task {task_id}] Completeness backstop on an "
+                        f"already-failed task: {reason}"
+                    )
+                    await self.store.record_event(
+                        task_id=task_id,
+                        event_type="module_completeness.backstop",
+                        payload={
+                            "reason": reason,
+                            "module_completeness_gate": True,
+                            "missing_modules": completeness.missing,
+                            "task_state": task.state.value,
+                        },
+                    )
+                else:
+                    task = await self.lifecycle.transition(
+                        task_id=task_id,
+                        to_state=TaskState.FAILED,
+                        reason=reason,
+                        error_message=reason,
+                        progress_percentage=100,
+                    )
+                    await self.store.record_event(
+                        task_id=task_id,
+                        event_type="task.failed",
+                        payload={
+                            "reason": reason,
+                            "module_completeness_gate": True,
+                            "missing_modules": completeness.missing,
+                        },
+                    )
+                    production_monitor.record_task_event("failed")
+                    await _finalize_tracker(task_id, success=False)
+                    return task
 
         final_report = await self._verify_and_repair(task_id)
         task = await self.store.get_task(task_id) or task

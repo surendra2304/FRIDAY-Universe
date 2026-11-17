@@ -32,6 +32,7 @@ from app.verification.evidence import (
     VerificationReport,
     VerificationStageResult,
 )
+from app.verification.golden_values import GoldenValueChecker
 from app.verification.security_gate import OutputSecurityGateChecker
 from app.verification.source_integrity import project_snapshot
 from app.verification.expanded_battery import (
@@ -48,7 +49,9 @@ logger = get_logger("verification.engine")
 # TASK-REL-028 shape: a program writing its own module at import time), so
 # these stay serialised -- in their original relative order -- while every
 # read-only checker runs concurrently. See _run_checkers().
-_EXECUTING_CHECKERS = frozenset({"TestChecker", "RuntimeChecker", "BrowserChecker"})
+_EXECUTING_CHECKERS = frozenset(
+    {"TestChecker", "RuntimeChecker", "BrowserChecker", "GoldenValueChecker"}
+)
 
 
 class VerificationEngine:
@@ -91,6 +94,12 @@ class VerificationEngine:
             BuildChecker(),
             LintChecker(),
             TestChecker(),
+            # TASK-FRG-013: execute the generated tests' golden values
+            # against the implementation, so a fabricated constant is
+            # named as a TEST defect instead of the pytest stage (and
+            # the recovery classifier) blaming correct code. Runs in
+            # the executing phase (it evaluates generated calls).
+            GoldenValueChecker(),
             RuntimeChecker(),
             SecurityChecker(),
             SecurityVulnerabilityChecker(),
