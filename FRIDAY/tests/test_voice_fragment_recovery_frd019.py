@@ -61,6 +61,11 @@ FRAG2 = (
 )
 FOLLOWUP = "How many closed trades are in the ledger exactly?"
 
+# The FRD-019(b) drill shapes (Phase B): a substantive fragment
+# followed by two contentless fillers before its flight settles.
+DRILL_G1_REQUEST = "Please remind me of my favorite color."
+DRILL_G2 = "And my favorite destination city?"
+
 
 def _run8_state():
     """The delegation flight with fragment 2 landed mid-flight."""
@@ -164,6 +169,70 @@ def test_unrelated_second_flight_does_not_block_recovery():
     _fragment_flight_started(state, "b7", "What time is it?", 119.0)
     due = _fragment_recovery_due(state, 121.0)
     assert [s["text"] for s in due] == [FRAG2]
+
+
+# ---------------------------------------------------------------------------
+# FRD-019(b): a fragment proven dropped BEFORE its flight settles
+# (two further finals land first) must still be recovered. Pre-fix,
+# _fragment_user_final consumed proven suspects — removed them from
+# state["suspects"] — while _fragment_recovery_due only ever saw
+# listed suspects, so the two fates were mutually exclusive and this
+# exact sequence was journalled but never recovered (drill Phase B).
+# ---------------------------------------------------------------------------
+
+def _phase_b_state():
+    """The drill's Phase B sequence: G2 lands during G1's flight;
+    two further finals land before the flight settles, the second
+    of which proves G2 dropped."""
+    state = _new_fragment_watch()
+    _fragment_flight_started(state, "b1", DRILL_G1_REQUEST, 100.0)
+    _fragment_user_final(state, DRILL_G2, 110.0)
+    _fragment_user_final(state, "Okay.", 112.0)
+    _fragment_user_final(state, "Yes, please.", 114.0)
+    return state
+
+
+def test_fragment_proven_by_two_further_finals_is_still_recovered():
+    state = _new_fragment_watch()
+    _fragment_flight_started(state, "b1", DRILL_G1_REQUEST, 100.0)
+    assert _fragment_user_final(state, DRILL_G2, 110.0) == []
+    assert _fragment_user_final(state, "Okay.", 112.0) == []
+    # The second further final proves G2 dropped: it is returned for
+    # journalling exactly as before the fix...
+    proven = _fragment_user_final(state, "Yes, please.", 114.0)
+    assert [s["text"] for s in proven] == [DRILL_G2]
+    # ...but it STAYS listed, so the recovery pass can still see it.
+    assert any(s["text"] == DRILL_G2 for s in state["suspects"])
+    # A fourth final does not report it a second time.
+    again = _fragment_user_final(state, "Okay.", 116.0)
+    assert DRILL_G2 not in [s["text"] for s in again]
+    # Once the flight settles, the proven fragment is due — once.
+    _fragment_flight_settled(state, "b1")
+    due = _fragment_recovery_due(state, 121.0)
+    assert [s["text"] for s in due] == [DRILL_G2]
+    assert _fragment_recovery_due(state, 122.0) == []
+
+
+def test_proven_fragment_covered_by_a_later_dispatch_is_not_recovered():
+    # Proof does not force recovery: if the model picks the proven
+    # fragment up in a later call before its flight settles, the
+    # covering dispatch resolves it — it must never become due.
+    state = _phase_b_state()
+    _fragment_flight_started(state, "b2", DRILL_G2, 116.0)
+    _fragment_flight_settled(state, "b2")
+    _fragment_flight_settled(state, "b1")
+    assert _fragment_recovery_due(state, 121.0) == []
+
+
+def test_flush_does_not_re_report_a_proven_fragment():
+    # The proven fragment already left its journal line at proof
+    # time; the session-end flush must not report it a second time.
+    # The unproven fillers — never proven, never followed — still
+    # flush exactly as before.
+    state = _phase_b_state()
+    flushed = _fragment_flush(state)
+    assert [s["text"] for s in flushed] == ["Okay.", "Yes, please."]
+    assert state["suspects"] == []
 
 
 # ---------------------------------------------------------------------------
