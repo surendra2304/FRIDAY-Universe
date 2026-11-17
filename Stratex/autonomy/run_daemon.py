@@ -25,6 +25,14 @@ from notifications.telegram_bot import get_telegram_bot
 
 logger = get_logger("stratex_daemon")
 
+# TASK-STR-FWD-016: the sleeve shock leg and its judged timeframe. The
+# contradiction guard's timeframe-precedence exemption and the
+# deferred-entry retry are scoped to exactly this strategy at exactly
+# this timeframe (see _resolve_contradictions and
+# _maybe_defer_sleeve_candidate).
+SLEEVE_SHOCK_STRATEGY = "strategy_sleeve_shock_breakout"
+SLEEVE_TIMEFRAME = "1wk"
+
 
 def heat_capped_risk_amount(
     equity: float,
@@ -109,6 +117,21 @@ class StratexTradingEngine:
         self._confluence_signals: dict[tuple[str, str, str], list[tuple[str, dict, str]]] = {}
         # Latched closed bar per (venue, symbol, strategy, tf)
         self._last_signal_bar: dict[tuple[str, str, str, str], object] = {}
+        # TASK-STR-FWD-016: sleeve candidates blocked by an existing open
+        # position are deferred (not consumed) and retried on later cycles
+        # while their weekly bucket is still the last closed bucket.
+        # _deferred_sleeve_entries is keyed (venue, symbol) and carries
+        # the stamped execution payload plus the bucket identity (the
+        # last closed bucket's open timestamp, stringified — the same
+        # value the bar latch keys on). _last_closed_bucket records, for
+        # the CURRENT scan cycle only, the last closed weekly bucket per
+        # (venue, symbol); scan_and_execute resets it every cycle, and
+        # the retry pass expires an entry only on positive evidence from
+        # it that the bucket rolled over. Both attributes are also
+        # lazily created by _sleeve_deferral_state() for engines built
+        # without __init__.
+        self._deferred_sleeve_entries: dict[tuple[str, str], dict] = {}
+        self._last_closed_bucket: dict[tuple[str, str], str] = {}
         # ADX only for trend/breakout (disabled with threshold=0)
         self.adx_strategies = {
             s.strip()
@@ -255,12 +278,222 @@ class StratexTradingEngine:
         except Exception as e:
             logger.warning(f"[STRATEX] Governance summary failed: {e}")
 
+    def _sleeve_deferral_state(self):
+        """TASK-STR-FWD-016: (deferred sleeve entries, bucket map).
+
+        __init__ creates both attributes; the lazy path exists for
+        engines constructed without __init__ (unit tests build the
+        engine with __new__ — the _heartbeat_state precedent).
+        """
+        deferred = getattr(self, "_deferred_sleeve_entries", None)
+        if deferred is None:
+            deferred = self._deferred_sleeve_entries = {}
+        buckets = getattr(self, "_last_closed_bucket", None)
+        if buckets is None:
+            buckets = self._last_closed_bucket = {}
+        return deferred, buckets
+
+    def _resolve_contradictions(self, confluenced: list) -> list:
+        """Contradiction guard, with sleeve timeframe precedence.
+
+        A (venue, symbol) carrying confluenced BUY *and* SELL entries in
+        the same cycle is conflicted. The default resolution is
+        unchanged from the original guard: EVERY entry for the symbol
+        is dropped — contradictory aggregation has no edge, only noise.
+
+        One scoped exemption (TASK-STR-FWD-016): when one side is
+        exclusively the sleeve shock leg (SLEEVE_SHOCK_STRATEGY on its
+        judged SLEEVE_TIMEFRAME) and the opposing side is exclusively
+        lower-timeframe, non-sleeve signals, the sleeve side survives
+        and the opposing side is dropped for this symbol-cycle. The two
+        are pre-judged, independent hypotheses that are *supposed* to
+        disagree after a weekly shock (the sleeve continues the shock;
+        dow_effect reverses the trailing daily move) — deleting both
+        silently starved the sleeve leg to zero lifetime executions
+        while dow lost the same entries uncredited. Every other
+        conflict shape keeps the delete-both behaviour exactly.
+
+        Every resolution is journalled per symbol — symbol, both
+        strategies, both sides, both timeframes, and the resolution
+        (both-dropped / precedence-dropped-<strategy>) — so a dropped
+        forward entrant is attributable from the journal alone. The
+        aggregate Conflict line is kept for continuity.
+        """
+        by_symbol: dict[tuple[str, str], dict[str, tuple]] = {}
+        for entry in confluenced:
+            by_symbol.setdefault((entry[0], entry[1]), {})[entry[2]] = entry
+        conflicted = {k for k, v in by_symbol.items() if len(v) > 1}
+        if not conflicted:
+            return confluenced
+
+        def _names(entry) -> str:
+            return "+".join(sorted({s[0] for s in entry[3]}))
+
+        def _tfs(entry) -> str:
+            return "+".join(sorted({s[2] for s in entry[3]}))
+
+        drop: set[tuple[str, str, str]] = set()
+        for venue, symbol in sorted(conflicted):
+            by_side = by_symbol[(venue, symbol)]
+            sleeve_side = None
+            for side, entry in by_side.items():
+                strategies = {s[0] for s in entry[3]}
+                tfs = {s[2] for s in entry[3]}
+                if strategies == {SLEEVE_SHOCK_STRATEGY} and tfs == {SLEEVE_TIMEFRAME}:
+                    sleeve_side = side
+            kept = False
+            if sleeve_side is not None and len(by_side) == 2:
+                other_side = next(s for s in by_side if s != sleeve_side)
+                other = by_side[other_side]
+                other_strategies = {s[0] for s in other[3]}
+                other_tfs = {s[2] for s in other[3]}
+                if (
+                    SLEEVE_SHOCK_STRATEGY not in other_strategies
+                    and SLEEVE_TIMEFRAME not in other_tfs
+                ):
+                    kept = True
+                    drop.add((venue, symbol, other_side))
+                    logger.info(
+                        f"[STRATEX] Conflict {venue}:{symbol}: "
+                        f"{SLEEVE_SHOCK_STRATEGY} {sleeve_side} "
+                        f"({SLEEVE_TIMEFRAME}) vs {_names(other)} "
+                        f"{other_side} ({_tfs(other)}) — timeframe "
+                        f"precedence: precedence-dropped-{_names(other)} "
+                        f"{other_side}; sleeve side proceeds"
+                    )
+            if not kept:
+                for side in by_side:
+                    drop.add((venue, symbol, side))
+                desc = " vs ".join(
+                    f"{_names(e)} {s} ({_tfs(e)})"
+                    for s, e in sorted(by_side.items())
+                )
+                logger.info(
+                    f"[STRATEX] Conflict {venue}:{symbol}: {desc} "
+                    f"— both dropped"
+                )
+        logger.info(
+            f"[STRATEX] Conflict: {len(conflicted)} symbol(s) produced both "
+            f"BUY and SELL confluence; resolved per-symbol above"
+        )
+        return [
+            c for c in confluenced if (c[0], c[1], c[2]) not in drop
+        ]
+
+    def _maybe_defer_sleeve_candidate(
+        self, venue: str, symbol: str, sigs: list
+    ) -> bool:
+        """TASK-STR-FWD-016: defer a position-blocked sleeve candidate.
+
+        Called from the execution loop when a confluenced entry did not
+        execute. If the entry carries a sleeve candidate and an open
+        position exists on the symbol, the candidate is retained for
+        the retry pass instead of being consumed: the leg's judged
+        contract is entry *during* the bucket that follows the shock
+        bucket, so a candidate blocked today stays valid while its
+        weekly bucket is still the last closed bucket. The existing
+        position is never preempted or closed by this mechanism.
+        Returns True when a candidate was deferred.
+        """
+        deferred, buckets = self._sleeve_deferral_state()
+        sleeve_sigs = [s for s in sigs if s[0] == SLEEVE_SHOCK_STRATEGY]
+        if not sleeve_sigs:
+            return False
+        if not self.engine.has_open_position(venue, symbol):
+            return False
+        bucket = buckets.get((venue, symbol))
+        if bucket is None:
+            return False
+        strat_name, result, tf = sleeve_sigs[0]
+        # Stamp exactly as the execution loop stamps a live attempt.
+        payload = dict(result)
+        payload["strategy"] = strat_name
+        payload["venue"] = venue
+        payload["symbol"] = symbol
+        payload["timeframe"] = tf
+        existing = deferred.get((venue, symbol))
+        deferred[(venue, symbol)] = {
+            "payload": payload,
+            "timeframe": tf,
+            "side": result.get("side"),
+            "bucket": bucket,
+        }
+        if existing is None or existing.get("bucket") != bucket:
+            logger.info(
+                f"[STRATEX] Sleeve deferred: {strat_name} "
+                f"{result.get('side')} {venue}:{symbol} {tf} blocked by "
+                f"an existing open position; will retry while weekly "
+                f"bucket {bucket} is the last closed bucket (deferred)"
+            )
+        return True
+
+    def _retry_deferred_sleeve_entries(self, results: dict) -> None:
+        """TASK-STR-FWD-016: retry deferred sleeve candidates.
+
+        Runs once per scan cycle, after the main execution loop. An
+        entry is retried only while its weekly bucket is positively
+        observed (this cycle's scan) to still be the last closed
+        bucket; on rollover evidence it expires instead, journalled.
+        A still-open position on the symbol leaves the entry deferred
+        — the existing position is never preempted or closed. A failed
+        execution attempt leaves the entry in place for the next cycle
+        (the failing gate journals its own reason); it expires only at
+        bucket rollover.
+        """
+        deferred, buckets = self._sleeve_deferral_state()
+        if not deferred:
+            return
+        for (venue, symbol), entry in list(deferred.items()):
+            try:
+                seen_bucket = buckets.get((venue, symbol))
+                if seen_bucket is None:
+                    # Symbol not scanned this cycle: no evidence either
+                    # way — neither retry nor expire on stale data.
+                    continue
+                if seen_bucket != entry["bucket"]:
+                    logger.info(
+                        f"[STRATEX] Sleeve deferred expired: "
+                        f"{SLEEVE_SHOCK_STRATEGY} {entry['side']} "
+                        f"{venue}:{symbol} {entry['timeframe']} — weekly "
+                        f"bucket {entry['bucket']} is no longer the last "
+                        f"closed bucket (now {seen_bucket}); entry never "
+                        f"filled"
+                    )
+                    del deferred[(venue, symbol)]
+                    continue
+                if self.engine.has_open_position(venue, symbol):
+                    continue
+                can_open, _reason = self.engine.can_open_position(venue)
+                if not can_open:
+                    continue
+                payload = dict(entry["payload"])
+                if self._execute_signal(
+                    venue, symbol, payload, entry["timeframe"]
+                ):
+                    results["executed"] += 1
+                    logger.info(
+                        f"[STRATEX] Sleeve deferred filled: "
+                        f"{SLEEVE_SHOCK_STRATEGY} {entry['side']} "
+                        f"{venue}:{symbol} {entry['timeframe']} "
+                        f"(bucket {entry['bucket']})"
+                    )
+                    del deferred[(venue, symbol)]
+            except Exception as e:
+                logger.warning(
+                    f"[STRATEX] Deferred sleeve retry failed for "
+                    f"{venue}:{symbol}: {e}"
+                )
+
     def scan_and_execute(self) -> dict:
         """Run one scan cycle across all symbols and timeframes."""
         results = {"scanned": 0, "signals": 0, "executed": 0, "errors": 0}
         scanned_symbols = set()
         scanned_1d = 0
         self._confluence_signals = {}
+        # TASK-STR-FWD-016: the last-closed weekly bucket map is
+        # re-observed during this cycle's scan; last cycle's observations
+        # must not leak into the deferred-entry retry pass.
+        self._last_closed_bucket = {}
         # TASK-STR-FWD-003: forward-protocol strategies (the VALIDATED
         # entrants and the FORWARD_TEST lane) trade their JUDGED
         # geometry — the generic min-RR pre-filter must not silently
@@ -355,6 +588,17 @@ class StratexTradingEngine:
                             last_bar_ts = df.index[-2] if len(df.index) > 1 else df.index[-1]
                         except Exception:
                             last_bar_ts = None
+
+                        # TASK-STR-FWD-016: record this cycle's last
+                        # closed weekly bucket per symbol; the deferred
+                        # sleeve retry pass keys bucket rollover off it.
+                        if tf == SLEEVE_TIMEFRAME and last_bar_ts is not None:
+                            _bucket_map = getattr(
+                                self, "_last_closed_bucket", None
+                            )
+                            if _bucket_map is None:
+                                _bucket_map = self._last_closed_bucket = {}
+                            _bucket_map[(venue, symbol)] = str(last_bar_ts)
 
                         # Track symbols actually scanned this cycle.
                         scanned_symbols.add((venue, symbol))
@@ -548,20 +792,12 @@ class StratexTradingEngine:
                 confluenced.append((c_venue, c_symbol, c_side, sigs, distinct))
         self._confluence_signals = {}
 
-        # Contradiction guard: a symbol with confluenced BUY *and* SELL in the
-        # same cycle has no edge, only noise. Skip it instead of guessing.
-        sides: dict[tuple[str, str], set[str]] = {}
-        for c_venue, c_symbol, c_side, _sigs, _distinct in confluenced:
-            sides.setdefault((c_venue, c_symbol), set()).add(c_side)
-        conflicted = {key for key, value in sides.items() if len(value) > 1}
-        if conflicted:
-            logger.info(
-                f"[STRATEX] Conflict: {len(conflicted)} symbol(s) produced both "
-                f"BUY and SELL confluence; skipped"
-            )
-            confluenced = [
-                c for c in confluenced if (c[0], c[1]) not in conflicted
-            ]
+        # Contradiction guard (TASK-STR-FWD-016): a symbol with
+        # confluenced BUY *and* SELL in the same cycle is resolved by
+        # _resolve_contradictions — delete-both by default, with the
+        # scoped sleeve timeframe-precedence exemption, journalled
+        # per symbol.
+        confluenced = self._resolve_contradictions(confluenced)
 
         if confluenced:
             logger.info(
@@ -589,6 +825,7 @@ class StratexTradingEngine:
             )
 
             executed = False
+            sleeve_executed = False
             for strat_name, result, tf in ranked:
                 if result.get("observe_only"):
                     # Defence in depth (TASK-STR-SAFETY-001): an OBSERVE_ONLY
@@ -620,6 +857,13 @@ class StratexTradingEngine:
                 if self._execute_signal(c_venue, c_symbol, payload, tf):
                     results["executed"] += 1
                     executed = True
+                    if strat_name == SLEEVE_SHOCK_STRATEGY:
+                        sleeve_executed = True
+                        # A live sleeve execution supersedes any deferred
+                        # entry for this symbol (same bucket signal).
+                        self._sleeve_deferral_state()[0].pop(
+                            (c_venue, c_symbol), None
+                        )
                     logger.info(
                         f"[STRATEX] Executed {strat_name} on {c_venue}:{c_symbol} "
                         f"{c_side} {tf} (confluence: "
@@ -627,11 +871,20 @@ class StratexTradingEngine:
                     )
                     break
 
+            if not sleeve_executed:
+                # TASK-STR-FWD-016: a sleeve candidate blocked by an
+                # existing open position is deferred, not consumed.
+                self._maybe_defer_sleeve_candidate(c_venue, c_symbol, sigs)
+
             if not executed:
                 logger.info(
                     f"[STRATEX] No executable candidate for {c_venue}:{c_symbol} "
                     f"{c_side} (evaluated {len(ranked)})"
                 )
+
+        # TASK-STR-FWD-016: retry deferred sleeve entries while their
+        # weekly bucket is still the last closed bucket.
+        self._retry_deferred_sleeve_entries(results)
 
         self._maybe_send_daily_summary(results)
 
