@@ -43,7 +43,9 @@ from apps.api.routers import (
     context_db_router,
 )
 
+import asyncio
 import os
+import threading
 import logging
 from datetime import datetime, timezone
 
@@ -53,6 +55,92 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger("memora")
+
+# TASK-MEM-012: the background consolidation / wiki-compile / skill
+# passes are synchronous, seconds-long, whole-database sweeps. They
+# used to run inline on the event loop (a measured 0-9s of loop block
+# per 300s cycle, and a reliable trigger for the swap major-fault
+# storms behind Memora's production stalls). They now run in a
+# worker thread via asyncio.to_thread. This lock guarantees passes
+# never overlap each other — including the edge where the lifespan
+# cancels the worker mid-pass: cancellation detaches the thread,
+# which keeps running to completion and releases the lock when done.
+_MEMORA_BG_PASS_LOCK = threading.Lock()
+
+
+def _run_memora_bg_pass() -> None:
+    """One full background pass, synchronously, in the original order.
+
+    Runs in a worker thread (see _memora_bg_worker). If a previous
+    pass is still running — only possible after a mid-pass cancel
+    detached its thread — this cycle is skipped rather than allowed
+    to run concurrently with it.
+    """
+    if not _MEMORA_BG_PASS_LOCK.acquire(blocking=False):
+        logger.warning(
+            "Memora background pass skipped: a previous pass is still running."
+        )
+        return
+    try:
+        logger.info("Running Memora background consolidation and wiki compile pass...")
+        from apps.api.routers.context_db import get_service
+
+        service = get_service()
+        service.compile_wiki(persist=True)
+        service.consolidate()
+        logger.info("Memora background consolidation and wiki compile pass completed.")
+        # TASK-IG2-MEM-02 wiring: the skill-learning loop's
+        # trigger pass. Drafts are created pending_review
+        # only — the pass proposes, the review gate disposes.
+        # Opt out with MEMORA_SKILL_LEARNING_BG=0.
+        if os.getenv("MEMORA_SKILL_LEARNING_BG", "1").strip().lower() not in {"0", "false", "no"}:
+            from apps.api.routers.v1_skills import run_evaluation_pass
+            from storage.relational.session import SessionLocal
+
+            skill_db = SessionLocal()
+            try:
+                summary = run_evaluation_pass(skill_db)
+                if summary.get("drafted"):
+                    logger.info("Skill-learning pass drafted %s skill(s): %s", summary["drafted"], summary)
+            finally:
+                skill_db.close()
+    finally:
+        _MEMORA_BG_PASS_LOCK.release()
+
+
+async def _memora_bg_worker():
+    """Lifespan background loop: one pass per interval, off the loop.
+
+    Cadence matches the original inline worker: sleep the interval,
+    run the pass to completion, repeat — so start-to-start spacing
+    is interval + pass duration, exactly as before, and passes
+    cannot overlap (the loop awaits each pass; the lock above also
+    covers the cancel-detach edge).
+    """
+    interval = float(os.getenv("MEMORA_CONSOLIDATION_INTERVAL_SEC", "300.0"))
+    while True:
+        try:
+            await asyncio.sleep(interval)
+            await asyncio.to_thread(_run_memora_bg_pass)
+        except asyncio.CancelledError:
+            break
+        except Exception as exc:
+            logger.warning("Memora background worker exception: %s", exc)
+
+
+def _compile_wiki_for_shutdown() -> None:
+    """Shutdown wiki compile, run off the event loop (TASK-MEM-012).
+
+    Waits for any in-flight background pass to release the pass lock
+    first, so the shutdown compile never runs concurrently with a
+    pass compile; the wait is bounded by the pass duration and the
+    unit's TimeoutStopSec (60s).
+    """
+    with _MEMORA_BG_PASS_LOCK:
+        from apps.api.routers.context_db import get_service
+
+        get_service().compile_wiki(persist=True)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -100,41 +188,11 @@ async def lifespan(app: FastAPI):
             logger.warning("VyralX bootstrap skipped or failed: %s", exc)
 
     # Background consolidation and wiki compilation loop
+    # (TASK-MEM-012: the worker lives at module level and runs each
+    # pass in a worker thread — see _memora_bg_worker above.)
     bg_enabled = os.getenv("FRIDAY_BACKGROUND_TASKS", "1").strip().lower() not in {"0", "false", "no"}
     bg_task = None
     if bg_enabled:
-        import asyncio
-        async def _memora_bg_worker():
-            interval = float(os.getenv("MEMORA_CONSOLIDATION_INTERVAL_SEC", "300.0"))
-            while True:
-                try:
-                    await asyncio.sleep(interval)
-                    logger.info("Running Memora background consolidation and wiki compile pass...")
-                    from apps.api.routers.context_db import get_service
-                    service = get_service()
-                    service.compile_wiki(persist=True)
-                    service.consolidate()
-                    logger.info("Memora background consolidation and wiki compile pass completed.")
-                    # TASK-IG2-MEM-02 wiring: the skill-learning loop's
-                    # trigger pass. Drafts are created pending_review
-                    # only — the pass proposes, the review gate disposes.
-                    # Opt out with MEMORA_SKILL_LEARNING_BG=0.
-                    if os.getenv("MEMORA_SKILL_LEARNING_BG", "1").strip().lower() not in {"0", "false", "no"}:
-                        from apps.api.routers.v1_skills import run_evaluation_pass
-                        from storage.relational.session import SessionLocal
-
-                        skill_db = SessionLocal()
-                        try:
-                            summary = run_evaluation_pass(skill_db)
-                            if summary.get("drafted"):
-                                logger.info("Skill-learning pass drafted %s skill(s): %s", summary["drafted"], summary)
-                        finally:
-                            skill_db.close()
-                except asyncio.CancelledError:
-                    break
-                except Exception as exc:
-                    logger.warning("Memora background worker exception: %s", exc)
-
         bg_task = asyncio.create_task(_memora_bg_worker())
 
     try:
@@ -147,8 +205,7 @@ async def lifespan(app: FastAPI):
             except asyncio.CancelledError:
                 pass
         try:
-            from apps.api.routers.context_db import get_service
-            get_service().compile_wiki(persist=True)
+            await asyncio.to_thread(_compile_wiki_for_shutdown)
             logger.info("Memora shutdown wiki compile complete.")
         except Exception as exc:
             logger.warning("Memora shutdown wiki compile skipped: %s", exc)
