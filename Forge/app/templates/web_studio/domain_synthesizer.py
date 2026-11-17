@@ -39,6 +39,13 @@ class DomainBlueprint:
     viewport_chip_bottom_left: str = ""
     viewport_chip_bottom_right: str = ""
     model_stats: str = ""
+    # Brief-derived model (diagnosis TASK-FRG-014 fix): what the brief
+    # itself asked for, carried to the renderers. Defaults keep every
+    # pre-existing blueprint construction behaving exactly as before.
+    requested_sections: list[str] = field(default_factory=list)
+    pricing_tiers: int = 0
+    app_entity: dict[str, Any] | None = None
+    brief_subject: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -79,10 +86,209 @@ def _palette_for_goal(goal: str, domain_type: str) -> tuple[str, str, str]:
 # ---------------------------------------------------------------------------
 # NLP entity extraction helpers
 # ---------------------------------------------------------------------------
+def _kw_hit(text: str, keyword: str) -> bool:
+    """Word-boundary keyword match.
+
+    The classifier and the domain tables used to match raw substrings, so
+    "ai" fired inside "email", "ml" inside "html" and "java" inside
+    "javascript". Single tokens now require word boundaries (a trailing
+    plural s/es is tolerated, so "store" still matches "stores"); phrases
+    and punctuated tokens ("e-commerce", "three.js", "ci/cd", "full stack")
+    still match as substrings -- they are specific enough not to false-fire
+    inside unrelated words.
+    """
+    k = keyword.strip().lower()
+    if not k:
+        return False
+    if any(ch in k for ch in " -/."):
+        return k in text
+    return re.search(rf"\b{re.escape(k)}(?:e?s)?\b", text) is not None
+
+
+def _any_kw(text: str, keywords: list[str]) -> bool:
+    return any(_kw_hit(text, k) for k in keywords)
+
+
+_BRAND_LEADIN_EXCLUDES = {
+    "note", "goal", "brief", "build", "create", "make", "design",
+    "generate", "develop", "the", "a", "an", "my", "your", "our",
+}
+_BRAND_SUFFIX_WORDS = ("Mini", "Pro", "Max", "Plus", "Lite", "Go")
+_BRAND_NAME_RE = (
+    r"([A-Z][A-Za-z0-9]*(?:\s+(?:[A-Z][A-Za-z0-9]*|"
+    + "|".join(_BRAND_SUFFIX_WORDS)
+    + r")){0,3}?)"
+)
+
+
+def _lead_in_brand(goal: str) -> str:
+    """Parse the "Name — description" / "Name - description" / "Name: ..."
+    lead-in common in briefs ("BeanRoute — a coffee subscription service").
+    Returns "" when the goal does not open with one."""
+    g = goal.strip()
+    m = re.match(r"^" + _BRAND_NAME_RE + r"\s*(?:—|–|:)\s+", g)
+    if not m:
+        m = re.match(r"^" + _BRAND_NAME_RE + r"\s+-\s+", g)
+    if not m:
+        return ""
+    candidate = m.group(1).strip()
+    if candidate.split()[0].lower() in _BRAND_LEADIN_EXCLUDES:
+        return ""
+    return candidate
+
+
+def _camelcase_brand(goal: str) -> str:
+    """First CamelCase token (BeanRoute, TaskBoard, LoomAndCo). The old
+    [A-Z][a-z]{2,} fallback can never match one: it has no interior word
+    boundary. Sentence-initial words are single-hump, so they never match
+    this pattern either."""
+    m = re.search(r"\b(?:[A-Z][a-z]+){2,}[A-Za-z0-9]*\b", goal)
+    return m.group(0) if m else ""
+
+
+def _brief_subject(goal: str) -> str:
+    """The descriptive phrase from a "Name — description" lead-in, trimmed
+    of a trailing page-type suffix ("... service landing page" -> "... service").
+    Returns "" for goals without a lead-in."""
+    g = goal.strip()
+    m = re.match(r"^" + _BRAND_NAME_RE + r"\s*(?:—|–|:)\s+(?P<subject>.+?)(?:[.!?]\s|$)", g)
+    if not m:
+        m = re.match(r"^" + _BRAND_NAME_RE + r"\s+-\s+(?P<subject>.+?)(?:[.!?]\s|$)", g)
+    if not m:
+        return ""
+    subject = m.group("subject").strip().rstrip(".")
+    subject = re.sub(
+        r"\s+(landing page|web ?page|website|web app|app|site)$",
+        "",
+        subject,
+        flags=re.IGNORECASE,
+    ).strip()
+    return subject
+
+
+_ENTITY_FIELD_TYPES = {
+    "title": "text",
+    "name": "text",
+    "priority": "select",
+    "status": "select",
+    "due date": "date",
+    "due_date": "date",
+    "deadline": "date",
+    "date": "date",
+}
+
+
+def _extract_app_entity(text: str, brand: str) -> dict[str, Any] | None:
+    """Detect an app-shaped brief (a form plus a persisted list) and model
+    its entity: name, fields, actions, and a brief-derived localStorage key.
+
+    The entity name comes from "add a task" / "task board"-style phrasing;
+    the fields come from the brief's parenthesised field list when present
+    ("(title, priority, due date)"), else a single title field. Returns None
+    for briefs that are not list apps -- landing pages keep no entity model.
+    """
+    t = text.lower()
+    has_persistence = "localstorage" in t or "local storage" in t
+    entity = ""
+    m = re.search(
+        r"\badd\s+(?:a\s+|an\s+|the\s+|new\s+)*([a-z][a-z0-9_-]{1,20}?)(?:\s*\(|\s+(?:with|to|form|item|entry)\b|[.,])",
+        t,
+    )
+    if m:
+        entity = m.group(1)
+    if not entity:
+        m = re.search(r"\b([a-z][a-z0-9_-]{1,20})\s+(?:board|list|tracker|manager|log)\b", t)
+        if m:
+            entity = m.group(1)
+    if not entity or entity in {"a", "the", "new", "form"}:
+        return None
+    if not (has_persistence or "list" in t or "board" in t):
+        return None
+
+    fields: list[dict[str, Any]] = []
+    fm = re.search(r"\(([^)]{3,120})\)", text)
+    if fm:
+        for raw in fm.group(1).split(","):
+            label = re.sub(r"^(a|an|the)\s+", "", raw.strip().lower())
+            if not label or len(label) > 24:
+                continue
+            field: dict[str, Any] = {
+                "name": re.sub(r"[^a-z0-9]+", "_", label).strip("_"),
+                "label": "Due date" if label == "due date" else label.capitalize(),
+                "type": _ENTITY_FIELD_TYPES.get(label, "text"),
+            }
+            if label == "priority":
+                field["options"] = ["Low", "Medium", "High"]
+            if label == "status":
+                field["options"] = ["Open", "In Progress", "Done"]
+            fields.append(field)
+    if not fields:
+        fields = [{"name": "title", "label": "Title", "type": "text"}]
+    elif fields[0]["name"] not in {"title", "name"}:
+        fields.insert(0, {"name": "title", "label": "Title", "type": "text"})
+
+    actions = ["add"]
+    if _kw_hit(t, "delete") or _kw_hit(t, "remove"):
+        actions.append("delete")
+    if "mark complete" in t or "mark-complete" in t or _kw_hit(t, "complete"):
+        actions.append("complete")
+    if "filter" in t:
+        actions.append("filter_status")
+
+    plural = entity if entity.endswith("s") else entity + "s"
+    brand_slug = re.sub(r"[^a-z0-9]+", "_", brand.lower()).strip("_") or "brief"
+    return {
+        "name": entity,
+        "plural": plural,
+        "fields": fields,
+        "actions": actions,
+        "storage_key": f"{brand_slug}_{plural}_v1",
+    }
+
+
+def _extract_brief_model(goal: str, requirements: list[str] | None) -> dict[str, Any]:
+    """Derive the brief model -- requested sections, pricing tiers, subject
+    phrase, and (for app-shaped briefs) the list entity -- from the goal and
+    its requirements. This is the model the archetype builders attach to the
+    blueprint so the renderers can compose the sections the brief named
+    instead of only the sections the archetype skeleton happens to have."""
+    text = " ".join([goal, *(requirements or [])])
+    t = text.lower()
+
+    sections: list[str] = []
+    if _any_kw(t, ["signup", "sign up", "subscribe", "newsletter", "waitlist", "lead capture"]) and _any_kw(
+        t, ["form", "email"]
+    ):
+        sections.append("signup_form")
+    if _kw_hit(t, "testimonial"):
+        sections.append("testimonials")
+    if _kw_hit(t, "faq") or "frequently asked" in t:
+        sections.append("faq")
+    if _kw_hit(t, "footer"):
+        sections.append("footer")
+
+    tiers = 0
+    tm = re.search(r"(\d+)\s*(?:pricing\s+)?tiers?", t)
+    if tm:
+        tiers = int(tm.group(1))
+    elif _kw_hit(t, "pricing"):
+        tiers = 3
+
+    return {
+        "requested_sections": sections,
+        "pricing_tiers": tiers,
+        "brief_subject": _brief_subject(goal),
+        "app_entity": _extract_app_entity(text, _extract_brand_name(goal)),
+    }
 
 def _extract_brand_name(goal: str) -> str:
     """Extract or generate a brand/project name from the goal text."""
     g = goal.strip()
+    # Brief lead-in first ("BeanRoute — a coffee subscription ..."):
+    # it is the strongest brand signal a brief carries.
+    lead = _lead_in_brand(g)
+    if lead:
+        return lead
     # Try: "for [Name]" or "[Name]'s portfolio"
     m = re.search(r"\bfor\s+([A-Z][a-z]+ [A-Z][a-z]+)", g)
     if m:
@@ -96,6 +302,11 @@ def _extract_brand_name(goal: str) -> str:
         candidate = m.group(1)
         if candidate.lower() not in {"the", "an", "this", "my", "your", "their", "futuristic", "modern", "interactive", "3d", "immersive", "best"}:
             return candidate
+    # CamelCase token (BeanRoute, TaskBoard): invisible to the fallback
+    # regex below, which needs a word boundary inside the name.
+    camel = _camelcase_brand(g)
+    if camel:
+        return camel
     # Fall back: first capitalized word from meaningful tokens
     words = re.findall(r"\b[A-Z][a-z]{2,}\b", g)
     exclude = {"Build", "Create", "Make", "Design", "Generate", "Develop",
@@ -119,25 +330,25 @@ def _extract_brand_name(goal: str) -> str:
 def _extract_specialty(goal: str) -> str:
     """Extract the technical specialty/domain from the goal."""
     g = goal.lower()
-    if any(k in g for k in ["three.js", "threejs", "webgl", "3d", "opengl", "glsl"]):
+    if _any_kw(g, ["three.js", "threejs", "webgl", "3d", "opengl", "glsl"]):
         return "3D WebGL Engineer"
-    if any(k in g for k in ["ai", "machine learning", "ml", "neural", "llm"]):
+    if _any_kw(g, ["ai", "machine learning", "ml", "neural", "llm"]):
         return "AI/ML Engineer"
-    if any(k in g for k in ["rust", "systems", "embedded", "kernel"]):
+    if _any_kw(g, ["rust", "systems", "embedded", "kernel"]):
         return "Systems Engineer"
-    if any(k in g for k in ["blockchain", "crypto", "web3", "solidity"]):
+    if _any_kw(g, ["blockchain", "crypto", "web3", "solidity"]):
         return "Web3 Developer"
-    if any(k in g for k in ["game", "unity", "unreal", "godot"]):
+    if _any_kw(g, ["game", "unity", "unreal", "godot"]):
         return "Game Developer"
-    if any(k in g for k in ["design", "ux", "ui", "figma", "creative"]):
+    if _any_kw(g, ["design", "ux", "ui", "figma", "creative"]):
         return "Creative Designer & Engineer"
-    if any(k in g for k in ["fullstack", "full-stack", "full stack"]):
+    if _any_kw(g, ["fullstack", "full-stack", "full stack"]):
         return "Full-Stack Engineer"
-    if any(k in g for k in ["backend", "api", "microservices", "distributed"]):
+    if _any_kw(g, ["backend", "api", "microservices", "distributed"]):
         return "Backend Architect"
-    if any(k in g for k in ["mobile", "ios", "android", "flutter", "react native"]):
+    if _any_kw(g, ["mobile", "ios", "android", "flutter", "react native"]):
         return "Mobile Developer"
-    if any(k in g for k in ["devops", "kubernetes", "docker", "infra", "cloud"]):
+    if _any_kw(g, ["devops", "kubernetes", "docker", "infra", "cloud"]):
         return "DevOps & Cloud Engineer"
     return "Software Engineer & Creative Technologist"
 
@@ -163,7 +374,7 @@ def _extract_technologies(goal: str) -> list[str]:
         "unity": "Unity", "unreal": "Unreal Engine",
     }
     for key, name in tech_map.items():
-        if key in g and name not in techs:
+        if _kw_hit(g, key) and name not in techs:
             techs.append(name)
     # Defaults if nothing detected
     if not techs:
@@ -176,7 +387,7 @@ def _extract_product_domain(goal: str) -> dict[str, Any]:
     g = goal.lower()
 
     # Map keyword to (store_name_seed, category_list, product_types, color_hint)
-    if any(k in g for k in ["watch", "timepiece", "luxury watch", "swiss", "dial", "horology"]):
+    if _any_kw(g, ["watch", "timepiece", "luxury watch", "swiss", "dial", "horology"]):
         return {
             "brand_seed": "Chronos",
             "tagline": "Swiss Precision Reimagined for the Digital Era",
@@ -194,7 +405,7 @@ def _extract_product_domain(goal: str) -> dict[str, Any]:
             "model_stats": "Swiss Tourbillon Movement • Automatic",
             "three_d_scene_type": "watch_dial",
         }
-    if any(k in g for k in ["sneaker", "shoe", "footwear", "streetwear", "nike", "jordan"]):
+    if _any_kw(g, ["sneaker", "shoe", "footwear", "streetwear", "nike", "jordan"]):
         return {
             "brand_seed": "Apex",
             "tagline": "Where Performance Meets Cultural Identity",
@@ -212,7 +423,7 @@ def _extract_product_domain(goal: str) -> dict[str, Any]:
             "model_stats": "Adaptive Fit • Energy Return",
             "three_d_scene_type": "sneaker_3d",
         }
-    if any(k in g for k in ["fashion", "clothing", "apparel", "dress", "luxury fashion"]):
+    if _any_kw(g, ["fashion", "clothing", "apparel", "dress", "luxury fashion"]):
         return {
             "brand_seed": "Maison",
             "tagline": "Elevated Essentials for the Modern Aesthetic",
@@ -230,7 +441,7 @@ def _extract_product_domain(goal: str) -> dict[str, Any]:
             "model_stats": "Made-to-Order • Tailored Fit",
             "three_d_scene_type": "luxury_gem",
         }
-    if any(k in g for k in ["keyboard", "mechanical", "gaming gear", "peripherals", "hardware"]):
+    if _any_kw(g, ["keyboard", "mechanical", "gaming gear", "peripherals", "hardware"]):
         return {
             "brand_seed": "Vortex",
             "tagline": "High-Performance Input Engineering",
@@ -248,7 +459,7 @@ def _extract_product_domain(goal: str) -> dict[str, Any]:
             "model_stats": "CNC Anodized Aluminum • Hot-Swap",
             "three_d_scene_type": "product_turntable",
         }
-    if any(k in g for k in ["headphone", "audio", "speaker", "music", "studio"]):
+    if _any_kw(g, ["headphone", "audio", "speaker", "music", "studio"]):
         return {
             "brand_seed": "Sonique",
             "tagline": "Audiophile-Grade Spatial Sound Engineering",
@@ -266,7 +477,7 @@ def _extract_product_domain(goal: str) -> dict[str, Any]:
             "model_stats": "Open-Back Acoustic Chamber",
             "three_d_scene_type": "audio_gear",
         }
-    if any(k in g for k in ["skincare", "beauty", "cosmetics", "wellness"]):
+    if _any_kw(g, ["skincare", "beauty", "cosmetics", "wellness"]):
         return {
             "brand_seed": "Lumina",
             "tagline": "Science-Backed Beauty for Radiant Living",
@@ -276,7 +487,7 @@ def _extract_product_domain(goal: str) -> dict[str, Any]:
             "secondary": "#a78bfa",
             "archetype": "luxury",
         }
-    if any(k in g for k in ["furniture", "interior", "home decor", "design objects"]):
+    if _any_kw(g, ["furniture", "interior", "home decor", "design objects"]):
         return {
             "brand_seed": "Forma",
             "tagline": "Sculptural Objects for Considered Living Spaces",
@@ -286,7 +497,7 @@ def _extract_product_domain(goal: str) -> dict[str, Any]:
             "secondary": "#78716c",
             "archetype": "luxury",
         }
-    if any(k in g for k in ["car", "automobile", "vehicle", "ev", "electric vehicle"]):
+    if _any_kw(g, ["car", "automobile", "vehicle", "ev", "electric vehicle"]):
         return {
             "brand_seed": "Volt",
             "tagline": "Electric Performance Without Compromise",
@@ -296,7 +507,7 @@ def _extract_product_domain(goal: str) -> dict[str, Any]:
             "secondary": "#3b82f6",
             "archetype": "mission_control",
         }
-    if any(k in g for k in ["book", "course", "education", "learning", "e-learning"]):
+    if _any_kw(g, ["book", "course", "education", "learning", "e-learning"]):
         return {
             "brand_seed": "Nexus",
             "tagline": "Expert-Led Learning for the Next Generation of Builders",
@@ -324,7 +535,7 @@ def _extract_saas_domain(goal: str) -> dict[str, Any]:
     g = goal.lower()
     brand = _extract_brand_name(goal)
 
-    if any(k in g for k in ["analytics", "data", "insights", "bi", "business intelligence"]):
+    if _any_kw(g, ["analytics", "data", "insights", "bi", "business intelligence"]):
         return {
             "brand": brand + "Analytics",
             "tagline": "Turn Raw Data Into Competitive Intelligence",
@@ -335,7 +546,7 @@ def _extract_saas_domain(goal: str) -> dict[str, Any]:
             "accent": "#3b82f6",
             "secondary": "#06b6d4",
         }
-    if any(k in g for k in ["security", "cybersecurity", "pentest", "soc", "zero trust"]):
+    if _any_kw(g, ["security", "cybersecurity", "pentest", "soc", "zero trust"]):
         return {
             "brand": brand + "Shield",
             "tagline": "Zero-Trust Security That Never Sleeps",
@@ -346,7 +557,7 @@ def _extract_saas_domain(goal: str) -> dict[str, Any]:
             "accent": "#ef4444",
             "secondary": "#f97316",
         }
-    if any(k in g for k in ["devops", "ci/cd", "deployment", "infrastructure", "platform engineering"]):
+    if _any_kw(g, ["devops", "ci/cd", "deployment", "infrastructure", "platform engineering"]):
         return {
             "brand": brand + "Deploy",
             "tagline": "Ship Faster. Break Nothing. Sleep Better.",
@@ -357,7 +568,7 @@ def _extract_saas_domain(goal: str) -> dict[str, Any]:
             "accent": "#10b981",
             "secondary": "#3b82f6",
         }
-    if any(k in g for k in ["crm", "sales", "leads", "revenue", "marketing"]):
+    if _any_kw(g, ["crm", "sales", "leads", "revenue", "marketing"]):
         return {
             "brand": brand + "CRM",
             "tagline": "Close More Deals With Autonomous AI Sales Intelligence",
@@ -368,7 +579,7 @@ def _extract_saas_domain(goal: str) -> dict[str, Any]:
             "accent": "#f59e0b",
             "secondary": "#ec4899",
         }
-    if any(k in g for k in ["ai", "llm", "copilot", "assistant", "automation", "agent"]):
+    if _any_kw(g, ["ai", "llm", "copilot", "assistant", "automation", "agent"]):
         return {
             "brand": brand + " AI",
             "tagline": "The AI Copilot That Writes, Builds, and Ships for You",
@@ -379,7 +590,7 @@ def _extract_saas_domain(goal: str) -> dict[str, Any]:
             "accent": "#6366f1",
             "secondary": "#a855f7",
         }
-    if any(k in g for k in ["design", "figma", "ui", "ux", "prototyping", "creative"]):
+    if _any_kw(g, ["design", "figma", "ui", "ux", "prototyping", "creative"]):
         return {
             "brand": brand + " Studio",
             "tagline": "AI-Powered Design That Ships Production Code",
@@ -390,7 +601,7 @@ def _extract_saas_domain(goal: str) -> dict[str, Any]:
             "accent": "#ec4899",
             "secondary": "#8b5cf6",
         }
-    if any(k in g for k in ["finance", "fintech", "banking", "payment", "investment"]):
+    if _any_kw(g, ["finance", "fintech", "banking", "payment", "investment"]):
         return {
             "brand": brand + " Finance",
             "tagline": "Intelligent Financial Infrastructure for Modern Businesses",
@@ -418,7 +629,7 @@ def _extract_dashboard_domain(goal: str) -> dict[str, Any]:
     """Extract dashboard/telemetry personality from goal."""
     g = goal.lower()
 
-    if any(k in g for k in ["iot", "sensor", "edge", "mqtt", "device"]):
+    if _any_kw(g, ["iot", "sensor", "edge", "mqtt", "device"]):
         return {
             "title": "EdgeSync — IoT Mission Control",
             "headline": "Real-Time IoT Fleet Intelligence & Edge Node Telemetry",
@@ -433,7 +644,7 @@ def _extract_dashboard_domain(goal: str) -> dict[str, Any]:
                 {"id": "metric-4", "category": "Actuators", "title": "Pneumatic Valve Actuator Bank", "description": "192 actuators in closed-loop PID control. Cycle time 80ms with 0.01bar precision.", "tags": ["PID", "4–20mA", "Fieldbus"], "metrics": "80ms Cycle • 0.01bar"},
             ],
         }
-    if any(k in g for k in ["orbital", "space", "satellite", "mission control", "aerospace"]):
+    if _any_kw(g, ["orbital", "space", "satellite", "mission control", "aerospace"]):
         return {
             "title": "Orbital Apex — Space Mission Control",
             "headline": "Deep Space Telemetry & Orbital Mission Operations",
@@ -448,7 +659,7 @@ def _extract_dashboard_domain(goal: str) -> dict[str, Any]:
                 {"id": "metric-4", "category": "Propulsion", "title": "Ion Thruster Cluster Gamma", "description": "Hall-effect ion thrusters at 42% duty. Delta-V budget: 124.6 m/s remaining.", "tags": ["Hall Effect", "Xenon", "42% Duty"], "metrics": "124.6 m/s ΔV"},
             ],
         }
-    if any(k in g for k in ["kubernetes", "k8s", "cloud infra", "devops", "sre", "infrastructure"]):
+    if _any_kw(g, ["kubernetes", "k8s", "cloud infra", "devops", "sre", "infrastructure"]):
         return {
             "title": "InfraWatch — Cloud Infrastructure Command",
             "headline": "Unified Kubernetes & Cloud Infrastructure Operations Hub",
@@ -463,7 +674,7 @@ def _extract_dashboard_domain(goal: str) -> dict[str, Any]:
                 {"id": "metric-4", "category": "Security", "title": "mTLS Service Mesh — Istio", "description": "Envoy sidecars on 382 pods. mTLS enforced. 0 policy violations in last 30d.", "tags": ["Istio 1.22", "mTLS", "Envoy"], "metrics": "0 Violations • mTLS Enforced"},
             ],
         }
-    if any(k in g for k in ["finance", "trading", "market", "stock", "crypto", "quant"]):
+    if _any_kw(g, ["finance", "trading", "market", "stock", "crypto", "quant"]):
         return {
             "title": "QuantWatch — Financial Market Operations",
             "headline": "Real-Time Market Intelligence & Algorithmic Trading Operations",
@@ -501,7 +712,7 @@ def _generate_portfolio_projects(goal: str, specialty: str, techs: list[str]) ->
     g = goal.lower()
 
     # 3D / WebGL specialist
-    if any(k in g for k in ["three.js", "threejs", "webgl", "3d", "shader", "glsl"]):
+    if _any_kw(g, ["three.js", "threejs", "webgl", "3d", "shader", "glsl"]):
         return [
             {
                 "id": "proj-1", "category": "3D & WebGL",
@@ -538,7 +749,7 @@ def _generate_portfolio_projects(goal: str, specialty: str, techs: list[str]) ->
         ]
 
     # AI/ML Engineer
-    if any(k in g for k in ["ai", "machine learning", "ml", "neural", "llm", "gpt"]):
+    if _any_kw(g, ["ai", "machine learning", "ml", "neural", "llm", "gpt"]):
         return [
             {
                 "id": "proj-1", "category": "AI Systems",
@@ -575,7 +786,7 @@ def _generate_portfolio_projects(goal: str, specialty: str, techs: list[str]) ->
         ]
 
     # Blockchain / Web3
-    if any(k in g for k in ["blockchain", "web3", "crypto", "solidity", "defi", "nft"]):
+    if _any_kw(g, ["blockchain", "web3", "crypto", "solidity", "defi", "nft"]):
         return [
             {
                 "id": "proj-1", "category": "DeFi Protocols",
@@ -612,7 +823,7 @@ def _generate_portfolio_projects(goal: str, specialty: str, techs: list[str]) ->
         ]
 
     # Systems / Rust / Performance
-    if any(k in g for k in ["rust", "systems", "performance", "low-latency", "embedded"]):
+    if _any_kw(g, ["rust", "systems", "performance", "low-latency", "embedded"]):
         return [
             {
                 "id": "proj-1", "category": "High Performance",
@@ -759,45 +970,46 @@ class DomainSynthesizer:
         g = combined_context.lower()
 
         # 0. E-Commerce
-        if any(k in g for k in ["ecommerce", "e-commerce", "store", "shop", "hardware accessories",
+        if _any_kw(g, ["ecommerce", "e-commerce", "store", "shop", "hardware accessories",
                                   "cart", "buy", "sneaker", "shoe", "clothing", "apparel", "retail",
                                   "watch", "timepiece", "jewelry", "fashion", "furniture", "audio gear",
                                   "headphone", "keyboard", "skincare", "cosmetics"]):
-            return cls._synthesize_ecommerce(goal)
+            return cls._synthesize_ecommerce(goal, requirements)
 
         # 1. SaaS / Platform / Subscription
-        if any(k in g for k in ["saas", "pricing", "subscription", "b2b", "copilot platform",
+        if _any_kw(g, ["saas", "pricing", "subscription", "b2b", "copilot platform",
                                   "analytics platform", "ai platform", "devops platform", "crm"]):
-            return cls._synthesize_saas(goal)
+            return cls._synthesize_saas(goal, requirements)
 
         # 2. Dashboard / Telemetry / Ops
-        if any(k in g for k in ["dashboard", "telemetry", "ops hub", "control center",
+        if _any_kw(g, ["dashboard", "telemetry", "ops hub", "control center",
                                   "monitoring", "operations hub", "iot", "mission control",
                                   "satellite", "trading terminal", "market monitor"]):
-            return cls._synthesize_dashboard(goal)
+            return cls._synthesize_dashboard(goal, requirements)
 
         # 3. Cyberpunk / Sci-Fi / Neon
-        if any(k in g for k in ["cyberpunk", "sci-fi", "scifi", "neon", "matrix", "dystopian"]):
-            return cls._synthesize_cyberpunk_portfolio(goal)
+        if _any_kw(g, ["cyberpunk", "sci-fi", "scifi", "neon", "matrix", "dystopian"]):
+            return cls._synthesize_cyberpunk_portfolio(goal, requirements)
 
         # 4. Portfolio / Personal site / Resume
-        if any(k in g for k in ["portfolio", "personal website", "developer profile", "resume", "cv",
+        if _any_kw(g, ["portfolio", "personal website", "developer profile", "resume", "cv",
                                   "personal site", "my website", "showcase"]):
-            return cls._synthesize_portfolio(goal)
+            return cls._synthesize_portfolio(goal, requirements)
 
         # 5. Generic SaaS / Tool / Platform fallback
-        if any(k in g for k in ["platform", "startup", "tool", "copilot", "cloud", "api service", "ai "]):
-            return cls._synthesize_saas(goal)
+        if _any_kw(g, ["platform", "startup", "tool", "copilot", "cloud", "api service", "ai "]):
+            return cls._synthesize_saas(goal, requirements)
 
         # 6. Creative / Generic App
-        return cls._synthesize_creative(goal)
+        return cls._synthesize_creative(goal, requirements)
 
     # =========================================================================
     # Dynamic Synthesizers
     # =========================================================================
 
     @classmethod
-    def _synthesize_ecommerce(cls, goal: str) -> DomainBlueprint:
+    def _synthesize_ecommerce(cls, goal: str, requirements: list[str] | None = None) -> DomainBlueprint:
+        brief = _extract_brief_model(goal, requirements)
         meta = _extract_product_domain(goal)
         accent = meta["accent"]
         secondary = meta["secondary"]
@@ -839,10 +1051,15 @@ class DomainSynthesizer:
             ],
             interactive_modules=["interactive_cart_drawer", "filter_catalog", "3d_product_preview", "checkout_modal"],
             meta_description=f"{store_name} — {meta['tagline']}. Premium {meta['product_type']} with world-class service.",
+            requested_sections=brief["requested_sections"],
+            pricing_tiers=brief["pricing_tiers"],
+            app_entity=brief["app_entity"],
+            brief_subject=brief["brief_subject"],
         )
 
     @classmethod
-    def _synthesize_saas(cls, goal: str) -> DomainBlueprint:
+    def _synthesize_saas(cls, goal: str, requirements: list[str] | None = None) -> DomainBlueprint:
+        brief = _extract_brief_model(goal, requirements)
         meta = _extract_saas_domain(goal)
         accent = meta.get("accent", "#3b82f6")
         secondary = meta.get("secondary", "#10b981")
@@ -876,10 +1093,15 @@ class DomainSynthesizer:
             ],
             interactive_modules=["pricing_toggle", "feature_bento", "roi_calculator", "faq_accordion", "live_demo_modal"],
             meta_description=f"{brand} — {meta['tagline']}.",
+            requested_sections=brief["requested_sections"],
+            pricing_tiers=brief["pricing_tiers"],
+            app_entity=brief["app_entity"],
+            brief_subject=brief["brief_subject"],
         )
 
     @classmethod
-    def _synthesize_dashboard(cls, goal: str) -> DomainBlueprint:
+    def _synthesize_dashboard(cls, goal: str, requirements: list[str] | None = None) -> DomainBlueprint:
+        brief = _extract_brief_model(goal, requirements)
         meta = _extract_dashboard_domain(goal)
         accent, secondary, archetype = _palette_for_goal(goal, "dashboard")
 
@@ -909,10 +1131,15 @@ class DomainSynthesizer:
                 "throughput": meta.get("kpi_throughput", "840k req/s"),
                 "latency": meta.get("kpi_latency", "6.4ms P99"),
             },
+            requested_sections=brief["requested_sections"],
+            pricing_tiers=brief["pricing_tiers"],
+            app_entity=brief["app_entity"],
+            brief_subject=brief["brief_subject"],
         )
 
     @classmethod
-    def _synthesize_cyberpunk_portfolio(cls, goal: str) -> DomainBlueprint:
+    def _synthesize_cyberpunk_portfolio(cls, goal: str, requirements: list[str] | None = None) -> DomainBlueprint:
+        brief = _extract_brief_model(goal, requirements)
         specialty = _extract_specialty(goal)
         techs = _extract_technologies(goal)
         brand = _extract_brand_name(goal)
@@ -949,10 +1176,15 @@ class DomainSynthesizer:
             ],
             interactive_modules=["three_d_canvas", "cyber_terminal", "filter_showcase", "details_modal", "skill_bars", "hud_controls", "theme_toggle"],
             meta_description=f"Portfolio of {brand} — {specialty}. Real-time WebGL, high-performance systems, and world-class engineering.",
+            requested_sections=brief["requested_sections"],
+            pricing_tiers=brief["pricing_tiers"],
+            app_entity=brief["app_entity"],
+            brief_subject=brief["brief_subject"],
         )
 
     @classmethod
-    def _synthesize_portfolio(cls, goal: str) -> DomainBlueprint:
+    def _synthesize_portfolio(cls, goal: str, requirements: list[str] | None = None) -> DomainBlueprint:
+        brief = _extract_brief_model(goal, requirements)
         specialty = _extract_specialty(goal)
         techs = _extract_technologies(goal)
         brand = _extract_brand_name(goal)
@@ -990,14 +1222,25 @@ class DomainSynthesizer:
             ],
             interactive_modules=["particle_hero", "filter_showcase", "details_modal", "skill_bars", "validated_contact", "theme_toggle"],
             meta_description=f"Portfolio of {brand} — {specialty}. {', '.join(techs[:3]) if techs else 'Modern software engineering'}.",
+            requested_sections=brief["requested_sections"],
+            pricing_tiers=brief["pricing_tiers"],
+            app_entity=brief["app_entity"],
+            brief_subject=brief["brief_subject"],
         )
 
     @classmethod
-    def _synthesize_creative(cls, goal: str) -> DomainBlueprint:
+    def _synthesize_creative(cls, goal: str, requirements: list[str] | None = None) -> DomainBlueprint:
+        brief = _extract_brief_model(goal, requirements)
         clean = re.sub(r"[^a-zA-Z0-9\s]", "", goal).strip()
         title_words = [w.capitalize() for w in clean.split()[:5]]
         headline = " ".join(title_words) or "Futuristic Web Application"
         brand = _extract_brand_name(goal)
+        if brief["brief_subject"]:
+            # A brief lead-in ("TaskBoard Mini - a personal task board")
+            # names the product; the first-five-words headline would read
+            # "Taskboard Mini A Personal Task". Use the brief's own
+            # description as the headline instead.
+            headline = brief["brief_subject"].capitalize()
         accent, secondary, archetype = _palette_for_goal(goal, "creative")
 
         return DomainBlueprint(
@@ -1024,6 +1267,10 @@ class DomainSynthesizer:
             ],
             interactive_modules=["particle_hero", "filter_showcase", "modal_preview", "theme_toggle"],
             meta_description=f"{brand} — {headline}. Built with Project FORGE.",
+            requested_sections=brief["requested_sections"],
+            pricing_tiers=brief["pricing_tiers"],
+            app_entity=brief["app_entity"],
+            brief_subject=brief["brief_subject"],
         )
 
     # =========================================================================
