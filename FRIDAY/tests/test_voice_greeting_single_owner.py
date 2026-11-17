@@ -21,6 +21,18 @@ code.line.number) decomposes it:
   greeting owner; the model greeting survives only as the last
   resort when the line could not be played at all, and no greeting
   stack fires once the user has spoken.
+
+TASK-VOI-016 (2026-11-17) supersedes the D5 half of the fix above:
+re-run #10d proved the settle-hold itself is a defect — it delayed
+the session start by the greeting's whole stretched playback
+(11.61 s of a 21.1 s join-to-hearing window) and a caller's first
+sentence spoken in that window is dropped by construction. The
+hold is removed: the session starts when the build resolves, and
+the greeting waits at the session-listening gate instead (pinned
+in test_voice_dead_input_voi016.py). The _await_greeting_settled
+unit tests below stay: they pin the bounded non-cancelling wait
+primitive's semantics, which VOI-016 retired from the ready path
+but did not change. The D8 half (one greeting owner) is unchanged.
 """
 
 import asyncio
@@ -94,14 +106,22 @@ def test_settled_wait_failed_task_counts_as_settled():
     assert asyncio.run(main()) is True
 
 
-# ---------- entrypoint source shape: settle BEFORE session start ----------
+# ---------- entrypoint source shape: NO settle-hold before start ----------
+# TASK-VOI-016 supersedes the VOI-014 shape this section originally
+# pinned (settle awaited BEFORE `await _start(session, agent)`):
+# re-run #10d proved the hold is the deaf-window defect. The session
+# now starts the moment the build resolves; the greeting waits at
+# the listening gate (test_voice_dead_input_voi016.py pins the gate
+# and the watchdog's dead-input trigger).
 
-def test_entrypoint_settles_greeting_before_session_start():
+def test_entrypoint_starts_session_without_the_greeting_settle_hold():
     src = inspect.getsource(w.entrypoint)
-    settle_at = src.index('await _await_greeting_settled(early_greeting["task"])')
     start_at = src.index("await _start(session, agent)")
     launch_at = src.index('early_greeting["task"] = asyncio.ensure_future(')
-    assert launch_at < settle_at < start_at
+    assert launch_at < start_at
+    # The VOI-014 hold is gone from the entrypoint entirely: the
+    # ready path never awaits the greeting's settlement.
+    assert 'await _await_greeting_settled(early_greeting["task"])' not in src
 
 
 def test_entrypoint_counts_the_job_active_for_the_warm_guard():
