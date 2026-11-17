@@ -1467,6 +1467,15 @@ def _result_verbalized(spoken_reply: str, assistant_texts) -> bool:
 # which dispatches the fragment's text as its OWN bridge call. The
 # tracker itself still never delays, holds, or alters any dispatch;
 # the recovery is a separate, additional dispatch after the fact.
+# TASK-FRD-019(b) boundary fix: proof and recovery are no longer
+# mutually exclusive fates. Pre-fix, _fragment_user_final REMOVED a
+# proven suspect from the list, so a fragment proven dropped by two
+# further finals that landed before its flight settled was journalled
+# but invisible to _fragment_recovery_due — never recovered (drill
+# Phase B). A proven suspect now stays listed, marked ``proven``,
+# until it is recovered or definitively resolved; it is returned for
+# journalling exactly once, at proof time, and the session-end flush
+# does not report it a second time.
 
 def _new_fragment_watch() -> dict:
     return {"in_flight": {}, "suspects": [], "dispatches": [],
@@ -1510,7 +1519,16 @@ def _fragment_user_final(state: dict, text, now: float) -> list:
     suspects this final proves (suspects from two or more finals ago
     that no later bridge call picked up); the caller journals them.
     The final itself becomes a suspect when a bridge call is in
-    flight at its landing."""
+    flight at its landing.
+
+    TASK-FRD-019(b): a proven suspect is NOT consumed — it stays in
+    state["suspects"], marked ``proven``, so _fragment_recovery_due
+    can still hand it out once its flight settles (pre-fix the proof
+    removed it from the list, and a fragment proven before settle
+    was never recovered). It is returned — journalled — exactly
+    once, here at proof time; later finals keep it silently, and a
+    later covering dispatch still resolves it without a trace,
+    exactly as for an unproven suspect."""
     state["final_seq"] += 1
     seq = state["final_seq"]
     dropped = []
@@ -1518,9 +1536,17 @@ def _fragment_user_final(state: dict, text, now: float) -> list:
     for suspect in state["suspects"]:
         if seq - suspect["seq"] < 2:
             remaining.append(suspect)
-        elif not _dispatch_followed(state, suspect):
+        elif _dispatch_followed(state, suspect):
+            # A bridge call picked it up — resolved, no trace owed.
+            continue
+        elif suspect.get("proven"):
+            # Already journalled at proof time; keep it listed for
+            # the recovery pass without reporting it twice.
+            remaining.append(suspect)
+        else:
+            suspect["proven"] = True
             dropped.append(suspect)
-        # else: a bridge call picked it up — resolved, no trace owed.
+            remaining.append(suspect)
     state["suspects"] = remaining
     if state["in_flight"]:
         state["suspects"].append({
@@ -1532,9 +1558,15 @@ def _fragment_user_final(state: dict, text, now: float) -> list:
 
 def _fragment_flush(state: dict) -> list:
     """Session end: the suspects no bridge call ever followed.
-    Clears the list either way, so a second flush is a no-op."""
+    Clears the list either way, so a second flush is a no-op.
+
+    TASK-FRD-019(b): proven suspects are excluded — they already
+    left their journal line at proof time (via _fragment_user_final's
+    return), so reporting them again here would double-journal the
+    same drop. Unproven suspects flush exactly as before."""
     dropped = [s for s in state["suspects"]
-               if not _dispatch_followed(state, s)]
+               if not s.get("proven")
+               and not _dispatch_followed(state, s)]
     state["suspects"] = []
     return dropped
 
