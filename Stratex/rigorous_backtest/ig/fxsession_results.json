@@ -1,0 +1,128 @@
+{
+  "task_id": "TASK-STR-RD-018",
+  "declaration_sha256": "0b4c10b085a5eebfd57a346c91285f6214133044f4c725498ea12a2e2cb01aa5",
+  "n_run": 3894,
+  "bonferroni_alpha": 1.2840267077555214e-05,
+  "bonferroni_p_value": 1.0,
+  "pooled_oos": {
+    "trades": 2051,
+    "expectancy_net": -0.000534063545975932,
+    "profit_factor_net": 0.34332165002683773,
+    "total_net": -1.0953643327966365,
+    "win_rate": 0.3515358361774744
+  },
+  "pooled_oos_2x_costs": {
+    "trades": 2051,
+    "expectancy_net": -0.0011341038538951744,
+    "profit_factor_net": 0.10381164522546686,
+    "total_net": -2.326047004339003,
+    "win_rate": 0.16040955631399317
+  },
+  "per_fold": {
+    "W1": {
+      "trades": 431,
+      "expectancy_net": -0.0005406441122736308,
+      "profit_factor_net": 0.3543183262119973,
+      "total_net": -0.23301761238993485,
+      "win_rate": 0.3109048723897912
+    },
+    "W2": {
+      "trades": 428,
+      "expectancy_net": -0.0005245693927632475,
+      "profit_factor_net": 0.4451821768792159,
+      "total_net": -0.22451570010266994,
+      "win_rate": 0.4205607476635514
+    },
+    "W3": {
+      "trades": 466,
+      "expectancy_net": -0.0005101670171045006,
+      "profit_factor_net": 0.32157581284005865,
+      "total_net": -0.23773782997069728,
+      "win_rate": 0.38197424892703863
+    },
+    "W4": {
+      "trades": 436,
+      "expectancy_net": -0.0004344050915990478,
+      "profit_factor_net": 0.38259209807235633,
+      "total_net": -0.18940061993718485,
+      "win_rate": 0.3623853211009174
+    },
+    "W5": {
+      "trades": 290,
+      "expectancy_net": -0.000726526104814309,
+      "profit_factor_net": 0.14105429841685735,
+      "total_net": -0.21069257039614964,
+      "win_rate": 0.24482758620689654
+    }
+  },
+  "per_symbol_oos": {
+    "EURUSD": {
+      "trades": 549,
+      "expectancy_net": -0.0005294528414438314,
+      "profit_factor_net": 0.2609450801036989,
+      "total_net": -0.29066960995266344,
+      "win_rate": 0.30601092896174864
+    },
+    "GBPUSD": {
+      "trades": 548,
+      "expectancy_net": -0.0005265573969105299,
+      "profit_factor_net": 0.24803389498361436,
+      "total_net": -0.28855345350697037,
+      "win_rate": 0.3722627737226277
+    },
+    "USDJPY": {
+      "trades": 481,
+      "expectancy_net": -0.0005464190457988107,
+      "profit_factor_net": 0.4130407169982182,
+      "total_net": -0.26282756102922794,
+      "win_rate": 0.3471933471933472
+    },
+    "AUDUSD": {
+      "trades": 473,
+      "expectancy_net": -0.000535546952024894,
+      "profit_factor_net": 0.42848066741317636,
+      "total_net": -0.25331370830777483,
+      "win_rate": 0.38477801268498946
+    }
+  },
+  "positive_folds": 0,
+  "temporal_holdout": {
+    "H1_holdout_trades_gte_20": true,
+    "H2_holdout_expectancy_gt_0": false,
+    "H3_dev_oos_expectancy_gt_0": false,
+    "H4_fold_concentration_lte_0.80": false,
+    "H5_burn_clause": "ATTESTED_BY_RUN_PROTOCOL (--declared-run)",
+    "holdout_metrics": {
+      "trades": 290,
+      "expectancy_net": -0.000726526104814309,
+      "profit_factor_net": 0.14105429841685735,
+      "total_net": -0.21069257039614964,
+      "win_rate": 0.24482758620689654
+    },
+    "dev_oos_metrics": {
+      "trades": 1761,
+      "expectancy_net": -0.0005023689735380391,
+      "profit_factor_net": 0.37819406290082325,
+      "total_net": -0.884671762400487,
+      "win_rate": 0.3691084611016468
+    },
+    "max_fold_profit_share": 1.0
+  },
+  "breadth": {
+    "positive_symbols_min20": [],
+    "max_symbol_profit_share": 1.0,
+    "passes": false
+  },
+  "checks": {
+    "pooled_expectancy_gt_0": false,
+    "pooled_pf_gte_1.2_finite": false,
+    "min_oos_trades_200": true,
+    "positive_folds_gte_4_of_5": false,
+    "cost_shadow_2x": false,
+    "bonferroni": false,
+    "temporal_holdout_v1": false,
+    "breadth": false
+  },
+  "verdict": "FAIL",
+  "delete_per_owner_rule": true
+}
