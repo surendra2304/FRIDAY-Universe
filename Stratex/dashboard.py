@@ -15,6 +15,7 @@ from flask import Flask, Response, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 import config
+import daemon_book
 from data import get_candles as fetch_candles
 from logger import get_logger
 
@@ -1035,56 +1036,6 @@ def get_candles():
             "error": str(e)
         }), 503
 
-def _daemon_engine_snapshot(max_age_seconds: int = 180):
-    """Observed state of the autonomous trading daemon, if it is alive.
-
-    In FUTURES mode the component that evaluates and executes trades is the
-    Stratex daemon, a separate process from this API. It rewrites its portfolio
-    state atomically every cycle, so the freshness of that file is direct
-    evidence of an engine that is working. The API-side heartbeat describes a
-    different process, and reading it alone made a daemon that was actively
-    managing 15 positions report ``engine: offline`` and ``/ready`` 503.
-    """
-    here = os.path.dirname(os.path.abspath(__file__))
-    candidates = [
-        os.path.join(os.getcwd(), "state", "cloud_portfolio_state.json"),
-        os.path.join(here, "state", "cloud_portfolio_state.json"),
-    ]
-    for path in candidates:
-        if not os.path.exists(path):
-            continue
-        try:
-            age = time.time() - os.path.getmtime(path)
-            if age > max_age_seconds:
-                continue
-            with open(path, "r", encoding="utf-8") as fh:
-                state = json.load(fh)
-        except Exception:
-            continue
-        positions = state.get("positions") or {}
-        if isinstance(positions, dict):
-            open_positions = len(positions)
-            unrealized = 0.0
-            for pos in positions.values():
-                try:
-                    unrealized += float(pos.get("unrealized_pnl") or 0.0)
-                except (TypeError, ValueError):
-                    continue
-        else:
-            open_positions = len(positions)
-            unrealized = 0.0
-        return {
-            "engine_source": "autonomous_daemon",
-            "daemon_state_age_seconds": round(age, 1),
-            "daemon_balance": state.get("balance"),
-            "daemon_updated_at": state.get("updated_at"),
-            "open_positions": open_positions,
-            "unrealized_pnl": round(unrealized, 2),
-            "environment": "ctrader_demo",
-        }
-    return None
-
-
 def _pid_alive(pid):
     """Best-effort liveness check for a recorded pid (no signal side effects)."""
     if not pid:
@@ -1111,57 +1062,43 @@ def _multi_venue_daemon_snapshot(max_age_seconds: int = 600):
     actually evaluates strategies and executes in FUTURES mode: Binance
     Futures testnet + OANDA practice. It rewrites state/daemon_heartbeat.json
     every scan cycle, so a fresh heartbeat with status RUNNING and a live pid
-    is direct evidence of a working engine. The legacy snapshot above reads
-    cloud_portfolio_state.json, which only the MT5 cTrader engine writes, on
-    trade events — this daemon never writes it, so reading it alone reported
-    a live daemon as ``engine: offline`` for 12 days (TASK-REL-003).
+    is direct evidence of a working engine (TASK-REL-003).
 
-    The 600s threshold is generous on purpose: a scan cycle is candle-fetch
-    bound across every symbol/timeframe, and the pid check means a daemon
-    killed moments ago is not resurrected by a merely-recent file.
+    The legacy snapshot that read state/cloud_portfolio_state.json has
+    been deleted: that file is written only by the retired MT5 cTrader
+    engine and froze on 2026-11-08 (balance 10792.8, zero positions), so
+    as a fallback it resurrected a dead engine's figures as the live
+    book. This daemon heartbeat is now the only engine witness.
+
+    The 600s threshold is generous on purpose: a scan cycle is
+    candle-fetch bound across every symbol/timeframe, and the pid check
+    means a daemon killed moments ago is not resurrected by a
+    merely-recent file.
+
+    The heartbeat read + gate live in daemon_book (shared with the
+    supervision composition); this function shapes its payload for the
+    health response.
     """
-    here = os.path.dirname(os.path.abspath(__file__))
-    candidates = []
-    env_hb = os.getenv("STRATEX_DAEMON_HEARTBEAT_FILE")
-    if env_hb:
-        candidates.append(env_hb)
-    candidates += [
-        os.path.join(os.getcwd(), "state", "daemon_heartbeat.json"),
-        os.path.join(here, "state", "daemon_heartbeat.json"),
-    ]
-    for path in candidates:
-        if not os.path.exists(path):
-            continue
-        try:
-            age = time.time() - os.path.getmtime(path)
-            if age > max_age_seconds:
-                continue
-            with open(path, "r", encoding="utf-8") as fh:
-                hb = json.load(fh)
-        except Exception:
-            continue
-        if hb.get("status") != "RUNNING":
-            continue
-        pid = hb.get("pid")
-        if pid is not None and not _pid_alive(pid):
-            continue
-        unrealized = hb.get("unrealized_pnl")
-        try:
-            unrealized = round(float(unrealized), 2)
-        except (TypeError, ValueError):
-            unrealized = None
-        return {
-            "engine_source": "multi_venue_daemon",
-            "daemon_state_age_seconds": round(age, 1),
-            "daemon_balance": hb.get("total_balance"),
-            "daemon_updated_at": hb.get("timestamp"),
-            "open_positions": hb.get("open_positions"),
-            "unrealized_pnl": unrealized,
-            "environment": "multi_venue_testnet_practice",
-            "daemon_last_evaluation": hb.get("last_strategy_evaluation"),
-            "daemon_scan_count": hb.get("scan_count"),
-        }
-    return None
+    result = daemon_book.read_daemon_heartbeat(max_age_seconds)
+    if result is None:
+        return None
+    hb, age = result
+    unrealized = hb.get("unrealized_pnl")
+    try:
+        unrealized = round(float(unrealized), 2)
+    except (TypeError, ValueError):
+        unrealized = None
+    return {
+        "engine_source": "multi_venue_daemon",
+        "daemon_state_age_seconds": round(age, 1),
+        "daemon_balance": hb.get("total_balance"),
+        "daemon_updated_at": hb.get("timestamp"),
+        "open_positions": hb.get("open_positions"),
+        "unrealized_pnl": unrealized,
+        "environment": "multi_venue_testnet_practice",
+        "daemon_last_evaluation": hb.get("last_strategy_evaluation"),
+        "daemon_scan_count": hb.get("scan_count"),
+    }
 
 
 def _daemon_capability_warnings(snapshot):
@@ -1280,10 +1217,9 @@ def get_engine_health_data():
         # that earns is the only one that always reports "not ready".
         _daemon_snapshot = None
         if not trading_capable and getattr(config, "TRADING_MODE", "").upper() == "FUTURES":
-            # The deployed multi-venue daemon is the primary witness; the
-            # MT5 cloud-state snapshot remains as a fallback for the process
-            # that actually writes it.
-            _daemon_snapshot = _multi_venue_daemon_snapshot() or _daemon_engine_snapshot()
+            # The deployed multi-venue daemon is the only witness; the
+            # legacy MT5 cloud-state snapshot reader has been deleted.
+            _daemon_snapshot = _multi_venue_daemon_snapshot()
             if _daemon_snapshot:
                 is_healthy = True
                 engine_status = "ONLINE"
@@ -1818,103 +1754,50 @@ def get_status():
                 if fees == 0.0:
                     fees = float(loaded_port.get("fees", loaded_port.get("cumulative_fees", 0.0)))
                 
-                # Compute unrealized PnL across active positions
-                for pos_sym, pos in loaded_port.get("positions", {}).items():
-                    if not isinstance(pos, dict): continue
-                    if pos.get('status', 'OPEN') != "OPEN": continue
-                    try:
-                        sym = pos.get("symbol", pos_sym if "USDT" in pos_sym else "BTCUSDT")
-                        entry_price = float(pos.get("entry_price", 0.0))
-                        quantity = float(pos.get("quantity", 0.0))
-                        direction = pos.get("direction", pos.get("side", "BUY"))
-                        
-                        current_price = entry_price
-                        try:
-                            df = fetch_candles(sym, "1m", 1)
-                            if not df.empty:
-                                current_price = float(df['close'].iloc[-1])
-                        except Exception:
-                            pass
-                            
-                        u_pnl = 0.0
-                        if current_price > 0 and entry_price > 0 and quantity > 0:
-                            used_margin += entry_price * quantity
-                            if direction in ["LONG", "BUY"]:
-                                u_pnl = (current_price - entry_price) * quantity
-                            else:
-                                u_pnl = (entry_price - current_price) * quantity
-                        
-                        unrealized_pnl += u_pnl
-                        
-                        # Timestamp resolution
-                        pos_ts = pos.get("entry_timestamp") or pos.get("timestamp")
-                        if not pos_ts and pos.get("open_time"):
-                            try:
-                                pos_ts = datetime.datetime.fromtimestamp(float(pos["open_time"]), datetime.timezone.utc).isoformat().replace("+00:00", "Z")
-                            except Exception:
-                                pos_ts = datetime.datetime.utcnow().isoformat() + "Z"
-                                
-                        open_pos_list.append({
-                            "symbol": sym,
-                            "side": direction,
-                            "entry_price": entry_price,
-                            "current_price": current_price,
-                            "quantity": quantity,
-                            "unrealized_pnl": u_pnl,
-                            "sl": pos.get("sl_price", pos.get("sl", 0.0)),
-                            "tp": pos.get("tp_price", pos.get("tp", 0.0)),
-                            "strategy": pos.get("strategy", "SUPERTREND"),
-                            "timestamp": pos_ts or (datetime.datetime.utcnow().isoformat() + "Z")
-                        })
-                    except Exception as pos_err:
-                        logger.error(f"Error calculating open pos PnL: {pos_err}")
-                
-                open_positions = sum(1 for p in loaded_port.get("positions", {}).values() if isinstance(p, dict) and p.get("status") == "OPEN")
                 if loaded_port.get("max_drawdown"):
                     mdd = max(mdd, float(loaded_port.get("max_drawdown", 0.0)) * 100)
             except Exception as e:
                 logger.error(f"Failed to process portfolio file {port_file}: {e}")
 
-    # For FUTURES mode, populate live open positions directly from Binance Futures account if portfolio file is empty
-    if getattr(config, "TRADING_MODE", "TESTNET").upper() == "FUTURES" and account_holdings.get("holdings"):
-        fut_positions = [h for h in account_holdings["holdings"] if h.get("is_bot_trade") and h.get("total_quantity", 0) > 0]
-        if fut_positions:
-            open_positions = len(fut_positions)
-            open_pos_list = []
-            
-            # Retrieve active SL / TP metadata from portfolio if available
-            port_positions = port.get("positions", {}) if (isinstance(port, dict) if 'port' in locals() else False) else {}
-            
-            for fp in fut_positions:
-                sym = fp.get("symbol")
-                pos_meta = port_positions.get(sym, {}) if isinstance(port_positions.get(sym), dict) else {}
-                sl_val = float(pos_meta.get("sl", pos_meta.get("sl_price", 0.0)))
-                tp_val = float(pos_meta.get("tp", pos_meta.get("tp_price", 0.0)))
-                
-                # If SL/TP not in portfolio file, estimate from entry_price and recent 1m ATR as fallback
-                entry_p = float(fp.get("entry_price", 0.0))
-                mark_p = float(fp.get("price", 0.0)) or entry_p
-                if (sl_val == 0.0 or tp_val == 0.0) and entry_p > 0:
-                    side_val = fp.get("side", "LONG")
-                    if side_val in ["LONG", "BUY"]:
-                        if sl_val == 0.0: sl_val = round(entry_p * 0.985, 4)
-                        if tp_val == 0.0: tp_val = round(entry_p * 1.030, 4)
-                    else:
-                        if sl_val == 0.0: sl_val = round(entry_p * 1.015, 4)
-                        if tp_val == 0.0: tp_val = round(entry_p * 0.970, 4)
-
-                open_pos_list.append({
-                    "symbol": sym,
-                    "side": fp.get("side", "LONG"),
-                    "entry_price": entry_p,
-                    "current_price": mark_p,
-                    "quantity": fp.get("total_quantity", 0.0),
-                    "unrealized_pnl": fp.get("unrealized_pnl", 0.0),
-                    "sl": sl_val,
-                    "tp": tp_val,
-                    "strategy": pos_meta.get("strategy", "SUPERTREND"),
-                    "timestamp": pos_meta.get("timestamp", fp.get("timestamp", datetime.datetime.utcnow().isoformat() + "Z"))
-                })
+    # Positions leg: the live book comes from the multi-venue daemon —
+    # the headline count and unrealized from daemon_heartbeat.json, the
+    # rows from forward_scorecard.json (daemon_book). The retired MT5
+    # portfolio file and the dashboard's own venue queries no longer
+    # source positions here: the file froze on 2026-11-08 with an empty
+    # book, and marking scorecard rows from live candles would invent
+    # per-row PnL the scorecard does not carry. Rows therefore omit
+    # unrealized_pnl / stop_loss / take_profit (absent values render
+    # blank). The cash/equity legs above are unchanged.
+    _book = daemon_book.live_book()
+    _hb = _book["heartbeat"]
+    if _hb is not None:
+        try:
+            open_positions = int(_hb.get("open_positions") or 0)
+        except (TypeError, ValueError):
+            open_positions = 0
+        try:
+            unrealized_pnl = float(_hb.get("unrealized_pnl") or 0.0)
+        except (TypeError, ValueError):
+            unrealized_pnl = 0.0
+    else:
+        open_positions = 0
+        alerts.append(
+            "POSITIONS_SOURCE_UNAVAILABLE: daemon heartbeat stale or "
+            "missing; position count and unrealized are not live"
+        )
+    open_pos_list = [
+        {
+            "position_id": row["position_id"],
+            "venue": row["venue"],
+            "symbol": row["symbol"],
+            "side": row["side"],
+            "entry_price": row["entry_price"],
+            "quantity": row["quantity"],
+            "strategy": row["strategy"],
+            "timestamp": row["opened_at"],
+        }
+        for row in _book["rows"]
+    ]
 
     today_utc_str = datetime.datetime.utcnow().date().isoformat()
     today_realized_pnl = 0.0
@@ -1963,10 +1846,11 @@ def get_status():
             current_eq_val = today_equities[-1]
             mdd = max(0.0, ((equity_high - current_eq_val) / equity_high) * 100)
 
-    # Sum current PnL across all active open positions and compute active position notional value
+    # Active position notional on the entry-price basis (the scorecard
+    # carries no marks). The headline unrealized comes from the daemon
+    # heartbeat above and is never re-summed from the served rows.
     if open_pos_list:
-        unrealized_pnl = sum(float(p.get("unrealized_pnl", 0.0)) for p in open_pos_list)
-        total_open_notional = sum(float(p.get("quantity", 0.0)) * float(p.get("current_price", p.get("entry_price", 0.0))) for p in open_pos_list)
+        total_open_notional = sum(float(p.get("quantity", 0.0)) * float(p.get("entry_price", 0.0)) for p in open_pos_list)
         if getattr(config, "TRADING_MODE", "TESTNET").upper() == "FUTURES":
             crypto_trade_val = account_holdings.get("active_trade_holdings_value", 0.0)
         elif total_open_notional > 0:
@@ -3362,78 +3246,85 @@ def api_trade_events():
 
 @app.route('/api/positions')
 def api_positions():
-    """
-    Returns active and historical positions.
-    Supports query parameter ?status=OPEN|CLOSED|ALL.
+    """Position list for the dashboard.
+
+    OPEN rows are the multi-venue daemon's live book, projected from
+    state/forward_scorecard.json into the legacy row shape the dashboard
+    renders (side LONG->BUY / SHORT->SELL). The scorecard has no marks,
+    so rows omit unrealized_pnl / current_price / stop_loss /
+    take_profit rather than inventing them; ``data_age`` is the
+    scorecard's real age in seconds. When the scorecard is missing or
+    stale the open leg is honestly empty with
+    ``positions_source: "unavailable"`` — the retired testnet engine's
+    telemetry store and the old dashboard-side venue/portfolio fallbacks
+    no longer backfill it (they served phantom OPEN records from a
+    deleted strategy).
+
+    CLOSED rows still come from the telemetry store: it is append-only
+    history and remains the record of what the retired engine closed.
+    The store file itself is never edited.
     """
     from testnet_engine.telemetry_manager import get_telemetry_manager
+
     status_filter = (query_text("status", "OPEN", max_len=32) or "OPEN").upper()
-    telemetry = get_telemetry_manager()
-    positions = telemetry.get_positions(status=status_filter)
-    
-    # If looking for OPEN positions and telemetry store is warming up, sync from Binance Futures or testnet_portfolio.json
-    if status_filter in ["OPEN", "ALL"] and not positions:
-        try:
-            from execution import get_exchange_client
-            client = get_exchange_client()
-            if client and hasattr(client, "futures_position_information"):
-                raw_pos = client.futures_position_information()
-                for p in raw_pos:
-                    amt = float(p.get("positionAmt", 0.0))
-                    if amt != 0:
-                        sym = p.get("symbol")
-                        side = "BUY" if amt > 0 else "SELL"
-                        entry_p = float(p.get("entryPrice", 0.0))
-                        mark_p = float(p.get("markPrice", 0.0))
-                        upnl = float(p.get("unRealizedProfit", 0.0))
-                        positions.append({
-                            "position_id": sym,
-                            "trade_id": f"binance_{sym}",
-                            "symbol": sym,
-                            "strategy": "FUTURES_ACTIVE",
-                            "side": side,
-                            "entry_timestamp": datetime.datetime.utcnow().isoformat() + "Z",
-                            "entry_price": entry_p,
-                            "current_price": mark_p,
-                            "quantity": abs(amt),
-                            "unrealized_pnl": upnl,
-                            "status": "OPEN"
-                        })
-        except Exception:
-            pass
+    positions = []
+    positions_source = None
+    positions_generated_at = None
+    data_age = 0.0
 
-        if not positions:
-            port_file = os.getenv("TESTNET_PORTFOLIO_FILE", "testnet_portfolio.json")
-            if os.path.exists(port_file):
-                try:
-                    with open(port_file, "r") as f:
-                        p_data = json.load(f)
-                        for sym, p in p_data.get("positions", {}).items():
-                            if isinstance(p, dict) and p.get("status") == "OPEN":
-                                positions.append({
-                                    "position_id": sym,
-                                    "trade_id": p.get("entry_client_id", sym),
-                                    "symbol": sym,
-                                    "strategy": p.get("strategy", ""),
-                                    "side": p.get("direction", p.get("side", "BUY")),
-                                    "entry_timestamp": p.get("timestamp", ""),
-                                    "entry_price": float(p.get("entry_price", 0.0)),
-                                    "quantity": float(p.get("quantity", 0.0)),
-                                    "stop_loss": float(p.get("sl", 0.0)),
-                                    "take_profit": float(p.get("tp", 0.0)),
-                                    "status": "OPEN"
-                                })
-                except Exception:
-                    pass
+    if status_filter in ("OPEN", "ALL"):
+        scorecard = daemon_book.read_forward_scorecard()
+        if scorecard is not None:
+            positions_generated_at = scorecard["generated_at"]
+            data_age = round(float(scorecard["age_seconds"]), 1)
+        if scorecard is not None and scorecard["fresh"]:
+            positions_source = "forward_scorecard"
+            for row in daemon_book.scorecard_position_rows(scorecard["card"]):
+                side = row["side"]
+                if side == "LONG":
+                    side = "BUY"
+                elif side == "SHORT":
+                    side = "SELL"
+                positions.append(
+                    {
+                        "position_id": row["position_id"],
+                        "trade_id": f"daemon_{row['venue']}_{row['symbol']}",
+                        "symbol": row["symbol"],
+                        "strategy": row["strategy"],
+                        "side": side,
+                        "entry_timestamp": row["opened_at"],
+                        "entry_price": row["entry_price"],
+                        "quantity": row["quantity"],
+                        "status": "OPEN",
+                        "venue": row["venue"],
+                    }
+                )
+        else:
+            positions_source = "unavailable"
 
-    return jsonify({
+    if status_filter == "CLOSED":
+        telemetry = get_telemetry_manager()
+        positions = telemetry.get_positions(status="CLOSED")
+    elif status_filter == "ALL":
+        telemetry = get_telemetry_manager()
+        positions = positions + telemetry.get_positions(status="CLOSED")
+    elif status_filter != "OPEN":
+        telemetry = get_telemetry_manager()
+        positions = telemetry.get_positions(status=status_filter)
+
+    payload = {
         "status": "SUCCESS",
         "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
-        "data_age": 0.0,
+        "data_age": data_age,
         "filter": status_filter,
         "count": len(positions),
-        "positions": positions
-    })
+        "positions": positions,
+    }
+    if status_filter in ("OPEN", "ALL"):
+        payload["positions_source"] = positions_source
+        payload["positions_generated_at"] = positions_generated_at
+    return jsonify(payload)
+
 
 @app.route('/api/testnet/positions/close-all', methods=['POST'])
 @require_bot_api_key

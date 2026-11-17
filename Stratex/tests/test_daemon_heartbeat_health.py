@@ -10,8 +10,9 @@ strategies while /health reported ``engine: offline`` for 12 days, because
    the MT5 cTrader engine writes — the deployed daemon never writes it.
 
 The daemon now writes state/daemon_heartbeat.json every scan cycle, and the
-dashboard reads it (pid-checked, freshness-bounded) before the legacy
-snapshot. These tests pin that behaviour.
+dashboard reads it (pid-checked, freshness-bounded) as its only daemon
+witness — the legacy MT5 cloud-state snapshot reader has been deleted.
+These tests pin that behaviour.
 """
 
 import datetime
@@ -146,7 +147,11 @@ class TestMultiVenueDaemonSnapshot:
         assert data["healthy"] is True
         assert data["engine_source"] == "multi_venue_daemon"
 
-    def test_legacy_cloud_snapshot_remains_the_fallback(self, tmp_path, monkeypatch):
+    def test_legacy_cloud_snapshot_no_longer_resurrects_the_engine(self, tmp_path, monkeypatch):
+        # The legacy MT5 cloud-state fallback (_daemon_engine_snapshot)
+        # has been deleted: a fresh cloud_portfolio_state.json must NOT
+        # make the engine healthy. That file belongs to a retired engine
+        # and its figures must never be served as the live book.
         _stale_testnet_hb(tmp_path, monkeypatch)
         monkeypatch.setenv("STRATEX_DAEMON_HEARTBEAT_FILE", str(tmp_path / "absent_daemon.json"))
         state_dir = tmp_path / "state"
@@ -160,11 +165,10 @@ class TestMultiVenueDaemonSnapshot:
 
         data = get_engine_health_data()
 
-        assert data["healthy"] is True
-        assert data["engine_source"] == "autonomous_daemon"
-        assert data["daemon_balance"] == 10792.8
-        assert data["open_positions"] == 1
-        assert data["environment"] == "ctrader_demo"
+        assert data["healthy"] is False
+        assert data["engine_status"] == "OFFLINE"
+        assert data.get("engine_source") is None
+        assert data.get("daemon_balance") is None
 
 
 class TestDaemonHeartbeatWriter:

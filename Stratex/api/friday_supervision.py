@@ -27,6 +27,7 @@ from typing import Any
 from flask import Blueprint, jsonify, request
 
 import config
+import daemon_book
 from advisory_params import get_advisory_overlay
 from api.validation import RequestValidationError, get_str, json_body
 from audit.audit_manager import get_audit_manager, get_idempotency_store, persisted_hash
@@ -103,34 +104,6 @@ def _safe_engine():
         return None
 
 
-def _state_file_path(engine=None) -> str:
-    if engine is not None and getattr(engine, "state_file", None):
-        return str(engine.state_file)
-    here = os.path.dirname(os.path.abspath(__file__))
-    repo_root = os.path.dirname(here)
-    candidates = [
-        os.path.join(os.getcwd(), "state", "cloud_portfolio_state.json"),
-        os.path.join(repo_root, "state", "cloud_portfolio_state.json"),
-    ]
-    for path in candidates:
-        if os.path.exists(path):
-            return path
-    return os.path.join(repo_root, "state", "cloud_portfolio_state.json")
-
-
-def _read_cloud_state(engine=None) -> dict[str, Any]:
-    path = _state_file_path(engine)
-    if not os.path.exists(path):
-        return {}
-    try:
-        with open(path, "r", encoding="utf-8") as fh:
-            data = json.load(fh)
-        return data if isinstance(data, dict) else {}
-    except Exception as exc:
-        logger.debug(f"[FRIDAY_SUPERVISION] Could not read cloud state: {exc}")
-        return {}
-
-
 def _position_to_dict(pos: Any) -> dict[str, Any]:
     if is_dataclass(pos):
         try:
@@ -180,49 +153,61 @@ def _signal_to_dict(sig: Any) -> dict[str, Any]:
     return out
 
 
-def _last_trade_time(engine, positions: list[dict[str, Any]]) -> str | None:
-    # Prefer the engine's execution journal (real fills).
+def _latest_fill_exit_time() -> str | None:
+    """Latest exit_time in the phase-2 fill ledger, as an ISO string.
+
+    The ledger is the same source the supervision scorecard block reports
+    from. Fails soft to None — the caller falls back to the heartbeat's
+    last_strategy_evaluation.
+    """
     try:
-        journal = getattr(engine, "execution_journal", None)
-        if isinstance(journal, list) and journal:
-            last = journal[-1]
-            if isinstance(last, dict):
-                ts = last.get("timestamp") or last.get("time")
-                if ts:
-                    return str(ts)
-    except Exception:
-        pass
-    # Fall back to the most recent position open time.
-    try:
-        opened = [p.get("opened_at") for p in positions if p.get("opened_at")]
-        if opened:
-            return str(max(opened))
-    except Exception:
-        pass
-    # Fall back to cloud state updated_at.
-    try:
-        state = _read_cloud_state(engine)
-        ts = state.get("updated_at")
-        if ts:
-            return str(ts)
-    except Exception:
-        pass
-    return None
+        try:
+            from measurement import fill_ledger
+        except Exception:
+            import fill_ledger  # type: ignore
+        fills = fill_ledger.read_fills()
+    except Exception as exc:
+        logger.debug(f"[FRIDAY_SUPERVISION] fill ledger unavailable: {exc}")
+        return None
+    latest: float | None = None
+    for row in fills or []:
+        try:
+            ts = float(row.get("exit_time") or 0.0)
+        except (TypeError, ValueError):
+            continue
+        if ts > 0 and (latest is None or ts > latest):
+            latest = ts
+    if latest is None:
+        return None
+    return (
+        datetime.datetime.fromtimestamp(latest, datetime.timezone.utc)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def _real_trading_data(engine=None) -> dict[str, Any]:
-    """Collect real trading data from the engine (or its persisted state)."""
-    if engine is None:
-        engine = _safe_engine()
+    """The live trading book, composed from the multi-venue daemon's state.
 
-    positions: list[dict[str, Any]] = []
-    balance = None
-    unrealized_pnl = 0.0
-    last_trade = None
-    max_positions = None
-    trading_mode = "ctrader_demo"
+    Composition (daemon_book): aggregates from state/daemon_heartbeat.json
+    — the daemon's own venue-derived view, the same figures /health
+    serves — and position rows from state/forward_scorecard.json. The
+    retired MT5 engine and its cloud_portfolio_state.json are NOT
+    consulted: that file froze on 2026-11-08 (balance 10792.8, zero
+    positions) and reported an empty book while the daemon traded. The
+    ``engine`` argument is retained for caller compatibility; this
+    composition never consults it (the engine remains in use for the
+    analyze path's signal generation only).
+
+    Degradation: when the heartbeat gate fails the daemon is reported
+    unavailable (``engine_data_status``) with an empty book — last
+    figures are never served as live. When the scorecard is missing or
+    stale, aggregates still serve and the position list is withheld with
+    ``positions_source: "unavailable"``. The headline count is always
+    the heartbeat's venue-derived count; the row list is served as-is
+    and never padded or trimmed to force a match.
+    """
     panic_active = False
-
     try:
         from panic_state import is_panic_active, is_kill_switch_locked
 
@@ -230,64 +215,19 @@ def _real_trading_data(engine=None) -> dict[str, Any]:
     except Exception:
         pass
 
-    if engine is not None:
-        max_positions = getattr(engine, "max_active_positions", None)
-        trading_mode = "ctrader_demo"
-        # Balance
-        try:
-            bal = engine.get_account_balance()
-            if isinstance(bal, dict):
-                usd = bal.get("USD", {})
-                if isinstance(usd, dict):
-                    if usd.get("total") is not None:
-                        balance = float(usd.get("total"))
-                    if usd.get("unrealized_pnl") is not None:
-                        unrealized_pnl = float(usd.get("unrealized_pnl"))
-        except Exception as exc:
-            logger.debug(f"[FRIDAY_SUPERVISION] get_account_balance failed: {exc}")
-        # Positions
-        try:
-            for pos in engine.get_active_positions() or []:
-                positions.append(_position_to_dict(pos))
-        except Exception as exc:
-            logger.debug(f"[FRIDAY_SUPERVISION] get_active_positions failed: {exc}")
-        # Unrealized PnL from positions if balance call did not provide it.
-        if not positions:
-            pass
-        else:
-            try:
-                unrealized_pnl = round(sum(float(p.get("unrealized_pnl") or 0.0) for p in positions), 2)
-            except Exception:
-                pass
-        last_trade = _last_trade_time(engine, positions)
+    trading_mode = "multi_venue_demo"
+    book = daemon_book.live_book()
+    heartbeat = book["heartbeat"]
+    scorecard = book["scorecard"]
+    positions_as_of = scorecard["generated_at"] if scorecard else None
 
-    # Fallback to persisted state file.
-    state = _read_cloud_state(engine)
-    if balance is None:
-        try:
-            if state.get("balance") is not None:
-                balance = float(state.get("balance"))
-        except (TypeError, ValueError):
-            balance = None
-    if balance is None:
-        balance = 0.0
-    if not positions and isinstance(state.get("positions"), dict):
-        for sym, pdata in state.get("positions", {}).items():
-            if isinstance(pdata, dict):
-                positions.append(dict(pdata))
-
-    # Market conditions: combine capacity + last analysis.
-    active_count = len(positions)
-    capacity_pct = 0.0
-    if max_positions and max_positions > 0:
-        capacity_pct = round((active_count / max_positions) * 100.0, 1)
     market_conditions: dict[str, Any] = {
         "trading_mode": trading_mode,
-        "venue": "ctrader_demo",
-        "max_positions": max_positions,
-        "active_positions": active_count,
-        "capacity_used_pct": capacity_pct,
-        "at_capacity": bool(max_positions and active_count >= max_positions),
+        "venue": "binance_futures+oanda_practice",
+        "max_positions": None,
+        "active_positions": 0,
+        "capacity_used_pct": 0.0,
+        "at_capacity": False,
         "panic_active": panic_active,
         "last_analysis": None,
     }
@@ -298,20 +238,63 @@ def _real_trading_data(engine=None) -> dict[str, Any]:
         market_conditions["buy_signals"] = _LAST_MARKET_ANALYSIS.get("buy_signals")
         market_conditions["sell_signals"] = _LAST_MARKET_ANALYSIS.get("sell_signals")
 
+    if heartbeat is None:
+        return {
+            "positions": [],
+            "open_positions": [],
+            "current_positions": [],
+            "position_count": 0,
+            "open_positions_count": 0,
+            "balance": 0.0,
+            "cash": 0.0,
+            "unrealized_pnl": 0.0,
+            "last_trade_time": None,
+            "max_positions": None,
+            "market_conditions": market_conditions,
+            "trading_mode": trading_mode,
+            "panic_active": panic_active,
+            "engine_source": "multi_venue_daemon",
+            "engine_data_status": "daemon_unavailable",
+            "positions_source": "unavailable",
+            "positions_as_of": positions_as_of,
+        }
+
+    def _as_int(value: Any) -> int:
+        try:
+            return int(value or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    def _as_float(value: Any) -> float:
+        try:
+            return float(value or 0.0)
+        except (TypeError, ValueError):
+            return 0.0
+
+    position_count = _as_int(heartbeat.get("open_positions"))
+    balance = _as_float(heartbeat.get("total_balance"))
+    unrealized_pnl = _as_float(heartbeat.get("unrealized_pnl"))
+    market_conditions["active_positions"] = position_count
+
     return {
-        "positions": positions,
-        "open_positions": positions,
-        "current_positions": positions,
-        "position_count": active_count,
-        "open_positions_count": active_count,
-        "balance": round(float(balance), 2),
-        "cash": round(float(balance), 2),
-        "unrealized_pnl": round(float(unrealized_pnl), 2),
-        "last_trade_time": last_trade,
-        "max_positions": max_positions,
+        "positions": book["rows"],
+        "open_positions": book["rows"],
+        "current_positions": book["rows"],
+        "position_count": position_count,
+        "open_positions_count": position_count,
+        "balance": round(balance, 2),
+        "cash": round(balance, 2),
+        "unrealized_pnl": round(unrealized_pnl, 2),
+        "last_trade_time": _latest_fill_exit_time()
+        or heartbeat.get("last_strategy_evaluation"),
+        "max_positions": None,
         "market_conditions": market_conditions,
         "trading_mode": trading_mode,
         "panic_active": panic_active,
+        "engine_source": "multi_venue_daemon",
+        "engine_data_status": "ok",
+        "positions_source": "unavailable" if book["rows_withheld"] else "forward_scorecard",
+        "positions_as_of": positions_as_of,
     }
 
 
