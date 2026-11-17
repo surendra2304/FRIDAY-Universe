@@ -242,6 +242,13 @@ class SleeveRunner:
         queue, and the unrecorded_close measurement alert latches, so
         the failure is visible and retried on the next scan instead of
         vanishing.
+
+        TASK-STR-FWD-011: a CLOSED record with NO close fields at all
+        (no closeTime AND no averageClosePrice) is also a
+        cannot-book-yet case, not a $0.00 close — trade 470 was booked
+        from exactly such a record while the venue position persisted.
+        A record with SOME close fields still books, with the single
+        missing field's fallback logged loudly (WARNING).
         """
         try:
             from measurement import fill_ledger
@@ -273,9 +280,49 @@ class SleeveRunner:
                     "(TASK-STR-FWD-007)",
                 )
                 return False
+            # TASK-STR-FWD-011 (trade 470): a CLOSED record carrying NO
+            # close fields is not broker truth — the old code booked a
+            # fallback fill here (exit = open price, realized = 0.0,
+            # exit_time = now) and the sleeve believed the leg closed
+            # while the venue position persisted. Refuse outright: keep
+            # the trade in own_trades and retry next cycle.
+            close_time_raw = str(trade.get("closeTime") or "").strip()
+            close_price_raw = trade.get("averageClosePrice")
+            has_close_time = bool(close_time_raw)
+            has_close_price = (
+                close_price_raw is not None
+                and str(close_price_raw).strip() != ""
+            )
+            if not has_close_time and not has_close_price:
+                fill_ledger.raise_alert(
+                    "unrecorded_close",
+                    f"sleeve trade {trade_id} ({meta.get('symbol')}) broker "
+                    "record is CLOSED but carries no closeTime and no "
+                    "averageClosePrice; refusing fallback fill, queued for "
+                    "retry (TASK-STR-FWD-011)",
+                )
+                logger.error(
+                    f"[SLEEVE] trade {trade_id} ({meta.get('symbol')}) "
+                    "CLOSED record has no close fields; NOT booking a "
+                    "fallback fill (TASK-STR-FWD-011)"
+                )
+                return False
+            if not has_close_time or not has_close_price:
+                missing = (
+                    "averageClosePrice" if has_close_time else "closeTime"
+                )
+                present = (
+                    "closeTime" if has_close_time else "averageClosePrice"
+                )
+                logger.warning(
+                    f"[SLEEVE] trade {trade_id} ({meta.get('symbol')}) "
+                    f"CLOSED record is missing {missing}; booking from the "
+                    f"real {present} field with a FALLBACK for the missing "
+                    "one (TASK-STR-FWD-011)"
+                )
             realized = float(trade.get("realizedPL") or 0.0)
             exit_price = float(trade.get("averageClosePrice") or trade.get("price") or 0.0)
-            exit_time = _rfc3339_to_unix(str(trade.get("closeTime") or ""))
+            exit_time = _rfc3339_to_unix(close_time_raw)
 
             row = fill_ledger.append_fill(
                 {
