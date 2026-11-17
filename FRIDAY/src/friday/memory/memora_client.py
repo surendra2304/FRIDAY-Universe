@@ -159,6 +159,7 @@ class MemoraClient:
         remote_enabled: Optional[bool] = None,
         recall_timeout: Optional[float] = None,
         write_timeout: Optional[float] = None,
+        recall_join_deadline: Optional[float] = None,
     ):
         if remote_enabled is not None:
             self.remote_enabled = remote_enabled
@@ -195,6 +196,23 @@ class MemoraClient:
                 self.write_timeout = float(os.getenv("FRIDAY_MEMORA_WRITE_TIMEOUT", "20"))
             except (TypeError, ValueError):
                 self.write_timeout = 20.0
+        # TASK-FRD-020 (2026-11-17): how long read-only recall waits for
+        # the remote leg once the local leg has answered (see the join in
+        # recall_memories). This bounds the CALLER's wait, never the
+        # request itself: the remote leg keeps its full recall_timeout
+        # socket budget and finishes (or times out) unobserved on its
+        # daemon thread — the WF015 contract above is about the request
+        # budget and is unchanged. <= 0 disables the deadline (the caller
+        # waits out the remote leg, the pre-FRD-020 behaviour).
+        if recall_join_deadline is not None:
+            self.recall_join_deadline = recall_join_deadline
+        else:
+            try:
+                self.recall_join_deadline = float(
+                    os.getenv("FRIDAY_MEMORA_RECALL_JOIN_DEADLINE_S", "5")
+                )
+            except (TypeError, ValueError):
+                self.recall_join_deadline = 5.0
         # Delays (seconds) between background re-sync attempts for a fact
         # that landed local_only. Bounded: after the last delay the fact
         # stays local and recall keeps serving it (REL-005 merge), but the
@@ -856,7 +874,36 @@ class MemoraClient:
             except Exception as e:
                 logger.debug(f"Memora local recall error: {type(e).__name__}")
 
-        _remote_thread.join()
+        # TASK-FRD-020 (2026-11-17): FRD-016 parallelised the legs but
+        # the unbounded join below preserved the serial tax — a stalled
+        # remote leg still cost the caller its full recall_timeout even
+        # with the local answer already in hand. FRD-005 re-run #8
+        # measured exactly that: the recall-gem brain turn burned
+        # 15.69s waiting out a remote leg Memora never served (its
+        # journal is silent for ~51s spanning the draw) while the local
+        # leg's 10 hits sat ready. So for read-only recall the wait is
+        # bounded by recall_join_deadline: a remote leg that outlives
+        # it is treated exactly like a remote error (the local answer
+        # stands; the daemon thread finishes or times out unobserved).
+        # Mutation recall (for_mutation=True) is exempt — REL-022 twin
+        # resolution needs the authoritative remote picture however
+        # long it takes — and a deadline <= 0 disables the bound.
+        _join_deadline = getattr(self, "recall_join_deadline", None)
+        if (
+            for_mutation
+            or not _join_deadline
+            or _join_deadline <= 0
+        ):
+            _remote_thread.join()
+        else:
+            _remote_thread.join(timeout=float(_join_deadline))
+            if _remote_thread.is_alive():
+                logger.info(
+                    "Memora remote recall exceeded the %.1fs join deadline; "
+                    "answering from the local store",
+                    float(_join_deadline),
+                )
+                return local_results
         remote_results = _remote_box["results"]
         remote_answered = bool(_remote_box["answered"])
 
