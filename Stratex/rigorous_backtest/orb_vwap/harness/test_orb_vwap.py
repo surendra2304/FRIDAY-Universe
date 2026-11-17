@@ -14,14 +14,21 @@ target = 2.0R), first-close-beyond-only, one trade per
 symbol-session + multi-symbol independence, cost arithmetic
 (16/32 bps), breadth-gate arithmetic, temporal-holdout arithmetic,
 the exact "insufficient OOS trades" verdict, DST session grouping
-by ET date, and the declaration-hash pin.
+by ET date, and the declaration-hash pin. Also: the pull tool's
+Alpaca pagination, on a mocked two-page response (no network) —
+the continuation cursor must go out as the `page_token` request
+parameter, not the response field name `next_page_token`.
 
 Run: python3 test_orb_vwap.py   (also pytest-compatible)
 """
 from __future__ import annotations
 
 import hashlib
+import io
+import json
 import sys
+import urllib.parse
+import urllib.request
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -29,6 +36,7 @@ from zoneinfo import ZoneInfo
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import nyse_calendar  # noqa: E402
 import orb_vwap  # noqa: E402
+import pull_orb_panel  # noqa: E402
 from orb_vwap import (session_trade, session_vwap_through,  # noqa: E402
                       generate_trades, judge, net_return,
                       breadth_check, temporal_holdout)
@@ -351,6 +359,59 @@ def test_declaration_hash_pinned():
     decl = Path(__file__).resolve().parent.parent / "orb_vwap_declaration.json"
     digest = hashlib.sha256(decl.read_bytes()).hexdigest()
     assert digest == orb_vwap.DECLARATION_SHA256, digest
+
+
+def test_pull_pagination_sends_cursor_as_page_token():
+    # Regression test for the DISC-004 harness transport erratum
+    # (proven live 2026-11-17, runprep-orb/PROOF_PULL.md): fetch_bars
+    # sent the continuation cursor back under the RESPONSE field name
+    # "next_page_token". Alpaca's REQUEST parameter is "page_token";
+    # as shipped, page 2 was rejected with HTTP 400
+    # "unexpected query parameter(s): next_page_token" and the tool
+    # exited 4 — no multi-page pull could ever complete. The response
+    # side (reading payload["next_page_token"]) is correct and stays.
+    page1 = {"bars": [{"t": "2026-10-01T13:30:00Z", "o": 1.0, "h": 1.0,
+                       "l": 1.0, "c": 1.0, "v": 10}],
+             "next_page_token": "CURSOR-XYZ"}
+    page2 = {"bars": [{"t": "2026-10-01T13:45:00Z", "o": 2.0, "h": 2.0,
+                       "l": 2.0, "c": 2.0, "v": 20}],
+             "next_page_token": None}
+    seen_urls = []
+
+    class _Resp:
+        def __init__(self, payload):
+            self._buf = io.BytesIO(json.dumps(payload).encode())
+
+        def read(self, *args):
+            return self._buf.read(*args)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    def fake_urlopen(req, timeout=None):
+        seen_urls.append(req.full_url)
+        return _Resp(page1 if len(seen_urls) == 1 else page2)
+
+    real_urlopen = urllib.request.urlopen
+    urllib.request.urlopen = fake_urlopen
+    try:
+        bars = pull_orb_panel.fetch_bars(
+            "AAPL", "2026-10-01T00:00:00Z", "2026-11-01T00:00:00Z",
+            "kid", "sec")
+    finally:
+        urllib.request.urlopen = real_urlopen
+
+    # Pagination completed: exactly two requests, both pages' bars.
+    assert len(seen_urls) == 2, seen_urls
+    assert [b["c"] for b in bars] == [1.0, 2.0], bars
+    # Page 2 must carry the cursor as Alpaca's page_token request
+    # parameter — and must NOT carry it as next_page_token.
+    query = urllib.parse.parse_qs(urllib.parse.urlparse(seen_urls[1]).query)
+    assert query.get("page_token") == ["CURSOR-XYZ"], query
+    assert "next_page_token" not in query, query
 
 
 if __name__ == "__main__":

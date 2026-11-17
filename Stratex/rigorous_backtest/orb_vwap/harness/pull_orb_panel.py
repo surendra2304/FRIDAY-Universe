@@ -82,7 +82,7 @@ def fetch_bars(symbol: str, start: str, end: str,
                   "adjustment": "split", "feed": "sip", "sort": "asc",
                   "limit": 10000}
         if token:
-            params["next_page_token"] = token
+            params["page_token"] = token
         url = f"{API_BASE}/{symbol}/bars?" + urllib.parse.urlencode(params)
         req = urllib.request.Request(url, headers={
             "APCA-API-KEY-ID": kid, "APCA-API-SECRET-KEY": sec,
