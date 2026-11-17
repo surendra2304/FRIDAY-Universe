@@ -462,7 +462,7 @@ async def _inject_memory_block(sess, agent, block: str, instructions: str) -> "s
 
 
 def _voice_tools(result_observer=None, turn_transcript_provider=None,
-                 dispatch_observer=None) -> list:
+                 dispatch_observer=None, bridge_sink=None) -> list:
     """The execute_friday_task bridge: voice requests hit the SAME brain as
     chat (memory recall, fleet dispatch, research) instead of the voice LLM
     guessing. Import failures degrade to no tools — never a dead worker.
@@ -472,10 +472,23 @@ def _voice_tools(result_observer=None, turn_transcript_provider=None,
     the bridge's split-final guard (a remember composed from a partial
     turn never reaches the brain). The dispatch observer feeds the
     dropped-fragment tracker (finals that land mid-flight and are
-    never dispatched leave a journal line, not silence)."""
+    never dispatched leave a journal line, not silence).
+    TASK-FRD-019: when bridge_sink (a dict) is given, the bridge is
+    constructed explicitly with the same observers/provider and the
+    sink's "bridge" entry is set to it, so the delivery-watch pass
+    can dispatch a dropped fragment's recovery call through the very
+    bridge the session's tool uses (same observers, same gates)."""
     try:
-        from friday.voice.brain_bridge import build_voice_tools
+        from friday.voice.brain_bridge import (
+            VoiceBrainBridge, build_voice_tools)
 
+        if bridge_sink is not None:
+            bridge = VoiceBrainBridge(
+                result_observer=result_observer,
+                dispatch_observer=dispatch_observer,
+                turn_transcript_provider=turn_transcript_provider)
+            bridge_sink["bridge"] = bridge
+            return build_voice_tools(bridge=bridge)
         return build_voice_tools(
             result_observer=result_observer,
             turn_transcript_provider=turn_transcript_provider,
@@ -1416,6 +1429,12 @@ def _result_verbalized(spoken_reply: str, assistant_texts) -> bool:
 # second half must not convict its first half, and the model needs a
 # turn to compose the follow-up call), or at the session-end flush.
 # Log-only: nothing here delays, holds, or alters a dispatch.
+# TASK-FRD-019: the tracker state now has one more consumer —
+# _fragment_recovery_due (below) hands a settled-flight suspect that
+# still carries undispatched substance to the delivery-watch pass,
+# which dispatches the fragment's text as its OWN bridge call. The
+# tracker itself still never delays, holds, or alters any dispatch;
+# the recovery is a separate, additional dispatch after the fact.
 
 def _new_fragment_watch() -> dict:
     return {"in_flight": {}, "suspects": [], "dispatches": [],
@@ -1486,6 +1505,91 @@ def _fragment_flush(state: dict) -> list:
                if not _dispatch_followed(state, s)]
     state["suspects"] = []
     return dropped
+
+
+# How long after it landed a dropped final may still be recovered by
+# dispatching it as its own bridge call (TASK-FRD-019). Past this the
+# conversation has moved on; blurting the fragment's answer would be
+# staler than silence. Matches the delivery watch's expiry horizon.
+_FRAGMENT_RECOVERY_MAX_AGE_S = 120.0
+
+
+def _fragment_recovery_due(state: dict, now: float) -> list:
+    """TASK-FRD-019: dropped finals whose recovery dispatch is due.
+
+    FRD-005 re-run #8 (run 20261117-055507): the delegation split
+    into two STT finals 10.4 s apart; the bridge call carried only
+    fragment 1, and fragment 2 — the substantive half — was never
+    dispatched (the model never called on it; it surfaced only via
+    this tracker's suspect ERROR). Prevention is not available: the
+    journal shows NO transcription signal of any kind between the
+    first final (+0.2 s) and fragment 2's interim (+5.8 s), so no
+    pre-dispatch settle can know a continuation is coming, and a
+    blanket >= 11 s hold on every command would break the owner's
+    speed-first bar. What IS guaranteed here is recovery: once the
+    flight a suspect landed during has settled, a suspect that still
+    carries substance no dispatch ever covered is handed out exactly
+    once so the caller can dispatch its text as its own bridge call;
+    the result then flows through the ordinary result observer into
+    the FRD-012/018 delivery watch. Unsplit calls pay nothing — no
+    suspect, no recovery, no added latency.
+
+    A suspect is due when ALL of these hold:
+    - it landed while a bridge call was in flight (``during``), and
+      every one of those calls has settled (none of the ``during``
+      turn ids remains in state["in_flight"]);
+    - it carries distinctive substance at all (a bare "Okay." that
+      landed mid-flight stranded nothing);
+    - no dispatch at/after its landing covered its substance
+      (_dispatch_followed, re-checked at due time — the model may
+      have picked the fragment up in a later call after all);
+    - the flight it landed during did not itself carry the
+      fragment's substance (same distinctive-token test against that
+      flight's request; that request was composed BEFORE the
+      fragment landed, so this should never hold — it is the
+      belt-and-braces half of "dispatched whole or not at all");
+    - it has not been handed out before (handing out marks it
+      ``recovered`` — exactly one recovery dispatch per suspect);
+    - it is still fresh (<= _FRAGMENT_RECOVERY_MAX_AGE_S old).
+    Returns the due suspects in landing order.
+    """
+    due = []
+    in_flight = state.get("in_flight") or set()
+    for suspect in state.get("suspects") or []:
+        if suspect.get("recovered"):
+            continue
+        during = suspect.get("during") or []
+        if not during:
+            continue
+        if any(turn_id in in_flight for turn_id in during):
+            continue
+        if now - float(suspect.get("ts") or now) > _FRAGMENT_RECOVERY_MAX_AGE_S:
+            continue
+        s_numbers, s_words = _distinctive_tokens(suspect.get("text"))
+        if not s_numbers and not s_words:
+            # No distinctive substance (a bare "Okay." that landed
+            # mid-flight): nothing was stranded, nothing to recover.
+            continue
+        if _dispatch_followed(state, suspect):
+            continue
+        covered_by_flight = False
+        for dispatch in state.get("dispatches") or []:
+            if dispatch.get("turn_id") not in during:
+                continue
+            d_numbers, d_words = _distinctive_tokens(
+                dispatch.get("request"))
+            # The same coverage rule _dispatch_followed applies to
+            # later dispatches: a shared figure, or >= 2 shared
+            # content words.
+            if ((s_numbers and (s_numbers & d_numbers))
+                    or len(s_words & d_words) >= 2):
+                covered_by_flight = True
+                break
+        if covered_by_flight:
+            continue
+        suspect["recovered"] = True
+        due.append(suspect)
+    return due
 
 
 # ---- TASK-FRD-018: verbatim-delivery gate + verification ----
@@ -2102,6 +2206,38 @@ async def entrypoint(ctx: JobContext):
     # observer, the result observer below, and the STT-final handler.
     fragment_watch = _new_fragment_watch()
 
+    # TASK-FRD-019: the current session's bridge handle, filled by
+    # _voice_tools (via _make_session) on every session build — a
+    # watchdog rebuild replaces it with the new session's bridge.
+    # The delivery-watch pass uses it to dispatch a dropped
+    # fragment's recovery call (see _fragment_recovery_due).
+    bridge_slot: dict = {"bridge": None}
+    fragment_recovery_tasks: set = set()
+
+    async def _recover_dropped_fragment(text: str) -> None:
+        """Dispatch one dropped final as its own bridge call. The
+        result settles through the bridge's own observers (this
+        record lands in bridge_results like any call), so the
+        delivery watch delivers/verifies it with the ordinary
+        FRD-012/018 machinery. Never raises: a failed recovery is a
+        journal line, not a watch-loop fault."""
+        bridge = bridge_slot.get("bridge")
+        if bridge is None:
+            logger.error(
+                "VOICE dropped-fragment recovery: no bridge handle "
+                "available; NOT dispatching %r", text[:120])
+            return
+        try:
+            result = await bridge.execute(text)
+            logger.error(
+                "VOICE dropped-fragment recovery: dispatched %r as "
+                "its own bridge call; settled state=%s",
+                text[:120], result.get("state"))
+        except Exception:
+            logger.exception(
+                "VOICE dropped-fragment recovery: dispatch of %r "
+                "raised", text[:120])
+
     def _observe_dispatch(info: dict) -> None:
         _fragment_flight_started(
             fragment_watch, info.get("turn_id"),
@@ -2198,7 +2334,8 @@ async def entrypoint(ctx: JobContext):
                       tools=_voice_tools(
                           result_observer=_observe_bridge_result,
                           turn_transcript_provider=_turn_transcript_snapshot,
-                          dispatch_observer=_observe_dispatch))
+                          dispatch_observer=_observe_dispatch,
+                          bridge_sink=bridge_slot))
         model = artifacts.get("model")
         if model is None:
             model = _build_realtime_model(pinned["key"], instr)
@@ -2967,6 +3104,15 @@ async def entrypoint(ctx: JobContext):
         line, with the watch-stop flush (see _flush_watch_on_stop)
         covering records still pending when the session ends.
 
+        TASK-FRD-019: (c) a dropped STT final whose bridge flight
+        has settled and whose substance no dispatch ever covered is
+        recovery-dispatched as its own bridge call (see
+        _fragment_recovery_due) — re-run #8's delegation fragment 2
+        and its starved follow-up both reached the brain ONLY if the
+        model chose to call on them, and it did not. The recovery
+        call passes every bridge gate like any other call; its
+        result re-enters this watch through the result observer.
+
         Participant rule, deliberately different from the recovery
         triggers in _watch_turns: delivering a settled result is safe
         for ANY listener in the room, so presence here means any
@@ -2978,6 +3124,35 @@ async def entrypoint(ctx: JobContext):
             late_results = _brain_bridge.pop_late_results()
         except Exception:
             late_results = []
+        # TASK-FRD-019: dropped-fragment recovery dispatch. A suspect
+        # whose flight has settled and whose substance no dispatch
+        # ever covered is dispatched as its own bridge call (exactly
+        # once — _fragment_recovery_due marks it). This runs BEFORE
+        # the delivery bookkeeping below so a recovery result that
+        # settles quickly is already in bridge_results for the same
+        # pass's verification. While the job is closing, due suspects
+        # are journalled instead — nothing can be delivered anyway.
+        for _suspect in _fragment_recovery_due(
+                fragment_watch, time.time()):
+            _frag_text = (_suspect.get("text") or "").strip()
+            if not _frag_text:
+                continue
+            if live["closing"]:
+                logger.error(
+                    "VOICE dropped-fragment recovery: final %r is due "
+                    "but the job is closing; leaving it journalled, "
+                    "not dispatched", _frag_text[:120])
+                continue
+            logger.error(
+                "VOICE dropped-fragment recovery: final %r landed "
+                "during bridge turn(s) %s, was never dispatched, and "
+                "its flight has settled — dispatching it as its own "
+                "bridge call (TASK-FRD-019)",
+                _frag_text[:120], _suspect.get("during"))
+            _task = asyncio.ensure_future(
+                _recover_dropped_fragment(_frag_text))
+            fragment_recovery_tasks.add(_task)
+            _task.add_done_callback(fragment_recovery_tasks.discard)
         sess = live.get("session")
         humans_present = bool(ctx.room.remote_participants)
         for entry in late_results:

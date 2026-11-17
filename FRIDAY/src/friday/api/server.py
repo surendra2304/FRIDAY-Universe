@@ -3681,6 +3681,34 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         _q_words = {_w for _w in _q_words if len(_w) > 3}
         _stop = {"remember", "about", "what", "have", "tell", "does", "your", "you", "when", "where", "which"}
         _q_words -= _stop
+        # TASK-FRD-019 (FRD-005 re-run #8, run 20261117-055507): the
+        # len>3 filter above also dropped 3-letter SUBJECT words, so
+        # "What is my favorite gem?" reduced to {"favorite"}: the
+        # full-match retry block below (needs >= 2 content words)
+        # never ran, ranking tied every favorite-bearing line at
+        # overlap 1 and the length tiebreak put the longest line (the
+        # chai user-model line) on top, and the direct-answer gate's
+        # full-match test passed trivially on "favorite" alone — the
+        # gate fired with the WRONG fact (its settled spoken reply was
+        # the 75-char chai sentence; the voice model declined to speak
+        # it for a gem question and alexandrite was never spoken).
+        # 3-letter words are content words unless they are function
+        # words: keep them, so the subject participates in ranking,
+        # the retry block, and the gate's all-words-must-match test.
+        _SHORT_FUNCTION_WORDS = {
+            "the", "and", "for", "are", "was", "but", "not", "all",
+            "any", "can", "has", "had", "did", "say", "she", "her",
+            "his", "its", "our", "who", "how", "why", "now", "per",
+            "via", "off", "out",
+        }
+        _q_words |= {
+            _w for _w in {
+                _tok.strip("?!.,;:'\"()")
+                for _tok in _clean_memory_line(cmd).split()
+            }
+            if len(_w) == 3 and _w not in _SHORT_FUNCTION_WORDS
+            and _w not in _stop
+        }
         # TASK-FRD-014 (drill finding): the store holds the SAME fact in
         # both spellings ("my favorite color is teal." / "My favourite
         # colour is teal.") from different sessions, so overlap matching
