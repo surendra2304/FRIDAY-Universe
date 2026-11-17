@@ -11155,6 +11155,21 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Declaration PR #903 MERGED in tranche 4 (merge commit c4094d3f). Declaration frozen: SHA-256 43063a6cdf8089d7d41bd39e4b02c1c05bf5528c3837590c167f87d2907dafc9 (blob verified byte-identical again on PR #916's branch -- see TASK-STR-DISC-004-FIX)."
       - "Gate-4 COORDINATOR RULING (~/workspace/runprep-orb/RULING.md): (A) AS FROZEN -- EARLY_CLOSE_BARS stays 10; the truncation (9 of 961 sessions) and the prose inconsistency are disclosed verbatim in the eventual run record. Proof pull PASSED exactly (AAPL Oct 2026: 1,408 raw bars -> 572 kept = 22 sessions x 26, the frozen expectation). Pull prep complete (~/workspace/orb-pull-prep/): S1 /var/tmp has 71G available and the panel footprint is <50 MB (fits ~1,400x). The pull tool's pagination defect (next_page_token vs page_token) is a harness transport erratum fixed by TASK-STR-DISC-004-FIX (PR #916, supervisor review APPROVE) -- the declaration itself is untouched."
     next_action: "After PR #916 merges: full panel pull on S1 -> ONE declared run, LAST in the queue (after RD-024) -> results-record PR disclosing the gate-4 as-frozen ruling and the harness erratum -> PASS joins forward demo / FAIL closes the family."
+  - id: TASK-VOI-020
+    title: "Voice key-probe quota fall-through: a stage-1 TEXT quota verdict must not condemn a key for voice (fall through to the Live stage), stage 1 pings the Flash-Lite catalogue model, verified-key TTL 240 s -> 1800 s"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/voi020-probe-quota-fallthrough
+    evidence:
+      - "Trigger: voice re-acceptance #12 (2026-11-18 00:25 IST) failed 0/8 — all 5 Gemini keys condemned at key resolution and no Live session was ever built. Quota forensics (~/workspace/voice-quota-diag/STATE.md): the probe's stage 1 judges keys on a generateContent ping against gemini-3.8-flash, whose free-tier DAILY bucket is ~20 requests/day/project/model; the key keeper (verified-key cache TTL 240 s, refresh-ahead) re-resolves every ~165-240 s and drains that bucket on the winning key; when it emptied, every key was condemned for VOICE on the TEXT bucket's exhaustion — the Live stage was never reached, and the Live bucket is metered separately (documented free Live: no daily cap)."
+      - "Fix (this task's PR): (a) stage 1 pings gemini-2.5-flash-lite — the Flash-Lite id in the fleet catalogue (Inference SUPPORTED_MODELS; documented free tier ~500 req/day vs 20) — via the new _PROBE_TEXT_MODEL constant; (b) a stage-1 QUOTA verdict (429 RESOURCE_EXHAUSTED) only falls through to the Live stage before condemning: the key is certified ONLY if the Live stage actually succeeds, and condemned exactly as today if it also fails; auth rejections still condemn at stage 1 without a Live attempt; (c) _KEY_CACHE_TTL_S 240 -> 1800 (~7x fewer keeper probe rounds) with all eviction machinery unchanged (quota cooldowns, negative cache, keeper pre-expiry re-probe, refresh-fallback semantics)."
+      - "INVARIANT PRESERVED (TASK-VOI-018): a 429 never certifies a key — certification comes only from a stage that actually succeeds. The VOI-018 pin test 'text quota is never valid, Live not consulted' is replaced by VOI-020 contract tests because its premise (condemn voice on the text bucket) is the defect being fixed. Claim: issue #35 comment 6958821761."
+    next_action: "PR open -> supervisor review -> serial-lane merge -> deploy with the voice wave -> re-acceptance #13 in the first post-reset window (daily buckets reset 13:30 IST) -> VERIFIED."
+    files:
+      - FRIDAY/src/friday/voice/livekit_worker.py
+      - FRIDAY/tests/test_voice_key_resolution.py
+      - FRIDAY/tests/test_voice_gemini_only.py
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

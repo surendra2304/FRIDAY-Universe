@@ -837,7 +837,9 @@ _PROBE_TRANSPORT_MARKERS = (
 
 class _ProbeQuotaExhausted(Exception):
     """The probe JUDGED the key quota-exhausted for voice purposes
-    (429 / RESOURCE_EXHAUSTED, from either probe stage). Distinct from
+    (429 / RESOURCE_EXHAUSTED at the Live stage — since TASK-VOI-020 a
+    stage-1 TEXT quota verdict alone no longer raises this; it falls
+    through to the Live stage, whose verdict governs). Distinct from
     an auth rejection (the key is bad) and from _ProbeInconclusive
     (the probe could not judge): a quota verdict is a judgement — the
     key must not be selected, must not be offered as tentative, and
@@ -874,6 +876,20 @@ def _classify_probe_error(exc: BaseException) -> str:
     if any(m in text for m in _PROBE_TRANSPORT_MARKERS):
         return "transport"
     return "other"
+
+
+# TASK-VOI-020: the probe's stage-1 text ping runs on the catalogue
+# Flash-Lite model (Inference SUPPORTED_MODELS), NOT on the voice/chat
+# Flash model. Stage 1 only classifies the key (auth / quota /
+# transport); it never certifies. On gemini-3.8-flash the ping drew on
+# that model's free-tier DAILY bucket (~20 requests/day/project), and
+# the key keeper's re-resolution rounds drained it — at re-acceptance
+# #12 (2026-11-18 00:25 IST) every key was condemned for voice on the
+# TEXT bucket's exhaustion without the Live stage ever being tested
+# (quota forensics, ~/workspace/voice-quota-diag/STATE.md). Flash-Lite's
+# documented free tier is ~500 requests/day, so routine probing no
+# longer drains the scarce bucket.
+_PROBE_TEXT_MODEL = "gemini-2.5-flash-lite"
 
 
 def _probe_gemini_live_sync(key: str, client) -> bool:
@@ -934,14 +950,27 @@ def _probe_gemini_key_sync(key: str) -> bool:
     is only chosen after a key proves itself.
 
     Two stages (2026-11-17 key-probe fix). Stage 1 is the cheap text
-    ping: it classifies auth rejections (the key is bad), transport
-    failures (the key is unjudged — TASK-VOI-005's _ProbeInconclusive),
-    and quota refusals. Stage 2 (_probe_gemini_live_sync) opens and
-    closes a minimal Live session: Live quota is a separate bucket
-    from text quota, so only a Live connect can certify a key for
-    voice. The pre-fix probe counted ANY non-auth text answer — a 429
-    RESOURCE_EXHAUSTED included — as a valid voice key and cached it
-    process-wide (frame-flow diagnosis, 2026-11-17 19:05 IST).
+    ping: it classifies auth rejections (the key is bad) and transport
+    failures (the key is unjudged — TASK-VOI-005's _ProbeInconclusive).
+    Stage 2 (_probe_gemini_live_sync) opens and closes a minimal Live
+    session: Live quota is a separate bucket from text quota, so only
+    a Live connect can certify a key for voice. The pre-fix probe
+    counted ANY non-auth text answer — a 429 RESOURCE_EXHAUSTED
+    included — as a valid voice key and cached it process-wide
+    (frame-flow diagnosis, 2026-11-17 19:05 IST).
+
+    TASK-VOI-020: a stage-1 QUOTA verdict no longer condemns the key
+    by itself. The text ping judges the TEXT bucket (a per-model daily
+    free-tier allowance the keeper's own probing can drain), not the
+    Live bucket voice actually draws on — at re-acceptance #12 every
+    key was condemned on the text bucket's exhaustion and the Live
+    stage was never reached. A stage-1 quota verdict now falls
+    through to the Live stage, whose verdict governs: certify ONLY if
+    the Live stage actually succeeds; if it also fails, the key is
+    condemned exactly as before. The TASK-VOI-018 invariant is
+    unchanged — a 429 never certifies a key; certification comes only
+    from a stage that actually succeeds. Auth rejections still
+    condemn at stage 1 without consulting the Live stage.
 
     Verdicts: True = a Live session connected on this key;
     False = auth-rejected; _ProbeQuotaExhausted = quota-dead for
@@ -954,7 +983,7 @@ def _probe_gemini_key_sync(key: str) -> bool:
         from google import genai
 
         client = genai.Client(api_key=key)
-        client.models.generate_content(model="gemini-3.8-flash", contents="ping")
+        client.models.generate_content(model=_PROBE_TEXT_MODEL, contents="ping")
     except Exception as exc:
         text = f"{type(exc).__name__}: {exc}".lower()
         verdict = _classify_probe_error(exc)
@@ -962,17 +991,28 @@ def _probe_gemini_key_sync(key: str) -> bool:
             logger.info("gemini key probe rejected: %s", text[:180])
             return False
         if verdict == "quota":
-            logger.info("gemini key probe quota-exhausted: %s", text[:180])
-            raise _ProbeQuotaExhausted(text[:180]) from None
-        if verdict == "transport":
+            # TASK-VOI-020: the TEXT bucket is exhausted; the Live
+            # bucket is metered separately and may be fine. Do not
+            # condemn the key for voice on the text verdict — fall
+            # through and let the Live stage judge it. The Live
+            # stage's own verdict (success / rejected / quota /
+            # inconclusive) becomes the probe's verdict.
+            logger.info(
+                "gemini key probe: text stage quota-exhausted (%s); "
+                "judging by the Live stage (separate bucket)",
+                text[:180],
+            )
+        elif verdict == "transport":
             logger.info("gemini key probe inconclusive (transport): %s", text[:180])
             raise _ProbeInconclusive(text[:180]) from None
-        # Any other API-level answer (a 503, a model error) means the
-        # key authenticated; the Live stage decides voice validity.
-        logger.info(
-            "gemini key probe: text stage answered (%s); judging by the Live stage",
-            text[:180],
-        )
+        else:
+            # Any other API-level answer (a 503, a model error) means
+            # the key authenticated; the Live stage decides voice
+            # validity.
+            logger.info(
+                "gemini key probe: text stage answered (%s); judging by the Live stage",
+                text[:180],
+            )
     if client is None:
         raise _ProbeInconclusive("gemini key probe: client construction failed")
     return _probe_gemini_live_sync(key, client)
@@ -1001,7 +1041,17 @@ _KEY_CACHE: dict = {
 # Key-probe fix (2026-11-17): per-key quota cooldown — key -> unix ts
 # until which a quota-judged key stays at the back of the rotation.
 _KEY_QUOTA_COOLDOWN_UNTIL: dict = {}
-_KEY_CACHE_TTL_S = 240.0  # trust a verified key for 4 minutes
+# TASK-VOI-020: the verified-key TTL was 240 s. The keeper refreshes
+# ahead of expiry, so a resolution round ran every ~165-240 s of
+# uptime and each round's stage-1 ping drew on the probe text model's
+# daily free-tier bucket — the keeper itself was a leading drain on
+# the bucket whose exhaustion condemned every key at re-acceptance
+# #12. 1800 s cuts keeper probe rounds ~7x. Eviction is NOT weakened:
+# this TTL only bounds trust in a VERIFIED key; a key judged bad by
+# any probe is still benched immediately (quota cooldown below,
+# negative cache, keeper pre-expiry re-probe, refresh-fallback
+# semantics all unchanged).
+_KEY_CACHE_TTL_S = 1800.0  # trust a verified key for 30 minutes
 _KEY_NEGATIVE_TTL_S = 30.0  # after a failed round, wait 30 s before re-probing
 _KEY_QUOTA_COOLDOWN_S = 300.0  # a quota-judged key cools down this long (key-probe fix)
 _KEY_PROBE_DEADLINE_S = 45.0  # one shared budget for the whole sequential round
@@ -1089,7 +1139,7 @@ def _resolve_gemini_key_sync(refresh: bool = False) -> "str | None":
     no keys exist) is a hard failure and earns the negative cache.
 
     Key-probe fix (2026-11-17): a candidate judged QUOTA-EXHAUSTED
-    (429 / RESOURCE_EXHAUSTED from either probe stage) is neither
+    (429 / RESOURCE_EXHAUSTED judged by the probe's Live stage) is neither
     verified, nor tentative, nor auth-rejected: it is cooled down
     (_KEY_QUOTA_COOLDOWN_S) at the back of the rotation and the round
     moves on; candidates still in cooldown are skipped without a
@@ -4524,7 +4574,7 @@ def _key_keeper_step() -> str:
             return "fresh"
         # TASK-VOI-010: refresh BEFORE the cache lapses. The pre-fix
         # keeper stood down while any verified key was cached and only
-        # re-resolved after the 240 s TTL expired, so a job landing in
+        # re-resolved after the cache TTL expired, so a job landing in
         # the gap (up to one keeper interval past expiry) paid a full
         # probe round on its own greeting path. _verified_key_
         # remaining_s was written for exactly this and never wired in.
