@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 PROVISIONED_TABLES: tuple[str, ...] = (
     "agent_tasks",
     "assets",
+    "brand_pitch_drafts",
     "content_packs",
     "publish_jobs",
     "render_jobs",
