@@ -1,11 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import "./ultron.css";
 
 /* TASK-WEB-002 (2026-11-15) — the Halo console's type system.
    Space Grotesk is the voice of the room (wordmark, headings,
    commands); Manrope carries conversation and prose; JetBrains
-   Mono is kept for numbers and machine readouts only. */
+   Mono is kept for numbers and machine readouts only.
+   TASK-WEB-003 (2026-11-17) — the ULTRON theme loads its own
+   stylesheet after Halo's; globals.css itself is unmodified, so
+   Halo renders byte-for-byte as before when it is selected. The
+   ULTRON stage sets its own families in ultron.css and does not
+   depend on these variables. */
 const grotesk = Space_Grotesk({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
