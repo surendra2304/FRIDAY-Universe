@@ -87,6 +87,32 @@ def _error_text(exc: BaseException) -> str:
     return f"{type(exc).__name__}: {text}" if text else type(exc).__name__
 
 
+# WEB FLEET-PANEL FIX: connect-level failures are the only probe failures
+# that prove a peer UNREACHABLE. httpx raises ConnectError when nothing
+# accepts the connection (refused / DNS) and ConnectTimeout when the
+# connect itself times out; in httpx 0.28 ConnectTimeout subclasses
+# TimeoutException, NOT ConnectError, so both must be named. Every other
+# timeout (Read / Write / Pool) means the probe simply got no answer
+# inside its budget — on the swap-loaded 956MB host that is usually
+# FRIDAY's own event-loop stall (peers answer in <=0.25s when curled
+# directly, TASK-REL-023), so it is DEGRADED, never proof of a dead peer.
+_PROBE_CONNECT_FAILURES = (httpx.ConnectError, httpx.ConnectTimeout)
+
+
+def _probe_failure(exc: BaseException) -> tuple[str, str]:
+    """Classify a probe exception as (status, reason) for an honest panel.
+
+    Timeout-class failures are DEGRADED with "probe timed out"; the reason
+    always carries the exception type via _error_text() because httpx
+    timeout exceptions have an empty str() (TASK-REL-007).
+    """
+    if isinstance(exc, _PROBE_CONNECT_FAILURES):
+        return "UNREACHABLE", _error_text(exc)
+    if isinstance(exc, httpx.TimeoutException):
+        return "DEGRADED", f"probe timed out ({_error_text(exc)})"
+    return "DEGRADED", f"probe failed ({_error_text(exc)})"
+
+
 CANONICAL_INTERNAL_MESH_URLS: dict[str, str] = {
     "inference": "http://10.0.0.121:8001",
     "memora": "http://10.0.0.121:8002",
@@ -341,10 +367,11 @@ class FleetClient:
                 )
         except Exception as e:
             lat = int((time.time() - t0) * 1000)
+            fail_status, reason = _probe_failure(e)
             return AgentStatus(
                 id="inference", name="Inference", role="Cloud AI Gateway", icon="⚡",
-                status="UNREACHABLE", latency_ms=lat, endpoint=self.inference_url,
-                details=f"Inference gateway error: {e}",
+                status=fail_status, latency_ms=lat, endpoint=self.inference_url,
+                details=f"Inference gateway error: {reason}",
                 last_checked=datetime.now(timezone.utc).isoformat(),
             )
         return AgentStatus(
@@ -371,10 +398,11 @@ class FleetClient:
                 )
         except Exception as e:
             lat = int((time.time() - t0) * 1000)
+            fail_status, reason = _probe_failure(e)
             return AgentStatus(
                 id="memora", name="Memora", role="Persistent Memory", icon="🧠",
-                status="UNREACHABLE", latency_ms=lat, endpoint=self.memora_url,
-                details=f"Cloud memory probe error: {e}",
+                status=fail_status, latency_ms=lat, endpoint=self.memora_url,
+                details=f"Cloud memory probe error: {reason}",
                 last_checked=datetime.now(timezone.utc).isoformat(),
             )
         return AgentStatus(
@@ -403,10 +431,11 @@ class FleetClient:
                 )
         except Exception as e:
             lat = int((time.time() - t0) * 1000)
+            fail_status, reason = _probe_failure(e)
             return AgentStatus(
                 id="stratex", name="Stratex", role="Algorithmic Trading", icon="📈",
-                status="UNREACHABLE", latency_ms=lat, endpoint=self.stratex_url,
-                details=f"Trading engine probe error: {e}",
+                status=fail_status, latency_ms=lat, endpoint=self.stratex_url,
+                details=f"Trading engine probe error: {reason}",
                 last_checked=datetime.now(timezone.utc).isoformat(),
             )
         return AgentStatus(
@@ -433,10 +462,11 @@ class FleetClient:
                 )
         except Exception as e:
             lat = int((time.time() - t0) * 1000)
+            fail_status, reason = _probe_failure(e)
             return AgentStatus(
                 id="intelx", name="IntelX", role="Macro Research", icon="🔍",
-                status="UNREACHABLE", latency_ms=lat, endpoint=self.intelx_url,
-                details=f"Research engine error: {e}",
+                status=fail_status, latency_ms=lat, endpoint=self.intelx_url,
+                details=f"Research engine error: {reason}",
                 last_checked=datetime.now(timezone.utc).isoformat(),
             )
         return AgentStatus(
@@ -467,7 +497,10 @@ class FleetClient:
         try:
             headers = {"Authorization": f"Bearer {self.futuris_key}"} if self.futuris_key else {}
             health_path = os.getenv("FRIDAY_FUTURIS_HEALTH_PATH", "/health")
-            r = await client.get(f"{self.futuris_url}{health_path}", headers=headers, timeout=5.0)
+            # WEB FLEET-PANEL FIX: cloud budget 5s -> 8s to match peers
+            # (5s was the tightest budget in the fleet and lost the probe
+            # timeout lottery most often; the local attempt stays 2.5s).
+            r = await client.get(f"{self.futuris_url}{health_path}", headers=headers, timeout=8.0)
             lat = int((time.time() - t0) * 1000)
             status = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
@@ -479,16 +512,17 @@ class FleetClient:
                 )
             return AgentStatus(
                 id="futuris", name="Futuris", role="Predictive Forecaster", icon="🔮",
-                status="UNREACHABLE", latency_ms=lat, endpoint=self.futuris_url,
-                details=f"Forecasting engine returned status {r.status_code}",
+                status="DEGRADED", latency_ms=lat, endpoint=self.futuris_url,
+                details=f"Health endpoint returned HTTP {r.status_code}; forecasting functionality was not verified.",
                 last_checked=datetime.now(timezone.utc).isoformat(),
             )
         except Exception as e:
             lat_err = int((time.time() - t0) * 1000)
+            fail_status, reason = _probe_failure(e)
             return AgentStatus(
                 id="futuris", name="Futuris", role="Predictive Forecaster", icon="🔮",
-                status="UNREACHABLE", latency_ms=lat_err, endpoint=self.futuris_url,
-                details=f"Forecasting engine unreachable: {e}",
+                status=fail_status, latency_ms=lat_err, endpoint=self.futuris_url,
+                details=f"Forecasting engine probe error: {reason}",
                 last_checked=datetime.now(timezone.utc).isoformat(),
             )
 
@@ -509,10 +543,11 @@ class FleetClient:
                 )
         except Exception as e:
             lat = int((time.time() - t0) * 1000)
+            fail_status, reason = _probe_failure(e)
             return AgentStatus(
                 id="cortex", name="Cortex", role="Web Operations", icon="🌐",
-                status="UNREACHABLE", latency_ms=lat, endpoint=self.cortex_url,
-                details=f"Web operations probe error: {e}",
+                status=fail_status, latency_ms=lat, endpoint=self.cortex_url,
+                details=f"Web operations probe error: {reason}",
                 last_checked=datetime.now(timezone.utc).isoformat(),
             )
         return AgentStatus(
@@ -539,10 +574,11 @@ class FleetClient:
                 )
         except Exception as e:
             lat = int((time.time() - t0) * 1000)
+            fail_status, reason = _probe_failure(e)
             return AgentStatus(
                 id="forge", name="Forge", role="Software Engineering", icon="🛠️",
-                status="UNREACHABLE", latency_ms=lat, endpoint=self.forge_url,
-                details=f"Forge local daemon unreachable ({lat}ms): {e}",
+                status=fail_status, latency_ms=lat, endpoint=self.forge_url,
+                details=f"Forge local daemon probe error ({lat}ms): {reason}",
                 last_checked=datetime.now(timezone.utc).isoformat(),
             )
         return AgentStatus(
@@ -569,10 +605,11 @@ class FleetClient:
                 )
         except Exception as e:
             lat = int((time.time() - t0) * 1000)
+            fail_status, reason = _probe_failure(e)
             return AgentStatus(
                 id="sentinel", name="Sentinel", role="Cybersecurity Shield", icon="🛡️",
-                status="UNREACHABLE", latency_ms=lat, endpoint=self.sentinel_url,
-                details=f"Sentinel local daemon unreachable ({lat}ms): {e}",
+                status=fail_status, latency_ms=lat, endpoint=self.sentinel_url,
+                details=f"Sentinel local daemon probe error ({lat}ms): {reason}",
                 last_checked=datetime.now(timezone.utc).isoformat(),
             )
         return AgentStatus(
@@ -625,10 +662,11 @@ class FleetClient:
             )
         except Exception as exc:
             latency = int((time.time() - t0) * 1000)
+            fail_status, reason = _probe_failure(exc)
             return AgentStatus(
                 id="vyralx", name="VyralX", role="Video Production", icon="🎬",
-                status="UNREACHABLE", latency_ms=latency, endpoint=self.vyralx_url,
-                details=f"VyralX health probe could not complete ({type(exc).__name__}).",
+                status=fail_status, latency_ms=latency, endpoint=self.vyralx_url,
+                details=f"VyralX health probe could not complete: {reason}.",
                 last_checked=datetime.now(timezone.utc).isoformat(),
             )
 
