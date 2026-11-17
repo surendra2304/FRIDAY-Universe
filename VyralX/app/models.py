@@ -98,6 +98,8 @@ class PublishJob(Base):
     title: Mapped[str] = mapped_column(String(100))
     description: Mapped[str] = mapped_column(Text, default="")
     tags_json: Mapped[str] = mapped_column(Text, default="[]")
+    thumbnail_path: Mapped[str] = mapped_column(String(2048), default="")
+    category_id: Mapped[str] = mapped_column(String(8), default="")
     privacy_status: Mapped[str] = mapped_column(String(20), default="private")
     scheduled_at: Mapped[str] = mapped_column(String(64), default="")
     status: Mapped[str] = mapped_column(String(40), default="pending_approval")

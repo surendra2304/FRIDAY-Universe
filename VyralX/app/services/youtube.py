@@ -343,6 +343,29 @@ def youtube_service():
     return build("youtube", "v3", credentials=youtube_credentials(), cache_discovery=False)
 
 
+def set_thumbnail(video_id: str, thumbnail_path: str) -> bool:
+    """Attach a custom thumbnail image to an already-uploaded video.
+
+    Raises ValueError/FileNotFoundError for invalid inputs; API errors
+    propagate so the caller decides how to react (the publish worker treats
+    a thumbnail failure as non-fatal — the video itself is already live).
+    """
+    if not _valid_video_id(video_id):
+        raise ValueError("Invalid video id for thumbnail upload")
+    path = Path(thumbnail_path).resolve()
+    if not path.is_file() or path.stat().st_size <= 0:
+        raise FileNotFoundError("Thumbnail file does not exist or is empty")
+    from googleapiclient.http import MediaFileUpload
+
+    service = youtube_service()
+    service.thumbnails().set(
+        videoId=video_id,
+        media_body=MediaFileUpload(str(path), mimetype="image/jpeg"),
+    ).execute()
+    log.info("YouTube thumbnail set video_id=%s thumbnail=%s", video_id, path.name)
+    return True
+
+
 def _video_id_from_response(response) -> str | None:
     try:
         payload = response.json()
@@ -532,6 +555,10 @@ def upload_video(
         },
         "status": {"privacyStatus": privacy_status},
     }
+    default_language = str(getattr(settings, "youtube_default_language", "") or "").strip()
+    if default_language:
+        body["snippet"]["defaultLanguage"] = default_language
+        body["snippet"]["defaultAudioLanguage"] = default_language
     if scheduled_at:
         if privacy_status != "private":
             raise ValueError("Scheduled publishing must start with privacy_status=private")

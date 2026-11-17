@@ -829,6 +829,29 @@ def analytics_summary_route(db: Session = Depends(get_db)):
         cohorts[tier] = cohorts.get(tier, 0) + 1
 
     avg_engagement = calculate_engagement_rate(total_views, total_likes, total_comments)
+
+    titles = {
+        job.youtube_video_id: job.title
+        for job in db.scalars(
+            select(PublishJob).where(
+                PublishJob.youtube_video_id.in_([m.youtube_video_id for m in metrics])
+            )
+        ).all()
+    }
+
+    def _performer(m: VideoMetric) -> dict:
+        return {
+            "youtube_video_id": m.youtube_video_id,
+            "publish_job_id": m.publish_job_id,
+            "title": titles.get(m.youtube_video_id, ""),
+            "view_count": m.view_count,
+            "like_count": m.like_count,
+            "comment_count": m.comment_count,
+            "engagement_rate": calculate_engagement_rate(m.view_count, m.like_count, m.comment_count),
+            "performance_tier": classify_performance_tier(m.view_count, m.like_count, m.comment_count),
+        }
+
+    # metrics is already ordered by views desc: head = top, tail = bottom.
     return {
         "total_videos_tracked": len(metrics),
         "total_views": total_views,
@@ -836,6 +859,8 @@ def analytics_summary_route(db: Session = Depends(get_db)):
         "total_comments": total_comments,
         "aggregate_engagement_rate": avg_engagement,
         "cohorts": cohorts,
+        "top_performers": [_performer(m) for m in metrics[:5]],
+        "bottom_performers": [_performer(m) for m in reversed(metrics[5:][-5:])],
     }
 
 

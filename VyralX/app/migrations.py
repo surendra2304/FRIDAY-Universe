@@ -40,6 +40,8 @@ ADDITIVE_COLUMNS: dict[str, dict[str, str]] = {
         "completed_at": "TIMESTAMP",
         "updated_at": "TIMESTAMP",
         "approved_at": "TIMESTAMP",
+        "thumbnail_path": "VARCHAR(2048) NOT NULL DEFAULT ''",
+        "category_id": "VARCHAR(8) NOT NULL DEFAULT ''",
     },
     "content_packs": {
         "voiceover_path": "VARCHAR(2048) NOT NULL DEFAULT ''",
