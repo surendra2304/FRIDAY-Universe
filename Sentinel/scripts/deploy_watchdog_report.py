@@ -45,6 +45,21 @@ def read_checkout_head(checkout: str) -> str | None:
     return sha if out.returncode == 0 and len(sha) >= 7 else None
 
 
+def read_checkout_branch(checkout: str) -> str | None:
+    """Branch the checkout is on (TASK-OBS-005); None if detached/unreadable."""
+    try:
+        out = subprocess.run(
+            ["git", "-C", checkout, "branch", "--show-current"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    name = (out.stdout or "").strip()
+    return name if out.returncode == 0 and name else None
+
+
 def read_checkout_tree_clean(checkout: str) -> bool | None:
     """Tracked-tree cleanliness (untracked runtime files don't count)."""
     try:
@@ -78,9 +93,15 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     tree_clean = read_checkout_tree_clean(args.checkout)
+    branch = read_checkout_branch(args.checkout)
     url = args.sentinel_url.rstrip("/") + "/operations/deploy-watchdog/report"
     payload = json.dumps(
-        {"server": args.server, "deployed_head": head, "tree_clean": tree_clean}
+        {
+            "server": args.server,
+            "deployed_head": head,
+            "tree_clean": tree_clean,
+            "branch": branch,
+        }
     ).encode("utf-8")
     request = urllib.request.Request(
         url, data=payload, headers={"Content-Type": "application/json"}, method="POST"
@@ -93,7 +114,8 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     print(
         f"deploy-watchdog-report: {args.server} head={head[:8]} "
-        f"status={body.get('status')} main={str(body.get('main_head'))[:8]}"
+        f"status={body.get('status')} main={str(body.get('main_head'))[:8]} "
+        f"branch={branch}"
     )
     return 0
 

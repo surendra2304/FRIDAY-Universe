@@ -67,6 +67,22 @@ jobs:
             set -euo pipefail
             DEPLOY_REV="${{ github.sha }}"
             [[ "$DEPLOY_REV" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid deployment revision"; exit 1; }
+            # BEGIN MAIN-BRANCH GUARD (TASK-OBS-005) — Fleet CD fast-forwards
+            # into the CURRENT checkout and never switches branches, so a
+            # checkout parked on a non-main branch can pass every other check
+            # (its HEAD can be an ancestor of the deploy revision) while the
+            # ff advances the WRONG branch and main stays stranded (defect
+            # D9, three recurrences 2026-11-16/17). Assert main BEFORE the
+            # fast-forward and fail loudly, naming the branch. This block is
+            # identical in both deploy jobs and is executed by
+            # tests/test_fleet_cd_branch_guard.py — keep them in sync.
+            DEPLOY_BRANCH="$(git branch --show-current)"
+            if [ "$DEPLOY_BRANCH" != "main" ]; then
+              echo "::error::TASK-OBS-005 branch guard: /opt/friday_universe is checked out on branch '${DEPLOY_BRANCH:-<detached HEAD>}' instead of 'main' — refusing to fast-forward. Return the checkout to the main branch and re-run this deploy."
+              exit 1
+            fi
+            echo "Branch guard (TASK-OBS-005): checkout is on 'main'; proceeding."
+            # END MAIN-BRANCH GUARD (TASK-OBS-005)
             OLD_REV=$(git rev-parse HEAD)
             if ! git diff --quiet || ! git diff --cached --quiet; then
               echo "Tracked collaborator changes present; refusing deployment without modifying them."
@@ -186,6 +202,40 @@ jobs:
                 FAILED_HEALTH="$FAILED_HEALTH $AGENT"
               fi
             done
+            # ── TASK-OBS-005 second-chance sweep ─────────────────────────────
+            # PR #868's deploy (2026-11-17) landed in full yet the job
+            # concluded FAILURE: the simultaneous restart of every unit on
+            # the 956MB host left FRIDAY/Stratex/Futuris still starting
+            # when their first-pass probe windows expired. Before failing
+            # the job, give the failed agents ONE bounded second pass
+            # after a settle delay. A genuinely dead agent fails both
+            # sweeps and still fails the job — this only widens the
+            # window for slow starters under a full-fleet restart.
+            if [ -n "$FAILED_HEALTH" ]; then
+              echo "=== Health gate: second-chance sweep after 60s settle (TASK-OBS-005) ==="
+              sleep 60
+              STILL_FAILED=""
+              for AGENT in $FAILED_HEALTH; do
+                PORT=""
+                case "$AGENT" in
+                  FRIDAY) PORT=10000;; Inference) PORT=8001;; Memora) PORT=8002;;
+                  Stratex) PORT=8003;; Futuris) PORT=8004;; IntelX) PORT=8005;; Forge) PORT=8006;;
+                esac
+                [ -n "$PORT" ] || continue
+                OK=""
+                for i in $(seq 1 12); do
+                  if curl -sf -m 5 "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then OK=yes; break; fi
+                  sleep 5
+                done
+                if [ "$OK" = "yes" ]; then
+                  echo "    $AGENT: healthy on second pass"
+                else
+                  echo "    ::error::$AGENT still UNHEALTHY on second pass"
+                  STILL_FAILED="$STILL_FAILED $AGENT"
+                fi
+              done
+              FAILED_HEALTH="$STILL_FAILED"
+            fi
             if [ -n "$FAILED_HEALTH" ]; then
               echo "::error::Deploy completed but health gate failed for:$FAILED_HEALTH — run scripts/rollback_deploy.sh <last-good-sha> or the 'Fleet Rollback' workflow"
               exit 1
@@ -211,6 +261,22 @@ jobs:
             set -euo pipefail
             DEPLOY_REV="${{ github.sha }}"
             [[ "$DEPLOY_REV" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid deployment revision"; exit 1; }
+            # BEGIN MAIN-BRANCH GUARD (TASK-OBS-005) — Fleet CD fast-forwards
+            # into the CURRENT checkout and never switches branches, so a
+            # checkout parked on a non-main branch can pass every other check
+            # (its HEAD can be an ancestor of the deploy revision) while the
+            # ff advances the WRONG branch and main stays stranded (defect
+            # D9, three recurrences 2026-11-16/17). Assert main BEFORE the
+            # fast-forward and fail loudly, naming the branch. This block is
+            # identical in both deploy jobs and is executed by
+            # tests/test_fleet_cd_branch_guard.py — keep them in sync.
+            DEPLOY_BRANCH="$(git branch --show-current)"
+            if [ "$DEPLOY_BRANCH" != "main" ]; then
+              echo "::error::TASK-OBS-005 branch guard: /opt/friday_universe is checked out on branch '${DEPLOY_BRANCH:-<detached HEAD>}' instead of 'main' — refusing to fast-forward. Return the checkout to the main branch and re-run this deploy."
+              exit 1
+            fi
+            echo "Branch guard (TASK-OBS-005): checkout is on 'main'; proceeding."
+            # END MAIN-BRANCH GUARD (TASK-OBS-005)
             OLD_REV=$(git rev-parse HEAD)
             if ! git diff --quiet || ! git diff --cached --quiet; then
               echo "Tracked collaborator changes present; refusing deployment without modifying them."
@@ -277,6 +343,31 @@ jobs:
                 FAILED_HEALTH="$FAILED_HEALTH $AGENT"
               fi
             done
+            # ── TASK-OBS-005 second-chance sweep (see Server 1 gate) ─────────
+            if [ -n "$FAILED_HEALTH" ]; then
+              echo "=== Health gate: second-chance sweep after 60s settle (TASK-OBS-005) ==="
+              sleep 60
+              STILL_FAILED=""
+              for AGENT in $FAILED_HEALTH; do
+                PORT=""
+                case "$AGENT" in
+                  Sentinel) PORT=8008;; Cortex) PORT=8009;; VyralX) PORT=8010;;
+                esac
+                [ -n "$PORT" ] || continue
+                OK=""
+                for i in $(seq 1 12); do
+                  if curl -sf -m 5 "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then OK=yes; break; fi
+                  sleep 5
+                done
+                if [ "$OK" = "yes" ]; then
+                  echo "    $AGENT: healthy on second pass"
+                else
+                  echo "    ::error::$AGENT still UNHEALTHY on second pass"
+                  STILL_FAILED="$STILL_FAILED $AGENT"
+                fi
+              done
+              FAILED_HEALTH="$STILL_FAILED"
+            fi
             if [ -n "$FAILED_HEALTH" ]; then
               echo "::error::Deploy completed but health gate failed for:$FAILED_HEALTH — run scripts/rollback_deploy.sh <last-good-sha> or the 'Fleet Rollback' workflow"
               exit 1
