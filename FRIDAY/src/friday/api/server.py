@@ -3700,6 +3700,18 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             "any", "can", "has", "had", "did", "say", "she", "her",
             "his", "its", "our", "who", "how", "why", "now", "per",
             "via", "off", "out",
+            # TASK-FRD-022 (PR #865 review follow-up): incidental
+            # 3-letter verbs and pronouns. In a recall question these
+            # only ever ride along ("the gem I saw", "the one I
+            # got"); they are never the asked-about subject, yet as
+            # content words they joined the gate's all-words test and
+            # blocked the direct answer for such phrasings — no
+            # stored line contains them, so nothing could full-match
+            # and the honest list stood where the fact was known.
+            # Subject NOUNS stay content words (gem, tea, car, dog…):
+            # the all-words test over subject-bearing questions is
+            # what keeps the wrong fact out.
+            "saw", "one", "got", "get", "see", "ask", "let", "him",
         }
         _q_words |= {
             _w for _w in {

@@ -234,3 +234,83 @@ def test_recall_subject_mentioned_without_a_fact_stays_a_list(monkeypatch):
     assert meta.get("memory_recall") is True
     assert "spoken_summary" not in meta
     assert "fact" not in meta
+
+
+# ---------------------------------------------------------------------------
+# TASK-FRD-022 (PR #865 review follow-up): incidental 3-letter verbs and
+# pronouns are function words too. The FRD-019 fix kept every 3-letter
+# word that was not already a known function word, so "the gem I saw"
+# made "saw" a content word: no stored line contains it, the gate's
+# all-words test could never full-match, and the direct answer was
+# blocked for such phrasings even though the subject fact was known
+# (safe — the wrong fact never fired — but narrower than needed).
+# The refinement excludes a small explicit verb/pronoun set while
+# keeping every 3-letter subject NOUN (gem, tea, car…) a content word.
+# ---------------------------------------------------------------------------
+
+def test_recall_incidental_verb_does_not_block_the_direct_answer(monkeypatch):
+    # "…I saw?" — 'saw' rides along; the subject is still 'gem'.
+    # On current main this composes NOTHING (saw joins the all-words
+    # test and no hit contains it); the fact was known all along.
+    result = _dispatch(
+        monkeypatch,
+        _hits(CHAI, ZQ, USERS_CHAI, TEAL_DIRTY, TEAL_CLEAN, GEM),
+        "What is my favorite gem I saw?",
+    )
+    meta = result["metadata"]
+    assert meta.get("memory_recall") is True
+    assert meta.get("spoken_summary") == "Your favorite gem is alexandrite."
+    assert meta.get("fact") == "My favorite gem is alexandrite."
+
+
+def test_recall_incidental_verb_got_does_not_block_the_direct_answer(monkeypatch):
+    result = _dispatch(
+        monkeypatch,
+        _hits(CHAI, ZQ, USERS_CHAI, TEAL_DIRTY, TEAL_CLEAN, GEM),
+        "What is my favorite gem I got?",
+    )
+    meta = result["metadata"]
+    assert meta.get("spoken_summary") == "Your favorite gem is alexandrite."
+    assert meta.get("fact") == "My favorite gem is alexandrite."
+
+
+@pytest.mark.parametrize("question", [
+    "What is my favorite gem?",
+    "What is my favorite gem I saw?",
+    "What is my favorite gem I got?",
+    "What is my favorite gem I see?",
+])
+def test_recall_wrong_fact_never_composed_for_any_gem_phrasing(
+        monkeypatch, question):
+    # The FRD-019 defect in its general form: for ANY gem phrasing the
+    # composed direct answer is the gem fact or nothing — never the
+    # chai sentence. (On pristine main the plain phrasing composes
+    # chai verbatim; on current main the incidental phrasings compose
+    # nothing. Only the refinement composes alexandrite throughout.)
+    result = _dispatch(
+        monkeypatch,
+        _hits(CHAI, ZQ, USERS_CHAI, TEAL_DIRTY, TEAL_CLEAN, GEM),
+        question,
+    )
+    meta = result["metadata"]
+    assert meta.get("spoken_summary") == "Your favorite gem is alexandrite."
+    assert meta.get("fact") == "My favorite gem is alexandrite."
+    assert "chai" not in str(meta.get("spoken_summary", "")).lower()
+    assert "chai" not in str(meta.get("fact", "")).lower()
+
+
+def test_recall_incidental_phrasing_without_the_fact_stays_a_list(monkeypatch):
+    # NEGATIVE: the refinement must not resurrect the wrong-fact fire.
+    # With no gem fact stored, an incidental phrasing still earns the
+    # honest list — 'gem' remains a content word, so nothing can
+    # full-match on "favorite" alone. (On pristine main this fired
+    # the chai sentence.)
+    result = _dispatch(
+        monkeypatch,
+        _hits(CHAI, ZQ, TEAL_DIRTY, TEAL_CLEAN, TEA),
+        "What is my favorite gem I saw?",
+    )
+    meta = result["metadata"]
+    assert meta.get("memory_recall") is True
+    assert "spoken_summary" not in meta
+    assert "fact" not in meta
