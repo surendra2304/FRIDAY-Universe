@@ -112,6 +112,14 @@ def bootstrap() -> Settings:
 
 
 def produce_one(settings: Settings, *, max_candidates: int) -> dict:
+    if str(getattr(settings, "viral_producer_lane", "viral_remix")).lower() == "mpt":
+        # IG2 B7-C1: the MoneyPrinterTurbo producer lane. It works from a
+        # briefs file (no source downloads, so no cookie jar is needed)
+        # and never queues a publish job — a pass is GATED_PASS, so the
+        # publish drain in main() is never triggered by this lane.
+        from app.services.mpt_lane import produce_from_briefs
+
+        return produce_from_briefs(settings, max_candidates=max_candidates)
     if not cookies_file():
         # Every source download goes through yt-dlp, and YouTube refuses
         # datacenter IPs without a signed-in jar. Fail fast with a clear reason
