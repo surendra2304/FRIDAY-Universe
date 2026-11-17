@@ -17,11 +17,18 @@ session. These tests pin the restructure that exploits both facts:
 - ``_wait_for_remote_participant``: bounded, and room-state read
   errors count as 'present' (the greeting path's long-standing
   best-effort semantics).
-- Entrypoint source shape: the build task is created BEFORE
+- Entrypoint source shape: the key + memory legs start BEFORE
   ``ctx.connect()`` is awaited, and the early greeting launches
   BEFORE ``sess.start()`` — a refactor must not silently
-  re-serialise the build behind the connect or the greeting behind
+  re-serialise the legs behind the connect or the greeting behind
   the session start.
+- TASK-VOI-017 (F3) supersedes the build-task half of the original
+  shape: the pre-connect session build task is REMOVED — the first
+  session is constructed in-job, after the connect, through
+  ``_make_session`` (the rebuild path), because the frame-flow
+  diagnosis found pre-connect-built first sessions going deaf
+  while in-job rebuilds in the same job transcribed. The key +
+  memory overlap is unchanged.
 """
 import asyncio
 import inspect
@@ -107,12 +114,18 @@ def test_wait_for_participant_arriving_mid_wait():
 
 # ---------- entrypoint source shape ----------
 
-def test_entrypoint_build_task_starts_before_the_connect():
+def test_entrypoint_first_session_built_in_job_after_connect():
+    # TASK-VOI-017 (F3): no pre-connect session build task exists;
+    # the first session is built in the job, after the connect,
+    # through _make_session — the rebuild path — and started after.
     src = inspect.getsource(w.entrypoint)
-    build_at = src.index("_build_task = asyncio.ensure_future(_build_first_session())")
+    assert "_build_first_session" not in src
+    assert "_build_task" not in src
     connect_at = src.index("await ctx.connect(")
-    assert build_at < connect_at
-    # The key + memory legs also start before the connect.
+    build_at = src.index("session, agent = await _make_session(instructions)")
+    start_at = src.index("await _start(session, agent)")
+    assert connect_at < build_at < start_at
+    # The key + memory legs still start before the connect.
     assert src.index("_key_task = asyncio.ensure_future") < connect_at
     assert src.index("_memory_task = asyncio.ensure_future") < connect_at
 

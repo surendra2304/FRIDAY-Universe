@@ -25,6 +25,7 @@ for the two-rung plan. Classification and budget rules are unchanged.
 """
 
 import asyncio
+import inspect
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -298,3 +299,60 @@ def test_env_float_parsing(monkeypatch):
 
 def test_recovery_budgets_have_sane_defaults():
     assert worker._RECOVERY_BUDGET_S > worker._RUNG_PROVE_S > 0
+
+
+# ---------------------------------------------------------------------------
+# TASK-VOI-017 (F1): a rung is proven by a transcript or a completed
+# turn — never by surviving the prove window.
+# ---------------------------------------------------------------------------
+# FRD-005 re-run #11: the ladder declared SUCCEEDED five times on
+# rebuilt sessions that never transcribed a word, because a rung
+# with no pending turn proved itself by surviving a ~20 s grace
+# window. Each false success stopped the rebuilds a still-deaf
+# session needed. These tests pin the new proof contract.
+
+
+def test_rung_proven_pending_turn_requires_completion():
+    assert worker._rung_proven(
+        "what time is it", turn_completed=True, transcript_landed=False
+    ) is True
+    assert worker._rung_proven(
+        "what time is it", turn_completed=False, transcript_landed=True
+    ) is False
+    assert worker._rung_proven(
+        "what time is it", turn_completed=False, transcript_landed=False
+    ) is False
+
+
+def test_rung_proven_no_pending_turn_requires_a_transcript():
+    # The re-run #11 regression pin: no pending turn + no transcript
+    # (the session merely survived) is NOT proof, even when the
+    # owner was audibly speaking (a transcript flag is what counts).
+    assert worker._rung_proven(
+        "", turn_completed=False, transcript_landed=False
+    ) is False
+    assert worker._rung_proven(
+        "", turn_completed=False, transcript_landed=True
+    ) is True
+    # A stray completion timestamp with no pending turn proves
+    # nothing on its own.
+    assert worker._rung_proven(
+        "", turn_completed=True, transcript_landed=False
+    ) is False
+
+
+def test_rung_unproven_reason_names_deaf_vs_silent():
+    deaf = worker._rung_unproven_reason("gemini", energy_seen=True)
+    assert "stayed deaf" in deaf
+    assert "no user transcript" in deaf
+    silent = worker._rung_unproven_reason("gemini", energy_seen=False)
+    assert "unproven" in silent
+    assert "silent room" in silent
+
+
+def test_entrypoint_rungs_judge_proof_via_rung_proven():
+    src = inspect.getsource(worker.entrypoint)
+    assert "_rung_proven(" in src
+    assert "_rung_unproven_reason(" in src
+    # The false-success sentence is gone from the entrypoint.
+    assert "survived the grace window" not in src

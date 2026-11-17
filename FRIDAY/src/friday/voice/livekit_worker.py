@@ -98,6 +98,28 @@ watchdog gains a dead-input trigger — owner-track audio ENERGY
 (an rtc.AudioStream RMS monitor) with zero transcripts for 25 s, or
 two consecutive 1008 inactivity closes — running the same rebuild
 ladder, whose rebuild re-creates RoomIO + input.
+
+TASK-VOI-017 (2026-11-17): the frame-flow diagnosis (issue #35;
+~/workspace/voice-frameflow) replayed the input chain hop by hop and
+exonerated the session CONSTRUCTION in five configurations — yet a
+production job's FIRST session went deaf while an identically built
+rebuild in the same job transcribed and answered, and the ladder
+declared that deaf session "recovered" five times in re-run #11
+because a rung with no pending turn proved itself by surviving a
+~20 s grace window. Three fixes, independent of the remaining
+root-cause hunt: (F1) a rung is proven ONLY by a user transcript
+landing on the rebuilt session or by the re-asked turn completing —
+grace survival proves nothing, and while track energy is present
+with no transcript the rungs fail and the ladder keeps rebuilding
+inside its existing plan and budget; (F2) the diagnosis's frame
+counters (AgentActivity.push_audio, plugin push_audio,
+_send_client_event audio events) are permanent journal lines,
+emitted per session at session end and at watchdog firing, so the
+next deaf session names its own dropping hop in production; (F3)
+the first session is built in-job after the room is up through
+_make_session — the rebuild path — instead of the pre-connect
+build task (the key and memory legs still start before the
+connect; only session construction moved).
 """
 import asyncio
 import json
@@ -2126,7 +2148,9 @@ def _env_float(name: str, default: float) -> float:
 _RECOVERY_BUDGET_S = _env_float("FRIDAY_VOICE_RECOVERY_BUDGET_S", 420.0)
 # How long one rung gets to prove itself: the rebuilt session must
 # complete the re-asked turn inside this window (or, with no turn
-# pending, survive a short grace window). Run 2's handshake death
+# pending, a user transcript must land on it — TASK-VOI-017 (F1);
+# surviving the window proved nothing and no longer counts).
+# Run 2's handshake death
 # surfaced ~11 s after the re-ask; VOI-003's worst strained AFC turn
 # took ~138 s, but a rung that needs longer than this is
 # indistinguishable from another wedge, and the ladder still owes the
@@ -2232,6 +2256,42 @@ async def _run_recovery_ladder(rungs, attempt, budget_s, rung_prove_s,
             served = kind
             break
     return {"served": served, "steps": steps, "elapsed": now() - started}
+
+
+def _rung_proven(pending_text, *, turn_completed: bool,
+                 transcript_landed: bool) -> bool:
+    """TASK-VOI-017 (F1): what proves a recovery rung — nothing else.
+
+    With a turn pending, the rung is proven only when the re-asked
+    turn COMPLETES. With no turn pending, it is proven only when a
+    user transcript lands on the rebuilt session inside the prove
+    window. The pre-fix third path — the rebuilt session merely
+    surviving a grace window — proved nothing about the input
+    forward and is gone: in FRD-005 re-run #11 it declared the
+    ladder SUCCEEDED five times on sessions that never transcribed
+    a word, and each false success stopped the rebuilds a still-
+    deaf session needed. Pure — unit-tested."""
+    if pending_text:
+        return bool(turn_completed)
+    return bool(transcript_landed)
+
+
+def _rung_unproven_reason(kind: str, *, energy_seen: bool) -> str:
+    """TASK-VOI-017 (F1): the honest failure reason for a rung whose
+    prove window expired with no transcript and no pending turn.
+    Energy present means the owner was speaking into a session that
+    never transcribed — still deaf. No energy means a silent room:
+    recovery is unproven, not disproven, and the reason says so."""
+    if energy_seen:
+        return (
+            f"{kind} rebuilt session stayed deaf: track energy was "
+            f"present but no user transcript landed in the prove "
+            f"window (survival is not proof)"
+        )
+    return (
+        f"{kind} rebuilt session unproven: no user transcript and "
+        f"no track energy in the prove window (silent room)"
+    )
 
 
 # ---- TASK-VOI-016: dead-input watchdog + greeting listening gate ----
@@ -2444,6 +2504,186 @@ async def _monitor_input_energy(track, watch: dict) -> None:
         logger.info("VOICE input-energy monitor ended: %s", exc)
 
 
+# ---- TASK-VOI-017 (F2): frame-flow counters, permanently journaled ----
+# The frame-flow diagnosis (2026-11-17) isolated the deaf-session
+# defect class by counting frames at three hops — AgentActivity.
+# push_audio (the session forward), the Google plugin session's
+# push_audio (the realtime input), and the plugin's
+# _send_client_event audio events (what actually queued for the
+# websocket) — with counters monkeypatched into a reproduction.
+# This section makes the same three counters permanent: every
+# session the entrypoint builds gets a counters dict (wired in
+# _make_session), and the counts are journaled per session at
+# session end and at watchdog firing, so the next deaf session
+# names its own dropping hop in the production journal with no
+# reproduction needed. Counting is defensive throughout: any wrap
+# failure leaves the session exactly as it was and journals the
+# gap once; a counter can never take a session down. Attribution
+# is by session identity (jobs share this process — THREAD
+# executor): the plugin wraps close over the session's own dict,
+# and the AgentActivity wrap resolves it through the activity's
+# own session reference. Increments are plain int adds (diagnostic
+# counts; the GIL keeps each add whole).
+
+_FRAME_COUNTERS: dict = {}
+
+
+def _new_frame_counters(label: str) -> dict:
+    return {
+        "label": label,
+        "activity_push_audio": 0,
+        "plugin_push_audio": 0,
+        "plugin_send_audio_events": 0,
+    }
+
+
+def _register_frame_counters(session, counters: dict) -> None:
+    if session is not None:
+        # The strong ref keeps the session (and therefore its id)
+        # alive for exactly as long as it is registered, so a
+        # recycled id can never inherit a dead session's counts.
+        counters["session"] = session
+        _FRAME_COUNTERS[id(session)] = counters
+
+
+def _frame_counters_for(session) -> "dict | None":
+    if session is None:
+        return None
+    return _FRAME_COUNTERS.get(id(session))
+
+
+def _journal_frame_counters(session, reason: str, *, drop: bool = False) -> None:
+    """One journal line carrying a session's three frame counts.
+
+    Called at session end (drop=True — the registry entry goes
+    with the line) and at watchdog firing (drop=False — the
+    session is still live; its end line comes later). A session
+    with no registered counters (its build could not be wrapped)
+    journals that fact instead of a row of misleading zeros."""
+    counters = _frame_counters_for(session)
+    if counters is None:
+        logger.info(
+            "VOICE frame counters: none registered for this session (%s)",
+            reason,
+        )
+        return
+    logger.info(
+        "VOICE frame counters [%s]: activity_push_audio=%d "
+        "plugin_push_audio=%d plugin_send_audio_events=%d (%s)",
+        counters.get("label"), counters["activity_push_audio"],
+        counters["plugin_push_audio"],
+        counters["plugin_send_audio_events"], reason,
+    )
+    if drop:
+        _FRAME_COUNTERS.pop(id(session), None)
+
+
+def _is_audio_client_event(event) -> bool:
+    """True for the plugin's audio-bearing client events. In the
+    deployed plugin generation push_audio sends
+    LiveClientRealtimeInput(audio=Blob(...)) through
+    _send_client_event; activity markers ride the same type with
+    no audio payload, and the other event types have no ``audio``
+    attribute at all — so the attribute is the discriminator."""
+    return getattr(event, "audio", None) is not None
+
+
+def _wrap_plugin_session(rt_session, counters: dict) -> bool:
+    """Count one plugin realtime session's push_audio calls and
+    its audio client events, via instance-attribute shims. The
+    framework's own calls resolve through the instance first —
+    including push_audio's internal _send_client_event — so both
+    the external and internal paths are counted exactly once.
+    Returns False (and changes nothing) when the session cannot
+    be wrapped."""
+    try:
+        orig_push_audio = rt_session.push_audio
+        orig_send = rt_session._send_client_event
+
+        def _counting_push_audio(frame):
+            counters["plugin_push_audio"] += 1
+            return orig_push_audio(frame)
+
+        def _counting_send_client_event(event):
+            if _is_audio_client_event(event):
+                counters["plugin_send_audio_events"] += 1
+            return orig_send(event)
+
+        rt_session.push_audio = _counting_push_audio
+        rt_session._send_client_event = _counting_send_client_event
+        return True
+    except Exception as exc:
+        logger.info(
+            "VOICE frame counters: plugin session wrap unavailable: %s", exc
+        )
+        return False
+
+
+def _wrap_model_frame_counters(model, counters: dict) -> bool:
+    """Wrap a realtime model's session factory so the plugin
+    session it creates carries the counters. A model in this
+    worker serves exactly one AgentSession (a fresh model is
+    built per session — the first and every rung alike), so the
+    factory's product belongs to this counters dict. Returns
+    False (model untouched) on any failure."""
+    try:
+        orig_factory = model.session
+
+        def _counting_factory(**kwargs):
+            rt_session = orig_factory(**kwargs)
+            _wrap_plugin_session(rt_session, counters)
+            return rt_session
+
+        model.session = _counting_factory
+        return True
+    except Exception as exc:
+        logger.info("VOICE frame counters: model wrap unavailable: %s", exc)
+        return False
+
+
+def _note_activity_push_audio(session) -> None:
+    counters = _frame_counters_for(session)
+    if counters is not None:
+        counters["activity_push_audio"] += 1
+
+
+_ACTIVITY_COUNTER_WRAP_DONE = False
+
+
+def _install_activity_frame_counter() -> bool:
+    """Wrap AgentActivity.push_audio ONCE per process so the
+    session-forward hop is counted against the session it belongs
+    to (the activity holds its session as ``_session``). The shim
+    only counts and calls through — frame handling is unchanged.
+    Idempotent; returns False when the framework's shape is not
+    the expected one, leaving the class untouched."""
+    global _ACTIVITY_COUNTER_WRAP_DONE
+    if _ACTIVITY_COUNTER_WRAP_DONE:
+        return True
+    try:
+        from livekit.agents.voice.agent_activity import AgentActivity
+
+        orig = AgentActivity.push_audio
+        if getattr(orig, "_friday_frame_counter", False):
+            _ACTIVITY_COUNTER_WRAP_DONE = True
+            return True
+
+        def _counting_push_audio(self, frame):
+            _note_activity_push_audio(getattr(self, "_session", None))
+            return orig(self, frame)
+
+        _counting_push_audio._friday_frame_counter = True
+        AgentActivity.push_audio = _counting_push_audio
+        _ACTIVITY_COUNTER_WRAP_DONE = True
+        return True
+    except Exception as exc:
+        logger.info("VOICE frame counters: activity wrap unavailable: %s", exc)
+        return False
+
+
+_install_activity_frame_counter()
+
+
 # ---- TASK-VOI-009: fixed lines are pre-recorded WAVs ----
 # The greeting, the recovery-exhausted ("unconfirmed") outcomes and the
 # voice-unavailable notice used to be spoken through a synthesized
@@ -2581,20 +2821,20 @@ async def entrypoint(ctx: JobContext):
         ctx.add_shutdown_callback(_voi014_job_finished)
     except Exception:
         pass
-    # ---- TASK-VOI-011: resolution + construction overlap the connect ----
+    # ---- TASK-VOI-011: resolution overlaps the connect ----
     # Owner-memory recall (thread, ≤7s since TASK-VOI-003) and the
     # Gemini key resolution START before the room connect and run
-    # concurrently with it; the provider model and the first
-    # AgentSession are CONSTRUCTED in the same window (they need the
-    # key + instructions, not the room — production segmentation
-    # 2026-11-16 priced that serial construction at 1.1–5.1 s of the
-    # 11–24 s key-to-session-started). Only sess.start() waits for
-    # both legs. TASK-VOI-010's rule is unchanged: only the key gates
-    # session construction — a recall that has landed is used exactly
-    # as before, a pending one joins asynchronously via
-    # _deliver_memory_when_ready. Key resolution is cached +
-    # single-flight (see _resolve_gemini_key_sync), so on a warm
-    # worker the gating leg is a dict read.
+    # concurrently with it. TASK-VOI-017 (F3): the provider model
+    # and the first AgentSession are NO LONGER constructed in that
+    # window — the first session is built in the main flow below,
+    # after the room is up, through _make_session (the rebuild
+    # path); see the F3 note at the build site. TASK-VOI-010's rule
+    # is unchanged: only the key gates session construction — a
+    # recall that has landed is used exactly as before, a pending
+    # one joins asynchronously via _deliver_memory_when_ready. Key
+    # resolution is cached + single-flight (see
+    # _resolve_gemini_key_sync), so on a warm worker the gating leg
+    # is a dict read.
     async def _key_after_warmup() -> "str | None":
         # TASK-VOI-003 follow-up: if this process's boot warm-up is
         # still resolving, let its round land first (bounded 20 s) —
@@ -2631,6 +2871,10 @@ async def entrypoint(ctx: JobContext):
     session_listening = asyncio.Event()
     input_watch = _new_input_watch()
     energy_tasks: dict = {}
+    # TASK-VOI-017 (F2): per-job session build sequence for the
+    # frame counters' labels — the first session is build 1 and
+    # every ladder rung adds one. Incremented in _make_session.
+    session_build_seq: dict = {"n": 0}
 
     # TASK-FRD-012: every foreground bridge result for this job lands
     # here via the bridge's result observer (wired in _make_session).
@@ -2780,6 +3024,15 @@ async def entrypoint(ctx: JobContext):
             model = _build_realtime_model(pinned["key"], instr)
         if model is None:
             return None, None
+        # TASK-VOI-017 (F2): every session built here — the first
+        # (which since F3 arrives through this same path) and every
+        # ladder rung alike — carries frame counters, so its input
+        # hops can be journaled at session end / watchdog firing.
+        session_build_seq["n"] += 1
+        counters = _new_frame_counters(
+            f"session build {session_build_seq['n']}"
+        )
+        _wrap_model_frame_counters(model, counters)
         session = _build_session(
             llm=model,
             turn_detection="realtime_llm",
@@ -2790,54 +3043,13 @@ async def entrypoint(ctx: JobContext):
             resume_false_interruption=True,
             false_interruption_timeout=1.0,
         )
+        _register_frame_counters(session, counters)
         return session, agent
-
-    async def _build_first_session() -> dict:
-        """TASK-VOI-011 build task: awaits ONLY the key, builds the
-        realtime model on it, then constructs (does not start) the
-        first session — all concurrently with ctx.connect(). Returns
-        the outcome as a dict; every status write and the unavailable
-        notice stay in the main flow below, in today's order and
-        wording. A build exception propagates at the main flow's
-        await, exactly where the serial code would have raised it."""
-        verified_key = await _key_task
-        _key_ready_at["ts"] = time.time()
-        memory_block, memory_pending = _memory_block_now(_memory_task)
-        instructions = _instructions(memory_block=memory_block)
-        pinned["instructions"] = instructions
-        # Gemini Live is the only provider (TASK-VOI-009). If it cannot
-        # serve this job, the honest replacement for the deleted
-        # fallback pipeline is the recorded notice, played by the main
-        # flow: the participant HEARS that voice is unavailable, the
-        # status file and the journal say why, plainly, and the job
-        # leaves. No silent rescue by any other provider, ever.
-        model, used_key = await _try_gemini_realtime(
-            instructions, verified_key=verified_key
-        )
-        if model is None:
-            return {
-                "stage": "model", "verified_key": verified_key,
-                "memory_pending": memory_pending,
-            }
-        pinned.update(kind="gemini", key=used_key, instructions=instructions)
-        session, agent = await _make_session(instructions, {"model": model})
-        if session is None:
-            return {
-                "stage": "session", "verified_key": verified_key,
-                "memory_pending": memory_pending,
-            }
-        return {
-            "stage": "ready", "verified_key": verified_key,
-            "memory_pending": memory_pending,
-            "session": session, "agent": agent,
-        }
-
-    _build_task = asyncio.ensure_future(_build_first_session())
 
     try:
         await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
     except BaseException:
-        for _pending_task in (_build_task, _key_task, _memory_task):
+        for _pending_task in (_key_task, _memory_task):
             _pending_task.cancel()
         raise
     _t_connected = time.time()  # TASK-VOI-010: greeting-timing evidence base
@@ -2974,25 +3186,55 @@ async def entrypoint(ctx: JobContext):
         )
     )
 
-    _built = await _build_task
-    _verified_key = _built["verified_key"]
-    _memory_pending = _built["memory_pending"]
+    # TASK-VOI-017 (F3): the first session is built HERE — in the
+    # job, with the room already up — through _make_session, the
+    # exact construction path a watchdog rebuild takes. The
+    # pre-connect build task (TASK-VOI-011's overlap, which built
+    # the model + session concurrently with ctx.connect()) is
+    # removed for session construction: the frame-flow diagnosis
+    # (2026-11-17) found post-VOI-016 first sessions built that way
+    # going deaf with clean loops and zero errors, while a rebuild
+    # built in-job in the same job transcribed and answered — the
+    # rebuild path is the only production-ecology path with a
+    # proven transcript. The key and memory legs still start before
+    # the connect, so the probe chain still overlaps the join; only
+    # construction moved in-job. The model _try_gemini_realtime
+    # returns is the buildability proof feeding the unavailable
+    # branches below; the session's own model is built inside
+    # _make_session on the pinned key, exactly as a rung builds it.
+    # (TASK-VOI-009: Gemini Live is the only provider — if it
+    # cannot serve this job, the honest replacement for a fallback
+    # pipeline is the recorded notice the branches below play: the
+    # participant HEARS that voice is unavailable, the status file
+    # and the journal say why, plainly, and the job leaves. No
+    # silent rescue by any other provider, ever.)
+    _verified_key = await _key_task
+    _key_ready_at["ts"] = time.time()
+    _memory_block, _memory_pending = _memory_block_now(_memory_task)
+    instructions = _instructions(memory_block=_memory_block)
+    pinned["instructions"] = instructions
+    _proof_model, _used_key = await _try_gemini_realtime(
+        instructions, verified_key=_verified_key
+    )
+    _build_stage = "model"
+    session = None
+    agent = None
+    if _proof_model is not None:
+        pinned.update(kind="gemini", key=_used_key, instructions=instructions)
+        session, agent = await _make_session(instructions)
+        _build_stage = "ready" if session is not None else "session"
     # The session-build window opens when BOTH the key and the
     # connection are in hand; on a warm worker the key now usually
     # lands first, so the stamp is the later of the two.
     _t_key_ready = max(_key_ready_at["ts"] or _t_connected, _t_connected)
     provider_name = "none"
-    session = None
-    agent = None
 
-    if _built["stage"] == "ready":
+    if _build_stage == "ready":
         provider_name = f"gemini-realtime:{_voice_model()}"
-        session = _built["session"]
-        agent = _built["agent"]
         _write_status(
             "ready", provider_name, model=_voice_model(), room=_room_name, job_id=_job_id
         )
-    elif _built["stage"] == "session":
+    elif _build_stage == "session":
         # The verified key could not build a session: Gemini cannot
         # serve this job. Same honest unavailable path as a failed key
         # resolution (TASK-VOI-009) — notice, plain log, leave.
@@ -3399,6 +3641,8 @@ async def entrypoint(ctx: JobContext):
         ladder rung; VOI-003's watchdog inlined the same logic)."""
         if sess is None:
             return
+        # TASK-VOI-017 (F2): the session's final frame counts.
+        _journal_frame_counters(sess, f"session end ({why})", drop=True)
         try:
             closer = getattr(sess, "aclose", None) or getattr(sess, "close", None)
             if closer is not None:
@@ -3417,7 +3661,10 @@ async def entrypoint(ctx: JobContext):
         A rung fails on: session build failure (provider setup),
         session start failure, a re-ask failure, a provider-classified
         (or explicitly unrecoverable) session error during the prove
-        window, or the prove window expiring with no completed reply.
+        window, the prove window expiring with no completed reply —
+        or, with no turn pending, the prove window expiring with no
+        user transcript on the rebuilt session (TASK-VOI-017 (F1):
+        survival alone no longer proves a rung; see _rung_proven).
         """
         old = live.get("session")
         await _close_quietly(old, "recovery ladder")
@@ -3438,6 +3685,12 @@ async def entrypoint(ctx: JobContext):
             cls = "provider" if _classify_provider_failure(text) else "setup"
             return False, f"{kind} session start failed ({cls}): {text[:200]}"
         reask_ts = time.time()
+        # TASK-VOI-017 (F1): this session's prove baseline — a
+        # transcript counts only if it lands in THIS session's life
+        # (the same comparison the dead-input verdict uses).
+        sess_started_ts = float(
+            input_watch.get("session_started_ts") or reask_ts
+        )
         if pending_text:
             try:
                 sess.generate_reply(user_input=pending_text)
@@ -3450,12 +3703,16 @@ async def entrypoint(ctx: JobContext):
                 return False, f"{kind} re-ask failed: {text[:200]}"
             deadline = time.time() + prove_s
         else:
-            # No turn pending (the session died between turns): the
-            # rung proves itself by surviving a short grace window —
-            # the provider handshake only happens at the first
-            # generation, so a death that is coming will either surface
-            # here or on the owner's next utterance, where the
-            # watchdog's death trigger runs the ladder again.
+            # No turn pending (the session died between turns, or
+            # the dead-input trigger fired): the rung is proven
+            # ONLY by a user transcript landing on the rebuilt
+            # session inside the window. TASK-VOI-017 (F1) removes
+            # the pre-fix rule under which merely surviving this
+            # window proved the rung — re-run #11's ladder declared
+            # SUCCEEDED five times that way on sessions that never
+            # transcribed a word, and each false success stopped
+            # the rebuilds a still-deaf input needed. The window
+            # length is unchanged; only the verdict at its end is.
             deadline = time.time() + min(prove_s, 20.0)
         while time.time() < deadline:
             err = live.get("session_error")
@@ -3467,15 +3724,36 @@ async def entrypoint(ctx: JobContext):
                         f"{kind} died on a provider failure: "
                         f"{str(err.get('text'))[:240]}"
                     )
-            if pending_text and float(turn.get("last_assistant_ts") or 0.0) > reask_ts:
-                return True, f"{kind} completed the re-asked turn"
+            heard_ts = input_watch.get("last_transcript_ts")
+            transcript_landed = bool(
+                heard_ts is not None and float(heard_ts) >= sess_started_ts
+            )
+            turn_completed = bool(
+                pending_text
+                and float(turn.get("last_assistant_ts") or 0.0) > reask_ts
+            )
+            if _rung_proven(
+                pending_text,
+                turn_completed=turn_completed,
+                transcript_landed=transcript_landed,
+            ):
+                if pending_text:
+                    return True, f"{kind} completed the re-asked turn"
+                return True, (
+                    f"{kind} session transcribed the user — "
+                    f"the input forward is proven"
+                )
             await asyncio.sleep(1.0)
         if pending_text:
             return False, (
                 f"{kind} did not complete the re-asked turn within "
                 f"{prove_s:.0f}s (prove window expired)"
             )
-        return True, f"{kind} session started cleanly and survived the grace window"
+        energy_ts = input_watch.get("last_energy_ts")
+        energy_seen = bool(
+            energy_ts is not None and float(energy_ts) >= sess_started_ts
+        )
+        return False, _rung_unproven_reason(kind, energy_seen=energy_seen)
 
     async def _speak_unconfirmed(pending_text: str) -> None:
         """Ladder exhausted: the owner hears the truth, not silence —
@@ -4057,6 +4335,12 @@ async def entrypoint(ctx: JobContext):
                 live["session_error"] = None
                 turn["pending_since"] = None
                 turn["state"] = "initializing"
+                # TASK-VOI-017 (F2): journal the suspect session's
+                # frame counts at the firing — the hop that reads
+                # zero here is the hop that dropped the input.
+                _journal_frame_counters(
+                    live.get("session"), "watchdog firing"
+                )
                 await _recover(pending_text)
             except asyncio.CancelledError:
                 raise
@@ -4152,6 +4436,10 @@ async def entrypoint(ctx: JobContext):
             current = live.get("session")
             if current is None:
                 return
+            # TASK-VOI-017 (F2): the session's final frame counts.
+            _journal_frame_counters(
+                current, "session end (job close)", drop=True
+            )
             closer = getattr(current, "aclose", None) or getattr(current, "close", None)
             if closer is not None:
                 result = closer()
