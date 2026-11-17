@@ -153,6 +153,14 @@ WorkingDirectory=$REPO_DIR/Memora
 Environment="PYTHONPATH=$REPO_DIR/Memora:$REPO_DIR"
 Environment="PORT=8002"
 EnvironmentFile=$REPO_DIR/Memora/.env
+# TASK-MEM-009: apply Alembic migrations before EVERY start. On
+# 2026-11-17 a merged migration never ran because nothing in the
+# deploy/start path ran Alembic, and every memory query failed while
+# /health stayed green. The runner logs before/after revisions, is
+# idempotent at head, holds an flock against concurrent runs, and
+# exits non-zero on failure — systemd then fails the start loudly
+# instead of booting on a stale schema.
+ExecStartPre=$VENV_DIR/bin/python $REPO_DIR/Memora/scripts/run_migrations.py
 ExecStart=$VENV_DIR/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8002 --workers 1
 Restart=always
 RestartSec=5
