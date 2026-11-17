@@ -16,7 +16,10 @@ def git(root, *args):
 def checkout(tmp_path):
     origin = tmp_path / "origin"
     origin.mkdir()
-    git(origin, "init")
+    # Production checkouts live on main, and since TASK-OBS-005 the CD
+    # checkout block refuses any other branch — the fixture must match
+    # the production precondition it contracts for.
+    git(origin, "init", "-b", "main")
     git(origin, "config", "user.email", "fixture@example.org")
     git(origin, "config", "user.name", "Fixture")
     (origin / "app.py").write_text("version=1\n")
@@ -89,6 +92,20 @@ def test_untracked_collision_aborts_instead_of_overwriting(checkout):
     assert sync(local, target).returncode != 0
     assert git(local, "rev-parse", "HEAD") == old
     assert (local / "protected.py").read_text() == "untracked collaborator code\n"
+
+
+def test_parked_branch_is_refused_even_at_targets_own_commit(checkout):
+    # TASK-OBS-005 / defect D9: a checkout parked on a non-main branch
+    # whose HEAD is an ancestor of the deploy target passed every old
+    # check while the ff advanced the wrong branch. The checkout block
+    # must refuse it loudly and leave it exactly as found.
+    _, local, old, target = checkout
+    git(local, "checkout", "-b", "claude/parked-side-branch")
+    result = sync(local, target)
+    assert result.returncode != 0
+    assert "claude/parked-side-branch" in result.stdout + result.stderr
+    assert git(local, "rev-parse", "HEAD") == old
+    assert git(local, "branch", "--show-current") == "claude/parked-side-branch"
 
 
 def test_voice_worker_restart_is_explicit_in_cd():
