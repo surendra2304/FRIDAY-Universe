@@ -41,7 +41,8 @@ sibling ``Stratex/`` checkout (the ``stratex_portfolio`` tool's rule);
 measurement state dir from ``STRATEX_STATE_DIR`` or ``<root>/state``;
 per-file overrides ``STRATEX_FILL_LEDGER_FILE`` /
 ``STRATEX_POSITION_TAGS_FILE`` / ``STRATEX_MEASUREMENT_ALERTS_FILE`` /
-``STRATEX_STRATEGY_DENYLIST_FILE`` (Stratex's own env names).
+``STRATEX_STRATEGY_DENYLIST_FILE`` / ``STRATEX_FORWARD_SCORECARD_FILE``
+(Stratex's own env names).
 
 Truthfulness: every figure in every message comes from the rows/files
 named above; a source that cannot be read contributes an honest
@@ -52,11 +53,23 @@ governance stays with Stratex's daemon and forward guard.
 
 TASK-FRD-021 adds ``read_status_snapshot`` below: the same source
 files compose the status figures Stratex's /v1/task/execute summary
-serves (cloud portfolio state + fill-ledger scorecard), gated on the
-daemon heartbeat's freshness (60 s, Stratex's own telemetry bound),
-so FRIDAY's read-only portfolio answers can be served locally when
-the live round trip is the slow path. It is a pure reader — the
-caller falls back to the live query whenever it returns None.
+serves, gated on the daemon heartbeat's freshness (60 s, Stratex's
+own telemetry bound), so FRIDAY's read-only portfolio answers can
+be served locally when the live round trip is the slow path. It is
+a pure reader — the caller falls back to the live query whenever it
+returns None.
+
+STALE-STATE fix (coupled with the Stratex-side supervision change):
+the snapshot's aggregates and position rows used to come from
+``cloud_portfolio_state.json`` — the retired MT5 engine's state
+file, frozen since 2026-11-08, which reported balance 10792.8 and
+ZERO positions while the multi-venue daemon ran a live book. The
+snapshot now composes exactly as Stratex's supervision status does:
+aggregates (balance, unrealized, open count) from
+``daemon_heartbeat.json`` — the daemon's combined multi-venue
+totals — and position rows from ``forward_scorecard.json``'s
+per-entrant open-position projection. The frozen file is never
+read on this path again.
 """
 
 from __future__ import annotations
@@ -118,18 +131,21 @@ class StratexPaths:
     alerts: Path
     denylist: Path
     heartbeat: Path
-    #: Stratex/state/cloud_portfolio_state.json — the API engine's
-    #: persisted balance/positions (TASK-FRD-021 status snapshot source).
-    #: Optional so existing constructions keep working; the snapshot
-    #: reader derives it from the heartbeat's directory when unset.
-    cloud_state: Path | None = None
+    #: Stratex/state/forward_scorecard.json — the forward protocol's
+    #: per-entrant open-position projection (STALE-STATE fix: the
+    #: TASK-FRD-021 status snapshot's position-row source; the daemon
+    #: heartbeat supplies the aggregates). Replaces the retired
+    #: cloud_portfolio_state.json path. Optional so existing
+    #: constructions keep working; the snapshot reader derives it
+    #: from the heartbeat's directory when unset.
+    forward_scorecard: Path | None = None
     #: <Stratex root>/panic_state.json + KILL_SWITCH_ACTIVE.lock — the
     #: halt state (TASK-FRD-021 follow-up). These live at the Stratex
     #: ROOT, not in the state dir: panic_state.py resolves its default
     #: relative filenames against the process working directory and
     #: both Stratex services run with the root as WorkingDirectory.
-    #: Optional like cloud_state; the snapshot reader derives them
-    #: from the heartbeat's directory when unset.
+    #: Optional like forward_scorecard; the snapshot reader derives
+    #: them from the heartbeat's directory when unset.
     panic_state: Path | None = None
     kill_switch_lock: Path | None = None
 
@@ -170,7 +186,9 @@ def resolve_stratex_paths(root: Path | None = None) -> StratexPaths | None:
         alerts=pick("STRATEX_MEASUREMENT_ALERTS_FILE", "measurement_alerts.json"),
         denylist=pick("STRATEX_STRATEGY_DENYLIST_FILE", "strategy_denylist.json"),
         heartbeat=state_dir / "daemon_heartbeat.json",
-        cloud_state=state_dir / "cloud_portfolio_state.json",
+        forward_scorecard=pick(
+            "STRATEX_FORWARD_SCORECARD_FILE", "forward_scorecard.json"
+        ),
         panic_state=pick_root("STRATEX_PANIC_STATE_FILE", "panic_state.json"),
         kill_switch_lock=pick_root(
             "STRATEX_KILL_SWITCH_LOCK_FILE", "KILL_SWITCH_ACTIVE.lock"
@@ -313,6 +331,15 @@ def _fill_key(row: dict[str, Any]) -> str:
 #: is not served; the caller falls back to the live query.
 STATUS_SNAPSHOT_MAX_AGE_S = 60.0
 
+#: Freshness bound for the forward scorecard leg of the snapshot
+#: (STALE-STATE fix). The scorecard regenerates on a ~15 min cadence;
+#: Stratex's own daemon composition reads it with a 30 min bound.
+#: A scorecard older than
+#: this cannot prove the position list, so the snapshot is not
+#: served at all — the caller falls back to the live query rather
+#: than serving a partial or stale list.
+SCORECARD_SNAPSHOT_MAX_AGE_S = 1800.0
+
 
 @dataclass(frozen=True)
 class StatusSnapshot:
@@ -325,8 +352,10 @@ class StatusSnapshot:
     kill_switch_active) — the same formatter renders both sources,
     so a snapshot-served answer carries the same figures as a
     live-served one, including the HALTED line when Stratex is
-    halted. ``age_seconds`` is the age of the freshness pulse (the
-    daemon heartbeat) at read time.
+    halted. It also carries the composition's source markers
+    (engine_source, positions_source, positions_as_of) so the
+    daemon basis is labelled, never silent. ``age_seconds`` is the
+    age of the freshness pulse (the daemon heartbeat) at read time.
     """
 
     data: dict[str, Any]
@@ -433,7 +462,7 @@ def _halt_flags(paths: StratexPaths) -> tuple[bool, bool]:
     panic_state.py resolves its default relative filenames against
     it — not in the measurement state dir. Paths derive from the
     heartbeat's directory when a hand-built StratexPaths leaves
-    them unset (the cloud_state pattern).
+    them unset (the forward_scorecard pattern).
     """
     root = paths.heartbeat.parent.parent
     panic_path = paths.panic_state or (root / "panic_state.json")
@@ -454,16 +483,28 @@ def read_status_snapshot(
     computed from, resolved exactly as this watch family resolves
     them:
 
-    * balance + open positions: ``cloud_portfolio_state.json`` (the
-      API engine's ``cloud_balance`` / ``cloud_positions`` load from
-      it; the served balance is that file's ``balance``);
+    * aggregates (balance, unrealized P&L, open-position count):
+      ``daemon_heartbeat.json`` — the multi-venue daemon's own
+      combined totals (``total_balance`` / ``unrealized_pnl`` /
+      ``open_positions``), rewritten every scan cycle. This is the
+      basis Stratex's supervision status serves since the
+      STALE-STATE fix; the heartbeat is both the freshness pulse
+      (60 s gate, unchanged) and the aggregate source. The balance
+      NEVER comes from the forward scorecard's
+      ``account_equity_usd`` — a different (snapshot-window) basis.
+    * position rows: ``forward_scorecard.json`` — the forward
+      protocol's per-entrant ``open_positions`` projection,
+      flattened across ALL entrant cards (registered, sleeves and
+      discovered/UNREGISTERED alike) and translated to the served
+      row shape (see _scorecard_position_row). The scorecard
+      carries no marks, so rows omit per-row unrealized P&L — the
+      headline unrealized always comes from the heartbeat, never
+      summed from rows — and stop-loss/take-profit are absent,
+      never fabricated.
     * closed trades + recorded P&L: ``fill_ledger.jsonl``, scored
       with measurement.scorecard's arithmetic;
-    * freshness pulse: ``daemon_heartbeat.json``, rewritten by
-      Stratex-Daemon every scan cycle. The heartbeat's own figures
-      are the daemon's multi-venue view — DIFFERENT numbers from
-      the API engine's served figures — so the heartbeat is used
-      ONLY as the pulse, never as a figure source.
+    * the retired ``cloud_portfolio_state.json`` (frozen
+      2026-11-08 MT5 state) is NEVER read on this path.
     * halt state: ``panic_state.json`` + ``KILL_SWITCH_ACTIVE.lock``
       at the Stratex root (Stratex/panic_state.py is the single
       source of truth for the flag; both Stratex services run with
@@ -478,17 +519,49 @@ def read_status_snapshot(
 
     Returns None (the caller falls back to the live query) when: no
     Stratex checkout resolves; the heartbeat is missing/corrupt,
-    not RUNNING, or older than STATUS_SNAPSHOT_MAX_AGE_S; the cloud
-    state is missing/corrupt or its balance is not numeric; the
-    cloud positions are not a map; or the fill ledger is unreadable.
-    An empty ledger and an empty positions map are valid (0 closed
-    trades / no open positions). Never raises.
+    not RUNNING, or older than STATUS_SNAPSHOT_MAX_AGE_S; the
+    heartbeat's balance, unrealized P&L or open-position count is
+    missing or not numeric; the forward scorecard is
+    missing/corrupt, its ``generated_at`` is missing/unparseable or
+    older than SCORECARD_SNAPSHOT_MAX_AGE_S, or its entrants are
+    not a list; the scorecard's row count DIVERGES from the
+    heartbeat's open-position count (a partial list is never
+    served); or the fill ledger is unreadable. An empty ledger is
+    valid (0 closed trades), as is an empty book (heartbeat count
+    0 with zero scorecard rows). Never raises.
     """
     try:
         return _read_status_snapshot(paths, now=now)
     except Exception as exc:  # a snapshot failure must never break the answer path
         logger.warning(f"stratex status snapshot: read failed ({exc}); live fallback")
         return None
+
+
+def _scorecard_position_row(row: dict[str, Any]) -> dict[str, Any]:
+    """Translate one forward-scorecard open-position row to the served shape.
+
+    Mirrors Stratex supervision's daemon composition row for row:
+    ``position_id`` is ``"{venue}:{symbol}"``; ``quantity`` comes
+    from the scorecard's ``qty``; ``side`` stays LONG/SHORT (the
+    LONG->BUY / SHORT->SELL mapping is /api/positions'
+    presentation, not the status payload's). The scorecard carries
+    no marks, so per-row ``unrealized_pnl`` is OMITTED — never
+    zero-filled: the headline unrealized comes from the daemon
+    heartbeat. Stop-loss / take-profit are likewise absent from
+    the source and are never fabricated.
+    """
+    venue = str(row.get("venue") or "")
+    symbol = str(row.get("symbol") or "")
+    return {
+        "position_id": f"{venue}:{symbol}",
+        "symbol": symbol,
+        "side": str(row.get("side") or ""),
+        "quantity": row.get("qty"),
+        "entry_price": row.get("entry_price"),
+        "opened_at": row.get("opened_at"),
+        "strategy": str(row.get("strategy") or ""),
+        "venue": venue,
+    }
 
 
 def _read_status_snapshot(
@@ -535,42 +608,90 @@ def _read_status_snapshot(
         )
         return None
 
-    cloud_path = paths.cloud_state or (
-        paths.heartbeat.parent / "cloud_portfolio_state.json"
-    )
-    cloud = _read_json(cloud_path)
-    if not isinstance(cloud, dict):
-        logger.info("stratex status snapshot: cloud portfolio state missing/unreadable")
+    # Aggregates from the daemon heartbeat — the multi-venue
+    # daemon's own combined totals, the basis Stratex's supervision
+    # status serves. The forward scorecard's account_equity_usd is
+    # a DIFFERENT basis (snapshot-window equity) and is never read
+    # here.
+    try:
+        balance = float(heartbeat.get("total_balance"))
+    except (TypeError, ValueError):
+        logger.info(
+            "stratex status snapshot: heartbeat total_balance is not numeric"
+        )
         return None
     try:
-        balance = float(cloud.get("balance"))
+        unrealized = float(heartbeat.get("unrealized_pnl"))
     except (TypeError, ValueError):
-        logger.info("stratex status snapshot: cloud balance is not numeric")
+        logger.info(
+            "stratex status snapshot: heartbeat unrealized_pnl is not numeric"
+        )
         return None
-    raw_positions = cloud.get("positions")
-    if raw_positions is None:
-        raw_positions = {}
-    if not isinstance(raw_positions, dict):
-        logger.info("stratex status snapshot: cloud positions are not a map")
+    open_count_raw = heartbeat.get("open_positions")
+    if isinstance(open_count_raw, bool) or not isinstance(
+        open_count_raw, (int, float)
+    ):
+        logger.info(
+            "stratex status snapshot: heartbeat open_positions is not a count"
+        )
+        return None
+    open_count = int(open_count_raw)
+
+    # Position rows from the forward scorecard's projection.
+    scorecard_path = paths.forward_scorecard or (
+        paths.heartbeat.parent / "forward_scorecard.json"
+    )
+    scorecard = _read_json(scorecard_path)
+    if not isinstance(scorecard, dict):
+        logger.info("stratex status snapshot: forward scorecard missing/unreadable")
+        return None
+    generated_raw = scorecard.get("generated_at")
+    try:
+        generated_ts = datetime.fromisoformat(
+            str(generated_raw or "").replace("Z", "+00:00")
+        ).timestamp()
+    except ValueError:
+        generated_ts = None
+    if generated_ts is None:
+        logger.info(
+            "stratex status snapshot: scorecard carries no usable generated_at"
+        )
+        return None
+    scorecard_age = (now or now_owner_tz()).timestamp() - generated_ts
+    if scorecard_age < 0:  # same-host writer/reader; clock noise
+        scorecard_age = 0.0
+    if scorecard_age > SCORECARD_SNAPSHOT_MAX_AGE_S:
+        logger.info(
+            f"stratex status snapshot: forward scorecard stale "
+            f"({scorecard_age:.1f}s > {SCORECARD_SNAPSHOT_MAX_AGE_S:.0f}s); "
+            "live fallback"
+        )
+        return None
+    entrants = scorecard.get("entrants")
+    if not isinstance(entrants, list):
+        logger.info("stratex status snapshot: scorecard entrants are not a list")
         return None
     positions: list[dict[str, Any]] = []
-    for symbol, pdata in raw_positions.items():
-        if isinstance(pdata, dict):
-            pos = dict(pdata)
-            pos.setdefault("symbol", symbol)
-            positions.append(pos)
+    for card in entrants:
+        if not isinstance(card, dict):
+            continue
+        for row in card.get("open_positions") or []:
+            if isinstance(row, dict):
+                positions.append(_scorecard_position_row(row))
+    if len(positions) != open_count:
+        # The two sources disagree about the book: never serve a
+        # partial list — the live query is the arbiter.
+        logger.info(
+            "stratex status snapshot: scorecard/heartbeat divergence "
+            f"(scorecard rows={len(positions)}, heartbeat "
+            f"open_positions={open_count}); live fallback"
+        )
+        return None
 
     fills = _read_jsonl(paths.fills)
     if fills is None:
         logger.info("stratex status snapshot: fill ledger unreadable")
         return None
-
-    unrealized = 0.0
-    for pos in positions:
-        try:
-            unrealized += float(pos.get("unrealized_pnl") or 0.0)
-        except (TypeError, ValueError):
-            continue
 
     panic_active, kill_switch_active = _halt_flags(paths)
     if panic_active or kill_switch_active:
@@ -582,9 +703,13 @@ def _read_status_snapshot(
 
     data: dict[str, Any] = {
         "engine": "Stratex",
+        "engine_source": "multi_venue_daemon",
+        "positions_source": "forward_scorecard",
+        "positions_as_of": str(generated_raw),
         "balance": round(balance, 2),
         "cash_balance": round(balance, 2),
         "current_positions": positions,
+        "position_count": open_count,
         "unrealized_pnl": round(unrealized, 2),
         "panic_active": panic_active,
         "kill_switch_active": kill_switch_active,
