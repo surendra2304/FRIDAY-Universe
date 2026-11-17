@@ -228,3 +228,78 @@ def test_worker_wiring_source_pins():
     assert src.count("_recover_dropped_fragment(") >= 2  # def + watch pass
     assert "bridge_sink=bridge_slot" in src
     assert "_FRAGMENT_RECOVERY_MAX_AGE_S = 120.0" in src
+
+
+# ---------------------------------------------------------------------------
+# TASK-FRD-022 (PR #865 review follow-up): a recovered fragment that
+# hits the confirmation gate is NEVER executed. The reviewer verified
+# this structurally — the recovery dispatch awaits the same
+# VoiceBrainBridge.execute() as the tool path, whose confirmation
+# gate runs before the only submission seam (bridge._send) — but the
+# case was not pinned by a test. Pin it here so it cannot regress:
+# the gated fragment still becomes due (the tracker hands out
+# undispatched substance; gating is the bridge's job, not the
+# tracker's), and its recovery dispatch settles confirmation_required
+# with the submission seam never reached.
+# ---------------------------------------------------------------------------
+
+GATED_FRAG2 = "And close all my Stratex positions."
+
+
+class _SendRecorder:
+    """Fake bridge._send (the submission seam): records every call."""
+
+    def __init__(self):
+        self.calls = []
+
+    async def __call__(self, client, text):
+        self.calls.append(text)
+        return {"state": "answered", "spoken_reply": "Done."}
+
+
+def _run(coro):
+    import asyncio
+
+    return asyncio.new_event_loop().run_until_complete(coro)
+
+
+def test_recovered_fragment_that_hits_the_confirmation_gate_is_never_executed(
+        monkeypatch):
+    from friday.voice import confirmation_policy as policy
+    from friday.voice.brain_bridge import VoiceBrainBridge
+
+    # The gated fragment lands during the read-only Stratex flight.
+    # Against that flight's request it shares only 'stratex' (one
+    # content word, no figures), so it is genuinely undispatched
+    # substance and becomes due once the flight settles — once.
+    state = _new_fragment_watch()
+    _fragment_flight_started(state, "b1", FRAG1_REQUEST, 100.0)
+    _fragment_user_final(state, GATED_FRAG2, 110.0)
+    _fragment_flight_settled(state, "b1")
+    due = _fragment_recovery_due(state, 121.0)
+    assert [s["text"] for s in due] == [GATED_FRAG2]
+    assert _fragment_recovery_due(state, 122.0) == []
+
+    # The recovery dispatch itself — what _recover_dropped_fragment
+    # awaits on the session bridge — with the REAL confirmation gate,
+    # constructed explicitly so the pin does not depend on env. The
+    # fragment's shape (close + positions, same clause) classifies
+    # trade/sensitive, so the gate must stop it.
+    seen = []
+    recorder = _SendRecorder()
+    bridge = VoiceBrainBridge(
+        confirmation_gate=policy.ConfirmationGate(),
+        result_observer=seen.append,
+    )
+    monkeypatch.setattr(bridge, "_send", recorder)
+    result = _run(bridge.execute(due[0]["text"]))
+
+    # The gate settles the recovery call: the owner is asked, the
+    # result observer closes the record with the gated state (the
+    # delivery watch's ordinary close for a gated call) — and the
+    # submission seam was NEVER reached. Nothing was executed.
+    assert result["state"] == "confirmation_required"
+    assert result["confirmation_required"] is True
+    assert recorder.calls == []
+    assert len(seen) == 1
+    assert seen[0]["state"] == "confirmation_required"
