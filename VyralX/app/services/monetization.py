@@ -138,3 +138,95 @@ def generate_monetized_description(
     ])
 
     return "\n".join(sections)
+
+
+# --------------------------------------------------------------------------- #
+# TASK-VYR-014: the LIVE description path.
+#
+# The generate_* functions above predate the viral pipeline and are not
+# called by it; their offer links are placeholders and must never ship.
+# The live path (viral_remix.produce_viral_short) uses ONLY the
+# config-driven footer below: links come from the operator's settings,
+# never from constants in code, and the footer is empty until the operator
+# configures real links (affiliate accounts are the owner's to open).
+# --------------------------------------------------------------------------- #
+import json as _json
+
+_AMAZON_HINTS = ("amazon.", "amzn.to", "amzn.in")
+
+
+def configured_affiliate_links(settings=None) -> list[dict[str, str]]:
+    """Parse the operator-configured affiliate/product links.
+
+    Source: settings.affiliate_links_json — a JSON list of
+    {"label": ..., "url": ...}. Anything malformed is dropped, never
+    raised: a bad config value must not break an upload.
+    """
+    if settings is None:
+        try:
+            from app.config import get_settings
+
+            settings = get_settings()
+        except Exception:
+            return []
+    raw = str(getattr(settings, "affiliate_links_json", "") or "").strip()
+    if not raw:
+        return []
+    try:
+        parsed = _json.loads(raw)
+    except ValueError:
+        log.warning("affiliate_links_json is not valid JSON; ignoring")
+        return []
+    links: list[dict[str, str]] = []
+    if isinstance(parsed, list):
+        for item in parsed:
+            if not isinstance(item, dict):
+                continue
+            label = str(item.get("label") or "").strip()
+            url = str(item.get("url") or "").strip()
+            if label and url.startswith(("https://", "http://")):
+                links.append({"label": label, "url": url})
+    return links
+
+
+def monetization_footer(settings=None) -> str:
+    """Description footer carrying the monetization slots.
+
+    Returns "" when nothing is configured, so uploads stay byte-identical
+    to the pre-monetization format until the operator fills the slots.
+
+    When links exist, the disclosure block is mandatory and always
+    attached: FTC + India ASCI rules require it, and Amazon's Operating
+    Agreement requires its exact sentence near affiliate links.
+    """
+    if settings is None:
+        try:
+            from app.config import get_settings
+
+            settings = get_settings()
+        except Exception:
+            return ""
+    links = configured_affiliate_links(settings)
+    business_email = str(getattr(settings, "business_email", "") or "").strip()
+
+    if not links and not business_email:
+        return ""
+
+    lines: list[str] = []
+    if links:
+        lines.append("🛒 PRODUCTS & GEAR:")
+        for link in links:
+            lines.append(f"• {link['label']}: {link['url']}")
+        lines.append("")
+        lines.append(
+            "Disclosure: Some links above are affiliate links. If you buy "
+            "through them, this channel may earn a commission at no extra "
+            "cost to you. #ad"
+        )
+        if any(any(hint in link["url"] for hint in _AMAZON_HINTS) for link in links):
+            lines.append("As an Amazon Associate I earn from qualifying purchases.")
+    if business_email:
+        if lines:
+            lines.append("")
+        lines.append(f"💼 Business & sponsorships: {business_email}")
+    return "\n".join(lines)

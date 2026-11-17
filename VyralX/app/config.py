@@ -174,6 +174,16 @@ class Settings(BaseSettings):
     # ISO 639-1 code sent as snippet.defaultLanguage/defaultAudioLanguage on
     # upload; empty string omits the fields.
     youtube_default_language: str = "en"
+    # TASK-VYR-014: monetization slots. Affiliate/product links are JSON —
+    # [{"label": "...", "url": "https://..."}] — and are rendered into upload
+    # descriptions (with the mandatory disclosure block) only when set.
+    # Empty default: descriptions stay byte-identical to the current format.
+    affiliate_links_json: str = ""
+    # Real business contact shown in descriptions / media kit. Empty = hidden.
+    business_email: str = ""
+    # Write a cross-post release bundle (Reels/TikTok/Facebook captions +
+    # render copy) next to every produced Short.
+    crosspost_export_enabled: bool = True
     youtube_upload_enabled: bool = False
     youtube_analytics_enabled: bool = False
     # TASK-VYR-014: channel identity + YPP eligibility tracker. The channel

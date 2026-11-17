@@ -1904,6 +1904,19 @@ def produce_viral_short(
         candidate, speech, hook, category, editorial, taken_titles, record=record
     )
 
+    # TASK-VYR-014: config-driven monetization footer (affiliate/product
+    # slots + mandatory disclosure + optional business contact). Empty when
+    # nothing is configured, so descriptions stay byte-identical until the
+    # operator fills the slots.
+    try:
+        from app.services.monetization import monetization_footer
+
+        _footer = monetization_footer()
+        if _footer:
+            meta["description"] = f"{meta['description']}\n\n{_footer}"[:4800]
+    except Exception as exc:  # monetization must never break production
+        log.warning("Monetization footer skipped: %s", exc)
+
     # 4. Persist rights record + render + queued publish job
     reuse_licensed = bool(str(getattr(candidate, "license", "")).strip()) and (
         "creative commons" in str(candidate.license).casefold()
@@ -2035,6 +2048,24 @@ def produce_viral_short(
         "quality_gate_attempts": gate_attempts,
         "description_repaired": description_repaired,
     }
+    # TASK-VYR-014: cross-post release bundle (render copy + per-platform
+    # captions for Instagram Reels / TikTok / Facebook Reels, built from the
+    # metadata that actually shipped). Packaging only — posts nothing.
+    if publish and getattr(settings, "crosspost_export_enabled", True):
+        try:
+            from app.services.crosspost_export import write_crosspost_bundle
+
+            bundle = write_crosspost_bundle(
+                render_path,
+                title=meta["title"],
+                description=meta["description"],
+                tags=meta["tags"],
+                category=category,
+                video_key=project_key,
+            )
+            result["crosspost_bundle"] = bundle["bundle"]
+        except Exception as exc:  # packaging must never break production
+            log.warning("Cross-post bundle skipped: %s", exc)
     log.info("Viral short ready: %s", result)
     return result
 
