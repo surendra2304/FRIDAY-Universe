@@ -114,7 +114,11 @@ class FailureClassifier:
         # corroborated. It must never fall through to the LOGIC_BUG
         # reading below (its stderr names assertion-shaped text), which
         # would aim the repair ladder at correct code.
-        if evidence.check_name == "Golden Value Verification":
+        if evidence.check_name == "Golden Value Verification" and any(
+            isinstance(issue, dict)
+            and issue.get("kind") == "golden_value_test_defect"
+            for issue in evidence.issues or []
+        ):
             first_file = None
             for issue in evidence.issues or []:
                 if isinstance(issue, dict) and issue.get("file"):

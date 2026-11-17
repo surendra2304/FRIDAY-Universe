@@ -507,6 +507,24 @@ def test_classifier_routes_golden_evidence_to_test_defect():
     assert diagnosis.failing_file == "tests/test_shortlink.py"
 
 
+def test_classifier_does_not_route_probe_no_report_to_test_defect():
+    # F1: the checker's probe-did-not-report infrastructure failure
+    # carries no golden_value_test_defect record (issues=[]) -- it is
+    # not a test defect and must fall through to the standard
+    # classification instead of being mislabelled TEST_DEFECT.
+    evidence = VerificationEvidence(
+        check_name=CHECK_NAME,
+        category=CheckCategory.TEST,
+        exit_code=1,
+        passed=False,
+        stderr="Golden value probe did not report results (terminal exit=1): ",
+        issues=[],
+    )
+    diagnosis = FailureClassifier().classify(evidence)
+    assert diagnosis.failure_class != FailureClass.TEST_DEFECT
+    assert diagnosis.failure_class == FailureClass.UNKNOWN
+
+
 def test_classifier_still_reads_pytest_failure_as_logic_bug():
     evidence = VerificationEvidence(
         check_name="Test Suite Runner",
@@ -595,7 +613,7 @@ async def test_recovery_route_without_records_does_nothing(tmp_path):
         exit_code=1,
         passed=False,
         stderr="TEST defect(s)",
-        issues=[],
+        issues=[{"kind": "golden_value_test_defect"}],
     )
     recovery = _recovery_engine(project)
     recovered, message, patch = await recovery.attempt_recovery("t6", evidence)
