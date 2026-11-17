@@ -1174,6 +1174,32 @@ class StratexTradingEngine:
             pass
         return None
 
+    def _max_stop_pct_for_strategy(self, strat: str) -> float | None:
+        """TASK-STR-FWD-012: the per-strategy max-stop cap override.
+
+        A strategy whose registry entry declares ``max_stop_pct`` (wide
+        judged ATR brackets — sleeve_shock_breakout 2.0x weekly ATR,
+        dow_effect 3.0x daily ATR) is judged against that value instead
+        of the engine-global cap. Under FWD-006, dollar risk is
+        quantity-controlled (size = risk budget / stop distance, heat
+        cap on top), so a wider stop shrinks the position instead of
+        adding risk; the override is a sanity bound against geometry /
+        unit errors, not a risk loosening. Strategies without the key
+        return None and keep the global cap exactly as before.
+        """
+        try:
+            from config_strategy import PRODUCTION_STRATEGY_REGISTRY
+
+            key = strat[len("strategy_"):] if strat.startswith("strategy_") else strat
+            entry = PRODUCTION_STRATEGY_REGISTRY.get(key) or {}
+            value = entry.get("max_stop_pct")
+            if value is None:
+                return None
+            value = float(value)
+            return value if value > 0 else None
+        except Exception:
+            return None
+
     def _manage_forward_time_exits(self) -> None:
         """Enforce judged bracket_time exits (e.g. dow_effect max_bars=5).
 
@@ -1675,11 +1701,20 @@ class StratexTradingEngine:
                 )
                 return False
 
-            # Max stop cap: never risk more than 3% on a single trade.
-            if stop_pct > self.max_stop_pct:
+            # Max stop cap: never risk more than the cap on a single trade.
+            # TASK-STR-FWD-012: a strategy whose registry entry declares
+            # max_stop_pct is judged against that override (see
+            # _max_stop_pct_for_strategy); every other strategy keeps the
+            # engine-global cap. The skip line names the strategy so a
+            # block is attributable from the journal alone.
+            cap_strat = signal.get("strategy") or signal.get("strategy_name") or ""
+            max_stop = self._max_stop_pct_for_strategy(cap_strat)
+            if max_stop is None:
+                max_stop = self.max_stop_pct
+            if stop_pct > max_stop:
                 logger.info(
-                    f"[STRATEX] Skip {symbol}: stop {stop_pct*100:.2f}% "
-                    f"> max {self.max_stop_pct*100:.2f}% (risk too large)"
+                    f"[STRATEX] Skip {symbol}: {cap_strat or 'unknown'} stop "
+                    f"{stop_pct*100:.2f}% > max {max_stop*100:.2f}% (risk too large)"
                 )
                 return False
 
