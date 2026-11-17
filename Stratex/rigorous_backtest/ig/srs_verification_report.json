@@ -1,0 +1,382 @@
+{
+  "panel": "/home/hatch/workspace/fleet30/srs-data/TSLA_15min_sip_2023-01-01_2026-10-31.csv",
+  "overall": "PASS",
+  "checks": [
+    {
+      "check": "1_gap_audit",
+      "status": "PASS",
+      "sessions_expected": 961,
+      "sessions_present": 961,
+      "bars_expected": 24842,
+      "bars_actual": 24842,
+      "exceptions": []
+    },
+    {
+      "check": "2_sip_vs_iex_volume",
+      "status": "PASS",
+      "median_daily_volume": 83246742.0,
+      "p10_daily_volume": 40912198.0,
+      "min_daily_volume": 15379328.0,
+      "pass_threshold_median": 10000000,
+      "reading": "Consolidated (SIP) scale"
+    },
+    {
+      "check": "3_split_adjustment",
+      "status": "PASS",
+      "split_band_hits": [],
+      "extreme_moves_to_eyeball": [],
+      "note": "Panel starts after the last TSLA split (2022-08-25) and was requested with adjustment=split; any split-band ratio is a provenance defect."
+    },
+    {
+      "check": "4_cross_source_spot_check",
+      "status": "PASS",
+      "samples_compared": 15,
+      "samples_required": 10,
+      "sample_table": [
+        {
+          "date": "2024-07-01",
+          "close_diff": 0.0,
+          "high_diff": 0.0,
+          "low_diff": 0.0,
+          "open_diff": 0.0,
+          "panel_close": 209.8601,
+          "r1b_price": 209.86,
+          "r1b_candidates": 1,
+          "auction_minus_panel": -0.0001
+        },
+        {
+          "date": "2024-08-29",
+          "close_diff": 0.0,
+          "high_diff": 0.0,
+          "low_diff": 0.0,
+          "open_diff": 0.0,
+          "panel_close": 206.27,
+          "r1b_price": 206.28,
+          "r1b_candidates": 1,
+          "auction_minus_panel": 0.01
+        },
+        {
+          "date": "2024-10-30",
+          "close_diff": 0.0,
+          "high_diff": 0.0,
+          "low_diff": 0.0001,
+          "open_diff": 0.06,
+          "panel_close": 257.65,
+          "r1b_price": 257.55,
+          "r1b_candidates": 1,
+          "auction_minus_panel": -0.1
+        },
+        {
+          "date": "2025-01-02",
+          "close_diff": 0.0,
+          "high_diff": 0.0001,
+          "low_diff": 0.0,
+          "open_diff": 0.0,
+          "panel_close": 379.03,
+          "r1b_price": 379.28,
+          "r1b_candidates": 1,
+          "auction_minus_panel": 0.25
+        },
+        {
+          "date": "2025-03-04",
+          "close_diff": 0.0,
+          "high_diff": 0.0,
+          "low_diff": 0.0001,
+          "open_diff": 0.03,
+          "panel_close": 271.99,
+          "r1b_price": 272.04,
+          "r1b_candidates": 1,
+          "auction_minus_panel": 0.05
+        },
+        {
+          "date": "2025-05-01",
+          "close_diff": 0.0,
+          "high_diff": 0.0012,
+          "low_diff": 0.0,
+          "open_diff": 0.0,
+          "panel_close": 280.51,
+          "r1b_price": 280.52,
+          "r1b_candidates": 1,
+          "auction_minus_panel": 0.01
+        },
+        {
+          "date": "2025-07-01",
+          "close_diff": 0.0,
+          "high_diff": 0.0,
+          "low_diff": 0.0,
+          "open_diff": 0.0,
+          "panel_close": 300.71,
+          "r1b_price": 300.71,
+          "r1b_candidates": 1,
+          "auction_minus_panel": 0.0
+        },
+        {
+          "date": "2025-08-29",
+          "close_diff": 0.0,
+          "high_diff": 0.0001,
+          "low_diff": 0.0,
+          "open_diff": 0.0,
+          "panel_close": 334.0,
+          "r1b_price": 333.87,
+          "r1b_candidates": 1,
+          "auction_minus_panel": -0.13
+        },
+        {
+          "date": "2025-10-30",
+          "close_diff": 0.0,
+          "high_diff": 0.0007,
+          "low_diff": 0.0,
+          "open_diff": 0.05,
+          "panel_close": 440.01,
+          "r1b_price": 440.1,
+          "r1b_candidates": 1,
+          "auction_minus_panel": 0.09
+        },
+        {
+          "date": "2026-01-02",
+          "close_diff": 0.0,
+          "high_diff": 0.0,
+          "low_diff": 0.0,
+          "open_diff": 0.0,
+          "panel_close": 438.1,
+          "r1b_price": 438.07,
+          "r1b_candidates": 1,
+          "auction_minus_panel": -0.03
+        },
+        {
+          "date": "2026-03-04",
+          "close_diff": 0.0,
+          "high_diff": 0.0,
+          "low_diff": 0.0,
+          "open_diff": 0.005,
+          "panel_close": 406.06,
+          "r1b_price": 405.94,
+          "r1b_candidates": 1,
+          "auction_minus_panel": -0.12
+        },
+        {
+          "date": "2026-05-01",
+          "close_diff": 0.0,
+          "high_diff": 0.0011,
+          "low_diff": 0.0,
+          "open_diff": 0.1,
+          "panel_close": 390.73,
+          "r1b_price": 390.82,
+          "r1b_candidates": 1,
+          "auction_minus_panel": 0.09
+        },
+        {
+          "date": "2026-07-01",
+          "close_diff": 0.0,
+          "high_diff": 0.0001,
+          "low_diff": 0.0001,
+          "open_diff": 0.01,
+          "panel_close": 425.335,
+          "r1b_price": 425.3,
+          "r1b_candidates": 1,
+          "auction_minus_panel": -0.035
+        },
+        {
+          "date": "2026-08-11",
+          "close_diff": 0.0,
+          "high_diff": 0.0,
+          "low_diff": 0.0,
+          "open_diff": 0.0,
+          "panel_close": 332.8,
+          "r1b_price": 332.81,
+          "r1b_candidates": 1,
+          "auction_minus_panel": 0.01
+        },
+        {
+          "date": "2026-09-22",
+          "close_diff": 0.0,
+          "high_diff": 0.0,
+          "low_diff": 0.0,
+          "open_diff": 0.001,
+          "panel_close": 378.86,
+          "r1b_price": 378.9,
+          "r1b_candidates": 1,
+          "auction_minus_panel": 0.04
+        }
+      ],
+      "findings": [],
+      "tolerances": {
+        "close_max_diff": 0.02,
+        "high_low_max_diff": 0.05
+      },
+      "close_leg": "addendum v4 Rule R1b \u2014 SIP tick official-close print (condition 'M', listing exchange 'Q', [scheduled close, +1 min) ET) vs cross-source close; the panel's last-bar close is a pre-auction trade, recorded as panel_close, never compared",
+      "tick_provenance": {
+        "2024-07-01": {
+          "source": "pull",
+          "feed": "sip",
+          "window_et": "[2024-07-01T15:55:00-04:00, 2024-07-01T16:10:00-04:00)",
+          "pulled_at_utc": "2026-11-17T13:11:55.756905+00:00",
+          "pages": 4,
+          "n_trades": 33604,
+          "trades_sha256": "d5614320c0ca22a09d1bfea9db101267aad60bf11c26d73e0af614c3b2ee6557"
+        },
+        "2024-08-29": {
+          "source": "pull",
+          "feed": "sip",
+          "window_et": "[2024-08-29T15:55:00-04:00, 2024-08-29T16:10:00-04:00)",
+          "pulled_at_utc": "2026-11-17T13:11:59.355983+00:00",
+          "pages": 3,
+          "n_trades": 20984,
+          "trades_sha256": "79c5c082f323fa03e1f3c484ce26d59be8706220bac3ad11adc7070163391c87"
+        },
+        "2024-10-30": {
+          "source": "pull",
+          "feed": "sip",
+          "window_et": "[2024-10-30T15:55:00-04:00, 2024-10-30T16:10:00-04:00)",
+          "pulled_at_utc": "2026-11-17T13:12:03.322453+00:00",
+          "pages": 3,
+          "n_trades": 26815,
+          "trades_sha256": "ffc4be4580be691ee26267cdbaaa63265a41a19ce9667fdadc6c9fcf569ab29d"
+        },
+        "2025-01-02": {
+          "source": "pull",
+          "feed": "sip",
+          "window_et": "[2025-01-02T15:55:00-05:00, 2025-01-02T16:10:00-05:00)",
+          "pulled_at_utc": "2026-11-17T13:12:08.738712+00:00",
+          "pages": 4,
+          "n_trades": 37295,
+          "trades_sha256": "becb7dd84f17e50203e9a95615d7c2f36f4ba77d3eedd1a3fa790fa0cb5cf41f"
+        },
+        "2025-03-04": {
+          "source": "pull",
+          "feed": "sip",
+          "window_et": "[2025-03-04T15:55:00-05:00, 2025-03-04T16:10:00-05:00)",
+          "pulled_at_utc": "2026-11-17T13:12:15.772171+00:00",
+          "pages": 5,
+          "n_trades": 44718,
+          "trades_sha256": "e55ae20d707ad15340befcb8120af6a8ba081ddb15534eca4a9677710aa03008"
+        },
+        "2025-05-01": {
+          "source": "pull",
+          "feed": "sip",
+          "window_et": "[2025-05-01T15:55:00-04:00, 2025-05-01T16:10:00-04:00)",
+          "pulled_at_utc": "2026-11-17T13:12:23.707880+00:00",
+          "pages": 6,
+          "n_trades": 54179,
+          "trades_sha256": "d186b64a4297924341ccecd8e971f843a9d89fb04645423576a9197bfb1de1eb"
+        },
+        "2025-07-01": {
+          "source": "pull",
+          "feed": "sip",
+          "window_et": "[2025-07-01T15:55:00-04:00, 2025-07-01T16:10:00-04:00)",
+          "pulled_at_utc": "2026-11-17T13:12:32.967250+00:00",
+          "pages": 7,
+          "n_trades": 67956,
+          "trades_sha256": "f2071bf4818921c4cb94ab4465bfd280e3289ff728d836f6e8d5b87ae1be4e6a"
+        },
+        "2025-08-29": {
+          "source": "pull",
+          "feed": "sip",
+          "window_et": "[2025-08-29T15:55:00-04:00, 2025-08-29T16:10:00-04:00)",
+          "pulled_at_utc": "2026-11-17T13:12:39.284172+00:00",
+          "pages": 5,
+          "n_trades": 42421,
+          "trades_sha256": "5e439ae931adfe375ca31dd439d56857fd58cf4f934887ac87f00130fbcecc70"
+        },
+        "2025-10-30": {
+          "source": "pull",
+          "feed": "sip",
+          "window_et": "[2025-10-30T15:55:00-04:00, 2025-10-30T16:10:00-04:00)",
+          "pulled_at_utc": "2026-11-17T13:12:44.450150+00:00",
+          "pages": 4,
+          "n_trades": 38234,
+          "trades_sha256": "580f74aa94f048ee9540000b8df14c0d34e583a68cb45ab3beaaa883f175d3fb"
+        },
+        "2026-01-02": {
+          "source": "pull",
+          "feed": "sip",
+          "window_et": "[2026-01-02T15:55:00-05:00, 2026-01-02T16:10:00-05:00)",
+          "pulled_at_utc": "2026-11-17T13:12:50.799824+00:00",
+          "pages": 5,
+          "n_trades": 45045,
+          "trades_sha256": "dbd563ef7dc4f0534071015e6f9962adc0376b1535bc1a1f6e8332826860b31d"
+        },
+        "2026-03-04": {
+          "source": "pull",
+          "feed": "sip",
+          "window_et": "[2026-03-04T15:55:00-05:00, 2026-03-04T16:10:00-05:00)",
+          "pulled_at_utc": "2026-11-17T13:12:58.204656+00:00",
+          "pages": 6,
+          "n_trades": 50420,
+          "trades_sha256": "0598d0262b2f45d41338bb4372d5a92e07c0c6bd97c8557bbf76303ae5851867"
+        },
+        "2026-05-01": {
+          "source": "pull",
+          "feed": "sip",
+          "window_et": "[2026-05-01T15:55:00-04:00, 2026-05-01T16:10:00-04:00)",
+          "pulled_at_utc": "2026-11-17T13:13:03.453005+00:00",
+          "pages": 4,
+          "n_trades": 37950,
+          "trades_sha256": "1a9b052a03ea8cc8fa28a887cacbc6089c69435c80fe4a6403013665a3299a1b"
+        },
+        "2026-07-01": {
+          "source": "pull",
+          "feed": "sip",
+          "window_et": "[2026-07-01T15:55:00-04:00, 2026-07-01T16:10:00-04:00)",
+          "pulled_at_utc": "2026-11-17T13:13:08.311469+00:00",
+          "pages": 4,
+          "n_trades": 31177,
+          "trades_sha256": "cdd67b811c62f5d45c6d0cc9be92dba50c51677650fb52c3ca38677018bfb560"
+        },
+        "2026-08-11": {
+          "source": "pull",
+          "feed": "sip",
+          "window_et": "[2026-08-11T15:55:00-04:00, 2026-08-11T16:10:00-04:00)",
+          "pulled_at_utc": "2026-11-17T13:13:12.249660+00:00",
+          "pages": 3,
+          "n_trades": 21653,
+          "trades_sha256": "66cb0594ba58941ec990eb74442375914c46b3ea7c347efd1130a0a168ef6754"
+        },
+        "2026-09-22": {
+          "source": "pull",
+          "feed": "sip",
+          "window_et": "[2026-09-22T15:55:00-04:00, 2026-09-22T16:10:00-04:00)",
+          "pulled_at_utc": "2026-11-17T13:13:16.194921+00:00",
+          "pages": 3,
+          "n_trades": 22442,
+          "trades_sha256": "970b2f1fe86f1841dea8612d30eba25fd35a26cf8836e504b5ab70c2e17c982b"
+        }
+      }
+    },
+    {
+      "check": "5_sha256_freeze",
+      "status": "PASS",
+      "panel_sha256": "5addb8cdee3f2a06d509c498a986ab23de3e8c92c5d7ff92d7a947bc716b67b1",
+      "download_draft_hash_match": true,
+      "provenance_record": {
+        "symbol": "TSLA",
+        "timeframe": "15Min",
+        "source": "Alpaca Market Data API (Basic plan, historical bars)",
+        "endpoint": "https://data.alpaca.markets/v2/stocks/TSLA/bars",
+        "request_parameters": {
+          "timeframe": "15Min",
+          "start": "2023-01-01T00:00:00Z",
+          "end": "2026-11-01T00:00:00Z",
+          "adjustment": "split",
+          "feed": "sip",
+          "sort": "asc",
+          "limit": 10000
+        },
+        "verified_at_utc": "2026-11-17T13:13:16.436568+00:00",
+        "rows": 24842,
+        "first_bar_utc": "2023-01-03T14:30:00+00:00",
+        "last_bar_utc": "2026-10-30T19:45:00+00:00",
+        "panel_file": "TSLA_15min_sip_2023-01-01_2026-10-31.csv",
+        "panel_sha256": "5addb8cdee3f2a06d509c498a986ab23de3e8c92c5d7ff92d7a947bc716b67b1",
+        "licence": "Alpaca/SIP data: personal use only, no redistribution. This record is the committable artifact; the panel file itself must NEVER be committed to git.",
+        "verification": {
+          "1_gap_audit": "PASS",
+          "2_sip_vs_iex_volume": "PASS",
+          "3_split_adjustment": "PASS",
+          "4_cross_source_spot_check": "PASS",
+          "overall": "PASS"
+        }
+      }
+    }
+  ]
+}

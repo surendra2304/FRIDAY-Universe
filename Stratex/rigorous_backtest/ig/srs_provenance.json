@@ -1,0 +1,29 @@
+{
+  "symbol": "TSLA",
+  "timeframe": "15Min",
+  "source": "Alpaca Market Data API (Basic plan, historical bars)",
+  "endpoint": "https://data.alpaca.markets/v2/stocks/TSLA/bars",
+  "request_parameters": {
+    "timeframe": "15Min",
+    "start": "2023-01-01T00:00:00Z",
+    "end": "2026-11-01T00:00:00Z",
+    "adjustment": "split",
+    "feed": "sip",
+    "sort": "asc",
+    "limit": 10000
+  },
+  "verified_at_utc": "2026-11-17T13:13:16.436568+00:00",
+  "rows": 24842,
+  "first_bar_utc": "2023-01-03T14:30:00+00:00",
+  "last_bar_utc": "2026-10-30T19:45:00+00:00",
+  "panel_file": "TSLA_15min_sip_2023-01-01_2026-10-31.csv",
+  "panel_sha256": "5addb8cdee3f2a06d509c498a986ab23de3e8c92c5d7ff92d7a947bc716b67b1",
+  "licence": "Alpaca/SIP data: personal use only, no redistribution. This record is the committable artifact; the panel file itself must NEVER be committed to git.",
+  "verification": {
+    "1_gap_audit": "PASS",
+    "2_sip_vs_iex_volume": "PASS",
+    "3_split_adjustment": "PASS",
+    "4_cross_source_spot_check": "PASS",
+    "overall": "PASS"
+  }
+}
