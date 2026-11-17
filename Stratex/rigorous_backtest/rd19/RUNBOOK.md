@@ -54,23 +54,30 @@ The harness in `~/workspace/str-xsrev/harness/` must hash to:
 
 ```
 xsrev.py      48280584f5469c82b862d27b5a359b7b655e678775c469270a7a40b6a3940c9e
-run_xsrev.py  e9d593672be9eb7353fb2a8a22bb866e3a994e115e30ede01b884be973611c59
+run_xsrev.py  2b731c3d98f8fef77248c7bb6acb0acdb4bdfacbeba6a326ad1066f638d3273b
 test_xsrev.py ac19a8813f9852bb88042687d532fb604354d2b222d5374109b3dc3d280e1535
 test_xsrev_judge_smoke.py 1de8280982e525fe6cbc911f004cb73100f78d789ebf1e30868799858d55fa1a
+test_xsrev_panel_manifest.py 8bb26f024e7b8ddd953f86f34e08e7fe5fc33272c6b7ac62143a118536f0eb5a
 ```
 
 (run_xsrev.py was rewritten by the PR #897 F1 fix against the real
 programme APIs; test_xsrev_judge_smoke.py is the F1 judge-path smoke
 suite. xsrev.py and test_xsrev.py are byte-identical to the original
-freeze.)
+freeze. run_xsrev.py was later patched by the RD-019 runner KeyError
+fix PR: the panel-verification loop read exp["missing"] where the
+S-RD1 provenance manifest keys the field "missing_bars" — two sites,
+the comparison and its mismatch message; test_xsrev_panel_manifest.py
+is that fix's regression suite, driving the loop against a manifest
+keyed "missing_bars".)
 
 And the synthetic tests must pass against those exact files:
 
 ```
 cd ~/workspace/str-xsrev/harness
-PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -p no:cacheprovider -q test_xsrev.py test_xsrev_judge_smoke.py
-# expected: 32 passed (20 signal-harness + 12 judge-path smoke;
-# the smoke suite needs the full checkout layout — run it from the
+PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -p no:cacheprovider -q test_xsrev.py test_xsrev_judge_smoke.py test_xsrev_panel_manifest.py
+# expected: 35 passed (20 signal-harness + 12 judge-path smoke
+# + 3 panel-manifest regression; the smoke and panel-manifest
+# suites need the full checkout layout — run them from the
 # rd19 directory of the fresh origin/main checkout)
 ```
 
