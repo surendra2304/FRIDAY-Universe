@@ -184,7 +184,7 @@ def main() -> int:
 
         for tf in TIMEFRAMES:
             ds = load_dataset(sym, tf, MONTHS_START, MONTHS_END,
-                              cache_dir=args.kline_cache)
+                              cache_dir=Path(args.kline_cache) if args.kline_cache else None)
             m = ds.manifest
             ga = m["gap_audit"]
             mismatches = 0
