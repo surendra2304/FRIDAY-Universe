@@ -2,8 +2,9 @@
 """Scheduled YouTube performance read-back for VyralX.
 
 Fetches public view/like/comment counters for every video VyralX has
-uploaded (YouTube Data API v3), stores the fresh snapshot in the
-``video_metrics`` table via
+uploaded (publish jobs merged with the channel's current uploads, so
+videos without a publish-job row are covered too), stores the fresh
+snapshot in the ``video_metrics`` table via
 ``app.services.youtube_analytics.sync_video_metrics_batch`` and prints the
 channel's current top and bottom performers — the feedback signal the
 production loop previously never collected on its own.
@@ -38,13 +39,73 @@ from app.services.youtube_analytics import (  # noqa: E402
 
 
 def _uploaded_video_ids(db, limit: int) -> list[str]:
+    # Never filter with ``youtube_video_id != ""``: on Oracle an empty
+    # string IS NULL, so that predicate compares against NULL and can
+    # never be true — it silently selected zero rows in production.
+    # ``IS NOT NULL`` is portable, and the strip check below drops the
+    # empty/blank values other backends can store.
     ids = db.scalars(
         select(PublishJob.youtube_video_id)
-        .where(PublishJob.status == "uploaded", PublishJob.youtube_video_id != "")
+        .where(PublishJob.status == "uploaded", PublishJob.youtube_video_id.is_not(None))
         .order_by(PublishJob.id.desc())
         .limit(limit)
     ).all()
-    return list(dict.fromkeys(str(v) for v in ids if v))
+    return list(dict.fromkeys(str(v).strip() for v in ids if v and str(v).strip()))
+
+
+def _channel_upload_ids(limit: int, service=None) -> list[str]:
+    """Ids of the videos currently on the channel, via the OAuth service.
+
+    Publish jobs only cover videos uploaded through the current pipeline;
+    the channel's surviving videos may have no job row at all. The uploads
+    playlist — the same OAuth path as scripts/list_channel_videos.py — is
+    the authoritative list of what is actually on the channel now.
+    """
+    if service is None:
+        from app.services.youtube import youtube_service
+
+        service = youtube_service()
+    channels = service.channels().list(part="contentDetails", mine=True).execute()
+    items = channels.get("items") or []
+    if not items:
+        return []
+    uploads_id = items[0]["contentDetails"]["relatedPlaylists"]["uploads"]
+    ids: list[str] = []
+    page_token = None
+    while len(ids) < limit:
+        response = service.playlistItems().list(
+            playlistId=uploads_id,
+            part="snippet",
+            maxResults=50,
+            pageToken=page_token,
+        ).execute()
+        for item in response.get("items") or []:
+            video_id = ((item.get("snippet") or {}).get("resourceId") or {}).get("videoId")
+            if video_id and str(video_id).strip():
+                ids.append(str(video_id).strip())
+        page_token = response.get("nextPageToken")
+        if not page_token:
+            break
+    return list(dict.fromkeys(ids))
+
+
+def _sync_video_ids(db, limit: int) -> list[str]:
+    """Publish-job ids merged with the channel's current upload ids.
+
+    The channel listing needs the OAuth token; if it is unavailable (for
+    example expired) the sync still proceeds with publish-job ids alone
+    rather than skipping the run entirely.
+    """
+    ids = _uploaded_video_ids(db, limit)
+    try:
+        channel_ids = _channel_upload_ids(limit)
+    except Exception as exc:  # OAuth unavailable: job ids still sync.
+        print(
+            f"NOTE: channel upload listing failed ({type(exc).__name__}); "
+            "syncing publish-job ids only"
+        )
+        channel_ids = []
+    return list(dict.fromkeys([*ids, *channel_ids]))
 
 
 def _report(db) -> None:
@@ -93,9 +154,9 @@ def main() -> int:
         return 0
 
     with SessionLocal() as db:
-        video_ids = _uploaded_video_ids(db, max(1, args.limit))
+        video_ids = _sync_video_ids(db, max(1, args.limit))
         if not video_ids:
-            print("SKIPPED: no uploaded publish jobs with a YouTube video id")
+            print("SKIPPED: no uploaded publish jobs or channel videos with a YouTube video id")
             return 0
         try:
             result = sync_video_metrics_batch(db, video_ids)
