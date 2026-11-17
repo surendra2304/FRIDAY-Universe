@@ -6,6 +6,13 @@ the Binance demo account. Live trading stays blocked by the merged fail-closed
 guard (owner decision D-015): this tool is READ-ONLY by construction (status
 and analyze actions only; order/panic actions are not sendable from here and
 Stratex rejects them server-side anyway).
+
+TASK-FRD-021: the status action is first served from FRIDAY's own
+stratex_watch snapshot (friday.proactive.stratex_watch.read_status_snapshot)
+when that local view is fresh — the same figures, composed from the same
+Stratex state files Stratex's own summary is computed from. A snapshot
+miss (missing/stale/unreadable) falls back to the live dispatch below,
+unchanged; analyze always dispatches live.
 """
 
 from __future__ import annotations
@@ -14,6 +21,7 @@ import asyncio
 import json
 import logging
 import os
+import time
 from pathlib import Path
 from typing import Any
 
@@ -295,6 +303,63 @@ class StratexPortfolioTool(BaseTool):
 
         return FleetClient()
 
+    def _snapshot_answer(self, question: str) -> ToolResult | None:
+        """TASK-FRD-021: serve the status answer from FRIDAY's own
+        stratex_watch snapshot when it is fresh; None -> live dispatch.
+
+        The snapshot (friday.proactive.stratex_watch.read_status_snapshot)
+        composes the SAME figures Stratex's execute summary serves,
+        from the same state files, gated on the daemon heartbeat's
+        freshness (60 s — Stratex's own telemetry bound). The live
+        round trip it replaces does 0-7 ms of Stratex-side work but
+        episodically walls 1-10 s on contention inside Stratex's
+        process, so a fresh local serve costs no figure freshness.
+        The snapshot data is shaped exactly like the execute result,
+        so the SAME _format_portfolio renders it. Read-only like the
+        rest of this tool: it reads files, sends nothing. Never
+        raises.
+        """
+        started = time.perf_counter()
+        try:
+            from friday.proactive.stratex_watch import read_status_snapshot
+
+            snap = read_status_snapshot()
+        except Exception as exc:
+            logger.warning(
+                f"stratex_portfolio: snapshot read failed ({exc}); using live dispatch"
+            )
+            return None
+        if snap is None:
+            logger.info(
+                "stratex_portfolio: no fresh stratex_watch snapshot; using live dispatch"
+            )
+            return None
+        data = snap.data
+        logger.info(
+            "stratex_portfolio: served status from stratex_watch snapshot "
+            f"(age {snap.age_seconds:.1f}s, balance {data.get('balance')}, "
+            f"positions {len(data.get('current_positions') or [])}, "
+            f"question {question[:80]!r})"
+        )
+        return ToolResult(
+            name=self.name,
+            content=_format_portfolio(data),
+            is_error=False,
+            safety_level=self.safety_level,
+            metadata={
+                "stratex": {
+                    "task_id": "",
+                    "action": "status",
+                    "execution_time_ms": int((time.perf_counter() - started) * 1000),
+                    "balance": data.get("balance"),
+                    "position_count": len(data.get("current_positions") or []),
+                    "source": "stratex_watch_snapshot",
+                    "snapshot_age_seconds": round(snap.age_seconds, 1),
+                },
+                "raw": json.dumps(data, default=str)[:4000],
+            },
+        )
+
     def _dispatch(self, action: str, question: str) -> Any:
         from friday.core.task_envelope import TaskEnvelope
 
@@ -311,6 +376,16 @@ class StratexPortfolioTool(BaseTool):
     def execute(self, question: str = "", kind: str = "portfolio", **kwargs: Any) -> ToolResult:
         question = (question or "").strip()
         action = "analyze" if kind == "analysis" else "status"
+        if action == "status":
+            # TASK-FRD-021: read-only status is served from FRIDAY's
+            # stratex_watch snapshot when fresh (see _snapshot_answer);
+            # a snapshot miss falls through to the live dispatch below,
+            # unchanged. "analyze" always takes the live path.
+            snapshot = self._snapshot_answer(
+                question or "portfolio snapshot"
+            )
+            if snapshot is not None:
+                return snapshot
         try:
             result = self._dispatch(action, question or ("market analysis" if action == "analyze" else "portfolio snapshot"))
         except Exception as exc:
