@@ -1,0 +1,152 @@
+{
+ "partA": {
+  "first_six_oos_periods": [
+   {
+    "period_start": "2024-07-01",
+    "my_net": 0.003665958574192496,
+    "engine_net": 0.003665958574192496,
+    "net_abs_diff": 0.0,
+    "my_picks": {
+     "SPX": 0.5,
+     "NDX": 0.5
+    },
+    "engine_picks": {
+     "SPX": 0.5,
+     "NDX": 0.5
+    },
+    "picks_equal": true
+   },
+   {
+    "period_start": "2024-07-08",
+    "my_net": -5.00198281591091e-05,
+    "engine_net": -5.00198281591091e-05,
+    "net_abs_diff": 0.0,
+    "my_picks": {
+     "SPX": 0.5,
+     "NDX": 0.5
+    },
+    "engine_picks": {
+     "SPX": 0.5,
+     "NDX": 0.5
+    },
+    "picks_equal": true
+   },
+   {
+    "period_start": "2024-07-15",
+    "my_net": -0.0032383447876155325,
+    "engine_net": -0.0032383447876155325,
+    "net_abs_diff": 0.0,
+    "my_picks": {
+     "ETHUSDT": 0.5,
+     "NDX": 0.5
+    },
+    "engine_picks": {
+     "ETHUSDT": 0.5,
+     "NDX": 0.5
+    },
+    "picks_equal": true
+   },
+   {
+    "period_start": "2024-07-22",
+    "my_net": -0.0016530041311463295,
+    "engine_net": -0.0016530041311463295,
+    "net_abs_diff": 0.0,
+    "my_picks": {
+     "SPX": 0.5,
+     "NDX": 0.5
+    },
+    "engine_picks": {
+     "SPX": 0.5,
+     "NDX": 0.5
+    },
+    "picks_equal": true
+   },
+   {
+    "period_start": "2024-07-29",
+    "my_net": -0.006541894435827866,
+    "engine_net": -0.006541894435827866,
+    "net_abs_diff": 0.0,
+    "my_picks": {
+     "SOLUSDT": 0.5,
+     "SPX": 0.5
+    },
+    "engine_picks": {
+     "SOLUSDT": 0.5,
+     "SPX": 0.5
+    },
+    "picks_equal": true
+   },
+   {
+    "period_start": "2024-08-05",
+    "my_net": 0.0,
+    "engine_net": 0.0,
+    "net_abs_diff": 0.0,
+    "my_picks": {
+     "GOLD": 0.5
+    },
+    "engine_picks": {
+     "GOLD": 0.5
+    },
+    "picks_equal": true
+   }
+  ],
+  "my_total_cost_frac": 0.10662447460178272,
+  "engine_total_cost_frac": 0.10662447460178272,
+  "my_oos_compounded": -0.12534346394520457,
+  "engine_oos_compounded": -0.12534346394520457,
+  "max_net_abs_diff_first_six": 0.0,
+  "all_picks_equal": true
+ },
+ "partB": {
+  "rebalance_grids_equal": true,
+  "n_rebalance_dates": 200,
+  "selection_mismatches": [],
+  "selections_match_exactly": true,
+  "brakeoff_vs_rd13_control": {
+   "L63_K2": {
+    "brakeoff_compounded": 0.5046244381784593,
+    "rd13_compounded": 0.504816254219747,
+    "brakeoff_pf": 1.3328466289766454,
+    "rd13_pf": 1.3328751042922478,
+    "brakeoff_folds_pos": 3,
+    "rd13_folds_pos": 3,
+    "brakeoff_cost_frac": 0.061023598323823015,
+    "rd13_cost_frac": 0.03383534534927526,
+    "brakeoff_transitions": 0
+   },
+   "L63_K3": {
+    "brakeoff_compounded": 0.5467480392061799,
+    "rd13_compounded": 0.546843695188189,
+    "brakeoff_pf": 1.3752360656423166,
+    "rd13_pf": 1.375224964605897,
+    "brakeoff_folds_pos": 3,
+    "rd13_folds_pos": 3,
+    "brakeoff_cost_frac": 0.04939688885662709,
+    "rd13_cost_frac": 0.027990308819020114,
+    "brakeoff_transitions": 0
+   },
+   "L126_K2": {
+    "brakeoff_compounded": 0.1791641247867175,
+    "rd13_compounded": 0.17938310529320622,
+    "brakeoff_pf": 1.1660524916489217,
+    "rd13_pf": 1.1661586026562893,
+    "brakeoff_folds_pos": 3,
+    "rd13_folds_pos": 3,
+    "brakeoff_cost_frac": 0.044135289757679774,
+    "rd13_cost_frac": 0.02204518260103668,
+    "brakeoff_transitions": 0
+   },
+   "L126_K3": {
+    "brakeoff_compounded": -0.04435513988115025,
+    "rd13_compounded": -0.044440888014033675,
+    "brakeoff_pf": 1.0552338445851759,
+    "rd13_pf": 1.0552101957761093,
+    "brakeoff_folds_pos": 3,
+    "rd13_folds_pos": 3,
+    "brakeoff_cost_frac": 0.0382880449708857,
+    "rd13_cost_frac": 0.01988861228812218,
+    "brakeoff_transitions": 0
+   }
+  }
+ }
+}

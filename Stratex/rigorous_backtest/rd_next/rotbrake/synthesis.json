@@ -1,0 +1,6728 @@
+{
+ "task": "TASK-STR-RD-020",
+ "family": "cross_asset_rotation_drawdown_brake",
+ "n_global": 3899,
+ "provenance": {
+  "BTCUSDT": {
+   "source": "binance_vision_futures_um_monthly_klines",
+   "csv_sha256": "cbd726f60c714420781961a447577b43659780e66f6e94e27ee1db5a2ebc640e",
+   "base_rows": 42360,
+   "daily_bars": 1765,
+   "incomplete_days_dropped": 0
+  },
+  "ETHUSDT": {
+   "source": "binance_vision_futures_um_monthly_klines",
+   "csv_sha256": "5d861191ad4d68e922b741c33e99192d6082016b92eaf265dd76e7949d01c88c",
+   "base_rows": 42360,
+   "daily_bars": 1765,
+   "incomplete_days_dropped": 0
+  },
+  "SOLUSDT": {
+   "source": "binance_vision_futures_um_monthly_klines",
+   "csv_sha256": "281fbff59b203575c1acf24b0a15cafdb53cae6a3814df2d95c099d0de056196",
+   "base_rows": 42240,
+   "daily_bars": 1760,
+   "incomplete_days_dropped": 5
+  },
+  "BNBUSDT": {
+   "source": "binance_vision_futures_um_monthly_klines",
+   "csv_sha256": "5461c517e9a18ffdfb0ec7fdad845fd864465a377351208c934f0cb3af745549",
+   "base_rows": 42360,
+   "daily_bars": 1765,
+   "incomplete_days_dropped": 0
+  },
+  "GOLD": {
+   "source": "yahoo_finance_chart_api",
+   "csv_sha256": "4933b83b0672551656e0c4c7068f9087b232274ab954e64164b9360ca3560dd4",
+   "base_rows": 2232,
+   "daily_bars": 2232,
+   "incomplete_days_dropped": 0
+  },
+  "SPX": {
+   "source": "yahoo_finance_chart_api",
+   "csv_sha256": "ab1482ee3b03fa53fa80ffc818cd86f4c60feb8c85265b4ca808e0b60b4673bb",
+   "base_rows": 2230,
+   "daily_bars": 2230,
+   "incomplete_days_dropped": 0
+  },
+  "NDX": {
+   "source": "yahoo_finance_chart_api",
+   "csv_sha256": "4dd2893217154491dc5732eae71883a71d4a234ff87b46d4b32cb964ed6ea581",
+   "base_rows": 2230,
+   "daily_bars": 2230,
+   "incomplete_days_dropped": 0
+  }
+ },
+ "rows": [
+  {
+   "lookback_days": 63,
+   "top_k": 2,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "brake": "frozen_v1",
+   "oos_periods": 122,
+   "oos_compounded": -0.12534346394520457,
+   "oos_max_drawdown_daily": -0.3967834932939496,
+   "oos_period_pf": 0.7020879197996849,
+   "oos_mean_period_return": -0.0010550678505885874,
+   "t_stat_one_sided_p": 0.8960268392228075,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": -0.0032853369410177358
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": 0.007756961718713207
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": -0.04962430550123176
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.033103938390601106
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.0523765935041971
+    }
+   },
+   "folds_positive": 1,
+   "oos_episodes": 202,
+   "oos_episode_pf": 0.7370244879411872,
+   "contrib_by_asset_episodes": {
+    "BTCUSDT": 0.017082306326940633,
+    "ETHUSDT": -0.1488994407540627,
+    "SOLUSDT": -0.14951645725242513,
+    "BNBUSDT": -0.12433272410321705,
+    "GOLD": 0.023433869126905038,
+    "SPX": -0.07554663330875933,
+    "NDX": -0.05692271395659454
+   },
+   "max_asset_profit_share": 0.5783830498414126,
+   "brake_transitions": 301,
+   "total_turnover_cost_frac": 0.10662447460178272,
+   "is_compounded": 0.10176876233193122,
+   "is_periods": 78,
+   "bar": {
+    "gates": {
+     "g1_compounded_positive": false,
+     "g2_period_pf_ge_1_2": false,
+     "g3_folds_ge_4_of_5": false,
+     "g4_max_dd_le_20pct_daily": false,
+     "g5_max_asset_share_le_50pct": false,
+     "g6_bonferroni": false,
+     "g8_episodes_ge_200_and_episode_pf_ge_1_2": false
+    },
+    "bonferroni_alpha": 1.2823800974608875e-05,
+    "verdict": "FAIL"
+   },
+   "transitions": [
+    {
+     "date": "2023-02-09",
+     "from": "NORMAL",
+     "to": "FLAT",
+     "dd_at_signal": -0.15571361059166544
+    },
+    {
+     "date": "2023-02-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15638903970319207
+    },
+    {
+     "date": "2023-03-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1516212048328217
+    },
+    {
+     "date": "2023-03-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1519581435319467
+    },
+    {
+     "date": "2023-03-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15386677407080085
+    },
+    {
+     "date": "2023-03-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15420459959565402
+    },
+    {
+     "date": "2023-03-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15003733353484683
+    },
+    {
+     "date": "2023-03-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15037912083512128
+    },
+    {
+     "date": "2023-03-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15060274734150036
+    },
+    {
+     "date": "2023-04-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1508580010304721
+    },
+    {
+     "date": "2023-05-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15745608163783453
+    },
+    {
+     "date": "2023-05-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1577884616465045
+    },
+    {
+     "date": "2023-05-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15883491756268497
+    },
+    {
+     "date": "2023-05-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15908679172935358
+    },
+    {
+     "date": "2023-05-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1643029135743027
+    },
+    {
+     "date": "2023-05-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16446904340374724
+    },
+    {
+     "date": "2023-05-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16297596582439622
+    },
+    {
+     "date": "2023-06-05",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16322761437525435
+    },
+    {
+     "date": "2023-06-06",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16287980522534984
+    },
+    {
+     "date": "2023-06-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16304733229703017
+    },
+    {
+     "date": "2023-06-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1601153037187628
+    },
+    {
+     "date": "2023-06-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1602839005418415
+    },
+    {
+     "date": "2023-06-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16163727931397442
+    },
+    {
+     "date": "2023-06-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1618047147710011
+    },
+    {
+     "date": "2023-06-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15546349849490815
+    },
+    {
+     "date": "2023-07-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15571869033499197
+    },
+    {
+     "date": "2023-07-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1586335257498297
+    },
+    {
+     "date": "2023-07-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15888460491659384
+    },
+    {
+     "date": "2023-07-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15664845569742936
+    },
+    {
+     "date": "2023-07-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15690229507711173
+    },
+    {
+     "date": "2023-07-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1652380011549477
+    },
+    {
+     "date": "2023-07-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1654837014149969
+    },
+    {
+     "date": "2023-07-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16500677609647807
+    },
+    {
+     "date": "2023-07-31",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16525702528813768
+    },
+    {
+     "date": "2023-08-01",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16312955738290558
+    },
+    {
+     "date": "2023-08-07",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16338201395382412
+    },
+    {
+     "date": "2023-08-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.153043340975615
+    },
+    {
+     "date": "2023-08-14",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15338639296729373
+    },
+    {
+     "date": "2023-08-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1661915488602882
+    },
+    {
+     "date": "2023-08-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16652008563656406
+    },
+    {
+     "date": "2023-08-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1584812802866682
+    },
+    {
+     "date": "2023-09-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15873561093723754
+    },
+    {
+     "date": "2023-09-05",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1602389308105603
+    },
+    {
+     "date": "2023-09-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16042749210041074
+    },
+    {
+     "date": "2023-09-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16412687097572043
+    },
+    {
+     "date": "2023-10-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16429333930865053
+    },
+    {
+     "date": "2023-10-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.17072802608471904
+    },
+    {
+     "date": "2023-10-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.17105729471264042
+    },
+    {
+     "date": "2023-10-31",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15015150593124416
+    },
+    {
+     "date": "2023-11-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15049994027521707
+    },
+    {
+     "date": "2023-11-15",
+     "from": "HALVED",
+     "to": "NORMAL",
+     "dd_at_signal": -0.025158037499007246
+    },
+    {
+     "date": "2023-11-16",
+     "from": "NORMAL",
+     "to": "HALVED",
+     "dd_at_signal": -0.10451265799346288
+    },
+    {
+     "date": "2023-12-05",
+     "from": "HALVED",
+     "to": "NORMAL",
+     "dd_at_signal": -0.04459799622207128
+    },
+    {
+     "date": "2024-01-06",
+     "from": "NORMAL",
+     "to": "HALVED",
+     "dd_at_signal": -0.11959005116528332
+    },
+    {
+     "date": "2024-01-22",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.17394816191346607
+    },
+    {
+     "date": "2024-01-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.17426599600361503
+    },
+    {
+     "date": "2024-01-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.17715376386024073
+    },
+    {
+     "date": "2024-02-05",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1774818793649946
+    },
+    {
+     "date": "2024-02-06",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.17400184014963593
+    },
+    {
+     "date": "2024-02-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.17433376303216142
+    },
+    {
+     "date": "2024-02-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.17529891166664924
+    },
+    {
+     "date": "2024-02-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1756285381491266
+    },
+    {
+     "date": "2024-02-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.18016194263573826
+    },
+    {
+     "date": "2024-02-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.18048819639632319
+    },
+    {
+     "date": "2024-02-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.18020698329189233
+    },
+    {
+     "date": "2024-03-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.18053514410570604
+    },
+    {
+     "date": "2024-03-05",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1986942898196803
+    },
+    {
+     "date": "2024-03-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.19900767955984366
+    },
+    {
+     "date": "2024-03-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1979751464383419
+    },
+    {
+     "date": "2024-03-18",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.19829649755178647
+    },
+    {
+     "date": "2024-03-19",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.24260356560785545
+    },
+    {
+     "date": "2024-03-25",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2428889296269503
+    },
+    {
+     "date": "2024-03-26",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.24397824811489233
+    },
+    {
+     "date": "2024-04-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.24428034222602246
+    },
+    {
+     "date": "2024-04-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.26312083913927453
+    },
+    {
+     "date": "2024-04-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.26340817551999873
+    },
+    {
+     "date": "2024-04-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2739664834971083
+    },
+    {
+     "date": "2024-04-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.27425279143521053
+    },
+    {
+     "date": "2024-04-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2782930492066128
+    },
+    {
+     "date": "2024-04-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.278580232003375
+    },
+    {
+     "date": "2024-04-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2809400376096799
+    },
+    {
+     "date": "2024-04-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2812268330995563
+    },
+    {
+     "date": "2024-04-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3004288950607027
+    },
+    {
+     "date": "2024-05-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30070115768160066
+    },
+    {
+     "date": "2024-05-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30999296039151203
+    },
+    {
+     "date": "2024-05-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3102653583740862
+    },
+    {
+     "date": "2024-05-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3164469166729431
+    },
+    {
+     "date": "2024-05-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3166658686581446
+    },
+    {
+     "date": "2024-05-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3122715245537895
+    },
+    {
+     "date": "2024-05-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31249749384219694
+    },
+    {
+     "date": "2024-05-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.31326662350763157
+    },
+    {
+     "date": "2024-06-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3134890668899971
+    },
+    {
+     "date": "2024-06-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2955330766164932
+    },
+    {
+     "date": "2024-06-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2958221556237054
+    },
+    {
+     "date": "2024-06-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3012089408100287
+    },
+    {
+     "date": "2024-06-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30141549025178527
+    },
+    {
+     "date": "2024-06-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3029256137435402
+    },
+    {
+     "date": "2024-06-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30313406434793644
+    },
+    {
+     "date": "2024-06-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30056235003451526
+    },
+    {
+     "date": "2024-07-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30070277978200843
+    },
+    {
+     "date": "2024-07-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.29799821590015607
+    },
+    {
+     "date": "2024-07-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2981391851416413
+    },
+    {
+     "date": "2024-07-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2980338497274222
+    },
+    {
+     "date": "2024-07-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29817429209899216
+    },
+    {
+     "date": "2024-07-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30023808416674824
+    },
+    {
+     "date": "2024-07-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3004470457219879
+    },
+    {
+     "date": "2024-07-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30146387780522466
+    },
+    {
+     "date": "2024-07-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30160340964536503
+    },
+    {
+     "date": "2024-07-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30596576624970795
+    },
+    {
+     "date": "2024-08-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30617224641380725
+    },
+    {
+     "date": "2024-08-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30603788125814246
+    },
+    {
+     "date": "2024-08-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3061941370316146
+    },
+    {
+     "date": "2024-08-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3179751413366778
+    },
+    {
+     "date": "2024-09-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3181913573691635
+    },
+    {
+     "date": "2024-09-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.32225934352729135
+    },
+    {
+     "date": "2024-09-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.32241111910922915
+    },
+    {
+     "date": "2024-09-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3224874757968643
+    },
+    {
+     "date": "2024-09-16",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3227075270872457
+    },
+    {
+     "date": "2024-09-17",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3238857774555445
+    },
+    {
+     "date": "2024-09-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3240376165658009
+    },
+    {
+     "date": "2024-09-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3223897472830324
+    },
+    {
+     "date": "2024-09-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.32261038958895105
+    },
+    {
+     "date": "2024-10-01",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3223742186782643
+    },
+    {
+     "date": "2024-10-07",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3225269492053482
+    },
+    {
+     "date": "2024-10-08",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3182815110976339
+    },
+    {
+     "date": "2024-10-14",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31855600506412607
+    },
+    {
+     "date": "2024-10-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3146920858615502
+    },
+    {
+     "date": "2024-10-21",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31496786362592577
+    },
+    {
+     "date": "2024-10-22",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3136727808517926
+    },
+    {
+     "date": "2024-10-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31394793937770327
+    },
+    {
+     "date": "2024-10-29",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30620541850960803
+    },
+    {
+     "date": "2024-11-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3064861431188811
+    },
+    {
+     "date": "2024-11-05",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2933543106291455
+    },
+    {
+     "date": "2024-11-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29364233260010686
+    },
+    {
+     "date": "2024-11-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.303814771571684
+    },
+    {
+     "date": "2024-11-18",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3040892897046935
+    },
+    {
+     "date": "2024-11-19",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3024993841164658
+    },
+    {
+     "date": "2024-11-25",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3027791316707681
+    },
+    {
+     "date": "2024-11-26",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3076574689375119
+    },
+    {
+     "date": "2024-12-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.307932566170369
+    },
+    {
+     "date": "2024-12-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3018745324739358
+    },
+    {
+     "date": "2024-12-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30215631660521425
+    },
+    {
+     "date": "2024-12-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3077259046657861
+    },
+    {
+     "date": "2024-12-16",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3080006981236849
+    },
+    {
+     "date": "2024-12-17",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3122709035151604
+    },
+    {
+     "date": "2024-12-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31254439779148613
+    },
+    {
+     "date": "2024-12-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30242161827940905
+    },
+    {
+     "date": "2024-12-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3027048087367985
+    },
+    {
+     "date": "2024-12-31",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3027211902338032
+    },
+    {
+     "date": "2025-01-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3030002067723414
+    },
+    {
+     "date": "2025-01-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3267226119658234
+    },
+    {
+     "date": "2025-01-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3269825454789267
+    },
+    {
+     "date": "2025-01-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3210908173584941
+    },
+    {
+     "date": "2025-01-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3213648454055916
+    },
+    {
+     "date": "2025-01-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3128134404421844
+    },
+    {
+     "date": "2025-01-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31309184420961766
+    },
+    {
+     "date": "2025-01-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.31942997058912626
+    },
+    {
+     "date": "2025-02-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3196997732556438
+    },
+    {
+     "date": "2025-02-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.324823426001589
+    },
+    {
+     "date": "2025-02-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3250401958364646
+    },
+    {
+     "date": "2025-02-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3257856730796893
+    },
+    {
+     "date": "2025-02-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.32593725707398946
+    },
+    {
+     "date": "2025-02-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.322871643071571
+    },
+    {
+     "date": "2025-02-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3230248405107541
+    },
+    {
+     "date": "2025-02-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.32650433631633236
+    },
+    {
+     "date": "2025-04-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.32665503705087195
+    },
+    {
+     "date": "2025-04-29",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3293820799221051
+    },
+    {
+     "date": "2025-05-05",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3295990519790053
+    },
+    {
+     "date": "2025-05-06",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.32102925353549094
+    },
+    {
+     "date": "2025-05-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3212525726912565
+    },
+    {
+     "date": "2025-05-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.29966983745625275
+    },
+    {
+     "date": "2025-05-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29995871121495266
+    },
+    {
+     "date": "2025-05-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.29866457950522807
+    },
+    {
+     "date": "2025-05-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29894574333271606
+    },
+    {
+     "date": "2025-05-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2981788173626365
+    },
+    {
+     "date": "2025-06-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29845996477476056
+    },
+    {
+     "date": "2025-06-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30050599096815045
+    },
+    {
+     "date": "2025-06-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30078508240769153
+    },
+    {
+     "date": "2025-06-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.28784808400122663
+    },
+    {
+     "date": "2025-06-16",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2881382314413754
+    },
+    {
+     "date": "2025-06-17",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2945467692058865
+    },
+    {
+     "date": "2025-06-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2948265009809813
+    },
+    {
+     "date": "2025-06-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2896240650192796
+    },
+    {
+     "date": "2025-06-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.28983880688707386
+    },
+    {
+     "date": "2025-07-01",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2973858599834419
+    },
+    {
+     "date": "2025-07-07",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29759360605832363
+    },
+    {
+     "date": "2025-07-08",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.29177452238744184
+    },
+    {
+     "date": "2025-07-14",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2920602525969783
+    },
+    {
+     "date": "2025-07-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2880491196379752
+    },
+    {
+     "date": "2025-07-21",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.28833561771366323
+    },
+    {
+     "date": "2025-07-22",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2844339438003681
+    },
+    {
+     "date": "2025-07-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2847218447587144
+    },
+    {
+     "date": "2025-07-29",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2892630048283238
+    },
+    {
+     "date": "2025-08-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2895455976068694
+    },
+    {
+     "date": "2025-08-05",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2981194465809446
+    },
+    {
+     "date": "2025-08-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.298396882935427
+    },
+    {
+     "date": "2025-08-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.27734201063560326
+    },
+    {
+     "date": "2025-08-18",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2776396080367678
+    },
+    {
+     "date": "2025-08-19",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2928082535924317
+    },
+    {
+     "date": "2025-08-25",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29308517841043513
+    },
+    {
+     "date": "2025-08-26",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2791507026268151
+    },
+    {
+     "date": "2025-09-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.27944472924244934
+    },
+    {
+     "date": "2025-09-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.27796590510550356
+    },
+    {
+     "date": "2025-09-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2782554255619596
+    },
+    {
+     "date": "2025-09-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.27575481995991247
+    },
+    {
+     "date": "2025-09-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.27604563375330127
+    },
+    {
+     "date": "2025-09-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.27515024370981156
+    },
+    {
+     "date": "2025-09-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.27544065760104364
+    },
+    {
+     "date": "2025-09-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2773092274398975
+    },
+    {
+     "date": "2025-09-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2775976722504808
+    },
+    {
+     "date": "2025-09-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2807845533731752
+    },
+    {
+     "date": "2025-10-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2810166432596306
+    },
+    {
+     "date": "2025-10-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.278976217163334
+    },
+    {
+     "date": "2025-10-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.27926555788424423
+    },
+    {
+     "date": "2025-10-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2901042494018412
+    },
+    {
+     "date": "2025-10-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2903295309377082
+    },
+    {
+     "date": "2025-10-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30770422501471884
+    },
+    {
+     "date": "2025-10-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3079241327131619
+    },
+    {
+     "date": "2025-10-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.31519821602947307
+    },
+    {
+     "date": "2025-11-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31541790071287934
+    },
+    {
+     "date": "2025-11-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3275661307250364
+    },
+    {
+     "date": "2025-11-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.32777969110952687
+    },
+    {
+     "date": "2025-11-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3339335722579919
+    },
+    {
+     "date": "2025-11-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3341472942243745
+    },
+    {
+     "date": "2025-11-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.33661575935950605
+    },
+    {
+     "date": "2025-11-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.33676458237365803
+    },
+    {
+     "date": "2025-11-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3340963115112947
+    },
+    {
+     "date": "2025-12-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3342468183449797
+    },
+    {
+     "date": "2025-12-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3350999971113382
+    },
+    {
+     "date": "2025-12-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3352492663193487
+    },
+    {
+     "date": "2025-12-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.33440592831782645
+    },
+    {
+     "date": "2025-12-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.33455593362078007
+    },
+    {
+     "date": "2025-12-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3352134362315362
+    },
+    {
+     "date": "2025-12-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3353629132196958
+    },
+    {
+     "date": "2025-12-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.33340730187572964
+    },
+    {
+     "date": "2025-12-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.33355778855843066
+    },
+    {
+     "date": "2025-12-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.332299392690774
+    },
+    {
+     "date": "2026-01-05",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.33245003553730346
+    },
+    {
+     "date": "2026-01-06",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3298946241098011
+    },
+    {
+     "date": "2026-01-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3300460384700584
+    },
+    {
+     "date": "2026-01-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3310875570377194
+    },
+    {
+     "date": "2026-01-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.331237849843953
+    },
+    {
+     "date": "2026-01-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.33835226370735005
+    },
+    {
+     "date": "2026-01-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3385621638651277
+    },
+    {
+     "date": "2026-01-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.33803290315428247
+    },
+    {
+     "date": "2026-02-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.33818196474140705
+    },
+    {
+     "date": "2026-02-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3296806683163216
+    },
+    {
+     "date": "2026-02-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.32983400798886076
+    },
+    {
+     "date": "2026-02-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.33213426750091424
+    },
+    {
+     "date": "2026-02-16",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3322840015243297
+    },
+    {
+     "date": "2026-02-17",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3369054303057748
+    },
+    {
+     "date": "2026-04-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3370533797940858
+    },
+    {
+     "date": "2026-04-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.34126911468387455
+    },
+    {
+     "date": "2026-04-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3415310268155043
+    },
+    {
+     "date": "2026-04-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3397495332580016
+    },
+    {
+     "date": "2026-04-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.340014451397157
+    },
+    {
+     "date": "2026-04-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3434783024807314
+    },
+    {
+     "date": "2026-05-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3437396312169936
+    },
+    {
+     "date": "2026-05-05",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3409402262022435
+    },
+    {
+     "date": "2026-05-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3412050748754275
+    },
+    {
+     "date": "2026-05-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.34533464428093963
+    },
+    {
+     "date": "2026-05-18",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.34552965263056845
+    },
+    {
+     "date": "2026-05-19",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.34774334690846564
+    },
+    {
+     "date": "2026-05-25",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.34787338167904236
+    },
+    {
+     "date": "2026-05-26",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3441349445022206
+    },
+    {
+     "date": "2026-06-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.34426689128582033
+    },
+    {
+     "date": "2026-06-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3433980713540944
+    },
+    {
+     "date": "2026-06-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.34352959173313424
+    },
+    {
+     "date": "2026-06-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.34592316777459153
+    },
+    {
+     "date": "2026-06-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3460535306846446
+    },
+    {
+     "date": "2026-06-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.35019472138193886
+    },
+    {
+     "date": "2026-06-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3503238803573818
+    },
+    {
+     "date": "2026-06-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3581361025144101
+    },
+    {
+     "date": "2026-06-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3582629388365206
+    },
+    {
+     "date": "2026-06-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.35441865763933056
+    },
+    {
+     "date": "2026-07-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.35454856843352456
+    },
+    {
+     "date": "2026-07-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3582475950867836
+    },
+    {
+     "date": "2026-08-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3583752315804929
+    },
+    {
+     "date": "2026-08-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.35714360227158326
+    },
+    {
+     "date": "2026-08-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.35740134014236113
+    },
+    {
+     "date": "2026-08-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.35914693823417987
+    },
+    {
+     "date": "2026-08-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.359355057379529
+    },
+    {
+     "date": "2026-08-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.36603064343224145
+    },
+    {
+     "date": "2026-08-31",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.36628166344363833
+    },
+    {
+     "date": "2026-09-01",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3744059785693259
+    },
+    {
+     "date": "2026-09-07",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.37465306784678176
+    },
+    {
+     "date": "2026-09-08",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3758529138752539
+    },
+    {
+     "date": "2026-09-14",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.37610219282680146
+    },
+    {
+     "date": "2026-09-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.39224853687465555
+    },
+    {
+     "date": "2026-09-21",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.39248527874593575
+    },
+    {
+     "date": "2026-09-22",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3944197633212132
+    },
+    {
+     "date": "2026-09-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.39466131882441
+    },
+    {
+     "date": "2026-09-29",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3951569124190335
+    },
+    {
+     "date": "2026-10-05",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.395398748270817
+    },
+    {
+     "date": "2026-10-06",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.39641094210274164
+    },
+    {
+     "date": "2026-10-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.396652069584568
+    },
+    {
+     "date": "2026-10-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3922057971884547
+    },
+    {
+     "date": "2026-10-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3924507899142067
+    },
+    {
+     "date": "2026-10-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3886074034415087
+    },
+    {
+     "date": "2026-10-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.38885359504259476
+    },
+    {
+     "date": "2026-10-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3881099644414955
+    }
+   ]
+  },
+  {
+   "lookback_days": 63,
+   "top_k": 3,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "brake": "frozen_v1",
+   "oos_periods": 122,
+   "oos_compounded": -0.1056714084086946,
+   "oos_max_drawdown_daily": -0.29174007645071987,
+   "oos_period_pf": 0.7041299129833811,
+   "oos_mean_period_return": -0.0008805223323807387,
+   "t_stat_one_sided_p": 0.8772240347881142,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": -0.02361032158942855
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": 0.004025481661609209
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": -0.017219593014588863
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.04103447534803095
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.032012572846288556
+    }
+   },
+   "folds_positive": 1,
+   "oos_episodes": 270,
+   "oos_episode_pf": 0.7547175740418275,
+   "contrib_by_asset_episodes": {
+    "BTCUSDT": -0.0671658999564606,
+    "ETHUSDT": -0.3061982965332135,
+    "SOLUSDT": -0.06250885285147745,
+    "BNBUSDT": -0.19680728379172574,
+    "GOLD": 0.1020188925328106,
+    "SPX": -0.05628992950960432,
+    "NDX": -0.05734767814130404
+   },
+   "max_asset_profit_share": 1.0,
+   "brake_transitions": 264,
+   "total_turnover_cost_frac": 0.09408747173339568,
+   "is_compounded": 0.2601026784408247,
+   "is_periods": 78,
+   "bar": {
+    "gates": {
+     "g1_compounded_positive": false,
+     "g2_period_pf_ge_1_2": false,
+     "g3_folds_ge_4_of_5": false,
+     "g4_max_dd_le_20pct_daily": false,
+     "g5_max_asset_share_le_50pct": false,
+     "g6_bonferroni": false,
+     "g8_episodes_ge_200_and_episode_pf_ge_1_2": false
+    },
+    "bonferroni_alpha": 1.2823800974608875e-05,
+    "verdict": "FAIL"
+   },
+   "transitions": [
+    {
+     "date": "2023-02-09",
+     "from": "NORMAL",
+     "to": "HALVED",
+     "dd_at_signal": -0.12148769807254778
+    },
+    {
+     "date": "2023-02-20",
+     "from": "HALVED",
+     "to": "NORMAL",
+     "dd_at_signal": -0.04490870695792537
+    },
+    {
+     "date": "2023-02-24",
+     "from": "NORMAL",
+     "to": "HALVED",
+     "dd_at_signal": -0.12385299363232893
+    },
+    {
+     "date": "2023-03-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15281657527929338
+    },
+    {
+     "date": "2023-03-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1531537047724636
+    },
+    {
+     "date": "2023-03-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16255317838842942
+    },
+    {
+     "date": "2023-03-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16288453282303494
+    },
+    {
+     "date": "2023-03-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15473546490589873
+    },
+    {
+     "date": "2023-03-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15507696428557793
+    },
+    {
+     "date": "2023-03-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1505965708617708
+    },
+    {
+     "date": "2023-04-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1508822053230583
+    },
+    {
+     "date": "2023-04-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1532119824884668
+    },
+    {
+     "date": "2023-04-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15353889034303891
+    },
+    {
+     "date": "2023-05-01",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15237432758440872
+    },
+    {
+     "date": "2023-05-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1526718147300823
+    },
+    {
+     "date": "2023-05-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15260459714307728
+    },
+    {
+     "date": "2023-05-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15290114718353065
+    },
+    {
+     "date": "2023-05-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15309619816200448
+    },
+    {
+     "date": "2023-05-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15337848756675043
+    },
+    {
+     "date": "2023-05-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15414315508729182
+    },
+    {
+     "date": "2023-05-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15436978466280926
+    },
+    {
+     "date": "2023-05-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15341636486145294
+    },
+    {
+     "date": "2023-06-05",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15364252529692746
+    },
+    {
+     "date": "2023-06-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15487023113679932
+    },
+    {
+     "date": "2023-06-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15509612865555966
+    },
+    {
+     "date": "2023-06-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15201983952145426
+    },
+    {
+     "date": "2023-07-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15224604712907708
+    },
+    {
+     "date": "2023-07-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1542538398173401
+    },
+    {
+     "date": "2023-07-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1544784218734062
+    },
+    {
+     "date": "2023-07-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1520862980563923
+    },
+    {
+     "date": "2023-07-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15231314949140695
+    },
+    {
+     "date": "2023-07-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15932839064569448
+    },
+    {
+     "date": "2023-07-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1596050121537389
+    },
+    {
+     "date": "2023-07-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15914483187917516
+    },
+    {
+     "date": "2023-07-31",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15942505127467355
+    },
+    {
+     "date": "2023-08-01",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1584260834187543
+    },
+    {
+     "date": "2023-08-07",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1586514433965973
+    },
+    {
+     "date": "2023-08-08",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1508333083256297
+    },
+    {
+     "date": "2023-08-14",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15112063378335427
+    },
+    {
+     "date": "2023-08-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16106062622609896
+    },
+    {
+     "date": "2023-08-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16139236179933003
+    },
+    {
+     "date": "2023-08-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.153485269807902
+    },
+    {
+     "date": "2023-09-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15371279291266438
+    },
+    {
+     "date": "2023-09-06",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1559152033097011
+    },
+    {
+     "date": "2023-09-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15615427392264591
+    },
+    {
+     "date": "2023-09-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15957711911645533
+    },
+    {
+     "date": "2023-10-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15975852936255963
+    },
+    {
+     "date": "2023-10-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1663127612689348
+    },
+    {
+     "date": "2023-10-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16664374891029987
+    },
+    {
+     "date": "2023-10-31",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1522939226030715
+    },
+    {
+     "date": "2023-11-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15263887830155343
+    },
+    {
+     "date": "2023-11-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15382221823240816
+    },
+    {
+     "date": "2023-11-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15416035158692232
+    },
+    {
+     "date": "2023-11-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16489416643181753
+    },
+    {
+     "date": "2023-11-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1652180555521291
+    },
+    {
+     "date": "2023-11-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.154010340517855
+    },
+    {
+     "date": "2023-12-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15435335303277276
+    },
+    {
+     "date": "2023-12-24",
+     "from": "HALVED",
+     "to": "NORMAL",
+     "dd_at_signal": -0.046809195492955036
+    },
+    {
+     "date": "2024-01-06",
+     "from": "NORMAL",
+     "to": "HALVED",
+     "dd_at_signal": -0.10152930636996005
+    },
+    {
+     "date": "2024-02-25",
+     "from": "HALVED",
+     "to": "NORMAL",
+     "dd_at_signal": -0.04587834204858565
+    },
+    {
+     "date": "2024-03-16",
+     "from": "NORMAL",
+     "to": "HALVED",
+     "dd_at_signal": -0.1029926764412249
+    },
+    {
+     "date": "2024-04-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15849915452411312
+    },
+    {
+     "date": "2024-04-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15881176931017027
+    },
+    {
+     "date": "2024-04-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16433261422994172
+    },
+    {
+     "date": "2024-04-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16466480743639877
+    },
+    {
+     "date": "2024-04-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16741411668847173
+    },
+    {
+     "date": "2024-04-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16774618497172633
+    },
+    {
+     "date": "2024-04-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.18961029722020872
+    },
+    {
+     "date": "2024-05-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.18992584061703177
+    },
+    {
+     "date": "2024-05-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.19757476680490826
+    },
+    {
+     "date": "2024-05-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1978524227861782
+    },
+    {
+     "date": "2024-05-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.20205218739464514
+    },
+    {
+     "date": "2024-05-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2022756723094138
+    },
+    {
+     "date": "2024-05-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.20137550935784565
+    },
+    {
+     "date": "2024-05-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.20165576467044788
+    },
+    {
+     "date": "2024-05-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.20187237612365327
+    },
+    {
+     "date": "2024-06-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.20209796834887073
+    },
+    {
+     "date": "2024-06-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.18947954936080702
+    },
+    {
+     "date": "2024-06-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.18976940410989263
+    },
+    {
+     "date": "2024-06-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.19358968536657373
+    },
+    {
+     "date": "2024-06-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.19380227587112864
+    },
+    {
+     "date": "2024-06-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.19850989318027767
+    },
+    {
+     "date": "2024-06-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.19877496857707144
+    },
+    {
+     "date": "2024-06-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.19527539114452586
+    },
+    {
+     "date": "2024-07-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.19549113359930426
+    },
+    {
+     "date": "2024-07-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.19430465008162212
+    },
+    {
+     "date": "2024-07-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.19451937680963738
+    },
+    {
+     "date": "2024-07-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1942560519477361
+    },
+    {
+     "date": "2024-07-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.19443073506087738
+    },
+    {
+     "date": "2024-07-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.19502367810917864
+    },
+    {
+     "date": "2024-07-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.19529182124229305
+    },
+    {
+     "date": "2024-07-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.19717611186046213
+    },
+    {
+     "date": "2024-08-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1974025287754967
+    },
+    {
+     "date": "2024-08-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.19925233816488996
+    },
+    {
+     "date": "2024-08-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1994783377658912
+    },
+    {
+     "date": "2024-08-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2159159382580057
+    },
+    {
+     "date": "2024-09-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21618313285819846
+    },
+    {
+     "date": "2024-09-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.21497419617178726
+    },
+    {
+     "date": "2024-09-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2152494618008911
+    },
+    {
+     "date": "2024-09-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.21369798691607533
+    },
+    {
+     "date": "2024-09-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21392119530374265
+    },
+    {
+     "date": "2024-10-01",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.21566737039306338
+    },
+    {
+     "date": "2024-10-07",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21583717241620604
+    },
+    {
+     "date": "2024-10-08",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2131123562778986
+    },
+    {
+     "date": "2024-10-14",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21342832672789525
+    },
+    {
+     "date": "2024-10-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.21229752402730095
+    },
+    {
+     "date": "2024-10-21",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2125614577083279
+    },
+    {
+     "date": "2024-10-22",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2106334388077491
+    },
+    {
+     "date": "2024-10-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2109104083979516
+    },
+    {
+     "date": "2024-10-29",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2039113624300095
+    },
+    {
+     "date": "2024-11-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.20423272375775947
+    },
+    {
+     "date": "2024-11-05",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.19408420258182546
+    },
+    {
+     "date": "2024-11-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.19437091458673716
+    },
+    {
+     "date": "2024-11-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.20734470975693065
+    },
+    {
+     "date": "2024-11-18",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.20765671125561347
+    },
+    {
+     "date": "2024-11-19",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.21071408871620778
+    },
+    {
+     "date": "2024-11-25",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21102870690466324
+    },
+    {
+     "date": "2024-11-26",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2182666199463298
+    },
+    {
+     "date": "2024-12-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21857654436854146
+    },
+    {
+     "date": "2024-12-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.21517170956779053
+    },
+    {
+     "date": "2024-12-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21548712784563662
+    },
+    {
+     "date": "2024-12-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2216179929398615
+    },
+    {
+     "date": "2024-12-16",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22192701891870747
+    },
+    {
+     "date": "2024-12-17",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22098435198534738
+    },
+    {
+     "date": "2024-12-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2212964598030035
+    },
+    {
+     "date": "2024-12-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.21324561441749346
+    },
+    {
+     "date": "2024-12-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21356366110244718
+    },
+    {
+     "date": "2024-12-31",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.21417163266845085
+    },
+    {
+     "date": "2025-01-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21448584665657133
+    },
+    {
+     "date": "2025-01-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.24203795934851058
+    },
+    {
+     "date": "2025-01-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.24233024900195899
+    },
+    {
+     "date": "2025-01-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23779692893619575
+    },
+    {
+     "date": "2025-01-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2380658070279249
+    },
+    {
+     "date": "2025-01-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23124334663340962
+    },
+    {
+     "date": "2025-01-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23151545609587376
+    },
+    {
+     "date": "2025-01-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23494634902546518
+    },
+    {
+     "date": "2025-02-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23521228675877526
+    },
+    {
+     "date": "2025-02-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23749187900715663
+    },
+    {
+     "date": "2025-02-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2377059623230845
+    },
+    {
+     "date": "2025-02-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23827494191085674
+    },
+    {
+     "date": "2025-02-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23843990051637676
+    },
+    {
+     "date": "2025-02-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23589516634736363
+    },
+    {
+     "date": "2025-04-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2360614304821017
+    },
+    {
+     "date": "2025-04-29",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23925636096224334
+    },
+    {
+     "date": "2025-05-05",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23952146465915514
+    },
+    {
+     "date": "2025-05-06",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23200286291507888
+    },
+    {
+     "date": "2025-05-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23227401523316082
+    },
+    {
+     "date": "2025-05-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.21443010199076207
+    },
+    {
+     "date": "2025-05-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21475159035142044
+    },
+    {
+     "date": "2025-05-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2123160258662562
+    },
+    {
+     "date": "2025-05-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21263219932144928
+    },
+    {
+     "date": "2025-05-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2071763526611743
+    },
+    {
+     "date": "2025-06-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.207495790437622
+    },
+    {
+     "date": "2025-06-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.21054065284877543
+    },
+    {
+     "date": "2025-06-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21085534544334494
+    },
+    {
+     "date": "2025-06-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2012176897325727
+    },
+    {
+     "date": "2025-06-16",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.20154118398210874
+    },
+    {
+     "date": "2025-06-17",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.20771175678452247
+    },
+    {
+     "date": "2025-06-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2079736274502635
+    },
+    {
+     "date": "2025-06-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.20325145227797603
+    },
+    {
+     "date": "2025-06-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.20351855492840487
+    },
+    {
+     "date": "2025-07-01",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2110637220944187
+    },
+    {
+     "date": "2025-07-07",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21132377383735323
+    },
+    {
+     "date": "2025-07-08",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.206923576303647
+    },
+    {
+     "date": "2025-07-14",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.20719007257435396
+    },
+    {
+     "date": "2025-07-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.20408068100703902
+    },
+    {
+     "date": "2025-07-21",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.20434749487631954
+    },
+    {
+     "date": "2025-07-22",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.19475349270030384
+    },
+    {
+     "date": "2025-07-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.19507955620849493
+    },
+    {
+     "date": "2025-07-29",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1988157150484835
+    },
+    {
+     "date": "2025-08-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.19908126831800754
+    },
+    {
+     "date": "2025-08-05",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.20671372804043187
+    },
+    {
+     "date": "2025-08-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.20702811771232377
+    },
+    {
+     "date": "2025-08-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.17840992535785916
+    },
+    {
+     "date": "2025-08-18",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.17875013554015906
+    },
+    {
+     "date": "2025-08-19",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.19537756603193857
+    },
+    {
+     "date": "2025-08-25",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.19569289543330726
+    },
+    {
+     "date": "2025-08-26",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.17901385453151197
+    },
+    {
+     "date": "2025-09-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1793490492951968
+    },
+    {
+     "date": "2025-09-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1697949378251109
+    },
+    {
+     "date": "2025-09-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.17013097279872091
+    },
+    {
+     "date": "2025-09-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16804941297676568
+    },
+    {
+     "date": "2025-09-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1683831586145481
+    },
+    {
+     "date": "2025-09-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1623665503828191
+    },
+    {
+     "date": "2025-09-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16270414346465334
+    },
+    {
+     "date": "2025-09-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16540567346428348
+    },
+    {
+     "date": "2025-09-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16573856455023506
+    },
+    {
+     "date": "2025-09-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.17091203687223933
+    },
+    {
+     "date": "2025-10-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.17119982630202601
+    },
+    {
+     "date": "2025-10-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.17672133750298824
+    },
+    {
+     "date": "2025-10-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.17704857297153453
+    },
+    {
+     "date": "2025-10-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.18950418064622832
+    },
+    {
+     "date": "2025-10-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.18978207622314192
+    },
+    {
+     "date": "2025-10-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2031354607721777
+    },
+    {
+     "date": "2025-10-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.20335681356657498
+    },
+    {
+     "date": "2025-10-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.20801246121923622
+    },
+    {
+     "date": "2025-11-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2082345395515971
+    },
+    {
+     "date": "2025-11-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2203833269674491
+    },
+    {
+     "date": "2025-11-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2205996764020589
+    },
+    {
+     "date": "2025-11-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22580530232036056
+    },
+    {
+     "date": "2025-11-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22602229458743572
+    },
+    {
+     "date": "2025-11-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22905159945730302
+    },
+    {
+     "date": "2025-11-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22921808832693147
+    },
+    {
+     "date": "2025-11-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22603831412584863
+    },
+    {
+     "date": "2025-12-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2262067630758383
+    },
+    {
+     "date": "2025-12-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22660261362739786
+    },
+    {
+     "date": "2025-12-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22676997834912682
+    },
+    {
+     "date": "2025-12-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22628046025330018
+    },
+    {
+     "date": "2025-12-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22644827646074372
+    },
+    {
+     "date": "2025-12-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22667171804530484
+    },
+    {
+     "date": "2025-12-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22683925364564383
+    },
+    {
+     "date": "2025-12-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22473596264536444
+    },
+    {
+     "date": "2026-01-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2249044574721556
+    },
+    {
+     "date": "2026-01-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22598838963167733
+    },
+    {
+     "date": "2026-01-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2261558805538758
+    },
+    {
+     "date": "2026-01-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23435545076384956
+    },
+    {
+     "date": "2026-01-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23456788972724318
+    },
+    {
+     "date": "2026-01-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23308695283795577
+    },
+    {
+     "date": "2026-02-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23325341949246148
+    },
+    {
+     "date": "2026-02-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22872388957060763
+    },
+    {
+     "date": "2026-04-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22889263575363272
+    },
+    {
+     "date": "2026-04-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22989377607624562
+    },
+    {
+     "date": "2026-04-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2301492031034028
+    },
+    {
+     "date": "2026-04-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22934666877648713
+    },
+    {
+     "date": "2026-04-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22960426141373147
+    },
+    {
+     "date": "2026-04-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2336518864563938
+    },
+    {
+     "date": "2026-05-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23390608699490822
+    },
+    {
+     "date": "2026-05-05",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23010168369457473
+    },
+    {
+     "date": "2026-05-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23035954034376716
+    },
+    {
+     "date": "2026-05-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23724184837426554
+    },
+    {
+     "date": "2026-05-18",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23749345665860477
+    },
+    {
+     "date": "2026-05-19",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2395840034170319
+    },
+    {
+     "date": "2026-05-25",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23978642155790875
+    },
+    {
+     "date": "2026-05-26",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2392379436191686
+    },
+    {
+     "date": "2026-06-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23944001152629713
+    },
+    {
+     "date": "2026-06-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.24661449901248644
+    },
+    {
+     "date": "2026-06-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.24681137432236033
+    },
+    {
+     "date": "2026-06-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.25047241349450966
+    },
+    {
+     "date": "2026-06-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.25067113419347986
+    },
+    {
+     "date": "2026-06-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.25651361744530643
+    },
+    {
+     "date": "2026-08-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.256710096404383
+    },
+    {
+     "date": "2026-08-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.25620626739888197
+    },
+    {
+     "date": "2026-08-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.25645470853892316
+    },
+    {
+     "date": "2026-08-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2562049278571894
+    },
+    {
+     "date": "2026-08-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2564659267591809
+    },
+    {
+     "date": "2026-08-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.26243245787101566
+    },
+    {
+     "date": "2026-08-31",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2627252172408743
+    },
+    {
+     "date": "2026-09-01",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.27092230004142404
+    },
+    {
+     "date": "2026-09-07",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2712107702522525
+    },
+    {
+     "date": "2026-09-08",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.270260800315004
+    },
+    {
+     "date": "2026-09-14",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2705531925891298
+    },
+    {
+     "date": "2026-09-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2846316961133225
+    },
+    {
+     "date": "2026-09-21",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.28491232874495676
+    },
+    {
+     "date": "2026-09-22",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2881508217462583
+    },
+    {
+     "date": "2026-09-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.28843438043438674
+    },
+    {
+     "date": "2026-09-29",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.28971328853347433
+    },
+    {
+     "date": "2026-10-05",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2899970055053205
+    },
+    {
+     "date": "2026-10-06",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2911734855000845
+    },
+    {
+     "date": "2026-10-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2914566591143657
+    },
+    {
+     "date": "2026-10-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.28617670284337426
+    },
+    {
+     "date": "2026-10-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2864644575116798
+    },
+    {
+     "date": "2026-10-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.28153734866398916
+    },
+    {
+     "date": "2026-10-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2818268187337494
+    },
+    {
+     "date": "2026-10-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.28021604579057824
+    }
+   ]
+  },
+  {
+   "lookback_days": 126,
+   "top_k": 2,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "brake": "frozen_v1",
+   "oos_periods": 122,
+   "oos_compounded": -0.1134931167998291,
+   "oos_max_drawdown_daily": -0.39490781766183236,
+   "oos_period_pf": 0.7531783814483572,
+   "oos_mean_period_return": -0.0009372099528191504,
+   "t_stat_one_sided_p": 0.8484499996702937,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.022394937755729982
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.050927754538648395
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": -0.046717232669936215
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.022747649507536716
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.019301112950908084
+    }
+   },
+   "folds_positive": 1,
+   "oos_episodes": 222,
+   "oos_episode_pf": 0.780516044479533,
+   "contrib_by_asset_episodes": {
+    "BTCUSDT": -0.023656748587389975,
+    "ETHUSDT": -0.2313426339588064,
+    "SOLUSDT": 0.05396894110734407,
+    "BNBUSDT": -0.1851200855906484,
+    "GOLD": 0.040658293277058166,
+    "SPX": -0.036622934837852394,
+    "NDX": -0.07512651991432939
+   },
+   "max_asset_profit_share": 0.5703320133832419,
+   "brake_transitions": 292,
+   "total_turnover_cost_frac": 0.10399407778727644,
+   "is_compounded": 0.040475504805096874,
+   "is_periods": 78,
+   "bar": {
+    "gates": {
+     "g1_compounded_positive": false,
+     "g2_period_pf_ge_1_2": false,
+     "g3_folds_ge_4_of_5": false,
+     "g4_max_dd_le_20pct_daily": false,
+     "g5_max_asset_share_le_50pct": false,
+     "g6_bonferroni": false,
+     "g8_episodes_ge_200_and_episode_pf_ge_1_2": false
+    },
+    "bonferroni_alpha": 1.2823800974608875e-05,
+    "verdict": "FAIL"
+   },
+   "transitions": [
+    {
+     "date": "2023-02-10",
+     "from": "NORMAL",
+     "to": "HALVED",
+     "dd_at_signal": -0.11018342533178083
+    },
+    {
+     "date": "2023-04-11",
+     "from": "HALVED",
+     "to": "NORMAL",
+     "dd_at_signal": -0.048739954003904296
+    },
+    {
+     "date": "2023-04-21",
+     "from": "NORMAL",
+     "to": "HALVED",
+     "dd_at_signal": -0.12737346974092723
+    },
+    {
+     "date": "2023-08-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15153367131939965
+    },
+    {
+     "date": "2023-08-21",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15177050177400464
+    },
+    {
+     "date": "2023-08-22",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15292262509782217
+    },
+    {
+     "date": "2023-08-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1530918440773178
+    },
+    {
+     "date": "2023-09-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1502614612327806
+    },
+    {
+     "date": "2023-09-18",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15043033760492375
+    },
+    {
+     "date": "2023-09-19",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15153316799516237
+    },
+    {
+     "date": "2023-09-25",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1517026747782717
+    },
+    {
+     "date": "2023-09-26",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1581990678630768
+    },
+    {
+     "date": "2023-10-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15836616270278026
+    },
+    {
+     "date": "2023-10-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16042146341912789
+    },
+    {
+     "date": "2023-10-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1606739776994186
+    },
+    {
+     "date": "2023-10-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16222373612270258
+    },
+    {
+     "date": "2023-10-16",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16255836101704768
+    },
+    {
+     "date": "2023-10-17",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.16373899855670593
+    },
+    {
+     "date": "2023-10-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.16407316469292954
+    },
+    {
+     "date": "2023-10-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.17050954674648577
+    },
+    {
+     "date": "2023-10-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.17083890212325936
+    },
+    {
+     "date": "2023-11-10",
+     "from": "HALVED",
+     "to": "NORMAL",
+     "dd_at_signal": -0.035567061231473684
+    },
+    {
+     "date": "2023-11-21",
+     "from": "NORMAL",
+     "to": "HALVED",
+     "dd_at_signal": -0.14096743351535002
+    },
+    {
+     "date": "2023-12-07",
+     "from": "HALVED",
+     "to": "NORMAL",
+     "dd_at_signal": -0.03312698329354835
+    },
+    {
+     "date": "2024-01-03",
+     "from": "NORMAL",
+     "to": "HALVED",
+     "dd_at_signal": -0.10356126607002336
+    },
+    {
+     "date": "2024-01-22",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.1537816092042047
+    },
+    {
+     "date": "2024-01-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15410411320785145
+    },
+    {
+     "date": "2024-01-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15677057798151717
+    },
+    {
+     "date": "2024-02-05",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15710693850775692
+    },
+    {
+     "date": "2024-02-06",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15278242552915466
+    },
+    {
+     "date": "2024-02-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1531231772270243
+    },
+    {
+     "date": "2024-02-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15299040929216
+    },
+    {
+     "date": "2024-02-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1533294017359087
+    },
+    {
+     "date": "2024-02-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15473372670608765
+    },
+    {
+     "date": "2024-02-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15507140695271282
+    },
+    {
+     "date": "2024-02-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15403948252751531
+    },
+    {
+     "date": "2024-03-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1543784146928493
+    },
+    {
+     "date": "2024-03-05",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.17185564646585838
+    },
+    {
+     "date": "2024-03-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.17218004861401648
+    },
+    {
+     "date": "2024-03-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.17393059207427408
+    },
+    {
+     "date": "2024-03-18",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.17426045207125251
+    },
+    {
+     "date": "2024-03-19",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.21989589988324487
+    },
+    {
+     "date": "2024-03-25",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2201898194624945
+    },
+    {
+     "date": "2024-03-26",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22131179704278037
+    },
+    {
+     "date": "2024-04-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22162294830256002
+    },
+    {
+     "date": "2024-04-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2410283062140488
+    },
+    {
+     "date": "2024-04-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.24132425728872686
+    },
+    {
+     "date": "2024-04-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2521991161726995
+    },
+    {
+     "date": "2024-04-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2524940079707956
+    },
+    {
+     "date": "2024-04-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2608005691759345
+    },
+    {
+     "date": "2024-04-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2610930459247408
+    },
+    {
+     "date": "2024-04-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.26351005312376263
+    },
+    {
+     "date": "2024-04-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.26380380052474617
+    },
+    {
+     "date": "2024-04-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2779200176311243
+    },
+    {
+     "date": "2024-05-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2782033209286212
+    },
+    {
+     "date": "2024-05-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.28457806210384917
+    },
+    {
+     "date": "2024-05-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2848617964700061
+    },
+    {
+     "date": "2024-05-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2993172854121676
+    },
+    {
+     "date": "2024-05-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2995918907245384
+    },
+    {
+     "date": "2024-05-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3022527705091659
+    },
+    {
+     "date": "2024-05-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3025309171143459
+    },
+    {
+     "date": "2024-05-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3049266876468313
+    },
+    {
+     "date": "2024-06-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30520387025861284
+    },
+    {
+     "date": "2024-06-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.28703117708504977
+    },
+    {
+     "date": "2024-06-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2873237448588659
+    },
+    {
+     "date": "2024-06-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3051390865206285
+    },
+    {
+     "date": "2024-06-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30541001877755636
+    },
+    {
+     "date": "2024-06-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3135834456605001
+    },
+    {
+     "date": "2024-06-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31385485404587976
+    },
+    {
+     "date": "2024-06-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30552851323976393
+    },
+    {
+     "date": "2024-07-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3058097421540138
+    },
+    {
+     "date": "2024-07-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2964564686738683
+    },
+    {
+     "date": "2024-07-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2967417384662322
+    },
+    {
+     "date": "2024-07-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2946358120820032
+    },
+    {
+     "date": "2024-07-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29484853342230277
+    },
+    {
+     "date": "2024-07-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2976845111923355
+    },
+    {
+     "date": "2024-07-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29789385303404825
+    },
+    {
+     "date": "2024-07-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.29773514692057246
+    },
+    {
+     "date": "2024-07-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29789330426683547
+    },
+    {
+     "date": "2024-07-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2969143051177555
+    },
+    {
+     "date": "2024-08-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29707289911137946
+    },
+    {
+     "date": "2024-08-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2940044397350643
+    },
+    {
+     "date": "2024-08-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29416388005717153
+    },
+    {
+     "date": "2024-08-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2950717174624866
+    },
+    {
+     "date": "2024-08-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2952125497849579
+    },
+    {
+     "date": "2024-08-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2944850613476051
+    },
+    {
+     "date": "2024-09-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2946263380245211
+    },
+    {
+     "date": "2024-09-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3040439141274459
+    },
+    {
+     "date": "2024-09-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30418125004434626
+    },
+    {
+     "date": "2024-09-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3028457842490919
+    },
+    {
+     "date": "2024-09-16",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3030029764677833
+    },
+    {
+     "date": "2024-09-17",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30421550581444534
+    },
+    {
+     "date": "2024-09-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3043717623980292
+    },
+    {
+     "date": "2024-09-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3024857221002776
+    },
+    {
+     "date": "2024-09-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30264318085453734
+    },
+    {
+     "date": "2024-10-01",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30240004840532353
+    },
+    {
+     "date": "2024-10-07",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3025572809239756
+    },
+    {
+     "date": "2024-10-08",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3030259896622094
+    },
+    {
+     "date": "2024-10-14",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3031825541677915
+    },
+    {
+     "date": "2024-10-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3037956584879007
+    },
+    {
+     "date": "2024-10-21",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3039523115070285
+    },
+    {
+     "date": "2024-10-22",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30135374035726537
+    },
+    {
+     "date": "2024-10-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.301581743936879
+    },
+    {
+     "date": "2024-10-29",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.299037242828896
+    },
+    {
+     "date": "2024-11-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29926589335706233
+    },
+    {
+     "date": "2024-11-05",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.29534937649274484
+    },
+    {
+     "date": "2024-11-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29558028950767967
+    },
+    {
+     "date": "2024-11-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3057248194619393
+    },
+    {
+     "date": "2024-11-18",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3059985844293266
+    },
+    {
+     "date": "2024-11-19",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3044130408925909
+    },
+    {
+     "date": "2024-11-25",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30469202093387493
+    },
+    {
+     "date": "2024-11-26",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3095569740358536
+    },
+    {
+     "date": "2024-12-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3098313165142751
+    },
+    {
+     "date": "2024-12-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3037899035877295
+    },
+    {
+     "date": "2024-12-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3040709146184545
+    },
+    {
+     "date": "2024-12-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3081476528272593
+    },
+    {
+     "date": "2024-12-16",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30842287441949845
+    },
+    {
+     "date": "2024-12-17",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30295299353448246
+    },
+    {
+     "date": "2024-12-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3032341109417628
+    },
+    {
+     "date": "2024-12-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2902511136642658
+    },
+    {
+     "date": "2024-12-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29054031790025336
+    },
+    {
+     "date": "2024-12-31",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2899790481367184
+    },
+    {
+     "date": "2025-01-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29026339453891825
+    },
+    {
+     "date": "2025-01-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.31272113350381303
+    },
+    {
+     "date": "2025-01-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3129871755126825
+    },
+    {
+     "date": "2025-01-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30517819134901525
+    },
+    {
+     "date": "2025-01-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3054593535881931
+    },
+    {
+     "date": "2025-01-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.29316728341193554
+    },
+    {
+     "date": "2025-01-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.29345504445314474
+    },
+    {
+     "date": "2025-01-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30093264400347486
+    },
+    {
+     "date": "2025-02-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3012093929532461
+    },
+    {
+     "date": "2025-02-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3155182699520481
+    },
+    {
+     "date": "2025-02-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31578645089976487
+    },
+    {
+     "date": "2025-02-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3210446745560215
+    },
+    {
+     "date": "2025-02-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3213142628709045
+    },
+    {
+     "date": "2025-02-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.32665119152362343
+    },
+    {
+     "date": "2025-02-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.32691850486527085
+    },
+    {
+     "date": "2025-02-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.33494312460034603
+    },
+    {
+     "date": "2025-03-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.33515631644890564
+    },
+    {
+     "date": "2025-03-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.33222525921908264
+    },
+    {
+     "date": "2025-03-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3324434458457852
+    },
+    {
+     "date": "2025-03-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.32223254424183057
+    },
+    {
+     "date": "2025-03-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3224574007566282
+    },
+    {
+     "date": "2025-03-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3239745557105572
+    },
+    {
+     "date": "2025-04-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3241934744220082
+    },
+    {
+     "date": "2025-04-29",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.32649191425620294
+    },
+    {
+     "date": "2025-05-05",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.32671003036070956
+    },
+    {
+     "date": "2025-05-06",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3181033012818182
+    },
+    {
+     "date": "2025-05-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3183275828077454
+    },
+    {
+     "date": "2025-05-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3152776774708842
+    },
+    {
+     "date": "2025-05-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31550145267041285
+    },
+    {
+     "date": "2025-05-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.31096418679011806
+    },
+    {
+     "date": "2025-05-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.311189573261631
+    },
+    {
+     "date": "2025-05-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3155413183211253
+    },
+    {
+     "date": "2025-06-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3157628101323313
+    },
+    {
+     "date": "2025-06-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.317779449603645
+    },
+    {
+     "date": "2025-06-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3180006225357467
+    },
+    {
+     "date": "2025-06-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.318794928338508
+    },
+    {
+     "date": "2025-06-16",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3190162232511522
+    },
+    {
+     "date": "2025-06-17",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3233300554353792
+    },
+    {
+     "date": "2025-06-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3235481846104168
+    },
+    {
+     "date": "2025-06-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.32561599515510464
+    },
+    {
+     "date": "2025-06-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3258352049391473
+    },
+    {
+     "date": "2025-07-01",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3261904060410914
+    },
+    {
+     "date": "2025-07-07",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3264086861689339
+    },
+    {
+     "date": "2025-07-08",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.32082832094309044
+    },
+    {
+     "date": "2025-07-14",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.32110232953541373
+    },
+    {
+     "date": "2025-07-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3172557467834487
+    },
+    {
+     "date": "2025-07-21",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3175304917414634
+    },
+    {
+     "date": "2025-07-22",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3097426836436109
+    },
+    {
+     "date": "2025-07-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3100220108885139
+    },
+    {
+     "date": "2025-07-29",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.31071106223804745
+    },
+    {
+     "date": "2025-08-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31098661258909055
+    },
+    {
+     "date": "2025-08-05",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.31771500732248603
+    },
+    {
+     "date": "2025-08-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31798534020380576
+    },
+    {
+     "date": "2025-08-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2868101126814283
+    },
+    {
+     "date": "2025-08-18",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.28710796784971016
+    },
+    {
+     "date": "2025-08-19",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30207778994329915
+    },
+    {
+     "date": "2025-08-25",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30235108496120966
+    },
+    {
+     "date": "2025-08-26",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2885992557235407
+    },
+    {
+     "date": "2025-09-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2888894283767728
+    },
+    {
+     "date": "2025-09-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.28742998797014285
+    },
+    {
+     "date": "2025-09-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.28771571352880887
+    },
+    {
+     "date": "2025-09-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.28746326797621613
+    },
+    {
+     "date": "2025-09-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.28774849761273247
+    },
+    {
+     "date": "2025-09-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2819134871980348
+    },
+    {
+     "date": "2025-09-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2822031697675619
+    },
+    {
+     "date": "2025-09-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.27975192071892396
+    },
+    {
+     "date": "2025-09-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.28004111529774867
+    },
+    {
+     "date": "2025-09-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2871102449368512
+    },
+    {
+     "date": "2025-10-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2873926883804425
+    },
+    {
+     "date": "2025-10-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.28484127315327
+    },
+    {
+     "date": "2025-10-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2851284712272695
+    },
+    {
+     "date": "2025-10-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30216106765199224
+    },
+    {
+     "date": "2025-10-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3024335045658062
+    },
+    {
+     "date": "2025-10-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3142184888324928
+    },
+    {
+     "date": "2025-10-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31448819905389236
+    },
+    {
+     "date": "2025-10-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3260455948777975
+    },
+    {
+     "date": "2025-11-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.326310663363405
+    },
+    {
+     "date": "2025-11-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3508810142317109
+    },
+    {
+     "date": "2025-11-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3511309414759648
+    },
+    {
+     "date": "2025-11-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3637178203776954
+    },
+    {
+     "date": "2025-11-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.36396740231703295
+    },
+    {
+     "date": "2025-11-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.359925928901183
+    },
+    {
+     "date": "2025-11-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.36013606449171875
+    },
+    {
+     "date": "2025-11-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3589524860434282
+    },
+    {
+     "date": "2025-12-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3591609507975573
+    },
+    {
+     "date": "2025-12-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.35998220150202065
+    },
+    {
+     "date": "2025-12-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.36012588468667894
+    },
+    {
+     "date": "2025-12-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3595842889500368
+    },
+    {
+     "date": "2025-12-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3597925696632138
+    },
+    {
+     "date": "2025-12-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3604251368136915
+    },
+    {
+     "date": "2025-12-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3605689449612416
+    },
+    {
+     "date": "2025-12-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.35862303349832314
+    },
+    {
+     "date": "2025-12-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.35876783883453356
+    },
+    {
+     "date": "2025-12-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.35773213397974435
+    },
+    {
+     "date": "2026-01-05",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3578770083016277
+    },
+    {
+     "date": "2026-01-06",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3549072343262363
+    },
+    {
+     "date": "2026-01-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.35505308599399144
+    },
+    {
+     "date": "2026-01-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3560288830294497
+    },
+    {
+     "date": "2026-01-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3561735766668973
+    },
+    {
+     "date": "2026-01-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.35376589237866807
+    },
+    {
+     "date": "2026-01-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3539123384497703
+    },
+    {
+     "date": "2026-01-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3526318655823901
+    },
+    {
+     "date": "2026-02-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3527777732531264
+    },
+    {
+     "date": "2026-02-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.34446396536433244
+    },
+    {
+     "date": "2026-02-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3446139232666895
+    },
+    {
+     "date": "2026-02-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3468634525997868
+    },
+    {
+     "date": "2026-02-16",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.34700988437240654
+    },
+    {
+     "date": "2026-02-17",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.35152939164982666
+    },
+    {
+     "date": "2026-02-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3516740782436776
+    },
+    {
+     "date": "2026-02-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.35210883977359886
+    },
+    {
+     "date": "2026-03-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.35225441184980566
+    },
+    {
+     "date": "2026-03-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3596564164602494
+    },
+    {
+     "date": "2026-04-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3597986511933631
+    },
+    {
+     "date": "2026-04-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3552814969021919
+    },
+    {
+     "date": "2026-04-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.35542765185253566
+    },
+    {
+     "date": "2026-04-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3598877307410703
+    },
+    {
+     "date": "2026-04-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.36003063653680134
+    },
+    {
+     "date": "2026-04-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3647023025554854
+    },
+    {
+     "date": "2026-05-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.36484416150026644
+    },
+    {
+     "date": "2026-05-05",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3616689669916938
+    },
+    {
+     "date": "2026-05-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.36181329541123197
+    },
+    {
+     "date": "2026-05-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.36358853807050295
+    },
+    {
+     "date": "2026-05-18",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3637154908418252
+    },
+    {
+     "date": "2026-05-19",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.36586767295779055
+    },
+    {
+     "date": "2026-05-25",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3659940944381561
+    },
+    {
+     "date": "2026-05-26",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.36235953761883866
+    },
+    {
+     "date": "2026-06-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.36248781798291496
+    },
+    {
+     "date": "2026-06-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3616431400444461
+    },
+    {
+     "date": "2026-06-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3617710058525122
+    },
+    {
+     "date": "2026-06-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.36409807133805006
+    },
+    {
+     "date": "2026-06-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3642248118398451
+    },
+    {
+     "date": "2026-06-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.368250930824073
+    },
+    {
+     "date": "2026-06-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.36837650084511886
+    },
+    {
+     "date": "2026-06-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3759716439415157
+    },
+    {
+     "date": "2026-06-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3760949558490482
+    },
+    {
+     "date": "2026-06-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.37235749610858515
+    },
+    {
+     "date": "2026-07-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3724837970575132
+    },
+    {
+     "date": "2026-07-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.37608003845774174
+    },
+    {
+     "date": "2026-07-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.37620412830241834
+    },
+    {
+     "date": "2026-07-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.37402618531680254
+    },
+    {
+     "date": "2026-07-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.37415184062017126
+    },
+    {
+     "date": "2026-07-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.36987857252133516
+    },
+    {
+     "date": "2026-07-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3700054764943771
+    },
+    {
+     "date": "2026-07-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.37135057127062676
+    },
+    {
+     "date": "2026-08-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.37147605733719835
+    },
+    {
+     "date": "2026-08-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.36356927939643036
+    },
+    {
+     "date": "2026-08-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.36369817203709687
+    },
+    {
+     "date": "2026-08-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.36485357498583637
+    },
+    {
+     "date": "2026-08-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3649803986423227
+    },
+    {
+     "date": "2026-08-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3688688920696145
+    },
+    {
+     "date": "2026-08-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.36899436599329916
+    },
+    {
+     "date": "2026-08-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.37527301714809747
+    },
+    {
+     "date": "2026-08-31",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3755204974416777
+    },
+    {
+     "date": "2026-09-01",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.38229890224973095
+    },
+    {
+     "date": "2026-09-07",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.38254337124362825
+    },
+    {
+     "date": "2026-09-08",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3808995280815586
+    },
+    {
+     "date": "2026-09-14",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3811479246006514
+    },
+    {
+     "date": "2026-09-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.39035596458712174
+    },
+    {
+     "date": "2026-09-21",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.39059623800162435
+    },
+    {
+     "date": "2026-09-22",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3925367377730019
+    },
+    {
+     "date": "2026-09-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.39277904438258604
+    },
+    {
+     "date": "2026-09-29",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3932761790040523
+    },
+    {
+     "date": "2026-10-05",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.39351876683395504
+    },
+    {
+     "date": "2026-10-06",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.39453410803881206
+    },
+    {
+     "date": "2026-10-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3947759852961119
+    },
+    {
+     "date": "2026-10-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3903158874083311
+    },
+    {
+     "date": "2026-10-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3905616419283653
+    },
+    {
+     "date": "2026-10-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3861383516172445
+    },
+    {
+     "date": "2026-10-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3863857631028593
+    },
+    {
+     "date": "2026-10-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.38434838439302665
+    }
+   ]
+  },
+  {
+   "lookback_days": 126,
+   "top_k": 3,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "brake": "frozen_v1",
+   "oos_periods": 122,
+   "oos_compounded": -0.13238622134301448,
+   "oos_max_drawdown_daily": -0.34324272885701534,
+   "oos_period_pf": 0.6503992227037486,
+   "oos_mean_period_return": -0.001122635779997748,
+   "t_stat_one_sided_p": 0.9135559516628852,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.03830585412593801
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.08428911070175105
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": -0.05498976817196444
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.006112179206173796
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.028441670088251603
+    }
+   },
+   "folds_positive": 1,
+   "oos_episodes": 258,
+   "oos_episode_pf": 0.7026409940966161,
+   "contrib_by_asset_episodes": {
+    "BTCUSDT": -0.0204721726993089,
+    "ETHUSDT": -0.40441655575650415,
+    "SOLUSDT": -0.16036923131859837,
+    "BNBUSDT": -0.08581916992951766,
+    "GOLD": 0.02516997594394066,
+    "SPX": -0.08377209364117755,
+    "NDX": -0.09184967098181185
+   },
+   "max_asset_profit_share": 1.0,
+   "brake_transitions": 210,
+   "total_turnover_cost_frac": 0.08056713103215646,
+   "is_compounded": 0.37976362677896747,
+   "is_periods": 78,
+   "bar": {
+    "gates": {
+     "g1_compounded_positive": false,
+     "g2_period_pf_ge_1_2": false,
+     "g3_folds_ge_4_of_5": false,
+     "g4_max_dd_le_20pct_daily": false,
+     "g5_max_asset_share_le_50pct": false,
+     "g6_bonferroni": false,
+     "g8_episodes_ge_200_and_episode_pf_ge_1_2": false
+    },
+    "bonferroni_alpha": 1.2823800974608875e-05,
+    "verdict": "FAIL"
+   },
+   "transitions": [
+    {
+     "date": "2023-02-24",
+     "from": "NORMAL",
+     "to": "HALVED",
+     "dd_at_signal": -0.11790616320722602
+    },
+    {
+     "date": "2023-03-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15266417205089944
+    },
+    {
+     "date": "2023-03-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15289667481137614
+    },
+    {
+     "date": "2023-10-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15439772624164239
+    },
+    {
+     "date": "2023-10-16",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.15467525574290375
+    },
+    {
+     "date": "2023-10-17",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.15599696318892464
+    },
+    {
+     "date": "2023-10-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1562780005581489
+    },
+    {
+     "date": "2023-10-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.159292195809702
+    },
+    {
+     "date": "2023-10-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1596274082487975
+    },
+    {
+     "date": "2023-12-02",
+     "from": "HALVED",
+     "to": "NORMAL",
+     "dd_at_signal": -0.04547556233297201
+    },
+    {
+     "date": "2024-01-22",
+     "from": "NORMAL",
+     "to": "HALVED",
+     "dd_at_signal": -0.1441034413422051
+    },
+    {
+     "date": "2024-02-14",
+     "from": "HALVED",
+     "to": "NORMAL",
+     "dd_at_signal": -0.031393590969321594
+    },
+    {
+     "date": "2024-03-19",
+     "from": "NORMAL",
+     "to": "HALVED",
+     "dd_at_signal": -0.12427086268014453
+    },
+    {
+     "date": "2024-03-31",
+     "from": "HALVED",
+     "to": "NORMAL",
+     "dd_at_signal": -0.04733563969900434
+    },
+    {
+     "date": "2024-04-02",
+     "from": "NORMAL",
+     "to": "HALVED",
+     "dd_at_signal": -0.13499243269150463
+    },
+    {
+     "date": "2024-04-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.17232075695180782
+    },
+    {
+     "date": "2024-04-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.1726282370581922
+    },
+    {
+     "date": "2024-04-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.17805840242136395
+    },
+    {
+     "date": "2024-04-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.17838513937373224
+    },
+    {
+     "date": "2024-04-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.18108929138129692
+    },
+    {
+     "date": "2024-04-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.181415905462319
+    },
+    {
+     "date": "2024-04-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.20058615124952284
+    },
+    {
+     "date": "2024-05-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.20089837966416324
+    },
+    {
+     "date": "2024-05-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2098689293268976
+    },
+    {
+     "date": "2024-05-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2101815213915611
+    },
+    {
+     "date": "2024-05-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22377804615086283
+    },
+    {
+     "date": "2024-05-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22408322269345538
+    },
+    {
+     "date": "2024-05-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2284991024787144
+    },
+    {
+     "date": "2024-05-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2288060606324931
+    },
+    {
+     "date": "2024-05-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23256359041151542
+    },
+    {
+     "date": "2024-06-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23286918535446954
+    },
+    {
+     "date": "2024-06-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.21425577358704995
+    },
+    {
+     "date": "2024-06-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21457763938325247
+    },
+    {
+     "date": "2024-06-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23198163183254783
+    },
+    {
+     "date": "2024-06-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2322820032504127
+    },
+    {
+     "date": "2024-06-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23939899603841341
+    },
+    {
+     "date": "2024-06-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23970051247776225
+    },
+    {
+     "date": "2024-06-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23048998608407245
+    },
+    {
+     "date": "2024-07-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23080159594811434
+    },
+    {
+     "date": "2024-07-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22554366404505422
+    },
+    {
+     "date": "2024-07-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22585567282394203
+    },
+    {
+     "date": "2024-07-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22413456834216416
+    },
+    {
+     "date": "2024-07-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22435529337906568
+    },
+    {
+     "date": "2024-07-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22442981246960514
+    },
+    {
+     "date": "2024-07-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2246489816930547
+    },
+    {
+     "date": "2024-07-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22478513053291238
+    },
+    {
+     "date": "2024-07-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22495316757183748
+    },
+    {
+     "date": "2024-07-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.226067935312515
+    },
+    {
+     "date": "2024-08-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22623559473796728
+    },
+    {
+     "date": "2024-08-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22080614293624345
+    },
+    {
+     "date": "2024-08-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22097601397380873
+    },
+    {
+     "date": "2024-08-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2212338587000343
+    },
+    {
+     "date": "2024-08-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.221402622541514
+    },
+    {
+     "date": "2024-08-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2210485155099755
+    },
+    {
+     "date": "2024-09-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2212173725005524
+    },
+    {
+     "date": "2024-09-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22845011185464714
+    },
+    {
+     "date": "2024-09-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2286159623125762
+    },
+    {
+     "date": "2024-09-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22652070210397912
+    },
+    {
+     "date": "2024-09-16",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22668875683872836
+    },
+    {
+     "date": "2024-09-17",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2275752141220886
+    },
+    {
+     "date": "2024-09-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22774235953031774
+    },
+    {
+     "date": "2024-09-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2257974661575286
+    },
+    {
+     "date": "2024-09-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22596571613719763
+    },
+    {
+     "date": "2024-10-01",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22768513584001449
+    },
+    {
+     "date": "2024-10-07",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22785233610873612
+    },
+    {
+     "date": "2024-10-08",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2262546451187808
+    },
+    {
+     "date": "2024-10-14",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22642246584847192
+    },
+    {
+     "date": "2024-10-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22868874566804898
+    },
+    {
+     "date": "2024-10-21",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2288555426645521
+    },
+    {
+     "date": "2024-10-22",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22704859041550907
+    },
+    {
+     "date": "2024-10-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2272683700578214
+    },
+    {
+     "date": "2024-10-29",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2203413853637084
+    },
+    {
+     "date": "2024-11-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22061715155447037
+    },
+    {
+     "date": "2024-11-05",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.21067758306786488
+    },
+    {
+     "date": "2024-11-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2109583918240715
+    },
+    {
+     "date": "2024-11-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2255547747449509
+    },
+    {
+     "date": "2024-11-18",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22585884052854188
+    },
+    {
+     "date": "2024-11-19",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22393518554719172
+    },
+    {
+     "date": "2024-11-25",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22420755310179574
+    },
+    {
+     "date": "2024-11-26",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22775288436311258
+    },
+    {
+     "date": "2024-12-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2280216561773173
+    },
+    {
+     "date": "2024-12-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.20628235158761676
+    },
+    {
+     "date": "2024-12-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.20660865788535243
+    },
+    {
+     "date": "2024-12-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.21280890705662925
+    },
+    {
+     "date": "2024-12-16",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2131214303367528
+    },
+    {
+     "date": "2024-12-17",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.21216809507614476
+    },
+    {
+     "date": "2024-12-23",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21248373507278973
+    },
+    {
+     "date": "2024-12-24",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.20007411147425946
+    },
+    {
+     "date": "2024-12-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.20039917168171162
+    },
+    {
+     "date": "2024-12-31",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.20101732034006592
+    },
+    {
+     "date": "2025-01-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.20133679408859917
+    },
+    {
+     "date": "2025-01-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22935011321024168
+    },
+    {
+     "date": "2025-01-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2296472956234219
+    },
+    {
+     "date": "2025-01-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22031739411808537
+    },
+    {
+     "date": "2025-01-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.220633122377473
+    },
+    {
+     "date": "2025-01-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.20982037131976006
+    },
+    {
+     "date": "2025-01-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.21014089297035576
+    },
+    {
+     "date": "2025-01-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2201639604266118
+    },
+    {
+     "date": "2025-02-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22047201199291577
+    },
+    {
+     "date": "2025-02-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23792400797808022
+    },
+    {
+     "date": "2025-02-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2382219823009729
+    },
+    {
+     "date": "2025-02-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.24226636823424985
+    },
+    {
+     "date": "2025-02-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.24252989836526329
+    },
+    {
+     "date": "2025-02-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.25247534846561615
+    },
+    {
+     "date": "2025-02-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.252770501341406
+    },
+    {
+     "date": "2025-02-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.26030385429392167
+    },
+    {
+     "date": "2025-03-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2605108293639943
+    },
+    {
+     "date": "2025-03-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2598940961625299
+    },
+    {
+     "date": "2025-05-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2601045742743243
+    },
+    {
+     "date": "2025-05-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2573421337134464
+    },
+    {
+     "date": "2025-06-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.25755368774933574
+    },
+    {
+     "date": "2025-06-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2580787432319378
+    },
+    {
+     "date": "2025-06-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.25828861791984425
+    },
+    {
+     "date": "2025-06-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.25746886230870003
+    },
+    {
+     "date": "2025-06-16",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2577293609946999
+    },
+    {
+     "date": "2025-06-17",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.26147608266367894
+    },
+    {
+     "date": "2025-06-30",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.26173310982871134
+    },
+    {
+     "date": "2025-07-01",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2684027011146932
+    },
+    {
+     "date": "2025-07-07",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2686554054650807
+    },
+    {
+     "date": "2025-07-08",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.26562100822361767
+    },
+    {
+     "date": "2025-07-14",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2658798047614449
+    },
+    {
+     "date": "2025-07-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2618015978263939
+    },
+    {
+     "date": "2025-07-21",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2620986259292686
+    },
+    {
+     "date": "2025-07-22",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2537927243663206
+    },
+    {
+     "date": "2025-07-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2540946477014191
+    },
+    {
+     "date": "2025-07-29",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2558041786840538
+    },
+    {
+     "date": "2025-08-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.25610129254504355
+    },
+    {
+     "date": "2025-08-05",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2650438391931582
+    },
+    {
+     "date": "2025-08-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.26533436366261476
+    },
+    {
+     "date": "2025-08-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.24155973809039222
+    },
+    {
+     "date": "2025-08-18",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.24187274159188676
+    },
+    {
+     "date": "2025-08-19",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2572221606160169
+    },
+    {
+     "date": "2025-08-25",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2575132532845221
+    },
+    {
+     "date": "2025-08-26",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.24211619071079282
+    },
+    {
+     "date": "2025-09-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.24242562185741756
+    },
+    {
+     "date": "2025-09-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23360585500107134
+    },
+    {
+     "date": "2025-09-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23391606177771407
+    },
+    {
+     "date": "2025-09-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2319944940437949
+    },
+    {
+     "date": "2025-09-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23230258744670107
+    },
+    {
+     "date": "2025-09-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22674842555148222
+    },
+    {
+     "date": "2025-09-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2270600706776057
+    },
+    {
+     "date": "2025-09-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.22955395666865408
+    },
+    {
+     "date": "2025-09-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.22986126120197903
+    },
+    {
+     "date": "2025-09-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.23741326726777157
+    },
+    {
+     "date": "2025-10-06",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.23771540438063632
+    },
+    {
+     "date": "2025-10-07",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.24279378523359085
+    },
+    {
+     "date": "2025-10-13",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.24309475833269156
+    },
+    {
+     "date": "2025-10-14",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.2589850373205247
+    },
+    {
+     "date": "2025-10-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2592752082988399
+    },
+    {
+     "date": "2025-10-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.27476586438263717
+    },
+    {
+     "date": "2025-10-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.2750149679317323
+    },
+    {
+     "date": "2025-10-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.28603334377006717
+    },
+    {
+     "date": "2025-11-03",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.286314639079829
+    },
+    {
+     "date": "2025-11-04",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3053124974807818
+    },
+    {
+     "date": "2025-11-10",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3055476769218046
+    },
+    {
+     "date": "2025-11-11",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.31474672909532386
+    },
+    {
+     "date": "2025-11-17",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31498258554300507
+    },
+    {
+     "date": "2025-11-18",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3134923673644584
+    },
+    {
+     "date": "2025-11-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3136883617406204
+    },
+    {
+     "date": "2025-11-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.31222338822059814
+    },
+    {
+     "date": "2025-12-01",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31241846612450674
+    },
+    {
+     "date": "2025-12-02",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3127702132275295
+    },
+    {
+     "date": "2025-12-08",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3129189311105398
+    },
+    {
+     "date": "2025-12-09",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.31239502446353373
+    },
+    {
+     "date": "2025-12-15",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31258999370041796
+    },
+    {
+     "date": "2025-12-16",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3107890423706605
+    },
+    {
+     "date": "2025-12-22",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3109854821354856
+    },
+    {
+     "date": "2025-12-23",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3091111008489037
+    },
+    {
+     "date": "2025-12-29",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3092612576984225
+    },
+    {
+     "date": "2025-12-30",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3087218587671684
+    },
+    {
+     "date": "2026-01-05",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3088718751723746
+    },
+    {
+     "date": "2026-01-06",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30588506466510146
+    },
+    {
+     "date": "2026-01-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30608259650386305
+    },
+    {
+     "date": "2026-01-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3070530051160042
+    },
+    {
+     "date": "2026-01-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30720295419900623
+    },
+    {
+     "date": "2026-01-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3079030907563334
+    },
+    {
+     "date": "2026-01-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3080533723097625
+    },
+    {
+     "date": "2026-01-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30671461310092896
+    },
+    {
+     "date": "2026-02-02",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3068650980866804
+    },
+    {
+     "date": "2026-02-03",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3027704267077491
+    },
+    {
+     "date": "2026-02-09",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3029229723753697
+    },
+    {
+     "date": "2026-02-10",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.30521040217468853
+    },
+    {
+     "date": "2026-04-20",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3053604375686255
+    },
+    {
+     "date": "2026-04-21",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3093459113051724
+    },
+    {
+     "date": "2026-04-27",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.30949458819096176
+    },
+    {
+     "date": "2026-04-28",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3134641493650071
+    },
+    {
+     "date": "2026-05-04",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3136119893734556
+    },
+    {
+     "date": "2026-05-05",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.31044147735032557
+    },
+    {
+     "date": "2026-05-11",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.31059157903088186
+    },
+    {
+     "date": "2026-05-12",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.312947819445085
+    },
+    {
+     "date": "2026-08-24",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3130961741257481
+    },
+    {
+     "date": "2026-08-25",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3169651809898102
+    },
+    {
+     "date": "2026-08-31",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.317190867119685
+    },
+    {
+     "date": "2026-09-01",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3236443382040356
+    },
+    {
+     "date": "2026-09-07",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3238674713279731
+    },
+    {
+     "date": "2026-09-08",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3233703515307059
+    },
+    {
+     "date": "2026-09-14",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.32359649508561794
+    },
+    {
+     "date": "2026-09-15",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.33665124977227423
+    },
+    {
+     "date": "2026-09-21",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3369114755950514
+    },
+    {
+     "date": "2026-09-22",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3399144745724494
+    },
+    {
+     "date": "2026-09-28",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.34017741367719334
+    },
+    {
+     "date": "2026-09-29",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3413633232073985
+    },
+    {
+     "date": "2026-10-05",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.34162640908591724
+    },
+    {
+     "date": "2026-10-06",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.34271733879297106
+    },
+    {
+     "date": "2026-10-12",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.34297992082534556
+    },
+    {
+     "date": "2026-10-13",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.33808390799588417
+    },
+    {
+     "date": "2026-10-19",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3383507379610303
+    },
+    {
+     "date": "2026-10-20",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.33378191449122596
+    },
+    {
+     "date": "2026-10-26",
+     "from": "FLAT",
+     "to": "HALVED",
+     "dd_at_signal": -0.3340503351186993
+    },
+    {
+     "date": "2026-10-27",
+     "from": "HALVED",
+     "to": "FLAT",
+     "dd_at_signal": -0.3323650314627976
+    }
+   ]
+  }
+ ]
+}
