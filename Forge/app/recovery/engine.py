@@ -508,7 +508,8 @@ class RecoveryEngine:
         agent route's repair intake skips anything not already in the
         project), and the Debugger escalation kept targeting main.py. This
         route fires only when ALL of these hold: the diagnosis is
-        dependency_missing; the evidence names a bare top-level module; the
+        dependency_missing; the evidence names a bare top-level module or
+        (the completeness gate's shape) a relative code-file path; the
         module is not a stdlib name (a missing stdlib module is an
         environment problem, not a project file); ``<module>.py`` is absent
         from the workspace; and the task goal, the architecture spec or
@@ -518,34 +519,94 @@ class RecoveryEngine:
         and the ladder's compile gate still applies before anything is
         written, so a bad generation changes nothing.
         """
-        if diagnosis.failure_class != FailureClass.DEPENDENCY_MISSING:
+        self._last_create_rejection = None
+
+        def reject(reason: str) -> None:
+            self._last_create_rejection = reason
             return None
+
+        if diagnosis.failure_class != FailureClass.DEPENDENCY_MISSING:
+            return reject(
+                f"diagnosis class is {diagnosis.failure_class.value}, "
+                "not dependency_missing"
+            )
         # The classifier names the missing module in failing_file; fall back
         # to the interpreter's own phrasing in the evidence text.
         module = None
-        named = re.fullmatch(
-            r"([A-Za-z_][A-Za-z0-9_]*)\.py", diagnosis.failing_file or ""
-        )
-        if named:
-            module = named.group(1)
-        else:
-            text = f"{diagnosis.error_message}\n{diagnosis.stack_trace or ''}"
-            match = re.search(r"No module named '([A-Za-z_][A-Za-z0-9_]*)'", text)
-            if match:
-                module = match.group(1)
-        if not module:
-            return None
-        if module in sys.stdlib_module_names:
-            return None
-        target_file = f"{module}.py"
+        target_file = None
+        path_shaped = False
+        # The completeness gate speaks paths: it passes the full relative
+        # path of the missing file (e.g. "taskboard/db.py"). Accept that
+        # shape directly -- the naming check below validates the full path
+        # against the goal, spec and manifest, which is exactly the
+        # provenance the gate computed its expected set from. (Before this,
+        # a path-shaped target matched neither extraction below and the
+        # route returned None before the naming check and before any
+        # provider call, so no file inside a directory could ever heal.)
+        raw_target = (diagnosis.failing_file or "").strip().replace("\\", "/")
+        while raw_target.startswith("./"):
+            raw_target = raw_target[2:]
+        raw_target = raw_target.lstrip("/")
+        parts = raw_target.split("/")
+        if (
+            len(parts) > 1
+            and all(part not in ("", ".", "..") for part in parts)
+            and "." in parts[-1]
+            and parts[-1].rsplit(".", 1)[0]
+            and "." + parts[-1].rsplit(".", 1)[-1].lower()
+            in {
+                ".py", ".js", ".jsx", ".ts", ".tsx", ".go", ".rs", ".java",
+                ".c", ".h", ".cpp", ".hpp", ".cc", ".sh", ".rb", ".php",
+                ".swift", ".kt",
+            }
+        ):
+            target_file = raw_target
+            module = parts[-1].rsplit(".", 1)[0]
+            path_shaped = True
+            if (
+                parts[0] in sys.stdlib_module_names
+                or module in sys.stdlib_module_names
+            ):
+                return reject(
+                    f"'{target_file}' resolves to a standard-library name "
+                    f"('{parts[0]}'/'{module}'); a missing standard-library "
+                    "module is an environment problem, not a project file"
+                )
+        if target_file is None:
+            named = re.fullmatch(
+                r"([A-Za-z_][A-Za-z0-9_]*)\.py", diagnosis.failing_file or ""
+            )
+            if named:
+                module = named.group(1)
+            else:
+                text = f"{diagnosis.error_message}\n{diagnosis.stack_trace or ''}"
+                match = re.search(r"No module named '([A-Za-z_][A-Za-z0-9_]*)'", text)
+                if match:
+                    module = match.group(1)
+            if not module:
+                return reject(
+                    f"failing_file '{diagnosis.failing_file}' is neither a "
+                    "bare module name nor a relative code-file path, and "
+                    "the evidence names no missing module"
+                )
+            if module in sys.stdlib_module_names:
+                return reject(
+                    f"'{module}' is a standard-library name; a missing "
+                    "standard-library module is an environment problem, "
+                    "not a project file"
+                )
+            target_file = f"{module}.py"
         try:
             existing = self.exec_engine.fs.search_files(
                 task_id, pattern="*.py", role="debugger"
             )
         except Exception:
-            return None
+            return reject(
+                "workspace listing failed while checking whether "
+                f"'{target_file}' already exists"
+            )
         if any(p == target_file or p.endswith("/" + target_file) for p in existing):
-            return None
+            return reject(f"'{target_file}' already exists in the workspace")
 
         goal, requirements = await self._load_task_objective(task_id)
         spec_text = ""
@@ -572,7 +633,9 @@ class RecoveryEngine:
             and target_file not in spec_text
             and target_file not in manifest_text
         ):
-            return None
+            return reject(
+                f"'{target_file}' is not named by the goal, spec or manifest"
+            )
 
         try:
             from app.agents.parser import LLMResponseParser
@@ -600,29 +663,42 @@ class RecoveryEngine:
                 f"[Task {task_id}] Missing-module creation for '{target_file}' "
                 f"failed at the provider call: {type(exc).__name__}"
             )
-            return None
+            return reject(f"provider call failed: {type(exc).__name__}")
         if not reply or reply.confidence < 0.70 or not reply.answer:
-            return None
+            return reject(
+                "provider reply was empty or below the 0.70 confidence bar"
+            )
         files = LLMResponseParser.extract_files(reply.answer, default_filename=target_file)
         if len(files) != 1 or files[0].relative_path != target_file:
-            return None
+            return reject(
+                "provider reply did not contain exactly the requested "
+                f"file '{target_file}'"
+            )
         content = files[0].content
         try:
             compile(content, target_file, "exec")
         except (SyntaxError, ValueError):
-            return None
+            return reject(f"generated content for '{target_file}' did not compile")
         logger.info(
             f"[Task {task_id}] Recovery creating missing project module '{target_file}'"
         )
+        if path_shaped:
+            explanation = (
+                f"Created missing project module {target_file}: the "
+                "completeness gate named it in the goal, spec or file "
+                "manifest and the file was absent from the workspace."
+            )
+        else:
+            explanation = (
+                f"Created missing project module {target_file}: verification "
+                f"reported \"No module named '{module}'\" and the file was "
+                "absent from the workspace."
+            )
         return RepairPatch(
             target_file=target_file,
             original_snippet=None,
             replacement_snippet=content,
-            explanation=(
-                f"Created missing project module {target_file}: verification "
-                f"reported \"No module named '{module}'\" and the file was "
-                "absent from the workspace."
-            ),
+            explanation=explanation,
             patch_type="create",
         )
 
@@ -659,10 +735,13 @@ class RecoveryEngine:
         )
         patch = await self._create_missing_module_patch(task_id, diagnosis)
         if not patch:
+            reason = (
+                getattr(self, "_last_create_rejection", None)
+                or "unspecified rejection"
+            )
             return False, (
-                f"Create route produced no module for '{target_file}' "
-                "(provider unavailable, below the confidence bar, or "
-                "the file is not named by the goal, spec or manifest)."
+                f"Create route produced no module for '{target_file}': "
+                f"{reason}."
             )
         if not self._patch_is_sound(task_id, patch):
             return False, (
