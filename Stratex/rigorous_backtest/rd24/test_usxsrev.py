@@ -341,7 +341,8 @@ def test_judge_pass_fail_insufficient():
 # ------------------------------------------------------------------
 # Runner: provenance refusal + synthetic end-to-end
 # ------------------------------------------------------------------
-def write_synthetic_panel(tmp_path, bad_sha=False):
+def write_synthetic_panel(tmp_path, bad_sha=False, with_iex=True,
+                          bad_iex_sha=False, flat_ratio=False):
     idx = pd.bdate_range("2023-01-02", "2026-10-30", tz="UTC")
     rng = np.random.default_rng(7)
     rows = []
@@ -358,6 +359,20 @@ def write_synthetic_panel(tmp_path, bad_sha=False):
     pdir = tmp_path / "panel"
     pdir.mkdir()
     panel.to_csv(pdir / "panel.csv", index=False)
+    # gate check 2 companion (USXSREV_ADDENDUM_V1.md): the identical
+    # pull at feed=iex — synthetic volumes at 1/40 of SIP (ratio 40),
+    # or identical to the SIP panel when flat_ratio (a mislabelled
+    # IEX panel presented as SIP; every ratio is then 1.0)
+    iex = panel.copy()
+    if not flat_ratio:
+        iex["volume"] = iex["volume"] // 40
+    iex_sha = None
+    if with_iex:
+        iex.to_csv(pdir / "iex_panel.csv", index=False)
+        iex_sha = hashlib.sha256(
+            (pdir / "iex_panel.csv").read_bytes()).hexdigest()
+        if bad_iex_sha:
+            iex_sha = "0" * 64
     pd.DataFrame([{"symbol": "AAPL", "ex_date": "2024-05-10",
                    "amount": 0.25}]).to_csv(pdir / "dividends.csv",
                                             index=False)
@@ -369,6 +384,7 @@ def write_synthetic_panel(tmp_path, bad_sha=False):
             (pdir / "panel.csv").read_bytes()).hexdigest(),
         "dividends_sha256": hashlib.sha256(
             (pdir / "dividends.csv").read_bytes()).hexdigest(),
+        "iex_panel_sha256": iex_sha,
         "per_symbol_counts": {s: int((panel["symbol"] == s).sum())
                               for s in U.UNIVERSE},
         "gate": {"session_census": "pass", "sip_feed_check": "pass",
@@ -408,3 +424,39 @@ def test_runner_refuses_bad_provenance(tmp_path):
                        capture_output=True, text=True, timeout=120)
     assert r.returncode == 2
     assert "REFUSED" in r.stderr
+
+
+def _run_runner(pdir, out):
+    return subprocess.run([sys.executable, str(RUNNER), "--panel-dir",
+                           str(pdir), "--n-final", "3896", "--out",
+                           str(out)],
+                          capture_output=True, text=True, timeout=120)
+
+
+def test_runner_refuses_missing_iex_panel(tmp_path):
+    # addendum v1, clause (a): no iex_panel.csv -> refuse
+    pdir = write_synthetic_panel(tmp_path, with_iex=False)
+    r = _run_runner(pdir, tmp_path / "out3")
+    assert r.returncode == 2
+    assert "REFUSED" in r.stderr
+    assert "iex_panel.csv" in r.stderr
+
+
+def test_runner_refuses_bad_iex_sha(tmp_path):
+    # addendum v1, clause (a): hash mismatch -> refuse
+    pdir = write_synthetic_panel(tmp_path, bad_iex_sha=True)
+    r = _run_runner(pdir, tmp_path / "out4")
+    assert r.returncode == 2
+    assert "REFUSED" in r.stderr
+    assert "iex_panel.csv SHA-256" in r.stderr
+
+
+def test_runner_refuses_iex_scale_panel(tmp_path):
+    # addendum v1, clauses (c)-(d): a panel at IEX scale presented as
+    # SIP scores ratio 1.0 on every symbol -> refuse (this is the
+    # failure mode gate check 2 exists to catch)
+    pdir = write_synthetic_panel(tmp_path, flat_ratio=True)
+    r = _run_runner(pdir, tmp_path / "out5")
+    assert r.returncode == 2
+    assert "REFUSED" in r.stderr
+    assert "SIP/IEX median-volume ratio" in r.stderr
