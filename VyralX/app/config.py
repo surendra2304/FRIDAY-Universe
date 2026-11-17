@@ -93,6 +93,28 @@ class Settings(BaseSettings):
     # A real synthesized music bed under every commentary render (the old
     # renders claimed [music] in captions with no music audible).
     viral_music_bed_enabled: bool = True
+    # --- IG2 B7-C1: optional MoneyPrinterTurbo producer lane --------------
+    # The autopilot's producer lane. "viral_remix" (default) is the native
+    # lane; "mpt" routes produce_one to app.services.mpt_lane, which renders
+    # briefs with a local MoneyPrinterTurbo checkout and passes the result
+    # through the SAME five quality gates. The lane runs only when it is
+    # BOTH selected here AND enabled below — either one alone is inert.
+    viral_producer_lane: str = Field(default="viral_remix", max_length=40)
+    viral_mpt_lane_enabled: bool = False
+    # Path to the operator-provisioned MoneyPrinterTurbo checkout (holds
+    # cli.py + config.toml). Empty = not provisioned; the lane refuses.
+    viral_mpt_home: str = Field(default="", max_length=600)
+    # Free stock sources only: pexels | pixabay (MPT's AI-generation
+    # sources are paid and are refused by the lane).
+    viral_mpt_video_source: str = Field(default="pexels", max_length=20)
+    # Optional Edge-TTS voice for MPT renders; empty = VyralX's default.
+    viral_mpt_voice_name: str = Field(default="", max_length=120)
+    # How to launch MPT's cli.py in MPT's own environment, e.g.
+    # "/opt/mpt/.venv/bin/python" or "uv run python". Empty = python3.
+    viral_mpt_python_cmd: str = Field(default="", max_length=200)
+    # JSON briefs file for the lane; empty = <data_dir>/mpt_briefs.json.
+    viral_mpt_briefs_path: str = Field(default="", max_length=600)
+    viral_mpt_timeout_seconds: int = Field(default=1800, ge=60, le=7200)
     inference_generation_path: str = "/v1/task/execute"
     inference_timeout_seconds: int = 60
     # Frame analysis: the commentary must describe what the clip actually shows,
@@ -273,6 +295,8 @@ class Settings(BaseSettings):
             raise ValueError("AUTONOMOUS_PUBLISH_PRIVACY must be private, unlisted, or public")
         if self.viral_source_policy not in {"reuse_licensed", "transformative"}:
             raise ValueError("VIRAL_SOURCE_POLICY must be reuse_licensed or transformative")
+        if self.viral_producer_lane not in {"viral_remix", "mpt"}:
+            raise ValueError("VIRAL_PRODUCER_LANE must be viral_remix or mpt")
         if self.sentinel_required_for_publish and not (
             self.sentinel_url and self.sentinel_api_key
             and self.sentinel_policy_path.startswith("/")
