@@ -164,6 +164,11 @@ class Settings(BaseSettings):
     youtube_category_id: str = "28"
     youtube_upload_enabled: bool = False
     youtube_analytics_enabled: bool = False
+    # TASK-VYR-014: channel identity + YPP eligibility tracker. The channel
+    # id lets the tracker use the Data API key directly; empty = resolve the
+    # channel through the OAuth session instead.
+    youtube_channel_id: str = ""
+    ypp_tracker_enabled: bool = True
 
     @model_validator(mode="after")
     def validate_settings(self) -> "Settings":

@@ -195,7 +195,34 @@ def report(limit: int = 5) -> None:
             )
 
 
+def _snapshot_ypp(settings: Settings) -> None:
+    """TASK-VYR-014: one channel snapshot per cycle for the YPP tracker.
+
+    Tracking is observability, not production: any failure is logged and
+    swallowed so a stats outage can never block an upload cycle.
+    """
+    if not getattr(settings, "ypp_tracker_enabled", True):
+        return
+    try:
+        from app.services.ypp_tracker import snapshot_channel
+
+        with SessionLocal() as db:
+            status = snapshot_channel(db, settings)
+        snap = status.get("snapshot", {})
+        progress = status.get("progress", {})
+        log.info(
+            "YPP tracker: subs=%s tracked_shorts_views_90d=%s fan_funding_eligible=%s ad_tier_eligible=%s",
+            snap.get("subscriber_count"),
+            snap.get("shorts_views_90d_tracked"),
+            progress.get("fan_funding_tier", {}).get("eligible"),
+            progress.get("ad_revenue_tier", {}).get("eligible"),
+        )
+    except Exception as exc:
+        log.info("YPP snapshot skipped: %s", exc)
+
+
 def run_cycle(settings: Settings, args: argparse.Namespace) -> dict:
+    _snapshot_ypp(settings)
     produced = produce_one(
         settings,
         max_candidates=args.max_candidates,
