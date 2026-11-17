@@ -57,6 +57,9 @@ _TRANSIENT_REASONS = {
     "tts_failed",
     "upload_failed",
     "timeout",
+    # TASK-VYR-014: the vision model being unreachable (or briefly returning
+    # unusable replies) is infrastructure, not a verdict on the clip.
+    "vision_unavailable",
 }
 
 

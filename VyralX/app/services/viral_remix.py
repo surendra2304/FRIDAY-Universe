@@ -17,6 +17,17 @@ format:
   two voices never overlap
 * A genre thumbnail, a rights record with the Creative Commons licence URL, and
   an unlisted publish job ready for the worker
+
+TASK-VYR-014 (owner's 2026-11-17 rebuild order, after the full-watch graded
+the channel's output BROKEN/WEAK with zero GOOD): the autopilot path is
+fail-closed. A structured vision record
+(:func:`app.services.scene_analysis.analyze_scene`) is the only source of
+truth for copy; :mod:`app.services.viral_quality` rejects candidates whose
+clip is static, whose copy states facts the record does not hold, whose
+script has no hook/payoff structure, or whose measured narration does not
+fit the clip. The narration is synthesised per beat with varied prosody,
+and a synthesized music bed plays under every render, so the captions'
+music is real.
 """
 from __future__ import annotations
 
@@ -39,13 +50,14 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.models import Asset, PublishJob, RenderJob, Source, VideoProject, utcnow
+from app.services import viral_quality
 from app.services.source_analysis import (
     SpeechReport,
     detect_speech,
     download_audio_only,
     probe_media,
 )
-from app.services.scene_analysis import describe_scene
+from app.services.scene_analysis import analyze_scene, describe_scene, scene_text
 log = logging.getLogger("vyralx.viral_remix")
 
 # One voice for the whole channel: the first four uploads all use Guy, so a
@@ -310,6 +322,7 @@ def generate_editorial(
     taken_titles: set[str] | None = None,
     scene: str = "",
     _strict: bool = False,
+    feedback: list[str] | None = None,
 ) -> dict[str, str]:
     """Write title, commentary and description in the channel's exact style.
 
@@ -372,6 +385,15 @@ def generate_editorial(
             "\n\nYour previous narration was too generic. Rewrite the commentary so every "
             "sentence names a specific person, object or action from the frame analysis. A line "
             "that could describe a different video is not acceptable."
+        )
+    if feedback:
+        prompt += (
+            "\n\nYour previous draft was REJECTED by the footage checker. Every claim in the "
+            "copy is verified against the frame analysis; fix each of these problems:\n"
+            + "\n".join(f"- {item}" for item in feedback[:10])
+            + "\nNever state a colour, item of clothing, time of day, posture, emotion or "
+            "eye state that the frame analysis does not record. Never describe a person's "
+            "race or skin. If the frame analysis does not record it, do not say it."
         )
     try:
         url = settings.inference_url.rstrip("/") + settings.inference_generation_path
@@ -444,9 +466,12 @@ def generate_editorial(
         )
 
     # Last resort. If vision gave us a description, narrate that instead of a
-    # generic template: an accurate description beats invented filler.
+    # generic template: an accurate description beats invented filler. The
+    # beat numbers are prompt scaffolding, not speech — strip them, or the
+    # voice would read "one) ... two) ..." aloud.
     if scene:
-        grounded = _trim_to_sentence(" ".join(str(scene).split()[:70]))
+        spoken_scene = re.sub(r"\b\d+\)\s*", "", str(scene))
+        grounded = _trim_to_sentence(" ".join(spoken_scene.split()[:70]))
         if len(grounded.split()) >= 12:
             return {
                 "title": _fallback_title(category, source_title, taken),
@@ -687,12 +712,36 @@ def segment_timing(
     }
 
 
+# Per-beat prosody (TASK-VYR-014): one flat rate/pitch for the whole video
+# is a large part of why the old uploads sounded monotone. The hook beat is
+# brighter and quicker, the build sits near natural, and the payoff beat
+# slows a touch so the last line lands. edge-tts applies these as SSML
+# prosody; the measured per-beat durations the renderer times against are
+# taken from the finished audio, so retiming stays exact.
+_BEAT_PROSODY = (
+    {"rate": "+8%", "pitch": "+3Hz"},
+    {"rate": "+2%", "pitch": "+0Hz"},
+    {"rate": "-3%", "pitch": "+1Hz"},
+)
+
+
+def _beat_prosody(beat_index: int, beat_count: int) -> dict[str, str]:
+    if beat_count <= 1:
+        return _BEAT_PROSODY[1]
+    if beat_index <= 0:
+        return _BEAT_PROSODY[0]
+    if beat_index >= beat_count - 1:
+        return _BEAT_PROSODY[2]
+    return _BEAT_PROSODY[1]
+
+
 async def _synthesize_beat_audio(
-    text: str, voice: str, output_path: Path
+    text: str, voice: str, output_path: Path,
+    *, rate: str = "+0%", pitch: str = "+0Hz",
 ) -> dict[str, Any]:
     """Synthesise one beat; report whether real word boundaries were emitted."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    communicate = edge_tts.Communicate(text, voice)
+    communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
     audio = bytearray()
     word_words: list[dict[str, Any]] = []
     async for chunk in communicate.stream():
@@ -743,6 +792,10 @@ def build_scene_tracks(
     """
     settings = get_settings()
     work_dir.mkdir(parents=True, exist_ok=True)
+    # Bracket tags ("[music]") and SSML artefacts must never reach the voice:
+    # job 761 shipped one baked into a caption and the TTS would read any
+    # that survived into the script aloud.
+    script = viral_quality.sanitize_spoken_text(script)
     beats = plan_beats(split_sentences(script), duration)
     tracks: list[dict[str, Any]] = []
     cursor = 0.0
@@ -751,8 +804,12 @@ def build_scene_tracks(
         stem = work_dir / f"{project_key}-beat{beat['index']}"
         word_words = None
         if beat["text"]:
+            prosody = _beat_prosody(beat["index"], len(beats))
             synth = asyncio.run(
-                _synthesize_beat_audio(beat["text"], voice, stem.with_suffix(".mp3"))
+                _synthesize_beat_audio(
+                    beat["text"], voice, stem.with_suffix(".mp3"),
+                    rate=prosody["rate"], pitch=prosody["pitch"],
+                )
             )
             word_words = synth["word_words"]
             wav_path = _decode_to_wav(stem.with_suffix(".mp3"), stem.with_suffix(".wav"))
@@ -891,6 +948,46 @@ def align_script_words(
     return aligned
 
 
+def _matched_script_indexes(audio_path: Path, script: str) -> set[int] | None:
+    """Indexes of script words Whisper actually heard in the finished audio.
+
+    Mirrors the matching rule of :func:`align_script_words`. Returns None
+    when transcription is unavailable or matches too little to trust — the
+    caller then lets the measured-duration window alone decide the fit.
+    """
+    try:
+        heard = _whisper_words(audio_path)
+    except Exception as exc:  # Whisper must never block a render
+        log.warning("Narration coverage unavailable (%s: %s)", type(exc).__name__, str(exc)[:160])
+        return None
+    if not heard:
+        return None
+
+    def norm(word: str) -> str:
+        return re.sub(r"[^a-z0-9']", "", word.lower())
+
+    script_words = str(script or "").split()
+    if not script_words:
+        return None
+    script_norm = [norm(word) for word in script_words]
+    heard_norm = [norm(word["text"]) for word in heard]
+    matcher = difflib.SequenceMatcher(a=script_norm, b=heard_norm, autojunk=False)
+    matched: set[int] = set()
+    for tag, i1, i2, _j1, _j2 in matcher.get_opcodes():
+        if tag == "equal":
+            matched.update(range(i1, i2))
+    if len(matched) < 0.5 * len(script_words):
+        return None
+    return matched
+
+
+def _last_sentence_coverage(script: str, narration_path: Path) -> float | None:
+    """How much of the script's final sentence survived into the audio."""
+    return viral_quality.last_sentence_coverage(
+        script, _matched_script_indexes(narration_path, script)
+    )
+
+
 def _beat_proportional_cues(text: str, offset: float, seconds: float) -> list[dict[str, Any]]:
     """Last-resort cues: the old sentence-spread estimate, confined to one beat.
 
@@ -918,6 +1015,16 @@ def _beat_proportional_cues(text: str, offset: float, seconds: float) -> list[di
     return cues
 
 
+def _sanitize_cues(cues: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Strip bracket/angle tags from every cue (job 761's '[music]' caption)."""
+    cleaned: list[dict[str, Any]] = []
+    for cue in cues:
+        text = viral_quality.sanitize_spoken_text(str(cue.get("text") or ""))
+        if text:
+            cleaned.append({**cue, "text": text})
+    return cleaned
+
+
 def build_commentary_cues(tracks: dict[str, Any], script: str) -> list[dict[str, Any]]:
     """Caption cues for a scene-timed narration, from the audio outwards.
 
@@ -929,7 +1036,7 @@ def build_commentary_cues(tracks: dict[str, Any], script: str) -> list[dict[str,
     """
     aligned = align_script_words(tracks["narration_path"], script)
     if aligned:
-        return _cues_from_words(aligned)
+        return _sanitize_cues(_cues_from_words(aligned))
     narrated = [beat for beat in tracks["beats"] if beat["text"]]
     if narrated and all(beat["word_words"] for beat in narrated):
         words: list[dict[str, Any]] = []
@@ -941,7 +1048,7 @@ def build_commentary_cues(tracks: dict[str, Any], script: str) -> list[dict[str,
                     "end": word["end"] + beat["track_start"],
                 })
         if words:
-            return _cues_from_words(words)
+            return _sanitize_cues(_cues_from_words(words))
     log.warning("Caption alignment fell back to per-beat proportional estimates")
     cues: list[dict[str, Any]] = []
     for beat in tracks["beats"]:
@@ -949,7 +1056,7 @@ def build_commentary_cues(tracks: dict[str, Any], script: str) -> list[dict[str,
             cues.extend(_beat_proportional_cues(
                 beat["text"], beat["track_start"], beat["target_seconds"]
             ))
-    return cues
+    return _sanitize_cues(cues)
 
 
 def _atempo_chain(tempo: float) -> str:
@@ -984,6 +1091,71 @@ def _head_trim_window_start(beat: dict[str, Any]) -> float:
     return max(beat["start"], beat["end"] - span)
 
 
+# --------------------------------------------------------------------------- #
+# music bed (TASK-VYR-014)
+#
+# The old renders carried "[music]" caption tags over clips with no audible
+# music at all. This bed is real, audible and royalty-free by construction:
+# a I-V-vi-IV synth pad generated with ffmpeg's own oscillators at render
+# time — no downloaded track, no licence question, no cost. It sits at low
+# volume under the narration and the ducked source audio.
+# --------------------------------------------------------------------------- #
+_MUSIC_CHORDS = (
+    (130.81, 196.00, 261.63, 329.63),   # C
+    (98.00, 146.83, 196.00, 293.66),    # G
+    (110.00, 164.81, 220.00, 261.63),   # Am
+    (87.31, 130.81, 174.61, 261.63),    # F
+)
+_MUSIC_CHORD_SECONDS = 2.0
+
+
+def build_music_bed(destination: Path, seconds: float) -> Path:
+    """Generate a looped chord-pad bed of exactly ``seconds`` length."""
+    settings = get_settings()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    total = max(1.0, float(seconds or 0.0))
+    work = destination.parent / f"{destination.stem}-parts"
+    work.mkdir(parents=True, exist_ok=True)
+    chord_paths: list[Path] = []
+    weights = (0.22, 0.18, 0.15, 0.10)
+    for index, chord in enumerate(_MUSIC_CHORDS):
+        expr = "+".join(
+            f"{weight}*sin(2*PI*{freq}*t)" for freq, weight in zip(chord, weights)
+        )
+        chord_path = work / f"chord{index}.wav"
+        _run([
+            settings.ffmpeg_bin, "-hide_banner", "-nostdin", "-y",
+            "-f", "lavfi",
+            "-i", f"aevalsrc={expr}:channel_layout=mono:sample_rate=44100",
+            "-t", f"{_MUSIC_CHORD_SECONDS:.2f}",
+            "-af", ("afade=t=in:st=0:d=0.4,"
+                    f"afade=t=out:st={_MUSIC_CHORD_SECONDS - 0.4:.2f}:d=0.4,"
+                    "lowpass=f=1100"),
+            "-c:a", "pcm_s16le", str(chord_path),
+        ])
+        chord_paths.append(chord_path)
+    progression = work / "progression.wav"
+    concat_list = work / "progression.txt"
+    concat_list.write_text(
+        "".join(f"file '{path.resolve()}'\n" for path in chord_paths),
+        encoding="utf-8",
+    )
+    _run([
+        settings.ffmpeg_bin, "-hide_banner", "-nostdin", "-y",
+        "-f", "concat", "-safe", "0", "-i", str(concat_list),
+        "-c:a", "pcm_s16le", str(progression),
+    ])
+    fade_start = max(0.0, total - 0.6)
+    _run([
+        settings.ffmpeg_bin, "-hide_banner", "-nostdin", "-y",
+        "-stream_loop", "-1", "-i", str(progression),
+        "-t", f"{total:.3f}",
+        "-af", f"afade=t=out:st={fade_start:.3f}:d=0.6",
+        "-c:a", "pcm_s16le", str(destination),
+    ])
+    return destination
+
+
 def render_scene_timed(
     source_path: Path,
     output_path: Path,
@@ -991,6 +1163,7 @@ def render_scene_timed(
     cues: list[dict[str, Any]],
     category: str,
     source_has_audio: bool = True,
+    music_bed_path: Path | None = None,
 ) -> Path:
     """Assemble the short so each visual segment lasts exactly its narration.
 
@@ -1021,6 +1194,10 @@ def render_scene_timed(
         "".join(f"[vb{beat['index']}]" for beat in beats)
         + f"concat=n={len(beats)}:v=1:a=0,{video_chain}[v]"
     )
+    bed = (
+        f"[2:a]volume=0.10[bed];" if music_bed_path is not None else ""
+    )
+    bed_input = "[bed]" if music_bed_path is not None else ""
     if source_has_audio:
         for beat in beats:
             timing = beat["timing"]
@@ -1031,10 +1208,17 @@ def render_scene_timed(
             )
             chain += f",apad=whole_dur={beat['target_seconds']:.3f},atrim=0:{beat['target_seconds']:.3f}"
             filters.append(chain + f"[ab{beat['index']}]")
+        mix_inputs = 3 if music_bed_path is not None else 2
         filters.append(
             "".join(f"[ab{beat['index']}]" for beat in beats)
             + f"concat=n={len(beats)}:v=0:a=1,volume=0.20[orig];"
-            "[orig][1:a]amix=inputs=2:duration=first:dropout_transition=2,"
+            + bed
+            + f"[orig]{bed_input}[1:a]amix=inputs={mix_inputs}:duration=first:dropout_transition=2,"
+            "loudnorm=I=-14:LRA=9:TP=-1.5[a]"
+        )
+    elif music_bed_path is not None:
+        filters.append(
+            bed + "[1:a][bed]amix=inputs=2:duration=first:dropout_transition=2,"
             "loudnorm=I=-14:LRA=9:TP=-1.5[a]"
         )
     else:
@@ -1043,6 +1227,10 @@ def render_scene_timed(
         settings.ffmpeg_bin, "-hide_banner", "-nostdin", "-y",
         "-i", str(source_path),
         "-i", str(tracks["narration_path"]),
+    ]
+    if music_bed_path is not None:
+        cmd += ["-i", str(music_bed_path)]
+    cmd += [
         "-filter_complex", ";".join(filters),
         "-map", "[v]", "-map", "[a]",
         "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
@@ -1368,6 +1556,23 @@ def _derive_tags(candidate: Any, title: str, category: str) -> list[str]:
     return tags
 
 
+def _dedupe_hashtags(text: str) -> str:
+    """Remove repeated hashtag tokens (job 701 shipped '#Shorts' twice)."""
+    seen: set[str] = set()
+
+    def keep(match: re.Match) -> str:
+        tag = match.group(0)
+        key = tag.casefold()
+        if key in seen:
+            return ""
+        seen.add(key)
+        return tag
+
+    cleaned = re.sub(r"#\w+", keep, text)
+    # Tidy the gaps a removed tag leaves behind, without touching line breaks.
+    return re.sub(r"[ \t]{2,}", " ", cleaned)
+
+
 def build_metadata(
     candidate: Any,
     speech: SpeechReport,
@@ -1375,6 +1580,7 @@ def build_metadata(
     category: str,
     editorial: dict[str, str] | None = None,
     taken_titles: set[str] | None = None,
+    record: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     editorial = editorial or {}
     title_core = re.sub(r"#\w+", "", str(candidate.title or "")).strip(" |-—")
@@ -1384,7 +1590,6 @@ def build_metadata(
         title = _fallback_title(category, candidate.title, taken_titles)
     comment = " ".join(str(editorial.get("commentary") or "").split())
 
-    question = QUESTION_BY_CATEGORY.get(category.upper(), QUESTION_BY_CATEGORY["VIRAL"])
     hashtags = HASHTAGS_BY_CATEGORY.get(category.upper(), HASHTAGS_BY_CATEGORY["VIRAL"])
     body = str(editorial.get("description") or "").strip()
     if not body:
@@ -1393,8 +1598,22 @@ def build_metadata(
             if not speech.has_speech
             else "The moment everyone replayed, with the audio left exactly as it was recorded."
         )
-        body = f"{summary}\n\n👉 {question} Drop your answer below! 💬\n\n{hashtags}"
-    description = (
+        # The fallback question must be about THIS clip (TASK-VYR-014): with
+        # a vision record it is built from the record's own objects, and when
+        # the record holds nothing concrete to ask about, the description
+        # ships with no "Drop your answer below!" CTA at all — job 701's CTA
+        # pointed at a question nobody had asked.
+        if record is not None:
+            question = viral_quality.grounded_question(record)
+        else:
+            question = QUESTION_BY_CATEGORY.get(
+                category.upper(), QUESTION_BY_CATEGORY["VIRAL"]
+            )
+        if question:
+            body = f"{summary}\n\n👉 {question} Drop your answer below! 💬\n\n{hashtags}"
+        else:
+            body = f"{summary}\n\n{hashtags}"
+    description = _dedupe_hashtags(
         f"{body}\n\n"
         f'Credit: source clip "{title_core}" by {candidate.channel or "the original creator"} - '
         f"https://www.youtube.com/watch?v={candidate.video_id}\n"
@@ -1482,9 +1701,54 @@ def produce_viral_short(
     # 3. Edit exactly like the first four: our voice-over over ducked source
     # audio, Anton captions, no second voice anywhere.
     taken_titles = existing_upload_titles(db)
-    # Look at the clip before writing about it: without this the model invents
-    # a plot from the title alone and the voice-over describes a different video.
-    scene = describe_scene(source_path, duration)
+
+    # TASK-VYR-014 fail-closed gates. The owner's full-watch (2026-11-17)
+    # proved the old chain shipped invented narration, cut-off endings and
+    # static clips; from here on, a candidate that cannot be grounded in a
+    # structured vision record, or whose copy fails the footage checks, is
+    # SKIPPED — the autopilot's reject ledger keeps it out of future pools.
+    gates_on = bool(getattr(settings, "viral_quality_gates_enabled", True))
+    record: dict[str, Any] | None = None
+    arc_info: dict[str, Any] | None = None
+    gate_attempts = 0
+    description_repaired = False
+    if gates_on:
+        arc = viral_quality.measure_event_arc(
+            source_path, duration, ffmpeg_bin=settings.ffmpeg_bin
+        )
+        arc_ok, arc_reason = viral_quality.arc_gate(arc)
+        if arc is not None:
+            arc_info = {
+                "mean_change": arc.mean_change,
+                "max_change": arc.max_change,
+                "static_ratio": arc.static_ratio,
+                "peak_position": arc.peak_position,
+                "verdict": arc_reason,
+            }
+        if not arc_ok:
+            log.info("Skipping %s: static scene (arc %s)", candidate.video_id, arc_info)
+            return {
+                "status": "SKIPPED", "reason": "static_scene",
+                "video_id": candidate.video_id, "event_arc": arc_info,
+            }
+        # Look at the clip before writing about it — structurally, or not
+        # at all: without a record the model invents a plot from the title
+        # alone and the voice-over describes a different video.
+        record = analyze_scene(source_path, duration)
+        if record is None:
+            return {
+                "status": "SKIPPED", "reason": "vision_unavailable",
+                "video_id": candidate.video_id,
+            }
+        if record.get("static"):
+            return {
+                "status": "SKIPPED", "reason": "static_scene",
+                "video_id": candidate.video_id, "event_arc": arc_info,
+            }
+        scene = scene_text(record)
+    else:
+        scene = describe_scene(source_path, duration)
+
     editorial = generate_editorial(
         category,
         str(getattr(candidate, "title", "")),
@@ -1494,21 +1758,131 @@ def produce_viral_short(
         taken_titles,
         scene=scene,
     )
+    voice_script = ""
+    if gates_on and record is not None:
+        # Check the draft against the footage; corrective retries with the
+        # violations as feedback, then the candidate is skipped. Template
+        # fallbacks go through the same gate — invented copy has no bypass.
+        def _gate_violations(
+            draft: str, ed: dict[str, Any]
+        ) -> list[viral_quality.Violation]:
+            return (
+                viral_quality.check_consistency(
+                    commentary=draft,
+                    title=str(ed.get("title") or ""),
+                    description=str(ed.get("description") or ""),
+                    record=record,
+                )
+                + viral_quality.check_structure(commentary=draft, record=record)
+                + viral_quality.check_script_length(
+                    commentary=draft, duration=duration
+                )
+            )
+
+        violations: list[viral_quality.Violation] = []
+        draft = ""
+        for attempt in range(3):
+            gate_attempts = attempt + 1
+            draft = viral_quality.sanitize_spoken_text(
+                editorial.get("commentary") or ""
+            )
+            violations = _gate_violations(draft, editorial)
+            if not violations:
+                voice_script = draft
+                editorial = {**editorial, "commentary": draft}
+                break
+            log.info(
+                "Quality gates rejected draft %d for %s: %s",
+                attempt + 1, candidate.video_id,
+                "; ".join(str(v) for v in violations[:6]),
+            )
+            if attempt < 2:
+                editorial = generate_editorial(
+                    category,
+                    str(getattr(candidate, "title", "")),
+                    str(getattr(candidate, "channel", "")),
+                    speech.text,
+                    duration,
+                    taken_titles,
+                    scene=scene,
+                    feedback=[violation.detail for violation in violations],
+                )
+        if not voice_script and violations and all(
+            violation.kind in {"question_ungrounded", "cta_without_question"}
+            for violation in violations
+        ):
+            # The copy itself is grounded; only the description's question
+            # is not. That one defect has a deterministic, fact-free repair
+            # (drop the ungrounded question, ask the record's own) — the
+            # staging self-test proved grounded packages die on it, and a
+            # channel whose discoveries are mostly narration-carrying
+            # cannot afford to discard them over packaging mechanics.
+            repaired = viral_quality.repair_description_question(
+                str(editorial.get("description") or ""), record
+            )
+            if repaired != str(editorial.get("description") or ""):
+                editorial = {**editorial, "description": repaired}
+                violations = _gate_violations(draft, editorial)
+                if not violations:
+                    voice_script = draft
+                    editorial = {**editorial, "commentary": draft}
+                    description_repaired = True
+                    log.info(
+                        "Description question repaired for %s",
+                        candidate.video_id,
+                    )
+        if not voice_script:
+            return {
+                "status": "SKIPPED", "reason": "script_unverifiable",
+                "video_id": candidate.video_id,
+                "violations": [violation.kind for violation in violations],
+            }
+    else:
+        voice_script = editorial.get("commentary") or _fallback_commentary(
+            category, str(getattr(candidate, "title", ""))
+        )
+
     voice = VOICE_BY_CATEGORY.get(category, DEFAULT_VOICE)
-    voice_script = editorial.get("commentary") or _fallback_commentary(
-        category, str(getattr(candidate, "title", ""))
-    )
     # Scene-timed assembly (TASK-VYR-003): per-beat voice-over, each visual
     # segment retimed to its beat's measured audio, captions aligned to the
     # finished narration. No path from here invents caption timings.
     tracks = build_scene_tracks(
         voice_script, voice, settings.media_dir / "voiceovers", project_key, duration
     )
+    if gates_on:
+        # The measured narration must fit the clip and its final sentence
+        # must survive whole — job 683's voice-over ended "Now again, about".
+        fit_violations = viral_quality.evaluate_narration_fit(
+            commentary=voice_script,
+            narration_seconds=tracks["total_seconds"],
+            duration=duration,
+            last_sentence_coverage=_last_sentence_coverage(
+                voice_script, tracks["narration_path"]
+            ),
+        )
+        if fit_violations:
+            log.info(
+                "Skipping %s: narration does not fit (%s)",
+                candidate.video_id,
+                "; ".join(str(v) for v in fit_violations),
+            )
+            return {
+                "status": "SKIPPED", "reason": "script_length_misfit",
+                "video_id": candidate.video_id,
+                "violations": [violation.kind for violation in fit_violations],
+            }
     cues = build_commentary_cues(tracks, voice_script)
     if not cues:
         raise RuntimeError("caption generation produced no cues")
+    bed_path: Path | None = None
+    if bool(getattr(settings, "viral_music_bed_enabled", True)):
+        bed_path = build_music_bed(
+            settings.media_dir / "voiceovers" / f"{project_key}-bed.wav",
+            tracks["total_seconds"],
+        )
     render_scene_timed(
-        source_path, render_path, tracks, cues, category, probe.has_audio
+        source_path, render_path, tracks, cues, category, probe.has_audio,
+        music_bed_path=bed_path,
     )
     mode = "commentary"
 
@@ -1526,7 +1900,9 @@ def produce_viral_short(
         log.warning("Thumbnail generation failed: %s", exc)
         thumbnail_path = Path("")
 
-    meta = build_metadata(candidate, speech, hook, category, editorial, taken_titles)
+    meta = build_metadata(
+        candidate, speech, hook, category, editorial, taken_titles, record=record
+    )
 
     # 4. Persist rights record + render + queued publish job
     reuse_licensed = bool(str(getattr(candidate, "license", "")).strip()) and (
@@ -1614,6 +1990,9 @@ def produce_viral_short(
             "source_video_id": candidate.video_id,
             "source_views": int(getattr(candidate, "view_count", 0) or 0),
             "edit_mode": mode,
+            "event_arc": arc_info,
+            "quality_gate_attempts": gate_attempts,
+            "description_repaired": description_repaired,
         }),
         completed_at=utcnow(),
     )
@@ -1652,6 +2031,9 @@ def produce_viral_short(
         "duration": round(duration, 1),
         "narration": voice_script[:280],
         "render": str(render_path),
+        "event_arc": arc_info,
+        "quality_gate_attempts": gate_attempts,
+        "description_repaired": description_repaired,
     }
     log.info("Viral short ready: %s", result)
     return result
