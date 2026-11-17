@@ -36,7 +36,14 @@ jobs:
       - name: Run regression tests
         env:
           DATABASE_URL: oracle+oracledb://mock:mock@localhost:1521/FREE
-        run: python -m pytest -q tests
+        run: |
+          set +e
+          python -m pytest -q tests > /tmp/pytest_out.txt 2>&1
+          code=$?
+          grep -E '^(FAILED|ERROR)' /tmp/pytest_out.txt | head -40 | while IFS= read -r line; do echo "::error::DIAG $line"; done
+          grep -E '^(FAILED|ERROR)' /tmp/pytest_out.txt | wc -l
+          tail -3 /tmp/pytest_out.txt
+          exit $code
 
       - name: Compile shared coordinator and its integrated call sites
         run: python -m compileall -q mesh Forge/app/verification/engine.py Futuris/futuris/core/pipeline.py Sentinel/sentinel/core/orchestrator/executor.py

@@ -8,15 +8,19 @@ import ast
 import asyncio
 import copy
 import json
+import os
+import re
 import time
 import uuid
+from collections import deque
+from dataclasses import dataclass, field
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Literal
+from typing import Any, Callable, Literal, Optional
 
 import pytest
 from fastapi import status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -58,11 +62,28 @@ class OfflineCache:
 
 @pytest.fixture
 def boundary():
+    # TASK-REL-052: the extracted route code grew three more module-level
+    # dependencies after REL-043 — custom_provider_for_model (TASK-IG-INF-02),
+    # model_servability_tracker (TASK-REL-049) and settings.REQUEST_TIMEOUT
+    # (TASK-INF-010) — and none of the three PRs extended this namespace, so
+    # every route-level test died with NameError and both Monorepo Structure
+    # and Safety CI jobs went red on main itself (the REL-042 failure mode,
+    # again). The two provider objects are bound by extracting their REAL
+    # source below (custom_endpoints.py / model_servability.py), exactly
+    # like the route code: with no INFERENCE_CUSTOM_ENDPOINTS configured the
+    # real custom_provider_for_model returns None, and the real servability
+    # tracker starts with nothing quarantined. settings is the one fixture
+    # stand-in: the extracted code reads only settings.REQUEST_TIMEOUT, and
+    # the value bound here is the real default from
+    # Inference/app/core/config.py (REQUEST_TIMEOUT Field default=60.0).
     calls = []
     state = {'finish': 'stop', 'provenance': None, 'fail': False}
     context = {'__name__': 'offline_inference_contract', 'Any': Any, 'Literal': Literal,
                'BaseModel': BaseModel, 'Field': Field, 'field_validator': field_validator,
-               'JSONResponse': JSONResponse, 'status': status,
+               'JSONResponse': JSONResponse, 'StreamingResponse': StreamingResponse, 'status': status,
+               'json': json, 'os': os, 're': re, 'deque': deque, 'Callable': Callable, 'Optional': Optional,
+               'dataclass': dataclass, 'field': field,
+               'settings': SimpleNamespace(REQUEST_TIMEOUT=60.0),
                'time': time, 'uuid': uuid, 'perf_cache': OfflineCache(),
                'as_answer_pair': lambda value: value,
                'agent_registry': SimpleNamespace(get_agent=lambda _: None),
@@ -97,8 +118,33 @@ def boundary():
     # REL-042 lesson — a helper an extracted symbol depends on joins the
     # extraction set in the same PR that introduces the dependency.
     nodes += actual_nodes('Inference/app/api/v1_core_routes.py', {'MODEL_CATALOG', '_CATALOG_PROVIDERS', '_provider_for_model', 'MODEL_CLASS_TIERS', 'MODEL_CLASSES', 'MODEL_SUITABILITY', '_CODE_HINTS', '_REASONING_HINTS', '_LONG_CONTEXT_MIN_CHARS', '_FLAGSHIP_SIZE_HINTS', '_ECONOMY_SIZE_HINTS', '_FLAGSHIP_NAME_HINTS', '_ECONOMY_NAME_HINTS', '_infer_task_type', '_requested_class', '_provider_available', '_ranked_suitable_models', '_select_best_suitable', 'ChatMessage', 'ChatCompletionRequest', 'chat_completions'})
+    # TASK-REL-052 (same REL-042 lesson, second recurrence): the selection /
+    # route path also reads module-level helpers and tables that were never
+    # in the extraction set — _is_custom_model (TASK-IG-INF-02),
+    # _estimate_prompt_tokens / _estimate_context_tokens /
+    # MODEL_CONTEXT_WINDOWS / _CONTEXT_FIT_FLOOR_TOKENS (context-fit path),
+    # and the gateway's GROQ_PROMPT_TOKEN_LIMIT constant (TASK-INF-012).
+    # They are extracted as actual source too, so the boundary assertion
+    # still fails loudly if any of them changes shape.
+    nodes += actual_nodes('Inference/app/api/v1_core_routes.py', {'_is_custom_model', '_estimate_prompt_tokens', '_estimate_context_tokens', 'MODEL_CONTEXT_WINDOWS', '_CONTEXT_FIT_FLOOR_TOKENS', '_CHARS_PER_TOKEN'})
+    nodes += actual_nodes('Inference/app/providers/gateway.py', {'GROQ_PROMPT_TOKEN_LIMIT'})
+    # TASK-REL-052: the imported names the route code reads, extracted as
+    # actual source from their own modules (see the fixture comment above).
+    nodes += actual_nodes('Inference/app/providers/custom_endpoints.py', {'PROVIDER_PREFIX', '_NAME_RE', 'CustomEndpoint', '_parse_entry', 'parse_custom_endpoints', '_cache', 'get_custom_endpoints', 'reset_custom_endpoints_cache', 'enabled_custom_endpoints', 'custom_endpoint_by_provider', 'custom_provider_for_model', 'custom_catalog_entries'})
+    nodes += actual_nodes('Inference/app/providers/model_servability.py', {'SERVED', 'SUBSTITUTED', 'FAILED', '_OUTCOMES', '_env_int', 'ModelServabilityTracker', '_default_tracker', 'model_servability_tracker'})
+    nodes += actual_nodes('Inference/app/providers/errors.py', {'GatewayError', 'RateLimitError', 'TemporaryUnavailableError', 'TimeoutError', 'ProviderUnconfiguredError', 'AuthenticationError', 'InvalidRequestError', 'ContentPolicyViolationError', 'CapabilityMismatchError', 'normalize_provider_exception'})
     # Only trusted, tracked repository code; no user/network input is executed.
     exec(compile(ast.Module(body=nodes, type_ignores=[]), 'actual_inference_source', 'exec'), context)  # noqa: S102
+    # v1_core_routes imports the class under this alias (TASK-REL-052).
+    context['ProviderTimeoutError'] = context['TimeoutError']
+    # TASK-REL-052: get_custom_endpoints() lazily imports
+    # app.core.config.settings on first use, which cannot resolve inside
+    # this exec namespace (the root suite's sys.path binds 'app' to another
+    # agent's package). Seed the registry cache with the empty registry —
+    # the exact state production runs with when INFERENCE_CUSTOM_ENDPOINTS
+    # is unset (parse_custom_endpoints('') == []); the real parse/enabled/
+    # lookup functions above still execute for every call.
+    context['_cache'] = []
     manager = context['UnifiedProviderManager']()
     context['unified_provider_manager'] = manager
     return SimpleNamespace(c=context, manager=manager, calls=calls, state=state)
