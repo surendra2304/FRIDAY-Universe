@@ -544,6 +544,13 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_protocol": True,
         "risk_per_trade_pct": 0.001,
         "max_heat_pct": 0.02,
+        # TASK-STR-FWD-012: judged stop is 3.0 x daily ATR — genuine stops
+        # observed 16.07-36.00% across CRYPTO30, structurally above the
+        # 15% engine-global cap, which blocked 27 of 30 symbols at the
+        # 2026-11-17 firing. 0.90 = sanity bound only (FWD-006 sizes by
+        # risk / stop distance; binding would need ATR > 30% of price
+        # sustained 14 days — never observed in this universe).
+        "max_stop_pct": 0.90,
         "reason": "TASK-STR-RD-002 winner: dow_effect/reversal @ CRYPTO30 1d passed the full bar (expectancy>0, PF 1.257 >= 1.2, 3,660 OOS trades, >=80% folds, untouched holdout), Bonferroni at N=1,557 and the 2x-cost stress (PF 1.206). Calendar effect — flagged in RD-002 as most prone to era decay; the forward window is the arbiter. Owner approved forward demo trading 2026-11-15 (TASK-STR-FWD-002). Time exit (max_bars=5) enforced by the daemon (no broker-native equivalent). Phase-3 protocol as for ichimoku_trend (TASK-STR-FWD-006 package). Vol-targeting is BANNED for dow_effect (TASK-STR-RD-011 settlement): no volatility-scaled position sizing may ever be applied to this strategy. DEMO venue only; live trading prohibited.",
     },
     "fx_mr_v4": {
@@ -582,6 +589,12 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "sleeve": SLEEVE_NAME,
         "risk_per_trade_pct": 0.001,
         "max_heat_pct": 0.02,
+        # TASK-STR-FWD-012: judged stop is 2.0 x weekly ATR — genuine
+        # stops ~16-36% of price, structurally above the 15%
+        # engine-global cap, which rejected every firing in the leg's
+        # life (28 detections, 0 executions to 2026-11-17). 0.90 =
+        # sanity bound only (FWD-006 sizes by risk / stop distance).
+        "max_stop_pct": 0.90,
         "reason": "Crypto leg of the RD-002 Stage-C best-per-class sleeve (owner-approved third forward entrant 2026-11-15, TASK-STR-FWD-002 extension). As a standalone cell it did NOT pass the promotion bar (109 OOS trades, PF 1.575, 3/5 folds) — it trades ONLY as a sleeve component, judged on the sleeve's compounded equity + max drawdown, with the sleeve-level kill rule (combined sleeve MARK-TO-MARKET DD > 5% of the combined venue equity of the accounts the sleeve trades on -> auto-pause all sleeve components; TASK-STR-FWD-006). Sizing per the FWD-006 package: 0.1% per-trade risk on venue equity, 2% heat cap. DEMO venue only; live trading prohibited.",
     },
     "sleeve_tsmom2_dual": {
