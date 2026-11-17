@@ -80,10 +80,29 @@ requests to execute_friday_task, whose brain recalls from Memora
 itself. The key keeper also refreshes the verified-key cache BEFORE
 it expires, so a job no longer lands in the expired-cache window and
 pays a probe round on its greeting path.
+
+TASK-VOI-016 (2026-11-17): re-run #10d's failure class — a 21.1 s
+deaf window and a dead input. VOI-014's greeting settle-hold kept
+sess.start() behind the greeting's stretched playback while the
+greeting (a WAV on its own track) masked the fact that the session
+could not hear yet; the caller's first sentence, spoken after the
+greeting, landed before RoomIO existed and was dropped by
+construction. And once started, the session's audio input had been
+established broken under a load peak: Gemini received no audio in
+six consecutive sessions (1008 'client inactivity' every ~122 s),
+plugin reconnects never rebuild the RoomIO input, and the watchdog
+could not fire (no transcript; recoverable=True closes). Fixes: the
+settle-hold is removed (the session starts when the build resolves)
+and the greeting is gated on the session listening instead; the
+watchdog gains a dead-input trigger — owner-track audio ENERGY
+(an rtc.AudioStream RMS monitor) with zero transcripts for 25 s, or
+two consecutive 1008 inactivity closes — running the same rebuild
+ladder, whose rebuild re-creates RoomIO + input.
 """
 import asyncio
 import json
 import logging
+import math
 import os
 import re
 import ssl
@@ -91,6 +110,7 @@ import sys
 import threading
 import time
 import wave
+from array import array
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as _FuturesTimeoutError
 from pathlib import Path
@@ -384,6 +404,18 @@ async def _settle_early_greeting(task, greeting_state: dict,
 async def _await_greeting_settled(task, timeout_s: float = 12.0) -> bool:
     """TASK-VOI-014: bounded, NON-cancelling wait for the early greeting
     task on the READY path, awaited BEFORE the session starts.
+
+    TASK-VOI-016 RETIRED the ready-path use: re-run #10d proved the
+    hold itself is a defect — it made the greeting actively delay
+    the session (an 11.61 s hold inside a 21.1 s deaf window) while
+    certifying nothing about readiness, and a caller's first
+    sentence spoken into that window is dropped by construction.
+    The ready path now starts the session immediately and the
+    greeting is gated on the session instead
+    (_await_session_listening). This primitive remains, with its
+    semantics pinned by its tests, as the bounded non-cancelling
+    wait the VOI-014 design used; nothing on the ready path calls
+    it any more.
 
     FRD-005 re-run #3 is the evidence: VOI-013's trigger fired the task
     at room-up correctly, but sess.start() then executed on the same
@@ -2016,6 +2048,216 @@ async def _run_recovery_ladder(rungs, attempt, budget_s, rung_prove_s,
     return {"served": served, "steps": steps, "elapsed": now() - started}
 
 
+# ---- TASK-VOI-016: dead-input watchdog + greeting listening gate ----
+# FRD-005 re-run #10d (2026-11-17) failed in a class VOI-003/004's
+# watchdog cannot see (diagnosis: ~/workspace/voice-session-diag,
+# issue #35 comment 6944904999). Two coupled defects:
+#
+# (1) THE DEAF WINDOW. VOI-014's settle-hold kept the session start
+# behind the greeting's real-time playback: participant join ->
+# session able to hear took 21.1 s, and an utterance played 0.3 s
+# before RoomIO linked was dropped by construction (nothing consumes
+# track media before the session's input stream exists, and
+# pre_connect_audio covers only clients that send the byte stream).
+# A human caller loses their first sentence the same way — they hear
+# the greeting, speak as it ends, and meet silence: no transcript,
+# no turn, no error, no re-ask. VOI-016 removes the hold (the session
+# starts the moment the build resolves) and gates the GREETING on
+# the session instead (see _await_session_listening): the line plays
+# once the session can hear, so it certifies readiness rather than
+# masking deafness. Re-run #3's starvation lesson is respected by
+# construction: in the gated path the line's playback never overlaps
+# sess.start() execution (it starts after start returns / listening),
+# and the start is never gated on the playback.
+#
+# (2) THE DEAD INPUT. In #10d Gemini received NO audio in ANY of six
+# sessions: each closed on its ~122 s no-input timer (1008 'Session
+# closed due to client inactivity'). The audio input had been
+# established during a host-load peak and came up broken; plugin
+# reconnects replace only the Gemini websocket, never the
+# AgentSession/RoomIO input — and the watchdog could not fire: its
+# triggers need a transcript (none existed) or a provider-classified
+# error in front of an owner-prefixed participant. The trigger below
+# watches the one signal that is independent of the broken path —
+# audio ENERGY on the owner's own track (an rtc.AudioStream RMS
+# monitor) — against the session's transcript record: energy
+# arriving for a session that has produced zero transcripts is a
+# broken forward, and the cure is the existing ladder (its rebuild
+# re-creates RoomIO + the input). A genuinely silent room produces
+# no energy and never fires. As a second net, K consecutive 1008
+# inactivity closes are treated as unrecoverable even when the
+# error text carries no provider marker: the second identical close
+# proves the plugin's internal retry did not restore the input.
+
+# How long the greeting waits for the session to report listening
+# before it plays anyway. Sized from the #10d decomposition:
+# sess.start() itself took ~4.3 s on the starved loop (1-2 s
+# healthy); 5 s covers the observed start while never letting a
+# dead build silence the greeting outright.
+_GREETING_LISTENING_GATE_S = _env_float("FRIDAY_VOICE_GREETING_LISTENING_GATE_S", 5.0)
+# How long a session may show track energy with zero transcripts
+# before the forward is declared dead. The 1008 metronome is ~122 s;
+# healthy STT interims land within ~1-4 s of speech even in the
+# worst #9/#10d legs, so 25 s is far beyond a slow-STT explanation
+# and far inside one inactivity cycle.
+_DEAD_INPUT_THRESHOLD_S = _env_float("FRIDAY_VOICE_DEAD_INPUT_S", 25.0)
+# Consecutive 1008 inactivity closes that prove the input dead.
+_INACTIVITY_CLOSE_LIMIT = 2
+# int16 RMS floor for "audio energy": digital silence is ~0 and a
+# muted/empty track sits far below this; speech at any sane mic
+# gain is far above it. This is a presence floor, not metering.
+_ENERGY_RMS_FLOOR = 200.0
+
+
+def _new_input_watch() -> dict:
+    """Per-job dead-input watch state (TASK-VOI-016). One dict per
+    job, created before the connect (the room handlers can fire
+    before the ``live`` dict exists) and adopted by ``live`` once it
+    is built. All timestamps are time.time() values or None."""
+    return {
+        # When the CURRENT session's sess.start() returned (its
+        # input stream exists from this moment). Reset by _start on
+        # every session, rebuilds included.
+        "session_started_ts": None,
+        # Last owner-track frame at/above the energy floor.
+        "last_energy_ts": None,
+        # Last user_input_transcribed event (interim or final) on
+        # any session of this job.
+        "last_transcript_ts": None,
+        # Consecutive 1008-inactivity session errors counted.
+        "inactivity_closes": 0,
+        # The session_error ts already counted (each record once).
+        "counted_error_ts": None,
+        # The session_started_ts the dead-input trigger fired for
+        # (one ladder run per broken session, never a loop).
+        "fired_for_session": None,
+    }
+
+
+def _frame_rms(data) -> float:
+    """RMS of int16 PCM bytes (an rtc.AudioFrame's data). 0.0 for
+    empty or sub-sample input. Pure — unit-tested on synthetic
+    frames."""
+    if not data:
+        return 0.0
+    raw = bytes(data)
+    n = len(raw) // 2
+    if n == 0:
+        return 0.0
+    samples = array("h")
+    samples.frombytes(raw[: 2 * n])
+    return math.sqrt(sum(int(s) * int(s) for s in samples) / float(n))
+
+
+def _is_inactivity_close(text) -> bool:
+    """True when a session-error text is Gemini's 1008 'client
+    inactivity' close — the no-input timer that killed every #10d
+    session. Matched on the close code + the inactivity wording so
+    other 1008s (e.g. a policy close) do not count."""
+    if not text:
+        return False
+    low = str(text).lower()
+    return "1008" in low and "inactiv" in low
+
+
+def _note_inactivity_close(watch: dict, err) -> int:
+    """Count one session_error record toward the inactivity streak
+    (TASK-VOI-016). Each record counts ONCE (keyed by its ts — the
+    watchdog polls the same record every 5 s); non-signature errors
+    are ignored (the streak is about CONSECUTIVE inactivity closes,
+    and the caller resets it on any user final and after the ladder
+    consumes it). Returns the current streak."""
+    if not err:
+        return int(watch.get("inactivity_closes") or 0)
+    ts = err.get("ts")
+    if ts is None or ts == watch.get("counted_error_ts"):
+        return int(watch.get("inactivity_closes") or 0)
+    watch["counted_error_ts"] = ts
+    if _is_inactivity_close(err.get("text")):
+        watch["inactivity_closes"] = int(watch.get("inactivity_closes") or 0) + 1
+    return int(watch.get("inactivity_closes") or 0)
+
+
+def _dead_input_verdict(watch: dict, now: float, *, owner_present: bool,
+                        session_live: bool,
+                        threshold_s: float = _DEAD_INPUT_THRESHOLD_S) -> bool:
+    """TASK-VOI-016 dead-input trigger (pure, unit-tested).
+
+    True exactly when the forward path is proven broken for the
+    CURRENT session: an owner is in the room, a session is live, the
+    session has had ``threshold_s`` to produce a transcript, audio
+    ENERGY arrived on the owner's track during this session's life,
+    and NO transcript (interim or final) has been seen in this
+    session's life. A silent room (no energy) never fires; a session
+    whose STT works (any transcript) never fires; a session that
+    already fired never re-fires (its rebuild gets a fresh start
+    stamp, and with it a fresh chance)."""
+    if not owner_present or not session_live:
+        return False
+    started = watch.get("session_started_ts")
+    if not started or now - float(started) < threshold_s:
+        return False
+    if watch.get("fired_for_session") == started:
+        return False
+    energy = watch.get("last_energy_ts")
+    if energy is None or float(energy) < float(started):
+        return False
+    heard = watch.get("last_transcript_ts")
+    if heard is not None and float(heard) >= float(started):
+        return False
+    return True
+
+
+async def _await_session_listening(event, timeout_s: float) -> bool:
+    """Bounded wait for the session-listening event (TASK-VOI-016):
+    the greeting gate. Returns True when the event was set inside
+    the bound (the session can hear — the line certifies readiness),
+    False on timeout (the caller plays anyway: a slow or dead build
+    must not silence the greeting, and the journal records which
+    shape happened). Never raises, never cancels the event's
+    setters."""
+    if event is None:
+        return False
+    try:
+        await asyncio.wait_for(event.wait(), timeout=timeout_s)
+    except Exception:
+        return event.is_set()
+    return True
+
+
+async def _monitor_input_energy(track, watch: dict) -> None:
+    """TASK-VOI-016: consume the owner's microphone track on a
+    side stream and stamp ``watch['last_energy_ts']`` whenever a
+    frame's RMS clears the energy floor. This is the dead-input
+    trigger's independent witness: it reads the track at the room
+    level, so it keeps working exactly when the session's own
+    forward path is broken. Best-effort by design — any failure
+    (no rtc, stream refused, track ended) logs and ends the
+    monitor; it can never take the job down."""
+    if _rtc is None:
+        return
+    try:
+        try:
+            stream = _rtc.AudioStream(track, sample_rate=24000, num_channels=1)
+        except TypeError:
+            stream = _rtc.AudioStream(track)
+    except Exception as exc:
+        logger.info("VOICE input-energy monitor unavailable: %s", exc)
+        return
+    try:
+        async for ev in stream:
+            frame = getattr(ev, "frame", ev)
+            data = getattr(frame, "data", None)
+            if data is None:
+                continue
+            if _frame_rms(data) >= _ENERGY_RMS_FLOOR:
+                watch["last_energy_ts"] = time.time()
+    except asyncio.CancelledError:
+        raise
+    except Exception as exc:
+        logger.info("VOICE input-energy monitor ended: %s", exc)
+
+
 # ---- TASK-VOI-009: fixed lines are pre-recorded WAVs ----
 # The greeting, the recovery-exhausted ("unconfirmed") outcomes and the
 # voice-unavailable notice used to be spoken through a synthesized
@@ -2192,6 +2434,17 @@ async def entrypoint(ctx: JobContext):
     # the build resolves, so it adopts this handle when it is built.
     early_greeting: dict = {"task": None}
     _key_ready_at: dict = {"ts": None}
+    # TASK-VOI-016: the session-listening event the greeting gate
+    # waits on (set by _start when sess.start() returns and by the
+    # agent_state handler on "listening"), the dead-input watch
+    # state, and the per-track energy-monitor tasks. All three are
+    # created HERE, before the connect: the room handlers below can
+    # fire before the ``live`` dict exists, and the early greeting
+    # task reads the event from this scope. ``live`` adopts the
+    # watch dict when it is built (same object).
+    session_listening = asyncio.Event()
+    input_watch = _new_input_watch()
+    energy_tasks: dict = {}
 
     # TASK-FRD-012: every foreground bridge result for this job lands
     # here via the bridge's result observer (wired in _make_session).
@@ -2418,11 +2671,37 @@ async def entrypoint(ctx: JobContext):
             "VOICE track_subscribed kind=%s source=%s sid=%s participant=%s",
             track.kind, publication.source, publication.sid, participant.identity,
         )
+        # TASK-VOI-016: the owner's microphone track gets the
+        # dead-input energy monitor — a room-level witness that keeps
+        # working when the session's own forward path is broken.
+        # Owner tracks only (the trigger's participant rule), audio
+        # only, one monitor per track; every failure is non-fatal.
+        try:
+            if not str(getattr(participant, "identity", "")).startswith("owner"):
+                return
+            kind = getattr(track, "kind", None)
+            audio_kind = getattr(_rtc.TrackKind, "KIND_AUDIO", 1) if _rtc else 1
+            if kind != audio_kind and str(kind).lower() not in ("1", "audio", "kind_audio"):
+                return
+            sid = getattr(track, "sid", None) or getattr(publication, "sid", None)
+            if sid and sid not in energy_tasks:
+                energy_tasks[sid] = asyncio.ensure_future(
+                    _monitor_input_energy(track, input_watch)
+                )
+        except Exception as exc:
+            logger.info("VOICE input-energy monitor not started: %s", exc)
+
+    def _on_track_unsubscribed(track, publication, participant):
+        sid = getattr(track, "sid", None) or getattr(publication, "sid", None)
+        task = energy_tasks.pop(sid, None) if sid else None
+        if task is not None and not task.done():
+            task.cancel()
 
     def _on_participant_connected(participant):
         logger.info("VOICE participant_connected %s", participant.identity)
 
     ctx.room.on("track_subscribed", _on_track_subscribed)
+    ctx.room.on("track_unsubscribed", _on_track_unsubscribed)
     ctx.room.on("participant_connected", _on_participant_connected)
 
     async def _play_early_greeting_line() -> None:
@@ -2441,7 +2720,15 @@ async def entrypoint(ctx: JobContext):
         BEFORE the build is awaited — previously it was defined and
         launched only after ``_built`` resolved, which is why the
         line fired 0.5 s before session start in FRD-005 re-run #2
-        instead of at room-up."""
+        instead of at room-up.
+
+        TASK-VOI-016: the play itself is gated on the session
+        listening (bounded by _GREETING_LISTENING_GATE_S) — the task
+        still launches at room-up and waits only for the key, but
+        the line no longer fires into a session that cannot hear
+        yet. The wait is a plain await inside this task, so the
+        unavailable branches' cancel (via _settle_early_greeting,
+        while the line is unattempted) keeps its exact shape."""
         try:
             if not await _wait_for_remote_participant(ctx.room):
                 return
@@ -2450,6 +2737,23 @@ async def entrypoint(ctx: JobContext):
             # is virtually always non-empty already; 0.3s is enough
             # for the audio pipeline to settle.
             await asyncio.sleep(0.3)
+            # TASK-VOI-016: the listening gate. The line waits —
+            # bounded — until the session can actually hear, so the
+            # greeting certifies readiness instead of masking the
+            # deaf window (re-run #10d: the line played at +7 s, the
+            # session heard at +21.1 s, and the caller's first
+            # sentence died between them). At the cap the line plays
+            # anyway: a slow build must not silence the greeting,
+            # and the session start is never gated on this wait —
+            # it proceeds independently on the ready path.
+            _gate_heard = await _await_session_listening(
+                session_listening, _GREETING_LISTENING_GATE_S
+            )
+            logger.info(
+                "VOICE greeting gate: line firing with the session %s "
+                "(TASK-VOI-016)",
+                "LISTENING" if _gate_heard else "not yet listening (gate cap)",
+            )
             greeting_state["attempted"] = True
             logger.info(
                 "VOICE job timing: first fixed-line audio starting %.2fs after connect",
@@ -2596,6 +2900,9 @@ async def entrypoint(ctx: JobContext):
         "recovering": False,
         "session_error": None,
         "recoveries": 0,
+        # TASK-VOI-016: the dead-input watch state (created before
+        # the connect alongside greeting_state; same object).
+        "input_watch": input_watch,
     }
 
     def _wire_session(sess) -> None:
@@ -2613,6 +2920,12 @@ async def entrypoint(ctx: JobContext):
                 "VOICE user_input_transcribed final=%s text=%r",
                 getattr(ev, "is_final", None), getattr(ev, "transcript", None),
             )
+            # TASK-VOI-016: any transcript event is proof the input
+            # forward works (the dead-input trigger's negative
+            # evidence); a final also breaks the inactivity streak.
+            input_watch["last_transcript_ts"] = time.time()
+            if getattr(ev, "is_final", None):
+                input_watch["inactivity_closes"] = 0
             if getattr(ev, "is_final", None):
                 # TASK-VOI-014: the user has spoken — no greeting
                 # stack may fire from here on (defect D8).
@@ -2691,6 +3004,11 @@ async def entrypoint(ctx: JobContext):
         def _on_state(ev):
             if getattr(ev, "new_state", None) == "speaking":
                 turn["spoke"] = True
+            if getattr(ev, "new_state", None) == "listening":
+                # TASK-VOI-016: the session can hear — open the
+                # greeting gate (idempotent; the first listening is
+                # the one the gate waits for).
+                session_listening.set()
             turn["state"] = getattr(ev, "new_state", None) or turn["state"]
             logger.info(
                 "VOICE agent_state %s -> %s",
@@ -2731,6 +3049,14 @@ async def entrypoint(ctx: JobContext):
                 audio_sample_rate=24000,
             ),
         )
+        # TASK-VOI-016: sess.start() returning means RoomIO is
+        # linked and this session's input stream exists — stamp the
+        # dead-input watch's per-session baseline (every session,
+        # rebuilds included) and open the greeting gate (the
+        # agent_state 'listening' transition lands at about the same
+        # moment; whichever fires first opens it).
+        input_watch["session_started_ts"] = time.time()
+        session_listening.set()
 
     # Honest greeting (remote main, 2026-11-13): a greeting must never
     # claim fleet health it has not probed. Since TASK-VOI-009 the fixed
@@ -2849,23 +3175,24 @@ async def entrypoint(ctx: JobContext):
     # nothing false.
     live["early_greeting_task"] = early_greeting["task"]
 
-    # TASK-VOI-014: the greeting SETTLES before the session starts.
-    # Re-run #3's lesson (see _await_greeting_settled): a concurrent
-    # task on this job's loop is not independent of sess.start() when
-    # the process is swap-starved — the line fired 0.2 s before
-    # session start despite launching at room-up. Holding the start
-    # gives the line a loop that serves nothing else until it has
-    # played (or the bound expires and the old concurrent behaviour
-    # resumes as backstop). The unavailable branches above never
-    # reach this line; their notice shape is untouched.
-    _greet_settle_started = time.time()
-    _greet_settled = await _await_greeting_settled(early_greeting["task"])
+    # TASK-VOI-016: the session starts NOW — the VOI-014 settle-hold
+    # is REMOVED. Re-run #10d proved the hold is itself the defect:
+    # it kept the session deaf for the greeting's whole (starved,
+    # ~2.8x-stretched) playback — an 11.61 s hold inside a 21.1 s
+    # join-to-hearing window — and a caller's first sentence spoken
+    # in that window is dropped by construction. Re-run #3's
+    # starvation lesson is answered on the greeting side instead:
+    # the line now waits at the listening gate (see
+    # _play_early_greeting_line), so its playback never overlaps
+    # sess.start() execution in the gated path, and the start is
+    # never gated on the playback. The greeting state is logged for
+    # the timing record only; nothing here waits on it. The
+    # unavailable branches above never reach this line; their
+    # notice shape is untouched.
     logger.info(
-        "VOICE job timing: greeting %s before session start "
-        "(attempted=%s played=%s, waited %.2fs) (TASK-VOI-014)",
-        "settled" if _greet_settled else "NOT settled - starting anyway",
+        "VOICE job timing: session starting without the greeting "
+        "settle-hold (greeting attempted=%s played=%s) (TASK-VOI-016)",
         greeting_state["attempted"], greeting_state["played"],
-        time.time() - _greet_settle_started,
     )
 
     await _start(session, agent)
@@ -3393,6 +3720,15 @@ async def entrypoint(ctx: JobContext):
             session died at the Gemini opening handshake (2026-11-14
             22:27 IST) nothing noticed and the call's remaining
             utterances were never even transcribed.
+        (c) a DEAD INPUT (TASK-VOI-016) — audio energy is arriving
+            on the owner's track yet the session has produced zero
+            transcripts for _DEAD_INPUT_THRESHOLD_S, or the session
+            has closed on Gemini's 1008 inactivity timer
+            _INACTIVITY_CLOSE_LIMIT times in a row. Re-run #10d's
+            class: the input was established broken under load and
+            no plugin-level reconnect ever rebuilds it; triggers
+            (a)/(b) are blind to it because there is no transcript
+            and the closes read recoverable=True.
 
         Either trigger runs the recovery ladder ONCE for that turn
         (_recover): pinned rebuild, one pinned retry (the pre-VOI-009
@@ -3458,16 +3794,51 @@ async def entrypoint(ctx: JobContext):
                         or _classify_provider_failure(err.get("text"))
                     )
                 )
-                if not wedged and not session_dead:
-                    continue
+                # TASK-VOI-016: count 1008 inactivity closes off the
+                # error record (each record once). The Kth
+                # consecutive one is treated as unrecoverable even
+                # when its text carries no provider marker: the
+                # plugin's internal retry already had its chance
+                # after the first close and the input is still dead.
+                _note_inactivity_close(input_watch, err)
+                inactivity_dead = bool(
+                    live.get("session") is not None
+                    and int(input_watch.get("inactivity_closes") or 0)
+                    >= _INACTIVITY_CLOSE_LIMIT
+                )
+                if inactivity_dead:
+                    session_dead = True
                 humans = [
                     p for p in ctx.room.remote_participants.values()
                     if str(p.identity).startswith("owner")
                 ]
+                # TASK-VOI-016: the dead-input trigger — audio
+                # energy arrived on the owner's track during this
+                # session's life, yet the session produced zero
+                # transcripts in threshold time. The forward path is
+                # broken; only a rebuild (new RoomIO + input) cures
+                # it, which is what the ladder does.
+                dead_input = _dead_input_verdict(
+                    input_watch, time.time(),
+                    owner_present=bool(humans),
+                    session_live=live.get("session") is not None,
+                )
+                if not wedged and not session_dead and not dead_input:
+                    continue
                 if not humans:
                     continue
                 pending_text = (turn.get("pending_text") or "").strip()
-                if wedged:
+                if dead_input and not wedged:
+                    logger.error(
+                        "VOICE input watchdog (TASK-VOI-016): audio energy is "
+                        "arriving on the owner's track but the session has "
+                        "produced no transcript for %.0fs — the input forward "
+                        "is dead; running the recovery ladder (the rebuild "
+                        "re-creates RoomIO + input), no re-greeting",
+                        time.time() - float(input_watch.get("session_started_ts")
+                                            or time.time()),
+                    )
+                elif wedged:
                     logger.error(
                         "VOICE turn watchdog: no completed reply for %.0fs in state %s "
                         "(pending %r); running the recovery ladder on pinned provider %s "
@@ -3488,6 +3859,15 @@ async def entrypoint(ctx: JobContext):
                 # wedge must not re-fire while rungs are in flight, and
                 # the death record belongs to a session the first rung
                 # is about to replace.
+                if dead_input:
+                    # TASK-VOI-016: one ladder run per broken session;
+                    # the rebuild's fresh start stamp re-arms the
+                    # trigger for the new session.
+                    input_watch["fired_for_session"] = (
+                        input_watch.get("session_started_ts")
+                    )
+                if inactivity_dead:
+                    input_watch["inactivity_closes"] = 0
                 live["session_error"] = None
                 turn["pending_since"] = None
                 turn["state"] = "initializing"
@@ -3578,6 +3958,11 @@ async def entrypoint(ctx: JobContext):
                 task = live.get(task_key)
                 if task is not None and not task.done():
                     task.cancel()
+            # TASK-VOI-016: the input-energy monitors end with the job.
+            for _etask in list(energy_tasks.values()):
+                if not _etask.done():
+                    _etask.cancel()
+            energy_tasks.clear()
             current = live.get("session")
             if current is None:
                 return
