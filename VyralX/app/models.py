@@ -98,6 +98,8 @@ class PublishJob(Base):
     title: Mapped[str] = mapped_column(String(100))
     description: Mapped[str] = mapped_column(Text, default="")
     tags_json: Mapped[str] = mapped_column(Text, default="[]")
+    thumbnail_path: Mapped[str] = mapped_column(String(2048), default="")
+    category_id: Mapped[str] = mapped_column(String(8), default="")
     privacy_status: Mapped[str] = mapped_column(String(20), default="private")
     scheduled_at: Mapped[str] = mapped_column(String(64), default="")
     status: Mapped[str] = mapped_column(String(40), default="pending_approval")
@@ -132,6 +134,28 @@ class VideoMetric(Base):
     view_count: Mapped[int] = mapped_column(Integer, default=0)
     like_count: Mapped[int] = mapped_column(Integer, default=0)
     comment_count: Mapped[int] = mapped_column(Integer, default=0)
+    fetched_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class ChannelSnapshot(Base):
+    """TASK-VYR-014: point-in-time channel statistics for YPP tracking.
+
+    Written by app.services.ypp_tracker once per autopilot cycle (and on
+    demand). ``shorts_views_90d`` is the tracked floor defined there: views
+    of PUBLIC uploads made inside the last 90 days. Watch hours are not
+    stored — they are not measurable from the Data API and are never
+    estimated (see ypp_tracker.compute_ypp_progress).
+    """
+
+    __tablename__ = "channel_snapshots"
+    id: Mapped[int] = mapped_column(Integer, Identity(), primary_key=True)
+    channel_id: Mapped[str] = mapped_column(String(100), default="", index=True)
+    channel_title: Mapped[str] = mapped_column(String(200), default="")
+    subscriber_count: Mapped[int] = mapped_column(Integer, default=0)
+    total_view_count: Mapped[int] = mapped_column(Integer, default=0)
+    video_count: Mapped[int] = mapped_column(Integer, default=0)
+    public_uploads_90d: Mapped[int] = mapped_column(Integer, default=0)
+    shorts_views_90d: Mapped[int] = mapped_column(Integer, default=0)
     fetched_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
