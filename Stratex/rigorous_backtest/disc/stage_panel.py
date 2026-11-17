@@ -6,10 +6,16 @@ SOLUSDT (the rd/common.py SYMBOLS triple) — exactly as the
 declaration's data plan specifies: 15m, months 2023-10..2026-10,
 108,192 bars/symbol, zero missing bars.
 
-The importable Stratex tree is expected at ../repo/Stratex (a
-git-archive extract of origin/main; see ../RUNBOOK.md). The Box
-Theory provenance record is read from that same tree
+The importable Stratex tree is taken from --repo (default: the
+repository this script ships in, resolved from the script's own
+path — Stratex/rigorous_backtest/disc/ sits three levels below
+the repo root; a git-archive extract of origin/main can be passed
+explicitly instead). The Box Theory provenance record is read
+from that same tree
 (Stratex/rigorous_backtest/ig/box_theory_provenance.json).
+Outputs go to --out (default ~/workspace/str-grid, outside the
+repo tree): the cache lives at <out>/panel/ and the provenance
+record is written to <out>/panel_provenance.json.
 
 Verification (hard stops, nothing patched):
 - per symbol: rows == 108,192; gap_audit.missing_bars == 0;
@@ -18,10 +24,11 @@ Verification (hard stops, nothing patched):
   (ig/box_theory_provenance.json on main) — the identical panel.
 
 Modes:
-  (default)      load with cache_dir=../panel/ (write-capable hosts);
-                 afterwards the cache CSV + sidecar are checked to
-                 exist with nonzero size — a cache that did not
-                 persist is reported as CACHE_NOT_PERSISTED failure.
+  (default)      load with cache_dir=<out>/panel/ (write-capable
+                 hosts); afterwards the cache CSV + sidecar are
+                 checked to exist with nonzero size — a cache that
+                 did not persist is reported as CACHE_NOT_PERSISTED
+                 failure.
   --verify-only  load with cache_dir=None (pure fetch + verify in
                  memory) and print the provenance JSON to stdout.
                  This is the mode used in the Muse sandbox, whose
@@ -39,13 +46,11 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parent / "repo"
-sys.path.insert(0, str(REPO / "Stratex"))
-
-from rigorous_backtest.data_feed import load_dataset  # noqa: E402
-
-OUT = HERE.parent
-PANEL_DIR = OUT / "panel"
+# Stratex/rigorous_backtest/disc/ sits three levels below the repo
+# root, so the repository this script ships in is HERE.parents[2].
+DEFAULT_REPO = HERE.parents[2]
+# Panel outputs live outside the repo tree (see ../RUNBOOK.md).
+DEFAULT_OUT = Path.home() / "workspace" / "str-grid"
 SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT"]
 EXPECTED_ROWS = 108192
 EXPECTED_FIRST = "2023-10-01T00:00:00+00:00"
@@ -54,12 +59,31 @@ EXPECTED_LAST = "2026-10-31T23:45:00+00:00"
 
 def main() -> int:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--repo", type=Path, default=DEFAULT_REPO,
+                    help="repository tree containing Stratex/ "
+                         "(default: the repository this script "
+                         "ships in, resolved from its own path)")
+    ap.add_argument("--out", type=Path, default=DEFAULT_OUT,
+                    help="output directory outside the repo tree; "
+                         "the cache goes to <out>/panel/ and the "
+                         "provenance record to "
+                         "<out>/panel_provenance.json "
+                         "(default: ~/workspace/str-grid)")
     ap.add_argument("--verify-only", action="store_true")
     args = ap.parse_args()
-    cache_dir = None if args.verify_only else PANEL_DIR
+    repo = args.repo.expanduser()
+    out = args.out.expanduser()
+    if not (repo / "Stratex/rigorous_backtest/data_feed.py").is_file():
+        print(f"ERROR: --repo {repo} does not contain "
+              "Stratex/rigorous_backtest/data_feed.py", file=sys.stderr)
+        return 2
+    sys.path.insert(0, str(repo / "Stratex"))
+    from rigorous_backtest.data_feed import load_dataset  # noqa: E402
+
+    cache_dir = None if args.verify_only else out / "panel"
 
     box_prov = json.loads(
-        (REPO / "Stratex/rigorous_backtest/ig/box_theory_provenance.json")
+        (repo / "Stratex/rigorous_backtest/ig/box_theory_provenance.json")
         .read_text(encoding="utf-8"))
     box_syms = box_prov["symbols"]
     provenance = {"panel": "BTC/ETH/SOL (rd.common SYMBOLS)",
@@ -120,7 +144,8 @@ def main() -> int:
         print(json.dumps(provenance, indent=1))
         print("PROVENANCE_JSON_END")
     else:
-        (OUT / "panel_provenance.json").write_text(
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "panel_provenance.json").write_text(
             json.dumps(provenance, indent=1), encoding="utf-8")
     if failures:
         print(f"\nPANEL VERIFICATION FAILED ({len(failures)}):", flush=True)

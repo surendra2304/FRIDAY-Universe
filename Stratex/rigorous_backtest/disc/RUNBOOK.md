@@ -15,7 +15,7 @@ the panel beyond the loader-level provenance verification.
 | harness/grid_mm.py | `f77d95a542a337807ebd0a5a6979b5b0cb901e910959a9e35026e090b38b0650` |
 | harness/test_grid_mm.py | `c4c3b0d51330f6233b22ae8a825d49c9b7df32ad1fd9017d9b37fef42096af1a` |
 | harness/run_grid_mm.py | `b80ca4047e2e15367520c4f02e01516ec07c2d0fc1689b459d3e211e53dcd554` |
-| harness/stage_panel.py | `ce8e8b46170247a3414bd6448df5274f4cef37830816f4780a89deb0b56279b9` |
+| harness/stage_panel.py | `1204459604889f794e822156e32d7040c2b2176218512a0863931ff836eccee1` |
 
 Repo placement (Gate A PR, branch `claude/task-str-rd-023`):
 all six files under `Stratex/rigorous_backtest/disc/`, plus the
@@ -54,8 +54,12 @@ first load also populates the cache at `--panel-dir`
 (default `~/workspace/str-grid/panel`); the loader re-verifies
 cache hashes on every read. To pre-stage the cache:
 `python3 Stratex/rigorous_backtest/disc/stage_panel.py`
-(default mode; writes `~/workspace/str-grid/panel/` +
-refreshes panel_provenance.json).
+(default mode; `--repo` defaults to the repository the script
+ships in, resolved from its own path, and `--out` defaults to
+`~/workspace/str-grid` — writes `~/workspace/str-grid/panel/` +
+refreshes `~/workspace/str-grid/panel_provenance.json`. Pass
+`--repo`/`--out` explicitly to stage against another tree or
+location.)
 
 ## Trial floor
 
