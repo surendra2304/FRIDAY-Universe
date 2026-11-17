@@ -162,6 +162,17 @@ class AutonomousDaemon:
         self._running = False
         self._daemon_task: asyncio.Task | None = None
         self._wake = asyncio.Event()
+        # Heartbeat cadence (TASK-FRD-023): the loop logs one INFO line per
+        # interval so an armed-but-idle daemon is provable from the journal.
+        # Before this existed, "alive and idle" and "never started" were
+        # indistinguishable except by the persistence file's mtime.
+        try:
+            self._heartbeat_interval_s = float(
+                os.getenv("FRIDAY_AUTONOMOUS_DAEMON_HEARTBEAT_S", "300")
+            )
+        except ValueError:
+            self._heartbeat_interval_s = 300.0
+        self._last_heartbeat_at = 0.0
         self._persistence_path = Path(__file__).resolve().parents[3] / ".data" / "autonomous_goals.json"
         self._load_state()
 
@@ -379,6 +390,7 @@ class AutonomousDaemon:
         if self._running:
             return
         self._running = True
+        self._last_heartbeat_at = 0.0
         self._daemon_task = asyncio.create_task(self._run_loop(), name="friday-autonomous-daemon")
         logger.info("Autonomous daemon started")
 
@@ -410,6 +422,17 @@ class AutonomousDaemon:
 
                 # Persist state periodically
                 self._persist_state()
+
+                # Heartbeat (TASK-FRD-023): one INFO line per interval
+                # proves the loop is alive even when no goal is queued.
+                now = time.monotonic()
+                if now - self._last_heartbeat_at >= self._heartbeat_interval_s:
+                    self._last_heartbeat_at = now
+                    logger.info(
+                        "Autonomous daemon alive: %d queued, %d running",
+                        len(self._goal_queue),
+                        len(self._running_goals),
+                    )
 
             except Exception as exc:
                 logger.error("Autonomous daemon loop error: %s", exc)
