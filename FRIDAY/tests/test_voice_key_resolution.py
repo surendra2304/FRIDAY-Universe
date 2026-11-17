@@ -51,6 +51,7 @@ from friday.voice import livekit_worker as worker  # noqa: E402
 @pytest.fixture(autouse=True)
 def _reset_key_cache():
     saved = dict(worker._KEY_CACHE)
+    saved_quota = dict(worker._KEY_QUOTA_COOLDOWN_UNTIL)
     worker._KEY_CACHE.update(
         {
             "key": None,
@@ -60,9 +61,12 @@ def _reset_key_cache():
             "tentative_ts": 0.0,
         }
     )
+    worker._KEY_QUOTA_COOLDOWN_UNTIL.clear()
     yield
     worker._KEY_CACHE.clear()
     worker._KEY_CACHE.update(saved)
+    worker._KEY_QUOTA_COOLDOWN_UNTIL.clear()
+    worker._KEY_QUOTA_COOLDOWN_UNTIL.update(saved_quota)
 
 
 def _run(coro):
@@ -145,36 +149,112 @@ def test_all_auth_rejected_is_a_hard_failure(monkeypatch):
     assert worker._KEY_CACHE["failed_ts"] != 0.0  # negative cache earned
 
 
-def test_probe_classifies_transport_errors_as_inconclusive(monkeypatch):
-    """The probe itself: a connection-class failure raises
-    _ProbeInconclusive; an API-level error still counts as key-valid;
-    an auth failure still counts as key-dead."""
+class _FakeLiveCM:
+    """Async context manager standing in for a Gemini Live connect."""
+
+    def __init__(self, exc=None):
+        self._exc = exc
+
+    async def __aenter__(self):
+        if self._exc is not None:
+            raise self._exc
+        return SimpleNamespace()
+
+    async def __aexit__(self, *args):
+        return False
+
+
+class _FakeGenaiClient:
+    """Stands in for google.genai.Client: the probe's text stage
+    fails via .models, its Live stage via .aio.live.connect — each
+    stage's failure is set independently."""
+
+    def __init__(self, models_exc=None, live_exc=None):
+        self._models_exc = models_exc
+        self._live_exc = live_exc
+
+    @property
+    def models(self):
+        if self._models_exc is not None:
+            raise self._models_exc
+        return SimpleNamespace(generate_content=lambda **kwargs: SimpleNamespace())
+
+    @property
+    def aio(self):
+        live = SimpleNamespace(
+            connect=lambda model=None, config=None: _FakeLiveCM(self._live_exc)
+        )
+        return SimpleNamespace(live=live)
+
+
+def _patch_genai_client(monkeypatch, **kwargs):
     import google.genai as genai
 
-    class _Boom:
-        def __init__(self, exc):
-            self._exc = exc
+    monkeypatch.setattr(genai, "Client", lambda api_key: _FakeGenaiClient(**kwargs))
 
-        @property
-        def models(self):
-            raise self._exc
 
-    def client_raising(exc):
-        return lambda api_key: _Boom(exc)
-
-    monkeypatch.setattr(genai, "Client", client_raising(ConnectionError("connection reset by peer")))
+def test_probe_classifies_transport_errors_as_inconclusive(monkeypatch):
+    """The probe itself: a connection-class failure raises
+    _ProbeInconclusive; an auth failure counts as key-dead; a
+    text-stage API answer that is neither auth, quota nor transport
+    (a 503) falls through to the Live stage, whose connect decides —
+    2026-11-17 key-probe fix: the pre-fix probe counted any such
+    answer, a 429 included, as key-valid without ever judging Live
+    availability."""
+    _patch_genai_client(
+        monkeypatch, models_exc=ConnectionError("connection reset by peer")
+    )
     with pytest.raises(worker._ProbeInconclusive):
         worker._probe_gemini_key_sync("k")
 
-    monkeypatch.setattr(
-        genai, "Client", client_raising(RuntimeError("503 UNAVAILABLE: high demand"))
+    _patch_genai_client(monkeypatch, models_exc=RuntimeError("API_KEY_INVALID"))
+    assert worker._probe_gemini_key_sync("k") is False
+
+    # text stage answers 503 (the key authenticated); Live connects
+    _patch_genai_client(
+        monkeypatch, models_exc=RuntimeError("503 UNAVAILABLE: high demand")
     )
     assert worker._probe_gemini_key_sync("k") is True
 
-    monkeypatch.setattr(
-        genai, "Client", client_raising(RuntimeError("API_KEY_INVALID"))
+    # text stage answers 503; the Live stage refuses for quota
+    _patch_genai_client(
+        monkeypatch,
+        models_exc=RuntimeError("503 UNAVAILABLE: high demand"),
+        live_exc=RuntimeError("429 RESOURCE_EXHAUSTED: you exceeded your current quota"),
     )
+    with pytest.raises(worker._ProbeQuotaExhausted):
+        worker._probe_gemini_key_sync("k")
+
+
+def test_probe_text_quota_is_never_valid(monkeypatch):
+    """The 2026-11-17 frame-flow finding, pinned: a 429
+    RESOURCE_EXHAUSTED from the probe's text stage is a quota
+    verdict — the key is NOT valid for voice, is never certified,
+    and the Live stage is not even consulted."""
+    _patch_genai_client(
+        monkeypatch,
+        models_exc=RuntimeError(
+            "429 RESOURCE_EXHAUSTED: you exceeded your current quota"
+        ),
+    )
+    with pytest.raises(worker._ProbeQuotaExhausted):
+        worker._probe_gemini_key_sync("k")
+
+
+def test_probe_live_stage_verdicts(monkeypatch):
+    """With a clean text stage, the Live stage alone decides:
+    connect -> valid; auth -> dead; transport -> unjudged."""
+    _patch_genai_client(monkeypatch)
+    assert worker._probe_gemini_key_sync("k") is True
+
+    _patch_genai_client(monkeypatch, live_exc=RuntimeError("API_KEY_INVALID"))
     assert worker._probe_gemini_key_sync("k") is False
+
+    _patch_genai_client(
+        monkeypatch, live_exc=ConnectionError("connection reset by peer")
+    )
+    with pytest.raises(worker._ProbeInconclusive):
+        worker._probe_gemini_key_sync("k")
 
 
 # ---------------------------------------------------------------------------
@@ -261,3 +341,64 @@ def test_keeper_step_reports_cooling_and_tentative(monkeypatch):
     monkeypatch.setattr(worker, "_probe_gemini_key_sync", inconclusive)
     assert worker._key_keeper_step() == "tentative"
     assert worker._cached_gemini_key() is None
+
+
+# ---------------------------------------------------------------------------
+# Quota verdicts: never valid, never tentative — cooled down (2026-11-17)
+# ---------------------------------------------------------------------------
+
+
+def test_quota_candidate_cooled_and_next_candidate_selected(monkeypatch):
+    monkeypatch.setattr(worker, "GOOGLE_PLUGIN_AVAILABLE", True)
+    monkeypatch.setattr(worker, "_gemini_pool_keys", lambda: ["quota-key", "good-key"])
+    calls = []
+
+    def fake_probe(key):
+        calls.append(key)
+        if key == "quota-key":
+            raise worker._ProbeQuotaExhausted("429 resource_exhausted")
+        return True
+
+    monkeypatch.setattr(worker, "_probe_gemini_key_sync", fake_probe)
+    assert _run(worker._gemini_best_key()) == "good-key"
+    assert calls == ["quota-key", "good-key"]
+    # the verified key is the good one; the quota key is cooled, not cached
+    assert worker._cached_gemini_key() == "good-key"
+    assert worker._key_quota_cooling("quota-key")
+    assert not worker._key_quota_cooling("good-key")
+
+
+def test_all_quota_round_fails_and_cooldown_prevents_reprobing(monkeypatch):
+    monkeypatch.setattr(worker, "GOOGLE_PLUGIN_AVAILABLE", True)
+    monkeypatch.setattr(worker, "_gemini_pool_keys", lambda: ["q1", "q2"])
+    calls = []
+
+    def quota_probe(key):
+        calls.append(key)
+        raise worker._ProbeQuotaExhausted("429 resource_exhausted")
+
+    monkeypatch.setattr(worker, "_probe_gemini_key_sync", quota_probe)
+    assert _run(worker._gemini_best_key()) is None
+    # quota is a judgement: nothing verified, nothing tentative
+    assert worker._cached_gemini_key() is None
+    assert worker._cached_tentative_key() is None
+    assert calls == ["q1", "q2"]
+    # past the negative-cache window, cooled keys are skipped, not re-probed
+    worker._KEY_CACHE["failed_ts"] = 0.0
+    calls.clear()
+    assert worker._resolve_gemini_key_sync() is None
+    assert calls == []
+
+
+def test_rotation_order_preserved_for_healthy_keys(monkeypatch):
+    monkeypatch.setattr(worker, "GOOGLE_PLUGIN_AVAILABLE", True)
+    monkeypatch.setattr(worker, "_gemini_pool_keys", lambda: ["k1", "k2", "k3"])
+    calls = []
+
+    def ok_probe(key):
+        calls.append(key)
+        return True
+
+    monkeypatch.setattr(worker, "_probe_gemini_key_sync", ok_probe)
+    assert _run(worker._gemini_best_key()) == "k1"
+    assert calls == ["k1"]  # first healthy key wins; the rest are not probed
