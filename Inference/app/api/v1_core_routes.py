@@ -1578,7 +1578,20 @@ async def chat_completions(req: ChatCompletionRequest):
                 prompt=f"{system_instruction}\n\n{prompt}",
                 temperature=exec_temp,
                 max_tokens=exec_tokens,
-                fast_lane=True if model == "auto" else False,
+                # Never fast_lane on this surface. "auto" delegates the
+                # CHOICE of model; it is not a request for the 60-token
+                # fast lane. Passing fast_lane=True for every "auto"
+                # caller made the unified manager silently clamp
+                # max_tokens to 60, force groq/openai/gpt-oss-20b and
+                # replace the system prompt with a 40-word instruction:
+                # a caller asking for 2,500 tokens received a 60-token
+                # stub with finish_reason="length" and no disclosure
+                # (measured live 2026-11-17: 4/4 auto probes at
+                # max_tokens=800 stopped at exactly 60). The fast lane
+                # stays available only where it is the explicit
+                # contract: /v1/ask with mode="fast" and the FRIDAY /ask
+                # fast lane, both of which ask for it by name.
+                fast_lane=False,
                 timeout=timeout_s,
             )
         )
