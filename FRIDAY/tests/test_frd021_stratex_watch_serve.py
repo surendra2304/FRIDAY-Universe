@@ -30,6 +30,15 @@ Rules pinned here:
 - a stale heartbeat (>60 s), a missing heartbeat, a missing cloud
   state, a non-RUNNING daemon, or a non-numeric balance all fall
   back to the live dispatch;
+- the halt state is snapshot-served too (TASK-FRD-021 follow-up):
+  panic_state.json + KILL_SWITCH_ACTIVE.lock at the Stratex root —
+  Stratex's panic_state.py resolves its default relative filenames
+  against the Stratex services' WorkingDirectory (the root), not
+  the state dir — composed exactly as the live summary composes
+  them (kill_switch_active = the lock file exists; panic_active =
+  the panic flag or the lock; the flag read fails CLOSED on a
+  corrupt file, as Stratex's own reader does), so the rendered
+  answer carries the HALTED line byte-identically on both paths;
 - "analyze" always dispatches live; the tool's sendable surface
   stays ("status", "analyze") — the snapshot path sends nothing,
   so no mutation-shaped intent can ever take it;
@@ -107,7 +116,12 @@ def _expected_stats(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _real_live_payload(fills: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+def _real_live_payload(
+    fills: list[dict[str, Any]] | None = None,
+    *,
+    panic_active: bool = False,
+    kill_switch_active: bool = False,
+) -> dict[str, Any]:
     """The live payload as Stratex ACTUALLY composes it from the fills.
 
     The scorecard is Stratex's own generator —
@@ -120,12 +134,15 @@ def _real_live_payload(fills: list[dict[str, Any]] | None = None) -> dict[str, A
     ``_ledger_scorecard_block()`` field-for-field, and the
     surrounding fields mirror ``_compute_engine_status_summary()``
     in the same file (balance/cash from the engine's cloud state,
-    ACTIVE_STRATEGIES empty, TRADING_MODE upper-cased, no halt
-    flags set). The first version of this pin hand-grouped only the
-    ledger strategies — a model sharing the implementation's wrong
-    assumption about the map — and so could not see the sleeve
-    fall outside the formatter's six-line window; the supervisor
-    review rejected it for exactly that.
+    ACTIVE_STRATEGIES empty, TRADING_MODE upper-cased, and the
+    halt flags as that function composes them: kill_switch_active
+    is the lock file's existence, panic_active is the panic flag
+    OR the lock — _real_trading_data folds the lock in). The first
+    version of this pin hand-grouped only the ledger strategies —
+    a model sharing the implementation's wrong assumption about
+    the map — and so could not see the sleeve fall outside the
+    formatter's six-line window; the supervisor review rejected
+    it for exactly that.
     """
     stratex_dir = Path(__file__).resolve().parents[2] / "Stratex"
     if str(stratex_dir) not in sys.path:
@@ -154,8 +171,8 @@ def _real_live_payload(fills: list[dict[str, Any]] | None = None) -> dict[str, A
         "current_positions": [],
         "unrealized_pnl": 0.0,
         "active_strategies": [],
-        "panic_active": False,
-        "kill_switch_active": False,
+        "panic_active": panic_active,
+        "kill_switch_active": kill_switch_active,
         "ledger_scorecard": {
             "generated_at": card.get("generated_at"),
             "source": card.get("source"),
@@ -225,6 +242,22 @@ class _World:
         rows = FIXTURE_FILLS if rows is None else rows
         (self.state / "fill_ledger.jsonl").write_text(
             "".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8"
+        )
+
+    def write_panic(self, payload: Any) -> None:
+        """The panic flag — at the Stratex ROOT (panic_state.py's
+        default relative filename resolves against the Stratex
+        services' WorkingDirectory), never in the state dir. A str
+        payload is written raw (corrupt-file cases)."""
+        text = payload if isinstance(payload, str) else json.dumps(payload)
+        (self.root / "panic_state.json").write_text(text, encoding="utf-8")
+
+    def write_kill_lock(self) -> None:
+        """The kill-switch lock — existence is the signal; content is
+        the marker JSON panic_state.engage_order_block writes."""
+        (self.root / "KILL_SWITCH_ACTIVE.lock").write_text(
+            json.dumps({"kill_switch_active": True, "actor": "test"}),
+            encoding="utf-8",
         )
 
     def write_all(self, **heartbeat_kw: Any) -> None:
@@ -389,6 +422,157 @@ class TestReadStatusSnapshot:
 
 
 # ---------------------------------------------------------------------------
+# the halt state (TASK-FRD-021 follow-up) — panic_state.json +
+# KILL_SWITCH_ACTIVE.lock at the Stratex root, composed with the
+# live summary's semantics
+# ---------------------------------------------------------------------------
+
+
+class TestReadStatusSnapshotHaltState:
+    def test_no_halt_files_means_not_halted(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        world = _World(tmp_path, monkeypatch)
+        world.write_all()
+
+        snap = sw.read_status_snapshot()
+
+        assert snap is not None
+        assert snap.data["panic_active"] is False
+        assert snap.data["kill_switch_active"] is False
+
+    def test_unified_writer_schema_trips_panic(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        world = _World(tmp_path, monkeypatch)
+        world.write_all()
+        # panic_state.write_panic_state's unified schema (both keys).
+        world.write_panic(
+            {"active": True, "panic_active": True, "actor": "owner",
+             "reason": "manual halt"}
+        )
+
+        snap = sw.read_status_snapshot()
+
+        assert snap is not None
+        assert snap.data["panic_active"] is True
+        assert snap.data["kill_switch_active"] is False
+
+    def test_legacy_single_key_schemas_trip_panic(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # The pre-unification writers disagreed on the schema (the
+        # reason panic_state.py exists): /api/panic wrote only
+        # "active", the FRIDAY supervision panic only "panic_active".
+        # Stratex's reader accepts either key; the snapshot must too.
+        world = _World(tmp_path, monkeypatch)
+        world.write_all()
+        for payload in ({"active": True}, {"panic_active": True}):
+            world.write_panic(payload)
+
+            snap = sw.read_status_snapshot()
+
+            assert snap is not None
+            assert snap.data["panic_active"] is True, payload
+            assert snap.data["kill_switch_active"] is False
+
+    def test_released_panic_file_is_not_halted(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        world = _World(tmp_path, monkeypatch)
+        world.write_all()
+        world.write_panic(
+            {"active": False, "panic_active": False, "actor": "owner",
+             "released_at": "2026-11-17T00:00:00+00:00"}
+        )
+
+        snap = sw.read_status_snapshot()
+
+        assert snap is not None
+        assert snap.data["panic_active"] is False
+        assert snap.data["kill_switch_active"] is False
+
+    def test_corrupt_panic_file_fails_closed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # panic_state.read_panic_state: a flag file that exists but
+        # cannot be parsed means panic ASSUMED — a corrupt halt flag
+        # must never read as "safe". The snapshot mirrors it.
+        world = _World(tmp_path, monkeypatch)
+        world.write_all()
+        for raw in ("{not json", "[1, 2]", "true"):
+            world.write_panic(raw)
+
+            snap = sw.read_status_snapshot()
+
+            assert snap is not None
+            assert snap.data["panic_active"] is True, raw
+            assert snap.data["kill_switch_active"] is False
+
+    def test_non_utf8_panic_file_fails_closed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # F1 (supervisor review of PR #877): bytes that are not valid
+        # UTF-8 make read_text raise UnicodeDecodeError — a ValueError,
+        # not an OSError — out of the flag read. Stratex's reader
+        # catches Exception around open+load and fails closed; the
+        # snapshot must fail closed in-function too: the flag exists,
+        # so panic is assumed and the snapshot still serves.
+        world = _World(tmp_path, monkeypatch)
+        world.write_all()
+        (world.root / "panic_state.json").write_bytes(
+            b'{"active": true, "actor": "\xff\xfe"}'
+        )
+
+        snap = sw.read_status_snapshot()
+
+        assert snap is not None
+        assert snap.data["panic_active"] is True
+        assert snap.data["kill_switch_active"] is False
+
+    def test_kill_lock_trips_both_flags(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # The live composition folds the lock into panic_active
+        # (_real_trading_data: is_panic_active() OR
+        # is_kill_switch_locked()) and reports the lock itself as
+        # kill_switch_active; the lock's content is irrelevant —
+        # existence is the signal.
+        world = _World(tmp_path, monkeypatch)
+        world.write_all()
+        world.write_kill_lock()
+
+        snap = sw.read_status_snapshot()
+
+        assert snap is not None
+        assert snap.data["panic_active"] is True
+        assert snap.data["kill_switch_active"] is True
+
+    def test_halt_files_in_state_dir_do_not_count(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # The files live at the Stratex ROOT (the services'
+        # WorkingDirectory). Namesakes inside the state dir are not
+        # the flag — reading them would invent a halt Stratex does
+        # not have (and miss the real one).
+        world = _World(tmp_path, monkeypatch)
+        world.write_all()
+        (world.state / "panic_state.json").write_text(
+            json.dumps({"active": True, "panic_active": True}),
+            encoding="utf-8",
+        )
+        (world.state / "KILL_SWITCH_ACTIVE.lock").write_text(
+            "{}", encoding="utf-8"
+        )
+
+        snap = sw.read_status_snapshot()
+
+        assert snap is not None
+        assert snap.data["panic_active"] is False
+        assert snap.data["kill_switch_active"] is False
+
+
+# ---------------------------------------------------------------------------
 # the tool: snapshot serve, fallback, and the read-only surface
 # ---------------------------------------------------------------------------
 
@@ -481,6 +665,101 @@ class TestToolSnapshotServe:
                 if a != b
             )
         )
+        assert snap_lines[0].replace("demo", "PAPER") == live_lines[0]
+
+    def test_snapshot_figures_byte_match_live_figures_when_panicked(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Receipt-exactness in the HALTED state (TASK-FRD-021
+        follow-up): with the panic flag set at the Stratex root, the
+        snapshot render and the live render both carry the HALTED
+        line and stay byte-identical below the header. The live side
+        is the real composition with the flags as
+        _compute_engine_status_summary sets them (panic flag set,
+        no lock: panic_active=True, kill_switch_active=False). The
+        sleeve line stays in BOTH renders — the window fix and the
+        halt wiring compose."""
+        world = _World(tmp_path, monkeypatch)
+        world.write_all()
+        world.write_panic(
+            {"active": True, "panic_active": True, "actor": "owner",
+             "reason": "manual halt"}
+        )
+
+        live_payload = _real_live_payload(panic_active=True)
+        assert live_payload["ledger_scorecard"]["totals"]["win_rate"] == 0.4
+
+        snap_client = _RecordingFleetClient(_MARKER_PAYLOAD)
+        snap_result = StratexPortfolioTool(fleet_client=snap_client).execute(
+            question="how is my portfolio", kind="portfolio"
+        )
+        assert snap_client.envelopes == [], "halted snapshot must still serve locally"
+
+        world.write_heartbeat(age_s=3600.0)
+        live_client = _RecordingFleetClient(live_payload)
+        live_result = StratexPortfolioTool(fleet_client=live_client).execute(
+            question="how is my portfolio", kind="portfolio"
+        )
+        assert len(live_client.envelopes) == 1
+
+        for literal in (
+            "Balance: 10,792.80",
+            "10 closed trade(s)",
+            "win rate 40%",
+            "strategy_sleeve_tsmom2_dual: 1 trade(s), net +0.00",
+            "- Trading HALTED: Stratex's panic/kill switch is active.",
+        ):
+            assert literal in snap_result.content
+            assert literal in live_result.content
+
+        snap_lines = snap_result.content.splitlines()
+        live_lines = live_result.content.splitlines()
+        assert snap_lines[1:] == live_lines[1:], (
+            "figure lines differ:\n"
+            + "\n".join(
+                f"  snap={a!r} live={b!r}"
+                for a, b in zip(snap_lines, live_lines)
+                if a != b
+            )
+        )
+        assert snap_lines[0].replace("demo", "PAPER") == live_lines[0]
+
+    def test_snapshot_figures_byte_match_live_figures_when_kill_locked(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The kill-switch lock variant: the live composition folds
+        the lock into panic_active AND reports kill_switch_active,
+        so both flags are True on both sides and the HALTED line
+        renders identically."""
+        world = _World(tmp_path, monkeypatch)
+        world.write_all()
+        world.write_kill_lock()
+
+        live_payload = _real_live_payload(
+            panic_active=True, kill_switch_active=True
+        )
+
+        snap_client = _RecordingFleetClient(_MARKER_PAYLOAD)
+        snap_result = StratexPortfolioTool(fleet_client=snap_client).execute(
+            question="how is my portfolio", kind="portfolio"
+        )
+        assert snap_client.envelopes == []
+
+        world.write_heartbeat(age_s=3600.0)
+        live_client = _RecordingFleetClient(live_payload)
+        live_result = StratexPortfolioTool(fleet_client=live_client).execute(
+            question="how is my portfolio", kind="portfolio"
+        )
+        assert len(live_client.envelopes) == 1
+
+        halted = "- Trading HALTED: Stratex's panic/kill switch is active."
+        assert halted in snap_result.content
+        assert halted in live_result.content
+        assert "strategy_sleeve_tsmom2_dual: 1 trade(s), net +0.00" in snap_result.content
+        assert "strategy_sleeve_tsmom2_dual: 1 trade(s), net +0.00" in live_result.content
+        snap_lines = snap_result.content.splitlines()
+        live_lines = live_result.content.splitlines()
+        assert snap_lines[1:] == live_lines[1:]
         assert snap_lines[0].replace("demo", "PAPER") == live_lines[0]
 
     def test_stale_snapshot_falls_back_to_live(
