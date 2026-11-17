@@ -156,7 +156,7 @@ EnvironmentFile=$REPO_DIR/Memora/.env
 ExecStart=$VENV_DIR/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8002 --workers 1
 Restart=always
 RestartSec=5
-TimeoutStopSec=10
+TimeoutStopSec=60
 MemoryMax=180M
 
 [Install]
