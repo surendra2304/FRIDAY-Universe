@@ -335,9 +335,9 @@ def main() -> int:
         problems = []
         if m["rows"] != EXPECTED_ROWS_15M or m["rows"] != exp["rows"]:
             problems.append(f"rows {m['rows']} != {exp['rows']}")
-        if ga["missing_bars"] != 0 or ga["missing_bars"] != exp["missing"]:
+        if ga["missing_bars"] != 0 or ga["missing_bars"] != exp["missing_bars"]:
             problems.append(
-                f"missing {ga['missing_bars']} != {exp['missing']}")
+                f"missing {ga['missing_bars']} != {exp['missing_bars']}")
         if m["csv_sha256"] != exp["csv_sha256"]:
             problems.append("csv_sha256 mismatch vs S-RD1 provenance")
         if problems:
