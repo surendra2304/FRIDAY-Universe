@@ -6,7 +6,12 @@ has been executed anywhere at declaration time, and none is executed
 in the declaring step.
 **Declaration JSON:** `xsrev_declaration.json` (repo home:
 `Stratex/rigorous_backtest/rd19/xsrev_declaration.json`)
-**Declaration SHA-256:** `ffc3c573071ee8014d99d125cbc08551b39f47fb756696e603124b81e86f31f1`
+**Declaration SHA-256:** `a2d5f212308fdd097e968c801c175b9513da3ff24c49456590eec70d324d917b`
+(amended 2026-11-17: TEMPORAL HOLDOUT v1 overlay added to the
+evaluation bar by coordinator ruling on PR #897 review item F2,
+before any run; original freeze hash
+`ffc3c573071ee8014d99d125cbc08551b39f47fb756696e603124b81e86f31f1`.
+No rule, parameter, cost or verdict term changed.)
 **Demo only.** A pass makes this a forward-test CANDIDATE only
 (Phase-3 protocol: ≥ 100 trades AND ≥ 8 weeks on demo; FWD-006 risk
 package if it ever forward-tests). Nothing here authorises live trading.
@@ -91,6 +96,26 @@ and keyless; no new data source.
   family for SRS (1) + S-RD1 (1) ahead in the queue. Declared
   programme counter at freeze: 3,891; this declaration adds exactly
   ONE trial → 3,892. The run states the N_global it used.
+- **Temporal holdout v1** (SRS TEMPORAL HOLDOUT v1, frozen SHA-256
+  `69d9dcefd553bb11a18cd3d2aa7ecb5d187f901ec3c3cebbe84ebc373926f7e4`,
+  in the adopted form of TASK-STR-RD-018's declaration; added by
+  coordinator ruling 2026-11-17 on PR #897 review item F2, before
+  any run — this family has never run and the holdout has never
+  been computed or inspected): sets by entry time — **D** = trades
+  entered in W1–W4 (2024-07-01..2026-07-01), **H** = trades
+  entered in W5 (2026-07-01..2026-11-01). H1 |H| ≥ 20 trades;
+  H2 expectancy_net(H) > 0; H3 expectancy_net(D) > 0; H4 fold
+  concentration — no single fold contributes more than 80% of
+  total positive fold profit; H5 **burn clause** — the holdout is
+  judged exactly once, in the single declared run; prior
+  computation/inspection of holdout trades or metrics, or any
+  re-run after evaluation with changed rules, parameters,
+  conventions, costs, panel, simulator or judging code, burns the
+  holdout: this element FAILS permanently under this declaration.
+  Judged at BOTH cost levels, like every other bar component of
+  this family, each level's H and D computed from that level's own
+  trade list. On any disagreement with TEMPORAL HOLDOUT v1, the
+  stricter reading governs.
 - Verdicts: pooled OOS < 200 at programme costs → exactly
   **"insufficient OOS trades"**; all components at both cost levels →
   **PASS** (forward-test candidate only); anything else → **FAIL**,

@@ -6,7 +6,11 @@ passes.** A declared run is executed exactly once; the runner refuses
 to re-run into an output directory that already holds RESULTS.md.
 
 Frozen declaration: `xsrev_declaration.json`
-SHA-256 `ffc3c573071ee8014d99d125cbc08551b39f47fb756696e603124b81e86f31f1`
+SHA-256 `a2d5f212308fdd097e968c801c175b9513da3ff24c49456590eec70d324d917b`
+(amended 2026-11-17 by the PR #897 F1/F2 fix: TEMPORAL HOLDOUT v1
+overlay added to the evaluation bar by coordinator ruling, before
+any run; original freeze hash
+`ffc3c573071ee8014d99d125cbc08551b39f47fb756696e603124b81e86f31f1`).
 (workspace copies: `~/workspace/str-xsrev/xsrev_declaration.json` +
 `XSREV_DECLARATION.md`; the differentiation paragraph is byte-identical
 in both — paragraph SHA-256
@@ -27,7 +31,7 @@ clone's working tree):
 
 ```
 sha256sum Stratex/rigorous_backtest/rd19/xsrev_declaration.json
-# must print ffc3c573071ee8014d99d125cbc08551b39f47fb756696e603124b81e86f31f1
+# must print a2d5f212308fdd097e968c801c175b9513da3ff24c49456590eec70d324d917b
 ```
 
 The runner re-verifies this hash itself and aborts on any mismatch.
@@ -50,16 +54,24 @@ The harness in `~/workspace/str-xsrev/harness/` must hash to:
 
 ```
 xsrev.py      48280584f5469c82b862d27b5a359b7b655e678775c469270a7a40b6a3940c9e
-run_xsrev.py  2f60a42edf439a0f0086be23debfdcb26a210912eb7508c5a9d30381a58b8234
+run_xsrev.py  e9d593672be9eb7353fb2a8a22bb866e3a994e115e30ede01b884be973611c59
 test_xsrev.py ac19a8813f9852bb88042687d532fb604354d2b222d5374109b3dc3d280e1535
+test_xsrev_judge_smoke.py 1de8280982e525fe6cbc911f004cb73100f78d789ebf1e30868799858d55fa1a
 ```
+
+(run_xsrev.py was rewritten by the PR #897 F1 fix against the real
+programme APIs; test_xsrev_judge_smoke.py is the F1 judge-path smoke
+suite. xsrev.py and test_xsrev.py are byte-identical to the original
+freeze.)
 
 And the synthetic tests must pass against those exact files:
 
 ```
 cd ~/workspace/str-xsrev/harness
-PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -p no:cacheprovider -q test_xsrev.py
-# expected: 20 passed
+PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -p no:cacheprovider -q test_xsrev.py test_xsrev_judge_smoke.py
+# expected: 32 passed (20 signal-harness + 12 judge-path smoke;
+# the smoke suite needs the full checkout layout — run it from the
+# rd19 directory of the fresh origin/main checkout)
 ```
 
 Any hash drift means the code no longer matches what was declared
@@ -93,11 +105,17 @@ cd ~/workspace/str-xsrev/harness
 python3 run_xsrev.py \
   --repo <fresh origin/main checkout> \
   --trial-floor <N_global computed above> \
+  --declared-run \
   --out ~/workspace/str-xsrev/run-output
 ```
 
 (--panel-dir and --expected-provenance default to the S-RD1 run-prep
-paths above; pass them explicitly if the panel lives elsewhere.)
+paths above; pass them explicitly if the panel lives elsewhere.
+`--declared-run` is the TEMPORAL HOLDOUT v1 H5 attestation: the
+operator attests the panel was verified first and the holdout was
+never previously computed or inspected — the runner refuses to
+judge without it. The runner also refuses any --trial-floor below
+the declared minimum 3894, before loading anything.)
 
 ## Verdict rules (from the frozen declaration — no discretion)
 
@@ -107,10 +125,14 @@ paths above; pass them explicitly if the panel lives elsewhere.)
   bars total, gated subset — and was declared up front.
 - PASS requires ALL of: check_bar (expectancy > 0, PF ≥ 1.2,
   ≥ 200 OOS trades, ≥ 4/5 positive folds) AND holdout_check AND
-  Bonferroni p < α, at programme costs (16 bps) AND at the 2×
-  shadow (32 bps). PASS means forward-test CANDIDATE only — the
-  Phase-3 bar (≥100 forward trades, ≥8 weeks on demo, FWD-006
-  sizing) still applies before anything trades.
+  the TEMPORAL HOLDOUT v1 overlay (H = W5 entries: |H| ≥ 20,
+  expectancy_net(H) > 0, expectancy_net(D = W1–W4 entries) > 0,
+  no fold > 80% of total positive fold profit; H5 burn clause —
+  judged exactly once, in this run) AND Bonferroni p < α, at
+  programme costs (16 bps) AND at the 2× shadow (32 bps). PASS
+  means forward-test CANDIDATE only — the Phase-3 bar (≥100
+  forward trades, ≥8 weeks on demo, FWD-006 sizing) still applies
+  before anything trades.
 - Anything else → FAIL; the family closes (strict OOS PF < 1.2
   components delete the family per the programme rule).
 
