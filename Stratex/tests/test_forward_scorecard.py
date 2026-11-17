@@ -382,3 +382,182 @@ def test_live_registry_resolves_fx_mr_v4_on_oanda_practice():
     by_id = {e["id"]: e for e in entrants}
     assert "fx_mr_v4" in by_id
     assert by_id["fx_mr_v4"]["venues"] == ["oanda_practice"]
+
+
+# ---------------------------------------------------------------------------
+# 10. TASK-STR-FWD-013: open positions + close verification
+#
+# The 2026-11-16T00:16Z card showed every entrant at 0 closes /
+# NO_TRADES_YET while three forward positions were already open: the
+# generator read only closed fills, so an open position was
+# indistinguishable from "never traded". And trade 470's booked close
+# was fallback-built ($0.00, exit = entry, exit_time a time.time()
+# fallback stamped 12.9us BEFORE the ledger append) while the venue
+# position stayed open — the daemon kept re-adopting it, writing
+# position tags hours after the "close". These tests pin both fixes.
+# ---------------------------------------------------------------------------
+def _iso(epoch):
+    from datetime import datetime, timezone
+
+    return datetime.fromtimestamp(epoch, timezone.utc).isoformat()
+
+
+def _tag(strategy, symbol, side, qty, entry, opened_ts, ts=None,
+         venue="binance_futures", source="strategy_open"):
+    return {
+        "record_type": "POSITION_TAG",
+        "ts": opened_ts if ts is None else ts,
+        "timestamp": _iso(opened_ts if ts is None else ts),
+        "venue": venue,
+        "strategy": strategy,
+        "symbol": symbol,
+        "side": side,
+        "quantity": qty,
+        "entry_price": entry,
+        "opened_ts": opened_ts,
+        "source": source,
+    }
+
+
+def test_open_positions_surface_and_change_verdict():
+    """Stale-state fixture: opens in the tag stream, zero fills.
+
+    Before FWD-013 this rendered NO_TRADES_YET for every entrant —
+    the false picture of 2026-11-16. Now the opens are listed and
+    the verdict says so.
+    """
+    tags = [
+        _tag("strategy_ichimoku_trend", "TRXUSDT", "SHORT", 521.0, 0.3052,
+             START + 26 * 3600),
+        _tag("strategy_dow_effect", "BTCUSDT", "LONG", 0.0014, 64812.8,
+             START + 42 * 3600),
+        _tag("strategy_dow_effect", "BNBUSDT", "LONG", 0.14, 591.12,
+             START + 42 * 3600),
+    ]
+    card = fsc.build_forward_scorecard(
+        fills=[], snapshots=[], probe={}, tags=tags, now=START + 2 * DAY,
+    )
+    by_id = {e["id"]: e for e in card["entrants"]}
+    ichi = by_id["ichimoku_trend"]
+    assert ichi["closed_trades"] == 0
+    assert ichi["open_positions_count"] == 1
+    assert ichi["open_positions"][0]["symbol"] == "TRXUSDT"
+    assert ichi["open_positions"][0]["side"] == "SHORT"
+    assert ichi["verdict"] == "OPEN_POSITIONS"
+    dow = by_id["dow_effect"]
+    assert dow["open_positions_count"] == 2
+    assert dow["verdict"] == "OPEN_POSITIONS"
+    # An entrant with neither opens nor closes keeps NO_TRADES_YET.
+    assert by_id["fx_mr_v4"]["verdict"] == "NO_TRADES_YET"
+    lines = "\n".join(fsc.render_lines(card))
+    assert "open: binance_futures TRXUSDT SHORT" in lines
+
+
+def test_trade_470_fallback_close_is_not_a_verified_close():
+    """The trade-470 shape: a fallback-built $0.00 close row plus
+    position tags re-adopting the same position hours later. The
+    close must be reported as booked-but-UNVERIFIED (both reasons),
+    never as a verified close."""
+    opened = START + 16 * 3600
+    exit_time = START + 31 * 3600 + 0.123443  # fallback time.time()
+    fill = _fill(
+        strategy="strategy_sleeve_tsmom2_dual", venue="oanda",
+        net=0.0, exit_time=exit_time, symbol="USDJPY", side="LONG",
+        entry_price=159.691,
+        exit_price=159.691,  # averageClosePrice -> price fallback
+        gross_pnl=0.0, fees=0.0,
+        # The append's own timestamp: 12.9us AFTER the fallback exit.
+        recorded_at=_iso(START + 31 * 3600 + 0.123456),
+    )
+    tags = [
+        _tag("strategy_sleeve_tsmom2_dual", "USDJPY", "LONG", 15.0, 159.691,
+             opened, venue="oanda"),
+        # Daemon re-adoptions AFTER the booked close (later that day).
+        _tag("strategy_sleeve_tsmom2_dual", "USDJPY", "LONG", 15.0, 159.691,
+             opened, ts=START + 33 * 3600, venue="oanda",
+             source="startup_reconcile"),
+        _tag("strategy_sleeve_tsmom2_dual", "USDJPY", "LONG", 15.0, 159.691,
+             opened, ts=START + 38 * 3600, venue="oanda",
+             source="startup_reconcile"),
+    ]
+    card = fsc.build_forward_scorecard(
+        fills=[fill], snapshots=[], probe={}, tags=tags, now=START + 2 * DAY,
+    )
+    sleeve = {e["id"]: e for e in card["entrants"]}["sleeve:best_per_class"]
+    # The booked row still counts in the headline stats (guard parity)…
+    assert sleeve["closed_trades"] == 1
+    assert sleeve["stats_basis"] == "ledger_booked"
+    # …but it is NOT a verified close.
+    assert sleeve["closed_trades_booked"] == 1
+    assert sleeve["closed_trades_verified"] == 0
+    assert sleeve["closed_trades_unverified"] == 1
+    assert sleeve["verified_net_pnl"] == 0.0
+    reasons = sleeve["unverified_closes"][0]["reasons"]
+    assert "fallback_exit_time" in reasons
+    assert "contradicted_by_position_tag" in reasons
+    assert sleeve["verdict"] == "UNVERIFIED_CLOSES_ONLY"
+    lines = "\n".join(fsc.render_lines(card))
+    assert "UNVERIFIED close: oanda USDJPY" in lines
+
+
+def test_genuine_broker_close_stays_verified():
+    """A normal broker close (real exit_time, recorded later, no
+    contradicting tags) stays ledger_booked AND verified."""
+    fill = _fill(
+        strategy="strategy_ichimoku_trend", net=12.5,
+        exit_time=START + 28 * 3600, symbol="ETHUSDT",
+        recorded_at=_iso(START + 29 * 3600),  # recorded an hour later
+    )
+    card = fsc.build_forward_scorecard(
+        fills=[fill], snapshots=[], probe={}, tags=[], now=START + 2 * DAY,
+    )
+    ichi = {e["id"]: e for e in card["entrants"]}["ichimoku_trend"]
+    assert ichi["closed_trades_verified"] == 1
+    assert ichi["closed_trades_unverified"] == 0
+    assert ichi["verified_net_pnl"] == 12.5
+    assert ichi["verdict"] == "IN_WINDOW"
+
+
+def test_fallback_signature_alone_marks_unverified():
+    """append_fill's own missing-exit_time default produces the same
+    signature with no tags involved: exit_time == the append instant.
+    That alone must mark the close unverified."""
+    exit_time = START + 27 * 3600 + 0.5
+    fill = _fill(
+        strategy="strategy_dow_effect", net=-3.0, exit_time=exit_time,
+        symbol="SOLUSDT", recorded_at=_iso(exit_time),
+    )
+    card = fsc.build_forward_scorecard(
+        fills=[fill], snapshots=[], probe={}, tags=[], now=START + 2 * DAY,
+    )
+    dow = {e["id"]: e for e in card["entrants"]}["dow_effect"]
+    assert dow["closed_trades_unverified"] == 1
+    assert dow["unverified_closes"][0]["reasons"] == [
+        "fallback_exit_time"
+    ]
+    assert dow["verdict"] == "UNVERIFIED_CLOSES_ONLY"
+
+
+def test_reopen_after_close_shows_open():
+    """Episode logic: a fill closes the episode; a LATER tag for the
+    same key is a new open position, not a resurrection."""
+    fill = _fill(
+        strategy="strategy_dow_effect", net=5.0,
+        exit_time=START + 28 * 3600, symbol="BTCUSDT",
+        recorded_at=_iso(START + 28 * 3600 + 300),
+    )
+    tags = [
+        _tag("strategy_dow_effect", "BTCUSDT", "LONG", 0.001, 64000.0,
+             START + 27 * 3600),
+        _tag("strategy_dow_effect", "BTCUSDT", "LONG", 0.0014, 64812.8,
+             START + 42 * 3600),
+    ]
+    card = fsc.build_forward_scorecard(
+        fills=[fill], snapshots=[], probe={}, tags=tags, now=START + 2 * DAY,
+    )
+    dow = {e["id"]: e for e in card["entrants"]}["dow_effect"]
+    assert dow["closed_trades"] == 1
+    assert dow["closed_trades_verified"] == 1
+    assert dow["open_positions_count"] == 1
+    assert dow["open_positions"][0]["entry_price"] == 64812.8
+    assert dow["verdict"] == "IN_WINDOW"

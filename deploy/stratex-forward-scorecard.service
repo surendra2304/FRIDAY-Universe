@@ -1,0 +1,21 @@
+[Unit]
+Description=FRIDAY Universe Stratex forward scorecard generator (TASK-STR-FWD-013)
+# Regenerates Stratex/state/forward_scorecard.json from the fill ledger,
+# equity snapshots and position tags; triggered by the timer. Before
+# TASK-STR-FWD-013 nothing invoked the generator in production: the card
+# was written once by a manual run (2026-11-16T00:16Z) and silently went
+# stale while forward positions opened and closed.
+# NOTE: Type=oneshot — between timer runs `systemctl status` shows this
+# unit as "inactive (dead)". That is its NORMAL resting state. Judge
+# liveness by the TIMER (systemctl is-active stratex-forward-scorecard.timer)
+# and the generated_at field inside forward_scorecard.json.
+Documentation=https://github.com/surendra2304/FRIDAY-Universe
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/opt/friday_universe/Stratex
+Environment="PYTHONPATH=/opt/friday_universe/Stratex:/opt/friday_universe"
+ExecStart=/opt/friday_universe/venv/bin/python -m measurement.forward_scorecard
+Nice=5
+MemoryMax=256M
