@@ -14,10 +14,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "harness"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import usxsrev as U  # noqa: E402
 
-RUNNER = Path(__file__).resolve().parents[1] / "harness" / "run_usxsrev.py"
+RUNNER = Path(__file__).resolve().parent / "run_usxsrev.py"
 
 
 def sessions(n, start="2023-01-02"):
