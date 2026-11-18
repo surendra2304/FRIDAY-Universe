@@ -111,6 +111,18 @@ HASHTAGS_BY_CATEGORY = {
     "VIRAL": "#Shorts #Viral #Trending #WaitForIt #VyralX",
     "COMEDY": "#Shorts #Comedy #Relatable #Viral #VyralX",
     "SPORTS": "#Shorts #Sports #Respect #Viral #VyralX",
+    "FILM": "#Shorts #Film #MovieMoment #Cinema #VyralX",
+    "AUTOS": "#Shorts #Cars #Autos #Driving #VyralX",
+    "MUSIC": "#Shorts #Music #Live #Performance #VyralX",
+    "PETS": "#Shorts #Pets #Animals #Cute #VyralX",
+    "TRAVEL": "#Shorts #Travel #Adventure #Wanderlust #VyralX",
+    "GAMING": "#Shorts #Gaming #Gameplay #Gamer #VyralX",
+    "PEOPLE": "#Shorts #People #RealLife #Stories #VyralX",
+    "ENTERTAINMENT": "#Shorts #Entertainment #Viral #Trending #VyralX",
+    "NEWS": "#Shorts #News #Headlines #World #VyralX",
+    "HOWTO": "#Shorts #HowTo #LifeHacks #Tips #VyralX",
+    "EDUCATION": "#Shorts #Education #Facts #Learn #VyralX",
+    "TECH": "#Shorts #Tech #Science #Innovation #VyralX",
 }
 
 
@@ -1505,12 +1517,39 @@ YOUTUBE_CATEGORY_BY_EDITORIAL = {
     "COMEDY": "23",
     "SPORTS": "17",
     "VIRAL": "24",
+    # TASK-VYR-019: labels the all-category trending discovery emits
+    # (app.services.viral_series). Additive — the three original labels
+    # keep their exact ids.
+    "FILM": "1",
+    "AUTOS": "2",
+    "MUSIC": "10",
+    "PETS": "15",
+    "TRAVEL": "19",
+    "GAMING": "20",
+    "PEOPLE": "22",
+    "ENTERTAINMENT": "24",
+    "NEWS": "25",
+    "HOWTO": "26",
+    "EDUCATION": "27",
+    "TECH": "28",
 }
 
 _BASE_TAGS_BY_CATEGORY = {
     "COMEDY": ["comedy", "funny", "relatable", "humor"],
     "SPORTS": ["sports", "respect", "skills", "highlights"],
     "VIRAL": ["viral", "trending", "wait for it", "wow"],
+    "FILM": ["film", "scene", "movie moment", "cinema"],
+    "AUTOS": ["cars", "autos", "driving", "vehicles"],
+    "MUSIC": ["music", "song", "performance", "live"],
+    "PETS": ["pets", "animals", "cute", "funny animals"],
+    "TRAVEL": ["travel", "places", "adventure", "wanderlust"],
+    "GAMING": ["gaming", "gameplay", "gamer", "highlights"],
+    "PEOPLE": ["people", "stories", "real life", "moments"],
+    "ENTERTAINMENT": ["entertainment", "viral", "trending", "wow"],
+    "NEWS": ["news", "headlines", "current events", "world"],
+    "HOWTO": ["how to", "tips", "life hacks", "diy"],
+    "EDUCATION": ["education", "learn", "facts", "explained"],
+    "TECH": ["tech", "science", "innovation", "future"],
 }
 
 _TAG_STOPWORDS = {
@@ -1669,8 +1708,16 @@ def produce_viral_short(
     db: Session,
     *,
     publish: bool = True,
+    hold_for_review: bool = False,
 ) -> dict[str, Any]:
-    """Audition -> download -> edit -> register -> queue publish for one candidate."""
+    """Audition -> download -> edit -> register -> queue publish for one candidate.
+
+    ``hold_for_review`` (TASK-VYR-019, used by the autonomous loop):
+    the publish job is created in ``pending_approval`` with no
+    approval timestamp, so no worker can upload it until the owner
+    reviews it. The default keeps the legacy autopilot behaviour
+    (``queued`` + pre-approved) byte-identical.
+    """
     settings = get_settings()
     category = str(candidate.category or "VIRAL").upper()
     settings.prepare_directories()
@@ -1901,10 +1948,17 @@ def produce_viral_short(
     if not cues:
         raise RuntimeError("caption generation produced no cues")
     bed_path: Path | None = None
+    bgm_source = ""
     if bool(getattr(settings, "viral_music_bed_enabled", True)):
-        bed_path = build_music_bed(
+        # TASK-VYR-019: the bed comes from the BGM policy (chart track
+        # while growing, YouTube-library track once monetised, synth
+        # bed as the labelled fallback) — never silence.
+        from app.services.viral_bgm import prepare_music_bed
+
+        bed_path, bgm_source = prepare_music_bed(
             settings.media_dir / "voiceovers" / f"{project_key}-bed.wav",
             tracks["total_seconds"],
+            category=category,
         )
     render_scene_timed(
         source_path, render_path, tracks, cues, category, probe.has_audio,
@@ -2033,6 +2087,8 @@ def produce_viral_short(
             "quality_gate_attempts": gate_attempts,
             "description_repaired": description_repaired,
             "hook_repaired": hook_repaired,
+            "hold_for_review": hold_for_review,
+            "bgm_source": bgm_source,
         }),
         completed_at=utcnow(),
     )
@@ -2049,8 +2105,8 @@ def produce_viral_short(
             description=meta["description"],
             tags_json=json.dumps(meta["tags"]),
             privacy_status=str(getattr(settings, "autonomous_publish_privacy", "unlisted")),
-            status="queued",
-            approved_at=utcnow(),
+            status="pending_approval" if hold_for_review else "queued",
+            approved_at=None if hold_for_review else utcnow(),
             thumbnail_path=str(thumbnail_path) if thumbnail_path else "",
             category_id=str(meta.get("category_id") or ""),
         )
@@ -2075,6 +2131,8 @@ def produce_viral_short(
         "quality_gate_attempts": gate_attempts,
         "description_repaired": description_repaired,
         "hook_repaired": hook_repaired,
+        "hold_for_review": hold_for_review,
+        "bgm_source": bgm_source,
     }
     # TASK-VYR-014: cross-post release bundle (render copy + per-platform
     # captions for Instagram Reels / TikTok / Facebook Reels, built from the

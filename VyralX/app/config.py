@@ -93,6 +93,51 @@ class Settings(BaseSettings):
     # A real synthesized music bed under every commentary render (the old
     # renders claimed [music] in captions with no music audible).
     viral_music_bed_enabled: bool = True
+    # TASK-VYR-019 BGM policy (owner decision 2026-11-18, option C):
+    # "growth" (the default, while the channel is unlisted and growing)
+    # takes the actual popular/chart tracks from the local BGM library
+    # (<data_dir>/bgm + catalog.json, operator-provisioned);
+    # "monetisation" takes YouTube Audio Library tracks from
+    # <data_dir>/bgm_library instead. Either way a real bed is
+    # MANDATORY: app.services.viral_bgm.prepare_music_bed picks the
+    # most relevant track it can and falls back to the generated synth
+    # bed rather than ever shipping silence — the source it used is
+    # recorded on the render job, so a fallback is never silent.
+    viral_bgm_policy: str = Field(default="growth", max_length=20)
+    # Optional explicit BGM library locations; empty = the policy's
+    # default folder under data_dir (bgm / bgm_library) and its
+    # catalog.json.
+    viral_bgm_library_dir: str = Field(default="", max_length=600)
+    viral_bgm_catalog_path: str = Field(default="", max_length=600)
+    # TASK-VYR-019: the autonomous find -> edit -> produce loop
+    # (app.services.viral_loop, scripts/run_viral_loop.py). Default OFF:
+    # nothing in this build runs, schedules or uploads by itself. The
+    # loop discovers trending videos across ALL YouTube categories,
+    # routes voiceless sources to the commentary path and voiced
+    # sources to the framed path, and holds EVERY output as an
+    # unlisted pending_approval publish job for the owner's review —
+    # it never drains the publish queue and never uploads.
+    viral_loop_enabled: bool = False
+    # Audition budget per cycle (each audition is a download + Whisper
+    # pass on a small host) and the cycle's wall-clock bound. Every
+    # candidate that passes the quality gates inside the budget is
+    # produced — the budget bounds cost, not output.
+    viral_loop_max_attempts_per_cycle: int = Field(default=24, ge=1, le=200)
+    viral_loop_cycle_budget_seconds: int = Field(default=5400, ge=60, le=21600)
+    # Trending fetch size per YouTube category, and the widest source
+    # the loop will consider at all (longer sources are excerpted by
+    # the framed path or compiled by the long-form lane, never used
+    # whole).
+    viral_loop_trending_per_category: int = Field(default=10, ge=1, le=50)
+    viral_loop_max_source_seconds: float = Field(default=600.0, ge=60.0, le=3600.0)
+    # Region for the trending chart; empty = YouTube's global chart.
+    viral_loop_region: str = Field(default="", max_length=8)
+    # Long-form lane (owner decision 2026-11-18, option B): shorts are
+    # the staple; when enabled, one compilation attempt is made every
+    # N loop cycles from a series' held renders.
+    viral_loop_longform_enabled: bool = False
+    viral_loop_longform_every_n_cycles: int = Field(default=6, ge=1, le=100)
+    viral_loop_longform_min_clips: int = Field(default=3, ge=2, le=20)
     # --- IG2 B7-C1: optional MoneyPrinterTurbo producer lane --------------
     # The autopilot's producer lane. "viral_remix" (default) is the native
     # lane; "mpt" routes produce_one to app.services.mpt_lane, which renders
@@ -295,6 +340,8 @@ class Settings(BaseSettings):
             raise ValueError("AUTONOMOUS_PUBLISH_PRIVACY must be private, unlisted, or public")
         if self.viral_source_policy not in {"reuse_licensed", "transformative"}:
             raise ValueError("VIRAL_SOURCE_POLICY must be reuse_licensed or transformative")
+        if self.viral_bgm_policy not in {"growth", "monetisation"}:
+            raise ValueError("VIRAL_BGM_POLICY must be growth or monetisation")
         if self.viral_producer_lane not in {"viral_remix", "mpt"}:
             raise ValueError("VIRAL_PRODUCER_LANE must be viral_remix or mpt")
         if self.sentinel_required_for_publish and not (
