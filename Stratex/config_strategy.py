@@ -441,6 +441,53 @@ TREND_PULLBACK_EMA200_STRATEGY = {
 }
 
 # ==============================================================================
+# TASK-STR-FWD-019 WAVE-2 (2026-11-18): mtf_confluence near-miss admissions.
+# RD-002 rows meeting the owner's second tier (expectancy > 0, PF >= 1.05,
+# >= 200 OOS trades, pre-Bonferroni) but NOT the full frozen bar — see
+# ~/workspace/str-nearmiss/REPORT.md §1.4 rows 24/39. The parameter sets
+# below ARE the judged configurations (rigorous_backtest/rd2/families2.py
+# sig_mtf_native; bracket BR24; warmup 260). Harness finding: the
+# h4_native_ema200 fn ignores the aux frame — sig_mtf_native runs on
+# each cell's OWN series, so the 1d cell was judged on 1d bars natively
+# and is wired at that construction (see the module docstrings).
+# ==============================================================================
+
+MTF_CONFLUENCE_STRATEGY = {
+    "NAME": "MTF Confluence (EMA20/50 cross + EMA200 gate, native series) — 4h",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "EMA_FAST": 20,
+    "EMA_SLOW": 50,
+    "EMA_TREND": 200,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families2)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families2)
+    "WARMUP_BARS": 260,     # judged warmup_for("4h")
+    # TASK-STR-RD-002 pooled OOS evidence (grid_rows record):
+    "OOS_TRADES": 1668,
+    "OOS_WIN_RATE": 0.3807,
+    "OOS_PROFIT_FACTOR": 1.1538,
+    "OOS_EXPECTANCY_PCT": 0.490,
+}
+
+MTF_CONFLUENCE_1D_STRATEGY = {
+    "NAME": "MTF Confluence (EMA20/50 cross + EMA200 gate, native series) — 1d",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "EMA_FAST": 20,
+    "EMA_SLOW": 50,
+    "EMA_TREND": 200,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families2)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families2)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    "OOS_TRADES": 217,
+    "OOS_WIN_RATE": 0.3779,
+    "OOS_PROFIT_FACTOR": 1.1902,
+    "OOS_EXPECTANCY_PCT": 1.472,
+}
+
+# ==============================================================================
 # FX MEAN REVERSION v4 — OANDA PRACTICE VENUE (TASK-STR-FWD-004, 2026-11-15)
 # Connors RSI(2) reversion behind an EMA(200) regime gate. The runtime
 # parameters live in oanda_demo/strategy.py (MeanReversionConfig) — the SAME
@@ -784,7 +831,62 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "lane_note": "entered sample-starved; forward evidence is the settler",
         "reason": "EXCLUDED from live lane execution (TASK-STR-FWD-003, RD-003 additions): TASK-STR-RD-003 watchlist cell trend_pullback/pb_ema200 @ comm7 1d — 109 OOS trades, expectancy +0.642%/trade, PF 1.182, 3 positive folds, max symbol profit share 0.37. It failed ONLY the >=200-trade floor (a data-span limit, not a performance failure) and failed Bonferroni significance; its PF of 1.182 is also marginally below the 1.2 line, recorded exactly as measured. Entered sample-starved; forward evidence is the settler. Unmappable-universe exclusion exactly as for vol_regime_switch_a: demo-fapi is crypto-only and the OANDA practice account holds 68 FX-only instruments (verified live 2026-11-15); substitution prohibited. Documentary registration only.",
-    }
+    },
+    # ------------------------------------------------------------------
+    # TASK-STR-FWD-019 WAVE-2: mtf_confluence near-miss admissions
+    # (audit ~/workspace/str-nearmiss/REPORT.md §1.4 rows 24/39).
+    # FWD-012 stop check (fixtures fwd002, 2.0 x ATR(14) / close at
+    # entry bars): 1d cell SOLUSDT max 18.66% (BTCUSDT 12.89%) —
+    # above the 0.15 cap, override required. 4h cell entry maxima
+    # 8.13% (SOLUSDT) / 4.93% (BTCUSDT), but the all-bar 4h stop
+    # distribution reaches 56.04% on SOLUSDT (crash tail), so the
+    # 4h entry carries the same max_stop_pct 0.90 (sleeve precedent;
+    # sanity bound only).
+    # ------------------------------------------------------------------
+    "mtf_confluence": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: EMA(20) crosses above EMA(50) AND close > EMA(200), all on the cell's own 4h series. SHORT: cross down AND close < EMA(200). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_mtf_native(df, warmup) — the h4_native_ema200 configuration consumes NO higher-timeframe series (its fn ignores the aux frame; rd2/grid.py loads aux only for 15m/1h cells), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3807,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 49.0,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): mtf_confluence/h4_native_ema200 @ CRYPTO30 4h meets the second tier (OOS expectancy +0.490%/trade, PF 1.1538, 1,668 OOS trades, 4/5 positive folds, PF @2x costs 1.1006) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Stop-cap override (TASK-STR-FWD-012): entry-bar stops measured max 8.13% (SOLUSDT 4h fixture) but the all-bar 4h stop distribution reaches 56.04% on SOLUSDT, so a stop plausibly exceeds the 0.15 engine-global cap on the volatile tail — max_stop_pct 0.90 declared (sanity bound only; admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "mtf_confluence_1d": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: EMA(20) crosses above EMA(50) AND close > EMA(200), all on the cell's own 1d series. SHORT: cross down AND close < EMA(200). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_mtf_native(df, warmup) at 1d — the h4_native_ema200 fn ignores the aux frame and grid.py loads aux only for 15m/1h cells, so the judged 1d cell ran on 1d bars natively (NOT on a 4h series); this entry wires exactly that construction, warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3779,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 147.2,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): mtf_confluence/h4_native_ema200 @ CRYPTO30 1d meets the second tier (OOS expectancy +1.472%/trade, PF 1.1902, 217 OOS trades, 2/5 positive folds, PF @2x costs 1.1679) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Faithfulness note: the judged 1d cell was computed by sig_mtf_native on 1d bars (the h4_native fn consumes no 4h series — see entry_conditions), so this entry wires the judged construction itself, not a re-judgement. Stop-cap override (TASK-STR-FWD-012): judged stops measured up to 18.66% of price at entry bars on the SOLUSDT 1d fixture (BTCUSDT 12.89%) — above the 0.15 engine-global cap — so max_stop_pct 0.90 is declared (sanity bound only; admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
 }
 
 # Stored research estimates are not runtime priors unless a strategy has been
