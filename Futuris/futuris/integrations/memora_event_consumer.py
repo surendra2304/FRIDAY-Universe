@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import math
+import os
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -21,6 +22,36 @@ CONSUMER_ID = "futuris-cloud-v1"
 POLL_INTERVAL_SECONDS = 15
 
 
+def notice_domain(payload: dict[str, Any]) -> str:
+    """The TASK-INT-013 domain of an intelx.news payload ("general" if none).
+
+    IntelX stamps the domain at ``relevance.domain``; a legacy notice
+    without one is classified "general" so it can never silently count as
+    a match for a specialist domain (TASK-INT-014 subscription rule).
+    """
+    relevance = payload.get("relevance")
+    if isinstance(relevance, dict):
+        domain = relevance.get("domain")
+        if isinstance(domain, str) and domain.strip():
+            return domain.strip()
+    return "general"
+
+
+def subscribed_domains() -> frozenset[str] | None:
+    """Futuris's Universe intel feed subscription; None = every domain.
+
+    The feed is broadcast (TASK-INT-014); subscriptions are enforced by
+    each consumer. Futuris's default is every domain — she forecasts
+    everything (owner decision 2026-11-18), matching her entry in
+    IntelX's subscription registry. Operators narrow without a code
+    change via FUTURIS_INTELX_FEED_DOMAINS=domain1,domain2.
+    """
+    raw = os.environ.get("FUTURIS_INTELX_FEED_DOMAINS", "").strip()
+    if not raw or raw.lower() in {"all", "*"}:
+        return None
+    return frozenset(part.strip() for part in raw.split(",") if part.strip())
+
+
 def _result_ok(result: Any) -> bool:
     return isinstance(result, dict) and result.get("status") not in {"error", "failed"}
 
@@ -35,6 +66,7 @@ async def consume_memora_events_once(client=memora_client) -> int:
     if not _result_ok(feed) or not isinstance(feed.get("events"), list):
         raise RuntimeError("Memora event feed is unavailable")
 
+    subscribed = subscribed_domains()
     handled = 0
     for event in feed["events"]:
         if not isinstance(event, dict) or not isinstance(event.get("id"), int):
@@ -45,19 +77,29 @@ async def consume_memora_events_once(client=memora_client) -> int:
             payload = event.get("payload")
             if not isinstance(payload, dict):
                 raise RuntimeError("IntelX event payload is malformed; cursor was not advanced")
-            async with async_session_factory() as session:
-                stable_event_id = str(event.get("event_id", event_id))
-                existing = await session.get(IntelXNoticeModel, stable_event_id)
-                if existing is None:
-                    await _persist_notice_to_memora(event, payload)
-                    session.add(
-                        IntelXNoticeModel(
-                            event_id=stable_event_id,
-                            source_agent=str(payload.get("source_agent", "intelx"))[:64],
-                            payload=payload,
+            if subscribed is not None and notice_domain(payload) not in subscribed:
+                # Out of subscription (TASK-INT-014): skip the durable
+                # persist, but still acknowledge below — an unsubscribed
+                # notice must not block the feed for later ones.
+                logger.info(
+                    "intelx_notice_out_of_subscription",
+                    domain=notice_domain(payload),
+                    event_id=str(event.get("event_id", event_id)),
+                )
+            else:
+                async with async_session_factory() as session:
+                    stable_event_id = str(event.get("event_id", event_id))
+                    existing = await session.get(IntelXNoticeModel, stable_event_id)
+                    if existing is None:
+                        await _persist_notice_to_memora(event, payload)
+                        session.add(
+                            IntelXNoticeModel(
+                                event_id=stable_event_id,
+                                source_agent=str(payload.get("source_agent", "intelx"))[:64],
+                                payload=payload,
+                            )
                         )
-                    )
-                    await session.commit()
+                        await session.commit()
         # Other event types are deliberately ignored by this consumer, but must
         # still be acknowledged in order to avoid blocking later IntelX notices.
         ack = await asyncio.to_thread(client.acknowledge_event, "futuris", event_id, CONSUMER_ID)
