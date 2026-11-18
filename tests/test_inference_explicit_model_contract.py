@@ -117,7 +117,12 @@ def boundary():
     # every module-level name that path reads is extracted too, per the
     # REL-042 lesson — a helper an extracted symbol depends on joins the
     # extraction set in the same PR that introduces the dependency.
-    nodes += actual_nodes('Inference/app/api/v1_core_routes.py', {'MODEL_CATALOG', '_CATALOG_PROVIDERS', '_provider_for_model', 'MODEL_CLASS_TIERS', 'MODEL_CLASSES', 'MODEL_SUITABILITY', '_CODE_HINTS', '_REASONING_HINTS', '_LONG_CONTEXT_MIN_CHARS', '_FLAGSHIP_SIZE_HINTS', '_ECONOMY_SIZE_HINTS', '_FLAGSHIP_NAME_HINTS', '_ECONOMY_NAME_HINTS', '_infer_task_type', '_requested_class', '_provider_available', '_ranked_suitable_models', '_select_best_suitable', 'ChatMessage', 'ChatCompletionRequest', 'chat_completions'})
+    # TASK-INF-016 (same REL-042 lesson, third recurrence): _infer_task_type
+    # now calls the new module-level helper _looks_simple, which reads the
+    # three _SIMPLE_*_RES pattern tables — all four join the extraction set
+    # in the same PR that introduces the dependency, extracted as actual
+    # source like everything else in this set.
+    nodes += actual_nodes('Inference/app/api/v1_core_routes.py', {'MODEL_CATALOG', '_CATALOG_PROVIDERS', '_provider_for_model', 'MODEL_CLASS_TIERS', 'MODEL_CLASSES', 'MODEL_SUITABILITY', '_CODE_HINTS', '_REASONING_HINTS', '_LONG_CONTEXT_MIN_CHARS', '_FLAGSHIP_SIZE_HINTS', '_ECONOMY_SIZE_HINTS', '_FLAGSHIP_NAME_HINTS', '_ECONOMY_NAME_HINTS', '_SIMPLE_MATH_RES', '_SIMPLE_LOOKUP_RES', '_SIMPLE_REWRITE_RES', '_looks_simple', '_infer_task_type', '_requested_class', '_provider_available', '_ranked_suitable_models', '_select_best_suitable', 'ChatMessage', 'ChatCompletionRequest', 'chat_completions'})
     # TASK-REL-052 (same REL-042 lesson, second recurrence): the selection /
     # route path also reads module-level helpers and tables that were never
     # in the extraction set — _is_custom_model (TASK-IG-INF-02),
