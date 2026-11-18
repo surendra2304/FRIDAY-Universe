@@ -322,6 +322,15 @@ FOREX28_SYMBOLS = [
     "USDCNH", "USDSGD", "USDHKD", "EURPLN",
 ]
 
+# The judged FOREX12 panel (rigorous_backtest/rd2/panels.py FOREX12) —
+# the 12 majors of FOREX28; every symbol is a member of FOREX28_SYMBOLS
+# above (verified present on the OANDA practice account with it) and is
+# exactly the costs2.py FX_MAJORS cost set (6 bps round trip).
+FOREX12_SYMBOLS = [
+    "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "USDCAD",
+    "NZDUSD", "EURGBP", "EURJPY", "GBPJPY", "AUDJPY", "EURCHF",
+]
+
 # ==============================================================================
 # TASK-STR-FWD-003 (2026-11-15): the FORWARD-TEST lane.
 # Owner directive 2026-11-15 ~11:47 IST: "Create more and more strategies
@@ -547,6 +556,81 @@ TREND_PULLBACK_EMA200_STRATEGY = {
     "OOS_PROFIT_FACTOR": 1.182,
     "OOS_EXPECTANCY_PCT": 0.642,
     "OOS_POSITIVE_FOLDS": 3,
+}
+
+# ==============================================================================
+# TASK-STR-FWD-019 WAVE-2 (2026-11-18): governed forex12 cells + the
+# bollinger p20 forex28 cell (near-miss audit REPORT.md §1.4). The
+# governed cells were judged "as coded" from live modules via
+# rigorous_backtest/rd2/gov2.py (bare configuration: module.add_features
+# pipeline, get_signal on trailing <=500-bar windows, warmup 260 bars —
+# module_eval WARMUP_BARS/WINDOW). Those live modules were deleted from
+# main by TASK-STR-CLEANUP-001; the lane modules restore the judged code
+# verbatim from the pre-cleanup blobs (see each module's docstring).
+# ==============================================================================
+
+FACTORY_WINNER_4_STRATEGY = {
+    "NAME": "Factory Winner 4 Bare (MACD+BB confluence, judged live module)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "WINDOW": 500,          # judged gov2/module_eval sliding window
+    "SL_ATR": 2.0,          # judged module bracket (get_signal_winner_4)
+    "TP_ATR": 4.0,          # judged module bracket (get_signal_winner_4)
+    "WARMUP_BARS": 260,     # judged WARMUP_BARS (module_eval)
+    # TASK-STR-RD-002 pooled OOS evidence, forex12 4h cell (682 trades,
+    # 3/5 folds, Bonferroni FAIL — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3856,
+    "OOS_PROFIT_FACTOR": 1.1394,
+    "OOS_EXPECTANCY_PCT": 0.0513,
+}
+
+FACTORY_WINNER_3_STRATEGY = {
+    "NAME": "Factory Winner 3 Bare (MACD+BB confluence, judged live module)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "WINDOW": 500,          # judged gov2/module_eval sliding window
+    "SL_ATR": 1.5,          # judged module bracket (get_signal_winner_3)
+    "TP_ATR": 4.5,          # judged module bracket (get_signal_winner_3)
+    "WARMUP_BARS": 260,     # judged WARMUP_BARS (module_eval)
+    # TASK-STR-RD-002 pooled OOS evidence, forex12 4h cell (702 trades,
+    # 2/5 folds, Bonferroni FAIL — near-miss, not a promotion).
+    # factory_winner_5:bare @ forex12 4h is this stream's EXACT
+    # duplicate (identical trades/PF/expectancy) — NOT separately wired.
+    "OOS_WIN_RATE": 0.2863,
+    "OOS_PROFIT_FACTOR": 1.0738,
+    "OOS_EXPECTANCY_PCT": 0.0245,
+}
+
+BB_REVERSION_STRATEGY = {
+    "NAME": "Bollinger Reversion Bare (BB(20,2) pierce-and-reenter, judged live module)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "WINDOW": 500,          # judged gov2/module_eval sliding window
+    "SL_ATR": 1.5,          # judged module bracket (code constants)
+    "TP_ATR": 3.0,          # judged module bracket (code constants)
+    "WARMUP_BARS": 260,     # judged WARMUP_BARS (module_eval)
+    # TASK-STR-RD-002 pooled OOS evidence, forex12 1d cell (308 trades,
+    # 3/5 folds, Bonferroni FAIL — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3571,
+    "OOS_PROFIT_FACTOR": 1.0911,
+    "OOS_EXPECTANCY_PCT": 0.0730,
+}
+
+BOLLINGER_TREND_P20_FX28_STRATEGY = {
+    "NAME": "Bollinger Trend p20 (close crosses SMA(20) +/- 2.0 sd band) — FOREX28",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "SMA_PERIOD": 20,
+    "SD_MULT": 2.0,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (355 trades, 3/5 folds,
+    # Bonferroni FAIL — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3915,
+    "OOS_PROFIT_FACTOR": 1.1177,
+    "OOS_EXPECTANCY_PCT": 0.1300,
 }
 
 # ==============================================================================
@@ -1815,6 +1899,100 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "lane_note": "entered sample-starved; forward evidence is the settler",
         "reason": "EXCLUDED from live lane execution (TASK-STR-FWD-003, RD-003 additions): TASK-STR-RD-003 watchlist cell trend_pullback/pb_ema200 @ comm7 1d — 109 OOS trades, expectancy +0.642%/trade, PF 1.182, 3 positive folds, max symbol profit share 0.37. It failed ONLY the >=200-trade floor (a data-span limit, not a performance failure) and failed Bonferroni significance; its PF of 1.182 is also marginally below the 1.2 line, recorded exactly as measured. Entered sample-starved; forward evidence is the settler. Unmappable-universe exclusion exactly as for vol_regime_switch_a: demo-fapi is crypto-only and the OANDA practice account holds 68 FX-only instruments (verified live 2026-11-15); substitution prohibited. Documentary registration only.",
+    },
+    # ------------------------------------------------------------------
+    # TASK-STR-FWD-019 WAVE-2: governed forex12 cells + bollinger p20
+    # @ forex28 (near-miss audit §1.4). Executable ONLY through the
+    # OANDA forward-test runner (PR 1 of this task) on the practice
+    # venue — forward_venues is the runner's discovery key.
+    # ------------------------------------------------------------------
+    "factory_winner_4": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "MACD(12,26,9) cross confluence with the Bollinger(20,2) mid band, evaluated exactly as the judged live module strategy_factory_winners.get_signal_winner_4 (LONG: MACD crosses above signal AND close < BB mid; SHORT: cross below AND close > BB mid). Judged bare: rigorous_backtest/rd2/gov2.py eval_module_cell — module.add_features over the frame, get_signal on trailing <=500-bar windows, NO downstream filter, warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged module bracket)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged module bracket)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3856,
+        "total_friction_bps": 6.0,
+        "expected_net_edge_bps": 5.1,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": FOREX12_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "forward_venues": ["oanda_practice"],
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): governed/strategy_factory_winner_4:bare @ FOREX12 4h meets the second tier (OOS expectancy +0.051%/trade, PF 1.1394, 682 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. The judged live module was deleted from main by TASK-STR-CLEANUP-001 under the earlier BT-001 evidence rule; the lane module restores its judged signal code verbatim from the pre-cleanup blob (see the module docstring) — the RD-002 forex12 cell recorded here, not the deleted configuration's earlier record, is the admission basis. RD-002 cost basis (rigorous_backtest/rd2/costs2.py): forex majors 6 bps round trip; the forex12 panel is exactly the costs2 majors set. FWD-012 stop check: measured max SL_ATR x ATR(14)/close on the fwd002 FX fixtures (FX_EURUSD/FX_GBPJPY/FX_USDJPY 1d) is 2.94% for the 2.0x stop at 1d (the judged 4h ATR is smaller than the 1d ATR, so the 1d measurement is a conservative upper bound) — far under the 0.15 global cap, so no max_stop_pct override is set (the override changes admissibility only; FWD-006 sizes by risk / stop distance).",
+    },
+    "factory_winner_3": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "MACD(12,26,9) cross confluence with the Bollinger(20,2) mid band, evaluated exactly as the judged live module strategy_factory_winners.get_signal_winner_3 (LONG: MACD crosses above signal AND close < BB mid; SHORT: cross below AND close > BB mid). Judged bare: rigorous_backtest/rd2/gov2.py eval_module_cell — module.add_features over the frame, get_signal on trailing <=500-bar windows, NO downstream filter, warmup 260 bars.",
+        "sl_method": "1.5 * ATR(14) at signal bar (judged module bracket)",
+        "tp_method": "4.5 * ATR(14) at signal bar (judged module bracket)",
+        "rr_ratio": 3.0,
+        "oos_win_rate_prior": 0.2863,
+        "total_friction_bps": 6.0,
+        "expected_net_edge_bps": 2.5,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": FOREX12_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "forward_venues": ["oanda_practice"],
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): governed/strategy_factory_winner_3:bare @ FOREX12 4h meets the second tier (OOS expectancy +0.025%/trade, PF 1.0738, 702 OOS trades, 2/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Duplicate-alias note: governed/strategy_factory_winner_5:bare @ FOREX12 4h is an identical trade stream to this row (702 trades, +0.025%/trade, PF 1.0738 — the judged modules differ only in win_rate_prior, which affects neither signals nor brackets), which is NOT separately wired — dedupe per audit §1.4. The judged live module was deleted from main by TASK-STR-CLEANUP-001 under the earlier BT-001 evidence rule; the lane module restores its judged signal code verbatim from the pre-cleanup blob (see the module docstring) — the RD-002 forex12 cell recorded here, not the deleted configuration's earlier record, is the admission basis. RD-002 cost basis (rigorous_backtest/rd2/costs2.py): forex majors 6 bps round trip; the forex12 panel is exactly the costs2 majors set. FWD-012 stop check: measured max SL_ATR x ATR(14)/close on the fwd002 FX fixtures (FX_EURUSD/FX_GBPJPY/FX_USDJPY 1d) is 2.20% for the 1.5x stop at 1d (the judged 4h ATR is smaller than the 1d ATR, so the 1d measurement is a conservative upper bound) — far under the 0.15 global cap, so no max_stop_pct override is set (the override changes admissibility only; FWD-006 sizes by risk / stop distance).",
+    },
+    "bb_reversion": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "Bollinger(20,2) pierce-and-reenter mean reversion, evaluated exactly as the judged live module strategy_bb_reversion (LONG: prior bar pierced the lower band and the current close closes back inside, rising; SHORT mirrored at the upper band). Judged bare: rigorous_backtest/rd2/gov2.py eval_module_cell — module.add_features over the frame, get_signal on trailing <=500-bar windows, NO downstream filter, warmup 260 bars.",
+        "sl_method": "1.5 * ATR(14) at signal bar (judged module bracket, code constants)",
+        "tp_method": "3.0 * ATR(14) at signal bar (judged module bracket, code constants)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3571,
+        "total_friction_bps": 6.0,
+        "expected_net_edge_bps": 7.3,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": FOREX12_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "forward_venues": ["oanda_practice"],
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): governed/strategy_bb_reversion:bare @ FOREX12 1d meets the second tier (OOS expectancy +0.073%/trade, PF 1.0911, 308 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. The judged live module was deleted from main by TASK-STR-CLEANUP-001 under the earlier BT-001 evidence rule; the lane module restores its judged signal code verbatim from the pre-cleanup blob (see the module docstring) — the RD-002 forex12 cell recorded here, not the deleted configuration's earlier record, is the admission basis. RD-002 cost basis (rigorous_backtest/rd2/costs2.py): forex majors 6 bps round trip; the forex12 panel is exactly the costs2 majors set. FWD-012 stop check: measured max SL_ATR x ATR(14)/close on the fwd002 FX fixtures (FX_EURUSD/FX_GBPJPY/FX_USDJPY 1d) is 2.20% for the 1.5x stop at 1d — far under the 0.15 global cap, so no max_stop_pct override is set (the override changes admissibility only; FWD-006 sizes by risk / stop distance).",
+    },
+    "bollinger_trend_p20_fx28": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close crosses above SMA(20) + 2.0 x rolling-std(20). SHORT: close crosses below SMA(20) - 2.0 x rolling-std(20). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_bollinger_trend(df, 20, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3915,
+        "total_friction_bps": 6.0,
+        "expected_net_edge_bps": 13.0,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": FOREX28_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "forward_venues": ["oanda_practice"],
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): bollinger_trend/p20_sd2.0 @ FOREX28 1d meets the second tier (OOS expectancy +0.130%/trade, PF 1.1177, 355 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. RD-002 cost basis (rigorous_backtest/rd2/costs2.py): forex majors 6 bps / minors and crosses 10 bps round trip; the registry friction field carries the 6.0 majors figure following the sleeve_tsmom2_dual precedent for this same panel. FWD-012 stop check: measured max SL_ATR x ATR(14)/close on the fwd002 FX fixtures (FX_EURUSD/FX_GBPJPY/FX_USDJPY 1d) is 2.94% for the 2.0x stop at 1d — far under the 0.15 global cap, so no max_stop_pct override is set (the override changes admissibility only; FWD-006 sizes by risk / stop distance).",
     },
     # ------------------------------------------------------------------
     # TASK-STR-FWD-019 WAVE-2: RD-004 vol_regime_trend gate_lo family
