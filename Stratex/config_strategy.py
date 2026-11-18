@@ -441,6 +441,65 @@ TREND_PULLBACK_EMA200_STRATEGY = {
 }
 
 # ==============================================================================
+# TASK-STR-FWD-019 WAVE-2 (2026-11-18): RD-001 stage-1 discovery
+# modules (near-miss audit ~/workspace/str-nearmiss/REPORT.md §1.1).
+# Judged harness: rigorous_backtest/rd/stage1.py via
+# rigorous_backtest/module_eval.py — the module's OWN get_signal()
+# on trailing <=500-bar windows from bar 260 (WARMUP_BARS), MODULE
+# simulation convention keeping the module's OWN bracket, 16 bps
+# round-trip costs (rd/common COSTS). Timeframe: the ranked rows
+# record no per-row timeframe; stage-1 ran one DAILY configuration
+# per module — both are wired at 1d on that basis (the stage-1 row
+# JSONs' timeframe field is the harness's docstring-inference
+# default; see the registry reasons). The judged module files were
+# deleted by TASK-STR-CLEANUP-001 after judgement; the lane modules
+# are line-faithful ports of the judged sources (volatility
+# bd9585c97b, choppiness 8b6ec77a4).
+# ==============================================================================
+VOLATILITY_BREAKOUT_STRATEGY = {
+    "NAME": "Volatility Breakout (ATR expansion + 10-bar breakout, EMA trend gate)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "WINDOW": 500,          # judged module_eval sliding window
+    "EMA_FAST": 50,
+    "EMA_SLOW": 200,
+    "DONCHIAN_PERIOD": 10,
+    "ATR_PERIOD": 14,
+    "ATR_AVG_PERIOD": 20,
+    "EXPANSION_MULT": 1.2,  # ATR > 1.2 x its 20-bar average = expanding
+    "SL_ATR": 2.5,          # judged module's OWN bracket (module_eval kept it)
+    "TP_ATR": 6.0,          # judged module's OWN bracket
+    "WARMUP_BARS": 260,     # judged WARMUP_BARS (module_eval)
+    # TASK-STR-RD-001 stage-1 pooled OOS evidence (520 trades, 3/5
+    # folds, full frozen bar FAIL — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3519,
+    "OOS_PROFIT_FACTOR": 1.067,
+    "OOS_EXPECTANCY_PCT": 0.131,
+    "OOS_TRADES": 520,
+}
+
+CHOPPINESS_BREAKOUT_STRATEGY = {
+    "NAME": "Choppiness Breakout (Donchian 20 breakout, CHOP(14) < 45 trend gate)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "WINDOW": 500,          # judged module_eval sliding window
+    "DONCHIAN_PERIOD": 20,
+    "CHOP_PERIOD": 14,
+    "CHOP_MAX": 45.0,       # entries only when CHOP(14) < 45 (trending)
+    "EMA_PERIOD": 200,
+    "ATR_PERIOD": 20,
+    "SL_ATR": 2.0,          # judged module's OWN bracket (module_eval kept it)
+    "TP_ATR": 4.5,          # judged module's OWN bracket
+    "WARMUP_BARS": 260,     # judged WARMUP_BARS (module_eval)
+    # TASK-STR-RD-001 stage-1 pooled OOS evidence (940 trades, 3/5
+    # folds, full frozen bar FAIL — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3564,
+    "OOS_PROFIT_FACTOR": 1.055,
+    "OOS_EXPECTANCY_PCT": 0.074,
+    "OOS_TRADES": 940,
+}
+
+# ==============================================================================
 # FX MEAN REVERSION v4 — OANDA PRACTICE VENUE (TASK-STR-FWD-004, 2026-11-15)
 # Connors RSI(2) reversion behind an EMA(200) regime gate. The runtime
 # parameters live in oanda_demo/strategy.py (MeanReversionConfig) — the SAME
@@ -784,6 +843,69 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "lane_note": "entered sample-starved; forward evidence is the settler",
         "reason": "EXCLUDED from live lane execution (TASK-STR-FWD-003, RD-003 additions): TASK-STR-RD-003 watchlist cell trend_pullback/pb_ema200 @ comm7 1d — 109 OOS trades, expectancy +0.642%/trade, PF 1.182, 3 positive folds, max symbol profit share 0.37. It failed ONLY the >=200-trade floor (a data-span limit, not a performance failure) and failed Bonferroni significance; its PF of 1.182 is also marginally below the 1.2 line, recorded exactly as measured. Entered sample-starved; forward evidence is the settler. Unmappable-universe exclusion exactly as for vol_regime_switch_a: demo-fapi is crypto-only and the OANDA practice account holds 68 FX-only instruments (verified live 2026-11-15); substitution prohibited. Documentary registration only.",
+    },
+    # ------------------------------------------------------------------
+    # TASK-STR-FWD-019 WAVE-2: RD-001 stage-1 discovery modules
+    # (near-miss audit REPORT.md §1.1). FORWARD_TEST — demo venues
+    # only, forward evidence decides them.
+    # ------------------------------------------------------------------
+    "volatility_breakout": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close breaks above the prior-10-bar high AND ATR(14) (simple rolling mean of true range) > 1.2 x its 20-bar average (volatility expanding) AND EMA(50) > EMA(200). SHORT: close breaks below the prior-10-bar low AND ATR expanding AND EMA(50) < EMA(200). Judged exactly as the module's own get_signal() evaluated by rigorous_backtest/module_eval.py (stage-1 harness): trailing <=500-bar windows, bars from 260, signal on close of bar i, entry at open of bar i+1 under the MODULE convention.",
+        "sl_method": "2.5 * ATR(14) at signal bar (the module's OWN judged bracket — module_eval kept the module's sl/tp; NOT the BR24 bracket)",
+        "tp_method": "6.0 * ATR(14) at signal bar (the module's OWN judged bracket)",
+        "rr_ratio": 2.4,
+        "oos_win_rate_prior": 0.3519,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 13.1,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        # TASK-STR-FWD-012 stop-cap check: judged stop 2.5 x ATR(14)
+        # / price on the fwd002 1d fixtures — max 0.9525 over entry
+        # bars and 0.9640 over all bars >= warmup (SOLUSDT; BTCUSDT
+        # 0.1943). Far above the 0.15 engine-global cap: without the
+        # override this config would register and silently never
+        # trade (the sleeve_shock failure mode). Override 1.20 =
+        # rounded sanity bound above the measured max;
+        # admissibility only, FWD-006 sizes by risk / stop distance.
+        "max_stop_pct": 1.20,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): volatility_breakout @ CRYPTO30 1d meets the second tier (OOS expectancy +0.131%/trade, PF 1.0669, 520 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Timeframe provenance: timeframe not recorded per-row; stage-1 discovery ran a single daily configuration per module — wired at 1d on that basis (the stage-1 row record's timeframe field is the harness's docstring-inference default and its datasets were BTC/ETH/SOL only; the round's judged universe per RESULTS_RD.md is crypto30, registered here as the lane universe). Judged bracket is the module's own (SL 2.5 x ATR(14), TP 6.0 x ATR(14), extracted by module_eval), not BR24. Stop-cap override max_stop_pct=1.20 per the FWD-012 check recorded in this entry (measured 1d-fixture max stop 0.9640 of price; override changes admissibility only).",
+    },
+    "choppiness_breakout": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close breaks above the prior-20-bar Donchian high AND Choppiness Index (14) < 45 (trending regime) AND close > EMA(200). SHORT: close breaks below the prior-20-bar Donchian low AND CHOP(14) < 45 AND close < EMA(200). Judged exactly as the module's own get_signal() evaluated by rigorous_backtest/module_eval.py (stage-1 harness): trailing <=500-bar windows, bars from 260, signal on close of bar i, entry at open of bar i+1 under the MODULE convention.",
+        "sl_method": "2.0 * ATR(20) at signal bar (the module's OWN judged bracket — module_eval kept the module's sl/tp; the judged source's governor clamp helper was never called by its get_signal and is NOT applied here)",
+        "tp_method": "4.5 * ATR(20) at signal bar (the module's OWN judged bracket)",
+        "rr_ratio": 2.25,
+        "oos_win_rate_prior": 0.3564,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 7.4,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        # TASK-STR-FWD-012 stop-cap check: judged stop 2.0 x ATR(20)
+        # / price on the fwd002 1d fixtures — max 0.6297 over entry
+        # bars and 0.6667 over all bars >= warmup (SOLUSDT; BTCUSDT
+        # 0.1331). Above the 0.15 engine-global cap: override 0.80 =
+        # rounded sanity bound above the measured max;
+        # admissibility only, FWD-006 sizes by risk / stop distance.
+        "max_stop_pct": 0.80,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): choppiness_breakout @ CRYPTO30 1d meets the second tier (OOS expectancy +0.074%/trade, PF 1.0550, 940 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Timeframe provenance: timeframe not recorded per-row; stage-1 discovery ran a single daily configuration per module — wired at 1d on that basis (the stage-1 row record's timeframe field is the harness's docstring-inference default and its datasets were BTC/ETH/SOL only; the round's judged universe per RESULTS_RD.md is crypto30, registered here as the lane universe). Judged bracket is the module's own (SL 2.0 x ATR(20), TP 4.5 x ATR(20), extracted by module_eval); the judged source's uncalled governor-clamp helper is not applied. Stop-cap override max_stop_pct=0.80 per the FWD-012 check recorded in this entry (measured 1d-fixture max stop 0.6667 of price; override changes admissibility only).",
     }
 }
 
