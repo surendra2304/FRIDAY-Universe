@@ -1,0 +1,579 @@
+{
+ "task": "TASK-STR-RD-013-CONV",
+ "study": "RD-013 best-config trade-unit conversion (research only; no wiring, no trading)",
+ "claim_comment": "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6974274733",
+ "base_main_sha": "9f1d187d90a784c7a940c64258758d57970e97e4",
+ "config": {
+  "lookback_days": 63,
+  "top_k": 1,
+  "cadence": "weekly",
+  "mode": "long_only"
+ },
+ "trade_definition_predeclared": "A TRADE = a maximal run of consecutive OOS periods holding the same single asset. Periods holding cash (no asset) are not trades and break runs. Trade net return = product(1 + period_net_return) - 1 over the run's periods. A run that starts before the OOS era and continues into it counts ONCE, with its return computed over its OOS periods only. A trade belongs to the fold of its first OOS period.",
+ "cost_attribution_note": "The harness charges turnover inside period returns: the switch-in charge sits in the run's first period, the switch-out charge in the successor run's first period. No costs were re-charged or moved.",
+ "holdings_extraction": "run_config period records carry contrib {asset: contribution}; for top_k=1 the single key is the held asset and an empty dict is a cash period. No harness arithmetic was altered.",
+ "anchor_check": {
+  "oos_periods": {
+   "recomputed": 122,
+   "recorded": 122
+  },
+  "oos_period_pf": {
+   "recomputed": 1.4104631243693715,
+   "recorded": 1.4104631243693715
+  },
+  "oos_mean_period_return": {
+   "recomputed": 0.008311546034462752,
+   "recorded": 0.008311546034462752
+  },
+  "oos_compounded": {
+   "recomputed": 0.8933620570323619,
+   "recorded": 0.8933620570323619
+  },
+  "folds_positive": {
+   "recomputed": 3,
+   "recorded": 3
+  },
+  "oos_max_drawdown": {
+   "recomputed": -0.39974286821868743,
+   "recorded": -0.39974286821868743
+  }
+ },
+ "anchor_pass": true,
+ "provenance_sha256": {
+  "BTCUSDT": "cbd726f60c714420781961a447577b43659780e66f6e94e27ee1db5a2ebc640e",
+  "ETHUSDT": "5d861191ad4d68e922b741c33e99192d6082016b92eaf265dd76e7949d01c88c",
+  "SOLUSDT": "281fbff59b203575c1acf24b0a15cafdb53cae6a3814df2d95c099d0de056196",
+  "BNBUSDT": "5461c517e9a18ffdfb0ec7fdad845fd864465a377351208c934f0cb3af745549",
+  "GOLD": "4933b83b0672551656e0c4c7068f9087b232274ab954e64164b9360ca3560dd4",
+  "SPX": "ab1482ee3b03fa53fa80ffc818cd86f4c60feb8c85265b4ca808e0b60b4673bb",
+  "NDX": "4dd2893217154491dc5732eae71883a71d4a234ff87b46d4b32cb964ed6ea581"
+ },
+ "period_level_recorded": {
+  "oos_periods": 122,
+  "period_pf": 1.4104631243693715,
+  "mean_period_return": 0.008311546034462752,
+  "compounded": 0.8933620570323619,
+  "folds_positive_period_units": 3,
+  "oos_max_drawdown_period_level": -0.39974286821868743
+ },
+ "trade_level": {
+  "n_oos_periods": 122,
+  "n_cash_oos_periods": 0,
+  "n_trades": 29,
+  "boundary_runs": 1,
+  "expectancy_per_trade": 0.035276644054284406,
+  "profit_factor": 1.9662590684950931,
+  "win_rate": 0.5517241379310345,
+  "wins": 16,
+  "losses": 13,
+  "compounded_trade_sequence": 0.8933620570323615,
+  "trade_sequence_max_drawdown": -0.3981924367333318,
+  "folds_positive_trade_units": 4,
+  "fold_stats": {
+   "W1": {
+    "trades": 10,
+    "compounded": -0.0015741276642305957,
+    "sum": 0.12142837820728991,
+    "wins": 6
+   },
+   "W2": {
+    "trades": 7,
+    "compounded": 0.5421622396452448,
+    "sum": 0.590340119011288,
+    "wins": 4
+   },
+   "W3": {
+    "trades": 2,
+    "compounded": 0.01156954882477712,
+    "sum": 0.02121216818868299,
+    "wins": 1
+   },
+   "W4": {
+    "trades": 5,
+    "compounded": 0.0163111489109391,
+    "sum": 0.017959687791848422,
+    "wins": 3
+   },
+   "W5": {
+    "trades": 5,
+    "compounded": 0.19609408027265496,
+    "sum": 0.27208232437513824,
+    "wins": 2
+   }
+  }
+ },
+ "verdict_forward_test_tier": "FAIL - does not meet the second tier: trade count 29 < 200 (expectancy +3.53%/trade > 0 PASS; PF 1.9663 >= 1.05 PASS; count FAIL)",
+ "trial_counting": "global counter 3,899 through RD-020 (per ~/workspace/str-nearmiss/REPORT.md); this conversion is +1; RD-021 is running in parallel under another crew and its trials are counted by that crew.",
+ "trades": [
+  {
+   "asset": "NDX",
+   "fold": "W1",
+   "start": "2024-07-01",
+   "end_start": "2024-07-08",
+   "n_periods": 2,
+   "n_periods_total_run": 3,
+   "boundary_run": true,
+   "net_return": 0.029005337910422258,
+   "period_nets": [
+    0.031663202665416224,
+    -0.002576291126917374
+   ]
+  },
+  {
+   "asset": "ETHUSDT",
+   "fold": "W1",
+   "start": "2024-07-15",
+   "end_start": "2024-07-15",
+   "n_periods": 1,
+   "n_periods_total_run": 1,
+   "boundary_run": false,
+   "net_return": -0.013705672646641465,
+   "period_nets": [
+    -0.013705672646641485
+   ]
+  },
+  {
+   "asset": "NDX",
+   "fold": "W1",
+   "start": "2024-07-22",
+   "end_start": "2024-07-22",
+   "n_periods": 1,
+   "n_periods_total_run": 1,
+   "boundary_run": false,
+   "net_return": -0.039710010878573065,
+   "period_nets": [
+    -0.039710010878573086
+   ]
+  },
+  {
+   "asset": "SOLUSDT",
+   "fold": "W1",
+   "start": "2024-07-29",
+   "end_start": "2024-07-29",
+   "n_periods": 1,
+   "n_periods_total_run": 1,
+   "boundary_run": false,
+   "net_return": -0.2901775298752389,
+   "period_nets": [
+    -0.2901775298752389
+   ]
+  },
+  {
+   "asset": "GOLD",
+   "fold": "W1",
+   "start": "2024-08-05",
+   "end_start": "2024-08-19",
+   "n_periods": 3,
+   "n_periods_total_run": 3,
+   "boundary_run": false,
+   "net_return": 0.04400153721659916,
+   "period_nets": [
+    0.023082302420771663,
+    0.014896185634235115,
+    0.005469602989288669
+   ]
+  },
+  {
+   "asset": "SOLUSDT",
+   "fold": "W1",
+   "start": "2024-08-26",
+   "end_start": "2024-08-26",
+   "n_periods": 1,
+   "n_periods_total_run": 1,
+   "boundary_run": false,
+   "net_return": -0.1425716807172146,
+   "period_nets": [
+    -0.14257168071721463
+   ]
+  },
+  {
+   "asset": "GOLD",
+   "fold": "W1",
+   "start": "2024-09-02",
+   "end_start": "2024-09-30",
+   "n_periods": 5,
+   "n_periods_total_run": 5,
+   "boundary_run": false,
+   "net_return": 0.05338703745735973,
+   "period_nets": [
+    0.0007176662915758482,
+    0.03008645028662693,
+    0.016712062282298046,
+    0.0026012826932140243,
+    0.002481799615933422
+   ]
+  },
+  {
+   "asset": "BNBUSDT",
+   "fold": "W1",
+   "start": "2024-10-07",
+   "end_start": "2024-10-14",
+   "n_periods": 2,
+   "n_periods_total_run": 2,
+   "boundary_run": false,
+   "net_return": 0.059654159164512555,
+   "period_nets": [
+    0.04296488047773458,
+    0.01600176477575488
+   ]
+  },
+  {
+   "asset": "SOLUSDT",
+   "fold": "W1",
+   "start": "2024-10-21",
+   "end_start": "2024-11-25",
+   "n_periods": 6,
+   "n_periods_total_run": 6,
+   "boundary_run": false,
+   "net_return": 0.3576299958242646,
+   "period_nets": [
+    0.07105394570517069,
+    -0.11408529741863072,
+    0.40831063533286893,
+    0.07929654117752882,
+    -0.02362893815635947,
+    -0.03589568483503347
+   ]
+  },
+  {
+   "asset": "BTCUSDT",
+   "fold": "W1",
+   "start": "2024-12-02",
+   "end_start": "2024-12-30",
+   "n_periods": 5,
+   "n_periods_total_run": 5,
+   "boundary_run": false,
+   "net_return": 0.06391520475179968,
+   "period_nets": [
+    0.01361110016112126,
+    0.08910303228278416,
+    -0.10527978782002423,
+    -0.02215660581629353,
+    0.10156501827849063
+   ]
+  },
+  {
+   "asset": "ETHUSDT",
+   "fold": "W2",
+   "start": "2025-01-06",
+   "end_start": "2025-01-06",
+   "n_periods": 1,
+   "n_periods_total_run": 1,
+   "boundary_run": false,
+   "net_return": -0.15071062153392,
+   "period_nets": [
+    -0.15071062153392006
+   ]
+  },
+  {
+   "asset": "BTCUSDT",
+   "fold": "W2",
+   "start": "2025-01-13",
+   "end_start": "2025-01-27",
+   "n_periods": 3,
+   "n_periods_total_run": 3,
+   "boundary_run": false,
+   "net_return": 0.07047269673590906,
+   "period_nets": [
+    0.08055352017721278,
+    -0.002213254883244198,
+    -0.007131844036490476
+   ]
+  },
+  {
+   "asset": "GOLD",
+   "fold": "W2",
+   "start": "2025-02-03",
+   "end_start": "2025-05-05",
+   "n_periods": 14,
+   "n_periods_total_run": 14,
+   "boundary_run": false,
+   "net_return": 0.12838683770593273,
+   "period_nets": [
+    0.025755336545930287,
+    -0.011484443938591493,
+    0.021546523615705304,
+    -0.02095702434493696,
+    -0.0005860519303948486,
+    0.0368007859923869,
+    0.0031602407409543343,
+    0.03554846388789801,
+    -0.0477776190723016,
+    0.08498114839687076,
+    0.06168056194038174,
+    -0.022654978118719526,
+    -0.0075872696819374585,
+    -0.02838396515732755
+   ]
+  },
+  {
+   "asset": "SOLUSDT",
+   "fold": "W2",
+   "start": "2025-05-12",
+   "end_start": "2025-05-12",
+   "n_periods": 1,
+   "n_periods_total_run": 1,
+   "boundary_run": false,
+   "net_return": -0.043679694498679145,
+   "period_nets": [
+    -0.04367969449867918
+   ]
+  },
+  {
+   "asset": "ETHUSDT",
+   "fold": "W2",
+   "start": "2025-05-19",
+   "end_start": "2025-05-19",
+   "n_periods": 1,
+   "n_periods_total_run": 1,
+   "boundary_run": false,
+   "net_return": 0.012472746124652101,
+   "period_nets": [
+    0.012472746124652146
+   ]
+  },
+  {
+   "asset": "BTCUSDT",
+   "fold": "W2",
+   "start": "2025-05-26",
+   "end_start": "2025-05-26",
+   "n_periods": 1,
+   "n_periods_total_run": 1,
+   "boundary_run": false,
+   "net_return": -0.03425933366731637,
+   "period_nets": [
+    -0.03425933366731632
+   ]
+  },
+  {
+   "asset": "ETHUSDT",
+   "fold": "W2",
+   "start": "2025-06-02",
+   "end_start": "2025-09-15",
+   "n_periods": 16,
+   "n_periods_total_run": 16,
+   "boundary_run": false,
+   "net_return": 0.6076574881447097,
+   "period_nets": [
+    0.026269003406893577,
+    -0.050762937083818516,
+    -0.05219179590424361,
+    0.030663087716095827,
+    0.022972265829408478,
+    0.1852898239925711,
+    0.24855092189917194,
+    0.009316770186335477,
+    -0.020173867228661768,
+    0.13493770534115535,
+    0.021419890981709377,
+    0.014499980286335257,
+    -0.014002400411499138,
+    -0.0020913517273360993,
+    0.050548562028634114,
+    -0.07180739305634809
+   ]
+  },
+  {
+   "asset": "BNBUSDT",
+   "fold": "W3",
+   "start": "2025-09-22",
+   "end_start": "2025-11-10",
+   "n_periods": 8,
+   "n_periods_total_run": 8,
+   "boundary_run": false,
+   "net_return": -0.08816186811548277,
+   "period_nets": [
+    0.03556117603245062,
+    0.18782450045126797,
+    0.05697852071537701,
+    -0.14994859744455868,
+    0.03515440293892991,
+    -0.1275760290939758,
+    -0.0016110355938177001,
+    -0.08494780898593102
+   ]
+  },
+  {
+   "asset": "GOLD",
+   "fold": "W3",
+   "start": "2025-11-17",
+   "end_start": "2026-03-23",
+   "n_periods": 19,
+   "n_periods_total_run": 19,
+   "boundary_run": false,
+   "net_return": 0.10937403630416576,
+   "period_nets": [
+    0.003534937089673641,
+    0.04411114641920033,
+    -0.01335725928320386,
+    0.0278587843039646,
+    0.03095582694805077,
+    -0.028146911763597293,
+    0.024841122552228256,
+    0.03666184326912281,
+    -0.004182350348210018,
+    0.1059973251528814,
+    -0.08458433887727501,
+    0.09173361039615258,
+    -0.006516537050169413,
+    0.0355310425278732,
+    0.016457439986380162,
+    -0.039140729445254374,
+    -0.01988753181333469,
+    -0.11892774527146555,
+    0.026932634622734986
+   ]
+  },
+  {
+   "asset": "SPX",
+   "fold": "W4",
+   "start": "2026-03-30",
+   "end_start": "2026-03-30",
+   "n_periods": 1,
+   "n_periods_total_run": 1,
+   "boundary_run": false,
+   "net_return": 0.04136382220544621,
+   "period_nets": [
+    0.04136382220544611
+   ]
+  },
+  {
+   "asset": "GOLD",
+   "fold": "W4",
+   "start": "2026-04-06",
+   "end_start": "2026-04-06",
+   "n_periods": 1,
+   "n_periods_total_run": 1,
+   "boundary_run": false,
+   "net_return": 0.016753148245003846,
+   "period_nets": [
+    0.016753148245003745
+   ]
+  },
+  {
+   "asset": "ETHUSDT",
+   "fold": "W4",
+   "start": "2026-04-13",
+   "end_start": "2026-04-27",
+   "n_periods": 3,
+   "n_periods_total_run": 3,
+   "boundary_run": false,
+   "net_return": -0.01089753257420989,
+   "period_nets": [
+    -0.025029314420803837,
+    -0.004458204869864479,
+    0.019037649634275455
+   ]
+  },
+  {
+   "asset": "BTCUSDT",
+   "fold": "W4",
+   "start": "2026-05-04",
+   "end_start": "2026-05-11",
+   "n_periods": 2,
+   "n_periods_total_run": 2,
+   "boundary_run": false,
+   "net_return": -0.037371461680781315,
+   "period_nets": [
+    0.021863503791366413,
+    -0.057967590830254045
+   ]
+  },
+  {
+   "asset": "NDX",
+   "fold": "W4",
+   "start": "2026-05-18",
+   "end_start": "2026-07-06",
+   "n_periods": 8,
+   "n_periods_total_run": 8,
+   "boundary_run": false,
+   "net_return": 0.00811171159638957,
+   "period_nets": [
+    0.015605728105746765,
+    0.03501225603858327,
+    -0.03603607121149355,
+    0.03840518732244891,
+    -0.006444485326489668,
+    -0.018859477638428546,
+    -0.0025820824482153393,
+    -0.014606082651789531
+   ]
+  },
+  {
+   "asset": "SPX",
+   "fold": "W5",
+   "start": "2026-07-13",
+   "end_start": "2026-08-03",
+   "n_periods": 4,
+   "n_periods_total_run": 4,
+   "boundary_run": false,
+   "net_return": 0.030804659373957488,
+   "period_nets": [
+    -0.01038839654519117,
+    -0.0040438637594983895,
+    0.02526848394036363,
+    0.020078924186731184
+   ]
+  },
+  {
+   "asset": "SOLUSDT",
+   "fold": "W5",
+   "start": "2026-08-10",
+   "end_start": "2026-08-10",
+   "n_periods": 1,
+   "n_periods_total_run": 1,
+   "boundary_run": false,
+   "net_return": -0.0006733377221858072,
+   "period_nets": [
+    -0.0006733377221858285
+   ]
+  },
+  {
+   "asset": "ETHUSDT",
+   "fold": "W5",
+   "start": "2026-08-17",
+   "end_start": "2026-09-14",
+   "n_periods": 5,
+   "n_periods_total_run": 5,
+   "boundary_run": false,
+   "net_return": 0.4487780040588174,
+   "period_nets": [
+    0.2955349401369792,
+    -0.005844346904309905,
+    0.009077529971255105,
+    0.010048535107596734,
+    0.10365045963889208
+   ]
+  },
+  {
+   "asset": "SOLUSDT",
+   "fold": "W5",
+   "start": "2026-09-21",
+   "end_start": "2026-10-19",
+   "n_periods": 5,
+   "n_periods_total_run": 5,
+   "boundary_run": false,
+   "net_return": -0.15251966293496644,
+   "period_nets": [
+    -0.002104710632570626,
+    0.015990573977444855,
+    -0.12442014579191518,
+    -0.006338694418164592,
+    -0.039226887555936396
+   ]
+  },
+  {
+   "asset": "BNBUSDT",
+   "fold": "W5",
+   "start": "2026-10-26",
+   "end_start": "2026-10-26",
+   "n_periods": 1,
+   "n_periods_total_run": 1,
+   "boundary_run": false,
+   "net_return": -0.054307338400484406,
+   "period_nets": [
+    -0.05430733840048436
+   ]
+  }
+ ]
+}
