@@ -853,6 +853,11 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         "keltner_breakout_ema20_m2_4h",
         "keltner_breakout_ema20_m15_4h",
         "keltner_breakout_forex",
+        # TASK-STR-FWD-019 Wave-2 (PR #985): bb_reversion + factory winners + fx28:
+        "factory_winner_4",
+        "factory_winner_3",
+        "bb_reversion",
+        "bollinger_trend_p20_fx28",
     } | overlay
 
 
@@ -914,6 +919,11 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "keltner_breakout_ema20_m2_4h",
         "keltner_breakout_ema20_m15_4h",
         "keltner_breakout_forex",
+        # TASK-STR-FWD-019 Wave-2 (PR #985): bb_reversion + factory winners + fx28:
+        "factory_winner_4",
+        "factory_winner_3",
+        "bb_reversion",
+        "bollinger_trend_p20_fx28",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -946,6 +956,10 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "keltner_breakout_ema20_m2_4h",
         "keltner_breakout_ema20_m15_4h",
         "keltner_breakout_forex",
+        "factory_winner_4",
+        "factory_winner_3",
+        "bb_reversion",
+        "bollinger_trend_p20_fx28",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
