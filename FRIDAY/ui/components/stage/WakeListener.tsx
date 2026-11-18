@@ -1,13 +1,14 @@
 "use client";
 
-/* WakeListener — the listening half of the stage's opt-in wake word.
+/* WakeListener — the listening half of the stage's wake word.
  *
  * Scope, stated plainly (full statement in FRIDAY/docs/WAKE_WORD.md):
  * this is a BROWSER wake word. It exists only while the FRIDAY stage tab
  * is open in a Chromium-family browser that exposes the Web Speech API
- * (SpeechRecognition / webkitSpeechRecognition), it is OFF until the
- * owner arms it from the Veil, and it stops the moment a voice call is
- * live (Stage unmounts it — LiveKit owns the microphone during a call).
+ * (SpeechRecognition / webkitSpeechRecognition), it is ARMED BY DEFAULT
+ * (owner decision 2026-11-18 — the Veil's "Disarm the wake word" turns
+ * it off), and it stops the moment a voice call is live (Stage unmounts
+ * it — LiveKit owns the microphone during a call).
  * It is not an OS-level always-on listener and it does not exist on the
  * phone or laptop surfaces.
  *
