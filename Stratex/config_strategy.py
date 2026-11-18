@@ -346,6 +346,42 @@ BOLLINGER_TREND_STRATEGY = {
     "OOS_EXPECTANCY_PCT": 3.545,
 }
 
+BOLLINGER_TREND_4H_STRATEGY = {
+    "NAME": "Bollinger Trend 4h (close crosses SMA(50) +/- 2.0 sd band) — FORWARD_TEST wave 1",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-018)",
+    "TIMEFRAME": "4h",
+    "SMA_PERIOD": 50,
+    "SD_MULT": 2.0,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("4h")
+    # TASK-STR-RD-002 pooled OOS evidence (grid_rows pooled_oos:
+    # bollinger_trend__p50_sd2.0__crypto30__4h — 3,211 trades, 4/5
+    # folds; near-miss re-audit 2026-11-18, second-tier admission):
+    "OOS_WIN_RATE": 0.3759,
+    "OOS_PROFIT_FACTOR": 1.137,
+    "OOS_EXPECTANCY_PCT": 0.465,
+}
+
+BOLLINGER_TREND_P20_STRATEGY = {
+    "NAME": "Bollinger Trend p20 (close crosses SMA(20) +/- 2.0 sd band) — FORWARD_TEST wave 1",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-018)",
+    "TIMEFRAME": "1d",
+    "SMA_PERIOD": 20,
+    "SD_MULT": 2.0,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (grid_rows pooled_oos:
+    # bollinger_trend__p20_sd2.0__crypto30__1d — 632 trades, 3/5
+    # folds; near-miss re-audit 2026-11-18, second-tier admission):
+    "OOS_WIN_RATE": 0.3513,
+    "OOS_PROFIT_FACTOR": 1.147,
+    "OOS_EXPECTANCY_PCT": 1.265,
+}
+
 SHOCK_BREAKOUT_STRATEGY = {
     "NAME": "Shock Breakout (one-bar close move > 1.0 x ATR(14))",
     "VERSION": "v1.0.0 (TASK-STR-FWD-003)",
@@ -654,6 +690,49 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "max_heat_pct": 0.02,
         "forward_lane": "FORWARD_TEST",
         "reason": "TASK-STR-RD-002 WATCHLIST: bollinger_trend/p50_sd2.0 @ CRYPTO30 1d passed the mechanical bar (expectancy +3.5448%/trade, PF 1.4562, 420 OOS trades, 5/5 positive folds, holdout) but FAILED Bonferroni significance at N=1,557 — not a promotion. Owner directed 2026-11-15 (TASK-STR-FWD-003) that near-bar configurations be decided by real demo forward evidence. FORWARD_TEST lane: DEMO venues only, phase-3 protocol (TASK-STR-FWD-006 package: 0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill criteria expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with the VALIDATED entrants' scorecards.",
+    },
+    "bollinger_trend_4h": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-018)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close crosses above SMA(50) + 2.0 x rolling-std(50). SHORT: close crosses below SMA(50) - 2.0 x rolling-std(50). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_bollinger_trend(df, 50, warmup) on CRYPTO30 4h bars, warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3759,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 46.5,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "reason": "TASK-STR-RD-002 near-miss re-audit 2026-11-18 (TASK-STR-FWD-018 wave 1): bollinger_trend/p50_sd2.0 @ CRYPTO30 4h — expectancy +0.4650%/trade, PF 1.1371, 3,211 pooled OOS trades, 4/5 positive folds, max symbol share 0.106 (grid_rows pooled_oos: bollinger_trend__p50_sd2.0__crypto30__4h). Admitted under the owner's second-tier demo-admission bar (2026-11-18: OOS expectancy>0, PF>=1.05, >=200 OOS trades, pre-Bonferroni); it does NOT pass the frozen promotion bar (PF>=1.2, >=4/5 folds, Bonferroni, holdout) — not a promotion. FORWARD_TEST lane terms as for bollinger_trend (demo venues only; FWD-006 package: 0.1% per-trade risk on venue equity, 2% heat cap, 3% daily breaker; kill at expectancy<0 or PF<1.0 after >=50 closed trades or MTM drawdown >5%; fills tagged FORWARD_TEST, never blended with the VALIDATED entrants' scorecards). FWD-012 stop-cap check (2026-11-18, harness signal bars over the full CRYPTO30 universe): signal-day judged stops (2.0 x ATR(14)) median 4.33%, p99 9.88%, max 17.82%, only 0.07% of judged signals above the 0.15 global cap — NO max_stop_pct override; the global cap binds as the sanity bound, as for the VALIDATED ichimoku_trend.",
+    },
+    "bollinger_trend_p20": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-018)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close crosses above SMA(20) + 2.0 x rolling-std(20). SHORT: close crosses below SMA(20) - 2.0 x rolling-std(20). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_bollinger_trend(df, 20, warmup) on CRYPTO30 1d bars, warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3513,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 126.5,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "max_stop_pct": 0.50,
+        "forward_lane": "FORWARD_TEST",
+        "reason": "TASK-STR-RD-002 near-miss re-audit 2026-11-18 (TASK-STR-FWD-018 wave 1): bollinger_trend/p20_sd2.0 @ CRYPTO30 1d — expectancy +1.2651%/trade, PF 1.1474, 632 pooled OOS trades, 3/5 positive folds, max symbol share 0.103 (grid_rows pooled_oos: bollinger_trend__p20_sd2.0__crypto30__1d). Admitted under the owner's second-tier demo-admission bar (2026-11-18: OOS expectancy>0, PF>=1.05, >=200 OOS trades, pre-Bonferroni); it does NOT pass the frozen promotion bar (PF>=1.2, >=4/5 folds, Bonferroni, holdout) — not a promotion. FORWARD_TEST lane terms as for bollinger_trend. FWD-012 stop-cap check (2026-11-18, harness signal bars over the full CRYPTO30 universe): signal-day judged stops (2.0 x ATR(14)) median 13.22%, p99 31.37%, max 36.24%, with 37.8% of judged signals above the 0.15 global cap — max_stop_pct 0.50 is set so the judged bracket is not silently clipped (a sanity bound above the measured distribution; under FWD-006 a wider stop shrinks the position, it does not add risk).",
     },
     "shock_breakout": {
         "status": "FORWARD_TEST",
