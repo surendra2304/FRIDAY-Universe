@@ -20,6 +20,25 @@ instead of adding risk — the value is a sanity bound against geometry /
 unit errors, set above any plausible genuine ATR-multiple stop.
 Strategies without the key keep the global cap exactly as before.
 
+Follow-up (2026-11-18, TASK-STR-FWD-018 wave-1 §3 recommendation):
+the two original FWD-003 FORWARD_TEST lane entries — bollinger_trend
+(p50_sd2.0 @ CRYPTO30 1d) and shock_breakout (k1.0 @ CRYPTO30 1d) —
+carry the same BR24 1d stop geometry (2.0 x ATR(14)) as the wave-1 1d
+rows but shipped with NO override. Independent re-measurement with
+the wave-1 capcheck method (RD-002 harness signal bars over current
+Binance spot 1d klines, full CRYPTO30 universe) found 33.88% of
+bollinger p50's 788 judged signals and 34.72% of shock k1.0's 2,180
+judged signals above the 0.15 global cap (median stops 12.76% /
+13.00%, max 36.24% both) — once the lane is allowlisted, ~1/3 of
+their judged signals would be silently cap-rejected, the
+sleeve_shock failure mode. Both entries now declare
+max_stop_pct = 0.50, the wave-1 value (a sanity bound above the whole
+measured distribution; under FWD-006 the wider stop shrinks the
+position, it does not add risk). The third executable lane entry,
+adx_ema_bare (4h, 3.0 x ATR module bracket), deliberately keeps NO
+override — it is outside this follow-up's scope, and its absence is
+pinned below.
+
 Everything is offline: fake engine/adapter only, no network, no orders.
 """
 
@@ -213,6 +232,53 @@ def test_narrow_stop_sizes_by_same_formula(_no_pause):
 
 
 # ----------------------------------------------------------------------
+# (e) FWD-003 lane entries: the 0.50 override is honoured end-to-end
+# ----------------------------------------------------------------------
+
+def _lane_daemon(engine):
+    daemon = _daemon(engine)
+    # Registry priors (config_strategy.py) for the expectancy gate.
+    daemon.strategy_priors["strategy_bollinger_trend"] = 0.3929
+    daemon.strategy_priors["strategy_shock_breakout"] = 0.3893
+    return daemon
+
+
+def test_override_lets_bollinger_trend_wide_stop_execute(_no_pause):
+    engine = _Engine()
+    daemon = _lane_daemon(engine)
+    # 22% stop at price 100: above the 15% global cap, inside the
+    # entry's 0.50 override. Measured: 33.88% of bollinger p50's
+    # judged 1d signals carry a stop above the global cap.
+    sig = {
+        "side": "BUY",
+        "strategy": "strategy_bollinger_trend",
+        "sl_dist": 22.0,
+        "tp_dist": 44.0,
+    }
+    assert daemon._execute_signal(
+        "binance_futures", "BTCUSDT", sig, "1d"
+    ) is True
+    assert len(engine.orders) == 1
+
+
+def test_override_lets_shock_breakout_wide_stop_execute(_no_pause):
+    engine = _Engine()
+    daemon = _lane_daemon(engine)
+    # Measured: 34.72% of shock k1.0's judged 1d signals carry a stop
+    # above the global cap.
+    sig = {
+        "side": "SELL",
+        "strategy": "strategy_shock_breakout",
+        "sl_dist": 22.0,
+        "tp_dist": 44.0,
+    }
+    assert daemon._execute_signal(
+        "binance_futures", "ETHUSDT", sig, "1d"
+    ) is True
+    assert len(engine.orders) == 1
+
+
+# ----------------------------------------------------------------------
 # (d) max-stop skip log line names the strategy
 # ----------------------------------------------------------------------
 
@@ -264,10 +330,18 @@ def test_max_stop_override_lookup():
     d = StratexTradingEngine.__new__(StratexTradingEngine)
     assert d._max_stop_pct_for_strategy("strategy_sleeve_shock_breakout") == 0.90
     assert d._max_stop_pct_for_strategy("strategy_dow_effect") == 0.90
+    # FWD-003 lane follow-up (2026-11-18): both 1d lane entries declare
+    # 0.50 (measured ~34% of judged signals above the 0.15 global cap).
+    assert d._max_stop_pct_for_strategy("strategy_bollinger_trend") == 0.50
+    assert d._max_stop_pct_for_strategy("strategy_shock_breakout") == 0.50
     # Bare registry keys (no module prefix) resolve too.
     assert d._max_stop_pct_for_strategy("sleeve_shock_breakout") == 0.90
+    assert d._max_stop_pct_for_strategy("bollinger_trend") == 0.50
     # No key on the entry -> None (global cap applies).
     assert d._max_stop_pct_for_strategy("strategy_ichimoku_trend") is None
+    # adx_ema_bare (the third executable lane entry) deliberately has
+    # no override in this follow-up's scope.
+    assert d._max_stop_pct_for_strategy("strategy_adx_ema_bare") is None
     # Unknown / empty strategies fail safe to None.
     assert d._max_stop_pct_for_strategy("strategy_does_not_exist") is None
     assert d._max_stop_pct_for_strategy("") is None
@@ -278,3 +352,7 @@ def test_registry_declares_overrides():
 
     assert PRODUCTION_STRATEGY_REGISTRY["sleeve_shock_breakout"]["max_stop_pct"] == 0.90
     assert PRODUCTION_STRATEGY_REGISTRY["dow_effect"]["max_stop_pct"] == 0.90
+    # FWD-003 lane follow-up (2026-11-18).
+    assert PRODUCTION_STRATEGY_REGISTRY["bollinger_trend"]["max_stop_pct"] == 0.50
+    assert PRODUCTION_STRATEGY_REGISTRY["shock_breakout"]["max_stop_pct"] == 0.50
+    assert "max_stop_pct" not in PRODUCTION_STRATEGY_REGISTRY["adx_ema_bare"]
