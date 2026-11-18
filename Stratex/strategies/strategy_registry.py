@@ -162,6 +162,14 @@ class UnifiedStrategyRegistry:
         self._items: dict[str, StrategySpec] = {}
         self._health: dict[str, StrategyHealth] = {}
         self._get_signal_fns: dict[str, Callable] = {}
+        # TASK-STR-EXP-002 / TASK-STR-FWD-024: whether a module's
+        # get_signal accepts evaluation context (symbol/timeframe/
+        # venue). Modules with the classic get_signal(df) signature
+        # are called exactly as before; context-aware modules
+        # (ensemble books; the panel-xs entrants, which cannot know
+        # their symbol from the frame alone) receive the frame's
+        # context.
+        self._accepts_context: dict[str, bool] = {}
         self._lock = threading.RLock()
         # TASK-STR-FWD-003: venues attested DEMO by the hosting daemon
         # (from the venue adapters' base URLs at startup). FORWARD_TEST
@@ -224,6 +232,24 @@ class UnifiedStrategyRegistry:
             get_signal = getattr(module, "get_signal", None)
             if get_signal is None or not callable(get_signal):
                 return
+
+            # TASK-STR-EXP-002 / TASK-STR-FWD-024: detect the
+            # context-aware signature. A module accepts context iff
+            # its get_signal declares symbol/timeframe/venue
+            # parameters (or **kwargs). Detection is best-effort:
+            # anything un-inspectable is called the classic
+            # single-argument way, exactly as before.
+            accepts_context = False
+            try:
+                params = inspect.signature(get_signal).parameters
+                accepts_context = bool(
+                    {"symbol", "timeframe", "venue"} & set(params)
+                ) or any(
+                    p.kind == inspect.Parameter.VAR_KEYWORD
+                    for p in params.values()
+                )
+            except (TypeError, ValueError):
+                accepts_context = False
 
             # Extract strategy metadata
             strategy_type = getattr(module, "_STRATEGY_TYPE", "RULE_BASED")
@@ -289,6 +315,7 @@ class UnifiedStrategyRegistry:
             with self._lock:
                 self._items[module_name] = spec
                 self._get_signal_fns[module_name] = get_signal
+                self._accepts_context[module_name] = accepts_context
                 self._health[module_name] = StrategyHealth(name=module_name)
 
             logger.info(f"Registered strategy: {module_name} (type={strategy_type}, rr={rr_ratio})")
@@ -434,7 +461,14 @@ class UnifiedStrategyRegistry:
             return {"status": "BLOCKED", "reason": "NO_SIGNAL_FUNCTION", "strategy": name}
 
         try:
-            result = get_signal(df)
+            # TASK-STR-EXP-002 / TASK-STR-FWD-024: context-aware
+            # modules receive the frame's symbol/timeframe/venue;
+            # classic get_signal(df) modules are called exactly as
+            # before.
+            if self._accepts_context.get(name):
+                result = get_signal(df, symbol=symbol, timeframe=timeframe, venue=venue)
+            else:
+                result = get_signal(df)
             health = self._health.get(name)
             if health:
                 health.signals_emitted += 1

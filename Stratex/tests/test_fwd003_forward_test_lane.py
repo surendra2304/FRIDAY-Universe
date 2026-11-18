@@ -834,6 +834,10 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         # TASK-STR-FWD-018 wave 1 (ichimoku variants):
         "ichimoku_trend_1d",
         "ichimoku_trend_raw",
+        # TASK-STR-FWD-024 (panel cross-sectional streams,
+        # execution_mode "panel_xs"):
+        "xs_momentum",
+        "xs_lowvol",
     } | overlay
 
 
@@ -878,6 +882,10 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         # TASK-STR-FWD-018 wave 1 (ichimoku variants):
         "ichimoku_trend_1d",
         "ichimoku_trend_raw",
+        # TASK-STR-FWD-024 (panel cross-sectional streams,
+        # execution_mode "panel_xs"):
+        "xs_momentum",
+        "xs_lowvol",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -895,6 +903,10 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "shock_breakout_k15",
         "ichimoku_trend_1d",
         "ichimoku_trend_raw",
+        # TASK-STR-FWD-024: lane-executable panel entrants keep
+        # their judged priors like every other executable entrant.
+        "xs_momentum",
+        "xs_lowvol",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
