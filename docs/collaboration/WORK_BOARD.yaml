@@ -11038,6 +11038,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: IN_REVIEW
     owner: muse_ai
     branch: claude/task-str-fwd-021-overlay
+    pr: 1003
     evidence:
       - "Claim: issue #35 comment 6974344725 (collision check recorded there: no FWD-018+ on the board or in ls-remote at claim time)."
       - "Core Stratex/overlay_service.py is a line-faithful port of rigorous_backtest/rd14/family14.py (signals tsmom42/tsmom126/ema10_50/ema20_100; w = s x min(1, sigma_target/sigma_42); shadow-equity drawdown brake none/flat_05/flat_10/half_10 with half-threshold hysteresis). Equivalence pinned by tests/test_fwd021_overlay_service.py: array-identical weights/shadow DD/brake/positions vs family14 on fixture + synthetic series (33 tests, all passing); brake hysteresis hand-verified; target-weight causality proven by truncation."
