@@ -397,21 +397,114 @@ def test_mixed_book_without_context_refuses(monkeypatch):
         evaluate_book(book, _frame(), state=BookState())
 
 
+# Post-lane-4 partition of the real books (verified per book on main
+# c52933e1): the wave-2 member PRs merged in lane 4, so six books now
+# have every member module on main and EVALUATE; two still refuse
+# because a member is genuinely absent. The partition is pinned
+# exactly -- when a refusing book's remaining members land, move its
+# key into REAL_BOOKS_EVALUATING in the same change;
+# test_real_books_partition_covers_all_books forces that deliberate
+# update instead of a silent behaviour change.
+REAL_BOOKS_EVALUATING = [
+    "ensemble_book_3905",  # SHK k1.5 (#996) + DON n55 (#987)
+    "ensemble_book_3906",  # SHK k1.5 (#996) + TSM roc72 (#991)
+    "ensemble_book_3927",  # VA (#983) + SHK k1.5 (#996) + STO fx (#994)
+    "ensemble_book_3928",  # DON (#987) + SHK k1.5 (#996) + STO fx (#994)
+    "ensemble_book_3929",  # TSM (#991) + SHK k1.5 (#996) + STO fx (#994)
+    "ensemble_book_3900",  # VA (#983) + SHK k1.0 (was on main) + STO crypto (#994)
+]
+# key -> substring the refusal reason must name (the first member that
+# cannot be resolved, in declaration order).
+REAL_BOOKS_REFUSING = {
+    # XSL is declared module=None: a cross-sectional rotation cannot
+    # be a per-symbol member until the engine passes it panel context
+    # (books still refuse even though strategy_xs_lowvol exists).
+    "ensemble_book_3933": "xs_lowvol",
+    # DUAL 1d has no module yet (PR #991 built the 4h cell only); the
+    # SHW and ZSC modules also do not exist, and XSL is module=None.
+    "ensemble_book_3978": "strategy_tsmom2_dual_crypto_1d",
+}
+
+
+def test_real_books_partition_covers_all_books():
+    assert sorted(REAL_BOOKS_EVALUATING + list(REAL_BOOKS_REFUSING)) \
+        == sorted(BOOK_KEYS)
+
+
+def test_real_books_with_all_members_present_evaluate():
+    # Every member module exists on main, so the book evaluates. On
+    # the flat fixture no member signals: the neutral outcome is None
+    # (NO_SIGNAL) on both calls and NO refusal is recorded -- the exact
+    # opposite of the pre-lane-4 behaviour the old version of
+    # test_real_books_refuse_until_members_land pinned for all books.
+    for key in REAL_BOOKS_EVALUATING:
+        book = BOOKS[key]
+        state = BookState()
+        assert evaluate_book(book, _frame(), symbol="BTCUSDT",
+                             timeframe="1d", venue="binance_futures",
+                             state=state) is None, key
+        assert state.refusal_reason(key) is None, key
+        assert evaluate_book(book, _frame(), symbol="BTCUSDT",
+                             timeframe="1d", venue="binance_futures",
+                             state=state) is None, key
+
+
 def test_real_books_refuse_until_members_land():
-    # Every book in this slice is registered but inert: each has at
-    # least one member module that does not exist on main yet (wave-2
-    # PRs unmerged, or no module at all). The refusal must name a
-    # member, and the second call must be quiet NO_SIGNAL.
-    for key in BOOK_KEYS:
+    # The books whose members have NOT all landed still refuse,
+    # fail-closed: the first call raises naming the missing member,
+    # the refusal is recorded, and the second call is quiet NO_SIGNAL.
+    for key, marker in REAL_BOOKS_REFUSING.items():
         book = BOOKS[key]
         state = BookState()
         with pytest.raises(EnsembleBookError, match="member"):
             evaluate_book(book, _frame(), symbol="BTCUSDT", timeframe="1d",
                           venue="binance_futures", state=state)
-        assert state.refusal_reason(key) is not None
+        reason = state.refusal_reason(key)
+        assert reason is not None and marker in reason, key
         assert evaluate_book(book, _frame(), symbol="BTCUSDT",
                              timeframe="1d", venue="binance_futures",
                              state=state) is None
+
+
+def test_book_with_all_members_missing_refuses(monkeypatch):
+    # Independent of which real books happen to be incomplete: a book
+    # whose members ALL point at modules that do not exist refuses on
+    # the first missing member, records the refusal, and is quiet
+    # NO_SIGNAL afterwards.
+    monkeypatch.setattr(
+        "strategies.ensemble_book._governance_status",
+        lambda _module_name: "FORWARD_TEST",
+    )
+    book = _book("test_book", [
+        _member("strategy_missing_one_xyz", "a"),
+        _member("strategy_missing_two_xyz", "b"),
+    ])
+    state = BookState()
+    with pytest.raises(EnsembleBookError, match="cannot be imported"):
+        evaluate_book(book, _frame(), symbol="BTCUSDT", timeframe="1d",
+                      venue="binance_futures", state=state)
+    assert state.refusal_reason("test_book") is not None
+    assert evaluate_book(book, _frame(), symbol="BTCUSDT", timeframe="1d",
+                         venue="binance_futures", state=state) is None
+
+
+def test_book_never_partially_evaluates_with_a_missing_member(monkeypatch):
+    # One member present and signalling, one member missing: the whole
+    # book refuses, and the present member is never even evaluated --
+    # the engine resolves EVERY member before evaluating ANY -- so no
+    # subset of a book can ever produce a signal.
+    calls = []
+    _install_fake(monkeypatch, "strategy_fake_a", BUY_10_30, calls)
+    book = _book("test_book", [
+        _member("strategy_fake_a", "a"),
+        _member("strategy_missing_xyz", "b"),
+    ])
+    state = BookState()
+    with pytest.raises(EnsembleBookError, match="cannot be imported"):
+        evaluate_book(book, _frame(), symbol="BTCUSDT", timeframe="1d",
+                      venue="binance_futures", state=state)
+    assert calls == []
+    assert state.refusal_reason("test_book") is not None
 
 
 # ---------------------------------------------------------------------------
@@ -820,22 +913,43 @@ def test_registry_book_specs_carry_lane_universe(registry):
 
 
 def test_execute_strategy_refusal_raises_once_then_quiet(registry):
-    # NOTE: this is the only test that calls a thin book module's
+    # NOTE: this is the only test that calls THIS thin book module's
     # get_signal, so the first call is genuinely the first evaluation
-    # of ensemble_book_3905 in this process.
+    # of ensemble_book_3933 in this process. Book 3933 still refuses
+    # (its xs_lowvol member is declared module=None). Before lane 4
+    # this test targeted book 3905; 3905's members have since landed
+    # and it now evaluates -- see
+    # test_execute_strategy_evaluates_landed_book.
     registry.set_demo_venues({"binance_futures", "oanda"})
     try:
         first = registry.execute_strategy(
-            "strategy_ensemble_book_3905", _frame(), "1d", "BTCUSDT",
+            "strategy_ensemble_book_3933", _frame(), "1d", "BTCUSDT",
             venue="binance_futures",
         )
         assert first["status"] == "ERROR", first
-        assert "strategy_shock_breakout_k15" in first["error"], first
+        assert "xs_lowvol" in first["error"], first
         second = registry.execute_strategy(
-            "strategy_ensemble_book_3905", _frame(), "1d", "BTCUSDT",
+            "strategy_ensemble_book_3933", _frame(), "1d", "BTCUSDT",
             venue="binance_futures",
         )
         assert second["status"] == "NO_SIGNAL", second
+    finally:
+        registry.set_demo_venues(set())
+
+
+def test_execute_strategy_evaluates_landed_book(registry):
+    # Book 3905's members landed in lane 4 (#996 shock k1.5, #987
+    # donchian): through the daemon's own execute path it now
+    # evaluates -- NO_SIGNAL on the flat fixture on every call, never
+    # the refusal ERROR this suite pinned for it before the merge.
+    registry.set_demo_venues({"binance_futures", "oanda"})
+    try:
+        for _ in range(2):
+            out = registry.execute_strategy(
+                "strategy_ensemble_book_3905", _frame(), "1d", "BTCUSDT",
+                venue="binance_futures",
+            )
+            assert out["status"] == "NO_SIGNAL", out
     finally:
         registry.set_demo_venues(set())
 
