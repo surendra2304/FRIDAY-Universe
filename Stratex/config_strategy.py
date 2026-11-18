@@ -1630,6 +1630,43 @@ MACD_TREND_STRATEGY = {
     "OOS_EXPECTANCY_PCT": 5.840,
 }
 
+VOL_COMPRESSION_SQUEEZE_RAW_STRATEGY = {
+    "NAME": "Vol Compression (ATR7 squeeze breakout, ungated) — 1h",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1h",
+    "ATR_FAST_PERIOD": 7,
+    "SQUEEZE_WINDOW": 50,
+    "BREAKOUT_BARS": 10,
+    "FILTERED": False,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("1h")
+    "OOS_TRADES": 1926,
+    "OOS_WIN_RATE": 0.3655,
+    "OOS_PROFIT_FACTOR": 1.0502,
+    "OOS_EXPECTANCY_PCT": 0.076,
+}
+
+VOL_COMPRESSION_STRATEGY = {
+    "NAME": "Vol Compression (ATR7 squeeze breakout, EMA200-gated) — 1h",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1h",
+    "ATR_FAST_PERIOD": 7,
+    "SQUEEZE_WINDOW": 50,
+    "BREAKOUT_BARS": 10,
+    "FILTERED": True,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("1h")
+    # TASK-STR-RD-002 pooled OOS evidence (grid_rows record):
+    "OOS_TRADES": 1104,
+    "OOS_WIN_RATE": 0.3732,
+    "OOS_PROFIT_FACTOR": 1.1310,
+    "OOS_EXPECTANCY_PCT": 0.182,
+}
+
 # ==============================================================================
 # TASK-STR-CLEANUP-001 (owner directive, 2026-11-15): every strategy whose
 # verified out-of-sample profit factor (net of costs, TASK-STR-BT-001 /
@@ -3813,6 +3850,50 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "max_stop_pct": 0.90,
         "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): macd_trend/hist_raw @ CRYPTO30 1d meets the second tier (OOS expectancy +5.840%/trade, PF 1.5522, 369 OOS trades, 2/5 positive folds, PF @2x costs 1.5330) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. Fold support is WEAK (2/5 positive folds) — flagged here as judged; its PF @2x costs of 1.5330 is the most cost-robust figure in the audit. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. This stream is also a member of the live Stage-C sleeve book under its sleeve key — a distinct judged object; records never blended. FWD-012 stop-cap: judged stop 2.5 x ATR(14) measured up to 89.1% of price over all post-warmup bars on the fwd002 SOLUSDT 1d fixture slice (48.0% at entry bars) — above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.90 (sanity bound only; FWD-006 sizes by risk / stop distance).",
+    },
+    "vol_compression": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: ATR(7) at its trailing 50-bar rolling minimum (squeeze) AND close above the prior 10-bar high AND close > EMA(200). SHORT: squeeze AND close below the prior 10-bar low AND close < EMA(200). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_vol_compression(df, filtered=True, warmup) on CRYPTO30 1h bars, warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3732,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 18.2,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): vol_compression/squeeze_ema200 @ CRYPTO30 1h meets the second tier (OOS expectancy +0.182%/trade, PF 1.1310, 1,104 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Stop-cap override (TASK-STR-FWD-012): measured on the 4h fixture frame (conservative upper bound for the judged 1h — per-bar ATR shrinks with timeframe), entry-bar stops reach only 4.97% but the all-bar 4h stop distribution reaches 56.04% on SOLUSDT, so a 1h stop plausibly exceeds the 0.15 engine-global cap on the volatile tail; max_stop_pct 0.90 declared (sanity bound only; admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "vol_compression_squeeze_raw": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: ATR(7) at its trailing 50-bar rolling minimum (squeeze) AND close above the prior 10-bar high. SHORT: squeeze AND close below the prior 10-bar low. No EMA(200) gate. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_vol_compression(df, filtered=False, warmup) on CRYPTO30 1h bars, warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3655,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 7.6,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): vol_compression/squeeze_raw @ CRYPTO30 1h meets the second tier (OOS expectancy +0.076%/trade, PF 1.0502, 1,926 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Stop-cap override (TASK-STR-FWD-012): as for vol_compression (4h-fixture measurement; entry-bar max 4.97% on SOLUSDT 4h, all-bar tail 56.04%) — max_stop_pct 0.90 declared (sanity bound only; admissibility only, FWD-006 sizes by risk / stop distance).",
     },
 }
 
