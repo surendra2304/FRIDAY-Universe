@@ -505,6 +505,25 @@ ADX_EMA_BARE_STRATEGY = {
     "OOS_EXPECTANCY_PCT": 0.796,
 }
 
+SUPERTREND_BARE_STRATEGY = {
+    "NAME": "Supertrend Bare (judged module signals restored verbatim, NO downstream filter)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-020)",
+    "TIMEFRAME": "4h",
+    "WINDOW": 500,          # judged gov2/module_eval sliding window
+    "WARMUP_BARS": 260,     # judged WARMUP_BARS (module_eval)
+    "SL_ATR_CAP": 2.0,      # module bracket: SL = supertrend band bounded by 2.0 x ATR(14)
+    "RISK_FLOOR_ATR": 0.8,  # module bracket: risk floored at 0.8 x ATR(14) for the TP leg
+    "RR_RATIO": 3.0,        # module bracket: TP = 3.0 x risk
+    "MIN_BRACKET_PCT": 0.0030,  # module anti-churn floor: both legs >= 0.30% of price, else the module suppresses the signal
+    # TASK-STR-RD-002 pooled OOS evidence for the BARE configuration
+    # (3,109 trades, 3/5 folds, holdout PASS; full bar FAIL —
+    # second-tier FORWARD_TEST admission, TASK-STR-FWD-020):
+    "OOS_WIN_RATE": 0.2602,
+    "OOS_PROFIT_FACTOR": 1.0529,
+    "OOS_EXPECTANCY_PCT": 0.191,
+    "OOS_TRADES": 3109,
+}
+
 TSMOM2_DUAL_STRATEGY = {
     "NAME": "Dual Momentum (ROC(30) sign cross + EMA(200) gate) — EXCLUDED, see registry",
     "VERSION": "v1.0.0 (TASK-STR-FWD-003)",
@@ -2897,6 +2916,27 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         ],
         "execution": "PENDING_WAVE_PR_MERGE: #983 (vol_adaptive), #994 (stoch_reversion crypto variant); shock k1.0 is on main",
         "reason": "TASK-STR-EXP-001 SELF-EXPERIMENT first-light book, loop trial 3900, VA+SHK10+STOc: the loop's own judge on its fixture store (6 real crypto30 1d streams, exporter-verified against the RD-002 records): pooled expectancy +0.8131%/trade, PF 1.2643, 1719 OOS trades, 4/5 positive folds, p ~1.2e-05 vs Bonferroni 1.28e-05 at N=3,900, holdout +2.91% -> PROVEN. These are the LOOP's recorded cells — NOT RD-025's k1.5 shock cell (book 3905) and NOT the forex28 stoch cell (book 3927): related but not identical books. The loop will admit this book to its own data-dir registry at activation under its own key (selfexp_combo_<sha12>); this config entry is the daemon-side executable registration of the same book — the two records coexist (different keys, no collision). FORWARD_TEST lane terms (0.1% per-trade risk on venue equity, 2% heat cap, 3% daily breaker; kill at expectancy < 0 or PF < 1.0 after >= 50 closed trades). LIVE-EXECUTION WARNING: this book's judged union diverges most from live netting of all 8 books — 45.2% of its judged member position-days would be cancelled by the one-net-position rule (its three crypto-1d members, one a reversion stream, oppose each other on 20.8% of active days; 7117 partial days). Expect the live book to trade far less often than the judged union suggests; the forward demo record is the arbiter. Stop-cap (FWD-012, measured 2026-11-18): vol_adaptive 50.1% of signals above the 0.15 env cap (median stop 15.03%, max 49.22%) — override 0.60; shock k1.0 34.7% (max 36.2%); stoch-crypto 33.4% (max 33.5%).",
+    },
+    "supertrend_bare": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-020)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "The judged strategy_supertrend module's OWN signals (supertrend flip entries + EMA21/50 pullback continuations; shorts gated to a full bear regime by the module's BLOCK_SHORTS_IN_BULL_REGIME rule), evaluated exactly as the judged harness did (shared features.add_features over the frame, judged get_signal on trailing <=500-bar windows), with NO downstream filter. The judged module was deleted by TASK-STR-CLEANUP-001; strategy_supertrend_bare restores its signal code verbatim from pre-cleanup blob ba3cc800. The module's ADX chop filter is inert under the judged pipeline (the shared features frame carries no ADX column), exactly as judged. The family's crypto30 1d cell (PF 0.8689) stays deleted — only the 4h bare cell is admitted.",
+        "sl_method": "Supertrend band (st_lower/st_upper) bounded by 2.0 * ATR(14) at the signal bar (module bracket); the module itself suppresses any signal whose stop leg is < 0.30% of price (anti-churn floor)",
+        "tp_method": "3.0 * risk at the signal bar (module bracket; risk = stop distance floored at 0.8 * ATR(14))",
+        "rr_ratio": 3.0,
+        "oos_win_rate_prior": 0.2602,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 19.1,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "reason": "TASK-STR-RD-002 governed row strategy_supertrend:bare @ CRYPTO30 4h (near-miss audit REPORT section 1.4 row #91 — the audit's one unassigned tier row, absent from section 7's wave lists, skipped by waves 1-2): expectancy +0.1911%/trade, PF 1.0529, 3,109 OOS trades, 3/5 positive folds, win rate 0.2602, untouched-holdout expectancy +0.1097% (1,048 trades, holdout PASS). It did NOT pass the frozen full bar (PF < 1.2, folds < 4/5, Bonferroni FAIL) and the family was deleted by TASK-STR-CLEANUP-001 under the old PF<1.2 rule (the judged module's signal code is restored verbatim from pre-cleanup blob ba3cc800 — see strategy_supertrend_bare.py). Under the owner's two-tier admission (2026-11-18) it meets the FORWARD_TEST tier (expectancy>0, PF>=1.05, >=200 OOS trades, pre-Bonferroni); the owner directed 2026-11-18 (implement-all) that such candidates be decided by real demo forward evidence. FORWARD_TEST lane terms as for bollinger_trend (TASK-STR-FWD-006 package: 0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill criteria expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST. FWD-012 stop-cap check (2026-11-18, judged gov2 loop over current Binance spot 4h klines, CRYPTO30 x 1,500 bars, 4,441 judged signals): median stop 3.61% of price, p99 9.28%, max 14.28%, share above the 0.15 production cap 0.00%, minimum 0.312% (the module's own 0.30% anti-churn floor) — NO max_stop_pct override; the global cap binds only as a sanity bound. Decision pinned in tests/test_fwd020_supertrend_bare_lane.py.",
     },
     "tsmom2_dual": {
         "status": "FORWARD_TEST",
