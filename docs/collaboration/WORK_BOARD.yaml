@@ -11367,6 +11367,38 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Envelope gains a domain key (the TASK-INT-014 subscription unit); WatchRunner gains an optional domains scope filter (None = historical behaviour); run_once gains --domain to poll a whole domain; watches/__init__ exports the domain API. STANDING_WATCHES.md gains section 6."
       - "Tests (local, sandbox Python 3.12.3): IntelX/tests/test_int013_watch_domains.py 13/13 PASS on the branch; the existing IntelX/tests/test_standing_watches.py 15/15 PASS on the branch and 15/15 on pristine main (no regression; the enabled-set pin is untouched because all new watches ship disabled); the new test file fails collection on pristine main (non-vacuous). Method note: run from a scratch dir with PYTHONPATH at the agent root — IntelX/tests/conftest.py provisions a shared ./data/test_intelx.db that parallel in-place runs stomp; CI on this PR runs the suite in place. Every shipped file diffed against the TRUE base blob at 3b24321b (engine.py diff removes exactly the 2 intentionally replaced WatchRunner lines; everything else is additive)."
     next_action: "Supervisor review -> serial-lane merge (union-resolve WORK_BOARD.yaml against current main). NOT deployed by this crew. After merge: each new watch enables only after its own live proof of the STANDING_WATCHES.md section-5 shape; the domain runner scope lets the new domains prove in a separate process from the two live watches."
+  - id: TASK-STR-EXP-002
+    title: "Stratex self-experiments slice 2: ensemble execution module (8 PROVEN books wired as FORWARD_TEST entries)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/stratex-ensemble-book-slice2
+    created_at: "2026-11-18"
+    updated_at: "2026-11-18"
+    evidence:
+      - "Claim: issue #35 comment 6974727167. Base: main 002abe9c. Follows TASK-STR-EXP-001 (PR #986, under review) and TASK-STR-RD-025 (complete: 7 PROVEN ensemble books, 58 TIER2)."
+      - "Engine: Stratex/strategies/ensemble_book.py (book definition, member resolution via importlib, per-member evaluation, mixed-TF signal cache, equal-weight net combination, fail-closed refusals) + strategies/ensemble_books.py (canonical BOOKS dict). Registry change: strategies/strategy_registry.py detects context-aware get_signal (symbol/timeframe/venue) via inspect.signature and passes context; classic get_signal(df) modules called exactly as before. 8 thin modules Stratex/strategy_ensemble_book_{3905,3906,3927,3928,3929,3933,3978,3900}.py. 8 FORWARD_TEST entries in Stratex/config_strategy.py (FWD-003 shape + members table + audit fields + max_stop_pct). Tests: Stratex/tests/test_exp002_ensemble_book.py (61 tests) + fixtures/exp002_book_3905_slice.json (339 real OOS trades); test_fwd003_forward_test_lane.py exact-set pins extended with the 8 book keys (wave-1 PRs add their 5 keys; merge lane union-resolves)."
+      - "Per-book status (implemented+tested only; NONE live — every book is registered but inert until its member modules merge + the book module is allowlisted at deploy): 3905 SHK+DON, 3906 SHK+TSM, 3927 VA+SHK+STO, 3928 DON+SHK+STO, 3929 TSM+SHK+STO, 3900 VA+SHK10+STOc (loop first-light) — all pending their wave-2 member PRs (#983/#987/#991/#994/#996); 3933 VA+SHK+XSL blocked on xs_lowvol (cross-sectional rotation, not a per-symbol member — needs rotation machinery); 3978 DUAL+SHW+ZSC+HA1d+XSL blocked on four members (DUAL 1d has no standalone module — PR #991 built the 4h cell only; SHW/ZSC have no module; XSL cross-sectional). First-light uses the LOOP's cells (shock k1.0, stoch @ crypto30), not RD-025's k1.5/forex cells."
+      - "Figures (recomputed offline from the saved RD-002 trade lists, exact match on trades/expectancy/PF vs rows/<trial>.json; loop 3900 matches PF 1.2643): 3905 784tr PF 1.4548; 3906 820tr 1.4333; 3927 1150tr 1.4639; 3928 1149tr 1.4440; 3929 1185tr 1.4235; 3933 1295tr 1.4072; 3978 1698tr 1.3262; 3900 1719tr 1.2643. Stop-cap (FWD-012 method, measured 2026-11-18): overrides 0.50 (3905/3906/3928/3929), 0.60 (3927/3933/3900 — vol_adaptive stops reach 49.22%), 0.90 (3978 — weekly shock stops reach 87.16%). Netting gap (judged union vs live one-net-position, offline): 4.3% (3929) to 17.4% (3978) of member position-days cancelled; 45.2% for 3900 — disclosed in every entry reason + SLICE2.md; forward demo is the arbiter."
+      - "Section-C vol-target second PR: SKIPPED, recorded in SLICE2.md — the declared rule weights returns by EXIT day (unknowable at entry), so the judged PFs (VA 2.100, DON 2.203, MACD 1.898) are exit-day return-reweightings, not a tradeable sizing edge. A properly-declared entry-day variant is new research (RD-026 or the loop's exit_sizing_gate_variant catalogue type), not wiring."
+      - "Tests (local, sandbox Python 3.12.3): test_exp002_ensemble_book.py 61/61 PASS + 1 skipped (loop cross-check, correctly skipped — PR #986 unmerged); test_fwd003 29/29 PASS on the branch (2 exact-set pins extended with the 8 book keys); related suites test_daemon_governance + test_daemon_book_composition + test_config + test_fwd012 + test_fwd006 + test_stratex_agent_registry + test_fwd002_forward_strategies + test_fwd002_sleeve 95/95 PASS on the branch. A/B vs pristine main owed before ship (new test file must fail collection there; fwd003 + related suites must pass there)."
+    next_action: "A/B vs pristine main -> ship PR via ship.py (full-env shell, full 40-char sha, triple read-back) -> supervisor review -> serial-lane merge (union-resolve test_fwd003 pins + WORK_BOARD.yaml with wave-1's 5 keys). NOT merged/deployed by this crew. Deploy checklist (coordinated deploy, after member PRs merge): append the 8 strategy_ensemble_book_* module names to S1's STRATEX_STRATEGY_ALLOWLIST, restart, verify evaluation lines + first NO_SIGNAL/ERROR behaviour in the journal; the books then evaluate and refuse or trade per their member state."
+    files:
+      - Stratex/strategies/ensemble_book.py
+      - Stratex/strategies/ensemble_books.py
+      - Stratex/strategy_ensemble_book_3905.py
+      - Stratex/strategy_ensemble_book_3906.py
+      - Stratex/strategy_ensemble_book_3927.py
+      - Stratex/strategy_ensemble_book_3928.py
+      - Stratex/strategy_ensemble_book_3929.py
+      - Stratex/strategy_ensemble_book_3933.py
+      - Stratex/strategy_ensemble_book_3978.py
+      - Stratex/strategy_ensemble_book_3900.py
+      - Stratex/strategies/strategy_registry.py
+      - Stratex/config_strategy.py
+      - Stratex/tests/test_exp002_ensemble_book.py
+      - Stratex/tests/fixtures/exp002_book_3905_slice.json
+      - Stratex/tests/test_fwd003_forward_test_lane.py
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

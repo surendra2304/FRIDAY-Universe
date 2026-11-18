@@ -809,17 +809,36 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         if entry.get("status") == "FORWARD_TEST"
         and entry.get("forward_protocol") is True
     }
-    assert protocol == {"bollinger_trend", "shock_breakout", "adx_ema_bare"}
+    # TASK-STR-EXP-002: the 8 ensemble books are forward-protocol
+    # entries too (registered but inert until their member modules
+    # merge — see each entry's "execution" stamp). The wave-1 wiring
+    # PRs add their 5 keys here as well; the merge lane union-resolves
+    # this pin to the full executable set.
+    assert protocol == {
+        "bollinger_trend",
+        "shock_breakout",
+        "adx_ema_bare",
+        "ensemble_book_3905",
+        "ensemble_book_3906",
+        "ensemble_book_3927",
+        "ensemble_book_3928",
+        "ensemble_book_3929",
+        "ensemble_book_3933",
+        "ensemble_book_3978",
+        "ensemble_book_3900",
+    }
 
 
 def test_non_tradable_lane_registrations_are_nulled_not_counted():
-    """Null-out follow-up (2026-11-16): of the 8 FORWARD_TEST registry
-    entries only 3 can trade. The other 5 registrations must be visibly
-    nulled on the record itself — no runtime prior, no runtime edge,
-    runtime_priors_nulled stamped True — so no consumer counting
-    registry records can mistake them for live lane entrants. The 3
-    executable entrants keep their judged priors for the daemon's
-    expectancy gate and are stamped False."""
+    """Null-out follow-up (2026-11-16): of the FORWARD_TEST registry
+    entries only the lane-executable ones can trade. The 5 non-tradable
+    registrations must be visibly nulled on the record itself — no
+    runtime prior, no runtime edge, runtime_priors_nulled stamped True
+    — so no consumer counting registry records can mistake them for
+    live lane entrants. The executable entrants (the 3 original lane
+    entries plus the 8 TASK-STR-EXP-002 ensemble books, registered but
+    inert until their member modules merge) keep their judged priors
+    for the daemon's expectancy gate and are stamped False."""
     import config_strategy as cs
 
     non_tradable = {
@@ -834,10 +853,21 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         for key, entry in cs.PRODUCTION_STRATEGY_REGISTRY.items()
         if entry.get("status") == "FORWARD_TEST"
     }
+    # TASK-STR-EXP-002: the 8 ensemble books join the FORWARD_TEST set.
+    # The wave-1 wiring PRs add their 5 keys here as well; the merge
+    # lane union-resolves this pin to the full set.
     assert forward_test == non_tradable | {
         "bollinger_trend",
         "shock_breakout",
         "adx_ema_bare",
+        "ensemble_book_3905",
+        "ensemble_book_3906",
+        "ensemble_book_3927",
+        "ensemble_book_3928",
+        "ensemble_book_3929",
+        "ensemble_book_3933",
+        "ensemble_book_3978",
+        "ensemble_book_3900",
     }
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
