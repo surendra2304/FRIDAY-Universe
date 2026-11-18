@@ -809,7 +809,10 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         if entry.get("status") == "FORWARD_TEST"
         and entry.get("forward_protocol") is True
     }
-    assert protocol == {"bollinger_trend", "shock_breakout", "adx_ema_bare"}
+    # TASK-STR-FWD-019 Wave-2 crew A adds the macd_trend cell.
+    assert protocol == {
+        "bollinger_trend", "shock_breakout", "adx_ema_bare", "macd_trend",
+    }
 
 
 def test_non_tradable_lane_registrations_are_nulled_not_counted():
@@ -838,6 +841,8 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "bollinger_trend",
         "shock_breakout",
         "adx_ema_bare",
+        # TASK-STR-FWD-019 Wave-2 crew A: macd_trend cell.
+        "macd_trend",
     }
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -846,7 +851,12 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         assert entry["oos_win_rate_prior"] is None, key
         assert entry["expected_net_edge_bps"] is None, key
         assert entry["runtime_priors_nulled"] is True, key
-    for key in ("bollinger_trend", "shock_breakout", "adx_ema_bare"):
+    for key in (
+        "bollinger_trend", "shock_breakout", "adx_ema_bare",
+        # TASK-STR-FWD-019 Wave-2 crew A: macd_trend is lane-executable
+        # too — priors live, stamp False.
+        "macd_trend",
+    ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
         assert entry["oos_win_rate_prior"] is not None, key

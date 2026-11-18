@@ -441,6 +441,29 @@ TREND_PULLBACK_EMA200_STRATEGY = {
 }
 
 # ==============================================================================
+# TASK-STR-FWD-019 WAVE-2 (2026-11-18): macd_trend near-miss cell (RD-002,
+# near-miss audit REPORT.md §1.4 row 6). FORWARD_TEST lane — see the registry
+# entry below and the FWD-003 lane block above for governance.
+# ==============================================================================
+MACD_TREND_STRATEGY = {
+    "NAME": "MACD Trend (MACD(12,26,9) histogram zero-cross, unfiltered)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "MACD_FAST": 12,
+    "MACD_SLOW": 26,
+    "MACD_SIGNAL": 9,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.5,          # judged bracket BR25 (families3)
+    "TP_ATR": 5.0,          # judged bracket BR25 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (369 trades, 2/5 folds — weak,
+    # PF @2x costs 1.5330, Bonferroni FAIL — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.4201,
+    "OOS_PROFIT_FACTOR": 1.5522,
+    "OOS_EXPECTANCY_PCT": 5.840,
+}
+
+# ==============================================================================
 # FX MEAN REVERSION v4 — OANDA PRACTICE VENUE (TASK-STR-FWD-004, 2026-11-15)
 # Connors RSI(2) reversion behind an EMA(200) regime gate. The runtime
 # parameters live in oanda_demo/strategy.py (MeanReversionConfig) — the SAME
@@ -784,7 +807,29 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "lane_note": "entered sample-starved; forward evidence is the settler",
         "reason": "EXCLUDED from live lane execution (TASK-STR-FWD-003, RD-003 additions): TASK-STR-RD-003 watchlist cell trend_pullback/pb_ema200 @ comm7 1d — 109 OOS trades, expectancy +0.642%/trade, PF 1.182, 3 positive folds, max symbol profit share 0.37. It failed ONLY the >=200-trade floor (a data-span limit, not a performance failure) and failed Bonferroni significance; its PF of 1.182 is also marginally below the 1.2 line, recorded exactly as measured. Entered sample-starved; forward evidence is the settler. Unmappable-universe exclusion exactly as for vol_regime_switch_a: demo-fapi is crypto-only and the OANDA practice account holds 68 FX-only instruments (verified live 2026-11-15); substitution prohibited. Documentary registration only.",
-    }
+    },
+    "macd_trend": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: MACD(12,26) histogram crosses up through 0. SHORT: histogram crosses down through 0. No EMA(200) filter (hist_raw). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_macd(df, False, warmup), warmup 260 bars.",
+        "sl_method": "2.5 * ATR(14) at signal bar (judged bracket BR25)",
+        "tp_method": "5.0 * ATR(14) at signal bar (judged bracket BR25)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.4201,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 584.0,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): macd_trend/hist_raw @ CRYPTO30 1d meets the second tier (OOS expectancy +5.840%/trade, PF 1.5522, 369 OOS trades, 2/5 positive folds, PF @2x costs 1.5330) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. Fold support is WEAK (2/5 positive folds) — flagged here as judged; its PF @2x costs of 1.5330 is the most cost-robust figure in the audit. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. This stream is also a member of the live Stage-C sleeve book under its sleeve key — a distinct judged object; records never blended. FWD-012 stop-cap: judged stop 2.5 x ATR(14) measured up to 89.1% of price over all post-warmup bars on the fwd002 SOLUSDT 1d fixture slice (48.0% at entry bars) — above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.90 (sanity bound only; FWD-006 sizes by risk / stop distance).",
+    },
 }
 
 # Stored research estimates are not runtime priors unless a strategy has been
