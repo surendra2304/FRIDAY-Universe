@@ -809,7 +809,14 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         if entry.get("status") == "FORWARD_TEST"
         and entry.get("forward_protocol") is True
     }
-    assert protocol == {"bollinger_trend", "shock_breakout", "adx_ema_bare"}
+    # The RD-003 documentary additions remain excluded. The lane's
+    # executable set has since grown by a deliberate, separately-tasked
+    # admission only: TASK-STR-FWD-022's wf_select_tsmom procedure
+    # entrant (execution_mode "wf_select" — see
+    # test_fwd022_wf_select_service.py).
+    assert protocol == {
+        "bollinger_trend", "shock_breakout", "adx_ema_bare", "wf_select_tsmom"
+    }
 
 
 def test_non_tradable_lane_registrations_are_nulled_not_counted():
@@ -838,6 +845,7 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "bollinger_trend",
         "shock_breakout",
         "adx_ema_bare",
+        "wf_select_tsmom",
     }
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -846,7 +854,7 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         assert entry["oos_win_rate_prior"] is None, key
         assert entry["expected_net_edge_bps"] is None, key
         assert entry["runtime_priors_nulled"] is True, key
-    for key in ("bollinger_trend", "shock_breakout", "adx_ema_bare"):
+    for key in ("bollinger_trend", "shock_breakout", "adx_ema_bare", "wf_select_tsmom"):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
         assert entry["oos_win_rate_prior"] is not None, key

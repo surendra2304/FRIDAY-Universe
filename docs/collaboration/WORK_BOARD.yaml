@@ -11033,6 +11033,26 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - FRIDAY/tests/test_voice_recovery_ladder.py
       - FRIDAY/tests/test_voice_greeting_trigger.py
       - FRIDAY/tests/test_voice_session_build_overlap.py
+  - id: TASK-STR-FWD-022
+    title: "WF-selection service: Appendix-A walk-forward selection PROCEDURES run as FORWARD_TEST entrants (first: ts_momentum @ CRYPTO30 1d); per-epoch selection strictly from past data, decisions logged, procedure record separate"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-str-fwd-022-wf-select
+    evidence:
+      - "Claim: issue #35 comment 6974344725 (collision check recorded there)."
+      - "Machinery Stratex/wf_select_service.py: generic procedure registry (PROCEDURES + register_procedure; a family must have a ported signal function in FAMILY_SIGNALS before it can register) running the judged rd/common.py wf_select_judge rule -- expanding in-sample window, rank by (profit_factor_net, win_rate), top 1 -- with line-faithful ports of rd/fastsim.py's bracket simulator, simulator.py Costs/_net_return/trade_metrics and families2's ts_momentum entries."
+      - "ACID TEST PASSED (tests/test_fwd022_wf_select_service.py, 17 tests): fed the recorded RD-002 trade streams, the service reproduces the judged picks roc24/roc168/roc72/roc42/roc42 and the pooled record exactly (453 trades, PF 1.1693910203271725, expectancy +1.4096%, win rate 0.3664); simulator port matches fastsim trade-for-trade on fixture slices; run_selection proven causal by post-epoch bar injection."
+      - "Live shape: daemon hook _maybe_run_wf_selection (scan cadence, 10-min throttle, places no orders) re-runs selection at each calendar-month UTC epoch over bars closed before the epoch start, persists state + append-only selection log (data/wf_select/) with the full in-sample table; strategy_wf_select_tsmom.py trades the current pick's judged BR24 entries (no pick persisted -> no signal). Registry entry wf_select_tsmom FORWARD_TEST, lane_assets CRYPTO30, fills under its own strategy name."
+      - "Disclosed translations (in the entry's reason): live in-sample history is venue candle history (1500 bars requested), not the judged cache from 2022 -- span logged per selection; trades still open at an epoch boundary are marked at the last pre-epoch close (END_OF_DATA rule) where the retrospective record used final outcomes; monthly epoch cadence is a declared service parameter (the judged W1-W5 windows were the judgement calendar)."
+      - "Regression: test_fwd003 lane-composition assertions updated for the new entrant (null-out assertions unchanged); ring fwd002/fwd003/fwd006/fwd012/registry/config + fwd022 = 118 passed."
+    next_action: "Supervisor review -> serial-lane merge -> deploy with the daemon restart -> verify in the journal: first 'WF selection wf_select_tsmom: epoch ... pick=...' line and the data/wf_select/ log; STRATEX_STRATEGY_ALLOWLIST on Server 1 must add strategy_wf_select_tsmom at deploy time. NOT merged/deployed by the builder."
+    files:
+      - Stratex/wf_select_service.py
+      - Stratex/strategy_wf_select_tsmom.py
+      - Stratex/autonomy/run_daemon.py
+      - Stratex/config_strategy.py
+      - Stratex/tests/test_fwd022_wf_select_service.py
+      - Stratex/tests/test_fwd003_forward_test_lane.py
   - id: TASK-STR-FWD-017
     title: "unrecorded_close alert: sweep resolver + raise_alert stamp -- the alert is a bookkeeping-path defect (three-way census proved venue closes == ledger rows, order-id for order-id; NO missing money and NO ledger correction row)"
     status: IN_REVIEW
