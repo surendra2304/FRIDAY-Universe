@@ -809,7 +809,14 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         if entry.get("status") == "FORWARD_TEST"
         and entry.get("forward_protocol") is True
     }
-    assert protocol == {"bollinger_trend", "shock_breakout", "adx_ema_bare"}
+    assert protocol == {
+        "bollinger_trend",
+        "shock_breakout",
+        "adx_ema_bare",
+        # TASK-STR-FWD-018 wave 1 (bollinger variants):
+        "bollinger_trend_4h",
+        "bollinger_trend_p20",
+    }
 
 
 def test_non_tradable_lane_registrations_are_nulled_not_counted():
@@ -838,6 +845,9 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "bollinger_trend",
         "shock_breakout",
         "adx_ema_bare",
+        # TASK-STR-FWD-018 wave 1 (bollinger variants):
+        "bollinger_trend_4h",
+        "bollinger_trend_p20",
     }
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -846,7 +856,13 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         assert entry["oos_win_rate_prior"] is None, key
         assert entry["expected_net_edge_bps"] is None, key
         assert entry["runtime_priors_nulled"] is True, key
-    for key in ("bollinger_trend", "shock_breakout", "adx_ema_bare"):
+    for key in (
+        "bollinger_trend",
+        "shock_breakout",
+        "adx_ema_bare",
+        "bollinger_trend_4h",
+        "bollinger_trend_p20",
+    ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
         assert entry["oos_win_rate_prior"] is not None, key
