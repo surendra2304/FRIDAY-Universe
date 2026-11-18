@@ -11185,6 +11185,21 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - FRIDAY/tests/test_voice_key_resolution.py
       - FRIDAY/tests/test_voice_gemini_only.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-FRD-024
+    title: "FRIDAY autonomous daemon self-generated task source: a closed catalogue of self-verifiable triggers (fleet agent unhealthy / fleet poll failing / Stratex heartbeat stale / repeated daemon goal failures) seeding read-only verification goals through the existing submit_goal path"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-frd-024-daemon-task-source
+    evidence:
+      - "Gap (diagnosis ~/workspace/friday-daemon-idle-diag/DIAGNOSIS.md + TASK-FRD-023): the daemon is armed at boot (PR #927) but its ONLY task source is manual POST /api/autonomous/goals submission — no scheduler, no self-generation; an armed daemon with an empty queue idles forever, the exact state it sat in unnoticed 2026-11-10 -> 2026-11-17."
+      - "Build (this task's PR): new FRIDAY/src/friday/autonomous/task_source.py — DaemonTaskSource evaluates a CLOSED catalogue against state FRIDAY verifies herself: fleet_client.get_all_statuses() probe anomalies (DEGRADED/UNREACHABLE/OFFLINE, per agent), the fleet poll itself raising, Stratex's daemon heartbeat file stale >600 s (the FRD-021 freshness pulse, read via proactive/stratex_watch.resolve_stratex_paths), and >=2 non-source goals FAILED inside 6 h. Every seed is a read-only verification/review goal submitted via daemon.submit_goal with metadata {source, trigger, trigger_key, evidence}; trigger evidence is INFO-logged per seed. NO external messages, money, deletions or config changes; the catalogue cannot seed anything else."
+      - "Bounds enforced in the source: seeds only into a fully idle daemon (owner work always wins; seeded priority -1); per-trigger cooldowns 6 h / 6 h / 6 h / 12 h + a reported-failure dedupe set (source-seeded failures are excluded, so no self-investigation loop); <=2 seeds per evaluation; global daily cap 6 (FRIDAY_AUTONOMOUS_TASK_SOURCE_DAILY_CAP) — each seed costs planner + Inference synthesis quota on the free tier; settings.autonomous_mode re-checked on EVERY evaluation (flag-off stops seeding immediately, including toggle-armed daemons) + FRIDAY_AUTONOMOUS_TASK_SOURCE=off kill switch; cooldown/cap state persists to .data/autonomous_task_source.json across restarts. Daemon wiring: throttled evaluation inside _run_loop (FRIDAY_AUTONOMOUS_TASK_SOURCE_INTERVAL_S, default 300 s), failure-isolated so a broken source can never break the loop. Claim: issue #35 comment 6971109043."
+    next_action: "PR open -> supervisor review -> serial-lane merge -> deploy with a watched FRIDAY restart -> journal shows 'Autonomous task source: seeding goal from trigger ...' lines when an anomaly is present (or a staging drill forces one) -> VERIFIED. NOTE for the merge lane: this PR and TASK-VOI-021's both append their board entry after TASK-VOI-020 — expect a board-only union resolution if both land."
+    files:
+      - FRIDAY/src/friday/autonomous/task_source.py
+      - FRIDAY/src/friday/autonomous/daemon.py
+      - FRIDAY/tests/test_autonomous_daemon_task_source.py
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
