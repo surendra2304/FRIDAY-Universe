@@ -23,7 +23,8 @@ with the failed questions named — never silently dropped, never
 silently believed.
 
 The seven questions (adapted from the source bundle's gate):
-1. evidence_attached    — is raw evidence attached? (evidence_refs)
+1. evidence_attached    — is raw evidence attached? (evidence_refs;
+                          blank refs do not count)
 2. target_identified    — is the affected target identified? (target_ref)
 3. severity_justified   — is the severity backed by a stated impact?
                           (impact required for high/critical; a real
@@ -34,7 +35,9 @@ The seven questions (adapted from the source bundle's gate):
                           floor for the claimed severity?
 6. not_duplicate        — is this the same finding already open?
                           (same target + same title, or same target +
-                          a shared CVE, against non-closed findings)
+                          a shared CVE, against non-closed findings;
+                          target and status compared case- and
+                          whitespace-insensitively)
 7. remediation_stated   — is a remediation path stated?
 
 Deterministic, stdlib-only, no I/O: the caller hands in finding dicts in
@@ -109,11 +112,16 @@ def _norm_title(title: str) -> str:
     return " ".join(title.lower().split())
 
 
+def _norm_key(value: str) -> str:
+    """Case/whitespace-insensitive comparison key (duplicate question)."""
+    return _norm_title(value)
+
+
 def _is_duplicate(
     finding: dict[str, Any], existing: Iterable[dict[str, Any]]
 ) -> str:
     """Return the twin finding's id when `finding` duplicates an open one."""
-    target = _text(finding, "target_ref")
+    target = _norm_key(_text(finding, "target_ref"))
     if not target:
         return ""
     title = _norm_title(_text(finding, "title"))
@@ -121,9 +129,9 @@ def _is_duplicate(
     for other in existing:
         if other.get("id") == finding.get("id"):
             continue  # never its own duplicate
-        if str(other.get("status") or "open") in _CLOSED_STATUSES:
+        if _norm_key(str(other.get("status") or "open")) in _CLOSED_STATUSES:
             continue
-        if _text(other, "target_ref") != target:
+        if _norm_key(_text(other, "target_ref")) != target:
             continue
         if title and _norm_title(_text(other, "title")) == title:
             return str(other.get("id") or "?")
@@ -141,14 +149,23 @@ def validate_finding(
 
     `existing` is the caller's current finding set for the duplicate
     question. The finding is never mutated; the caller applies
-    `recommended_status` if it adopts the verdict.
+    `recommended_status` if it adopts the verdict. A non-dict
+    `finding` never raises: it is treated as an empty finding and
+    routed to review_required.
     """
+    if not isinstance(finding, dict):
+        finding = {}
     severity_raw = _text(finding, "severity").lower()
     severity = severity_raw if severity_raw in CONFIDENCE_FLOORS else "info"
     checks: list[CheckResult] = []
 
-    # 1 — evidence attached
-    evidence = finding.get("evidence_refs") or []
+    # 1 — evidence attached (only non-blank string refs count: a blank
+    # ref anchors the finding to nothing)
+    evidence = [
+        ref
+        for ref in (finding.get("evidence_refs") or [])
+        if isinstance(ref, str) and ref.strip()
+    ]
     checks.append(CheckResult(
         "evidence_attached",
         bool(evidence),

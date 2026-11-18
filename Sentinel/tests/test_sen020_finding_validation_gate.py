@@ -135,6 +135,35 @@ def test_minimal_info_finding_can_pass():
     assert result.passed is True
 
 
+def test_blank_evidence_refs_fail_question_1():
+    result = validate_finding(_finding(evidence_refs=["", "   "]))
+    assert result.passed is False
+    assert result.failed == ["evidence_attached"]
+    # a real ref among blanks still counts
+    result = validate_finding(_finding(evidence_refs=["", "evidence/F-1/nmap.txt"]))
+    assert result.passed is True
+
+
+def test_duplicate_with_case_variant_target_fails_question_6():
+    twin = _finding(id="F-0", target_ref=" HOST:Build-01 ")
+    result = validate_finding(_finding(), existing=[twin])
+    assert result.failed == ["not_duplicate"]
+
+
+def test_mixed_case_false_positive_twin_does_not_block_a_fresh_report():
+    twin = _finding(id="F-0", status="False_Positive")
+    result = validate_finding(_finding(), existing=[twin])
+    assert result.passed is True
+
+
+def test_non_dict_finding_is_routed_to_review_not_raised():
+    for bad in (None, "not a finding", ["not", "a", "finding"], 42):
+        result = validate_finding(bad)
+        assert result.passed is False
+        assert result.recommended_status == "review_required"
+        assert "evidence_attached" in result.failed
+
+
 def test_as_dict_shape():
     result = validate_finding(_finding(evidence_refs=[]))
     payload = result.as_dict()
