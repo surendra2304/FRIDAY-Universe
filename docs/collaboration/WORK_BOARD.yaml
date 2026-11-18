@@ -11243,6 +11243,22 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Inference/app/providers/gemini.py
       - Inference/tests/test_inf015_flash_lite_catalogue.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-FUT-012
+    title: "Futuris forecasts everything: open target registry + measured-series provider path (VyralX domain, IntelX/VyralX volume + fleet forecast-demand targets)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-fut-012-forecast-registry
+    evidence:
+      - "Trigger: owner decisions 2026-11-18 — Futuris forecasts EVERYTHING, not markets only; IntelX shares its data with all agents (TASK-INT-014). Claim: issue #35 comment 6971458003 (crew claim covering INT-013/014/015 + FUT-012)."
+      - "Build (this task's PR, based on main dad3b9f9 — no file overlap with the INT-013/014/015 stack beyond this board file): UniverseDomain gains VYRALX; DomainTargetSpec gains series_provider; register_target() opens the registry at runtime (duplicate refused unless replace=True); new futuris/core/series_providers.py reads zero-filled daily series from Futuris's own stored data (IntelX notices, topic-tagged notices, forecast rows); generate_universe_forecast gains a third honest path — provider series fitted via select_best_adapter (injectable selector/fetcher for tests), labelled EvidenceClass.LIVE. Three new targets: vyralx:trends:topic_volume_24h, intelx:research:finding_volume_24h, friday:fleet:forecast_demand_24h."
+      - "Refusal preserved: short series (<10 points), an unreadable provider, a missing session, and StatsForecastUnavailableError (every deployment until the Fri py3.12 flip lands statsforecast in the live venv) all return insufficient_data with the reason recorded. Tests: Futuris/tests/test_fut012_forecast_registry.py — registry/provider/forecast-path evidence recorded in the PR body; A/B: the suite fails collection on pristine main."
+    next_action: "Supervisor review -> serial-lane merge -> after the Fri py3.12 flip (statsforecast live), first real provider-path forecast on Server 1 -> VERIFIED."
+    files:
+      - Futuris/futuris/core/universe_domains.py
+      - Futuris/futuris/core/universe_forecasting.py
+      - Futuris/futuris/core/series_providers.py
+      - Futuris/tests/test_fut012_forecast_registry.py
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

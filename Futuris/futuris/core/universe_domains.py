@@ -27,6 +27,7 @@ class UniverseDomain(StrEnum):
     INTELX = "intelx"
     STRATEX = "stratex"
     INFRA = "infra"
+    VYRALX = "vyralx"
 
 
 class RiskLevel(StrEnum):
@@ -55,6 +56,13 @@ class DomainTargetSpec:
     # it -- without caller-supplied context -- is "insufficient data", never a
     # demand number relabelled as a failure rate or a health index.
     pipeline_target: bool = False
+    # Name of a measured-series provider in
+    # ``futuris.core.series_providers.SERIES_PROVIDERS``, or None. A target
+    # with a provider is forecast from a daily series read out of Futuris's
+    # own stored data (TASK-FUT-012) -- measured numbers, labelled LIVE --
+    # instead of refusing. A provider that cannot produce enough points
+    # still lands in "insufficient data" with the reason recorded.
+    series_provider: str | None = None
 
 
 # Full registry of supported targets across all 9 FRIDAY Universe pillars
@@ -306,7 +314,74 @@ UNIVERSE_TARGETS: dict[str, DomainTargetSpec] = {
             "risk of capacity exceedance).",
         pipeline_target=True,
     ),
+    # 10. VyralX (Autonomous Video Production) + measured-volume targets
+    # (TASK-FUT-012). These three are forecast from daily series stored by
+    # Futuris itself -- IntelX notice intake and the fleet's own forecast
+    # demand -- so they carry a series_provider instead of refusing.
+    "vyralx:trends:topic_volume_24h": DomainTargetSpec(
+        target="vyralx:trends:topic_volume_24h",
+        name="VyralX Topic-Trend Feedstock Volume",
+        domain=UniverseDomain.VYRALX,
+        unit="events/day",
+        description="Daily volume of topic-tagged IntelX findings -- the trend "
+            "feedstock VyralX's production loop consumes when it picks topics.",
+        high_risk_threshold=25.0,
+        critical_risk_threshold=50.0,
+        mitigation_action="Review which topics drive the surge before VyralX "
+            "commits production capacity to them.",
+        interpretation_template="Topic-tagged trend feedstock projected at "
+            "{prediction:.0f} events/day.",
+        series_provider="intelx_topic_notices",
+    ),
+    "intelx:research:finding_volume_24h": DomainTargetSpec(
+        target="intelx:research:finding_volume_24h",
+        name="IntelX Finding Volume",
+        domain=UniverseDomain.INTELX,
+        unit="events/day",
+        description="Daily volume of IntelX findings persisted by Futuris from "
+            "the Memora event feed (all domains).",
+        high_risk_threshold=40.0,
+        critical_risk_threshold=80.0,
+        mitigation_action="Triage the finding surge and prioritise synthesis "
+            "of the highest-relevance domains.",
+        interpretation_template="IntelX finding volume projected at "
+            "{prediction:.0f} events/day.",
+        series_provider="intelx_notices",
+    ),
+    "friday:fleet:forecast_demand_24h": DomainTargetSpec(
+        target="friday:fleet:forecast_demand_24h",
+        name="Fleet Forecast Demand Volume",
+        domain=UniverseDomain.FRIDAY,
+        unit="forecasts/day",
+        description="Daily count of forecasts Futuris has produced for the "
+            "fleet -- the Universe's own demand for prediction.",
+        high_risk_threshold=200.0,
+        critical_risk_threshold=400.0,
+        mitigation_action="Review refresh pacing and per-target budgets if "
+            "demand outgrows the fleet's compute envelope.",
+        interpretation_template="Fleet forecast demand projected at "
+            "{prediction:.0f} forecasts/day.",
+        series_provider="forecast_requests",
+    ),
 }
+
+
+def register_target(spec: DomainTargetSpec, *, replace: bool = False) -> DomainTargetSpec:
+    """Register a target at runtime (TASK-FUT-012: the registry is open).
+
+    The static registry above stays the reviewed baseline; this is the
+    supported way for a deployment (or a test) to add a target without
+    editing this module. Refusing a duplicate unless ``replace=True`` keeps
+    an accidental re-registration from silently swapping the spec a target's
+    history was forecast against.
+    """
+    if spec.target in UNIVERSE_TARGETS and not replace:
+        raise ValueError(
+            f"universe target already registered: {spec.target!r} "
+            "(pass replace=True to override)"
+        )
+    UNIVERSE_TARGETS[spec.target] = spec
+    return spec
 
 
 def get_target_spec(target: str, *, strict: bool = False) -> DomainTargetSpec:
@@ -356,6 +431,9 @@ def get_target_spec(target: str, *, strict: bool = False) -> DomainTargetSpec:
     elif lower.startswith("friday"):
         domain = UniverseDomain.FRIDAY
         unit = "%"
+    elif lower.startswith("vyralx"):
+        domain = UniverseDomain.VYRALX
+        unit = "idx"
     elif "capacity" in lower or "rpm" in lower or "throughput" in lower:
         domain = UniverseDomain.INFRA
         unit = "rpm"
