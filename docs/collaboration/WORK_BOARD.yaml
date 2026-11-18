@@ -11170,6 +11170,21 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - FRIDAY/tests/test_voice_key_resolution.py
       - FRIDAY/tests/test_voice_gemini_only.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-VOI-021
+    title: "Voice key-probe model pin correction: stage 1 pings gemini-3.5-flash-lite (the current Flash-Lite id), not the legacy gemini-2.5-flash-lite alias TASK-VOI-020 pinned"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-voi-021-probe-model-pin
+    evidence:
+      - "Trigger: the owner ordered a first-hand check of the model facts (2026-11-18 ~11:44 IST) after the '3.7 Flash 15 RPM / 500 RPD' figure was repeated unverified. Verified: Gemini 3.7 Flash exists (2026-08-13) but is NOT on the free tier and Google auto-routes gemini-3.7-flash calls to gemini-3.8-flash; the 15 RPM / 500 RPD free figures belong to FLASH-LITE (gemini-3.5-flash-lite + gemini-3.1-flash-lite; two independent free-project readings, Sep + Oct 2026, agree); full Flash free tier (3.6/3.8) = 5 RPM / 20 RPD — the wall that killed re-acceptance #12."
+      - "Defect in TASK-VOI-020's pin: _PROBE_TEXT_MODEL = gemini-2.5-flash-lite is a legacy access-limited id (the Inference catalogue's entry) that Google routes to gemini-3.5-flash-lite from 2026-12-01 — the pin would silently become the 3.5 id anyway, on Google's schedule rather than ours. Fix (this task's PR): pin gemini-3.5-flash-lite directly in livekit_worker.py + the two pin-asserting tests (test_voice_key_resolution.py, test_voice_gemini_only.py — both collected by friday-universe-ci.yml). The probe's two-stage contract and the VOI-018 invariant (a 429 never certifies) are untouched."
+      - "Disclosed follow-up, NOT in this PR: the Inference catalogue (Inference/app/providers/gemini.py SUPPORTED_MODELS) still lists gemini-2.5-flash-lite and not gemini-3.5-flash-lite; aligning it is a separate Inference change for the coordinator to schedule. Claim: issue #35 comment 6971109043."
+    next_action: "PR open -> supervisor review -> serial-lane merge -> deploy with the voice wave -> re-acceptance in the first post-reset window (daily buckets reset 13:30 IST) -> VERIFIED."
+    files:
+      - FRIDAY/src/friday/voice/livekit_worker.py
+      - FRIDAY/tests/test_voice_key_resolution.py
+      - FRIDAY/tests/test_voice_gemini_only.py
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

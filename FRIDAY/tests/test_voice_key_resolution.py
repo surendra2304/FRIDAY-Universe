@@ -298,15 +298,17 @@ def test_probe_auth_rejection_never_reaches_live_stage(monkeypatch):
 
 
 def test_probe_stage1_pings_the_flash_lite_catalogue_model(monkeypatch):
-    """TASK-VOI-020 (a): stage 1 draws on the Flash-Lite model's
-    bucket (documented free tier ~500 requests/day), not the voice
-    Flash model's (~20/day) — routine probing must not drain the
-    scarce bucket. The id is the fleet catalogue's Flash-Lite
-    (Inference SUPPORTED_MODELS)."""
+    """TASK-VOI-020 (a) + TASK-VOI-021: stage 1 draws on the
+    Flash-Lite model's bucket (free tier 15 RPM / 500 requests/day,
+    verified 2026-11-18), not the voice Flash model's (5 RPM /
+    ~20/day) — routine probing must not drain the scarce bucket.
+    The pinned id is gemini-3.5-flash-lite, the current Flash-Lite
+    id; the legacy gemini-2.5-flash-lite alias routes to it from
+    2026-12-01 and is not pinned."""
     created = _patch_genai_client(monkeypatch)
     assert worker._probe_gemini_key_sync("k") is True
-    assert created[0].calls[0] == ("text", "gemini-2.5-flash-lite")
-    assert worker._PROBE_TEXT_MODEL == "gemini-2.5-flash-lite"
+    assert created[0].calls[0] == ("text", "gemini-3.5-flash-lite")
+    assert worker._PROBE_TEXT_MODEL == "gemini-3.5-flash-lite"
 
 
 def test_verified_key_cache_ttl_is_thirty_minutes():

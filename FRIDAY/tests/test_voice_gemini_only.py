@@ -53,17 +53,20 @@ def test_voice_model_honors_explicit_live_model_override(monkeypatch):
 
 
 def test_gemini_key_probe_uses_current_flash_model():
-    """TASK-VOI-020: the probe's stage-1 ping runs on the catalogue
-    Flash-Lite model (gemini-2.5-flash-lite), NOT the current voice
-    Flash model — stage 1 only classifies the key, and its pings must
-    not drain the Flash model's ~20/day free-tier bucket. (The pin
-    previously asserted gemini-3.8-flash; that target is the defect
-    that condemned every key at re-acceptance #12.)"""
+    """TASK-VOI-020 + TASK-VOI-021: the probe's stage-1 ping runs on
+    the Flash-Lite model (gemini-3.5-flash-lite, the current
+    Flash-Lite id — free tier 15 RPM / 500 RPD), NOT the current
+    voice Flash model — stage 1 only classifies the key, and its
+    pings must not drain the Flash model's ~20/day free-tier bucket.
+    (The pin previously asserted gemini-3.8-flash; that target is
+    the defect that condemned every key at re-acceptance #12. The
+    legacy gemini-2.5-flash-lite alias is not pinned: it routes to
+    gemini-3.5-flash-lite from 2026-12-01.)"""
     with mock.patch("google.genai.Client") as client_class:
         worker._probe_gemini_key_sync("test-gemini-key")
     client_class.assert_called_once_with(api_key="test-gemini-key")
     client_class.return_value.models.generate_content.assert_called_once_with(
-        model="gemini-2.5-flash-lite",
+        model="gemini-3.5-flash-lite",
         contents="ping",
     )
 
