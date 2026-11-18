@@ -331,6 +331,15 @@ FOREX12_SYMBOLS = [
     "NZDUSD", "EURGBP", "EURJPY", "GBPJPY", "AUDJPY", "EURCHF",
 ]
 
+# The judged FOREX12 panel (rigorous_backtest/rd2/panels.py FOREX12) —
+# the 12 majors of FOREX28; every symbol is a member of FOREX28_SYMBOLS
+# above (verified present on the OANDA practice account with it) and is
+# exactly the costs2.py FX_MAJORS cost set (6 bps round trip).
+FOREX12_SYMBOLS = [
+    "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "USDCAD",
+    "NZDUSD", "EURGBP", "EURJPY", "GBPJPY", "AUDJPY", "EURCHF",
+]
+
 # ==============================================================================
 # TASK-STR-FWD-003 (2026-11-15): the FORWARD-TEST lane.
 # Owner directive 2026-11-15 ~11:47 IST: "Create more and more strategies
@@ -556,6 +565,50 @@ TREND_PULLBACK_EMA200_STRATEGY = {
     "OOS_PROFIT_FACTOR": 1.182,
     "OOS_EXPECTANCY_PCT": 0.642,
     "OOS_POSITIVE_FOLDS": 3,
+}
+
+# ==============================================================================
+# TASK-STR-FWD-019 WAVE-2 gap-fill (2026-11-18): the two ts_momentum
+# FOREX cells missed by the original slice plan (near-miss audit
+# REPORT.md §1.4 rows 30 and 68; §3 forex group). Both were judged by
+# RD-002's rigorous_backtest/rd2/families2.py sig_ts_momentum under the
+# BR24 bracket recorded in each cell's own grid row (spec sl_atr 2.0 /
+# tp_atr 4.0), warmup 260 bars (families2 WARMUP / warmup_for). The
+# lane modules are SELF-CONTAINED ports of that harness function —
+# Crew A's crypto30 ts_momentum modules (PR #991) are not merged at
+# this base and are not imported.
+# ==============================================================================
+
+TS_MOMENTUM_ROC72_FX28_STRATEGY = {
+    "NAME": "TS Momentum ROC(72) zero-cross — FOREX28",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "ROC_LOOKBACK": 72,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (cell grid-row spec)
+    "TP_ATR": 4.0,          # judged bracket BR24 (cell grid-row spec)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (226 trades, 3/5 folds,
+    # PF @2x costs 1.0944, Bonferroni FAIL — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3673,
+    "OOS_PROFIT_FACTOR": 1.1735,
+    "OOS_EXPECTANCY_PCT": 0.185,
+}
+
+TS_MOMENTUM_ROC24_FX12_STRATEGY = {
+    "NAME": "TS Momentum ROC(24) zero-cross — FOREX12",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "ROC_LOOKBACK": 24,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (cell grid-row spec)
+    "TP_ATR": 4.0,          # judged bracket BR24 (cell grid-row spec)
+    "WARMUP_BARS": 260,     # judged warmup_for("4h")
+    # TASK-STR-RD-002 pooled OOS evidence (715 trades, 2/5 folds,
+    # Bonferroni FAIL — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3790,
+    "OOS_PROFIT_FACTOR": 1.1001,
+    "OOS_EXPECTANCY_PCT": 0.039,
 }
 
 # ==============================================================================
@@ -2670,6 +2723,56 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "lane_note": "entered sample-starved; forward evidence is the settler",
         "reason": "EXCLUDED from live lane execution (TASK-STR-FWD-003, RD-003 additions): TASK-STR-RD-003 watchlist cell trend_pullback/pb_ema200 @ comm7 1d — 109 OOS trades, expectancy +0.642%/trade, PF 1.182, 3 positive folds, max symbol profit share 0.37. It failed ONLY the >=200-trade floor (a data-span limit, not a performance failure) and failed Bonferroni significance; its PF of 1.182 is also marginally below the 1.2 line, recorded exactly as measured. Entered sample-starved; forward evidence is the settler. Unmappable-universe exclusion exactly as for vol_regime_switch_a: demo-fapi is crypto-only and the OANDA practice account holds 68 FX-only instruments (verified live 2026-11-15); substitution prohibited. Documentary registration only.",
+    },
+    # ------------------------------------------------------------------
+    # TASK-STR-FWD-019 WAVE-2 gap-fill: the two ts_momentum FOREX cells
+    # (near-miss audit §1.4 rows 30 and 68). Executable ONLY through
+    # the OANDA forward-test runner (PR #980) on the practice venue —
+    # forward_venues is the runner's discovery key.
+    # ------------------------------------------------------------------
+    "ts_momentum_roc72_fx28": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: ROC(72) = close/close[-72] - 1 crosses up through 0 (roc > 0 and prior-bar roc <= 0). SHORT: ROC(72) crosses down through 0 (roc < 0 and prior-bar roc >= 0). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_ts_momentum(df, 72, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3673,
+        "total_friction_bps": 6.0,
+        "expected_net_edge_bps": 18.5,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": FOREX28_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "forward_venues": ["oanda_practice"],
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): ts_momentum/roc72 @ FOREX28 1d meets the second tier (OOS expectancy +0.185%/trade, PF 1.1735, 226 OOS trades, 3/5 positive folds, PF @2x costs 1.0944) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Execution rides the OANDA FORWARD_TEST runner (PR #980); the module name strategy_ts_momentum_roc72_fx28 must be added to STRATEX_STRATEGY_ALLOWLIST on S1 at deploy. Distinct judged object from ts_momentum/roc72 @ CRYPTO30 1d (TASK-STR-FWD-019 crew A, PR #991) — same judged signal function (families2 sig_ts_momentum), different panel cell and records; never blended. RD-002 cost basis (rigorous_backtest/rd2/costs2.py, recorded per-symbol in the cell's grid row): 6 bps round trip on the majors, 10 bps on the crosses/minors; the registry friction field carries the 6.0 majors figure following the sleeve_tsmom2_dual / bollinger_trend_p20_fx28 precedent for this panel. FWD-012 stop check: measured max 2.0 x ATR(14)/close on the fwd002 FX fixtures (FX_EURUSD/FX_GBPJPY/FX_USDJPY 1d) is 2.94% over all bars and 2.71% at this config's entry bars — far under the 0.15 global cap, so no max_stop_pct override is set (the override changes admissibility only; FWD-006 sizes by risk / stop distance).",
+    },
+    "ts_momentum_roc24_fx12": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: ROC(24) = close/close[-24] - 1 crosses up through 0 (roc > 0 and prior-bar roc <= 0). SHORT: ROC(24) crosses down through 0 (roc < 0 and prior-bar roc >= 0). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_ts_momentum(df, 24, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3790,
+        "total_friction_bps": 6.0,
+        "expected_net_edge_bps": 3.9,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": FOREX12_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "forward_venues": ["oanda_practice"],
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): ts_momentum/roc24 @ FOREX12 4h meets the second tier (OOS expectancy +0.039%/trade, PF 1.1001, 715 OOS trades, 2/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Execution rides the OANDA FORWARD_TEST runner (PR #980); the module name strategy_ts_momentum_roc24_fx12 must be added to STRATEX_STRATEGY_ALLOWLIST on S1 at deploy. Distinct judged object from the ts_momentum crypto30 cells (TASK-STR-FWD-019 crew A, PR #991) — same judged signal function (families2 sig_ts_momentum), different panel/timeframe cell and records; never blended. RD-002 cost basis (rigorous_backtest/rd2/costs2.py): the forex12 panel is exactly the costs2 majors set, 6 bps round trip on every symbol (recorded per-symbol in the cell's grid row). FWD-012 stop check: measured max 2.0 x ATR(14)/close on the fwd002 FX fixtures (FX_EURUSD/FX_GBPJPY/FX_USDJPY 1d) is 2.94% over all bars and 2.64% at this config's entry bars on the 1d slices — the judged 4h ATR is smaller than the 1d ATR, so the 1d measurement is a conservative upper bound for the 4h cell — far under the 0.15 global cap, so no max_stop_pct override is set (the override changes admissibility only; FWD-006 sizes by risk / stop distance).",
     },
     # ------------------------------------------------------------------
     # TASK-STR-FWD-019 WAVE-2: governed forex12 cells + bollinger p20
