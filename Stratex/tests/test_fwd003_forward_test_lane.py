@@ -818,6 +818,9 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         "bollinger_trend_p20",
         # TASK-STR-FWD-018 wave 1 (shock variant):
         "shock_breakout_k15",
+        # TASK-STR-FWD-018 wave 1 (ichimoku variants):
+        "ichimoku_trend_1d",
+        "ichimoku_trend_raw",
     }
 
 
@@ -852,6 +855,9 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "bollinger_trend_p20",
         # TASK-STR-FWD-018 wave 1 (shock variant):
         "shock_breakout_k15",
+        # TASK-STR-FWD-018 wave 1 (ichimoku variants):
+        "ichimoku_trend_1d",
+        "ichimoku_trend_raw",
     }
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -867,6 +873,8 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "bollinger_trend_4h",
         "bollinger_trend_p20",
         "shock_breakout_k15",
+        "ichimoku_trend_1d",
+        "ichimoku_trend_raw",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
