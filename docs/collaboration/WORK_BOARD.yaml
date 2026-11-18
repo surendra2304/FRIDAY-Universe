@@ -11532,6 +11532,27 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Stratex/tests/fixtures/exp002_book_3905_slice.json
       - Stratex/tests/test_fwd003_forward_test_lane.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-STR-FWD-024
+    title: "Panel-signal machinery: xs_momentum + xs_lowvol FORWARD_TEST (panel_signal_service, daemon ranking hook, registry context passing)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-str-fwd-024-panel-xs
+    created_at: "2026-11-18"
+    updated_at: "2026-11-18"
+    evidence:
+      - "Claim: issue #35 comment 6976625377. Base: main c9d137cc. PR #1020 (implemented + tested only by the crew; merged by merge lane 4). The last two implement-all audit rows (xs_momentum roc60_rb20, xs_lowvol lv20_r10, both CRYPTO30 1d) needed panel machinery: the judged object ranks a panel cross-sectionally while the daemon contract is per-symbol get_signal(df)."
+      - "Built: Stratex/panel_signal_service.py (judged rankings as causal ports of families2.xs_entries / families3.xs_lowvol_fn, panel grid from the judged anchor 2022-01-01T00:00:00Z, fail-closed run_membership, wf_select-style persistence under data/panel_signal/); daemon hook _maybe_run_panel_rankings (mirrors _maybe_run_wf_selection, throttled 600s, attested demo venue, places no orders); entrant modules strategy_xs_momentum.py / strategy_xs_lowvol.py (fire the judged bracket only when the persisted membership signal bar == the frame's last closed bar); registry context passing in strategies/strategy_registry.py (byte-identical code to TASK-STR-EXP-002's; union keeps one copy). Config: xs_momentum / xs_lowvol FORWARD_TEST, execution_mode panel_xs, max_stop_pct overrides 0.90 / 0.60 (FWD-012 measured: 3.0xATR max 77.34%, 2.0xATR max 51.56% vs the 0.15 global cap)."
+      - "Equivalence (RD-002 cache panel, in-suite): service ports reproduce the harness entry lists bit-identically (456 / 906 entries) and the recorded pooled metrics exactly (xs_momentum 258 trades, expectancy +0.865%, PF 1.1347; xs_lowvol 510 trades, +0.716%, PF 1.1790). Both pass the owner's second-tier demo-admission bar; neither meets the frozen promotion bar — FORWARD_TEST only. Tests: test_fwd024_panel_xs.py 21/21 on the branch; neighbour suites 115 passed / 1 failed (the pre-existing pandas forming-bar failure, byte-identical on pristine base)."
+    next_action: "Merged by merge lane 4 (union: daemon gains BOTH hooks — wf-selection and panel rankings; registry context passing kept as one copy shared with TASK-STR-EXP-002; board entry added by the lane from the PR body, since the PR shipped no board change). NOT deployed by the lane. Panel C1 caveat: ensemble books 3933/3978 stamps must not flip until the ensemble engine context passing (step 5) exists — the registry-level context passing merged here is the daemon path, not the ensemble engine's."
+    files:
+      - Stratex/panel_signal_service.py
+      - Stratex/autonomy/run_daemon.py
+      - Stratex/strategies/strategy_registry.py
+      - Stratex/strategy_xs_momentum.py
+      - Stratex/strategy_xs_lowvol.py
+      - Stratex/config_strategy.py
+      - Stratex/tests/test_fwd024_panel_xs.py
+      - Stratex/tests/test_fwd003_forward_test_lane.py
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
