@@ -78,9 +78,12 @@ const SHEET_HEADS: Record<SheetKind, { kicker: string; title: string }> = {
 export function Stage() {
   const router = useRouter();
   const [voicePhase, setVoicePhase] = useState<VoicePhase>("resting");
-  /* The opt-in wake word (FRIDAY/docs/WAKE_WORD.md): off by default,
-     persisted in localStorage, read through useSyncExternalStore so the
-     server render and the first client render agree on "off". */
+  /* The wake word (FRIDAY/docs/WAKE_WORD.md): ARMED by default (owner
+     decision 2026-11-18) — the preference persists in localStorage and
+     only an explicit disarm turns it off. Read through
+     useSyncExternalStore; the server snapshot stays "off" so the server
+     render and the first client render agree, then the client snapshot
+     (armed unless stored "off") applies. */
   const wakeArmed = useSyncExternalStore(subscribeWakeArmed, getWakeArmedSnapshot, () => false);
   const [wakeNote, setWakeNote] = useState<string | null>(null);
   const [chatBusy, setChatBusy] = useState(false);

@@ -39,7 +39,9 @@ assert.equal(extractAfterWake("hey friday"), "");
 assert.equal(extractAfterWake("no wake here"), null);
 
 // The preference round-trips through a Storage-shaped object, defaults
-// to off, and survives a storage backend that throws (private mode).
+// to ARMED (owner decision 2026-11-18, TASK-FRD-026: only an explicit
+// stored "off" disarms), and survives a storage backend that throws
+// (private mode — unreadable storage reads as unset, i.e. armed).
 class FakeStorage {
   data = new Map<string, string>();
   getItem(k: string) {
@@ -50,12 +52,15 @@ class FakeStorage {
   }
 }
 const store = new FakeStorage();
-assert.equal(loadWakeArmed(store), false);
+assert.equal(loadWakeArmed(store), true);
 saveWakeArmed(store, true);
 assert.equal(store.data.get(WAKE_STORAGE_KEY), "on");
 assert.equal(loadWakeArmed(store), true);
 saveWakeArmed(store, false);
+assert.equal(store.data.get(WAKE_STORAGE_KEY), "off");
 assert.equal(loadWakeArmed(store), false);
+saveWakeArmed(store, true);
+assert.equal(loadWakeArmed(store), true);
 const broken = {
   getItem(): string | null {
     throw new Error("denied");
@@ -64,7 +69,7 @@ const broken = {
     throw new Error("denied");
   },
 };
-assert.equal(loadWakeArmed(broken), false);
+assert.equal(loadWakeArmed(broken), true);
 saveWakeArmed(broken, true); // must not throw
 
 console.log("wakeWord.test: all expectations passed");
