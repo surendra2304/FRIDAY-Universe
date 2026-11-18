@@ -11038,6 +11038,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: IN_REVIEW
     owner: muse_ai
     branch: claude/task-str-fwd-022-wf-select
+    pr: 1004
     evidence:
       - "Claim: issue #35 comment 6974344725 (collision check recorded there)."
       - "Machinery Stratex/wf_select_service.py: generic procedure registry (PROCEDURES + register_procedure; a family must have a ported signal function in FAMILY_SIGNALS before it can register) running the judged rd/common.py wf_select_judge rule -- expanding in-sample window, rank by (profit_factor_net, win_rate), top 1 -- with line-faithful ports of rd/fastsim.py's bracket simulator, simulator.py Costs/_net_return/trade_metrics and families2's ts_momentum entries."
