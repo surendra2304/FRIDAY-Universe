@@ -10,15 +10,25 @@ the owner's second tier (expectancy > 0, PF >= 1.05, >= 200 OOS
 trades, pre-Bonferroni) but did NOT pass the full frozen bar — not
 a promotion, not VALIDATED.
 
-Timeframe provenance (stated exactly): the ranked rows record no
-per-row timeframe; the round's stage-1 ran one DAILY configuration
-per module — wired at 1d on that basis. (For the record: the
-stage-1 row JSON carries timeframe "1h", which is the harness's
-docstring-inference DEFAULT in run_all._infer_primary_timeframe —
-neither discovery module's text names a timeframe — and its
-datasets were BTC/ETH/SOL; the round's judged universe per
-RESULTS_RD.md Stages 1/3 is crypto30, which is the lane universe
-registered here.)
+Timeframe provenance (stated exactly): the tier figures are 1h
+figures, and this module is wired at 1h. The stage-1 harness
+selected each module's dataset by timeframe inference
+(run_all._infer_primary_timeframe scans the module text for a
+timeframe name and defaults to "1h"; neither discovery module
+names one) and rd/stage1.py evaluated on load_timeframe("1h") —
+the inference SELECTED the dataset, it did not merely label it.
+The stage-1 row JSON records timeframe "1h" and data_provenance
+keyed BTCUSDT_1h / ETHUSDT_1h / SOLUSDT_1h with 27,048 hourly
+rows per symbol (2023-10 → 2026-10; a 1d set over the same span
+has ~1,127 rows). The judged datasets were BTC/ETH/SOL (stage-1
+SYMBOLS); the round's judged universe per RESULTS_RD.md Stages
+1/3 is crypto30, which is the lane universe registered here.
+CORRECTION (2026-11-18, wave-2 review comment 6975928782): this
+module was originally wired at 1d on the basis of the near-miss
+audit REPORT §1.1 footnote claiming stage-1 "ran one daily
+configuration per module" — the primary records contradict that
+footnote, and the wiring now matches the judged 1h
+configuration.
 
 Judged semantics (rigorous_backtest/module_eval.py, the stage-1
 harness): the module's OWN get_signal() was called on trailing
@@ -66,8 +76,8 @@ try:
 except Exception:  # pragma: no cover - standalone fallback
     _CFG = {}
 
-TIMEFRAME = str(_CFG.get("TIMEFRAME", "1d"))
-BAR_SECONDS = 24 * 3600
+TIMEFRAME = str(_CFG.get("TIMEFRAME", "1h"))
+BAR_SECONDS = 3600
 WARMUP_BARS = int(_CFG.get("WARMUP_BARS", 260))
 WINDOW = int(_CFG.get("WINDOW", 500))
 ATR_PERIOD = int(_CFG.get("ATR_PERIOD", 20))
@@ -207,7 +217,7 @@ def _closed_frame(df: pd.DataFrame, now_s: Optional[float] = None) -> pd.DataFra
 
 
 def get_signal(df: pd.DataFrame) -> Dict[str, Any]:
-    """Evaluate the last closed 1d bar (trailing <=500-bar window,
+    """Evaluate the last closed 1h bar (trailing <=500-bar window,
     as judged); return the daemon signal dict."""
     none_signal: Dict[str, Any] = {"side": None}
     try:

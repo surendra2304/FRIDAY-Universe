@@ -6,7 +6,7 @@ the owner's second tier (audit ~/workspace/str-nearmiss/REPORT.md
 
 1. EQUIVALENCE: the production modules reproduce the judged
    stage-1 evaluation entry-for-entry (with bracket distances) on
-   the fwd002 1d fixture slices. The judged harness
+   the fwd002 fixture slices. The judged harness
    (rigorous_backtest/module_eval.py, driven by rd/stage1.py)
    called each module's OWN get_signal() on trailing <=500-bar
    windows from bar 260 and kept the module's own bracket. The
@@ -17,18 +17,38 @@ the owner's second tier (audit ~/workspace/str-nearmiss/REPORT.md
    revisions), evaluated exactly as module_eval evaluated them.
    The judged calendar-date forming-bar drop is a no-op on these
    historical windows and is omitted from the transcription.
-2. GOVERNANCE: both keys are FORWARD_TEST lane entries with the
-   judged priors, CRYPTO30 lane_assets, and neither is in the
-   VALIDATED partition.
-3. STOP-CAP: both entries carry FWD-012 max_stop_pct overrides
-   consistent with the measured fixture stop distributions
-   recorded below (both judged stops exceed the 0.15 global cap
-   on the SOLUSDT slice — without the overrides these configs
-   would register and silently never trade).
+   The fixtures are daily-binned price slices used purely as bar
+   series: the signal is a pure function of the bar series, so
+   the equivalence property is timeframe-agnostic — the judged
+   timeframe itself (1h) is pinned separately in section 2.
+2. GOVERNANCE + TIMEFRAME: both keys are FORWARD_TEST lane
+   entries with the judged priors, CRYPTO30 lane_assets, and
+   neither is in the VALIDATED partition. Both are wired at the
+   JUDGED 1h: registry timeframe, config TIMEFRAME, module
+   TIMEFRAME / BAR_SECONDS, and the registry executable() binding
+   all say 1h / 3600, and executable() at 1d is refused.
+3. STOP-CAP: the FWD-012 check was re-measured at the judged 1h
+   on the judged datasets (recorded below). volatility_breakout's
+   judged stops exceed the 0.15 global cap at 1h (pooled all-bars
+   max 0.1665), so it carries an override (0.25) — without it the
+   widest judged stops would be cap-blocked and silently never
+   trade. choppiness_breakout's judged stops stay below the cap
+   at 1h (pooled all-bars max 0.1152), so it carries NO override.
+   (The original overrides 1.20 / 0.80 rested on measurements over
+   the fwd002 1d fixtures — not the judged timeframe — and are
+   superseded.)
 
-Timeframe provenance: the ranked rows record no per-row timeframe;
-stage-1 ran one daily configuration per module — both are wired
-at 1d on that basis (see the registry reasons for the full record).
+Timeframe provenance: JUDGED AT 1h. rd/stage1.py evaluated on
+load_timeframe("1h") — the dataset selected by
+run_all._infer_primary_timeframe (default "1h"; neither module's
+text names a timeframe) — and the stage-1 row JSONs record
+timeframe "1h" with data_provenance keyed BTCUSDT_1h /
+ETHUSDT_1h / SOLUSDT_1h at 27,048 hourly rows per symbol. The
+original 1d wiring rested on the near-miss audit REPORT §1.1
+footnote ("stage-1 discovery ran one daily configuration per
+module"), which the primary records contradict; corrected
+2026-11-18 per the wave-2 review (comment 6975928782). See the
+registry reasons for the full record.
 """
 
 from __future__ import annotations
@@ -51,15 +71,23 @@ WINDOW = 500
 
 KEYS = ("volatility_breakout", "choppiness_breakout")
 
-# FWD-012 stop-cap measurements on the fwd002 1d fixtures (judged
-# stop / close): volatility_breakout (2.5 x ATR(14) SMA): entry-bar
-# max 0.9525, all-bars >= warmup max 0.9640 (SOLUSDT; BTCUSDT
-# 0.1943) -> override 1.20. choppiness_breakout (2.0 x ATR(20)
-# SMA): entry-bar max 0.6297, all-bars >= warmup max 0.6667
-# (SOLUSDT; BTCUSDT 0.1331) -> override 0.80.
+# FWD-012 stop-cap measurements AT THE JUDGED 1h on the judged
+# datasets (BTC/ETH/SOL 1h, 27,048 bars each, 2023-10 to 2026-10 —
+# the stage-1 row provenance; judged stop / close, pooled over the
+# three symbols, SOLUSDT the max on both measures):
+# volatility_breakout (2.5 x ATR(14) SMA): entry-bar max 0.1284,
+# all-bars >= warmup max 0.1665 -> override 0.25 (rounded bound
+# above the measured max; the pooled max exceeds the 0.15 global
+# cap, so the override is load-bearing).
+# choppiness_breakout (2.0 x ATR(20) SMA): entry-bar max 0.0853,
+# all-bars >= warmup max 0.1152 -> NO override (the pooled max is
+# below the 0.15 global cap at the judged timeframe).
+# Superseded: the original measurements were taken on the fwd002
+# 1d fixtures (volatility 0.9525/0.9640 -> 1.20; choppiness
+# 0.6297/0.6667 -> 0.80) — not at the judged timeframe.
 MEASURED = {
-    "volatility_breakout": (0.9525, 0.9640, 1.20),
-    "choppiness_breakout": (0.6297, 0.6667, 0.80),
+    "volatility_breakout": (0.1284, 0.1665, 0.25),
+    "choppiness_breakout": (0.0853, 0.1152, None),
 }
 
 
@@ -217,7 +245,12 @@ def test_live_signal_reproduces_judged_bracket():
 # ---------------------------------------------------------------------------
 
 def test_config_registry_lane_entries():
-    from config_strategy import CRYPTO30_SYMBOLS, PRODUCTION_STRATEGY_REGISTRY
+    from config_strategy import (
+        CHOPPINESS_BREAKOUT_STRATEGY,
+        CRYPTO30_SYMBOLS,
+        PRODUCTION_STRATEGY_REGISTRY,
+        VOLATILITY_BREAKOUT_STRATEGY,
+    )
 
     for key, wr, edge, rr in (
         ("volatility_breakout", 0.3519, 13.1, 2.4),
@@ -227,7 +260,7 @@ def test_config_registry_lane_entries():
         assert entry["status"] == "FORWARD_TEST", key
         assert entry["forward_protocol"] is True, key
         assert entry["forward_lane"] == "FORWARD_TEST", key
-        assert entry["timeframe"] == "1d", key
+        assert entry["timeframe"] == "1h", key
         assert entry["lane_assets"] == CRYPTO30_SYMBOLS, key
         assert entry["runtime_priors_nulled"] is False, key
         assert entry["oos_win_rate_prior"] == pytest.approx(wr), key
@@ -236,9 +269,15 @@ def test_config_registry_lane_entries():
         assert entry["risk_per_trade_pct"] == pytest.approx(0.001), key
         assert entry["max_heat_pct"] == pytest.approx(0.02), key
         assert not entry.get("validated_assets"), key
-        # The mandated timeframe-provenance sentence is on the record.
-        assert "timeframe not recorded per-row" in entry["reason"], key
-        assert "wired at 1d on that basis" in entry["reason"], key
+        # The corrected timeframe-provenance record is on the entry.
+        assert "JUDGED AT 1h" in entry["reason"], key
+        assert "Wired at 1h" in entry["reason"], key
+        assert "27,048 hourly rows" in entry["reason"], key
+        assert "registered-but-not-allowlisted" in entry["reason"], key
+
+    # The per-strategy config dicts the modules read say 1h too.
+    assert VOLATILITY_BREAKOUT_STRATEGY["TIMEFRAME"] == "1h"
+    assert CHOPPINESS_BREAKOUT_STRATEGY["TIMEFRAME"] == "1h"
 
     validated = {
         k for k, e in PRODUCTION_STRATEGY_REGISTRY.items() if e["status"] == "VALIDATED"
@@ -262,17 +301,40 @@ def test_registry_discovers_modules_and_binds_lane():
         assert reg.get(f"strategy_{key}") is not None, key
         assert reg.governance_status(f"strategy_{key}") == "FORWARD_TEST", key
     ok, reason = reg.executable(
-        "strategy_volatility_breakout", "1d", "BTCUSDT", venue="binance_futures"
+        "strategy_volatility_breakout", "1h", "BTCUSDT", venue="binance_futures"
     )
     assert not ok and reason == "FORWARD_TEST_DEMO_VENUE_ONLY"
     reg.set_demo_venues({"binance_futures"})
     try:
         for key in KEYS:
             assert reg.executable(
+                f"strategy_{key}", "1h", "BTCUSDT", venue="binance_futures"
+            )[0], key
+            # The judged timeframe is 1h; the pre-fix 1d wiring must
+            # stay refused (regression pin for the wave-2 C5 fix).
+            assert not reg.executable(
                 f"strategy_{key}", "1d", "BTCUSDT", venue="binance_futures"
             )[0], key
     finally:
         reg.set_demo_venues(set())
+
+
+def test_timeframe_wiring_matches_judged_1h():
+    """Every layer of the wiring names the judged 1h — a regression
+    to 1d in any one of them fails here (wave-2 review C5)."""
+    from config_strategy import (
+        CHOPPINESS_BREAKOUT_STRATEGY,
+        PRODUCTION_STRATEGY_REGISTRY,
+        VOLATILITY_BREAKOUT_STRATEGY,
+    )
+
+    for module in (vol, chop):
+        assert module.TIMEFRAME == "1h", module.__name__
+        assert module.BAR_SECONDS == 3600, module.__name__
+    for cfg in (VOLATILITY_BREAKOUT_STRATEGY, CHOPPINESS_BREAKOUT_STRATEGY):
+        assert cfg["TIMEFRAME"] == "1h"
+    for key in KEYS:
+        assert PRODUCTION_STRATEGY_REGISTRY[key]["timeframe"] == "1h", key
 
 
 def test_daemon_forward_protocol_covers_modules():
@@ -293,12 +355,21 @@ def test_stop_cap_override_consistent_with_measurements():
     from config_strategy import PRODUCTION_STRATEGY_REGISTRY
 
     for key, (entry_max, all_max, chosen) in MEASURED.items():
-        # Both modules' measured stops exceed the 0.15 global cap —
-        # the override is load-bearing, not decorative.
-        assert entry_max > 0.15, key
-        assert all_max > 0.15, key
         entry = PRODUCTION_STRATEGY_REGISTRY[key]
-        assert entry["max_stop_pct"] == pytest.approx(chosen), key
-        assert entry["max_stop_pct"] > 0.15, key
-        assert entry["max_stop_pct"] >= all_max, key
-        assert entry["max_stop_pct"] >= entry_max, key
+        if chosen is None:
+            # At the judged 1h this module's measured stops never
+            # reach the 0.15 global cap — an override would admit
+            # stops outside the judged distribution, so none is
+            # carried (FWD-012 forex precedent).
+            assert all_max < 0.15, key
+            assert entry_max < 0.15, key
+            assert "max_stop_pct" not in entry, key
+        else:
+            # The measured stops exceed the 0.15 global cap — the
+            # override is load-bearing, not decorative, and it must
+            # bound the measured 1h distribution.
+            assert all_max > 0.15, key
+            assert entry["max_stop_pct"] == pytest.approx(chosen), key
+            assert entry["max_stop_pct"] > 0.15, key
+            assert entry["max_stop_pct"] >= all_max, key
+            assert entry["max_stop_pct"] >= entry_max, key
