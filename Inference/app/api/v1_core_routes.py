@@ -20,6 +20,7 @@ Strict Guarantees:
 from __future__ import annotations
 
 import json
+import re
 import time
 import uuid
 from datetime import datetime, timezone
@@ -885,6 +886,14 @@ class ChatCompletionRequest(BaseModel):
 MODEL_CATALOG: list[dict[str, str]] = [
     {"id": "gemini-3.8-flash", "owned_by": "google", "provider": "gemini"},
     {"id": "gemini-3.6-flash", "owned_by": "google", "provider": "gemini"},
+    # TASK-INF-016: the fast tier, admitted for adaptive routing (the
+    # owner's per-task choice: simple -> speed). GeminiProvider's
+    # adapter catalogue gained the same id in TASK-INF-015. Admission
+    # here is what lets a NAMED fast request serve under its own name:
+    # a non-catalogue id would be substituted by REL-043 selection and
+    # a serve of it contained as a policy breach. Live generation with
+    # this deployment's keys is a post-merge probe (see INF-015).
+    {"id": "gemini-3.5-flash-lite", "owned_by": "google", "provider": "gemini"},
     {"id": "openai/gpt-oss-120b", "owned_by": "groq", "provider": "groq"},
     {"id": "qwen/qwen3.8-27b", "owned_by": "groq", "provider": "groq"},
     {"id": "meta-llama/llama-3.3-70b-instruct", "owned_by": "openrouter", "provider": "openrouter"},
@@ -981,6 +990,7 @@ MODEL_CLASSES: dict[str, str] = {
     "gemini-3.8-flash": "flagship",
     "openai/gpt-oss-120b": "flagship",
     "gemini-3.6-flash": "standard",
+    "gemini-3.5-flash-lite": "economy",
     "meta-llama/llama-3.3-70b-instruct": "standard",
     "qwen/qwen3.8-27b": "standard",
     "nvidia/nemotron-3.5-lightning:free": "economy",
@@ -1003,7 +1013,23 @@ MODEL_SUITABILITY: dict[str, list[str]] = {
         "meta-llama/llama-3.3-70b-instruct",
         "gemini-3.6-flash",
         "qwen/qwen3.8-27b",
+        "gemini-3.5-flash-lite",
         "nvidia/nemotron-3.5-lightning:free",
+    ],
+    # TASK-INF-016: the adaptive-routing task type for provably small
+    # tasks (arithmetic, short lookups, short rewrites — classified by
+    # _infer_task_type with the same heuristics FRIDAY's escalation
+    # classifier uses). The fast Flash-Lite tier leads; the rest of
+    # the ranking is the catalogue's economy-to-flagship ladder so a
+    # health-filtered fast pick degrades upward, never off-catalogue.
+    "simple": [
+        "gemini-3.5-flash-lite",
+        "nvidia/nemotron-3.5-lightning:free",
+        "gemini-3.6-flash",
+        "qwen/qwen3.8-27b",
+        "meta-llama/llama-3.3-70b-instruct",
+        "gemini-3.8-flash",
+        "openai/gpt-oss-120b",
     ],
     "reasoning": [
         "openai/gpt-oss-120b",
@@ -1011,6 +1037,7 @@ MODEL_SUITABILITY: dict[str, list[str]] = {
         "qwen/qwen3.8-27b",
         "meta-llama/llama-3.3-70b-instruct",
         "gemini-3.6-flash",
+        "gemini-3.5-flash-lite",
         "nvidia/nemotron-3.5-lightning:free",
     ],
     "code": [
@@ -1019,6 +1046,7 @@ MODEL_SUITABILITY: dict[str, list[str]] = {
         "gemini-3.8-flash",
         "meta-llama/llama-3.3-70b-instruct",
         "gemini-3.6-flash",
+        "gemini-3.5-flash-lite",
         "nvidia/nemotron-3.5-lightning:free",
     ],
     "long_context": [
@@ -1027,6 +1055,7 @@ MODEL_SUITABILITY: dict[str, list[str]] = {
         "openai/gpt-oss-120b",
         "meta-llama/llama-3.3-70b-instruct",
         "qwen/qwen3.8-27b",
+        "gemini-3.5-flash-lite",
         "nvidia/nemotron-3.5-lightning:free",
     ],
     "vision": [
@@ -1035,6 +1064,7 @@ MODEL_SUITABILITY: dict[str, list[str]] = {
         "openai/gpt-oss-120b",
         "meta-llama/llama-3.3-70b-instruct",
         "qwen/qwen3.8-27b",
+        "gemini-3.5-flash-lite",
         "nvidia/nemotron-3.5-lightning:free",
     ],
 }
@@ -1052,6 +1082,7 @@ MODEL_SUITABILITY: dict[str, list[str]] = {
 MODEL_CONTEXT_WINDOWS: dict[str, int] = {
     "gemini-3.8-flash": 2097152,
     "gemini-3.6-flash": 2097152,
+    "gemini-3.5-flash-lite": 1048576,
     "openai/gpt-oss-120b": 131072,
     "qwen/qwen3.8-27b": 131072,
     "meta-llama/llama-3.3-70b-instruct": 131072,
@@ -1119,6 +1150,39 @@ _REASONING_HINTS = (
 )
 _LONG_CONTEXT_MIN_CHARS = 24000
 
+#: TASK-INF-016 — simple-task hints for adaptive routing. These mirror
+#: the heuristics FRIDAY's escalation classifier uses (a math
+#: expression, a short lookup, a short rewrite): a request of this
+#: shape is provably small, so suitability selection may lead with the
+#: fast tier instead of a flagship. Complex markers are checked FIRST
+#: in _infer_task_type (code fences/markers, long context, reasoning
+#: markers) and always win — simple is a narrow, late verdict.
+_SIMPLE_MATH_RES = (
+    re.compile(r"\b(?:what is|calculate|compute|evaluate)\b[^.?!]{0,60}?\d"),
+    re.compile(r"\d+\s*(?:\+|-|\*|/|×|÷)\s*\d+"),
+    re.compile(r"\b\d+(?:\.\d+)?\s*(?:percent|%)\b"),
+    re.compile(r"\b(?:sum|total|average|mean|product|difference|quotient)\s+of\b[^.?!]{0,40}?\d"),
+)
+_SIMPLE_LOOKUP_RES = (
+    re.compile(r"^(?:what|who|when|where|which|how many|how much)\b[^.?!]{0,80}\??$"),
+    re.compile(r"\b(?:capital of|meaning of|definition of|translate)\b"),
+)
+_SIMPLE_REWRITE_RES = (
+    re.compile(r"\b(?:rewrite|rephrase|reword|paraphrase|shorten)\b"),
+    re.compile(r"\bfix\s+(?:the\s+)?(?:grammar|spelling)\b"),
+)
+
+
+def _looks_simple(text: str) -> bool:
+    """Whether a (lowercased) prompt is a provably small task."""
+    if any(p.search(text) for p in _SIMPLE_MATH_RES):
+        return True
+    if len(text) <= 600 and any(p.search(text) for p in _SIMPLE_REWRITE_RES):
+        return True
+    if len(text) <= 200 and any(p.search(text) for p in _SIMPLE_LOOKUP_RES):
+        return True
+    return False
+
 #: Requested-class inference for ids the catalogue does not know (the
 #: class of a catalogue id is declared in MODEL_CLASSES and always wins).
 #: Heuristic by design — it only drives the downgrade DISCLOSURE, and it
@@ -1134,7 +1198,9 @@ def _infer_task_type(req: ChatCompletionRequest) -> str:
 
     Deterministic and documented: a vision hint in the requested model
     id wins; then code markers in the prompt; then prompt size (long
-    context); then reasoning markers; otherwise plain chat.
+    context); then reasoning markers; then (TASK-INF-016) the simple
+    shapes — arithmetic, short lookups, short rewrites; otherwise
+    plain chat.
     """
     model_hint = (req.model or "").lower()
     if "vision" in model_hint or "-vl" in model_hint:
@@ -1146,6 +1212,10 @@ def _infer_task_type(req: ChatCompletionRequest) -> str:
         return "long_context"
     if any(hint in text for hint in _REASONING_HINTS):
         return "reasoning"
+    # TASK-INF-016: simple is checked LAST, after every complex marker,
+    # so a short-but-structural request never falls to the fast tier.
+    if _looks_simple(text):
+        return "simple"
     return "chat"
 
 
