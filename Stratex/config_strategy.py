@@ -464,6 +464,52 @@ FX_MR_V4_STRATEGY = {
     "MAX_SPREAD_FRAC_ATR": 0.15,
 }
 
+
+# ==============================================================================
+# TASK-STR-FWD-019 WAVE-2 (2026-11-18): near-miss FORWARD_TEST additions
+# (audit ~/workspace/str-nearmiss/REPORT.md S1.4). Judged bracket BR24 and
+# warmup 260 for every config below (families3 build_configs3 + families2
+# warmup_for); win rates from the RD-002 grid row records.
+# ==============================================================================
+
+PSAR_TREND_AF001_MAX010_STRATEGY = {
+    "NAME": "PSAR Trend (Parabolic SAR flips, step 0.01, max AF 0.10)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "AF_STEP": 0.01,
+    "AF_MAX": 0.10,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (648 trades, 3/5 folds,
+    # second tier only — Bonferroni FAIL at N=3,899, not a promotion):
+    "OOS_WIN_RATE": 0.3765,
+    "OOS_PROFIT_FACTOR": 1.2165,
+    "OOS_EXPECTANCY_PCT": 1.828,
+    "OOS_TRADES": 648,
+    "OOS_POSITIVE_FOLDS": 3,
+}
+
+PSAR_TREND_AF002_MAX020_STRATEGY = {
+    "NAME": "PSAR Trend (Parabolic SAR flips, step 0.02, max AF 0.20)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "AF_STEP": 0.02,
+    "AF_MAX": 0.20,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (651 trades, 2/5 folds,
+    # second tier only — Bonferroni FAIL at N=3,899, not a promotion):
+    "OOS_WIN_RATE": 0.3671,
+    "OOS_PROFIT_FACTOR": 1.1526,
+    "OOS_EXPECTANCY_PCT": 1.447,
+    "OOS_TRADES": 651,
+    "OOS_POSITIVE_FOLDS": 2,
+}
+
 # ==============================================================================
 # PRODUCTION STRATEGY REGISTRY
 # Explicit classification of all candidate strategies
@@ -784,7 +830,55 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "lane_note": "entered sample-starved; forward evidence is the settler",
         "reason": "EXCLUDED from live lane execution (TASK-STR-FWD-003, RD-003 additions): TASK-STR-RD-003 watchlist cell trend_pullback/pb_ema200 @ comm7 1d — 109 OOS trades, expectancy +0.642%/trade, PF 1.182, 3 positive folds, max symbol profit share 0.37. It failed ONLY the >=200-trade floor (a data-span limit, not a performance failure) and failed Bonferroni significance; its PF of 1.182 is also marginally below the 1.2 line, recorded exactly as measured. Entered sample-starved; forward evidence is the settler. Unmappable-universe exclusion exactly as for vol_regime_switch_a: demo-fapi is crypto-only and the OANDA practice account holds 68 FX-only instruments (verified live 2026-11-15); substitution prohibited. Documentary registration only.",
-    }
+    },
+    # ------------------------------------------------------------------
+    # TASK-STR-FWD-019 WAVE-2 near-miss additions (audit S1.4) — second
+    # tier only, NOT VALIDATED; demo forward evidence decides them.
+    # ------------------------------------------------------------------
+    "psar_trend_af001_max010": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "Entries on Parabolic SAR trend flips (step 0.01, max AF 0.10): the SAR state machine is computed over the whole frame from bar 0; a flip to uptrend enters LONG, a flip to downtrend enters SHORT. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py _psar_flip_entries(df, 0.01, 0.10, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3765,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 182.8,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): psar_trend/af0.01_max0.10 @ CRYPTO30 1d meets the second tier (OOS expectancy +1.828%/trade, PF 1.2165, 648 OOS trades, 3/5 positive folds, PF @2x costs 1.1957) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. TASK-STR-FWD-012 stop check: judged stop 2.0 x ATR(14) on 1d crypto fixtures reaches 28.4% of price at entry bars (SOL 1d) and 71.28% across all fixture bars — structurally above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.90 (sanity bound above the measured max; the override changes admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "psar_trend_af002_max020": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "Entries on Parabolic SAR trend flips (step 0.02, max AF 0.20): the SAR state machine is computed over the whole frame from bar 0; a flip to uptrend enters LONG, a flip to downtrend enters SHORT. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py _psar_flip_entries(df, 0.02, 0.20, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3671,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 144.7,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): psar_trend/af0.02_max0.20 @ CRYPTO30 1d meets the second tier (OOS expectancy +1.447%/trade, PF 1.1526, 651 OOS trades, 2/5 positive folds, PF @2x costs 1.1346) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. TASK-STR-FWD-012 stop check: judged stop 2.0 x ATR(14) on 1d crypto fixtures reaches 28.4% of price at entry bars (SOL 1d) and 71.28% across all fixture bars — structurally above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.90 (sanity bound above the measured max; the override changes admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
 }
 
 # Stored research estimates are not runtime priors unless a strategy has been
