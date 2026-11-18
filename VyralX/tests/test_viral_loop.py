@@ -68,7 +68,8 @@ def _wire(monkeypatch, settings, *, pool, speech_by_id, calls):
         lambda video_id, folder: Path(f"/tmp/{video_id}.m4a"),
     )
     monkeypatch.setattr(
-        viral_loop.vr, "detect_speech", lambda path: speech_by_id[path.stem]
+        viral_loop.vr, "detect_speech",
+        lambda path, **_kwargs: speech_by_id[path.stem],
     )
 
     def fake_produce(kind):

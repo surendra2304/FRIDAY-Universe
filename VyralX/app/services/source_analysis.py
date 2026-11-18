@@ -149,12 +149,25 @@ def cues_from_segments(segments: list[Any], max_words: int = 5) -> list[dict[str
     return cues
 
 
-def detect_speech(path: Path | str, model_size: str = "base") -> SpeechReport:
+def detect_speech(
+    path: Path | str,
+    model_size: str = "base",
+    *,
+    beam_size: int = 1,
+    vad_threshold: float = 0.35,
+) -> SpeechReport:
     """Detect whether the clip already has narration, and transcribe it.
 
     Whisper runs behind a voice-activity filter so music and sound effects are
     not mistaken for speech. A clip only counts as narrated when at least one
     second of genuine speech is found.
+
+    The defaults are the production decode settings (greedy beam, VAD
+    threshold 0.35) and are unchanged for every existing caller. The
+    keyword-only overrides exist so a caller can run a second,
+    differently-tuned pass over the same clip — the viral loop's routing
+    audition (TASK-VYR-020) confirms a "no speech" verdict with a
+    beam_size=5 / threshold=0.25 pass before it trusts it.
     """
     settings = get_settings()
     probe = probe_media(path)
@@ -171,9 +184,9 @@ def detect_speech(path: Path | str, model_size: str = "base") -> SpeechReport:
     try:
         segments, _info = model.transcribe(
             str(path),
-            beam_size=1,
+            beam_size=beam_size,
             vad_filter=True,
-            vad_parameters={"threshold": 0.35, "min_speech_duration_ms": 200},
+            vad_parameters={"threshold": vad_threshold, "min_speech_duration_ms": 200},
             condition_on_previous_text=False,
         )
         segments = list(segments)

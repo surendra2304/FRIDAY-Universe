@@ -8,7 +8,13 @@ One cycle of the loop the owner ordered on 2026-11-18:
    rejected or produced. Breadth is the point: the gated renders kept
    starving on a stale 12-candidate pool from the lanes alone.
 2. **Route by the owner's audio rule** — each candidate is auditioned
-   once (the same speech detector production uses):
+   with the same speech detector production uses, hardened at the
+   routing layer (TASK-VYR-020): a single positive speech detection
+   routes voiced, but the commentary route — her narration over the
+   source, the dangerous direction — requires two differently-tuned
+   detector passes to AGREE there is no speech. A disagreement is
+   treated as voiced. (The single-call audition this replaces flipped
+   12/12 candidates in gated render #2.)
    * voiced, with a transcript -> **framed** production
      (:mod:`app.services.viral_framing`): source voice kept, her
      hook/payoff frame it, source speech subtitled;
@@ -143,6 +149,83 @@ def _tag_publish_job_series(db: Session, publish_job_id: int | None, label: str)
     db.commit()
 
 
+# TASK-VYR-020: the confirmation pass for the commentary route. It is
+# deliberately MORE speech-sensitive than the production pass (a wider
+# beam and a lower VAD threshold keep and decode more borderline
+# audio), so if any speech is really there it is the pass most likely
+# to hear it.
+_AUDITION_CONFIRM_KWARGS: dict[str, Any] = {"beam_size": 5, "vad_threshold": 0.25}
+
+
+def _verdict(report: Any) -> dict[str, Any]:
+    """Compact, loggable shape of one detector verdict."""
+    return {
+        "has_speech": bool(getattr(report, "has_speech", False)),
+        "speech_seconds": round(float(getattr(report, "speech_seconds", 0.0) or 0.0), 2),
+        "cues": len(getattr(report, "cues", ()) or ()),
+    }
+
+
+def _routing_audition(
+    candidate: Candidate, audio_path: Path, *, commentary_cap: float
+) -> tuple[Any, dict[str, Any]]:
+    """Audition one candidate for routing (TASK-VYR-020).
+
+    Pass 1 is the production detector at its production settings. A
+    positive verdict routes voiced on its own — production re-auditions
+    and fails closed, so one call is enough in that direction. A
+    negative verdict is only trusted for the commentary route when a
+    second, differently-tuned pass agrees there is no speech; on
+    disagreement the candidate is treated as voiced and the second
+    pass's report (with any transcript it found) drives routing. The
+    second pass runs only for candidates that would otherwise take the
+    commentary route (no speech heard, short enough) — long candidates
+    skip either way, so confirming them would buy nothing.
+
+    Returns ``(effective_report, audit)``; the audit records both
+    verdicts and the agreement outcome, and is logged per candidate.
+    """
+    first = vr.detect_speech(audio_path)
+    audit: dict[str, Any] = {
+        "pass1": _verdict(first),
+        "pass2": None,
+        "agreement": "voiced_first_pass",
+        "disagreement": False,
+    }
+    if first.has_speech:
+        log.info(
+            "Routing audition %s: pass1=%s -> voiced (single positive suffices)",
+            candidate.video_id, audit["pass1"],
+        )
+        return first, audit
+    if float(candidate.duration or 0) > commentary_cap:
+        audit["agreement"] = "no_second_pass_too_long"
+        log.info(
+            "Routing audition %s: pass1=%s -> no confirmation pass "
+            "(over the commentary cap; skips either way)",
+            candidate.video_id, audit["pass1"],
+        )
+        return first, audit
+    second = vr.detect_speech(audio_path, **_AUDITION_CONFIRM_KWARGS)
+    audit["pass2"] = _verdict(second)
+    if second.has_speech:
+        audit["agreement"] = "disagreement_treated_voiced"
+        audit["disagreement"] = True
+        log.warning(
+            "Routing audition %s DISAGREEMENT: pass1=%s pass2=%s -> "
+            "treated as voiced (commentary requires two-pass agreement)",
+            candidate.video_id, audit["pass1"], audit["pass2"],
+        )
+        return second, audit
+    audit["agreement"] = "agree_no_speech"
+    log.info(
+        "Routing audition %s: pass1=%s pass2=%s -> agree no speech, "
+        "commentary allowed",
+        candidate.video_id, audit["pass1"], audit["pass2"],
+    )
+    return first, audit
+
+
 def _guard(settings: Any, force: bool) -> str | None:
     if not force and not bool(getattr(settings, "viral_loop_enabled", False)):
         return "LOOP_DISABLED"
@@ -208,6 +291,8 @@ def run_viral_loop_cycle(db: Session, *, force: bool = False) -> dict[str, Any]:
         "held_publish_jobs": [],
         "by_series": {},
         "skips": {},
+        "audition_second_passes": 0,
+        "audition_disagreements": 0,
         "longform": None,
     }
 
@@ -231,7 +316,13 @@ def run_viral_loop_cycle(db: Session, *, force: bool = False) -> dict[str, Any]:
         if audio_path is None:
             skip("audio_unavailable")
             continue
-        speech = vr.detect_speech(audio_path)
+        speech, audition = _routing_audition(
+            candidate, audio_path, commentary_cap=commentary_cap
+        )
+        if audition["pass2"] is not None:
+            summary["audition_second_passes"] += 1
+        if audition["disagreement"]:
+            summary["audition_disagreements"] += 1
         try:
             if speech.has_speech:
                 if not speech.cues:
