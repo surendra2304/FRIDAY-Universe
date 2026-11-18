@@ -11584,6 +11584,59 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     files:
       - FRIDAY/src/friday/voice/livekit_worker.py
       - FRIDAY/tests/test_voice_input_forward_voi022.py
+  - id: TASK-STR-FWD-025
+    title: "pandas-3 forming-bar fix: resolution-independent epoch seconds in every lane module's _closed_frame"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-str-fwd-025-pandas3-forming-bar
+    created_at: "2026-11-18"
+    updated_at: "2026-11-18"
+    evidence:
+      - "Claim: issue #35 comment 6985750679. Base: main c52933e102d7773b6a76eb95e1a6c3bd80fdde8e. Defect: the lane modules' _closed_frame computed bar-open epoch seconds as idx.view(\"int64\")/1e9 (or idx.asi8/1e9) — correct only for nanosecond-resolution indexes. pandas 3.1.1 infers non-ns resolutions (verified: to_datetime unit='ms'/'s', date_range and string parsing all yield datetime64[us]), so opens came out 1000x too small, every bar passed the closed test, and the still-forming bar was evaluated. Reproduced on c52933e1: test_fwd003 test_forming_bar_is_never_evaluated returned 4 bars vs 3 (the kept 4th bar opened 1h before now on a 1d timeframe — forming, not closed) and test_fwd020's supertrend forming-bar test failed the same way."
+      - "Fix (module layer, the mtf_confluence family's existing pattern): epoch seconds by timedelta division — (idx - epoch).total_seconds() with epoch in the index's own tz — in all 34 files carrying the buggy inline computation (incl. the donchian_turtle/ts_momentum/turtle2/vol_adaptive cores and the keltner/ha/bar_patterns/psar _closed_frame_s cores). 35 thin wrappers delegate to those cores and inherit the fix (delegate->core imports verified file by file); the 5 mtf-family files were already correct (docstring tense touch only). Scoped OUT with evidence: rigorous_backtest/rd5/run_rd5.py asi8 uses (frozen research harness, self-consistent within a run, not the live signal path)."
+      - "Tests (civenv, pandas 3.1.1): the two originally failing tests pass; rings fwd002+fwd003+fwd012+fwd020+fwd024+fwd025 = 133 passed, fwd019 ring (18 files) = 262 passed; exp001/exp002/fwd018/fwd021/fwd022 = 179 passed with 3 failures proven byte-identical on pristine base (2 exp002 refusal tests fail BY DESIGN post-lane-4 per the lane's own finding; 1 exp001 fabric-writer test, unrelated). New suite test_fwd025_pandas3_forming_bar.py (13 tests) pins the invariant at ns/us/ms/s resolutions across every fixed template class + a delegating wrapper + the weekly sleeve: A/B on the unfixed tree = 10 failed / 3 passed (only the ns parametrizations pass — the old code was correct for ns only)."
+    next_action: "Supervisor review, then merge via the next merge lane. No deploy step of its own: the fix rides the normal fleet pull; it is a precondition-grade safety fix for the Fri py3.12 window (venv312 carries pandas 3.1.1, where the guard was silently off for effectively all real frames)."
+    files:
+      - Stratex/strategy_adx_ema_bare.py
+      - Stratex/strategy_bar_patterns.py
+      - Stratex/strategy_bb_reversion.py
+      - Stratex/strategy_bollinger_trend.py
+      - Stratex/strategy_bollinger_trend_4h.py
+      - Stratex/strategy_bollinger_trend_p20.py
+      - Stratex/strategy_bollinger_trend_p20_fx28.py
+      - Stratex/strategy_choppiness_breakout.py
+      - Stratex/strategy_donchian_turtle.py
+      - Stratex/strategy_dow_effect.py
+      - Stratex/strategy_factory_winner_3.py
+      - Stratex/strategy_factory_winner_4.py
+      - Stratex/strategy_ha_trend.py
+      - Stratex/strategy_ichimoku_trend.py
+      - Stratex/strategy_ichimoku_trend_1d.py
+      - Stratex/strategy_ichimoku_trend_raw.py
+      - Stratex/strategy_keltner_breakout.py
+      - Stratex/strategy_macd_trend.py
+      - Stratex/strategy_mtf_confluence.py
+      - Stratex/strategy_psar_trend_af001_max010.py
+      - Stratex/strategy_rsi_momentum.py
+      - Stratex/strategy_shock_breakout.py
+      - Stratex/strategy_shock_breakout_k15.py
+      - Stratex/strategy_sleeve_shock_breakout.py
+      - Stratex/strategy_stoch_reversion.py
+      - Stratex/strategy_supertrend_bare.py
+      - Stratex/strategy_ts_momentum.py
+      - Stratex/strategy_ts_momentum_roc24_fx12.py
+      - Stratex/strategy_ts_momentum_roc72_fx28.py
+      - Stratex/strategy_tsmom2_dual_crypto.py
+      - Stratex/strategy_turtle2.py
+      - Stratex/strategy_vol_adaptive_trend.py
+      - Stratex/strategy_vol_compression.py
+      - Stratex/strategy_vol_regime_trend.py
+      - Stratex/strategy_volatility_breakout.py
+      - Stratex/strategy_volume_breakout.py
+      - Stratex/strategy_wf_select_tsmom.py
+      - Stratex/strategy_xs_lowvol.py
+      - Stratex/strategy_xs_momentum.py
+      - Stratex/tests/test_fwd025_pandas3_forming_bar.py
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
