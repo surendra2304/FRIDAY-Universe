@@ -441,6 +441,84 @@ TREND_PULLBACK_EMA200_STRATEGY = {
 }
 
 # ==============================================================================
+# TASK-STR-FWD-019 WAVE-2 (2026-11-18): RD-004 vol_regime_trend gate_lo
+# family @ CRYPTO30 2h (near-miss audit ~/workspace/str-nearmiss/
+# REPORT.md §1.2). Judged harness: rigorous_backtest/rd4/
+# families_rd4.py (base trend signal gated by the daily
+# volatility-regime rank; gate_lo = entries only when R(d) < 0.50).
+# Judged bracket is RD-004's own (families_rd4 docstring + rd4/
+# sim_rd4.py SL_BASE/TP_BASE): SL 2.0 x ATR(14), TP 4.0 x ATR(14);
+# warmup 260 bars (families_rd4 WARMUP); costs 16 bps round trip
+# (rd2/costs2 CRYPTO). The RD-004 WF-2h procedure's pooled stream is
+# identical to the ema24_96_gate_lo cell (picked in all 5 folds) —
+# NOT a separate config; not wired twice.
+# ==============================================================================
+VOL_REGIME_TREND_STRATEGY = {
+    "NAME": "Vol-Regime Trend (EMA 24/96 cross, low-vol regime gate)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "2h",
+    "SIGNAL": "ema24_96",
+    "MODE": "gate_lo",
+    "EMA_FAST": 24,
+    "EMA_SLOW": 96,
+    "REGIME_DAYS": 180,     # judged REGIME_DAYS (families_rd4)
+    "GATE_THRESHOLD": 0.50,  # gate_lo: entries only when R(d) < 0.50
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged RD-004 bracket (sim_rd4 SL_BASE)
+    "TP_ATR": 4.0,          # judged RD-004 bracket (sim_rd4 TP_BASE)
+    "WARMUP_BARS": 260,     # judged WARMUP (families_rd4)
+    # TASK-STR-RD-004 pooled OOS evidence (2,286 trades, 2/5 folds,
+    # full frozen bar FAIL — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3675,
+    "OOS_PROFIT_FACTOR": 1.107,
+    "OOS_EXPECTANCY_PCT": 0.203,
+    "OOS_TRADES": 2286,
+}
+
+VOL_REGIME_TREND_DON20_GATE_LO_STRATEGY = {
+    "NAME": "Vol-Regime Trend (Donchian 20 breakout, low-vol regime gate)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "2h",
+    "SIGNAL": "don20",
+    "MODE": "gate_lo",
+    "DONCHIAN_PERIOD": 20,
+    "REGIME_DAYS": 180,
+    "GATE_THRESHOLD": 0.50,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,
+    "TP_ATR": 4.0,
+    "WARMUP_BARS": 260,
+    # TASK-STR-RD-004 pooled OOS evidence (6,313 trades, 3/5 folds,
+    # full frozen bar FAIL — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3681,
+    "OOS_PROFIT_FACTOR": 1.074,
+    "OOS_EXPECTANCY_PCT": 0.148,
+    "OOS_TRADES": 6313,
+}
+
+VOL_REGIME_TREND_EMA12_48_GATE_LO_STRATEGY = {
+    "NAME": "Vol-Regime Trend (EMA 12/48 cross, low-vol regime gate)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "2h",
+    "SIGNAL": "ema12_48",
+    "MODE": "gate_lo",
+    "EMA_FAST": 12,
+    "EMA_SLOW": 48,
+    "REGIME_DAYS": 180,
+    "GATE_THRESHOLD": 0.50,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,
+    "TP_ATR": 4.0,
+    "WARMUP_BARS": 260,
+    # TASK-STR-RD-004 pooled OOS evidence (3,471 trades, 2/5 folds,
+    # full frozen bar FAIL — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3598,
+    "OOS_PROFIT_FACTOR": 1.055,
+    "OOS_EXPECTANCY_PCT": 0.107,
+    "OOS_TRADES": 3471,
+}
+
+# ==============================================================================
 # FX MEAN REVERSION v4 — OANDA PRACTICE VENUE (TASK-STR-FWD-004, 2026-11-15)
 # Connors RSI(2) reversion behind an EMA(200) regime gate. The runtime
 # parameters live in oanda_demo/strategy.py (MeanReversionConfig) — the SAME
@@ -784,6 +862,87 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "lane_note": "entered sample-starved; forward evidence is the settler",
         "reason": "EXCLUDED from live lane execution (TASK-STR-FWD-003, RD-003 additions): TASK-STR-RD-003 watchlist cell trend_pullback/pb_ema200 @ comm7 1d — 109 OOS trades, expectancy +0.642%/trade, PF 1.182, 3 positive folds, max symbol profit share 0.37. It failed ONLY the >=200-trade floor (a data-span limit, not a performance failure) and failed Bonferroni significance; its PF of 1.182 is also marginally below the 1.2 line, recorded exactly as measured. Entered sample-starved; forward evidence is the settler. Unmappable-universe exclusion exactly as for vol_regime_switch_a: demo-fapi is crypto-only and the OANDA practice account holds 68 FX-only instruments (verified live 2026-11-15); substitution prohibited. Documentary registration only.",
+    },
+    # ------------------------------------------------------------------
+    # TASK-STR-FWD-019 WAVE-2: RD-004 vol_regime_trend gate_lo family
+    # @ CRYPTO30 2h (near-miss audit REPORT.md §1.2). FORWARD_TEST —
+    # demo venues only, forward evidence decides them.
+    # ------------------------------------------------------------------
+    "vol_regime_trend": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "2h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: EMA(24) crosses above EMA(96) on the signal bar AND the daily volatility-regime rank R(d) < 0.50 (gate_lo). SHORT: EMA(24) crosses below EMA(96) AND R(d) < 0.50. R(d): bar ATR%(14) averaged per UTC day = V(d); R(d) = share of the prior 180 days' V values <= V(d-1); all bars of day d use R(d); no entries while R is NaN (first 181 days). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd4/families_rd4.py base_entries('ema24_96') + regime_rank_by_bar + apply_mode(..., 'gate_lo', ...), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged RD-004 bracket: families_rd4 docstring, rd4/sim_rd4.py SL_BASE)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged RD-004 bracket: rd4/sim_rd4.py TP_BASE)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3675,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 20.3,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        # TASK-STR-FWD-012 stop-cap check (wave-2 brief method): the
+        # judged stop (2.0 x ATR(14) / price) measured on the fwd002
+        # 4h fixtures — 2h configs are measured on 4h slices because
+        # per-bar ATR only shrinks with timeframe, so the 4h figure
+        # is a conservative upper bound for 2h: max 0.0477 over gated
+        # entry bars, 0.1300 over all bars >= warmup (SOLUSDT), and
+        # 0.5604 over the full SOLUSDT 4h history. The CRYPTO30 tail
+        # (INJ/SUI/APT-class names) plausibly exceeds the 0.15
+        # engine-global cap, so the override is set at 0.60 —
+        # admissibility only; FWD-006 sizes by risk / stop distance.
+        "max_stop_pct": 0.60,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): vol_regime_trend/ema24_96_gate_lo @ CRYPTO30 2h meets the second tier (OOS expectancy +0.203%/trade, PF 1.1072, 2286 OOS trades, 2/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Stop-cap override max_stop_pct=0.60 per the FWD-012 check recorded in this entry (measured 4h-fixture max stop 0.1300 over bars >= warmup, 0.5604 over the full SOLUSDT 4h history; override changes admissibility only). The RD-004 WF-2h walk-forward-select procedure's pooled stream is identical to this cell (it picked ema24_96_gate_lo in all 5 folds) and is NOT separately wired.",
+    },
+    "vol_regime_trend_don20_gate_lo": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "2h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close crosses above the prior-20-bar Donchian high on the signal bar AND the daily volatility-regime rank R(d) < 0.50 (gate_lo). SHORT: close crosses below the prior-20-bar Donchian low AND R(d) < 0.50. R(d) as for vol_regime_trend (180-day rank of daily mean bar ATR%(14); no entries while NaN). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd4/families_rd4.py base_entries('don20') + regime_rank_by_bar + apply_mode(..., 'gate_lo', ...), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged RD-004 bracket: families_rd4 docstring, rd4/sim_rd4.py SL_BASE)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged RD-004 bracket: rd4/sim_rd4.py TP_BASE)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3681,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 14.8,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.60,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): vol_regime_trend/don20_gate_lo @ CRYPTO30 2h meets the second tier (OOS expectancy +0.148%/trade, PF 1.0741, 6313 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. This is the fastest independent-family accumulator in the audit (6,313 OOS trades, approx 3,157/year) — expected to reach the lane's 50-closed-trade kill threshold quickest. Stop-cap override max_stop_pct=0.60 per the family FWD-012 check recorded in the vol_regime_trend entry (measured 4h-fixture max stop 0.1300 over bars >= warmup, 0.5604 over the full SOLUSDT 4h history; override changes admissibility only).",
+    },
+    "vol_regime_trend_ema12_48_gate_lo": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "2h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: EMA(12) crosses above EMA(48) on the signal bar AND the daily volatility-regime rank R(d) < 0.50 (gate_lo). SHORT: EMA(12) crosses below EMA(48) AND R(d) < 0.50. R(d) as for vol_regime_trend (180-day rank of daily mean bar ATR%(14); no entries while NaN). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd4/families_rd4.py base_entries('ema12_48') + regime_rank_by_bar + apply_mode(..., 'gate_lo', ...), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged RD-004 bracket: families_rd4 docstring, rd4/sim_rd4.py SL_BASE)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged RD-004 bracket: rd4/sim_rd4.py TP_BASE)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3598,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 10.7,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.60,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): vol_regime_trend/ema12_48_gate_lo @ CRYPTO30 2h meets the second tier (OOS expectancy +0.107%/trade, PF 1.0550, 3471 OOS trades, 2/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Stop-cap override max_stop_pct=0.60 per the family FWD-012 check recorded in the vol_regime_trend entry (measured 4h-fixture max stop 0.1300 over bars >= warmup, 0.5604 over the full SOLUSDT 4h history; override changes admissibility only).",
     }
 }
 
