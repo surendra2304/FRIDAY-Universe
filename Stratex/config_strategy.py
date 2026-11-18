@@ -160,6 +160,46 @@ ICHIMOKU_TREND_STRATEGY = {
     "OOS_EXPECTANCY_PCT": 0.894,
 }
 
+ICHIMOKU_TREND_1D_STRATEGY = {
+    "NAME": "Ichimoku Trend 1d (TK cross + cloud filter) — FORWARD_TEST wave 1",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-018)",
+    "TIMEFRAME": "1d",
+    "TENKAN_PERIOD": 9,
+    "KIJUN_PERIOD": 26,
+    "SENKOU_B_PERIOD": 52,
+    "CLOUD_SHIFT": 26,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (grid_rows pooled_oos:
+    # ichimoku_trend__tk_cloud__crypto30__1d — 398 trades, 4/5
+    # folds; near-miss re-audit 2026-11-18, second-tier admission):
+    "OOS_WIN_RATE": 0.3970,
+    "OOS_PROFIT_FACTOR": 1.367,
+    "OOS_EXPECTANCY_PCT": 3.013,
+}
+
+ICHIMOKU_TREND_RAW_STRATEGY = {
+    "NAME": "Ichimoku Trend Raw 4h (TK cross, NO cloud filter) — FORWARD_TEST wave 1",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-018)",
+    "TIMEFRAME": "4h",
+    "TENKAN_PERIOD": 9,
+    "KIJUN_PERIOD": 26,
+    "SENKOU_B_PERIOD": 52,
+    "CLOUD_SHIFT": 26,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("4h")
+    # TASK-STR-RD-002 pooled OOS evidence (grid_rows pooled_oos:
+    # ichimoku_trend__tk_raw__crypto30__4h — 3,630 trades, 3/5
+    # folds; near-miss re-audit 2026-11-18, second-tier admission):
+    "OOS_WIN_RATE": 0.3741,
+    "OOS_PROFIT_FACTOR": 1.114,
+    "OOS_EXPECTANCY_PCT": 0.411,
+}
+
 DOW_EFFECT_STRATEGY = {
     "NAME": "Dow Effect (Monday reversal of trailing 5-day move)",
     "VERSION": "v1.0.0 (TASK-STR-FWD-002)",
@@ -525,6 +565,49 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "risk_per_trade_pct": 0.001,
         "max_heat_pct": 0.02,
         "reason": "TASK-STR-RD-002 winner: ichimoku_trend/tk_cloud @ CRYPTO30 4h passed the full bar (expectancy>0, PF 1.278 >= 1.2, 2,302 OOS trades, >=80% folds, untouched holdout), Bonferroni at N=1,557 and the 2x-cost stress (PF 1.222). Owner approved forward demo trading 2026-11-15 (TASK-STR-FWD-002). Phase-3 protocol (TASK-STR-FWD-006 decided package, docs/PHASE3_FORWARD_PROTOCOL.md): 0.1% per-trade risk on VENUE equity, 2% aggregate heat cap per strategy, 3% daily breaker (pause, not kill), kill criteria (expectancy<0 or PF<1.0 after >=50 closed trades, or mark-to-market strategy drawdown >5% of venue equity, evaluated on the scan cadence) auto-pause via measurement/forward_guard.py. DEMO venue only; live trading prohibited.",
+    },
+    "ichimoku_trend_1d": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-018)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: Tenkan(9) crosses above Kijun(26) (windows include current bar) AND close above the cloud (max of span A/B, both shifted 26). SHORT: cross down AND close below the cloud. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_ichimoku(df, cloud=True, warmup) on CRYPTO30 1d bars, warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3970,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 301.3,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "max_stop_pct": 0.50,
+        "forward_lane": "FORWARD_TEST",
+        "reason": "TASK-STR-RD-002 near-miss re-audit 2026-11-18 (TASK-STR-FWD-018 wave 1): ichimoku_trend/tk_cloud @ CRYPTO30 1d — expectancy +3.0131%/trade, PF 1.3674, 398 pooled OOS trades, 4/5 positive folds, max symbol share 0.089 (grid_rows pooled_oos: ichimoku_trend__tk_cloud__crypto30__1d). Admitted under the owner's second-tier demo-admission bar (2026-11-18: OOS expectancy>0, PF>=1.05, >=200 OOS trades, pre-Bonferroni); it does NOT pass the frozen promotion bar (Bonferroni + holdout) — not a promotion, and a different judged object from the VALIDATED ichimoku_trend (tk_cloud @ 4h), whose record is untouched. FORWARD_TEST lane terms as for bollinger_trend. FWD-012 stop-cap check (2026-11-18, harness signal bars over the full CRYPTO30 universe): signal-day judged stops (2.0 x ATR(14)) median 13.41%, p99 27.46%, max 36.92%, with 36.2% of judged signals above the 0.15 global cap — max_stop_pct 0.50 is set so the judged bracket is not silently clipped (a sanity bound above the measured distribution; under FWD-006 a wider stop shrinks the position, it does not add risk).",
+    },
+    "ichimoku_trend_raw": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-018)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: Tenkan(9) crosses above Kijun(26) (windows include current bar), NO cloud filter. SHORT: cross down. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_ichimoku(df, cloud=False, warmup) on CRYPTO30 4h bars, warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3741,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 41.1,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "reason": "TASK-STR-RD-002 near-miss re-audit 2026-11-18 (TASK-STR-FWD-018 wave 1): ichimoku_trend/tk_raw @ CRYPTO30 4h — expectancy +0.4106%/trade, PF 1.1144, 3,630 pooled OOS trades, 3/5 positive folds, max symbol share 0.120 (grid_rows pooled_oos: ichimoku_trend__tk_raw__crypto30__4h). Admitted under the owner's second-tier demo-admission bar (2026-11-18: OOS expectancy>0, PF>=1.05, >=200 OOS trades, pre-Bonferroni); it does NOT pass the frozen promotion bar (PF>=1.2, >=4/5 folds, Bonferroni, holdout) — not a promotion. FORWARD_TEST lane terms as for bollinger_trend. FWD-012 stop-cap check (2026-11-18, harness signal bars over the full CRYPTO30 universe): signal-day judged stops (2.0 x ATR(14)) median 4.06%, p99 10.41%, max 16.85%, only 0.11% of judged signals above the 0.15 global cap — NO max_stop_pct override; the global cap binds as the sanity bound, as for the VALIDATED ichimoku_trend.",
     },
     "dow_effect": {
         "status": "VALIDATED",
