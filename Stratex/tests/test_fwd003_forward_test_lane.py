@@ -910,6 +910,17 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         # FOREX cells join the executable protocol set.
         "ts_momentum_roc72_fx28",
         "ts_momentum_roc24_fx12",
+        # TASK-STR-EXP-002: the 8 ensemble books are forward-protocol
+        # entries too (registered but inert until their member modules
+        # merge — see each entry's "execution" stamp).
+        "ensemble_book_3905",
+        "ensemble_book_3906",
+        "ensemble_book_3927",
+        "ensemble_book_3928",
+        "ensemble_book_3929",
+        "ensemble_book_3933",
+        "ensemble_book_3978",
+        "ensemble_book_3900",
     } | overlay
 
 
@@ -920,7 +931,9 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
     stamped True — so no consumer counting registry records can
     mistake them for live lane entrants. Executable entrants (the
     original 3 bracket modules, TASK-STR-FWD-018's 5 wave-1 bracket
-    variants and, since TASK-STR-FWD-021, the 21 overlay entries)
+    variants and, since TASK-STR-FWD-021, the 21 overlay entries,
+    plus the 8 TASK-STR-EXP-002 ensemble books, registered but inert
+    until their member modules merge)
     keep their judged priors for the daemon's
     expectancy gate and are stamped False."""
     import config_strategy as cs
@@ -1030,6 +1043,15 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         # FOREX cells join the FORWARD_TEST registry population.
         "ts_momentum_roc72_fx28",
         "ts_momentum_roc24_fx12",
+        # TASK-STR-EXP-002: the 8 ensemble books join the FORWARD_TEST set.
+        "ensemble_book_3905",
+        "ensemble_book_3906",
+        "ensemble_book_3927",
+        "ensemble_book_3928",
+        "ensemble_book_3929",
+        "ensemble_book_3933",
+        "ensemble_book_3978",
+        "ensemble_book_3900",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -1109,6 +1131,14 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "mtf_confluence_1d",
         "ts_momentum_roc72_fx28",
         "ts_momentum_roc24_fx12",
+        "ensemble_book_3905",
+        "ensemble_book_3906",
+        "ensemble_book_3927",
+        "ensemble_book_3928",
+        "ensemble_book_3929",
+        "ensemble_book_3933",
+        "ensemble_book_3978",
+        "ensemble_book_3900",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
