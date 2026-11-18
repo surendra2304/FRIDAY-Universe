@@ -112,7 +112,8 @@ appended as one JSON object per line to the outbox
 {"schema": "intelx.watch_alert/1",
  "envelope_id": "<sha256 of watch_id + url fingerprint>",
  "dedupe_key": "intelx.watch:ai_model_releases:<fp16>",
- "watch_id": "ai_model_releases", "severity": "info",
+ "watch_id": "ai_model_releases", "domain": "ai_models",
+ "alert_class": "digest", "severity": "info",
  "quiet_hours_exempt": false,
  "title": "...", "summary": "...", "url": "...", "publisher": "...",
  "published_at": "...", "fired_at": "...",
@@ -124,9 +125,19 @@ Contract points for the PRO-001 crew:
 
 * `dedupe_key` is stable across processes and restarts — safe to dedupe
   on downstream as a second line of defence.
-* `quiet_hours_exempt` is **always false** for watch alerts: PRO-001's
-  quiet hours (23:00–07:00 IST) hold them like any other non-breaker
-  alert. IntelX sets the flag; PRO-001 enforces the policy.
+* `quiet_hours_exempt` is false for digest-class alerts: PRO-001's quiet
+  hours (23:00–07:00 IST) hold them like any other non-breaker alert.
+  Since TASK-INT-015 it is **true for instant-class alerts only** (big
+  breaks; §7) — the owner's instant-for-big-breaks decision supersedes
+  the v1 never-exempt rule. IntelX sets the flag; PRO-001 enforces the
+  policy.
+* `alert_class` (`"digest"` | `"instant"`, TASK-INT-015) and `domain`
+  (TASK-INT-013) ride every envelope. Instant-class envelopes are
+  additionally appended to the instant outbox
+  (`./data/watches/instant_outbox.jsonl`,
+  `INTELX_WATCH_INSTANT_OUTBOX_PATH`) for a fast-lane drainer; the main
+  outbox remains the complete record, and the `dedupe_key` contract
+  above is what keeps a two-lane consumer from delivering twice.
 * The outbox is append-only JSONL; a drainer can tail it or the file can
   be swapped for a direct call into PRO-001's notification path without
   changing the envelope schema.
@@ -196,3 +207,32 @@ build environment, so it is not shipped on faith). Ops:
 `python -m intelx.watches.run_once --domain <id>` polls a whole domain.
 Domains are also the subscription unit for the Universe intel feed
 (TASK-INT-014).
+
+## 7. Alert policy: instant for big breaks, one digest for the rest — TASK-INT-015 (2026-11-18)
+
+Owner decision 2026-11-18: instant alerts for big breaks, a digest for
+everything else — replacing the v1 behaviour where every watch alert
+rode the same digest terms. Each watch now declares
+`instant_min_score`: an alert scoring at or above it is **instant-class**
+(`alert_class: "instant"`, `severity: "high"` — the fleet's existing
+severity vocabulary — `quiet_hours_exempt: true`, and a copy in the
+instant outbox); below it, alerts are **digest-class**, byte-identical
+in contract to v1. A watch with no bar (`None`) never alerts instantly.
+
+The bars are derived, not picked: each is the score at which the item
+carries the watch's heaviest rule **plus independent corroboration** —
+`ai_model_releases` 6 = release_language(3) + model_name_with_version(3);
+`crypto_market_structure` 6 = any two weight-3 structure rules;
+`india_tech_regulatory` 6 = regulator_action(3) + payments_structure(3);
+`platform_policy` 6 = policy_surface(3) + change_language(2) +
+platform_name(1); `fleet_tools` 7 = security_event(3) +
+python_version(2) + release_event(2); `world_events` 5 =
+infra_outage(3) + impact_scale(2) (an outage *with* impact — a bare
+outage mention stays digest). `PollResult.alerted_instant` counts the
+instant class per poll, so the policy is observable, not implicit.
+
+Downstream follow-up (PRO-001's lane, stated plainly): the instant
+outbox is a new file for a fast-lane drainer to deliver from; until one
+reads it, instant-class alerts still reach the owner through the main
+outbox exactly as before — the policy change can make delivery faster,
+never slower or lost.

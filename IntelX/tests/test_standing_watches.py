@@ -200,8 +200,15 @@ def test_first_poll_alerts_once_suppresses_rest(tmp_path: Path) -> None:
     env = result.alerted[0]
     assert env["schema"] == "intelx.watch_alert/1"
     assert env["dedupe_key"].startswith("intelx.watch:ai_model_releases:")
-    assert env["quiet_hours_exempt"] is False
-    assert env["severity"] == "info"
+    # TASK-INT-015 supersedes the v1 pin that stood here (quiet_hours_exempt
+    # False / severity "info" for every alert): the owner's alert policy —
+    # instant for big breaks, digest for the rest — makes a frontier release
+    # like this fixture (score 8, over the watch's instant bar of 6)
+    # instant-class by design. Digest-class envelopes keep the v1 values;
+    # they are pinned in test_int015_alert_policy.py.
+    assert env["alert_class"] == "instant"
+    assert env["quiet_hours_exempt"] is True
+    assert env["severity"] == "high"
     assert env["score"] >= WATCH_AI_MODEL_RELEASES.min_score
 
 

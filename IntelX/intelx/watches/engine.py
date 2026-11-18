@@ -105,6 +105,13 @@ class WatchDefinition:
     # unit for the Universe intel feed (TASK-INT-014) and is stamped on
     # every envelope. "general" is the undeclared fallback, not a home.
     domain: str = "general"
+    # Alert policy (TASK-INT-015): an alert scoring at or above this bar is
+    # an INSTANT alert (severity "high", quiet-hours exempt, also written
+    # to the instant outbox); below it, alerts ride the digest as before.
+    # None = this watch never alerts instantly. Per-watch derivation: the
+    # watch's heaviest rule plus independent corroboration — a big break,
+    # not a routine pass over min_score.
+    instant_min_score: int | None = None
 
 
 _AI_RELEASE_RULES = (
@@ -166,6 +173,7 @@ WATCH_AI_MODEL_RELEASES = WatchDefinition(
     poll_interval_seconds=1800,
     enabled=True,
     domain="ai_models",
+    instant_min_score=6,  # release_language(3) + model_name_with_version(3)
 )
 
 WATCH_CRYPTO_MARKET_STRUCTURE = WatchDefinition(
@@ -242,6 +250,7 @@ WATCH_CRYPTO_MARKET_STRUCTURE = WatchDefinition(
     poll_interval_seconds=1800,
     enabled=False,  # designed; enables after its own live proof (design doc §5)
     domain="markets",
+    instant_min_score=6,  # any two of the three weight-3 structure rules
 )
 
 WATCH_INDIA_TECH_REGULATORY = WatchDefinition(
@@ -288,6 +297,7 @@ WATCH_INDIA_TECH_REGULATORY = WatchDefinition(
     poll_interval_seconds=3600,
     enabled=True,  # live proof passed 2026-11-15/16: 1 alert + 1 cap-suppressed, dedupe exact, zero false positives (design doc §5)
     domain="india_regulatory",
+    instant_min_score=6,  # regulator_action(3) + payments_structure(3)
 )
 
 WATCH_PLATFORM_POLICY = WatchDefinition(
@@ -340,6 +350,7 @@ WATCH_PLATFORM_POLICY = WatchDefinition(
     poll_interval_seconds=3600,
     enabled=False,  # designed (TASK-INT-013); enables after its own live proof
     domain="platforms_policy",
+    instant_min_score=6,  # policy_surface(3) + change_language(2) + platform_name(1)
 )
 
 WATCH_FLEET_TOOLS = WatchDefinition(
@@ -397,6 +408,7 @@ WATCH_FLEET_TOOLS = WatchDefinition(
     poll_interval_seconds=3600,
     enabled=False,  # designed (TASK-INT-013); enables after its own live proof
     domain="tools_infra",
+    instant_min_score=7,  # security_event(3) + python_version(2) + release_event(2)
 )
 
 WATCH_WORLD_EVENTS = WatchDefinition(
@@ -462,6 +474,7 @@ WATCH_WORLD_EVENTS = WatchDefinition(
     poll_interval_seconds=1800,
     enabled=False,  # designed (TASK-INT-013); enables after its own live proof
     domain="world_events",
+    instant_min_score=5,  # infra_outage(3) + impact_scale(2): an outage WITH impact
 )
 
 WATCHES: dict[str, WatchDefinition] = {
@@ -719,8 +732,19 @@ class Outbox:
 
 
 def build_envelope(
-    watch: WatchDefinition, item: FeedItem, score: int, reasons: list[str], now: datetime
+    watch: WatchDefinition,
+    item: FeedItem,
+    score: int,
+    reasons: list[str],
+    now: datetime,
+    *,
+    alert_class: str = "digest",
 ) -> dict[str, Any]:
+    # TASK-INT-015: two alert classes. "digest" is the historical envelope
+    # (severity info, quiet hours apply). "instant" is a big break:
+    # severity high (the fleet's existing severity vocabulary), exempt
+    # from quiet hours, and additionally written to the instant outbox.
+    instant = alert_class == "instant"
     fp = url_fingerprint(item.url)
     return {
         "schema": ENVELOPE_SCHEMA,
@@ -728,8 +752,9 @@ def build_envelope(
         "dedupe_key": f"intelx.watch:{watch.id}:{fp[:16]}",
         "watch_id": watch.id,
         "domain": watch.domain,
-        "severity": "info",
-        "quiet_hours_exempt": False,
+        "alert_class": alert_class,
+        "severity": "high" if instant else "info",
+        "quiet_hours_exempt": instant,
         "title": item.title,
         "summary": item.summary[:300],
         "url": item.url,
@@ -799,6 +824,8 @@ class PollResult:
     # that mean "not delivered" — a silent feed is a visible feed here.
     feed_published: int = 0
     feed_errors: int = 0
+    # TASK-INT-015: how many of this poll's alerts were instant-class.
+    alerted_instant: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -812,6 +839,7 @@ class PollResult:
             "errors": self.errors,
             "feed_published": self.feed_published,
             "feed_errors": self.feed_errors,
+            "alerted_instant": self.alerted_instant,
         }
 
 
@@ -823,6 +851,15 @@ def default_outbox_path() -> Path:
     return Path(os.environ.get("INTELX_WATCH_OUTBOX_PATH", "./data/watches/outbox.jsonl"))
 
 
+def default_instant_outbox_path(outbox_path: Path) -> Path:
+    """The instant lane (TASK-INT-015): sibling of the main outbox unless
+    INTELX_WATCH_INSTANT_OUTBOX_PATH says otherwise."""
+    override = os.environ.get("INTELX_WATCH_INSTANT_OUTBOX_PATH")
+    if override:
+        return Path(override)
+    return outbox_path.parent / "instant_outbox.jsonl"
+
+
 class WatchService:
     def __init__(
         self,
@@ -832,9 +869,17 @@ class WatchService:
         fetcher: Fetcher | None = None,
         feed_publisher: Any = None,
         feed_enabled: bool | None = None,
+        instant_outbox_path: Path | None = None,
     ) -> None:
         self.store = SeenStore(state_path or default_state_path())
         self.outbox = Outbox(outbox_path or default_outbox_path())
+        # TASK-INT-015: instant-class envelopes are ALSO appended here, so
+        # a fast-lane drainer can deliver big breaks immediately while the
+        # main outbox remains the complete record (consumers dedupe on
+        # dedupe_key, the field's documented purpose).
+        self.instant_outbox = Outbox(
+            instant_outbox_path or default_instant_outbox_path(self.outbox.path)
+        )
         self.fetcher = fetcher or UrllibFetcher()
         # TASK-INT-014: optional Universe intel feed hook. feed_publisher is
         # an async callable taking an IntelFeedEntry; feed_enabled=None
@@ -894,8 +939,20 @@ class WatchService:
         allowance = max(0, min(watch.max_alerts_per_poll, budget_left))
         for idx, (item, score, reasons) in enumerate(candidates):
             if idx < allowance:
-                envelope = build_envelope(watch, item, score, reasons, now)
+                # TASK-INT-015: classify against the watch's instant bar.
+                alert_class = (
+                    "instant"
+                    if watch.instant_min_score is not None
+                    and score >= watch.instant_min_score
+                    else "digest"
+                )
+                envelope = build_envelope(
+                    watch, item, score, reasons, now, alert_class=alert_class
+                )
                 self.outbox.append(envelope)
+                if alert_class == "instant":
+                    self.instant_outbox.append(envelope)
+                    result.alerted_instant += 1
                 self.store.mark(watch.id, item, "alerted", fired_at=now)
                 result.alerted.append(envelope)
                 await self._publish_to_feed(watch, envelope, result)
