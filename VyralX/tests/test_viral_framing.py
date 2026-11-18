@@ -456,6 +456,158 @@ def test_title_action_must_be_shown_by_the_record():
     assert grounded == []
 
 
+def test_grounding_object_not_grounded_by_prefix_cousin():
+    # Review C1 probe (PR #1053): the 5-char prefix backstop grounded
+    # an invented "poster" in the evidence word "posted".
+    violations = viral_framing.framing_grounding_violations(
+        hook="", payoff="He points at the poster.", title="",
+        transcript="she posted it online yesterday for everyone",
+        scene="", record=None,
+    )
+    assert any(
+        v.kind == "framing_ungrounded" and v.field == "payoff"
+        for v in violations
+    )
+
+
+def test_grounding_object_not_grounded_by_generated_stem():
+    # Review C1 probe: "folding" spawns the stem form "folde", whose
+    # 5-char prefix grounded an invented "folder".
+    violations = viral_framing.framing_grounding_violations(
+        hook="", payoff="He opens the folder.", title="",
+        transcript="folding laundry all afternoon at home",
+        scene="", record=None,
+    )
+    assert any(
+        v.kind == "framing_ungrounded" and v.field == "payoff"
+        for v in violations
+    )
+
+
+def test_grounding_object_not_grounded_by_stem_cousin():
+    # Review C1 probe: _word_forms("signing") contains "sign", so
+    # stem intersection grounded the invented object (a sign) in a
+    # man signing (the verb) autographs.
+    violations = viral_framing.framing_grounding_violations(
+        hook="", payoff="He holds the sign.", title="",
+        transcript="a man signing autographs for fans at the park",
+        scene="", record=None,
+    )
+    assert any(
+        v.kind == "framing_ungrounded" and v.field == "payoff"
+        for v in violations
+    )
+
+
+def test_grounding_object_not_grounded_by_compound_cousin():
+    # "basketball" shares a 6-char prefix with "basket" — the ball
+    # game cannot vouch for the object.
+    violations = viral_framing.framing_grounding_violations(
+        hook="Watch the basket.", payoff="", title="",
+        transcript="basketball practice runs all afternoon long",
+        scene="", record=None,
+    )
+    assert any(
+        v.kind == "framing_ungrounded" and v.field == "hook"
+        for v in violations
+    )
+
+
+def test_grounding_object_not_grounded_by_derived_form():
+    # "enveloped" is a verb form, not the object "envelope".
+    violations = viral_framing.framing_grounding_violations(
+        hook="Watch the envelope.", payoff="", title="",
+        transcript="enveloped in mist the valley sleeps",
+        scene="", record=None,
+    )
+    assert any(
+        v.kind == "framing_ungrounded" and v.field == "hook"
+        for v in violations
+    )
+
+
+def test_grounding_object_not_grounded_by_shared_stem_word():
+    # "microscope" and "microphone" share the 5-char prefix "micro";
+    # neither can vouch for the other.
+    violations = viral_framing.framing_grounding_violations(
+        hook="Watch the microphone.", payoff="", title="",
+        transcript="the microscope reveals tiny cells today",
+        scene="", record=None,
+    )
+    assert any(
+        v.kind == "framing_ungrounded" and v.field == "hook"
+        for v in violations
+    )
+
+
+def test_grounding_object_grounded_by_its_own_plural():
+    # The strict route still accepts the object's own inflections:
+    # evidence naming "trophies" vouches for a claimed "trophy".
+    assert viral_framing.framing_grounding_violations(
+        hook="", payoff="And the trophy comes out.", title="",
+        transcript="the trophies come out at the ceremony",
+        scene="", record=None,
+    ) == []
+
+
+def test_grounding_plural_object_claim_is_still_an_object():
+    # "folders" names the listed object "folder": the single-object
+    # rule is about the object, not the spelling. Every other word
+    # of the line is grounded in the park evidence, so only the
+    # object can flag it.
+    violations = _grounding(payoff="He switches sides with the folders.")
+    assert any(
+        v.kind == "framing_ungrounded" and v.field == "payoff"
+        for v in violations
+    )
+
+
+def test_title_action_rule_covers_shatter_after_c2():
+    # Review C2 probe (PR #1053): "shatters" was off the closed verb
+    # list, so this title promised job 803 an action the footage
+    # never shows and passed both title rules.
+    record = {
+        "event_arc": "hands open a journal and turn its pages",
+        "beats": [{
+            "setting": "desk", "time_of_day": "day",
+            "summary": "Hands hold a paperback journal and flip "
+                       "through its printed pages.",
+            "objects": ["journal", "pages"],
+            "subjects": [{
+                "hair": "", "clothing": "", "posture": "",
+                "action": "holding and opening a journal", "emotion": "",
+            }],
+        }],
+    }
+    transcript = (
+        "it is called wreck this journal it gives you a new way to "
+        "ruin it every day you crack the spine you spill your drink "
+        "and strips of paper"
+    )
+    violations = viral_framing.framing_grounding_violations(
+        hook="", payoff="", title="He Shatters the Journal Strip #Shorts",
+        transcript=transcript, scene="", record=record,
+    )
+    assert any(v.kind == "title_action_ungrounded" for v in violations)
+    # And a shatter the record DOES show passes the rule.
+    shown = {
+        "event_arc": "hands shatter a glass pane on the desk",
+        "beats": [{
+            "setting": "desk", "time_of_day": "day",
+            "summary": "Hands shatter a glass pane into pieces.",
+            "objects": ["glass", "pane"],
+            "subjects": [{
+                "hair": "", "clothing": "", "posture": "",
+                "action": "shattering a glass pane", "emotion": "",
+            }],
+        }],
+    }
+    assert viral_framing.framing_grounding_violations(
+        hook="", payoff="", title="He Shatters the Glass #Shorts",
+        transcript="", scene="", record=shown,
+    ) == []
+
+
 def test_payoff_engagement_bait_is_a_violation():
     violations = viral_framing.framing_violations(
         hook="Watch the keeper dive at it",

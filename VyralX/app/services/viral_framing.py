@@ -381,6 +381,13 @@ _DESCRIPTIVE_WORDS = {
 # these must find it in the vision record's own account of the action —
 # the transcript alone does not prove the camera showed it (job 803's
 # source TALKS about tearing strips; the footage never tears one).
+# The list is CLOSED by construction: an off-list verb escapes this
+# record-only rule and is judged by the general union rule alone —
+# a recorded residual (see framing_grounding_violations). "shatter"
+# and its kin were added after review C2 on PR #1053 demonstrated
+# "He Shatters the Journal Strip" evading the rule against job 803's
+# evidence; the list grows as evasions are observed, it is never
+# complete.
 _TITLE_ACTION_WORDS = {
     "tear", "rip", "flip", "break", "smash", "catch", "drop", "throw",
     "build", "open", "close", "pour", "cut", "hit", "kick", "jump",
@@ -388,6 +395,9 @@ _TITLE_ACTION_WORDS = {
     "push", "pull", "shake", "spin", "slide", "climb", "chase", "bite",
     "steal", "hide", "reveal", "unbox", "paint", "draw", "cook",
     "drive", "ride", "swim", "dive", "rescue", "escape", "transform",
+    "shatter", "crush", "squash", "melt", "burn", "freeze", "burst",
+    "pop", "snap", "bend", "twist", "fold", "toss", "grab", "lift",
+    "drag", "roll", "bounce", "dig", "wrap", "stack",
 }
 
 # Tangible-object nouns that are classic editorial inventions. One of
@@ -395,7 +405,12 @@ _TITLE_ACTION_WORDS = {
 # really in the footage, the transcript or the vision record would
 # name it (a real folder in frame is recorded as a folder). Ordinary
 # paraphrase drift ("stroll" for the record's "walking") is NOT in
-# this class and needs the two-word threshold below.
+# this class and needs the two-word threshold below. Listed objects
+# are grounded ONLY by their own spellings appearing verbatim in the
+# evidence (see _is_grounded): the stem/prefix fuzzy routes that
+# absorb paraphrase for other words are closed for this class,
+# because they let morphological cousins ("posted", "folding",
+# "signing") vouch for objects that were never there.
 _UNGROUNDED_OBJECT_WORDS = {
     "folder", "sign", "trophy", "envelope", "ladder", "balloon",
     "candle", "suitcase", "umbrella", "bicycle", "guitar", "piano",
@@ -415,8 +430,58 @@ def _ungrounded_is_violation(missing: list[str]) -> bool:
     """The rejection rule: two or more ungrounded specifics, or one
     invented tangible object (see _UNGROUNDED_OBJECT_WORDS)."""
     return len(missing) >= 2 or any(
-        word in _UNGROUNDED_OBJECT_WORDS for word in missing
+        _object_base(word) is not None for word in missing
     )
+
+
+def _object_base(word: str) -> str | None:
+    """The listed tangible object a claim word names, if any.
+
+    Matches the word itself or its singular ("folders" -> "folder",
+    "trophies" -> "trophy"): the single-object invariant is about
+    the object, not about which spelling the line happened to use.
+    """
+    if word in _UNGROUNDED_OBJECT_WORDS:
+        return word
+    singulars: set[str] = set()
+    if word.endswith("ies") and len(word) > 4:
+        singulars.add(word[:-3] + "y")
+    if word.endswith("es") and len(word) > 4:
+        singulars.add(word[:-2])
+    if word.endswith("s") and len(word) > 3:
+        singulars.add(word[:-1])
+    for singular in singulars:
+        if singular in _UNGROUNDED_OBJECT_WORDS:
+            return singular
+    return None
+
+
+def _object_family(word: str) -> set[str]:
+    """Inflectional spellings of an object noun: the word itself, its
+    singular, and their plurals — nothing else.
+
+    Deliberately NOT :func:`_word_forms`. That family's derivational
+    stem guesses jump lexemes: "signing" stems down to "sign" and
+    "folding" spawns the non-word stem "folde", so a stem-intersection
+    (or a prefix match against such a stem) lets a morphological
+    cousin vouch for an object that was never in the footage. An
+    object is vouched for only by the object word's own spellings
+    appearing verbatim in the evidence.
+    """
+    family = {word}
+    if word.endswith("ies") and len(word) > 4:
+        family.add(word[:-3] + "y")
+    if word.endswith("es") and len(word) > 4:
+        family.add(word[:-2])
+    if word.endswith("s") and len(word) > 3:
+        family.add(word[:-1])
+    for form in list(family):
+        family.add(form + "s")
+        if form.endswith("y") and len(form) > 1 and form[-2] not in "aeiou":
+            family.add(form[:-1] + "ies")
+        if form.endswith(("s", "x", "z", "ch", "sh")):
+            family.add(form + "es")
+    return family
 
 
 def _word_forms(word: str) -> set[str]:
@@ -449,11 +514,23 @@ def _word_forms(word: str) -> set[str]:
     return forms
 
 
+def _evidence_tokens(texts: list[str]) -> set[str]:
+    """Raw evidence tokens, exactly as written (no stemming).
+
+    This is the only evidence view the tangible-object check may
+    use: an object counts as vouched for when the evidence names
+    the object itself, not a stemmed or prefixed relative of it.
+    """
+    tokens: set[str] = set()
+    for text in texts:
+        tokens.update(re.findall(r"[a-z]{4,}", str(text or "").lower()))
+    return tokens
+
+
 def _evidence_forms(texts: list[str]) -> set[str]:
     forms: set[str] = set()
-    for text in texts:
-        for token in re.findall(r"[a-z]{4,}", str(text or "").lower()):
-            forms |= _word_forms(token)
+    for token in _evidence_tokens(texts):
+        forms |= _word_forms(token)
     return forms
 
 
@@ -466,7 +543,18 @@ def _common_prefix(a: str, b: str) -> int:
     return count
 
 
-def _is_grounded(word: str, evidence_forms: set[str]) -> bool:
+def _is_grounded(
+    word: str, evidence_forms: set[str], evidence_tokens: set[str]
+) -> bool:
+    if _object_base(word) is not None:
+        # Tangible objects take the strict route only (review C1 on
+        # PR #1053): the evidence must name the object itself or its
+        # plural, verbatim. Both fuzzy routes below are closed for
+        # this class — stem-form intersection let "signing" vouch
+        # for an invented "sign", and the prefix backstop let
+        # "posted" vouch for an invented "poster" and the generated
+        # stem "folde" (from "folding") for an invented "folder".
+        return bool(_object_family(word) & evidence_tokens)
     forms = _word_forms(word)
     if forms & evidence_forms:
         return True
@@ -506,8 +594,14 @@ def _claim_words(text: str) -> list[str]:
     return words
 
 
-def _ungrounded_words(text: str, evidence_forms: set[str]) -> list[str]:
-    return [word for word in _claim_words(text) if not _is_grounded(word, evidence_forms)]
+def _ungrounded_words(
+    text: str, evidence_forms: set[str], evidence_tokens: set[str]
+) -> list[str]:
+    return [
+        word
+        for word in _claim_words(text)
+        if not _is_grounded(word, evidence_forms, evidence_tokens)
+    ]
 
 
 def framing_grounding_violations(
@@ -533,14 +627,37 @@ def framing_grounding_violations(
     additionally obeys the stricter record-only rule for action
     verbs — a title may only promise an action the vision record
     says the camera showed.
+
+    Known residuals (deliberate, recorded — review C1/C2 on
+    PR #1053):
+
+    - A single invented tangible object that is NOT in
+      _UNGROUNDED_OBJECT_WORDS, used with an otherwise grounded
+      verb, still passes: "He walks the path with a ribbon." flags
+      only 'ribbon', below the two-word threshold. Listed objects
+      no longer enjoy any such slack — since the C1 fix they are
+      grounded only by their own spellings in the evidence, never
+      by the stem/prefix fuzzy routes — but the list itself is
+      closed, so an unlisted object rides on the general threshold.
+    - The title record-only rule likewise covers only the closed
+      _TITLE_ACTION_WORDS list. A title promising an unshown action
+      with an off-list verb is judged by the general union rule
+      alone and can pass it when the rest of the title is grounded
+      (before the list was extended, "He Shatters the Journal
+      Strip" passed both title rules against job 803's evidence).
+      The list is extended as evasions are observed, but it remains
+      closed by construction; the coordinator's watch is the
+      backstop for both residuals.
     """
     record_texts = vq._record_strings(record) if record is not None else []
-    union_forms = _evidence_forms([transcript or "", scene or "", *record_texts])
+    union_texts = [transcript or "", scene or "", *record_texts]
+    union_forms = _evidence_forms(union_texts)
+    union_tokens = _evidence_tokens(union_texts)
     violations: list[vq.Violation] = []
     for field_name, line in (("hook", hook), ("payoff", payoff)):
         if not line:
             continue
-        missing = _ungrounded_words(line, union_forms)
+        missing = _ungrounded_words(line, union_forms, union_tokens)
         if _ungrounded_is_violation(missing):
             violations.append(vq.Violation(
                 "framing_ungrounded", field_name,
@@ -552,7 +669,7 @@ def framing_grounding_violations(
         # Hashtags are channel metadata, not claims ("#Shorts" rides
         # every title by design); they are stripped before checking.
         title_text = re.sub(r"#\w+", "", title)
-        missing = _ungrounded_words(title_text, union_forms)
+        missing = _ungrounded_words(title_text, union_forms, union_tokens)
         if _ungrounded_is_violation(missing):
             violations.append(vq.Violation(
                 "title_ungrounded", "title",
@@ -561,10 +678,13 @@ def framing_grounding_violations(
                 "verified scene record",
             ))
         record_forms = _evidence_forms(record_texts)
+        record_tokens = _evidence_tokens(record_texts)
         if record is not None:
             for token in re.findall(r"[a-z]+", title_text.lower()):
                 forms = _word_forms(token)
-                if forms & _TITLE_ACTION_WORDS and not _is_grounded(token, record_forms):
+                if forms & _TITLE_ACTION_WORDS and not _is_grounded(
+                    token, record_forms, record_tokens
+                ):
                     violations.append(vq.Violation(
                         "title_action_ungrounded", "title",
                         f"the title promises the action '{token}', which the "
