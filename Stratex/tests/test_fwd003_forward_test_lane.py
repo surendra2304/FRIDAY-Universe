@@ -872,6 +872,10 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         "turtle2_n20_trail_filt",
         "turtle2_n55_trail_filt_4h",
         "turtle2_n20_trail_filt_4h",
+        # TASK-STR-FWD-019 Wave-2 (PR #988):
+        "rsi_momentum",
+        "rsi_momentum_rsi7_60_40",
+        "rsi_momentum_forex",
     } | overlay
 
 
@@ -952,6 +956,10 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "turtle2_n20_trail_filt",
         "turtle2_n55_trail_filt_4h",
         "turtle2_n20_trail_filt_4h",
+        # TASK-STR-FWD-019 Wave-2 (PR #988):
+        "rsi_momentum",
+        "rsi_momentum_rsi7_60_40",
+        "rsi_momentum_forex",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -1001,6 +1009,9 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "turtle2_n20_trail_filt",
         "turtle2_n55_trail_filt_4h",
         "turtle2_n20_trail_filt_4h",
+        "rsi_momentum",
+        "rsi_momentum_rsi7_60_40",
+        "rsi_momentum_forex",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
