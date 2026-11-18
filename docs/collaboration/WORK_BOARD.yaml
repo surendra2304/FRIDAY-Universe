@@ -11170,6 +11170,30 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - FRIDAY/tests/test_voice_key_resolution.py
       - FRIDAY/tests/test_voice_gemini_only.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-INT-013
+    title: "IntelX researches everything: configurable topic domains on the standing-watch machinery (owner decision 2026-11-18)"
+    owner: muse_ai
+    status: IN_REVIEW
+    pr: null
+    branch: claude/task-int-013-watch-domains
+    created_at: "2026-11-18T13:15:00+05:30"
+    updated_at: "2026-11-18T13:15:00+05:30"
+    files:
+      - "IntelX/intelx/watches/domains.py"
+      - "IntelX/intelx/watches/engine.py"
+      - "IntelX/intelx/watches/run_once.py"
+      - "IntelX/intelx/watches/__init__.py"
+      - "IntelX/tests/test_int013_watch_domains.py"
+      - "IntelX/docs/STANDING_WATCHES.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    evidence:
+      - "Claim: issue #35 comment 6971458003. Base: origin/main 3b24321bd6b21f051fc6574551bc88f43a65d406 (main has since moved to 75f06f3e via PR #954, which touched none of these files except this board — union resolution expected on WORK_BOARD.yaml only)."
+      - "Change: new intelx/watches/domains.py — a DomainSpec registry (markets, ai_models, india_regulatory, platforms_policy, tools_infra, world_events, plus a general fallback that is classification debt, not a home) with watches_in_domain / domains_in_use / validate_watch_domains helpers; domains.py imports the engine only under TYPE_CHECKING (AST-pinned, no cycle). WatchDefinition gains domain (default general); the three INT-007 watches are tagged ai_models / markets / india_regulatory with enabled states and every operational field unchanged."
+      - "Three new domain watches, all enabled=False per the INT-007 pattern (each enables only after its own live proof): platform_policy (YouTube Official Blog + Meta Newsroom — partner-programme / monetisation / recommendation / guideline changes for VyralX), fleet_tools (Python Insider + GitHub Blog — CPython security releases, EOL, platform deprecations), world_events (Al Jazeera — outages, cable cuts, cyber events, disasters with infrastructure blast radius; denial/commentary exclusions from day one). All five feeds fetch-verified live 2026-11-18; BBC World RSS could not be verified from the build environment and is NOT shipped on faith."
+      - "Scoring tuned on real 2026-11-17/18 headlines from those feeds, pinned in tests: Meta's Instagram recommendation update and a YouTube Partner Program eligibility change alert; the Direct app launch, Billboard chart news, the Python Insider blog move, the GitHub MDASH post, the Rubio outage-denial and ordinary Al Jazeera world news stay silent; Python pre-releases are excluded by design."
+      - "Envelope gains a domain key (the TASK-INT-014 subscription unit); WatchRunner gains an optional domains scope filter (None = historical behaviour); run_once gains --domain to poll a whole domain; watches/__init__ exports the domain API. STANDING_WATCHES.md gains section 6."
+      - "Tests (local, sandbox Python 3.12.3): IntelX/tests/test_int013_watch_domains.py 13/13 PASS on the branch; the existing IntelX/tests/test_standing_watches.py 15/15 PASS on the branch and 15/15 on pristine main (no regression; the enabled-set pin is untouched because all new watches ship disabled); the new test file fails collection on pristine main (non-vacuous). Method note: run from a scratch dir with PYTHONPATH at the agent root — IntelX/tests/conftest.py provisions a shared ./data/test_intelx.db that parallel in-place runs stomp; CI on this PR runs the suite in place. Every shipped file diffed against the TRUE base blob at 3b24321b (engine.py diff removes exactly the 2 intentionally replaced WatchRunner lines; everything else is additive)."
+    next_action: "Supervisor review -> serial-lane merge (union-resolve WORK_BOARD.yaml against current main). NOT deployed by this crew. After merge: each new watch enables only after its own live proof of the STANDING_WATCHES.md section-5 shape; the domain runner scope lets the new domains prove in a separate process from the two live watches."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
