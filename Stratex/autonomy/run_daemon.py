@@ -54,6 +54,92 @@ def heat_capped_risk_amount(
     return min(per_trade, remaining)
 
 
+def trailing_stop_path(
+    side: str,
+    entry_price: float,
+    atr_entry: float,
+    sl_atr: float,
+    trail_atr: float,
+    bars: list,
+) -> dict:
+    """Judged trailing-stop path over closed bars (TASK-STR-FWD-023).
+
+    A faithful port of the RD-002 harness's trailing simulation
+    (rigorous_backtest/rd/fastsim.py ``_simulate_trail``) for the TRAIL
+    spec the FORWARD_TEST donchian/turtle entries were judged under
+    (families2 TRAIL = {"type": "trail", "sl_atr": 2.0,
+    "trail_atr": 2.5} — no fixed TP, no arm threshold):
+
+    - the stop starts at entry -/+ sl_atr * atr_entry, where atr_entry
+      is the ATR(14) at the SIGNAL bar, frozen for the life of the
+      trade (the harness never re-reads ATR after entry);
+    - bars are consumed in order starting at the entry bar; within a
+      bar the stop is checked BEFORE the running extreme is updated —
+      a bar's own high never lifts the stop its low is tested against
+      (no intrabar lookahead);
+    - a bar that gaps through the stop exits at the bar open; a bar
+      whose low (LONG) / high (SHORT) reaches the stop exits at the
+      stop level;
+    - after the checks, the extreme moves to the bar's high (LONG) /
+      low (SHORT) and the stop ratchets to extreme -/+ trail_atr *
+      atr_entry — favourable direction only, by construction.
+
+    ``bars`` is a list of dicts with open/high/low keys (the daemon's
+    candle shape), CLOSED bars only, starting at the entry bar.
+    Returns {"stop", "best", "exit_index", "exit_price",
+    "exit_reason"}: exit_index is the index into ``bars`` of the first
+    breaching bar, or None when the position is still open at the last
+    bar; exit_reason is "TRAIL" once the stop has ratcheted past its
+    initial level, else "SL" (the harness's own labelling).
+    """
+    is_long = str(side).upper() in ("LONG", "BUY")
+    entry_price = float(entry_price)
+    atr_entry = float(atr_entry)
+    if is_long:
+        stop = entry_price - float(sl_atr) * atr_entry
+        best = entry_price
+    else:
+        stop = entry_price + float(sl_atr) * atr_entry
+        best = entry_price
+    initial_stop = stop
+    exit_index = exit_price = exit_reason = None
+    for j, bar in enumerate(bars):
+        o = float(bar["open"])
+        h = float(bar["high"])
+        low = float(bar["low"])
+        if is_long:
+            if o <= stop:
+                exit_index, exit_price = j, o
+                exit_reason = "TRAIL" if stop > initial_stop else "SL"
+                break
+            if low <= stop:
+                exit_index, exit_price = j, stop
+                exit_reason = "TRAIL" if stop > initial_stop else "SL"
+                break
+            if h > best:
+                best = h
+            stop = max(stop, best - float(trail_atr) * atr_entry)
+        else:
+            if o >= stop:
+                exit_index, exit_price = j, o
+                exit_reason = "TRAIL" if stop < initial_stop else "SL"
+                break
+            if h >= stop:
+                exit_index, exit_price = j, stop
+                exit_reason = "TRAIL" if stop < initial_stop else "SL"
+                break
+            if low < best:
+                best = low
+            stop = min(stop, best + float(trail_atr) * atr_entry)
+    return {
+        "stop": stop,
+        "best": best,
+        "exit_index": exit_index,
+        "exit_price": exit_price,
+        "exit_reason": exit_reason,
+    }
+
+
 class StratexTradingEngine:
     """Main trading engine that coordinates signal generation and execution.
     ALL RESTRICTIONS REMOVED FOR DEMO TESTING - UNLIMITED TRADING.
@@ -217,6 +303,12 @@ class StratexTradingEngine:
         self._last_overlay_entries = 0.0
         # TASK-STR-FWD-022: WF-selection hook throttle.
         self._last_wf_select_check = 0.0
+        # TASK-STR-FWD-023: trailing-exit manager throttle + the
+        # persisted per-position trailing records (loaded lazily by
+        # _trailing_state(); also safe on engines built without
+        # __init__, which the test suites construct).
+        self._last_trailing_manage = 0.0
+        self._trailing_positions: dict | None = None  # None = not yet loaded
         self._last_summary_date = ""
         # TASK-STR-PHASE2-001 measurement hooks (best-effort, never fatal):
         # shadow-trade tracker for OBSERVE_ONLY strategies, the hourly
@@ -549,6 +641,10 @@ class StratexTradingEngine:
         # gate, so a losing overlay book can always be reduced; entries
         # and increases run in the second pass below, after the gate.
         self._manage_overlay_positions(allow_entries=False)
+        # TASK-STR-FWD-023: judged trailing-stop exits (the donchian /
+        # turtle TRAIL spec) are likewise daemon-side; enforce them here,
+        # also before the loss-limit gate so exits are never blocked by it.
+        self._manage_trailing_exits()
 
         # TASK-STR-FWD-006: phase-3 kill criteria on the scan cadence,
         # marked to market — evaluated here (after close reconciliation,
@@ -778,7 +874,16 @@ class StratexTradingEngine:
                                 except (TypeError, ValueError):
                                     win_rate = 0.0  # noqa: F841
 
-                                if rr <= 0:
+                                # TASK-STR-FWD-023: a strategy whose
+                                # registry entry declares the judged
+                                # trailing exit has no fixed R:R BY
+                                # CONSTRUCTION (families2 TRAIL: no TP),
+                                # so the metric's absence must not veto
+                                # it. The exemption is keyed to the
+                                # registry declaration only — every
+                                # undeclared strategy keeps the
+                                # fail-closed skip below.
+                                if rr <= 0 and self._trailing_spec_for_strategy(strat_name) is None:
                                     logger.info(
                                         f"[STRATEX] Skip {strat_name} {symbol}: "
                                         f"no R:R metric"
@@ -2031,6 +2136,241 @@ class StratexTradingEngine:
             except Exception as e:
                 logger.warning(f"[STRATEX] Forward time exit check failed for {key}: {e}")
 
+    # ------------------------------------------------------------------
+    # TASK-STR-FWD-023: judged trailing-stop exits (donchian/turtle TRAIL)
+    # ------------------------------------------------------------------
+
+    def _trailing_spec_for_strategy(self, strat: str) -> dict | None:
+        """The judged trailing-exit spec for a strategy, or None.
+
+        A strategy trades the trailing exit ONLY when its registry
+        entry explicitly declares ``exit_mode == "trailing"`` with the
+        judged multiples (``exit_sl_atr`` / ``exit_trail_atr`` — the
+        families2 TRAIL spec: initial stop 2.0 x ATR(14), trailing stop
+        2.5 x ATR(14), ATR frozen at the signal bar, no fixed TP).
+        Anything else — no entry, no declaration, malformed values —
+        returns None and the strategy keeps the fixed-bracket path
+        exactly as before (fail-closed: a module returning tp_dist=None
+        without this declaration still cannot trade).
+        """
+        try:
+            from config_strategy import PRODUCTION_STRATEGY_REGISTRY
+
+            key = strat[len("strategy_"):] if strat.startswith("strategy_") else strat
+            entry = PRODUCTION_STRATEGY_REGISTRY.get(key) or {}
+            if entry.get("exit_mode") != "trailing":
+                return None
+            sl_atr = float(entry.get("exit_sl_atr"))
+            trail_atr = float(entry.get("exit_trail_atr"))
+            if sl_atr <= 0 or trail_atr <= 0:
+                return None
+            return {"sl_atr": sl_atr, "trail_atr": trail_atr}
+        except Exception:
+            return None
+
+    def _trailing_state_path(self) -> str:
+        """Path of the persisted trailing-position state file."""
+        return os.getenv(
+            "STRATEX_TRAILING_STATE_FILE",
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), "state", "trailing_positions.json"),
+        )
+
+    def _trailing_state(self) -> dict:
+        """{venue:symbol -> trailing record}, loaded lazily; never raises.
+
+        A record is written at entry time by _execute_signal and carries
+        the one quantity the judged trailing rule needs that cannot be
+        re-derived from the venue position: atr_entry (the signal bar's
+        ATR(14) — the executed sl_dist / exit_sl_atr). The stop path
+        itself is a pure function of the closed bars since entry and is
+        recomputed on every pass, so the record needs no per-scan
+        writes beyond the last computed stop/best (kept for the
+        journal). A missing or corrupt file degrades to an empty state:
+        affected positions then keep their venue-side initial stop and
+        are simply never trail-managed (fail-closed, loudly logged at
+        the point the record was written or lost).
+        """
+        state = getattr(self, "_trailing_positions", None)
+        if state is None:
+            state = {}
+            try:
+                with open(self._trailing_state_path(), "r", encoding="utf-8") as fh:
+                    raw = json.load(fh)
+                if isinstance(raw, dict):
+                    state = {
+                        str(k): v for k, v in raw.items() if isinstance(v, dict)
+                    }
+            except FileNotFoundError:
+                state = {}
+            except Exception as e:
+                logger.warning(f"[STRATEX] Could not load trailing state: {e}")
+                state = {}
+            self._trailing_positions = state
+        return state
+
+    def _persist_trailing_state(self) -> None:
+        """Write the trailing records to STRATEX_TRAILING_STATE_FILE."""
+        try:
+            path = self._trailing_state_path()
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump(self._trailing_state(), fh, indent=2)
+        except Exception as e:
+            logger.debug(f"Trailing state persist failed: {e}")
+
+    def _manage_trailing_exits(self) -> None:
+        """Enforce judged trailing-stop exits (TASK-STR-FWD-023).
+
+        For every open position whose strategy's registry entry
+        declares exit_mode="trailing" AND which carries a trailing
+        state record written at entry, replay the judged rule
+        (trailing_stop_path) over the CLOSED bars since the entry bar:
+        if a closed bar breached the trailed stop, close at market now.
+        Only the market order is sent here — the reconciler books the
+        close into the ledgers from userTrades, as for trend/time
+        exits, so PnL can never be double counted. The venue-side
+        protective order placed at entry stays at the judged INITIAL
+        stop for the position's whole life: it is the intrabar/gap
+        backstop, while the trailed exit is evaluated on closed bars
+        on the scan cadence (the judged simulator's own granularity
+        is the bar).
+
+        Fail-closed throughout: a position with no state record
+        (opened before this support existed, or state lost), a
+        strategy whose declaration was removed, an entry bar outside
+        the fetched window, or a record that no longer matches the
+        live position is skipped — never guessed at.
+        """
+        now = time.time()
+        if now - getattr(self, "_last_trailing_manage", 0) < 60:
+            return
+        self._last_trailing_manage = now
+
+        state = self._trailing_state()
+        # Prune records whose position the engine no longer tracks
+        # (closed by the broker-side stop, the forward guard, or
+        # manually): a record must not outlive its position, or a later
+        # unrelated position on the same symbol could inherit its trail.
+        stale = [k for k in state if k not in self.engine.positions]
+        if stale:
+            for k in stale:
+                state.pop(k, None)
+            self._persist_trailing_state()
+
+        for key, pos in list(self.engine.positions.items()):
+            venue, _, symbol = key.partition(":")
+            if not venue or not symbol:
+                continue
+            strat = self.engine.position_strategy.get(key, "")
+            spec = self._trailing_spec_for_strategy(strat)
+            if spec is None:
+                continue
+            record = state.get(key)
+            if record is None:
+                # Declared trailing but no entry-time record: the
+                # position predates this support (or the record was
+                # lost). Its venue-side initial stop still protects it;
+                # inventing an atr_entry here would fabricate the
+                # judged geometry, so it is left unmanaged.
+                continue
+            adapter = self.engine.venues.get(venue)
+            if adapter is None:
+                continue
+            try:
+                # The record must describe THIS position: a strategy or
+                # entry-price mismatch means the position changed under
+                # the record (closed and reopened) — drop and skip.
+                entry_price = float(record.get("entry_price") or 0)
+                if (
+                    str(record.get("strategy") or "") != strat
+                    or entry_price <= 0
+                    or abs(entry_price - float(pos.entry_price))
+                    > max(1e-9, entry_price * 1e-6)
+                ):
+                    logger.warning(
+                        f"[STRATEX] Trailing record for {key} does not "
+                        f"match the live position; dropping it"
+                    )
+                    state.pop(key, None)
+                    self._persist_trailing_state()
+                    continue
+                atr_entry = float(record.get("atr_entry") or 0)
+                opened_ms = float(record.get("opened_at_ms") or 0)
+                if atr_entry <= 0 or opened_ms <= 0:
+                    logger.warning(
+                        f"[STRATEX] Trailing record for {key} is "
+                        f"incomplete; leaving the position to its "
+                        f"venue-side stop"
+                    )
+                    continue
+                tf = self.engine.position_timeframe.get(key, "") or str(
+                    record.get("timeframe") or ""
+                )
+                bar_seconds = self._BAR_SECONDS.get(tf, 86400)
+                age_bars = int((now - opened_ms / 1000.0) // bar_seconds) + 3
+                limit = max(60, min(1000, age_bars))
+                candles = self.engine.get_candles(venue, symbol, tf, limit)
+                if not candles:
+                    continue
+                # Closed bars only: a bar counts once its full span has
+                # elapsed (the trend manager's filter).
+                closed = [
+                    c
+                    for c in candles
+                    if float(c.get("timestamp", 0)) + bar_seconds <= now
+                ]
+                # Entry bar: the bar whose span contains the fill time.
+                opened_s = opened_ms / 1000.0
+                entry_idx = None
+                for idx, c in enumerate(closed):
+                    ts = float(c.get("timestamp", 0))
+                    if ts <= opened_s < ts + bar_seconds:
+                        entry_idx = idx
+                        break
+                if entry_idx is None:
+                    logger.warning(
+                        f"[STRATEX] Trailing exit check for {key}: entry "
+                        f"bar outside the fetched window; skipping "
+                        f"(venue-side stop remains armed)"
+                    )
+                    continue
+                path = trailing_stop_path(
+                    pos.side,
+                    entry_price,
+                    atr_entry,
+                    spec["sl_atr"],
+                    spec["trail_atr"],
+                    closed[entry_idx:],
+                )
+                if float(record.get("stop") or 0) != path["stop"]:
+                    record["stop"] = path["stop"]
+                    record["best"] = path["best"]
+                    self._persist_trailing_state()
+                if path["exit_index"] is None:
+                    continue
+                is_long = str(pos.side).upper() in ("LONG", "BUY")
+                close_side = "SELL" if is_long else "BUY"
+                result = adapter.place_order(
+                    symbol, close_side, "MARKET", pos.quantity
+                )
+                if result is None:
+                    logger.warning(
+                        f"[STRATEX] Trailing exit rejected for {venue}:{symbol}"
+                    )
+                    continue
+                if hasattr(adapter, "cancel_protective_orders"):
+                    adapter.cancel_protective_orders(symbol)
+                state.pop(key, None)
+                self._persist_trailing_state()
+                logger.info(
+                    f"[STRATEX] Trailing exit {venue}:{symbol} ({pos.side}) "
+                    f"strategy={strat} reason={path['exit_reason']} "
+                    f"stop={path['stop']:.5f} entry={entry_price:.5f} "
+                    f"(TASK-STR-FWD-023 judged TRAIL exit)"
+                )
+            except Exception as e:
+                logger.warning(f"[STRATEX] Trailing exit check failed for {key}: {e}")
+
     def _strategy_open_risk(
         self, strategy_name: str, venue: Optional[str] = None
     ) -> float:
@@ -2436,21 +2776,47 @@ class StratexTradingEngine:
             stop_loss = signal.get("stop_loss", signal.get("sl", 0))
             take_profit = signal.get("take_profit", signal.get("tp", 0))
 
+            # TASK-STR-FWD-023: a strategy whose registry entry declares
+            # the judged trailing exit (exit_mode="trailing") has NO
+            # fixed take-profit by construction — its module returns
+            # tp_dist=None and rr_ratio=None. For such entries ONLY, the
+            # TP-dependent preconditions below are replaced by the
+            # trailing contract: a judged sl_dist must be present, the
+            # stop is re-anchored from it alone, the order is placed
+            # with the initial stop and no TP, and the daemon manages
+            # the trailed exit on closed bars (_manage_trailing_exits).
+            # Every other strategy keeps the fixed-bracket path exactly
+            # as before — tp_dist=None without the declaration still
+            # cannot trade (fail-closed).
+            trailing_spec = self._trailing_spec_for_strategy(
+                signal.get("strategy") or signal.get("strategy_name") or ""
+            )
+
             # Re-anchor stops to the live entry price when the strategy supplies
             # distances. The backtest entered at the next bar's open, but the
             # daemon can fire hours later; re-anchoring keeps the tested risk
             # geometry (e.g. 2.5xATR) instead of a stale signal-bar level.
             sl_dist = signal.get("sl_dist")
             tp_dist = signal.get("tp_dist")
-            if sl_dist and tp_dist:
+            if sl_dist and (tp_dist or trailing_spec is not None):
                 sign = 1 if str(side).upper() in ("BUY", "LONG") else -1
                 try:
                     stop_loss = current_price - sign * float(sl_dist)
-                    take_profit = current_price + sign * float(tp_dist)
+                    if tp_dist:
+                        take_profit = current_price + sign * float(tp_dist)
                 except (TypeError, ValueError):
                     pass
 
-            if stop_loss <= 0 or take_profit <= 0:
+            if trailing_spec is not None:
+                # The declaration governs: there is no fixed target to
+                # anchor to — the exit is the trailed stop, managed
+                # daemon-side after entry. Any tp the module supplied
+                # is disregarded so the venue order carries SL only.
+                take_profit = None
+
+            if stop_loss <= 0 or (
+                trailing_spec is None and (take_profit is None or take_profit <= 0)
+            ):
                 return False
 
             # A stop tighter than the min distance means taker fees eat a large
@@ -2483,12 +2849,23 @@ class StratexTradingEngine:
 
             # Direction sanity: an inverted SL/TP pair must never reach the venue.
             side_up = str(side).upper() in ("BUY", "LONG")
-            if side_up and not (stop_loss < current_price < take_profit):
-                logger.warning(f"[STRATEX] Skip {symbol}: invalid BUY SL/TP geometry")
-                return False
-            if not side_up and not (take_profit < current_price < stop_loss):
-                logger.warning(f"[STRATEX] Skip {symbol}: invalid SELL SL/TP geometry")
-                return False
+            if trailing_spec is not None:
+                # TASK-STR-FWD-023: only the stop side can be checked —
+                # a trailing entry has no fixed target to bracket the
+                # price against.
+                if side_up and not (stop_loss < current_price):
+                    logger.warning(f"[STRATEX] Skip {symbol}: invalid BUY trailing stop geometry")
+                    return False
+                if not side_up and not (stop_loss > current_price):
+                    logger.warning(f"[STRATEX] Skip {symbol}: invalid SELL trailing stop geometry")
+                    return False
+            else:
+                if side_up and not (stop_loss < current_price < take_profit):
+                    logger.warning(f"[STRATEX] Skip {symbol}: invalid BUY SL/TP geometry")
+                    return False
+                if not side_up and not (take_profit < current_price < stop_loss):
+                    logger.warning(f"[STRATEX] Skip {symbol}: invalid SELL SL/TP geometry")
+                    return False
 
             # Net expectancy gate. Declared R:R alone is not evidence: the
             # backtest showed 0.78-win-rate strategies losing money after fees.
@@ -2528,36 +2905,52 @@ class StratexTradingEngine:
             except Exception as e:
                 logger.debug(f"[STRATEX] ADX calc failed for {symbol}: {e}")
 
-            target_pct = abs(take_profit - current_price) / current_price
-            rr_actual = target_pct / stop_pct if stop_pct > 0 else 0.0
-            # Full round-trip friction (fees + spread/slippage), per the
-            # RD-002 judged cost model — see __init__ (TASK-STR-RD-010).
-            # The getattr fallback keeps manually-constructed engines
-            # (tests) on the legacy fees-only rate.
-            friction_rate = getattr(
-                self, "friction_rate_roundtrip", None
-            ) or self.fee_rate_roundtrip
-            fee_r = friction_rate / stop_pct
-            expectancy_r = win_rate * rr_actual - (1.0 - win_rate) - fee_r
-
-            # Reward-side fee floor: the stop side already refuses sub-0.5%
-            # stops, but a TP narrower than the round-trip fee means even a
-            # WINNER nets negative (live: TP hits paying +$0.02 against $0.60
-            # fees). The take-profit must clear the fee by the same margin.
-            if target_pct < self.min_stop_pct:
+            if trailing_spec is not None:
+                # TASK-STR-FWD-023: no fixed target exists, so the R:R
+                # expectancy gate and the TP fee floor have nothing to
+                # price — any R:R imputed to a trailing exit would be an
+                # invented parameter. The judged OOS expectancy is
+                # recorded on the registry entry, the win-rate presence
+                # check above still applies, and the phase-3 forward
+                # guard enforces REALIZED expectancy (kill at
+                # expectancy<0 or PF<1.0 after >=50 closes) on the scan
+                # cadence — the governor every FORWARD_TEST lane entry
+                # answers to.
                 logger.info(
-                    f"[STRATEX] Skip {symbol}: TP {target_pct*100:.2f}% "
-                    f"< min {self.min_stop_pct*100:.2f}% (fee floor)"
+                    f"[STRATEX] {symbol}: {strategy_name} trailing exit — "
+                    f"R:R expectancy gate not applicable (no fixed target)"
                 )
-                return False
+            else:
+                target_pct = abs(take_profit - current_price) / current_price
+                rr_actual = target_pct / stop_pct if stop_pct > 0 else 0.0
+                # Full round-trip friction (fees + spread/slippage), per the
+                # RD-002 judged cost model — see __init__ (TASK-STR-RD-010).
+                # The getattr fallback keeps manually-constructed engines
+                # (tests) on the legacy fees-only rate.
+                friction_rate = getattr(
+                    self, "friction_rate_roundtrip", None
+                ) or self.fee_rate_roundtrip
+                fee_r = friction_rate / stop_pct
+                expectancy_r = win_rate * rr_actual - (1.0 - win_rate) - fee_r
 
-            if expectancy_r < self.min_expectancy_r:
-                logger.info(
-                    f"[STRATEX] Skip {symbol}: {strategy_name} expectancy "
-                    f"{expectancy_r:+.3f}R < {self.min_expectancy_r:+.3f}R "
-                    f"(p={win_rate:.2f} rr={rr_actual:.2f} fee={fee_r:.2f}R)"
-                )
-                return False
+                # Reward-side fee floor: the stop side already refuses sub-0.5%
+                # stops, but a TP narrower than the round-trip fee means even a
+                # WINNER nets negative (live: TP hits paying +$0.02 against $0.60
+                # fees). The take-profit must clear the fee by the same margin.
+                if target_pct < self.min_stop_pct:
+                    logger.info(
+                        f"[STRATEX] Skip {symbol}: TP {target_pct*100:.2f}% "
+                        f"< min {self.min_stop_pct*100:.2f}% (fee floor)"
+                    )
+                    return False
+
+                if expectancy_r < self.min_expectancy_r:
+                    logger.info(
+                        f"[STRATEX] Skip {symbol}: {strategy_name} expectancy "
+                        f"{expectancy_r:+.3f}R < {self.min_expectancy_r:+.3f}R "
+                        f"(p={win_rate:.2f} rr={rr_actual:.2f} fee={fee_r:.2f}R)"
+                    )
+                    return False
 
             # Calculate position size based on risk.
             # TASK-STR-FWD-006: sizing is denominated on the equity of
@@ -2686,6 +3079,35 @@ class StratexTradingEngine:
             if result is None:
                 return False
             if result.status == "FILLED":
+                if trailing_spec is not None:
+                    # TASK-STR-FWD-023: record the trailing state the
+                    # exit manager needs. atr_entry is the signal bar's
+                    # ATR(14), recovered from the executed stop distance
+                    # (sl_dist = exit_sl_atr x atr_entry by the judged
+                    # geometry). The position is open and protected by
+                    # its venue-side initial stop either way; if the
+                    # record cannot be written the trailing manager
+                    # will (fail-closed) leave it to that stop — loudly,
+                    # never silently.
+                    try:
+                        fill_price = float(result.avg_price or current_price)
+                        state = self._trailing_state()
+                        state[f"{venue}:{symbol}"] = {
+                            "strategy": strategy_name,
+                            "timeframe": timeframe,
+                            "side": "LONG" if side_up else "SHORT",
+                            "entry_price": fill_price,
+                            "atr_entry": float(sl_dist) / trailing_spec["sl_atr"],
+                            "opened_at_ms": int(time.time() * 1000),
+                            "stop": float(stop_loss),
+                            "best": fill_price,
+                        }
+                        self._persist_trailing_state()
+                    except Exception as e:
+                        logger.warning(
+                            f"[STRATEX] Trailing state record failed for "
+                            f"{venue}:{symbol}: {e}"
+                        )
                 return True
             # A PENDING order is not tracked by the engine, so counting it as
             # executed would orphan its SL/TP and lose the PnL attribution.
