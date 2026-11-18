@@ -11200,6 +11200,20 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - FRIDAY/src/friday/autonomous/daemon.py
       - FRIDAY/tests/test_autonomous_daemon_task_source.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-SEN-020
+    title: "Sentinel finding-validation gate: a 7-question false-positive checklist a finding must pass before it may be marked verified (pattern adopted from the Claude-BugHunter post, IG intake round 2)"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-sen-020-finding-validation-gate
+    evidence:
+      - "Source (IG intake round 2, 2026-11-18): post DfoioTRhRTr (Claude-BugHunter, via @githubprojects) — a Claude Code skill bundle for bug hunting whose standout mechanism is a '7-QUESTION VALIDATION GATE — kills false positives before reports'. Full-watch item file: ~/workspace/ig-fullwatch/items/DfoioTRhRTr.md (FULL, 27 points); classification: ~/workspace/ig-intake-2/ROLLUP.md item 7. PATTERN ADOPTION ONLY — no part of the external red-team bundle is imported, copied or installed."
+      - "Gap (verified on main 75f06f3e): Sentinel/contracts/finding.schema.json already defines the statuses verified / false_positive / review_required and demands findings be 'strictly anchored to raw evidence artifacts', but no code decided WHEN a finding has earned verified — grep of Sentinel/app/services finds false-positive handling only inside threat matching, no pre-verification gate."
+      - "Build (this task's PR): new Sentinel/app/services/finding_validation_gate.py — validate_finding(finding, existing) runs 7 deterministic questions over the finding-contract shape (evidence_attached; target_identified; severity_justified — impact for high/critical, description otherwise; exploitability_stated for high/critical; confidence_floor 0.0/0.3/0.5/0.7/0.8 by severity; not_duplicate of a live finding on the same target with the same title or a shared CVE; remediation_stated) and returns a GateVerdict recommending 'verified' only on a full pass, else 'review_required' with the failed questions named. Pure logic, stdlib-only, no I/O. Tests: Sentinel/tests/test_sen020_finding_validation_gate.py (11 tests, following the test_ig2_sen_* pattern). Claim: issue #35 comment 6972059487."
+    next_action: "PR open -> supervisor review -> serial-lane merge (NOTE: this PR and TASK-FRD-027's both append their board entry after TASK-FRD-024 — whichever merges second needs a board-only union resolution) -> wire the gate into the finding lifecycle at the verified-transition point in a follow-up -> VERIFIED."
+    files:
+      - Sentinel/app/services/finding_validation_gate.py
+      - Sentinel/tests/test_sen020_finding_validation_gate.py
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
