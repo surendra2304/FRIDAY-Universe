@@ -441,6 +441,109 @@ TREND_PULLBACK_EMA200_STRATEGY = {
 }
 
 # ==============================================================================
+# TASK-STR-FWD-019 WAVE-2 (2026-11-18): ts_momentum (RD-002 + RD-001 rows)
+# and the tsmom2_dual crypto30 4h cell. FORWARD_TEST lane — see the registry
+# entries below and the FWD-003 lane block above for governance.
+# ==============================================================================
+TS_MOMENTUM_STRATEGY = {
+    "NAME": "Time-Series Momentum (ROC(72) zero-cross)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "ROC_LOOKBACK": 72,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families2)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families2)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (334 trades, 5/5 folds,
+    # PF @2x costs 1.5760, Bonferroni FAIL — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.4251,
+    "OOS_PROFIT_FACTOR": 1.6049,
+    "OOS_EXPECTANCY_PCT": 4.376,
+}
+
+TS_MOMENTUM_ROC42_STRATEGY = {
+    "NAME": "Time-Series Momentum (ROC(42) zero-cross)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "ROC_LOOKBACK": 42,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families2)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families2)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (460 trades, 4/5 folds,
+    # PF @2x costs 1.4088, Bonferroni FAIL — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.4283,
+    "OOS_PROFIT_FACTOR": 1.4354,
+    "OOS_EXPECTANCY_PCT": 3.213,
+}
+
+TS_MOMENTUM_ROC168_STRATEGY = {
+    "NAME": "Time-Series Momentum (ROC(168) zero-cross)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "ROC_LOOKBACK": 168,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families2)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families2)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (265 trades, 3/5 folds,
+    # PF @2x costs 1.1580, Bonferroni FAIL — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3925,
+    "OOS_PROFIT_FACTOR": 1.1776,
+    "OOS_EXPECTANCY_PCT": 1.579,
+}
+
+TS_MOMENTUM_ROC42_4H_STRATEGY = {
+    "NAME": "Time-Series Momentum (ROC(42) zero-cross) @ 4h",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "ROC_LOOKBACK": 42,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families2)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families2)
+    "WARMUP_BARS": 260,     # judged warmup_for("4h")
+    # TASK-STR-RD-002 pooled OOS evidence (2,906 trades, 3/5 folds,
+    # Bonferroni FAIL — near-miss, not a promotion). RD-001's roc42_4h
+    # row is the same judged stream — see the registry reason (alias).
+    "OOS_WIN_RATE": 0.3672,
+    "OOS_PROFIT_FACTOR": 1.0993,
+    "OOS_EXPECTANCY_PCT": 0.338,
+}
+
+TS_MOMENTUM_ROC168_RD001_STRATEGY = {
+    "NAME": "Time-Series Momentum (ROC(168) zero-cross) @ 1h — RD-001 row",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1h",
+    "ROC_LOOKBACK": 168,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket (rd/stage3.py roc168_1h)
+    "TP_ATR": 4.0,          # judged bracket (rd/stage3.py roc168_1h)
+    "WARMUP_BARS": 260,     # judged WARMUP (rd/stage3.py)
+    # TASK-STR-RD-001 pooled OOS evidence (678 trades, 4/5 folds,
+    # holdout FAIL, SOL = 84% of profit — stage5_synthesis ranked row):
+    "OOS_WIN_RATE": 0.3805,
+    "OOS_PROFIT_FACTOR": 1.0663,
+    "OOS_EXPECTANCY_PCT": 0.082,
+}
+
+TSMOM2_DUAL_CRYPTO_STRATEGY = {
+    "NAME": "Dual Momentum (ROC(90) zero-cross + EMA(200) gate) @ CRYPTO30 4h",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "ROC_LOOKBACK": 90,
+    "EMA_PERIOD": 200,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.5,          # judged bracket (families2 build_configs; verified in this cell's row record)
+    "TP_ATR": 5.0,          # judged bracket (families2 build_configs; verified in this cell's row record)
+    "WARMUP_BARS": 260,     # judged warmup_for("4h")
+    # TASK-STR-RD-002 pooled OOS evidence (1,580 trades, 3/5 folds,
+    # Bonferroni FAIL — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3627,
+    "OOS_PROFIT_FACTOR": 1.0965,
+    "OOS_EXPECTANCY_PCT": 0.402,
+}
+
+# ==============================================================================
 # FX MEAN REVERSION v4 — OANDA PRACTICE VENUE (TASK-STR-FWD-004, 2026-11-15)
 # Connors RSI(2) reversion behind an EMA(200) regime gate. The runtime
 # parameters live in oanda_demo/strategy.py (MeanReversionConfig) — the SAME
@@ -784,7 +887,139 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "lane_note": "entered sample-starved; forward evidence is the settler",
         "reason": "EXCLUDED from live lane execution (TASK-STR-FWD-003, RD-003 additions): TASK-STR-RD-003 watchlist cell trend_pullback/pb_ema200 @ comm7 1d — 109 OOS trades, expectancy +0.642%/trade, PF 1.182, 3 positive folds, max symbol profit share 0.37. It failed ONLY the >=200-trade floor (a data-span limit, not a performance failure) and failed Bonferroni significance; its PF of 1.182 is also marginally below the 1.2 line, recorded exactly as measured. Entered sample-starved; forward evidence is the settler. Unmappable-universe exclusion exactly as for vol_regime_switch_a: demo-fapi is crypto-only and the OANDA practice account holds 68 FX-only instruments (verified live 2026-11-15); substitution prohibited. Documentary registration only.",
-    }
+    },
+    "ts_momentum": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: ROC(72) crosses up through 0 (close/close[-72] - 1 moves from <= 0 to > 0). SHORT: ROC(72) crosses down through 0. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_ts_momentum(df, 72, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.4251,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 437.6,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): ts_momentum/roc72 @ CRYPTO30 1d meets the second tier (OOS expectancy +4.376%/trade, PF 1.6049, 334 OOS trades, 5/5 positive folds, PF @2x costs 1.5760) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.0 x ATR(14) measured up to 71.3% of price over all post-warmup bars on the fwd002 SOLUSDT 1d fixture slice (11.0% at entry bars) — above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.90 (sanity bound only; FWD-006 sizes by risk / stop distance).",
+    },
+    "ts_momentum_roc42": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: ROC(42) crosses up through 0 (close/close[-42] - 1 moves from <= 0 to > 0). SHORT: ROC(42) crosses down through 0. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_ts_momentum(df, 42, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.4283,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 321.3,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): ts_momentum/roc42 @ CRYPTO30 1d meets the second tier (OOS expectancy +3.213%/trade, PF 1.4354, 460 OOS trades, 4/5 positive folds, PF @2x costs 1.4088) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.0 x ATR(14) measured up to 71.3% of price over all post-warmup bars on the fwd002 SOLUSDT 1d fixture slice (18.4% at entry bars) — above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.90 (sanity bound only; FWD-006 sizes by risk / stop distance).",
+    },
+    "ts_momentum_roc168": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: ROC(168) crosses up through 0 (close/close[-168] - 1 moves from <= 0 to > 0). SHORT: ROC(168) crosses down through 0. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_ts_momentum(df, 168, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3925,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 157.9,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): ts_momentum/roc168 @ CRYPTO30 1d meets the second tier (OOS expectancy +1.579%/trade, PF 1.1776, 265 OOS trades, 3/5 positive folds, PF @2x costs 1.1580) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.0 x ATR(14) measured up to 71.3% of price over all post-warmup bars on the fwd002 SOLUSDT 1d fixture slice (17.1% at entry bars) — above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.90 (sanity bound only; FWD-006 sizes by risk / stop distance).",
+    },
+    "ts_momentum_roc42_4h": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: ROC(42) crosses up through 0 (close/close[-42] - 1 moves from <= 0 to > 0). SHORT: ROC(42) crosses down through 0. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_ts_momentum(df, 42, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3672,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 33.8,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.25,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): ts_momentum/roc42 @ CRYPTO30 4h meets the second tier (OOS expectancy +0.338%/trade, PF 1.0993, 2,906 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.0 x ATR(14) measured up to 13.0% of price over all post-warmup bars on the fwd002 SOLUSDT 4h fixture slice (8.5% at entry bars) — close to the 0.15 engine-global cap on only two fixture symbols, and the CRYPTO30 volatile tail plausibly exceeds it — so this entry carries max_stop_pct 0.25 as a pre-emptive sanity bound (FWD-006 sizes by risk / stop distance). Duplicate-stream alias: RD-001's ts_momentum/roc42_4h row (303 OOS trades, +0.243%/trade, PF 1.0969, 2/5 positive folds; flags: holdout FAIL, SOL = 97% of profit) is the SAME judged stream — identical signal (rd/stage3.py fam_ts_momentum is the same ROC-cross logic as families2 sig_ts_momentum; RD-002's harness reproduced RD-001's published roc42_4h row BIT-IDENTICALLY — results_rd2/sanity_checks.json), identical bracket (2.0/4.0) and warmup (260) — and is NOT separately wired (dedupe per audit §1.4); this crypto30 config is its single lane admission.",
+    },
+    "ts_momentum_roc168_rd001": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: ROC(168) crosses up through 0. SHORT: ROC(168) crosses down through 0. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd/stage3.py fam_ts_momentum(df, 168) at 1h (identical ROC-cross logic to rd2/families2.py sig_ts_momentum), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3805,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 8.2,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.25,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md §1.1): ts_momentum/roc168_1h @ CRYPTO30 1h — a TASK-STR-RD-001 row — meets the second tier (OOS expectancy +0.082%/trade, PF 1.0663, 678 OOS trades, 4/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. Flags from the RD-001 record: holdout FAIL; SOL = 84% of profit (concentration). Judged by RD-001's stage-3 code (rigorous_backtest/rd/stage3.py fam_ts_momentum(df, 168), bracket 2.0/4.0, warmup 260) on its stage-3 cache panel (BTC/ETH/SOL — rd/common.py SYMBOLS); the identical signal was later re-judged by RD-002 on crypto30, and this admission trades the CRYPTO30 universe. Cost basis 16.0 bps round trip (rd/common.py harness standard). FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.0 x ATR(14) measured up to 13.0% of price over all post-warmup bars on the fwd002 SOLUSDT 4h fixture slice (9.1% at entry bars) — close to the 0.15 engine-global cap on only two fixture symbols, and the CRYPTO30 volatile tail plausibly exceeds it — so this entry carries max_stop_pct 0.25 as a pre-emptive sanity bound (FWD-006 sizes by risk / stop distance). Stop measured on the 4h fixtures: per-bar ATR% only shrinks as the timeframe shortens, so the 4h figure is a conservative upper bound for this 1h config.",
+    },
+    "tsmom2_dual_crypto": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: ROC(90) crosses up through 0 AND close > EMA(200). SHORT: ROC(90) crosses down through 0 AND close < EMA(200). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_dual_momentum(df, 90, warmup), warmup 260 bars.",
+        "sl_method": "2.5 * ATR(14) at signal bar (judged bracket, families2 tsmom2_dual spec)",
+        "tp_method": "5.0 * ATR(14) at signal bar (judged bracket, families2 tsmom2_dual spec)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3627,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 40.2,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.25,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): tsmom2_dual/roc90_ema200 @ CRYPTO30 4h meets the second tier (OOS expectancy +0.402%/trade, PF 1.0965, 1,580 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.5 x ATR(14) measured up to 16.3% of price over all post-warmup bars on the fwd002 SOLUSDT 4h fixture slice (10.4% at entry bars) — above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.25 (sanity bound only; FWD-006 sizes by risk / stop distance). Registry key is tsmom2_dual_crypto because the plain tsmom2_dual key is taken by the EXCLUDED comm7 documentary registration (roc30_ema200 @ comm7 4h) — a different judged object; records never blended.",
+    },
 }
 
 # Stored research estimates are not runtime priors unless a strategy has been

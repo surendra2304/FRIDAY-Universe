@@ -809,7 +809,13 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         if entry.get("status") == "FORWARD_TEST"
         and entry.get("forward_protocol") is True
     }
-    assert protocol == {"bollinger_trend", "shock_breakout", "adx_ema_bare"}
+    # TASK-STR-FWD-019 Wave-2 crew A adds the ts_momentum/tsmom2 cells.
+    assert protocol == {
+        "bollinger_trend", "shock_breakout", "adx_ema_bare",
+        "ts_momentum", "ts_momentum_roc42", "ts_momentum_roc168",
+        "ts_momentum_roc42_4h", "ts_momentum_roc168_rd001",
+        "tsmom2_dual_crypto",
+    }
 
 
 def test_non_tradable_lane_registrations_are_nulled_not_counted():
@@ -838,6 +844,13 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "bollinger_trend",
         "shock_breakout",
         "adx_ema_bare",
+        # TASK-STR-FWD-019 Wave-2 crew A: ts_momentum/tsmom2 cells.
+        "ts_momentum",
+        "ts_momentum_roc42",
+        "ts_momentum_roc168",
+        "ts_momentum_roc42_4h",
+        "ts_momentum_roc168_rd001",
+        "tsmom2_dual_crypto",
     }
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -846,7 +859,14 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         assert entry["oos_win_rate_prior"] is None, key
         assert entry["expected_net_edge_bps"] is None, key
         assert entry["runtime_priors_nulled"] is True, key
-    for key in ("bollinger_trend", "shock_breakout", "adx_ema_bare"):
+    for key in (
+        "bollinger_trend", "shock_breakout", "adx_ema_bare",
+        # TASK-STR-FWD-019 Wave-2 crew A: ts_momentum/tsmom2 cells are
+        # lane-executable too — priors live, stamp False.
+        "ts_momentum", "ts_momentum_roc42", "ts_momentum_roc168",
+        "ts_momentum_roc42_4h", "ts_momentum_roc168_rd001",
+        "tsmom2_dual_crypto",
+    ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
         assert entry["oos_win_rate_prior"] is not None, key
