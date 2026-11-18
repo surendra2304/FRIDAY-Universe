@@ -751,6 +751,120 @@ FX_MR_V4_STRATEGY = {
 # Explicit classification of all candidate strategies
 # ==============================================================================
 
+KELTNER_BREAKOUT_FOREX_STRATEGY = {
+    "NAME": "Keltner Breakout (close crosses EMA(20) +/- 2.0 x ATR(14) band) — FOREX28 / OANDA",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "EMA_PERIOD": 20,
+    "BAND_MULT": 2.0,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (241 trades, 3/5 folds,
+    # second tier only — Bonferroni FAIL at N=3,899, not a promotion):
+    "OOS_WIN_RATE": 0.3900,
+    "OOS_PROFIT_FACTOR": 1.1273,
+    "OOS_EXPECTANCY_PCT": 0.137,
+    "OOS_TRADES": 241,
+    "OOS_POSITIVE_FOLDS": 3,
+}
+
+KELTNER_BREAKOUT_EMA20_M15_4H_STRATEGY = {
+    "NAME": "Keltner Breakout (close crosses EMA(20) +/- 1.5 x ATR(14) band)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "EMA_PERIOD": 20,
+    "BAND_MULT": 1.5,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (4336 trades, 3/5 folds,
+    # second tier only — Bonferroni FAIL at N=3,899, not a promotion):
+    "OOS_WIN_RATE": 0.3605,
+    "OOS_PROFIT_FACTOR": 1.0731,
+    "OOS_EXPECTANCY_PCT": 0.256,
+    "OOS_TRADES": 4336,
+    "OOS_POSITIVE_FOLDS": 3,
+}
+
+KELTNER_BREAKOUT_EMA20_M2_4H_STRATEGY = {
+    "NAME": "Keltner Breakout (close crosses EMA(20) +/- 2.0 x ATR(14) band)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "EMA_PERIOD": 20,
+    "BAND_MULT": 2.0,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (3314 trades, 2/5 folds,
+    # second tier only — Bonferroni FAIL at N=3,899, not a promotion):
+    "OOS_WIN_RATE": 0.3669,
+    "OOS_PROFIT_FACTOR": 1.0816,
+    "OOS_EXPECTANCY_PCT": 0.288,
+    "OOS_TRADES": 3314,
+    "OOS_POSITIVE_FOLDS": 2,
+}
+
+KELTNER_BREAKOUT_EMA20_M15_STRATEGY = {
+    "NAME": "Keltner Breakout (close crosses EMA(20) +/- 1.5 x ATR(14) band)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "EMA_PERIOD": 20,
+    "BAND_MULT": 1.5,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (605 trades, 3/5 folds,
+    # second tier only — Bonferroni FAIL at N=3,899, not a promotion):
+    "OOS_WIN_RATE": 0.3471,
+    "OOS_PROFIT_FACTOR": 1.1424,
+    "OOS_EXPECTANCY_PCT": 1.215,
+    "OOS_TRADES": 605,
+    "OOS_POSITIVE_FOLDS": 3,
+}
+
+KELTNER_BREAKOUT_EMA50_M2_STRATEGY = {
+    "NAME": "Keltner Breakout (close crosses EMA(50) +/- 2.0 x ATR(14) band)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "EMA_PERIOD": 50,
+    "BAND_MULT": 2.0,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (501 trades, 3/5 folds,
+    # second tier only — Bonferroni FAIL at N=3,899, not a promotion):
+    "OOS_WIN_RATE": 0.3593,
+    "OOS_PROFIT_FACTOR": 1.1696,
+    "OOS_EXPECTANCY_PCT": 1.465,
+    "OOS_TRADES": 501,
+    "OOS_POSITIVE_FOLDS": 3,
+}
+
+KELTNER_BREAKOUT_STRATEGY = {
+    "NAME": "Keltner Breakout (close crosses EMA(20) +/- 2.0 x ATR(14) band)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "EMA_PERIOD": 20,
+    "BAND_MULT": 2.0,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (437 trades, 3/5 folds,
+    # second tier only — Bonferroni FAIL at N=3,899, not a promotion):
+    "OOS_WIN_RATE": 0.3753,
+    "OOS_PROFIT_FACTOR": 1.2284,
+    "OOS_EXPECTANCY_PCT": 1.941,
+    "OOS_TRADES": 437,
+    "OOS_POSITIVE_FOLDS": 3,
+}
+
 # ==============================================================================
 # TASK-STR-CLEANUP-001 (owner directive, 2026-11-15): every strategy whose
 # verified out-of-sample profit factor (net of costs, TASK-STR-BT-001 /
@@ -1892,6 +2006,138 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "max_stop_pct": 0.25,
         "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): vol_adaptive_trend/ema20_50_gate @ CRYPTO30 4h meets the second tier (OOS expectancy +0.550%/trade, PF 1.1346, 1,293 OOS trades, 4/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.5 x ATR(14) measured up to 16.3% of price over all post-warmup bars on the fwd002 SOLUSDT 4h fixture slice (8.9% at entry bars) — above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.25 (sanity bound only; FWD-006 sizes by risk / stop distance).",
+    },
+    "keltner_breakout": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close crosses above EMA(20) + 2.0 x ATR(14). SHORT: close crosses below EMA(20) - 2.0 x ATR(14). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_keltner(df, 20, 2.0, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3753,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 194.1,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): keltner_breakout/ema20_m2.0 @ CRYPTO30 1d meets the second tier (OOS expectancy +1.941%/trade, PF 1.2284, 437 OOS trades, 3/5 positive folds, PF @2x costs 1.2072) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. TASK-STR-FWD-012 stop check: judged stop 2.0 x ATR(14) on 1d crypto fixtures reaches 28.4% of price at entry bars (SOL 1d) and 71.28% across all fixture bars — structurally above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.90 (sanity bound above the measured max; the override changes admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "keltner_breakout_ema50_m2": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close crosses above EMA(50) + 2.0 x ATR(14). SHORT: close crosses below EMA(50) - 2.0 x ATR(14). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_keltner(df, 50, 2.0, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3593,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 146.5,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): keltner_breakout/ema50_m2.0 @ CRYPTO30 1d meets the second tier (OOS expectancy +1.465%/trade, PF 1.1696, 501 OOS trades, 3/5 positive folds, PF @2x costs 1.1496) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. TASK-STR-FWD-012 stop check: judged stop 2.0 x ATR(14) on 1d crypto fixtures reaches 28.4% of price at entry bars (SOL 1d) and 71.28% across all fixture bars — structurally above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.90 (sanity bound above the measured max; the override changes admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "keltner_breakout_ema20_m15": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close crosses above EMA(20) + 1.5 x ATR(14). SHORT: close crosses below EMA(20) - 1.5 x ATR(14). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_keltner(df, 20, 1.5, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3471,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 121.5,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): keltner_breakout/ema20_m1.5 @ CRYPTO30 1d meets the second tier (OOS expectancy +1.215%/trade, PF 1.1424, 605 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. TASK-STR-FWD-012 stop check: judged stop 2.0 x ATR(14) on 1d crypto fixtures reaches 28.4% of price at entry bars (SOL 1d) and 71.28% across all fixture bars — structurally above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.90 (sanity bound above the measured max; the override changes admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "keltner_breakout_ema20_m2_4h": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close crosses above EMA(20) + 2.0 x ATR(14). SHORT: close crosses below EMA(20) - 2.0 x ATR(14). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_keltner(df, 20, 2.0, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3669,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 28.8,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.30,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): keltner_breakout/ema20_m2.0 @ CRYPTO30 4h meets the second tier (OOS expectancy +0.288%/trade, PF 1.0816, 3,314 OOS trades, 2/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. TASK-STR-FWD-012 stop check: judged stop 2.0 x ATR(14) on 4h fixtures measures at most 13.0% of price across all BTC/SOL bars (entry-bar max in this entry's record), under the 0.15 engine-global cap on the fixtures — but the CRYPTO30 tail (INJ/SUI/APT-class names) plausibly exceeds it, so this entry carries max_stop_pct 0.30 (rounded sanity bound above the measured max; admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "keltner_breakout_ema20_m15_4h": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close crosses above EMA(20) + 1.5 x ATR(14). SHORT: close crosses below EMA(20) - 1.5 x ATR(14). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_keltner(df, 20, 1.5, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3605,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 25.6,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.30,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): keltner_breakout/ema20_m1.5 @ CRYPTO30 4h meets the second tier (OOS expectancy +0.256%/trade, PF 1.0731, 4,336 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. TASK-STR-FWD-012 stop check: judged stop 2.0 x ATR(14) on 4h fixtures measures at most 13.0% of price across all BTC/SOL bars (entry-bar max in this entry's record), under the 0.15 engine-global cap on the fixtures — but the CRYPTO30 tail (INJ/SUI/APT-class names) plausibly exceeds it, so this entry carries max_stop_pct 0.30 (rounded sanity bound above the measured max; admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "keltner_breakout_forex": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close crosses above EMA(20) + 2.0 x ATR(14). SHORT: close crosses below EMA(20) - 2.0 x ATR(14). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_keltner(df, 20, 2.0, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3900,
+        "total_friction_bps": 10.0,
+        "expected_net_edge_bps": 13.7,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": FOREX28_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "forward_venues": ["oanda_practice"],
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): keltner_breakout/ema20_m2.0 @ FOREX28 1d meets the second tier (OOS expectancy +0.137%/trade, PF 1.1273, 241 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. TASK-STR-FWD-012 stop check: daily FX 2.0 x ATR(14) stops measure at most 2.94% of price across all bars of the FX fixture slices (EURUSD/GBPJPY/USDJPY 1d) — far under the 0.15 engine-global cap — so no max_stop_pct override is carried. Friction: the RD-002 forex28 record carries per-symbol round-trip costs of 6.0-10.0 bps; this entry records the conservative maximum, 10.0. DEPENDENCY: this config trades on the OANDA practice venue via the OANDA runner (a separate crew's FWD-019 runner PR); the Binance daemon will not execute it.",
     },
 }
 
