@@ -165,9 +165,9 @@ def _closed_frame(
     """Drop still-forming trailing bars (bar open + duration > now).
 
     Epoch seconds are computed by timedelta division (resolution-
-    independent); the bollinger template's ``idx.view("int64")``
-    returns the index's native unit (microseconds under pandas 3),
-    which silently disables the drop there."""
+    independent); the index's int64 view returns its native unit
+    (microseconds under pandas 3), which silently disables the
+    drop when divided by 1e9 (fixed fleet-wide, TASK-STR-FWD-025)."""
     if df is None or len(df) == 0:
         return df
     now = time.time() if now_s is None else now_s
