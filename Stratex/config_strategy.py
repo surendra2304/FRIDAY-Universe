@@ -1667,6 +1667,24 @@ VOL_COMPRESSION_STRATEGY = {
     "OOS_EXPECTANCY_PCT": 0.182,
 }
 
+VOLUME_BREAKOUT_STRATEGY = {
+    "NAME": "Volume Breakout (Donchian(20) break, volume > 1.5x SMA(20) volume)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "DONCHIAN_BARS": 20,
+    "VOLUME_WINDOW": 20,
+    "VOLUME_CONFIRM": 1.5,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families2)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families2)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (grid_rows record):
+    "OOS_TRADES": 558,
+    "OOS_WIN_RATE": 0.3925,
+    "OOS_PROFIT_FACTOR": 1.3038,
+    "OOS_EXPECTANCY_PCT": 2.417,
+}
+
 # ==============================================================================
 # TASK-STR-CLEANUP-001 (owner directive, 2026-11-15): every strategy whose
 # verified out-of-sample profit factor (net of costs, TASK-STR-BT-001 /
@@ -3894,6 +3912,28 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "max_stop_pct": 0.90,
         "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): vol_compression/squeeze_raw @ CRYPTO30 1h meets the second tier (OOS expectancy +0.076%/trade, PF 1.0502, 1,926 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Stop-cap override (TASK-STR-FWD-012): as for vol_compression (4h-fixture measurement; entry-bar max 4.97% on SOLUSDT 4h, all-bar tail 56.04%) — max_stop_pct 0.90 declared (sanity bound only; admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "volume_breakout": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close above the prior 20-bar high AND volume > 1.5 x the trailing 20-bar mean volume. SHORT: close below the prior 20-bar low AND the same volume confirmation. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_volume_breakout(df, confirm=1.5, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3925,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 241.7,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): volume_breakout/donch20_vol1.5 @ CRYPTO30 1d meets the second tier (OOS expectancy +2.417%/trade, PF 1.3038, 558 OOS trades, 3/5 positive folds, PF @2x costs 1.2801) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Duplicate-alias note: volume_breakout/donch20_novol @ CRYPTO30 1d is an identical trade stream to donchian_turtle/n20_b24 (audit §1.4), which is NOT separately wired here — dedupe per audit §1.4; the donchian crew wires that stream canonically. Stop-cap override (TASK-STR-FWD-012): judged stops measured up to 71.28% of price at entry bars on the SOLUSDT 1d fixture (the 2022-11-09 FTX-collapse bar; BTCUSDT max 12.89%) — above the 0.15 engine-global cap — so max_stop_pct 0.90 is declared (sanity bound only; admissibility only, FWD-006 sizes by risk / stop distance). Module note: the pre-existing strategy_volume_breakout.py was a different, never-judged, governance-UNREGISTERED module (prior-10-bar break + EMA50/200 filter); the judged port replaces its logic — see the module docstring and PR body.",
     },
 }
 

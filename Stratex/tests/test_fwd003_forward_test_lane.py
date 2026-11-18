@@ -901,6 +901,8 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         # TASK-STR-FWD-019 Wave-2 (PR #999):
         "vol_compression",
         "vol_compression_squeeze_raw",
+        # TASK-STR-FWD-019 Wave-2 (PR #1001):
+        "volume_breakout",
     } | overlay
 
 
@@ -1012,6 +1014,8 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         # TASK-STR-FWD-019 Wave-2 (PR #999):
         "vol_compression",
         "vol_compression_squeeze_raw",
+        # TASK-STR-FWD-019 Wave-2 (PR #1001):
+        "volume_breakout",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -1086,6 +1090,7 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "macd_trend",
         "vol_compression",
         "vol_compression_squeeze_raw",
+        "volume_breakout",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
