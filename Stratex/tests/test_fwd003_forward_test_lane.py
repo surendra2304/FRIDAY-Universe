@@ -812,10 +812,12 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
     # The RD-003 documentary additions remain excluded. The lane's
     # executable set has since grown by deliberate, separately-tasked
     # admissions only: TASK-STR-FWD-018's wave-1 bracket variants
-    # (the eight bracket keys below) and TASK-STR-FWD-021's 21
-    # RD-014 overlay entries (execution_mode "overlay", executed by
-    # the daemon's overlay manager — see
-    # test_fwd021_overlay_service.py).
+    # (the eight bracket keys below), TASK-STR-FWD-021's 21 RD-014
+    # overlay entries (execution_mode "overlay", executed by the
+    # daemon's overlay manager — see
+    # test_fwd021_overlay_service.py) and TASK-STR-FWD-022's
+    # wf_select_tsmom procedure entrant (execution_mode
+    # "wf_select" — see test_fwd022_wf_select_service.py).
     overlay = {
         key
         for key, entry in cs.PRODUCTION_STRATEGY_REGISTRY.items()
@@ -834,6 +836,8 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         # TASK-STR-FWD-018 wave 1 (ichimoku variants):
         "ichimoku_trend_1d",
         "ichimoku_trend_raw",
+        # TASK-STR-FWD-022 (wf-select entrant):
+        "wf_select_tsmom",
     } | overlay
 
 
@@ -878,6 +882,7 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         # TASK-STR-FWD-018 wave 1 (ichimoku variants):
         "ichimoku_trend_1d",
         "ichimoku_trend_raw",
+        "wf_select_tsmom",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -895,6 +900,7 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "shock_breakout_k15",
         "ichimoku_trend_1d",
         "ichimoku_trend_raw",
+        "wf_select_tsmom",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key

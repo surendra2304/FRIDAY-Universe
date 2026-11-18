@@ -260,6 +260,22 @@ SLEEVE_SHOCK_BREAKOUT_STRATEGY = {
     "OOS_WIN_RATE": 0.4267,
 }
 
+WF_SELECT_TSMOM_STRATEGY = {
+    "NAME": "WF-Select ts_momentum (walk-forward selection procedure, CRYPTO30 1d)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-022)",
+    "PROCEDURE": "ts_momentum__crypto30__1d",
+    "TIMEFRAME": "1d",
+    "SL_ATR": 2.0,          # judged bracket BR24
+    "TP_ATR": 4.0,          # judged bracket BR24
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 walk-forward selection record (wf_select_judge:
+    # expanding in-sample window, rank by PF then win rate, top 1;
+    # pooled over the picks roc24/roc168/roc72/roc42/roc42):
+    "OOS_WIN_RATE": 0.3664,
+    "OOS_PROFIT_FACTOR": 1.1694,
+    "OOS_EXPECTANCY_PCT": 1.4096,
+}
+
 SLEEVE_TSMOM2_DUAL_STRATEGY = {
     "NAME": "Sleeve leg: Dual Momentum (ROC90 zero-cross + EMA200 filter)",
     "VERSION": "v1.0.0 (TASK-STR-FWD-002 sleeve)",
@@ -1394,6 +1410,36 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "max_heat_pct": 0.02,
         "forward_lane": "FORWARD_TEST",
         "reason": 'TASK-STR-RD-014 two-tier admission (owner rule 2026-11-18): tsmom42_vt60_none @ CRYPTO30 4h — 10474 OOS episodes, expectancy +0.117%/episode, PF 1.0908, win rate 0.2987, 4/5 positive folds, standalone max drawdown -1.000 (the overlay\'s vol-target sizing and drawdown brake are integral to the judged object — it is NOT admitted as a standalone config). Passed the second tier (expectancy>0, PF>=1.05, >=200 episodes, pre-Bonferroni); it did NOT pass the frozen full bar. FORWARD_TEST lane (TASK-STR-FWD-021): DEMO venues only, phase-3 protocol package, fills tagged FORWARD_TEST, never blended with the VALIDATED entrants\' scorecards. Execution is by the daemon\'s overlay manager (execution_mode "overlay"), NOT the bracket signal path — the judged object has no SL/TP and none is invented. Sizing: virtual book = overlay_capital_pct (0.005) x venue equity; a symbol\'s target notional is m x w x book. Disclosed translations: the judged books are per-symbol standalone equity curves while live the 21 configurations share one demo account and one venue position per symbol (contention is skipped and logged, never forced); at a 0.5% book the venue-level 5% MTM drawdown kill cannot bind on a single overlay configuration, so the operative protections are the judged brake itself and the expectancy/PF kill after >=50 closed fills; targets below the manager\'s $10 notional floor are skipped and logged. Kill criteria otherwise unchanged (expectancy<0 or PF<1.0 after >=50 closed, or MTM drawdown >5% of venue equity).',
+    },
+    # ------------------------------------------------------------------
+    # TASK-STR-FWD-022 (2026-11-18): WF-SELECTION lane entrant. The
+    # entrant is a selection PROCEDURE (Appendix A of the near-miss
+    # re-audit), not a fixed configuration; wf_select_service.py runs
+    # the judged selection rule per epoch and the module trades the
+    # current pick. Its forward record is its own.
+    # ------------------------------------------------------------------
+    "wf_select_tsmom": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-022)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "execution_mode": "wf_select",
+        "wf_select": {"procedure": "ts_momentum__crypto30__1d", "epoch": "calendar_month_utc"},
+        "entry_conditions": "Walk-forward selection procedure, not a fixed config: at each calendar-month (UTC) epoch the judged rule (expanding in-sample window over bars closed before the epoch; rank variants roc24/roc42/roc72/roc168 by profit_factor_net, then win rate; top 1) picks the ts_momentum variant for the epoch; the module then trades that variant's ROC sign-cross entries. Judged: rigorous_backtest/rd/common.py wf_select_judge over rd2 grid streams; live machinery: wf_select_service.py (line-faithful ports, equivalence-tested).",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3664,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 141.0,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "reason": "TASK-STR-RD-002 WALK-FORWARD SELECTION PROCEDURE (near-miss re-audit Appendix A): ts_momentum @ CRYPTO30 1d, judged by rd/common.py wf_select_judge (expanding in-sample window; per fold, rank variants by profit_factor_net then win_rate, take top 1) — pooled OOS record of the picks (roc24/roc168/roc72/roc42/roc42): 453 trades, expectancy +1.4096%/trade, PF 1.1694, win rate 0.3664, 3/5 positive folds. Meets the owner's second tier (expectancy>0, PF>=1.05, >=200 trades, pre-Bonferroni); it is NOT a full-bar promotion. Owner directed 2026-11-18 (implement-all) that tier-meeting procedures run on demo as FORWARD_TEST entrants. Execution: wf_select_service.py re-runs the judged selection rule at each calendar-month (UTC) epoch over bars closed before the epoch start, persists the pick (data/wf_select/ state + append-only selection log with the full in-sample table), and strategy_wf_select_tsmom trades the picked variant's judged entries with the BR24 bracket. The procedure's fills carry its own strategy name — its forward record is never blended with fixed ts_momentum configurations. Disclosed translations: live in-sample history is the venue candle history (1500 bars requested), not the judged cache from 2022 — the span used is logged per selection; trades still open at an epoch boundary are marked at the last pre-epoch close (the simulator's END_OF_DATA rule) where the retrospective record used final outcomes; the monthly epoch cadence is a declared service parameter (the judged W1-W5 windows were the judgement calendar). FORWARD_TEST lane terms as for bollinger_trend (demo venues only, 0.1% per-trade risk, 2% heat cap, 3% daily breaker, kill criteria expectancy<0 or PF<1.0 after >=50 closed trades or MTM drawdown >5% of venue equity).",
     },
     "tsmom2_dual": {
         "status": "FORWARD_TEST",
