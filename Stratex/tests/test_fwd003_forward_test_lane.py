@@ -879,6 +879,8 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         # TASK-STR-FWD-019 Wave-2 (PR #989): RD-001 choppiness + volatility breakout:
         "volatility_breakout",
         "choppiness_breakout",
+        "psar_trend_af001_max010",
+        "psar_trend_af002_max020",
     } | overlay
 
 
@@ -966,6 +968,8 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         # TASK-STR-FWD-019 Wave-2 (PR #989): RD-001 choppiness + volatility breakout:
         "volatility_breakout",
         "choppiness_breakout",
+        "psar_trend_af001_max010",
+        "psar_trend_af002_max020",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -1020,6 +1024,8 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "rsi_momentum_forex",
         "volatility_breakout",
         "choppiness_breakout",
+        "psar_trend_af001_max010",
+        "psar_trend_af002_max020",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
