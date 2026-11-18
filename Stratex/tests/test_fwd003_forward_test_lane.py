@@ -847,6 +847,12 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         "vol_adaptive_trend_ema20_50_nogate_4h",
         "vol_adaptive_trend_ema12_26_nogate_4h",
         "vol_adaptive_trend_ema20_50_gate_4h",
+        "keltner_breakout",
+        "keltner_breakout_ema50_m2",
+        "keltner_breakout_ema20_m15",
+        "keltner_breakout_ema20_m2_4h",
+        "keltner_breakout_ema20_m15_4h",
+        "keltner_breakout_forex",
     } | overlay
 
 
@@ -902,6 +908,12 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "vol_adaptive_trend_ema20_50_nogate_4h",
         "vol_adaptive_trend_ema12_26_nogate_4h",
         "vol_adaptive_trend_ema20_50_gate_4h",
+        "keltner_breakout",
+        "keltner_breakout_ema50_m2",
+        "keltner_breakout_ema20_m15",
+        "keltner_breakout_ema20_m2_4h",
+        "keltner_breakout_ema20_m15_4h",
+        "keltner_breakout_forex",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -928,6 +940,12 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "vol_adaptive_trend_ema20_50_nogate_4h",
         "vol_adaptive_trend_ema12_26_nogate_4h",
         "vol_adaptive_trend_ema20_50_gate_4h",
+        "keltner_breakout",
+        "keltner_breakout_ema50_m2",
+        "keltner_breakout_ema20_m15",
+        "keltner_breakout_ema20_m2_4h",
+        "keltner_breakout_ema20_m15_4h",
+        "keltner_breakout_forex",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
