@@ -211,6 +211,10 @@ class StratexTradingEngine:
         self._heartbeat_stop = threading.Event()
         self._heartbeat_thread = None
         self._last_trend_manage = 0.0
+        # TASK-STR-FWD-021: overlay manager throttles (separate for the
+        # pre-gate exits pass and the post-gate entries pass).
+        self._last_overlay_exits = 0.0
+        self._last_overlay_entries = 0.0
         self._last_summary_date = ""
         # TASK-STR-PHASE2-001 measurement hooks (best-effort, never fatal):
         # shadow-trade tracker for OBSERVE_ONLY strategies, the hourly
@@ -515,6 +519,13 @@ class StratexTradingEngine:
         # the loss-limit gate so exits are never blocked by it.
         self._manage_forward_time_exits()
 
+        # TASK-STR-FWD-021: RD-014 overlay positions are managed toward
+        # their judged target weights. Risk-reducing actions (closes,
+        # reductions, brake flattening) run here, before the loss-limit
+        # gate, so a losing overlay book can always be reduced; entries
+        # and increases run in the second pass below, after the gate.
+        self._manage_overlay_positions(allow_entries=False)
+
         # TASK-STR-FWD-006: phase-3 kill criteria on the scan cadence,
         # marked to market — evaluated here (after close reconciliation,
         # before any entry decision) so a breached strategy is denylisted
@@ -541,6 +552,10 @@ class StratexTradingEngine:
         if risk.get("daily_loss_limit_hit", False):
             logger.warning("[STRATEX] Daily loss limit hit, skipping scan")
             return results
+
+        # TASK-STR-FWD-021: overlay entries/increases, only once the
+        # daily-loss gate above has passed.
+        self._manage_overlay_positions(allow_entries=True)
 
         # Prefetch candles for all symbols
         self._prefetch_candles()
@@ -1499,6 +1514,312 @@ class StratexTradingEngine:
             return value if value > 0 else None
         except Exception:
             return None
+
+    # ------------------------------------------------------------------
+    # TASK-STR-FWD-021: RD-014 vol-target overlay manager.
+    #
+    # The 21 overlay configurations (config_strategy entries with
+    # execution_mode "overlay") have no SL/TP bracket, so the
+    # get_signal/_execute_signal path cannot run them. This manager
+    # holds each configuration's venue position at the judged target
+    # weight m * w (overlay_service.target_weight — signal, vol-target
+    # sizing and the shadow-equity drawdown brake, ported line-faithfully
+    # from rigorous_backtest/rd14/family14.py). Actions are bar-cadenced
+    # and target-based, hence idempotent: no state persists, and a
+    # restart simply re-derives the same target from candle history.
+    #
+    # Governance, mirroring the lane's standing rules:
+    # - FORWARD_TEST venue confinement: only venues attested demo in
+    #   the strategy registry are touched (fail-closed).
+    # - A configuration on the persisted denylist (phase-3 kill
+    #   criteria, _maybe_apply_forward_guard) is never opened or
+    #   increased; its open position is still reduced/closed here.
+    # - Entries/increases additionally require the fail-closed
+    #   pause/panic reads of _execute_signal and run only in the
+    #   post-daily-loss-gate pass (allow_entries=True); closes and
+    #   reductions run in both passes, like the other managers'
+    #   exits, so a losing book can always be reduced.
+    # - One venue position per symbol account-wide: a symbol held by
+    #   another strategy is contention — skipped and counted, never
+    #   touched.
+    # Order routing: opens go through engine.place_order (position
+    # attribution + fill-ledger tag); adjustments to an open position
+    # go through the venue adapter directly (engine.place_order is an
+    # open-only primitive — it would overwrite the tracked position),
+    # following the _manage_trend_positions precedent. A sign flip is
+    # a close in this pass and a fresh open once the reconciler shows
+    # the symbol flat — never a single double-sided order.
+    # ------------------------------------------------------------------
+
+    _OVERLAY_MIN_ORDER_NOTIONAL = 10.0    # below this, an open/increase is not worth its fees
+    _OVERLAY_REBALANCE_TOLERANCE = 5.0    # |delta| below this is held, not churned
+    _OVERLAY_HISTORY_LIMIT = 1500         # candles requested per symbol/timeframe
+
+    def _overlay_entries_blocked(self) -> bool:
+        """Fail-closed pause/panic reads, mirroring _execute_signal."""
+        try:
+            from trading_pause import is_trading_paused
+
+            if is_trading_paused():
+                return True
+        except Exception as e:
+            logger.error(
+                f"[STRATEX] Overlay pause-state read failed ({e}); "
+                "failing CLOSED, entries blocked"
+            )
+            return True
+        try:
+            from panic_state import is_panic_active, is_kill_switch_locked
+
+            if is_panic_active() or is_kill_switch_locked():
+                return True
+        except Exception as e:
+            logger.error(
+                f"[STRATEX] Overlay panic-state read failed ({e}); "
+                "failing CLOSED, entries blocked"
+            )
+            return True
+        return False
+
+    def _manage_overlay_positions(self, allow_entries: bool) -> None:
+        now = time.time()
+        throttle_attr = (
+            "_last_overlay_entries" if allow_entries else "_last_overlay_exits"
+        )
+        if now - getattr(self, throttle_attr, 0.0) < 60:
+            return
+        setattr(self, throttle_attr, now)
+        try:
+            from config_strategy import PRODUCTION_STRATEGY_REGISTRY
+
+            import overlay_service
+        except Exception as e:
+            logger.warning(f"[STRATEX] Overlay manager unavailable: {e}")
+            return
+        configs = {
+            key: entry
+            for key, entry in PRODUCTION_STRATEGY_REGISTRY.items()
+            if entry.get("status") == "FORWARD_TEST"
+            and entry.get("execution_mode") == "overlay"
+            and entry.get("forward_protocol")
+            and entry.get("lane_assets")
+        }
+        if not configs:
+            return
+        try:
+            demo_venues = strategy_registry.demo_venues()
+        except Exception as e:
+            logger.warning(
+                f"[STRATEX] Overlay demo-venue attestation read failed: {e}"
+            )
+            return
+        entries_blocked = (not allow_entries) or self._overlay_entries_blocked()
+        acted = 0
+        contention = 0
+        evaluated = 0
+        for key in sorted(configs):
+            entry = configs[key]
+            strat_name = "strategy_" + key
+            denylisted = strat_name in self.strategy_denylist
+            tf = str(entry.get("timeframe") or "")
+            params = entry.get("overlay") or {}
+            try:
+                signal = str(params["signal"])
+                vol_target = float(params["vol_target"])
+                brake = str(params["brake"])
+                cost = float(params.get("cost_per_turnover", 0.0008))
+                alloc = float(entry.get("overlay_capital_pct", 0.005))
+            except Exception as e:
+                logger.warning(
+                    f"[STRATEX] Overlay config {key} malformed ({e}); skipped"
+                )
+                continue
+            bar_seconds = overlay_service.BAR_SECONDS.get(tf)
+            if bar_seconds is None:
+                continue
+            for venue, venue_symbols in self.symbols.items():
+                if venue not in demo_venues:
+                    continue
+                adapter = self.engine.venues.get(venue)
+                if adapter is None:
+                    continue
+                try:
+                    equity = float(self.engine.get_venue_equity(venue) or 0.0)
+                except Exception:
+                    equity = 0.0
+                if equity <= 0:
+                    continue
+                book = alloc * equity
+                for symbol in entry["lane_assets"]:
+                    if symbol not in venue_symbols:
+                        continue
+                    try:
+                        done = self._overlay_manage_one(
+                            overlay_service=overlay_service,
+                            key=key,
+                            strat_name=strat_name,
+                            venue=venue,
+                            adapter=adapter,
+                            symbol=symbol,
+                            tf=tf,
+                            bar_seconds=bar_seconds,
+                            signal=signal,
+                            vol_target=vol_target,
+                            brake=brake,
+                            cost=cost,
+                            book=book,
+                            entries_blocked=entries_blocked or denylisted,
+                            now=now,
+                        )
+                        evaluated += 1
+                        if done == "acted":
+                            acted += 1
+                        elif done == "contention":
+                            contention += 1
+                    except Exception as e:
+                        logger.warning(
+                            f"[STRATEX] Overlay manage failed for "
+                            f"{key} {venue}:{symbol}: {e}"
+                        )
+        if acted or contention:
+            logger.info(
+                f"[STRATEX] Overlay manager ({'entries' if allow_entries else 'exits'} pass): "
+                f"{acted} orders, {contention} contention skips, "
+                f"{evaluated} config-symbols evaluated"
+            )
+
+    def _overlay_manage_one(self, *, overlay_service, key, strat_name, venue,
+                            adapter, symbol, tf, bar_seconds, signal,
+                            vol_target, brake, cost, book,
+                            entries_blocked, now) -> str:
+        """Drive one (config, venue, symbol) toward its target weight.
+
+        Returns "acted" (an order was placed), "contention" (symbol
+        held by another strategy) or "held".
+        """
+        vs_key = f"{venue}:{symbol}"
+        pos = self.engine.positions.get(vs_key)
+        if pos is not None and self.engine.position_strategy.get(vs_key) != strat_name:
+            return "contention"
+        candles = self.engine.get_candles(
+            venue, symbol, tf, self._OVERLAY_HISTORY_LIMIT
+        )
+        if not candles:
+            return "held"
+        closes = []
+        stamps = []
+        for c in candles:
+            try:
+                ts = float(c.get("timestamp", 0))
+                px = float(c["close"])
+            except Exception:
+                continue
+            if ts + bar_seconds <= now and px > 0:
+                stamps.append(ts)
+                closes.append(px)
+        if len(closes) < overlay_service.MIN_BARS:
+            return "held"
+        import pandas as pd
+
+        target = overlay_service.target_weight(
+            pd.Series(closes), signal, vol_target, brake, tf, cost
+        )
+        last_close = closes[-1]
+        ticker = self.engine.get_ticker(venue, symbol)
+        price = float(ticker.last) if ticker and ticker.last else last_close
+        if price <= 0:
+            return "held"
+        target_notional = target["weight"] * book
+        cur_qty = 0.0
+        if pos is not None:
+            cur_qty = float(pos.quantity or 0.0)
+            if str(pos.side).upper() in ("SHORT", "SELL"):
+                cur_qty = -cur_qty
+        cur_notional = cur_qty * last_close
+        delta_notional = target_notional - cur_notional
+
+        def _log(action, qty):
+            logger.info(
+                f"[STRATEX] Overlay {action}: {key} {venue}:{symbol} {tf} "
+                f"qty={qty:.6f} target_w={target['weight']:+.4f} "
+                f"(raw {target['raw_weight']:+.4f}, brake_m={target['brake_m']}, "
+                f"shadow_dd={target['shadow_dd']:.4f}, bars={target['bars']})"
+            )
+
+        # Close: no target, or a sign flip (the open side is taken in a
+        # later pass once the reconciler shows the symbol flat).
+        if pos is not None and (
+            target_notional == 0.0
+            or (target_notional > 0) != (cur_notional > 0)
+        ):
+            close_side = "SELL" if cur_qty > 0 else "BUY"
+            result = adapter.place_order(
+                symbol, close_side, "MARKET", abs(cur_qty)
+            )
+            if result is None:
+                logger.warning(
+                    f"[STRATEX] Overlay close rejected for {key} {venue}:{symbol}"
+                )
+                return "held"
+            if hasattr(adapter, "cancel_protective_orders"):
+                adapter.cancel_protective_orders(symbol)
+            _log("close", abs(cur_qty))
+            return "acted"
+        if abs(delta_notional) < self._OVERLAY_REBALANCE_TOLERANCE:
+            return "held"
+        if delta_notional * (1 if target_notional >= 0 else -1) < 0:
+            # Reduction toward (not past) the target.
+            reduce_qty = min(abs(delta_notional) / price, abs(cur_qty))
+            if reduce_qty <= 0:
+                return "held"
+            side = "SELL" if cur_qty > 0 else "BUY"
+            result = adapter.place_order(symbol, side, "MARKET", reduce_qty)
+            if result is None:
+                logger.warning(
+                    f"[STRATEX] Overlay reduce rejected for {key} {venue}:{symbol}"
+                )
+                return "held"
+            _log("reduce", reduce_qty)
+            return "acted"
+        # Open or increase: entries only, under the entry gates.
+        if entries_blocked:
+            return "held"
+        add_notional = abs(delta_notional)
+        if pos is None and add_notional < self._OVERLAY_MIN_ORDER_NOTIONAL:
+            logger.debug(
+                f"[STRATEX] Overlay open skipped for {key} {venue}:{symbol}: "
+                f"target notional ${add_notional:.2f} below the "
+                f"${self._OVERLAY_MIN_ORDER_NOTIONAL:.0f} floor"
+            )
+            return "held"
+        qty = add_notional / price
+        side = "BUY" if delta_notional > 0 else "SELL"
+        if pos is not None:
+            result = adapter.place_order(symbol, side, "MARKET", qty)
+            if result is None:
+                logger.warning(
+                    f"[STRATEX] Overlay increase rejected for {key} {venue}:{symbol}"
+                )
+                return "held"
+            _log("increase", qty)
+            return "acted"
+        can_open, reason = self.engine.can_open_position(venue)
+        if not can_open:
+            logger.debug(
+                f"[STRATEX] Overlay open blocked for {key} {venue}:{symbol}: {reason}"
+            )
+            return "held"
+        result = self.engine.place_order(
+            venue, symbol, side, "MARKET", qty,
+            strategy_name=strat_name, timeframe=tf,
+        )
+        if result is None:
+            logger.warning(
+                f"[STRATEX] Overlay open rejected for {key} {venue}:{symbol}"
+            )
+            return "held"
+        _log("open", qty)
+        return "acted"
 
     def _manage_forward_time_exits(self) -> None:
         """Enforce judged bracket_time exits (e.g. dow_effect max_bars=5).

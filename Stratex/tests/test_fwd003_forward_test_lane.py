@@ -809,16 +809,28 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         if entry.get("status") == "FORWARD_TEST"
         and entry.get("forward_protocol") is True
     }
-    assert protocol == {"bollinger_trend", "shock_breakout", "adx_ema_bare"}
+    # The RD-003 documentary additions remain excluded. The lane's
+    # executable set has since grown by deliberate, separately-tasked
+    # admissions only: TASK-STR-FWD-021's 21 RD-014 overlay entries
+    # (execution_mode "overlay", executed by the daemon's overlay
+    # manager — see test_fwd021_overlay_service.py).
+    overlay = {
+        key
+        for key, entry in cs.PRODUCTION_STRATEGY_REGISTRY.items()
+        if entry.get("execution_mode") == "overlay"
+    }
+    assert len(overlay) == 21
+    assert protocol == {"bollinger_trend", "shock_breakout", "adx_ema_bare"} | overlay
 
 
 def test_non_tradable_lane_registrations_are_nulled_not_counted():
-    """Null-out follow-up (2026-11-16): of the 8 FORWARD_TEST registry
-    entries only 3 can trade. The other 5 registrations must be visibly
-    nulled on the record itself — no runtime prior, no runtime edge,
-    runtime_priors_nulled stamped True — so no consumer counting
-    registry records can mistake them for live lane entrants. The 3
-    executable entrants keep their judged priors for the daemon's
+    """Null-out follow-up (2026-11-16): the FORWARD_TEST registry's
+    non-tradable registrations must be visibly nulled on the record
+    itself — no runtime prior, no runtime edge, runtime_priors_nulled
+    stamped True — so no consumer counting registry records can
+    mistake them for live lane entrants. Executable entrants (the
+    original 3 bracket modules plus, since TASK-STR-FWD-021, the 21
+    overlay entries) keep their judged priors for the daemon's
     expectancy gate and are stamped False."""
     import config_strategy as cs
 
@@ -834,11 +846,16 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         for key, entry in cs.PRODUCTION_STRATEGY_REGISTRY.items()
         if entry.get("status") == "FORWARD_TEST"
     }
+    overlay = {
+        key
+        for key, entry in cs.PRODUCTION_STRATEGY_REGISTRY.items()
+        if entry.get("execution_mode") == "overlay"
+    }
     assert forward_test == non_tradable | {
         "bollinger_trend",
         "shock_breakout",
         "adx_ema_bare",
-    }
+    } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["forward_protocol"] is False, key
@@ -848,6 +865,16 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         assert entry["runtime_priors_nulled"] is True, key
     for key in ("bollinger_trend", "shock_breakout", "adx_ema_bare"):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
+        assert entry["runtime_priors_nulled"] is False, key
+        assert entry["oos_win_rate_prior"] is not None, key
+        assert entry["expected_net_edge_bps"] is not None, key
+    # TASK-STR-FWD-021: the 21 overlay entries are lane-executable
+    # (forward_protocol True, lane_assets non-empty), so they too keep
+    # their judged priors and are stamped False.
+    for key in overlay:
+        entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
+        assert entry["forward_protocol"] is True, key
+        assert entry["lane_assets"], key
         assert entry["runtime_priors_nulled"] is False, key
         assert entry["oos_win_rate_prior"] is not None, key
         assert entry["expected_net_edge_bps"] is not None, key
