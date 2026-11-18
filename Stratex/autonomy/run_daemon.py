@@ -275,6 +275,28 @@ class StratexTradingEngine:
                 f"observe_only={sorted(observe_only)} "
                 f"excluded={sorted(excluded)}"
             )
+            # TASK-STR-FWD-018: a governed strategy missing from a
+            # non-empty STRATEX_STRATEGY_ALLOWLIST is skipped by the
+            # scan loop BEFORE evaluation, silently — the FORWARD_TEST
+            # lane sat in exactly that state from its 2026-11-15 wiring
+            # until this diagnostic (governance line listed it as
+            # armed; zero evaluations, zero signals, zero fills).
+            # Name the blocked strategies loudly at startup so an
+            # allowlist/governance mismatch can never again read as an
+            # armed-but-quiet lane.
+            allowlist = getattr(self, "strategy_allowlist", set())
+            if allowlist:
+                blocked = sorted(
+                    name
+                    for name in executable + forward_test
+                    if name not in allowlist
+                )
+                if blocked:
+                    logger.warning(
+                        "[STRATEX] Governance WARNING: governed strategies "
+                        "are NOT in STRATEX_STRATEGY_ALLOWLIST and will "
+                        f"never be evaluated: {blocked}"
+                    )
         except Exception as e:
             logger.warning(f"[STRATEX] Governance summary failed: {e}")
 
