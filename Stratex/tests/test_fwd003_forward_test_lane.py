@@ -838,6 +838,10 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         "ichimoku_trend_raw",
         # TASK-STR-FWD-022 (wf-select entrant):
         "wf_select_tsmom",
+        # TASK-STR-FWD-019 Wave-2 (PR #981): vol_regime_trend family:
+        "vol_regime_trend",
+        "vol_regime_trend_don20_gate_lo",
+        "vol_regime_trend_ema12_48_gate_lo",
     } | overlay
 
 
@@ -883,6 +887,10 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "ichimoku_trend_1d",
         "ichimoku_trend_raw",
         "wf_select_tsmom",
+        # TASK-STR-FWD-019 Wave-2 (PR #981): vol_regime_trend family:
+        "vol_regime_trend",
+        "vol_regime_trend_don20_gate_lo",
+        "vol_regime_trend_ema12_48_gate_lo",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -901,6 +909,9 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "ichimoku_trend_1d",
         "ichimoku_trend_raw",
         "wf_select_tsmom",
+        "vol_regime_trend",
+        "vol_regime_trend_don20_gate_lo",
+        "vol_regime_trend_ema12_48_gate_lo",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
