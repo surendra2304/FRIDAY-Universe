@@ -441,6 +441,67 @@ TREND_PULLBACK_EMA200_STRATEGY = {
 }
 
 # ==============================================================================
+# TASK-STR-FWD-019 WAVE-2 (2026-11-18): rsi_momentum near-miss admissions.
+# RD-002 rows meeting the owner's second tier (expectancy > 0, PF >= 1.05,
+# >= 200 OOS trades, pre-Bonferroni) but NOT the full frozen bar — see
+# ~/workspace/str-nearmiss/REPORT.md §1.4 rows 67/71/78. The parameter
+# sets below ARE the judged configurations (rigorous_backtest/rd2/
+# families3.py sig_rsi_momentum; bracket BR24; warmup 260).
+# ==============================================================================
+
+RSI_MOMENTUM_STRATEGY = {
+    "NAME": "RSI Momentum (RSI(14) crosses 55 up / 45 down)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "RSI_PERIOD": 14,
+    "RSI_HI": 55.0,
+    "RSI_LO": 45.0,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (grid_rows record):
+    "OOS_TRADES": 648,
+    "OOS_WIN_RATE": 0.3642,
+    "OOS_PROFIT_FACTOR": 1.1016,
+    "OOS_EXPECTANCY_PCT": 0.913,
+}
+
+RSI_MOMENTUM_RSI7_60_40_STRATEGY = {
+    "NAME": "RSI Momentum (RSI(7) crosses 60 up / 40 down)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "RSI_PERIOD": 7,
+    "RSI_HI": 60.0,
+    "RSI_LO": 40.0,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    "OOS_TRADES": 709,
+    "OOS_WIN_RATE": 0.3470,
+    "OOS_PROFIT_FACTOR": 1.0932,
+    "OOS_EXPECTANCY_PCT": 0.856,
+}
+
+RSI_MOMENTUM_FOREX_STRATEGY = {
+    "NAME": "RSI Momentum (RSI(14) crosses 55 up / 45 down) — FOREX28 / OANDA",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "RSI_PERIOD": 14,
+    "RSI_HI": 55.0,
+    "RSI_LO": 45.0,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    "OOS_TRADES": 344,
+    "OOS_WIN_RATE": 0.3721,
+    "OOS_PROFIT_FACTOR": 1.0761,
+    "OOS_EXPECTANCY_PCT": 0.089,
+}
+
+# ==============================================================================
 # FX MEAN REVERSION v4 — OANDA PRACTICE VENUE (TASK-STR-FWD-004, 2026-11-15)
 # Connors RSI(2) reversion behind an EMA(200) regime gate. The runtime
 # parameters live in oanda_demo/strategy.py (MeanReversionConfig) — the SAME
@@ -784,7 +845,84 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "lane_note": "entered sample-starved; forward evidence is the settler",
         "reason": "EXCLUDED from live lane execution (TASK-STR-FWD-003, RD-003 additions): TASK-STR-RD-003 watchlist cell trend_pullback/pb_ema200 @ comm7 1d — 109 OOS trades, expectancy +0.642%/trade, PF 1.182, 3 positive folds, max symbol profit share 0.37. It failed ONLY the >=200-trade floor (a data-span limit, not a performance failure) and failed Bonferroni significance; its PF of 1.182 is also marginally below the 1.2 line, recorded exactly as measured. Entered sample-starved; forward evidence is the settler. Unmappable-universe exclusion exactly as for vol_regime_switch_a: demo-fapi is crypto-only and the OANDA practice account holds 68 FX-only instruments (verified live 2026-11-15); substitution prohibited. Documentary registration only.",
-    }
+    },
+    # ------------------------------------------------------------------
+    # TASK-STR-FWD-019 WAVE-2: rsi_momentum near-miss admissions
+    # (audit ~/workspace/str-nearmiss/REPORT.md §1.4 rows 67/71/78).
+    # FWD-012 stop check (fixtures fwd002, 2.0 x ATR(14) / close at
+    # entry bars): BTCUSDT 1d max 9.87%, SOLUSDT 1d max 20.21%
+    # (rsi14) / 32.94% (rsi7) — above the 0.15 engine-global cap, so
+    # both crypto entries carry max_stop_pct 0.90 (sleeve precedent;
+    # sanity bound only, FWD-006 sizes by risk / stop distance).
+    # Forex entry-bar stops measured 1.58-2.64% on the FX fixtures —
+    # no override needed.
+    # ------------------------------------------------------------------
+    "rsi_momentum": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: RSI(14) crosses up through 55. SHORT: RSI(14) crosses down through 45. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_rsi_momentum(df, 14, 55.0, 45.0, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3642,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 91.3,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): rsi_momentum/rsi14_55_45 @ CRYPTO30 1d meets the second tier (OOS expectancy +0.913%/trade, PF 1.1016, 648 OOS trades, 4/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Stop-cap override (TASK-STR-FWD-012): judged 2.0 x ATR(14) stops measured up to 20.21% of price at entry bars on the SOLUSDT 1d fixture (BTCUSDT 9.87%) — above the 0.15 engine-global cap — so max_stop_pct 0.90 is declared (sanity bound only; the override changes admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "rsi_momentum_rsi7_60_40": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: RSI(7) crosses up through 60. SHORT: RSI(7) crosses down through 40. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_rsi_momentum(df, 7, 60.0, 40.0, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3470,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 85.6,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): rsi_momentum/rsi7_60_40 @ CRYPTO30 1d meets the second tier (OOS expectancy +0.856%/trade, PF 1.0932, 709 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Stop-cap override (TASK-STR-FWD-012): judged stops measured up to 32.94% of price at entry bars on the SOLUSDT 1d fixture (BTCUSDT 10.82%) — above the 0.15 engine-global cap — so max_stop_pct 0.90 is declared (sanity bound only; admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "rsi_momentum_forex": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: RSI(14) crosses up through 55. SHORT: RSI(14) crosses down through 45. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_rsi_momentum(df, 14, 55.0, 45.0, warmup) on the FOREX28 panel, warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3721,
+        "total_friction_bps": 10.0,
+        "expected_net_edge_bps": 8.9,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": FOREX28_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "forward_venues": ["oanda_practice"],
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): rsi_momentum/rsi14_55_45 @ FOREX28 1d meets the second tier (OOS expectancy +0.089%/trade, PF 1.0761, 344 OOS trades, 2/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Judged cost basis is the RD-002 forex model (rigorous_backtest/rd2/costs2.py: 6 bps round trip majors, 10 bps minors/crosses); total_friction_bps carries the 10.0 panel maximum. Stop check (TASK-STR-FWD-012): judged 2.0 x ATR(14) stops measured 1.58% (EURUSD), 1.65% (USDJPY), 2.64% (GBPJPY) max at entry bars on the fwd002 FX fixtures — far below the 0.15 engine-global cap, so no max_stop_pct override. OANDA entry: execution rides the governed OANDA runner (separate PR); this entry carries forward_venues [oanda_practice] so that runner can discover it.",
+    },
 }
 
 # Stored research estimates are not runtime priors unless a strategy has been
