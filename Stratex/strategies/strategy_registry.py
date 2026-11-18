@@ -162,12 +162,13 @@ class UnifiedStrategyRegistry:
         self._items: dict[str, StrategySpec] = {}
         self._health: dict[str, StrategyHealth] = {}
         self._get_signal_fns: dict[str, Callable] = {}
-        # TASK-STR-EXP-002: whether a module's get_signal accepts
-        # evaluation context (symbol/timeframe/venue). Modules with the
-        # classic get_signal(df) signature are called exactly as before;
-        # context-aware modules (ensemble books) receive the frame's
-        # context so they can tell a crypto frame from a forex frame
-        # and a 1d bar from a 1wk bar.
+        # TASK-STR-EXP-002 / TASK-STR-FWD-024: whether a module's
+        # get_signal accepts evaluation context (symbol/timeframe/
+        # venue). Modules with the classic get_signal(df) signature
+        # are called exactly as before; context-aware modules
+        # (ensemble books; the panel-xs entrants, which cannot know
+        # their symbol from the frame alone) receive the frame's
+        # context.
         self._accepts_context: dict[str, bool] = {}
         self._lock = threading.RLock()
         # TASK-STR-FWD-003: venues attested DEMO by the hosting daemon
@@ -232,11 +233,12 @@ class UnifiedStrategyRegistry:
             if get_signal is None or not callable(get_signal):
                 return
 
-            # TASK-STR-EXP-002: detect the context-aware signature.
-            # A module accepts context iff its get_signal declares
-            # symbol/timeframe/venue parameters (or **kwargs). Detection
-            # is best-effort: anything un-inspectable is called the
-            # classic single-argument way, exactly as before.
+            # TASK-STR-EXP-002 / TASK-STR-FWD-024: detect the
+            # context-aware signature. A module accepts context iff
+            # its get_signal declares symbol/timeframe/venue
+            # parameters (or **kwargs). Detection is best-effort:
+            # anything un-inspectable is called the classic
+            # single-argument way, exactly as before.
             accepts_context = False
             try:
                 params = inspect.signature(get_signal).parameters
@@ -459,9 +461,10 @@ class UnifiedStrategyRegistry:
             return {"status": "BLOCKED", "reason": "NO_SIGNAL_FUNCTION", "strategy": name}
 
         try:
-            # TASK-STR-EXP-002: context-aware modules (ensemble books)
-            # receive the frame's symbol/timeframe/venue; classic
-            # get_signal(df) modules are called exactly as before.
+            # TASK-STR-EXP-002 / TASK-STR-FWD-024: context-aware
+            # modules receive the frame's symbol/timeframe/venue;
+            # classic get_signal(df) modules are called exactly as
+            # before.
             if self._accepts_context.get(name):
                 result = get_signal(df, symbol=symbol, timeframe=timeframe, venue=venue)
             else:

@@ -658,6 +658,14 @@ class StratexTradingEngine:
         # epoch has rolled (places no orders; the entrant modules read
         # the persisted pick on their own evaluation path).
         self._maybe_run_wf_selection()
+        # TASK-STR-FWD-024: refresh the cross-sectional panel
+        # memberships (xs_momentum / xs_lowvol) on their judged
+        # rebalance cadence. The ranking runs HERE, in the service
+        # hook — never inside a per-symbol signal evaluation — and
+        # only persists state; entries fire later in this same scan
+        # through the ordinary per-symbol path when a membership's
+        # signal bar is the frame's last closed bar.
+        self._maybe_run_panel_rankings()
 
         # Check daily loss limit. get_risk_summary() runs the daily reset and
         # seeds daily_start_equity on first call, so the breaker below has a
@@ -2066,6 +2074,137 @@ class StratexTradingEngine:
             except Exception as e:
                 logger.warning(
                     f"[STRATEX] WF selection run failed for {key}: {e}"
+                )
+
+    def _maybe_run_panel_rankings(self) -> None:
+        """TASK-STR-FWD-024: refresh cross-sectional panel memberships.
+
+        For each FORWARD_TEST registry entry with execution_mode
+        "panel_xs", when the persisted membership predates the
+        latest judged rebalance bar (or none exists), gather the
+        lane panel's candle history from an attested demo venue and
+        run the judged ranking (panel_signal_service.run_membership
+        — strictly closed bars, panel grid counted from the judged
+        anchor), persist the decision (state + append-only log) and
+        log the membership. Places no orders. Throttled to one check
+        per 10 minutes; a failed run keeps the PREVIOUS membership
+        (fail-closed, wf_select precedent) and retries on the next
+        check.
+        """
+        now = time.time()
+        if now - getattr(self, "_last_panel_xs_check", 0.0) < 600:
+            return
+        self._last_panel_xs_check = now
+        try:
+            from config_strategy import PRODUCTION_STRATEGY_REGISTRY
+
+            import pandas as pd
+
+            import panel_signal_service as pss
+        except Exception as e:
+            logger.warning(f"[STRATEX] Panel ranking unavailable: {e}")
+            return
+        entries = {
+            key: entry
+            for key, entry in PRODUCTION_STRATEGY_REGISTRY.items()
+            if entry.get("status") == "FORWARD_TEST"
+            and entry.get("execution_mode") == "panel_xs"
+            and entry.get("forward_protocol")
+            and entry.get("lane_assets")
+        }
+        if not entries:
+            return
+        try:
+            demo_venues = strategy_registry.demo_venues()
+        except Exception as e:
+            logger.warning(
+                f"[STRATEX] Panel ranking demo-venue attestation read failed: {e}"
+            )
+            return
+        for key in sorted(entries):
+            entry = entries[key]
+            spec_ref = entry.get("panel_xs") or {}
+            stream_id = spec_ref.get("stream")
+            stream = pss.STREAMS.get(stream_id)
+            if stream is None:
+                logger.warning(
+                    f"[STRATEX] Panel ranking: {key} names unregistered "
+                    f"stream {stream_id!r}; skipped"
+                )
+                continue
+            # Nothing new can be decided until a later rebalance bar
+            # than the persisted one has closed.
+            state = pss.load_membership(stream_id)
+            bar_seconds = pss.BAR_SECONDS[stream["timeframe"]]
+            anchor_epoch = int(
+                pd.Timestamp(stream["anchor"]).timestamp()
+            )
+            now_grid = int((now - anchor_epoch) // bar_seconds)
+            latest_rebalance = (
+                stream["warmup"]
+                + ((now_grid - 1 - stream["warmup"]) // stream["rebalance"])
+                * stream["rebalance"]
+            )
+            if (
+                state
+                and state.get("ok")
+                and int(state.get("rebalance_epoch", -1))
+                >= anchor_epoch + latest_rebalance * bar_seconds
+            ):
+                continue
+            tf = str(entry.get("timeframe") or "1d")
+            venue = None
+            for candidate, symbols in self.symbols.items():
+                if candidate in demo_venues and candidate in self.engine.venues:
+                    if any(s in symbols for s in entry["lane_assets"]):
+                        venue = candidate
+                        break
+            if venue is None:
+                logger.warning(
+                    f"[STRATEX] Panel ranking for {key}: no attested demo "
+                    "venue carries the lane panel; membership not refreshed"
+                )
+                continue
+            try:
+                frames = {}
+                for symbol in entry["lane_assets"]:
+                    candles = self.engine.get_candles(venue, symbol, tf, 1500)
+                    if not candles:
+                        continue
+                    frame = pd.DataFrame(candles)
+                    frame.index = pd.to_datetime(
+                        frame["timestamp"], unit="s", utc=True
+                    )
+                    frames[symbol] = frame.sort_index()
+                if not frames:
+                    logger.warning(
+                        f"[STRATEX] Panel ranking for {key}: no candle "
+                        f"history on {venue}; membership not refreshed"
+                    )
+                    continue
+                decision = pss.run_membership(stream_id, frames)
+                if not decision.get("ok"):
+                    logger.warning(
+                        f"[STRATEX] Panel ranking for {key} failed closed "
+                        f"({decision.get('reason')}); previous membership kept"
+                    )
+                    continue
+                saved = pss.save_membership(decision)
+                picks = ", ".join(
+                    f"{sym} {e['side']}"
+                    for sym, e in sorted(decision["entries"].items())
+                )
+                logger.info(
+                    f"[STRATEX] Panel ranking {key}: rebalance "
+                    f"{decision['rebalance_bar']} membership "
+                    f"[{picks or 'none'}] (panel as of "
+                    f"{decision['panel_asof']}, "
+                    f"{decision['panel']['symbols_ranked']} ranked; "
+                    f"persisted={saved})"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"[STRATEX] Panel ranking run failed for {key}: {e}"
                 )
 
     def _manage_forward_time_exits(self) -> None:
