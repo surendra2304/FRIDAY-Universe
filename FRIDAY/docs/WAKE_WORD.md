@@ -1,6 +1,8 @@
 # Wake word — what FRIDAY has, what it does not, and why
 
-*Status as of 2026-11-16 (IG implementation wave, FRIDAY lane).*
+*Status as of 2026-11-16 (IG implementation wave, FRIDAY lane).
+Update 2026-11-18 (TASK-FRD-026): the owner reversed the default —
+the wake word is now ARMED by default; see the behaviour rules.*
 
 ## The gap this closes
 
@@ -33,7 +35,11 @@ A **browser wake word** for the FRIDAY stage (the Halo site):
 
 Behaviour rules:
 
-- **Off by default.** Nothing listens until the owner arms it.
+- **Armed by default** (owner decision 2026-11-18, TASK-FRD-026;
+  originally shipped off-by-default on 2026-11-16). The stage listens
+  from first load. The Veil's "Disarm the wake word" stores an explicit
+  "off" — that, and the blocked-browser auto-disarm below, are the
+  only things that turn it off.
 - Phrases: "hey friday", "ok friday", "okay friday", "yo friday".
   A bare "friday" deliberately does **not** trigger — it would fire
   constantly in conversation about FRIDAY.

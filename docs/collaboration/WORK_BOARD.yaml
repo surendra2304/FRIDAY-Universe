@@ -11326,6 +11326,23 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - FRIDAY/src/friday/proactive/owner_notify.py
       - FRIDAY/tests/test_owner_notify.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-FRD-026
+    title: "Wake word ARMED BY DEFAULT: the stage listens for 'Hey FRIDAY' from first load; only an explicit disarm turns it off (owner decision FRIDAY-2A, 2026-11-18)"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-frd-026-wake-default-armed
+    evidence:
+      - "Trigger: owner answers 2026-11-18 ~12:19 IST — FRIDAY (2) wake word ARMED BY DEFAULT. Grounding (git objects): the default lives in FRIDAY/ui/lib/wakeWord.ts loadWakeArmed() — storage.getItem('friday.wakeWord') === 'on', so unset = DISARMED. The Veil control in Stage.tsx already toggles both ways via setWakeArmedPref, and the blocked-browser path (Stage.tsx) persists a disarm when the mic is refused — both keep working unchanged after the flip. This PR is based on main 75f06f3e (the TASK-VOI-021 + TASK-FRD-024 union merge, PR #954); FRIDAY/ui is byte-identical between 3b24321b and 75f06f3e (that merge touched no ui file), so the export in this PR is a build of the current main ui tree plus this change."
+      - "Fix (this task's PR): loadWakeArmed returns getItem(...) !== 'off' — armed unless the stored preference is explicitly 'off'; unreadable storage reads as unset (armed). lib/wakeWord.test.ts default assertions updated (unset -> armed, stored 'off' -> disarmed, throwing storage -> armed, save never throws; the new test FAILS against the old wakeWord.ts and passes against the new one); comments in Stage.tsx / WakeListener.tsx and the behaviour rule in FRIDAY/docs/WAKE_WORD.md updated to the decision. FRIDAY/ui/out/** regenerated from the shipped tree by the PR #948 method (dependency tree identical to the merged lockfile + next build) in the SAME PR, and the built export was grepped: the wake chunk carries getWakeArmedSnapshot as the off-comparison with catch -> true, where the old committed export carries the on-comparison with catch -> false. Claim: issue #35 comment 6971438352."
+    next_action: "PR open -> supervisor review -> serial-lane merge -> deploy with the website wave -> production proof: a fresh browser profile (no stored preference) shows the wake word armed on first load and 'Hey FRIDAY' starts the line; a stored 'off' still starts disarmed -> VERIFIED (owner's phone test is the final judge)."
+    files:
+      - FRIDAY/ui/lib/wakeWord.ts
+      - FRIDAY/ui/lib/wakeWord.test.ts
+      - FRIDAY/ui/components/stage/Stage.tsx
+      - FRIDAY/ui/components/stage/WakeListener.tsx
+      - FRIDAY/docs/WAKE_WORD.md
+      - FRIDAY/ui/out/
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

@@ -1,5 +1,6 @@
-/* Wake-phrase logic for the stage's opt-in wake word — see
-   FRIDAY/docs/WAKE_WORD.md for the full scope statement.
+/* Wake-phrase logic for the stage's wake word (armed by default since
+   the owner's 2026-11-18 decision — see the preference section below)
+   — see FRIDAY/docs/WAKE_WORD.md for the full scope statement.
  *
  * Background: the IG full-watch lane package (F-items) and the lane
  * baseline proved FRIDAY had NO wake word anywhere in code — the wave-2
@@ -66,7 +67,15 @@ export function extractAfterWake(
 /* — The arm/disarm preference (localStorage, "friday.wakeWord") ————
    Read through useSyncExternalStore in Stage.tsx: getWakeArmedSnapshot
    is the snapshot, subscribeWakeArmed the subscription, and
-   setWakeArmedPref the only writer (it persists, then notifies). */
+   setWakeArmedPref the only writer (it persists, then notifies).
+
+   DEFAULT: ARMED (owner decision 2026-11-18, TASK-FRD-026). The wake
+   word originally shipped opt-in (off until armed); the owner reversed
+   that — FRIDAY listens for her name out of the box, and only an
+   explicit stored "off" (the Veil's "Disarm the wake word") turns her
+   off. Unreadable storage reads as unset, i.e. armed; the in-session
+   disarm still applies because setWakeArmedPref notifies listeners
+   even when the persist itself fails. */
 
 export const WAKE_STORAGE_KEY = "friday.wakeWord";
 
@@ -77,9 +86,9 @@ export interface WakeStorageLike {
 
 export function loadWakeArmed(storage: WakeStorageLike): boolean {
   try {
-    return storage.getItem(WAKE_STORAGE_KEY) === "on";
+    return storage.getItem(WAKE_STORAGE_KEY) !== "off";
   } catch {
-    return false;
+    return true;
   }
 }
 
