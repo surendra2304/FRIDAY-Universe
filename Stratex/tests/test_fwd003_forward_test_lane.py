@@ -891,6 +891,10 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         "ha_trend_two_candle_4h",
         "ha_trend_one_candle",
         "ha_trend_one_candle_4h",
+        # TASK-STR-FWD-019 Wave-2 (PR #994):
+        "stoch_reversion",
+        "stoch_reversion_k14_filt",
+        "stoch_reversion_crypto",
     } | overlay
 
 
@@ -991,6 +995,10 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "ha_trend_two_candle_4h",
         "ha_trend_one_candle",
         "ha_trend_one_candle_4h",
+        # TASK-STR-FWD-019 Wave-2 (PR #994):
+        "stoch_reversion",
+        "stoch_reversion_k14_filt",
+        "stoch_reversion_crypto",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -1057,6 +1065,9 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "ha_trend_two_candle_4h",
         "ha_trend_one_candle",
         "ha_trend_one_candle_4h",
+        "stoch_reversion",
+        "stoch_reversion_k14_filt",
+        "stoch_reversion_crypto",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
