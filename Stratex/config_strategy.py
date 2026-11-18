@@ -1571,6 +1571,42 @@ STOCH_REVERSION_STRATEGY = {
     "OOS_EXPECTANCY_PCT": 0.286,
 }
 
+BAR_PATTERNS_INSIDE_BAR_4H_STRATEGY = {
+    "NAME": "Bar Patterns (inside-bar breakout)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "PATTERN": "inside_bar",
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (3481 trades, 3/5 folds,
+    # second tier only — Bonferroni FAIL at N=3,899, not a promotion):
+    "OOS_WIN_RATE": 0.3617,
+    "OOS_PROFIT_FACTOR": 1.0556,
+    "OOS_EXPECTANCY_PCT": 0.209,
+    "OOS_TRADES": 3481,
+    "OOS_POSITIVE_FOLDS": 3,
+}
+
+BAR_PATTERNS_STRATEGY = {
+    "NAME": "Bar Patterns (engulfing candles)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "PATTERN": "engulfing",
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (548 trades, 3/5 folds,
+    # second tier only — Bonferroni FAIL at N=3,899, not a promotion):
+    "OOS_WIN_RATE": 0.3850,
+    "OOS_PROFIT_FACTOR": 1.1743,
+    "OOS_EXPECTANCY_PCT": 1.587,
+    "OOS_TRADES": 548,
+    "OOS_POSITIVE_FOLDS": 3,
+}
+
 # ==============================================================================
 # TASK-STR-CLEANUP-001 (owner directive, 2026-11-15): every strategy whose
 # verified out-of-sample profit factor (net of costs, TASK-STR-BT-001 /
@@ -3688,6 +3724,50 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "max_stop_pct": 0.90,
         "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): stoch_reversion/k14_raw @ CRYPTO30 1d meets the second tier (OOS expectancy +0.518%/trade, PF 1.0510, 688 OOS trades, 2/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Stop-cap override (TASK-STR-FWD-012): judged 2.0 x ATR(14) stops measured up to 58.74% of price at entry bars on the SOLUSDT 1d fixture (BTCUSDT 12.38%) — above the 0.15 engine-global cap — so max_stop_pct 0.90 is declared (sanity bound only; admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "bar_patterns": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: bullish engulfing candle (bull candle whose body fully engulfs the prior bear candle's body). SHORT: bearish engulfing (bear candle whose body fully engulfs the prior bull candle's body). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_engulfing(df, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3850,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 158.7,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): bar_patterns/engulfing @ CRYPTO30 1d meets the second tier (OOS expectancy +1.587%/trade, PF 1.1743, 548 OOS trades, 3/5 positive folds, PF @2x costs 1.1555) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. TASK-STR-FWD-012 stop check: judged stop 2.0 x ATR(14) on 1d crypto fixtures reaches 28.4% of price at entry bars (SOL 1d) and 71.28% across all fixture bars — structurally above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.90 (sanity bound above the measured max; the override changes admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "bar_patterns_inside_bar_4h": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: bar i-1 is an inside bar (wholly inside bar i-2) and the close of bar i breaks above bar i-2's high. SHORT: close of bar i breaks below bar i-2's low. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_inside_bar(df, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3617,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 20.9,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.30,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): bar_patterns/inside_bar @ CRYPTO30 4h meets the second tier (OOS expectancy +0.209%/trade, PF 1.0556, 3,481 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. TASK-STR-FWD-012 stop check: judged stop 2.0 x ATR(14) on 4h fixtures measures at most 13.0% of price across all BTC/SOL bars (entry-bar max in this entry's record), under the 0.15 engine-global cap on the fixtures — but the CRYPTO30 tail (INJ/SUI/APT-class names) plausibly exceeds it, so this entry carries max_stop_pct 0.30 (rounded sanity bound above the measured max; admissibility only, FWD-006 sizes by risk / stop distance).",
     },
 }
 
