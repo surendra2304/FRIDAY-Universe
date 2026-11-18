@@ -11553,6 +11553,22 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Stratex/config_strategy.py
       - Stratex/tests/test_fwd024_panel_xs.py
       - Stratex/tests/test_fwd003_forward_test_lane.py
+  - id: TASK-VYR-021
+    title: "VyralX render-fit: the framed render path gets a measured encode profile (720x1280, fps cap 30, libx264 ultrafast/crf23, threads 2) so framed renders fit the unchanged 2,400s production timeout on Server 2"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-vyr-021-render-fit
+    created_at: "2026-11-18"
+    updated_at: "2026-11-18"
+    evidence:
+      - "Trigger: the first supervised VyralX cycle (2026-11-18) produced zero videos — both framed renders died at the ~2,400s final-composition timeout on Server 2, leaving unplayable partial files. Profiling (build record ~/workspace/vyr-render-fit/STATE.md; claim issue #35 comment 6980256431, completion 6980597231): the libx264 encode is ~66% of the framed composition CPU (baseline 40s framed render = 70.5 CPU-s at 1 core, peak RSS 378MB on the 956MB host, whose swap pressure throttles delivery further); caption burn-in costs only ~3 CPU-s — the encode profile, not the subtitles, is the lever."
+      - "Build (PR #1026, single commit on base 11807832): viral_framing.render_framed passes width=720, height=1280, max_fps=30 and encodes -preset ultrafast -crf 23 -threads 2; viral_remix._base_video_filter gains keyword-only width/height/max_fps parameters whose defaults reproduce the previous chain byte-for-byte, so the commentary renderers are untouched (a test pins the default string exactly). The 2,400s timeout is NOT moved (2400 at every _run site in both revisions). Locked rules intact: captions burned with the unchanged ASS PlayRes, 0.22 ducking, loudnorm I=-14, BGM bed path, held/unlisted publish behaviour. Measured before/after (full command, 1 core): 40s framed 70.5 -> 30.4 CPU-s, peak RSS 378 -> 243MB; 58s worst case 39.2 CPU-s measured; SSIM vs the old profile 0.965 on the build fixture."
+      - "Supervisor review APPROVE-WITH-CONDITIONS (comment 6981331995; ~/workspace/vyr-render-fit/REVIEW.md): diff is exactly 3 files +175/-6, framed-path-only verified by full-command capture (audio chain byte-identical); the reviewer independently reproduced the headline on their own fixture — OLD 51.9 CPU-s / RSS 312MB -> NEW 23.5 CPU-s / RSS 179MB = 2.21x cheaper — and measured the locked rules in the NEW output (720x1280@30fps, caption styling, duck -11.6 dB, loudness -13.85 LUFS, SSIM 0.9768); core test ring 40 passed with the 3 profile pins failing on pristine base as designed. CONDITION C1 (acceptance — gates any production claim, NOT the merge): after merge + deploy, the first supervised cycle on S2 must produce a held render inside the 2,400s timeout before this task is called production-verified."
+    next_action: "Merged by mini merge lane 1 (union onto main; board entry added by the lane from the PR/review records, since the PR shipped no board change). NOT deployed by the lane. Next: deploy to Server 2 -> supervised cycle re-run -> the coordinator watches the first produced video personally before any owner review step (owner standing order 2026-11-18) -> condition C1 satisfied -> VERIFIED."
+    files:
+      - VyralX/app/services/viral_framing.py
+      - VyralX/app/services/viral_remix.py
+      - VyralX/tests/test_viral_framing.py
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
