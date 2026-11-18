@@ -1344,12 +1344,32 @@ def _escape_filter_path(path: Path) -> str:
     return text
 
 
-def _base_video_filter(cues: list[dict[str, Any]], category: str, ass_path: Path) -> str:
+def _base_video_filter(
+    cues: list[dict[str, Any]],
+    category: str,
+    ass_path: Path,
+    *,
+    width: int = 1080,
+    height: int = 1920,
+    max_fps: int | None = None,
+) -> str:
+    """The channel video chain: scale/crop to format, grade, burn captions.
+
+    The defaults are the channel format (1080x1920, source frame rate)
+    and are byte-identical to the historical chain — the commentary
+    renderers rely on them unchanged. A caller on a CPU-starved host
+    may pass a smaller ``width``/``height`` and a ``max_fps`` cap (the
+    framed renderer does, TASK-VYR-021): the ASS PlayRes stays
+    1080x1920 and libass scales the captions proportionally, so the
+    burned-in look is unchanged, only cheaper to encode.
+    """
     fonts_dir = _escape_filter_path(Path("data/fonts"))
     ass_filter = _escape_filter_path(ass_path)
+    fps_prefix = f"fps={int(max_fps)}," if max_fps else ""
     return (
-        "scale=1080:1920:force_original_aspect_ratio=increase,"
-        "crop=1080:1920,eq=contrast=1.06:saturation=1.12,"
+        f"{fps_prefix}"
+        f"scale={int(width)}:{int(height)}:force_original_aspect_ratio=increase,"
+        f"crop={int(width)}:{int(height)},eq=contrast=1.06:saturation=1.12,"
         f"subtitles='{ass_filter}':fontsdir='{fonts_dir}'"
     )
 
