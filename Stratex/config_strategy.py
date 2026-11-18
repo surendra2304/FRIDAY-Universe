@@ -398,6 +398,23 @@ SHOCK_BREAKOUT_STRATEGY = {
     "OOS_EXPECTANCY_PCT": 2.696,
 }
 
+SHOCK_BREAKOUT_K15_STRATEGY = {
+    "NAME": "Shock Breakout k1.5 (one-bar close move > 1.5 x ATR(14)) — FORWARD_TEST wave 1",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-018)",
+    "TIMEFRAME": "1d",
+    "SHOCK_K": 1.5,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (grid_rows pooled_oos:
+    # shock_breakout__k1.5__crypto30__1d — 486 trades, 3/5 folds;
+    # near-miss re-audit 2026-11-18, second-tier admission):
+    "OOS_WIN_RATE": 0.4033,
+    "OOS_PROFIT_FACTOR": 1.333,
+    "OOS_EXPECTANCY_PCT": 2.811,
+}
+
 ADX_EMA_BARE_STRATEGY = {
     "NAME": "ADX+EMA Bare (production module signals, NO downstream filter)",
     "VERSION": "v1.0.0 (TASK-STR-FWD-003)",
@@ -754,6 +771,28 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "max_heat_pct": 0.02,
         "forward_lane": "FORWARD_TEST",
         "reason": "TASK-STR-RD-002 WATCHLIST: shock_breakout/k1.0 @ CRYPTO30 1d passed the mechanical bar (expectancy +2.6957%/trade, PF 1.3179, 732 OOS trades, 4/5 positive folds, holdout) but FAILED Bonferroni significance at N=1,557 — not a promotion. Owner directed 2026-11-15 (TASK-STR-FWD-003) that near-bar configurations be decided by real demo forward evidence. FORWARD_TEST lane terms as for bollinger_trend. (Distinct from sleeve_shock_breakout, the sleeve's own component module/configuration — different judged object, different records.)",
+    },
+    "shock_breakout_k15": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-018)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: one-bar close rise (close - close[-1]) > 1.5 x ATR(14) at the signal bar. SHORT: one-bar close fall > 1.5 x ATR(14). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_shock(df, 1.5, warmup) on CRYPTO30 1d bars, warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.4033,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 281.1,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "max_stop_pct": 0.50,
+        "forward_lane": "FORWARD_TEST",
+        "reason": "TASK-STR-RD-002 near-miss re-audit 2026-11-18 (TASK-STR-FWD-018 wave 1): shock_breakout/k1.5 @ CRYPTO30 1d — expectancy +2.8113%/trade, PF 1.3325, 486 pooled OOS trades, 3/5 positive folds, max symbol share 0.120 (grid_rows pooled_oos: shock_breakout__k1.5__crypto30__1d). Admitted under the owner's second-tier demo-admission bar (2026-11-18: OOS expectancy>0, PF>=1.05, >=200 OOS trades, pre-Bonferroni); it does NOT pass the frozen promotion bar (PF>=1.2, >=4/5 folds, Bonferroni, holdout) — not a promotion. FORWARD_TEST lane terms as for bollinger_trend. The family's 4h cells are NOT admitted (k1.0@4h expectancy -0.0315% / PF 0.9918; k1.5@4h expectancy -0.0820% / PF 0.9786 — below the tier on their own records). FWD-012 stop-cap check (2026-11-18, harness signal bars over the full CRYPTO30 universe): signal-day judged stops (2.0 x ATR(14)) median 12.81%, p99 32.46%, max 36.24%, with 33.7% of judged signals above the 0.15 global cap — max_stop_pct 0.50 is set so the judged bracket is not silently clipped (a sanity bound above the measured distribution; under FWD-006 a wider stop shrinks the position, it does not add risk).",
     },
     "adx_ema_bare": {
         "status": "FORWARD_TEST",
