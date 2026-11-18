@@ -303,6 +303,11 @@ class SelfHealingSupervisor:
         self._attempts: dict[str, int] = {}
         self._repair_fns: dict[str, Callable[[], Awaitable[bool]]] = {}
         self.escalations: list[dict[str, Any]] = []
+        # Subsystems already escalated during their current continuous failure
+        # streak (TASK-COR-013): an escalation is delivered once per streak,
+        # not once per cycle. Cleared when a probe observes the subsystem
+        # healthy again (or a repair verifies), so a new outage re-escalates.
+        self._escalated_streaks: set[str] = set()
         self.notifier = notifier or EscalationNotifier()
 
     def register_repair(self, subsystem: str, repair: Callable[[], Awaitable[bool]]) -> None:
@@ -316,6 +321,38 @@ class SelfHealingSupervisor:
         except Exception as exc:  # noqa: BLE001 - defensive: the notifier already guards itself
             delivery = {"delivered": False, "detail": f"{type(exc).__name__}: {exc}"}
         run.escalations_delivered.append(delivery)
+
+    async def _escalate(self, escalation: dict[str, Any], run: HealingRun) -> None:
+        """Record an escalation and deliver it — once per failure streak.
+
+        TASK-COR-013: previously a permanently failing subsystem was
+        re-delivered on every cycle, throttled only by the notifier's dedupe
+        window. With the production loop ticking every 30s and that window at
+        600s, the operator received one identical message every ~10 minutes
+        indefinitely (the ``ai_universe`` escalation, for a provider that is
+        intentionally unconfigured in this deployment, delivered 247 times in
+        48h before the channel was disconnected on 2026-11-19). The escalation
+        is still recorded every cycle; delivery happens on the transition
+        into the escalated state and repeats within the same streak are
+        recorded as suppressed.
+        """
+        self.escalations.append(escalation)
+        self.escalations = self.escalations[-20:]
+        subsystem = str(escalation.get("subsystem", ""))
+        if subsystem in self._escalated_streaks:
+            run.escalations_delivered.append(
+                {
+                    "subsystem": escalation.get("subsystem"),
+                    "reason": escalation.get("reason"),
+                    "at": escalation.get("at"),
+                    "channel": self.notifier.channel,
+                    "delivered": False,
+                    "detail": "suppressed: already escalated for this failure streak",
+                }
+            )
+            return
+        self._escalated_streaks.add(subsystem)
+        await self._notify(escalation, run)
 
     def _throttled(self, subsystem: str) -> bool:
         history = [t for t in self._repairs.get(subsystem, []) if time.monotonic() - t < self.repair_cooldown_seconds]
@@ -334,6 +371,10 @@ class SelfHealingSupervisor:
             # samples, no way to ever open. Detection has to come from probing, not from
             # waiting for a failure to announce itself.
             healthy = await self.registry.run_probe(status.name)
+            if healthy:
+                # A healthy observation ends any failure streak: a later
+                # outage is a new incident and may escalate again.
+                self._escalated_streaks.discard(status.name)
             if healthy and circuit.state is CircuitState.CLOSED:
                 continue
             run.unhealthy.append(status.name)
@@ -356,9 +397,7 @@ class SelfHealingSupervisor:
                     "reason": f"{attempts} repair attempts did not restore health",
                     "at": _utcnow().isoformat(),
                 }
-                self.escalations.append(escalation)
-                self.escalations = self.escalations[-20:]
-                await self._notify(escalation, run)
+                await self._escalate(escalation, run)
                 run.repairs.append(RepairOutcome(status.name, "none", False, True, escalation["reason"]))
                 continue
 
@@ -369,9 +408,7 @@ class SelfHealingSupervisor:
                     "reason": "no repair action registered",
                     "at": _utcnow().isoformat(),
                 }
-                self.escalations.append(escalation)
-                self.escalations = self.escalations[-20:]
-                await self._notify(escalation, run)
+                await self._escalate(escalation, run)
                 run.repairs.append(RepairOutcome(status.name, "none", False, True, "no repair action registered"))
                 continue
 
@@ -392,6 +429,7 @@ class SelfHealingSupervisor:
                 await circuit.reset("self-healing repair verified")
                 await circuit.record_success()  # the verifying probe is evidence of health
                 self._attempts[status.name] = 0
+                self._escalated_streaks.discard(status.name)
                 run.repairs.append(RepairOutcome(status.name, "repair+probe", True, False, "repair verified by probe"))
             else:
                 run.repairs.append(
@@ -684,7 +722,12 @@ class EscalationNotifier:
         self,
         webhook_url: str | None = None,
         timeout_seconds: float = 5.0,
-        dedupe_window_seconds: float = 600.0,
+        # 6h, aligned with the fleet owner-notification policy (FRD-025's
+        # per-key cooldown). The previous 600s default, combined with the
+        # supervisor's per-cycle re-escalation, produced the TASK-COR-013
+        # spam cadence; the supervisor now also delivers once per failure
+        # streak, so this window is a backstop, not the only throttle.
+        dedupe_window_seconds: float = 21600.0,
     ) -> None:
         self.webhook_url = (webhook_url or "").strip() or None
         self.timeout_seconds = timeout_seconds

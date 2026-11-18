@@ -10701,6 +10701,31 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "None — complete and production-verified (post-deploy breach -> durable save -> restart survival -> journal redaction proof, 2026-11-17)."
 
+  - id: TASK-COR-013
+    title: "Cortex self-healing escalation spam: ai_universe escalation re-delivered every ~10 min for 2 days (247 Telegram messages in 48h) — escalate once per failure streak + 6h notifier dedupe"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-cor-013-escalation-streak
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-19T04:45:00+05:30"
+    updated_at: "2026-11-19T04:45:00+05:30"
+    files:
+      - "Cortex/packages/core/src/cortex_core/resilience.py"
+      - "Cortex/tests/unit/test_self_healing_and_self_model.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6994469484"
+    defect: "Owner-reported Telegram spam via @fridayuniverse_bot (2026-11-19 ~04:30 IST). Journal-verified on Server 2: Cortex.service made 247 sendMessage POSTs in 48h (136 in 24h), all HTTP 200, at a ~10-minute cadence from 2026-11-17 10:05 IST (journal horizon; the escalation webhook env was written 2026-11-17 ~04:53 IST during the COR-012 drill work and left live). Mechanism, code-verified against production blobs (sha256-identical to main 39e1ce7c): (1) cortex_api/self_healing.py probe_ai_universe returns False whenever INFERENCE_BASE_URL and AI_UNIVERSE_BASE_URL are both unset — both are unset in production — and its registered repair intentionally returns False (an intentionally absent provider is escalated, never claimed repaired); (2) SelfHealingSupervisor.run_cycle therefore escalates ai_universe on every cycle once the 3-attempt repair budget is exhausted, and the loop ticks every 30s; (3) EscalationNotifier's dedupe_window_seconds default of 600 was the ONLY throttle, so exactly one identical 'Cortex escalation / Subsystem: ai_universe' message was delivered per 600s window, indefinitely. The path bypasses FRIDAY's PR #953 severity gate entirely (Cortex has its own notifier). The COR-012 WebhookBreachAlertSink shares the webhook but is once-per-day-per-agent ledger-guarded and is not the cadence source. Cleared: FRIDAY (0 sends; FRIDAY_AUTONOMOUS_TASK_SOURCE and FRIDAY_OWNER_NOTIFY verified unset in FRIDAY/.env, /opt/friday_universe/.env, /etc/friday/dispatch.env, unit and drop-ins), Sentinel (15 telegram mentions, 0 sends), IntelX/Memora/VyralX (0), webhook watchdogs (0 sends). Secondary: Stratex-Daemon sent a 3-message set every ~8-9 min during 2026-11-18 20:24-22:31 plus the same triple per restart (46 sends/48h via @stratextradingbot); zero sends since 2026-11-19 01:04 — episodic, not reconfigured (designed trade/status channel); follow-up if it recurs."
+    acceptance:
+      - "PRODUCTION STOP-BLEED (done 2026-11-19, config only): SELF_HEALING_ESCALATION_WEBHOOK commented out in /opt/friday_universe/Cortex/.env on Server 2 (backup .env.bak-spamfix-20261119 kept beside it); Cortex.service restarted watched at 04:40 IST — active, GET /health 200, startup journal: 'self-healing: no SELF_HEALING_ESCALATION_WEBHOOK configured; escalations stay in-process'. Zero sendMessage since the restart; last-ever send 04:36:51 IST (pre-fix cadence slot). Self-healing repairs and in-process escalation records continue; COR-012 budget breaches still pause agents and persist delivery records marked not-delivered/no-channel. The webhook stays disconnected until this PR is merged + deployed; re-enabling it is a separate coordinator step."
+      - "CODE FIX (this PR): SelfHealingSupervisor gains escalate-once-per-failure-streak — _escalate() records every cycle's escalation but delivers only on the transition into the escalated state; repeats within the streak are recorded in the run as delivered=False 'suppressed: already escalated for this failure streak'. A healthy probe observation or a verified repair clears the streak, so a genuinely new outage escalates again. EscalationNotifier default dedupe_window_seconds 600 -> 21600 (6h, aligned with FRD-025's per-key cooldown) as a backstop for any other producer."
+      - "TESTS: test_self_healing_and_self_model.py 23/23 on the branch, including 2 new TASK-COR-013 tests (streak suppression across repeated failing cycles + re-delivery after recovery; notifier default window pin). Neighbour ring (self-healing + escalation telegram mode + COR-012 redaction suites): branch 54 passed / 5 failed == pristine main 5 failed — the 5 test_escalation_channel_redaction.py failures are pre-existing and environment-dependent (they require SELF_HEALING_ESCALATION_TELEGRAM_CHAT_ID set), identical failure sets on both trees."
+    evidence:
+      - "Diagnosis + fix record: ~/workspace/telegram-spam/STATE.md (journal counts, timestamps, code citations, cleared services, fix + silence verification)."
+      - "Claim: issue #35 comment 6994469484."
+    blockers: []
+    next_action: "Supervisor review, then merge. After merge + fleet deploy, coordinator re-enables SELF_HEALING_ESCALATION_WEBHOOK in Cortex/.env on S2 (uncomment, watched Cortex restart) and verifies one full hour with zero ai_universe deliveries while the supervisor records suppressed streak repeats; then flip VERIFIED. Follow-ups (not this task): identify Stratex-Daemon's periodic 3-message report trigger from the 2026-11-18 evening window if it recurs; consider wiring Cortex escalations through the FRIDAY #953 severity gate instead of a raw webhook."
+
   - id: TASK-REL-052
     title: "CI hygiene: both Monorepo Structure and Safety CI jobs red on main itself AGAIN — root Inference contract test's AST extraction boundary broken by IG-INF-02 + REL-049 + INF-010 (REL-042 failure mode, second recurrence)"
     status: VERIFIED
