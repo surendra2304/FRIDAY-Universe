@@ -809,7 +809,7 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         if entry.get("status") == "FORWARD_TEST"
         and entry.get("forward_protocol") is True
     }
-    assert protocol == {"bollinger_trend", "shock_breakout", "adx_ema_bare"}
+    assert protocol == {"bollinger_trend", "shock_breakout", "adx_ema_bare"} | {"keltner_breakout", "keltner_breakout_ema50_m2", "keltner_breakout_ema20_m15", "keltner_breakout_ema20_m2_4h", "keltner_breakout_ema20_m15_4h", "keltner_breakout_forex"}
 
 
 def test_non_tradable_lane_registrations_are_nulled_not_counted():
@@ -838,6 +838,12 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "bollinger_trend",
         "shock_breakout",
         "adx_ema_bare",
+        "keltner_breakout",
+        "keltner_breakout_ema50_m2",
+        "keltner_breakout_ema20_m15",
+        "keltner_breakout_ema20_m2_4h",
+        "keltner_breakout_ema20_m15_4h",
+        "keltner_breakout_forex",
     }
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
