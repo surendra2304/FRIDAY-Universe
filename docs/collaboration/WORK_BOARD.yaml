@@ -11170,6 +11170,50 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - FRIDAY/tests/test_voice_key_resolution.py
       - FRIDAY/tests/test_voice_gemini_only.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-VOI-021
+    title: "Voice key-probe model pin correction: stage 1 pings gemini-3.5-flash-lite (the current Flash-Lite id), not the legacy gemini-2.5-flash-lite alias TASK-VOI-020 pinned"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-voi-021-probe-model-pin
+    evidence:
+      - "Trigger: the owner ordered a first-hand check of the model facts (2026-11-18 ~11:44 IST) after the '3.7 Flash 15 RPM / 500 RPD' figure was repeated unverified. Verified: Gemini 3.7 Flash exists (2026-08-13) but is NOT on the free tier and Google auto-routes gemini-3.7-flash calls to gemini-3.8-flash; the 15 RPM / 500 RPD free figures belong to FLASH-LITE (gemini-3.5-flash-lite + gemini-3.1-flash-lite; two independent free-project readings, Sep + Oct 2026, agree); full Flash free tier (3.6/3.8) = 5 RPM / 20 RPD — the wall that killed re-acceptance #12."
+      - "Defect in TASK-VOI-020's pin: _PROBE_TEXT_MODEL = gemini-2.5-flash-lite is a legacy access-limited id (the Inference catalogue's entry) that Google routes to gemini-3.5-flash-lite from 2026-12-01 — the pin would silently become the 3.5 id anyway, on Google's schedule rather than ours. Fix (this task's PR): pin gemini-3.5-flash-lite directly in livekit_worker.py + the two pin-asserting tests (test_voice_key_resolution.py, test_voice_gemini_only.py — both collected by friday-universe-ci.yml). The probe's two-stage contract and the VOI-018 invariant (a 429 never certifies) are untouched."
+      - "Disclosed follow-up, NOT in this PR: the Inference catalogue (Inference/app/providers/gemini.py SUPPORTED_MODELS) still lists gemini-2.5-flash-lite and not gemini-3.5-flash-lite; aligning it is a separate Inference change for the coordinator to schedule. Claim: issue #35 comment 6971109043."
+    next_action: "PR open -> supervisor review -> serial-lane merge -> deploy with the voice wave -> re-acceptance in the first post-reset window (daily buckets reset 13:30 IST) -> VERIFIED."
+    files:
+      - FRIDAY/src/friday/voice/livekit_worker.py
+      - FRIDAY/tests/test_voice_key_resolution.py
+      - FRIDAY/tests/test_voice_gemini_only.py
+      - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-FRD-024
+    title: "FRIDAY autonomous daemon self-generated task source: a closed catalogue of self-verifiable triggers (fleet agent unhealthy / fleet poll failing / Stratex heartbeat stale / repeated daemon goal failures) seeding read-only verification goals through the existing submit_goal path"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-frd-024-daemon-task-source
+    evidence:
+      - "Gap (diagnosis ~/workspace/friday-daemon-idle-diag/DIAGNOSIS.md + TASK-FRD-023): the daemon is armed at boot (PR #927) but its ONLY task source is manual POST /api/autonomous/goals submission — no scheduler, no self-generation; an armed daemon with an empty queue idles forever, the exact state it sat in unnoticed 2026-11-10 -> 2026-11-17."
+      - "Build (this task's PR): new FRIDAY/src/friday/autonomous/task_source.py — DaemonTaskSource evaluates a CLOSED catalogue against state FRIDAY verifies herself: fleet_client.get_all_statuses() probe anomalies (DEGRADED/UNREACHABLE/OFFLINE, per agent), the fleet poll itself raising, Stratex's daemon heartbeat file stale >600 s (the FRD-021 freshness pulse, read via proactive/stratex_watch.resolve_stratex_paths), and >=2 non-source goals FAILED inside 6 h. Every seed is a read-only verification/review goal submitted via daemon.submit_goal with metadata {source, trigger, trigger_key, evidence}; trigger evidence is INFO-logged per seed. NO external messages, money, deletions or config changes; the catalogue cannot seed anything else."
+      - "Bounds enforced in the source: seeds only into a fully idle daemon (owner work always wins; seeded priority -1); per-trigger cooldowns 6 h / 6 h / 6 h / 12 h + a reported-failure dedupe set (source-seeded failures are excluded, so no self-investigation loop); <=2 seeds per evaluation; global daily cap 6 (FRIDAY_AUTONOMOUS_TASK_SOURCE_DAILY_CAP) — each seed costs planner + Inference synthesis quota on the free tier; settings.autonomous_mode re-checked on EVERY evaluation (flag-off stops seeding immediately, including toggle-armed daemons) + FRIDAY_AUTONOMOUS_TASK_SOURCE=off kill switch; cooldown/cap state persists to .data/autonomous_task_source.json across restarts. Daemon wiring: throttled evaluation inside _run_loop (FRIDAY_AUTONOMOUS_TASK_SOURCE_INTERVAL_S, default 300 s), failure-isolated so a broken source can never break the loop. Claim: issue #35 comment 6971109043."
+    next_action: "PR open -> supervisor review -> serial-lane merge -> deploy with a watched FRIDAY restart -> journal shows 'Autonomous task source: seeding goal from trigger ...' lines when an anomaly is present (or a staging drill forces one) -> VERIFIED. NOTE for the merge lane: this PR and TASK-VOI-021's both append their board entry after TASK-VOI-020 — expect a board-only union resolution if both land."
+    files:
+      - FRIDAY/src/friday/autonomous/task_source.py
+      - FRIDAY/src/friday/autonomous/daemon.py
+      - FRIDAY/tests/test_autonomous_daemon_task_source.py
+      - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-FRG-017
+    title: "Forge idle experiment loop (Self-Upgrade Programme slice 1): when Forge has no assigned work it runs pre-declared experiments on its own build behaviour — hypothesis from its own failure clusters, champion-vs-challenger starting-manifest A/B over the golden build shapes via the deterministic synthesizer, keep/discard by a pre-declared score bar, champion registry, and lessons written as procedural-type memories (PROMOTE to Forge's private section; failed experiments also copied to the universal section per the owner's standing rule R)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/forge-idle-experiment-loop
+    evidence:
+      - "Design: ~/workspace/self-upgrade/DESIGN.md (the shared self-upgrade mechanism for all 10 agents; owner's self-upgrade law and memory promotion decisions, 2026-11-18). Programme state: ~/workspace/self-upgrade/STATE.md."
+      - "Implementation (this PR, additive only): Forge/app/improvement/idle_loop.py — IdleExperimentLoop (idle gate over Forge's own StateStore, daily cap 6, per-arm 120 s time box, FORGE_IDLE_EXPERIMENTS=off kill switch), GoldenBattery (deterministic synthesis in a temp sandbox + the generated project's own pytest suite; composite = 0.5 tests + 0.3 manifest + 0.2 compile, declared in advance), a closed challenger-mutation catalogue (library_shape / drop_readme / py_only), a champion registry + append-only experiment ledger + lessons ledger under the Forge data dir, and FabricLessonWriter over mesh.memory_fabric (procedural type; AGENT scope = Forge's private section; DISCARD lessons also delivered at UNIVERSAL scope per standing rule R; failed deliveries stay pending in the ledger and are retried). NOT wired into the FastAPI lifespan in this slice — run_forever() is the driver a follow-up wires after review; the champion registry is the loop's own record and production build roles do not read it yet (adoption travels the Universe change path)."
+      - "Tests: Forge/tests/test_frg017_idle_experiments.py — 14/14 pass locally (CPython 3.12.3; staging tree extracted byte-identical from origin/main 3b24321b, blob-verified): kill switch, busy gate, daily cap, cluster-taxonomy parity with self_improve, hypothesis formation with and without failures, PROMOTE (champion registry updated, private-only lesson), DISCARD (champion untouched, private + universal lesson), the test-regression guard blocking a higher-composite challenger, pending-lesson retry, the real fabric writer's call shape (owner FORGE, type procedural, AGENT vs UNIVERSAL scope), and the REAL battery on the CLI golden shape (manifest 1.0, compile 1.0, generated tests > 0.9, composite > 80). Claim: issue #35 comment 6971433191."
+    next_action: "Supervisor review -> coordinator merge -> follow-ups in order: (1) wire run_forever into Forge's lifespan behind the kill switch, then deploy; (2) champion adoption into the build path via the Universe change path (Forge builds, Sentinel gates, Cortex schedules, fleet CD deploys); (3) copy the loop shape to the other nine agents, each as its own task and PR."
+    files:
+      - Forge/app/improvement/idle_loop.py
+      - Forge/tests/test_frg017_idle_experiments.py
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
