@@ -1,0 +1,59 @@
+{
+  "owner": "stratex_self_experiments",
+  "streams": {
+    "bollinger_trend/p50_sd2.0@crypto30/1d": {
+      "file": "streams/bollinger_trend__p50_sd2.0__at__crypto30__1d.json",
+      "sha256": "bcbdef2a8471267f9c6164de4bfaed057b195869a11d9bed55ab69dfc823d140",
+      "source_record": {
+        "file": "bollinger_trend__p50_sd2.0__crypto30__1d.json",
+        "sha256": "49f6a51204d06822a0e6ef3c46bb2a944d395b5b0992ab1c9376a2b2ee38b2bb",
+        "round": "TASK-STR-RD-002"
+      }
+    },
+    "shock_breakout/k1.0@crypto30/1d": {
+      "file": "streams/shock_breakout__k1.0__at__crypto30__1d.json",
+      "sha256": "c5feb873ba81a2bb1152cfe672e05eec779f5cf58273bbeca21be3b4f556c05e",
+      "source_record": {
+        "file": "shock_breakout__k1.0__crypto30__1d.json",
+        "sha256": "2917027ab33225b736f3cba58ebf9d82ed2f302303c72e5e31b5fc63c81bb49b",
+        "round": "TASK-STR-RD-002"
+      }
+    },
+    "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": {
+      "file": "streams/vol_adaptive_trend__ema12_26_nogate__at__crypto30__1d.json",
+      "sha256": "4783c658fcafab1b2051826ba2cde918c9cdf92d6a7fef1937180f48aa4f31c3",
+      "source_record": {
+        "file": "vol_adaptive_trend__ema12_26_nogate__crypto30__1d.json",
+        "sha256": "1ddad59c37f12a7cb59e41ae95bff14d9c129181dd3a763749e10cc87ddd8493",
+        "round": "TASK-STR-RD-002"
+      }
+    },
+    "donchian_turtle/n55_b26@crypto30/1d": {
+      "file": "streams/donchian_turtle__n55_b26__at__crypto30__1d.json",
+      "sha256": "28fc508812beafc602a3d9537ec88c5ce519bc7dad1fc76ba0a400a4639bbd99",
+      "source_record": {
+        "file": "donchian_turtle__n55_b26__crypto30__1d.json",
+        "sha256": "16ee5e8170edbf36e7d5603f61314f12e2c6896c36b2a3e72c6b9b2eaf3fbbcb",
+        "round": "TASK-STR-RD-002"
+      }
+    },
+    "ts_momentum/roc72@crypto30/1d": {
+      "file": "streams/ts_momentum__roc72__at__crypto30__1d.json",
+      "sha256": "f7cbebfa4d7e892c7f633ae0a66737f6f8b4f2ecd2250aba672826954102ab8f",
+      "source_record": {
+        "file": "ts_momentum__roc72__crypto30__1d.json",
+        "sha256": "301ef8c79155c250f967c1a737eafb67c95800c53a31c9a299f69c320038db81",
+        "round": "TASK-STR-RD-002"
+      }
+    },
+    "stoch_reversion/k14_raw@crypto30/1d": {
+      "file": "streams/stoch_reversion__k14_raw__at__crypto30__1d.json",
+      "sha256": "fe387769f321da126c730d1f1607ab7f956e1042d5194c8a477f5dc4526462dc",
+      "source_record": {
+        "file": "stoch_reversion__k14_raw__crypto30__1d.json",
+        "sha256": "a81acc4dfad474d243526ed9cdfd5d7f45510333345cbd39f14251571044fab8",
+        "round": "TASK-STR-RD-002"
+      }
+    }
+  }
+}
