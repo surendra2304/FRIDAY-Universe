@@ -921,6 +921,7 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         "ensemble_book_3933",
         "ensemble_book_3978",
         "ensemble_book_3900",
+        "supertrend_bare",
     } | overlay
 
 
@@ -1052,6 +1053,7 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "ensemble_book_3933",
         "ensemble_book_3978",
         "ensemble_book_3900",
+        "supertrend_bare",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -1139,6 +1141,7 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "ensemble_book_3933",
         "ensemble_book_3978",
         "ensemble_book_3900",
+        "supertrend_bare",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
