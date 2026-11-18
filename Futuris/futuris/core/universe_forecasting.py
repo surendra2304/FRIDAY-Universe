@@ -24,8 +24,11 @@ from futuris.core.enums import (
 )
 from futuris.core.hashing import content_hash_of
 from futuris.core.schemas import Driver, EvidenceRef, Forecast
+from futuris.core.series_providers import SeriesProvider, get_series_provider
 from futuris.core.universe_domains import UNIVERSE_TARGETS, DomainTargetSpec, get_target_spec
 from futuris.infra.logging import get_logger
+from futuris.models.registry import model_registry
+from futuris.models.selection import select_best_adapter
 from futuris.storage.repositories import ForecastRepository
 
 logger = get_logger("futuris.core.universe_forecasting")
@@ -41,6 +44,18 @@ REFRESH_BUDGET_SECONDS = 15.0
 #: database write.
 WRITE_GRACE_SECONDS = 2.0
 
+#: TASK-FUT-012 series-provider path: how much stored history a daily series
+#: is built from, and the minimum below which a fit would be numerology.
+PROVIDER_SERIES_DAYS = 28
+MIN_PROVIDER_POINTS = 10
+#: One forecast step on a daily series is the 24h horizon.
+PROVIDER_STEP_MINUTES = 1440
+#: Candidates for short daily series. seasonal_naive's registry default
+#: season (288 steps) is a 5-minute-grid artefact and meaningless at a daily
+#: step; the heavy candidates cost ~4.5s each for no proven gain on series
+#: this short. Naive and drift are honest baselines a surge must beat.
+PROVIDER_CANDIDATES = ["naive", "drift"]
+
 
 async def generate_universe_forecast(
     target: str,
@@ -48,10 +63,12 @@ async def generate_universe_forecast(
     session: AsyncSession | None = None,
     skip_intelx: bool = False,
     model_budget_seconds: float | None = None,
+    selector: Any | None = None,
+    series_fetcher: SeriesProvider | None = None,
 ) -> Forecast:
     """Produce a forecast for any FRIDAY Universe target.
 
-    There are exactly two honest ways to obtain a number here, and each is
+    There are exactly three honest ways to obtain a number here, and each is
     labelled with the provenance the client renders:
 
     * the caller supplies the estimate (``context.point_estimate`` /
@@ -61,6 +78,13 @@ async def generate_universe_forecast(
       series this deployment actually measures) -- the forecasting pipeline
       computes a number and the forecast is marked ``synthetic`` with the
       generator named as the source.
+    * nobody supplies one and the target names a series provider
+      (TASK-FUT-012) -- a daily series is read from Futuris's own stored
+      data, fitted through the same model-selection machinery as the
+      pipeline, and the forecast is marked ``live`` with the provider named
+      as the source. ``selector`` / ``series_fetcher`` are injectable so
+      tests can exercise this path without a statsforecast backend or a
+      database; production callers leave both unset.
 
     Every other target has no telemetry source in this deployment, so without
     caller context the forecast is returned in ``insufficient_data`` status
@@ -86,6 +110,16 @@ async def generate_universe_forecast(
     elif spec.pipeline_target:
         forecast = await _forecast_from_pipeline(
             spec, target, now, intelx_findings, model_budget_seconds=model_budget_seconds
+        )
+    elif spec.series_provider:
+        forecast = await _forecast_from_series_provider(
+            spec,
+            now,
+            intelx_findings,
+            session=session,
+            selector=selector,
+            series_fetcher=series_fetcher,
+            model_budget_seconds=model_budget_seconds,
         )
     else:
         forecast = _insufficient_data_forecast(
@@ -289,6 +323,176 @@ async def _forecast_from_pipeline(
             )
         )
     return forecast
+
+
+async def _forecast_from_series_provider(
+    spec: DomainTargetSpec,
+    now: datetime,
+    intelx_findings: list[str],
+    *,
+    session: AsyncSession | None,
+    selector: Any | None,
+    series_fetcher: SeriesProvider | None,
+    model_budget_seconds: float | None = None,
+) -> Forecast:
+    """Fit a forecast on a measured daily series from Futuris's stored data.
+
+    Refusal is preserved end-to-end: an unreadable provider, a series
+    shorter than ``MIN_PROVIDER_POINTS``, or an unavailable statsforecast
+    backend (``StatsForecastUnavailableError`` from the selector -- the
+    state of every deployment before the py3.12 flip) all land in
+    ``insufficient_data`` with the reason recorded, exactly like the
+    pipeline path.
+    """
+    try:
+        if series_fetcher is not None:
+            series = await series_fetcher(session, days=PROVIDER_SERIES_DAYS, now=now)
+        elif session is None:
+            raise RuntimeError(
+                f"target '{spec.target}' reads its series from stored data "
+                "but no database session was supplied"
+            )
+        else:
+            provider = get_series_provider(spec.series_provider or "")
+            series = await provider(session, days=PROVIDER_SERIES_DAYS, now=now)
+    except Exception as exc:
+        logger.warning("universe_forecast_series_unavailable", target=spec.target, error=str(exc))
+        return _insufficient_data_forecast(spec, now, error=exc, intelx_findings=intelx_findings)
+
+    if len(series) < MIN_PROVIDER_POINTS:
+        return _insufficient_data_forecast(
+            spec,
+            now,
+            error=RuntimeError(
+                f"stored series for target '{spec.target}' has {len(series)} daily "
+                f"points; {MIN_PROVIDER_POINTS} required before a fit is honest"
+            ),
+            intelx_findings=intelx_findings,
+        )
+
+    try:
+        import pandas as pd
+
+        index = pd.DatetimeIndex(
+            [datetime(d.year, d.month, d.day, tzinfo=UTC) for d, _ in series]
+        )
+        values = pd.Series([float(v) for _, v in series], index=index, dtype=float)
+        features = pd.DataFrame(index=index)
+        val_steps = min(7, max(2, len(series) // 5))
+        select = selector if selector is not None else select_best_adapter
+        outcome = select(
+            PROVIDER_CANDIDATES,
+            x_train=features.iloc[:-val_steps],
+            y_train=values.iloc[:-val_steps],
+            y_val=values.iloc[-val_steps:].to_numpy(),
+            as_of=now,
+            val_steps=val_steps,
+            step_minutes=PROVIDER_STEP_MINUTES,
+            budget_seconds=model_budget_seconds,
+        )
+        adapter = outcome.adapter
+        adapter.fit(features, values, as_of=now)
+        prediction = adapter.predict(
+            horizon=1,
+            capacity_threshold=spec.high_risk_threshold,
+            probability_method="empirical",
+        )
+    except Exception as exc:
+        logger.warning("universe_forecast_series_fit_failed", target=spec.target, error=str(exc))
+        return _insufficient_data_forecast(spec, now, error=exc, intelx_findings=intelx_findings)
+
+    point = (
+        float(prediction.point_forecast[0])
+        if prediction.point_forecast
+        else float(prediction.central_estimate)
+    )
+    lower, upper = float(prediction.range_lower), float(prediction.range_upper)
+    if lower > upper:
+        lower, upper = upper, lower
+    try:
+        model_version = model_registry.get_version_string(adapter)
+    except Exception:
+        model_version = f"{adapter.name}@series-provider"
+    if getattr(outcome, "is_fallback", False):
+        model_version = f"{model_version}:fallback_after_candidate_failures"
+
+    evidence_id = uuid4()
+    evidence = EvidenceRef(
+        evidence_id=evidence_id,
+        source=f"stored_series:{spec.series_provider}",
+        source_trust=SourceTrust.HIGH,
+        signal_class=SignalClass.TELEMETRY,
+        as_of=now,
+        snapshot_path=f"inline://universe/{spec.target}/stored-series.json",
+        content_hash=content_hash_of(
+            {
+                "target": spec.target,
+                "provider": spec.series_provider,
+                "points": [(d.isoformat(), v) for d, v in series],
+            }
+        ),
+        evidence_class=EvidenceClass.LIVE,
+    )
+    drivers = [
+        Driver(
+            name=f"stored_series:{spec.series_provider} last={series[-1][1]:.0f} {spec.unit}",
+            direction="neutral",
+            strength=0.5,
+            leading_or_lagging="leading",
+            evidence_refs=[evidence_id],
+        )
+    ]
+    drivers.extend(
+        Driver(
+            name=finding,
+            direction="neutral",
+            strength=0.5,
+            leading_or_lagging="leading",
+            evidence_refs=[evidence_id],
+        )
+        for finding in intelx_findings[:2]
+    )
+
+    return Forecast(
+        forecast_id=uuid4(),
+        target=spec.target,
+        as_of=now,
+        horizon=timedelta(hours=24),
+        expires_at=now + timedelta(hours=24),
+        review_at=now + timedelta(hours=6),
+        prediction=point,
+        range_lower=lower,
+        range_upper=upper,
+        probability=prediction.exceedance_probability,
+        confidence=ConfidenceLevel.LOW,
+        drivers=drivers,
+        evidence=[evidence],
+        assumptions=[
+            f"fitted on Futuris's own stored daily series (provider "
+            f"'{spec.series_provider}', {len(series)} points); no resolved "
+            "outcomes back this target yet"
+        ],
+        model_version=model_version,
+        status=ForecastStatus.ACTIVE,
+        evidence_class=EvidenceClass.LIVE,
+        evidence_source=f"stored_series:{spec.series_provider}",
+        model_metadata={
+            "source": "stored_series_provider",
+            "provider": spec.series_provider,
+            "series_points": len(series),
+            "series_start": series[0][0].isoformat(),
+            "series_end": series[-1][0].isoformat(),
+            "series_last_value": series[-1][1],
+            **outcome.metadata(),
+            "calibration_notes": (
+                "No resolved outcomes back this target; confidence is reported LOW "
+                "because calibration quality is unmeasured, not because the estimate "
+                "is likely wrong."
+            ),
+            "intelx_context_included": bool(intelx_findings),
+            "prediction_is_not_authorization": True,
+        },
+    )
 
 
 def _insufficient_data_forecast(
