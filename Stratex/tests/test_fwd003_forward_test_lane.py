@@ -842,6 +842,11 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         "vol_regime_trend",
         "vol_regime_trend_don20_gate_lo",
         "vol_regime_trend_ema12_48_gate_lo",
+        "vol_adaptive_trend",
+        "vol_adaptive_trend_ema20_50_nogate",
+        "vol_adaptive_trend_ema20_50_nogate_4h",
+        "vol_adaptive_trend_ema12_26_nogate_4h",
+        "vol_adaptive_trend_ema20_50_gate_4h",
     } | overlay
 
 
@@ -891,6 +896,12 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "vol_regime_trend",
         "vol_regime_trend_don20_gate_lo",
         "vol_regime_trend_ema12_48_gate_lo",
+        # TASK-STR-FWD-019 Wave-2 crew A: vol_adaptive_trend cells.
+        "vol_adaptive_trend",
+        "vol_adaptive_trend_ema20_50_nogate",
+        "vol_adaptive_trend_ema20_50_nogate_4h",
+        "vol_adaptive_trend_ema12_26_nogate_4h",
+        "vol_adaptive_trend_ema20_50_gate_4h",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -912,6 +923,11 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "vol_regime_trend",
         "vol_regime_trend_don20_gate_lo",
         "vol_regime_trend_ema12_48_gate_lo",
+        "vol_adaptive_trend",
+        "vol_adaptive_trend_ema20_50_nogate",
+        "vol_adaptive_trend_ema20_50_nogate_4h",
+        "vol_adaptive_trend_ema12_26_nogate_4h",
+        "vol_adaptive_trend_ema20_50_gate_4h",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
