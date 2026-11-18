@@ -809,7 +809,12 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         if entry.get("status") == "FORWARD_TEST"
         and entry.get("forward_protocol") is True
     }
-    assert protocol == {"bollinger_trend", "shock_breakout", "adx_ema_bare"}
+    # The RD-003 additions themselves must never join the executable
+    # protocol; the lane itself may grow by later admissions
+    # (TASK-STR-FWD-019 wave-2 expanded it), so this pins the RD-003
+    # exclusion and the original three, not the lane's exact size.
+    assert {"bollinger_trend", "shock_breakout", "adx_ema_bare"} <= protocol
+    assert not (set(RD3_ADDITIONS) & protocol)
 
 
 def test_non_tradable_lane_registrations_are_nulled_not_counted():
@@ -834,11 +839,14 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         for key, entry in cs.PRODUCTION_STRATEGY_REGISTRY.items()
         if entry.get("status") == "FORWARD_TEST"
     }
-    assert forward_test == non_tradable | {
+    # The original eight registrations are all present; the lane may
+    # grow by later admissions (TASK-STR-FWD-019 wave-2), whose own
+    # lane tests pin their tradability/nulling individually.
+    assert non_tradable | {
         "bollinger_trend",
         "shock_breakout",
         "adx_ema_bare",
-    }
+    } <= forward_test
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["forward_protocol"] is False, key
