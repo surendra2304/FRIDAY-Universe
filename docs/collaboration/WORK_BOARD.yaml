@@ -11194,6 +11194,31 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Envelope gains a domain key (the TASK-INT-014 subscription unit); WatchRunner gains an optional domains scope filter (None = historical behaviour); run_once gains --domain to poll a whole domain; watches/__init__ exports the domain API. STANDING_WATCHES.md gains section 6."
       - "Tests (local, sandbox Python 3.12.3): IntelX/tests/test_int013_watch_domains.py 13/13 PASS on the branch; the existing IntelX/tests/test_standing_watches.py 15/15 PASS on the branch and 15/15 on pristine main (no regression; the enabled-set pin is untouched because all new watches ship disabled); the new test file fails collection on pristine main (non-vacuous). Method note: run from a scratch dir with PYTHONPATH at the agent root — IntelX/tests/conftest.py provisions a shared ./data/test_intelx.db that parallel in-place runs stomp; CI on this PR runs the suite in place. Every shipped file diffed against the TRUE base blob at 3b24321b (engine.py diff removes exactly the 2 intentionally replaced WatchRunner lines; everything else is additive)."
     next_action: "Supervisor review -> serial-lane merge (union-resolve WORK_BOARD.yaml against current main). NOT deployed by this crew. After merge: each new watch enables only after its own live proof of the STANDING_WATCHES.md section-5 shape; the domain runner scope lets the new domains prove in a separate process from the two live watches."
+  - id: TASK-INT-014
+    title: "Universe intel feed: IntelX publishes every verified finding once to all agents (Memora mesh broadcast), per-agent domain subscriptions (owner decision 2026-11-18)"
+    owner: muse_ai
+    status: IN_REVIEW
+    pr: null
+    branch: claude/task-int-014-universe-intel-feed
+    created_at: "2026-11-18T13:40:00+05:30"
+    updated_at: "2026-11-18T13:40:00+05:30"
+    files:
+      - "IntelX/intelx/feed/__init__.py"
+      - "IntelX/intelx/feed/entries.py"
+      - "IntelX/intelx/feed/subscriptions.py"
+      - "IntelX/intelx/watches/engine.py"
+      - "IntelX/tests/test_int014_universe_feed.py"
+      - "Futuris/futuris/integrations/memora_event_consumer.py"
+      - "Futuris/tests/test_int014_feed_subscription.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    evidence:
+      - "Claim: issue #35 comment 6971458003. STACKED on TASK-INT-013 (PR #959, head 7d632129): this branch's base is the INT-013 head, so its diff vs that head is INT-014 only; merge 013 first, then this. The engine.py delta vs the INT-013 head is 87 lines, 100% additive (zero removed lines)."
+      - "Channel choice, from the code: Memora's durable event feed is the Universe's shared channel — POST /mesh/envelope persists to event_log and a recipient of 'all' is stored target_agent=NULL, visible to every agent's cursor poll (GET /v1/events/poll + ack). IntelX's existing signed publisher (intelx/integrations/memora_events.py publish_research_notice, intent intelx.news) already speaks that path, and Futuris already consumes intelx.news. So the feed is ONE broadcast publish — no new channel, no per-agent fan-out, no new credentials. Memora's semantic memory sections are a different tool (durable recall, not a feed) and were not used for this."
+      - "Change: new intelx/feed/ package — IntelFeedEntry (a verified finding: stable entry_id, headline, summary, domain, category, confidence, topics, sources) + publish_feed_entry (one publish, target_agent='all', run_id=entry_id so retries dedupe downstream; all of the underlying publisher's gates still apply) + subscriptions.py (the Universe subscription registry: futuris/friday/cortex/memora = all domains; stratex = markets+india_regulatory+world_events; sentinel = world_events+tools_infra; forge = tools_infra+ai_models; inference = ai_models+tools_infra; vyralx = platforms_policy+world_events; unknown agents default to all; INTELX_FEED_SUB_<AGENT> env override; an un-domained notice classifies as 'general' so it never silently matches a specialist domain)."
+      - "Watch hook: WatchService gains an optional feed hook (feed_publisher injectable; feed_enabled=None defers to INTELX_WATCH_FEED_ENABLED, default OFF — deploying changes nothing until enabled). Each alerted envelope is broadcast once as a watch_alert entry in its INT-013 domain. Failure-isolated: the outbox write (TASK-PRO-001's channel) happens first, and feed failures are counted in PollResult (feed_published / feed_errors, both in to_dict) and logged — a not-delivered publisher verdict counts as an error, never silently as success. The feed package is imported lazily inside the hook so the watch engine stays importable with the standard library alone (INT-007 design rule)."
+      - "Futuris (named first consumer): memora_event_consumer gains notice_domain() + subscribed_domains() (env FUTURIS_INTELX_FEED_DOMAINS; unset/'all' = every domain, her default — she forecasts everything). An out-of-subscription notice is acknowledged but not persisted, so it cannot jam the feed for later notices; in-subscription behaviour is byte-identical to before."
+      - "Tests (local, sandbox Python 3.12.3, scratch-dir PYTHONPATH method as in INT-013): IntelX/tests/test_int014_universe_feed.py 10/10 PASS (broadcast shape, finding-text composition, subscription matrix incl. env override, hook publish/off-by-default/failure-isolation/not-delivered counting); Futuris/tests/test_int014_feed_subscription.py 4/4 PASS (domain extraction, env narrowing, ack-without-persist); regressions: IntelX watch suites 15/15 + 13/13 still PASS with the hook present, Futuris's existing test_memora_event_consumer.py 9/9 PASS against the modified consumer. Futuris tests need an Oracle-shaped DATABASE_URL to import the storage layer (no connection is made; the session factory is monkeypatched, same as the existing tests)."
+    next_action: "Supervisor review -> merge AFTER PR #959 (stack). NOT deployed by this crew. Enablement is a separate coordinator step: INTELX_WATCH_FEED_ENABLED=1 in IntelX's env (plus the publisher's existing INTELX_MEMORA_EVENTS_ENABLED gate outside production) once the coordinator wants watch alerts flowing to the feed; Futuris consumes with her default all-domain subscription unless FUTURIS_INTELX_FEED_DOMAINS narrows her."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

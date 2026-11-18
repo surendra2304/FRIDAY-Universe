@@ -794,6 +794,11 @@ class PollResult:
     suppressed_budget: list[dict[str, Any]] = field(default_factory=list)
     alerted: list[dict[str, Any]] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+    # TASK-INT-014: Universe intel feed accounting (0 unless the feed hook
+    # is enabled). feed_errors counts exceptions AND publisher verdicts
+    # that mean "not delivered" — a silent feed is a visible feed here.
+    feed_published: int = 0
+    feed_errors: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -805,6 +810,8 @@ class PollResult:
             "suppressed_budget": self.suppressed_budget,
             "alerted": self.alerted,
             "errors": self.errors,
+            "feed_published": self.feed_published,
+            "feed_errors": self.feed_errors,
         }
 
 
@@ -823,10 +830,18 @@ class WatchService:
         state_path: Path | None = None,
         outbox_path: Path | None = None,
         fetcher: Fetcher | None = None,
+        feed_publisher: Any = None,
+        feed_enabled: bool | None = None,
     ) -> None:
         self.store = SeenStore(state_path or default_state_path())
         self.outbox = Outbox(outbox_path or default_outbox_path())
         self.fetcher = fetcher or UrllibFetcher()
+        # TASK-INT-014: optional Universe intel feed hook. feed_publisher is
+        # an async callable taking an IntelFeedEntry; feed_enabled=None
+        # defers to INTELX_WATCH_FEED_ENABLED (default off, so deploying
+        # this code changes nothing until the coordinator enables it).
+        self.feed_publisher = feed_publisher
+        self.feed_enabled = feed_enabled
 
     async def poll_once(
         self, watch: WatchDefinition, *, now: datetime | None = None
@@ -883,6 +898,7 @@ class WatchService:
                 self.outbox.append(envelope)
                 self.store.mark(watch.id, item, "alerted", fired_at=now)
                 result.alerted.append(envelope)
+                await self._publish_to_feed(watch, envelope, result)
             else:
                 self.store.mark(watch.id, item, "suppressed_budget")
                 result.suppressed_budget.append(
@@ -900,6 +916,77 @@ class WatchService:
             result.below_threshold,
         )
         return result
+
+    # -- TASK-INT-014: Universe intel feed --------------------------------
+
+    #: Publisher verdicts that mean the entry did NOT reach the feed.
+    _FEED_NOT_DELIVERED = frozenset(
+        {"disabled", "skipped_mock", "blocked_missing_credential", "error", "failed_upstream"}
+    )
+
+    def _feed_hook_enabled(self) -> bool:
+        if self.feed_enabled is not None:
+            return self.feed_enabled
+        return os.environ.get("INTELX_WATCH_FEED_ENABLED", "").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+
+    async def _publish_to_feed(
+        self, watch: WatchDefinition, envelope: dict[str, Any], result: PollResult
+    ) -> None:
+        """Broadcast one alerted envelope to the Universe intel feed.
+
+        Failure-isolated by design: the outbox (TASK-PRO-001's channel) is
+        already written when this runs, and a feed failure must never fail
+        the poll — it is counted in the PollResult and logged instead. The
+        feed package is imported lazily so this engine stays importable
+        with the standard library alone (its INT-007 design rule); with
+        the hook off, the import never happens.
+        """
+        if not self._feed_hook_enabled():
+            return
+        try:
+            from intelx.feed.entries import IntelFeedEntry, publish_feed_entry
+
+            entry = IntelFeedEntry(
+                entry_id=envelope["dedupe_key"],
+                headline=envelope["title"],
+                summary=envelope["summary"],
+                domain=watch.domain,
+                category="watch_alert",
+                topics=[watch.domain, watch.id],
+                sources=[
+                    {
+                        "url": envelope["url"],
+                        "title": envelope["title"],
+                        "publisher": envelope["publisher"],
+                    }
+                ],
+            )
+            if self.feed_publisher is not None:
+                outcome = await self.feed_publisher(entry)
+            else:
+                outcome = await publish_feed_entry(entry)
+            status = outcome.get("status") if isinstance(outcome, dict) else None
+            if status in self._FEED_NOT_DELIVERED:
+                result.feed_errors += 1
+                logger.warning(
+                    "[Watch:%s] intel feed did not deliver %s: status=%s",
+                    watch.id,
+                    entry.entry_id,
+                    status,
+                )
+            else:
+                result.feed_published += 1
+        except Exception:  # the feed must never break the watch
+            result.feed_errors += 1
+            logger.exception(
+                "[Watch:%s] intel feed publish failed for %s",
+                watch.id,
+                envelope.get("dedupe_key"),
+            )
 
 
 class WatchRunner:
