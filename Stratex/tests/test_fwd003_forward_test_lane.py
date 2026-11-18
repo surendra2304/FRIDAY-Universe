@@ -809,17 +809,20 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         if entry.get("status") == "FORWARD_TEST"
         and entry.get("forward_protocol") is True
     }
-    assert protocol == {"bollinger_trend", "shock_breakout", "adx_ema_bare"}
+    assert protocol == {
+        "bollinger_trend", "shock_breakout", "adx_ema_bare", "supertrend_bare"
+    }
 
 
 def test_non_tradable_lane_registrations_are_nulled_not_counted():
-    """Null-out follow-up (2026-11-16): of the 8 FORWARD_TEST registry
-    entries only 3 can trade. The other 5 registrations must be visibly
-    nulled on the record itself — no runtime prior, no runtime edge,
-    runtime_priors_nulled stamped True — so no consumer counting
-    registry records can mistake them for live lane entrants. The 3
-    executable entrants keep their judged priors for the daemon's
-    expectancy gate and are stamped False."""
+    """Null-out follow-up (2026-11-16): of the FORWARD_TEST registry
+    entries only the executable entrants can trade (3 at FWD-003,
+    + supertrend_bare at TASK-STR-FWD-020). The other 5 registrations
+    must be visibly nulled on the record itself — no runtime prior,
+    no runtime edge, runtime_priors_nulled stamped True — so no
+    consumer counting registry records can mistake them for live
+    lane entrants. The executable entrants keep their judged priors
+    for the daemon's expectancy gate and are stamped False."""
     import config_strategy as cs
 
     non_tradable = {
@@ -838,6 +841,7 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "bollinger_trend",
         "shock_breakout",
         "adx_ema_bare",
+        "supertrend_bare",
     }
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
