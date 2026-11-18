@@ -858,6 +858,20 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         "factory_winner_3",
         "bb_reversion",
         "bollinger_trend_p20_fx28",
+        # TASK-STR-FWD-019 Wave-2 (PR #987): donchian/turtle family:
+        "donchian_turtle",
+        "donchian_turtle_n20_trail",
+        "donchian_turtle_n20_b26",
+        "donchian_turtle_n55_trail",
+        "donchian_turtle_n55_trail_4h",
+        "donchian_turtle_n20_trail_4h",
+        "donchian_turtle_n20_b24",
+        "donchian_turtle_n20_b26_4h",
+        "donchian_turtle_n55_b24",
+        "turtle2",
+        "turtle2_n20_trail_filt",
+        "turtle2_n55_trail_filt_4h",
+        "turtle2_n20_trail_filt_4h",
     } | overlay
 
 
@@ -924,6 +938,20 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "factory_winner_3",
         "bb_reversion",
         "bollinger_trend_p20_fx28",
+        # TASK-STR-FWD-019 Wave-2 (PR #987): donchian/turtle family:
+        "donchian_turtle",
+        "donchian_turtle_n20_trail",
+        "donchian_turtle_n20_b26",
+        "donchian_turtle_n55_trail",
+        "donchian_turtle_n55_trail_4h",
+        "donchian_turtle_n20_trail_4h",
+        "donchian_turtle_n20_b24",
+        "donchian_turtle_n20_b26_4h",
+        "donchian_turtle_n55_b24",
+        "turtle2",
+        "turtle2_n20_trail_filt",
+        "turtle2_n55_trail_filt_4h",
+        "turtle2_n20_trail_filt_4h",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -960,6 +988,19 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "factory_winner_3",
         "bb_reversion",
         "bollinger_trend_p20_fx28",
+        "donchian_turtle",
+        "donchian_turtle_n20_trail",
+        "donchian_turtle_n20_b26",
+        "donchian_turtle_n55_trail",
+        "donchian_turtle_n55_trail_4h",
+        "donchian_turtle_n20_trail_4h",
+        "donchian_turtle_n20_b24",
+        "donchian_turtle_n20_b26_4h",
+        "donchian_turtle_n55_b24",
+        "turtle2",
+        "turtle2_n20_trail_filt",
+        "turtle2_n55_trail_filt_4h",
+        "turtle2_n20_trail_filt_4h",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key

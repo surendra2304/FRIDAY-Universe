@@ -949,6 +949,243 @@ KELTNER_BREAKOUT_STRATEGY = {
     "OOS_POSITIVE_FOLDS": 3,
 }
 
+TURTLE2_N20_TRAIL_FILT_4H_STRATEGY = {
+    "NAME": "turtle2 / n20_trail_filt @ CRYPTO30 4h (TASK-STR-FWD-019)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "CHANNEL_N": 20,
+    "USE_FILTER": True,   # trail_filt: EMA(200) trend filter (sig_turtle2)
+    "EMA_PERIOD": 200,
+    "ATR_PERIOD": 14,
+    "SPEC_TYPE": "trail",
+    "SL_ATR": 2.0,          # judged TRAIL spec (families2 build_configs)
+    "TP_ATR": None,         # judged TRAIL spec has NO fixed take-profit
+    "TRAIL_ATR": 2.5,       # judged trailing-stop distance (families2 TRAIL)
+    "WARMUP_BARS": 260,     # judged warmup_for("4h") (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (4369 trades, 3/5 folds,
+    # Bonferroni FAIL at programme N=3,899 — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3809,
+    "OOS_PROFIT_FACTOR": 1.1421,
+    "OOS_EXPECTANCY_PCT": 0.33,
+}
+
+TURTLE2_N55_TRAIL_FILT_4H_STRATEGY = {
+    "NAME": "turtle2 / n55_trail_filt @ CRYPTO30 4h (TASK-STR-FWD-019)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "CHANNEL_N": 55,
+    "USE_FILTER": True,   # trail_filt: EMA(200) trend filter (sig_turtle2)
+    "EMA_PERIOD": 200,
+    "ATR_PERIOD": 14,
+    "SPEC_TYPE": "trail",
+    "SL_ATR": 2.0,          # judged TRAIL spec (families2 build_configs)
+    "TP_ATR": None,         # judged TRAIL spec has NO fixed take-profit
+    "TRAIL_ATR": 2.5,       # judged trailing-stop distance (families2 TRAIL)
+    "WARMUP_BARS": 260,     # judged warmup_for("4h") (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (2966 trades, 4/5 folds,
+    # Bonferroni FAIL at programme N=3,899 — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3911,
+    "OOS_PROFIT_FACTOR": 1.1585,
+    "OOS_EXPECTANCY_PCT": 0.366,
+}
+
+TURTLE2_N20_TRAIL_FILT_STRATEGY = {
+    "NAME": "turtle2 / n20_trail_filt @ CRYPTO30 1d (TASK-STR-FWD-019)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "CHANNEL_N": 20,
+    "USE_FILTER": True,   # trail_filt: EMA(200) trend filter (sig_turtle2)
+    "EMA_PERIOD": 200,
+    "ATR_PERIOD": 14,
+    "SPEC_TYPE": "trail",
+    "SL_ATR": 2.0,          # judged TRAIL spec (families2 build_configs)
+    "TP_ATR": None,         # judged TRAIL spec has NO fixed take-profit
+    "TRAIL_ATR": 2.5,       # judged trailing-stop distance (families2 TRAIL)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d") (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (558 trades, 3/5 folds,
+    # Bonferroni FAIL at programme N=3,899 — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.371,
+    "OOS_PROFIT_FACTOR": 1.159,
+    "OOS_EXPECTANCY_PCT": 0.892,
+}
+
+TURTLE2_STRATEGY = {
+    "NAME": "turtle2 / n55_trail_filt @ CRYPTO30 1d (TASK-STR-FWD-019)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "CHANNEL_N": 55,
+    "USE_FILTER": True,   # trail_filt: EMA(200) trend filter (sig_turtle2)
+    "EMA_PERIOD": 200,
+    "ATR_PERIOD": 14,
+    "SPEC_TYPE": "trail",
+    "SL_ATR": 2.0,          # judged TRAIL spec (families2 build_configs)
+    "TP_ATR": None,         # judged TRAIL spec has NO fixed take-profit
+    "TRAIL_ATR": 2.5,       # judged trailing-stop distance (families2 TRAIL)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d") (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (400 trades, 3/5 folds,
+    # Bonferroni FAIL at programme N=3,899 — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3725,
+    "OOS_PROFIT_FACTOR": 1.2037,
+    "OOS_EXPECTANCY_PCT": 1.17,
+}
+
+DONCHIAN_TURTLE_N55_B24_STRATEGY = {
+    "NAME": "donchian_turtle / n55_b24 @ CRYPTO30 1d (TASK-STR-FWD-019)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "CHANNEL_N": 55,
+    "ATR_PERIOD": 14,
+    "SPEC_TYPE": "bracket",
+    "SL_ATR": 2.0,          # judged bracket BR24 (families2 build_configs)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families2 build_configs)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d") (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (496 trades, 2/5 folds,
+    # Bonferroni FAIL at programme N=3,899 — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3468,
+    "OOS_PROFIT_FACTOR": 1.0581,
+    "OOS_EXPECTANCY_PCT": 0.525,
+}
+
+DONCHIAN_TURTLE_N20_B26_4H_STRATEGY = {
+    "NAME": "donchian_turtle / n20_b26 @ CRYPTO30 4h (TASK-STR-FWD-019)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "CHANNEL_N": 20,
+    "ATR_PERIOD": 14,
+    "SPEC_TYPE": "bracket",
+    "SL_ATR": 2.0,          # judged bracket BR26 (families2 build_configs)
+    "TP_ATR": 6.0,          # judged bracket BR26 (families2 build_configs)
+    "WARMUP_BARS": 260,     # judged warmup_for("4h") (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (3583 trades, 3/5 folds,
+    # Bonferroni FAIL at programme N=3,899 — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.276,
+    "OOS_PROFIT_FACTOR": 1.0613,
+    "OOS_EXPECTANCY_PCT": 0.26,
+}
+
+DONCHIAN_TURTLE_N20_B24_STRATEGY = {
+    "NAME": "donchian_turtle / n20_b24 @ CRYPTO30 1d (TASK-STR-FWD-019)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "CHANNEL_N": 20,
+    "ATR_PERIOD": 14,
+    "SPEC_TYPE": "bracket",
+    "SL_ATR": 2.0,          # judged bracket BR24 (families2 build_configs)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families2 build_configs)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d") (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (727 trades, 2/5 folds,
+    # Bonferroni FAIL at programme N=3,899 — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3466,
+    "OOS_PROFIT_FACTOR": 1.1016,
+    "OOS_EXPECTANCY_PCT": 0.87,
+}
+
+DONCHIAN_TURTLE_N20_TRAIL_4H_STRATEGY = {
+    "NAME": "donchian_turtle / n20_trail @ CRYPTO30 4h (TASK-STR-FWD-019)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "CHANNEL_N": 20,
+    "ATR_PERIOD": 14,
+    "SPEC_TYPE": "trail",
+    "SL_ATR": 2.0,          # judged TRAIL spec (families2 build_configs)
+    "TP_ATR": None,         # judged TRAIL spec has NO fixed take-profit
+    "TRAIL_ATR": 2.5,       # judged trailing-stop distance (families2 TRAIL)
+    "WARMUP_BARS": 260,     # judged warmup_for("4h") (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (5413 trades, 3/5 folds,
+    # Bonferroni FAIL at programme N=3,899 — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3747,
+    "OOS_PROFIT_FACTOR": 1.1043,
+    "OOS_EXPECTANCY_PCT": 0.245,
+}
+
+DONCHIAN_TURTLE_N55_TRAIL_4H_STRATEGY = {
+    "NAME": "donchian_turtle / n55_trail @ CRYPTO30 4h (TASK-STR-FWD-019)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "CHANNEL_N": 55,
+    "ATR_PERIOD": 14,
+    "SPEC_TYPE": "trail",
+    "SL_ATR": 2.0,          # judged TRAIL spec (families2 build_configs)
+    "TP_ATR": None,         # judged TRAIL spec has NO fixed take-profit
+    "TRAIL_ATR": 2.5,       # judged trailing-stop distance (families2 TRAIL)
+    "WARMUP_BARS": 260,     # judged warmup_for("4h") (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (3176 trades, 4/5 folds,
+    # Bonferroni FAIL at programme N=3,899 — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.392,
+    "OOS_PROFIT_FACTOR": 1.139,
+    "OOS_EXPECTANCY_PCT": 0.32,
+}
+
+DONCHIAN_TURTLE_N55_TRAIL_STRATEGY = {
+    "NAME": "donchian_turtle / n55_trail @ CRYPTO30 1d (TASK-STR-FWD-019)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "CHANNEL_N": 55,
+    "ATR_PERIOD": 14,
+    "SPEC_TYPE": "trail",
+    "SL_ATR": 2.0,          # judged TRAIL spec (families2 build_configs)
+    "TP_ATR": None,         # judged TRAIL spec has NO fixed take-profit
+    "TRAIL_ATR": 2.5,       # judged trailing-stop distance (families2 TRAIL)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d") (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (435 trades, 3/5 folds,
+    # Bonferroni FAIL at programme N=3,899 — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3632,
+    "OOS_PROFIT_FACTOR": 1.1509,
+    "OOS_EXPECTANCY_PCT": 0.864,
+}
+
+DONCHIAN_TURTLE_N20_B26_STRATEGY = {
+    "NAME": "donchian_turtle / n20_b26 @ CRYPTO30 1d (TASK-STR-FWD-019)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "CHANNEL_N": 20,
+    "ATR_PERIOD": 14,
+    "SPEC_TYPE": "bracket",
+    "SL_ATR": 2.0,          # judged bracket BR26 (families2 build_configs)
+    "TP_ATR": 6.0,          # judged bracket BR26 (families2 build_configs)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d") (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (400 trades, 3/5 folds,
+    # Bonferroni FAIL at programme N=3,899 — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.275,
+    "OOS_PROFIT_FACTOR": 1.1641,
+    "OOS_EXPECTANCY_PCT": 1.596,
+}
+
+DONCHIAN_TURTLE_N20_TRAIL_STRATEGY = {
+    "NAME": "donchian_turtle / n20_trail @ CRYPTO30 1d (TASK-STR-FWD-019)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "CHANNEL_N": 20,
+    "ATR_PERIOD": 14,
+    "SPEC_TYPE": "trail",
+    "SL_ATR": 2.0,          # judged TRAIL spec (families2 build_configs)
+    "TP_ATR": None,         # judged TRAIL spec has NO fixed take-profit
+    "TRAIL_ATR": 2.5,       # judged trailing-stop distance (families2 TRAIL)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d") (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (677 trades, 3/5 folds,
+    # Bonferroni FAIL at programme N=3,899 — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3885,
+    "OOS_PROFIT_FACTOR": 1.1968,
+    "OOS_EXPECTANCY_PCT": 1.087,
+}
+
+DONCHIAN_TURTLE_STRATEGY = {
+    "NAME": "donchian_turtle / n55_b26 @ CRYPTO30 1d (TASK-STR-FWD-019)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "CHANNEL_N": 55,
+    "ATR_PERIOD": 14,
+    "SPEC_TYPE": "bracket",
+    "SL_ATR": 2.0,          # judged bracket BR26 (families2 build_configs)
+    "TP_ATR": 6.0,          # judged bracket BR26 (families2 build_configs)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d") (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (298 trades, 4/5 folds,
+    # Bonferroni FAIL at programme N=3,899 — near-miss, not a promotion):
+    "OOS_WIN_RATE": 0.3523,
+    "OOS_PROFIT_FACTOR": 1.6502,
+    "OOS_EXPECTANCY_PCT": 5.614,
+}
+
 # ==============================================================================
 # TASK-STR-CLEANUP-001 (owner directive, 2026-11-15): every strategy whose
 # verified out-of-sample profit factor (net of costs, TASK-STR-BT-001 /
@@ -2316,6 +2553,292 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "forward_venues": ["oanda_practice"],
         "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): keltner_breakout/ema20_m2.0 @ FOREX28 1d meets the second tier (OOS expectancy +0.137%/trade, PF 1.1273, 241 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. TASK-STR-FWD-012 stop check: daily FX 2.0 x ATR(14) stops measure at most 2.94% of price across all bars of the FX fixture slices (EURUSD/GBPJPY/USDJPY 1d) — far under the 0.15 engine-global cap — so no max_stop_pct override is carried. Friction: the RD-002 forex28 record carries per-symbol round-trip costs of 6.0-10.0 bps; this entry records the conservative maximum, 10.0. DEPENDENCY: this config trades on the OANDA practice venue via the OANDA runner (a separate crew's FWD-019 runner PR); the Binance daemon will not execute it.",
+    },
+    "donchian_turtle": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close > prior-55-bar highest high (rolling(55) max of high, shifted 1). SHORT: close < prior-55-bar lowest low. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_donchian(df, 55, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR26)",
+        "tp_method": "6.0 * ATR(14) at signal bar (judged bracket BR26)",
+        "rr_ratio": 3.0,
+        "oos_win_rate_prior": 0.3523,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 561.4,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.9,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): donchian_turtle/n55_b26 @ CRYPTO30 1d meets the second tier (OOS expectancy +5.614%/trade, PF 1.6502, 298 OOS trades, 4/5 positive folds, PF @2x costs 1.6246) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) \u2014 not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. This stream is also a member of the live Stage-C sleeve book under its sleeve key \u2014 a distinct judged object; records never blended. FWD-012 stop-cap: judged stop 2.0 x ATR(14); measured max stop on the fwd002 fixture slices at 1d = 71.28% of price (SOLUSDT 1d slice; BTCUSDT lower), above the 0.15 engine-global cap, so this entry carries max_stop_pct=0.9 (sanity bound above the measured max; FWD-006 sizes by risk / stop distance, the override changes admissibility only).",
+    },
+    "donchian_turtle_n20_trail": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close > prior-20-bar highest high (rolling(20) max of high, shifted 1). SHORT: close < prior-20-bar lowest low. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_donchian(df, 20, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged TRAIL spec, families2)",
+        "tp_method": "NONE \u2014 judged TRAIL spec: trailing stop 2.5 * ATR(14), no fixed take-profit (see reason)",
+        "rr_ratio": None,
+        "oos_win_rate_prior": 0.3885,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 108.7,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.9,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): donchian_turtle/n20_trail @ CRYPTO30 1d meets the second tier (OOS expectancy +1.087%/trade, PF 1.1968, 677 OOS trades, 3/5 positive folds, PF @2x costs 1.1647) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) \u2014 not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Identical trade stream to turtle2/n20_trail 1d (audit S1.4 dup flag), which is NOT separately wired \u2014 dedupe per audit S1.4; this is the single wired copy. FWD-012 stop-cap: judged stop 2.0 x ATR(14); measured max stop on the fwd002 fixture slices at 1d = 71.28% of price (SOLUSDT 1d slice; BTCUSDT lower), above the 0.15 engine-global cap, so this entry carries max_stop_pct=0.9 (sanity bound above the measured max; FWD-006 sizes by risk / stop distance, the override changes admissibility only). EXIT GEOMETRY NOTE: the judged spec is TRAIL (families2 TRAIL: SL 2.0 x ATR(14), trailing stop 2.5 x ATR(14), NO fixed take-profit \u2014 rigorous_backtest/rd/fastsim.py). The daemon's execution path requires a fixed TP distance, so this config's trailing exit is NOT faithfully executable until the daemon gains trailing-exit support; do NOT add its module to STRATEX_STRATEGY_ALLOWLIST before that support exists. Entry signal and initial stop are the judged ones, equivalence-tested.",
+    },
+    "donchian_turtle_n20_b26": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close > prior-20-bar highest high (rolling(20) max of high, shifted 1). SHORT: close < prior-20-bar lowest low. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_donchian(df, 20, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR26)",
+        "tp_method": "6.0 * ATR(14) at signal bar (judged bracket BR26)",
+        "rr_ratio": 3.0,
+        "oos_win_rate_prior": 0.275,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 159.6,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.9,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): donchian_turtle/n20_b26 @ CRYPTO30 1d meets the second tier (OOS expectancy +1.596%/trade, PF 1.1641, 400 OOS trades, 3/5 positive folds, PF @2x costs 1.1459) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) \u2014 not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.0 x ATR(14); measured max stop on the fwd002 fixture slices at 1d = 71.28% of price (SOLUSDT 1d slice; BTCUSDT lower), above the 0.15 engine-global cap, so this entry carries max_stop_pct=0.9 (sanity bound above the measured max; FWD-006 sizes by risk / stop distance, the override changes admissibility only).",
+    },
+    "donchian_turtle_n55_trail": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close > prior-55-bar highest high (rolling(55) max of high, shifted 1). SHORT: close < prior-55-bar lowest low. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_donchian(df, 55, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged TRAIL spec, families2)",
+        "tp_method": "NONE \u2014 judged TRAIL spec: trailing stop 2.5 * ATR(14), no fixed take-profit (see reason)",
+        "rr_ratio": None,
+        "oos_win_rate_prior": 0.3632,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 86.4,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.9,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): donchian_turtle/n55_trail @ CRYPTO30 1d meets the second tier (OOS expectancy +0.864%/trade, PF 1.1509, 435 OOS trades, 3/5 positive folds, PF @2x costs 1.1208) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) \u2014 not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Identical trade stream to turtle2/n55_trail 1d (audit S1.4 dup flag), which is NOT separately wired \u2014 dedupe per audit S1.4; this is the single wired copy. FWD-012 stop-cap: judged stop 2.0 x ATR(14); measured max stop on the fwd002 fixture slices at 1d = 71.28% of price (SOLUSDT 1d slice; BTCUSDT lower), above the 0.15 engine-global cap, so this entry carries max_stop_pct=0.9 (sanity bound above the measured max; FWD-006 sizes by risk / stop distance, the override changes admissibility only). EXIT GEOMETRY NOTE: the judged spec is TRAIL (families2 TRAIL: SL 2.0 x ATR(14), trailing stop 2.5 x ATR(14), NO fixed take-profit \u2014 rigorous_backtest/rd/fastsim.py). The daemon's execution path requires a fixed TP distance, so this config's trailing exit is NOT faithfully executable until the daemon gains trailing-exit support; do NOT add its module to STRATEX_STRATEGY_ALLOWLIST before that support exists. Entry signal and initial stop are the judged ones, equivalence-tested.",
+    },
+    "donchian_turtle_n55_trail_4h": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close > prior-55-bar highest high (rolling(55) max of high, shifted 1). SHORT: close < prior-55-bar lowest low. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_donchian(df, 55, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged TRAIL spec, families2)",
+        "tp_method": "NONE \u2014 judged TRAIL spec: trailing stop 2.5 * ATR(14), no fixed take-profit (see reason)",
+        "rr_ratio": None,
+        "oos_win_rate_prior": 0.392,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 32.0,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.2,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): donchian_turtle/n55_trail @ CRYPTO30 4h meets the second tier (OOS expectancy +0.32%/trade, PF 1.139, 3176 OOS trades, 4/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) \u2014 not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Identical trade stream to turtle2/n55_trail 4h (audit S1.4 dup flag), which is NOT separately wired \u2014 dedupe per audit S1.4; this is the single wired copy. FWD-012 stop-cap: judged stop 2.0 x ATR(14); measured max stop on the fwd002 fixture slices at 4h = 11.12% of price (SOLUSDT 4h slice; BTCUSDT lower), above the 0.15 engine-global cap, so this entry carries max_stop_pct=0.2 (sanity bound above the measured max; FWD-006 sizes by risk / stop distance, the override changes admissibility only). EXIT GEOMETRY NOTE: the judged spec is TRAIL (families2 TRAIL: SL 2.0 x ATR(14), trailing stop 2.5 x ATR(14), NO fixed take-profit \u2014 rigorous_backtest/rd/fastsim.py). The daemon's execution path requires a fixed TP distance, so this config's trailing exit is NOT faithfully executable until the daemon gains trailing-exit support; do NOT add its module to STRATEX_STRATEGY_ALLOWLIST before that support exists. Entry signal and initial stop are the judged ones, equivalence-tested.",
+    },
+    "donchian_turtle_n20_trail_4h": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close > prior-20-bar highest high (rolling(20) max of high, shifted 1). SHORT: close < prior-20-bar lowest low. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_donchian(df, 20, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged TRAIL spec, families2)",
+        "tp_method": "NONE \u2014 judged TRAIL spec: trailing stop 2.5 * ATR(14), no fixed take-profit (see reason)",
+        "rr_ratio": None,
+        "oos_win_rate_prior": 0.3747,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 24.5,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.2,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): donchian_turtle/n20_trail @ CRYPTO30 4h meets the second tier (OOS expectancy +0.245%/trade, PF 1.1043, 5413 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) \u2014 not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Identical trade stream to turtle2/n20_trail 4h (audit S1.4 dup flag), which is NOT separately wired \u2014 dedupe per audit S1.4; this is the single wired copy. FWD-012 stop-cap: judged stop 2.0 x ATR(14); measured max stop on the fwd002 fixture slices at 4h = 11.12% of price (SOLUSDT 4h slice; BTCUSDT lower), above the 0.15 engine-global cap, so this entry carries max_stop_pct=0.2 (sanity bound above the measured max; FWD-006 sizes by risk / stop distance, the override changes admissibility only). EXIT GEOMETRY NOTE: the judged spec is TRAIL (families2 TRAIL: SL 2.0 x ATR(14), trailing stop 2.5 x ATR(14), NO fixed take-profit \u2014 rigorous_backtest/rd/fastsim.py). The daemon's execution path requires a fixed TP distance, so this config's trailing exit is NOT faithfully executable until the daemon gains trailing-exit support; do NOT add its module to STRATEX_STRATEGY_ALLOWLIST before that support exists. Entry signal and initial stop are the judged ones, equivalence-tested.",
+    },
+    "donchian_turtle_n20_b24": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close > prior-20-bar highest high (rolling(20) max of high, shifted 1). SHORT: close < prior-20-bar lowest low. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_donchian(df, 20, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3466,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 87.0,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.9,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): donchian_turtle/n20_b24 @ CRYPTO30 1d meets the second tier (OOS expectancy +0.87%/trade, PF 1.1016, 727 OOS trades, 2/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) \u2014 not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Identical trade stream to volume_breakout/donch20_novol 1d (audit S1.4 dup flag), which is NOT separately wired \u2014 dedupe per audit S1.4; this is the single wired copy. FWD-012 stop-cap: judged stop 2.0 x ATR(14); measured max stop on the fwd002 fixture slices at 1d = 71.28% of price (SOLUSDT 1d slice; BTCUSDT lower), above the 0.15 engine-global cap, so this entry carries max_stop_pct=0.9 (sanity bound above the measured max; FWD-006 sizes by risk / stop distance, the override changes admissibility only).",
+    },
+    "donchian_turtle_n20_b26_4h": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close > prior-20-bar highest high (rolling(20) max of high, shifted 1). SHORT: close < prior-20-bar lowest low. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_donchian(df, 20, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR26)",
+        "tp_method": "6.0 * ATR(14) at signal bar (judged bracket BR26)",
+        "rr_ratio": 3.0,
+        "oos_win_rate_prior": 0.276,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 26.0,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.2,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): donchian_turtle/n20_b26 @ CRYPTO30 4h meets the second tier (OOS expectancy +0.26%/trade, PF 1.0613, 3583 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) \u2014 not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.0 x ATR(14); measured max stop on the fwd002 fixture slices at 4h = 11.12% of price (SOLUSDT 4h slice; BTCUSDT lower), above the 0.15 engine-global cap, so this entry carries max_stop_pct=0.2 (sanity bound above the measured max; FWD-006 sizes by risk / stop distance, the override changes admissibility only).",
+    },
+    "donchian_turtle_n55_b24": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close > prior-55-bar highest high (rolling(55) max of high, shifted 1). SHORT: close < prior-55-bar lowest low. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_donchian(df, 55, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3468,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 52.5,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.9,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): donchian_turtle/n55_b24 @ CRYPTO30 1d meets the second tier (OOS expectancy +0.525%/trade, PF 1.0581, 496 OOS trades, 2/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) \u2014 not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.0 x ATR(14); measured max stop on the fwd002 fixture slices at 1d = 71.28% of price (SOLUSDT 1d slice; BTCUSDT lower), above the 0.15 engine-global cap, so this entry carries max_stop_pct=0.9 (sanity bound above the measured max; FWD-006 sizes by risk / stop distance, the override changes admissibility only).",
+    },
+    "turtle2": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG/SHORT: donchian_turtle n=55 channel breakout (sig_donchian) AND the EMA(200) trend filter \u2014 longs only above EMA(200), shorts only below. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_turtle2(df, 55, True, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged TRAIL spec, families2)",
+        "tp_method": "NONE \u2014 judged TRAIL spec: trailing stop 2.5 * ATR(14), no fixed take-profit (see reason)",
+        "rr_ratio": None,
+        "oos_win_rate_prior": 0.3725,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 117.0,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.9,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): turtle2/n55_trail_filt @ CRYPTO30 1d meets the second tier (OOS expectancy +1.17%/trade, PF 1.2037, 400 OOS trades, 3/5 positive folds, PF @2x costs 1.1727) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) \u2014 not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.0 x ATR(14); measured max stop on the fwd002 fixture slices at 1d = 71.28% of price (SOLUSDT 1d slice; BTCUSDT lower), above the 0.15 engine-global cap, so this entry carries max_stop_pct=0.9 (sanity bound above the measured max; FWD-006 sizes by risk / stop distance, the override changes admissibility only). EXIT GEOMETRY NOTE: the judged spec is TRAIL (families2 TRAIL: SL 2.0 x ATR(14), trailing stop 2.5 x ATR(14), NO fixed take-profit \u2014 rigorous_backtest/rd/fastsim.py). The daemon's execution path requires a fixed TP distance, so this config's trailing exit is NOT faithfully executable until the daemon gains trailing-exit support; do NOT add its module to STRATEX_STRATEGY_ALLOWLIST before that support exists. Entry signal and initial stop are the judged ones, equivalence-tested.",
+    },
+    "turtle2_n20_trail_filt": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG/SHORT: donchian_turtle n=20 channel breakout (sig_donchian) AND the EMA(200) trend filter \u2014 longs only above EMA(200), shorts only below. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_turtle2(df, 20, True, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged TRAIL spec, families2)",
+        "tp_method": "NONE \u2014 judged TRAIL spec: trailing stop 2.5 * ATR(14), no fixed take-profit (see reason)",
+        "rr_ratio": None,
+        "oos_win_rate_prior": 0.371,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 89.2,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.9,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): turtle2/n20_trail_filt @ CRYPTO30 1d meets the second tier (OOS expectancy +0.892%/trade, PF 1.159, 558 OOS trades, 3/5 positive folds, PF @2x costs 1.1281) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) \u2014 not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.0 x ATR(14); measured max stop on the fwd002 fixture slices at 1d = 71.28% of price (SOLUSDT 1d slice; BTCUSDT lower), above the 0.15 engine-global cap, so this entry carries max_stop_pct=0.9 (sanity bound above the measured max; FWD-006 sizes by risk / stop distance, the override changes admissibility only). EXIT GEOMETRY NOTE: the judged spec is TRAIL (families2 TRAIL: SL 2.0 x ATR(14), trailing stop 2.5 x ATR(14), NO fixed take-profit \u2014 rigorous_backtest/rd/fastsim.py). The daemon's execution path requires a fixed TP distance, so this config's trailing exit is NOT faithfully executable until the daemon gains trailing-exit support; do NOT add its module to STRATEX_STRATEGY_ALLOWLIST before that support exists. Entry signal and initial stop are the judged ones, equivalence-tested.",
+    },
+    "turtle2_n55_trail_filt_4h": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG/SHORT: donchian_turtle n=55 channel breakout (sig_donchian) AND the EMA(200) trend filter \u2014 longs only above EMA(200), shorts only below. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_turtle2(df, 55, True, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged TRAIL spec, families2)",
+        "tp_method": "NONE \u2014 judged TRAIL spec: trailing stop 2.5 * ATR(14), no fixed take-profit (see reason)",
+        "rr_ratio": None,
+        "oos_win_rate_prior": 0.3911,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 36.6,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.2,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): turtle2/n55_trail_filt @ CRYPTO30 4h meets the second tier (OOS expectancy +0.366%/trade, PF 1.1585, 2966 OOS trades, 4/5 positive folds, PF @2x costs 1.0858) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) \u2014 not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.0 x ATR(14); measured max stop on the fwd002 fixture slices at 4h = 11.12% of price (SOLUSDT 4h slice; BTCUSDT lower), above the 0.15 engine-global cap, so this entry carries max_stop_pct=0.2 (sanity bound above the measured max; FWD-006 sizes by risk / stop distance, the override changes admissibility only). EXIT GEOMETRY NOTE: the judged spec is TRAIL (families2 TRAIL: SL 2.0 x ATR(14), trailing stop 2.5 x ATR(14), NO fixed take-profit \u2014 rigorous_backtest/rd/fastsim.py). The daemon's execution path requires a fixed TP distance, so this config's trailing exit is NOT faithfully executable until the daemon gains trailing-exit support; do NOT add its module to STRATEX_STRATEGY_ALLOWLIST before that support exists. Entry signal and initial stop are the judged ones, equivalence-tested.",
+    },
+    "turtle2_n20_trail_filt_4h": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG/SHORT: donchian_turtle n=20 channel breakout (sig_donchian) AND the EMA(200) trend filter \u2014 longs only above EMA(200), shorts only below. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_turtle2(df, 20, True, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged TRAIL spec, families2)",
+        "tp_method": "NONE \u2014 judged TRAIL spec: trailing stop 2.5 * ATR(14), no fixed take-profit (see reason)",
+        "rr_ratio": None,
+        "oos_win_rate_prior": 0.3809,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 33.0,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.2,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): turtle2/n20_trail_filt @ CRYPTO30 4h meets the second tier (OOS expectancy +0.33%/trade, PF 1.1421, 4369 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) \u2014 not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.0 x ATR(14); measured max stop on the fwd002 fixture slices at 4h = 11.12% of price (SOLUSDT 4h slice; BTCUSDT lower), above the 0.15 engine-global cap, so this entry carries max_stop_pct=0.2 (sanity bound above the measured max; FWD-006 sizes by risk / stop distance, the override changes admissibility only). EXIT GEOMETRY NOTE: the judged spec is TRAIL (families2 TRAIL: SL 2.0 x ATR(14), trailing stop 2.5 x ATR(14), NO fixed take-profit \u2014 rigorous_backtest/rd/fastsim.py). The daemon's execution path requires a fixed TP distance, so this config's trailing exit is NOT faithfully executable until the daemon gains trailing-exit support; do NOT add its module to STRATEX_STRATEGY_ALLOWLIST before that support exists. Entry signal and initial stop are the judged ones, equivalence-tested.",
     },
 }
 
