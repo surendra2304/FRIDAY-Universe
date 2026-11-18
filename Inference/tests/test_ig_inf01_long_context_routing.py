@@ -142,7 +142,11 @@ def test_ranked_models_without_requirement_match_rel043_ranking(all_providers_av
 
 def test_ranked_models_fit_filter_keeps_ranking_order(all_providers_available):
     ranked = v1._ranked_suitable_models("chat", required_tokens=200000)
-    assert ranked == ["gemini-3.8-flash", "gemini-3.6-flash"]
+    # TASK-INF-016 DISCLOSURE: this expectation gains gemini-3.5-flash-lite
+    # (declared window 1,048,576 — it fits 200k where the 131k tier cannot).
+    # The property under test is unchanged: the fit filter keeps REL-043
+    # ranking order among the models whose windows fit.
+    assert ranked == ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"]
 
 
 # ---------------------------------------------------------------------------

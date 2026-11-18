@@ -11258,6 +11258,27 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Forge/tests/test_frg017_idle_experiments.py
       - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
+  - id: TASK-INF-016
+    title: "Adaptive routing (owner decision 2026-11-18): the route chooses per task — complex (code/reasoning/multi-step/synthesis) to the quality model, simple (math sum, lookup, short rewrite) to the fast model; classifier at the FRIDAY escalation point + fast-model admission to Inference's verified catalogue"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-inf-016-adaptive-routing
+    evidence:
+      - "Owner decision 2026-11-18 ~12:19 IST, in his words: let it choose, because sometimes quality matters most and sometimes speed matters most — if it is a complex task quality matters, if it is just a normal math sum speed matters. Supersedes the fixed-order framings (Groq-first / Gemini-first) put to him as doubts 3A/3B. Claim: issue #35 comment 6971400049."
+      - "BEFORE: TASK-REL-044 escalation sent every complex turn to a fixed quality model per kind (openai/gpt-oss-120b / gemini-3.8-flash), and turns escalated by pool exhaustion or tool-chain depth got the same quality model regardless of the task's own simplicity. Inference-side, a fast model could not be requested by name at all: gemini-3.5-flash-lite was absent from MODEL_CATALOG, so REL-043 selection would substitute it and REL-030 containment would treat its serve as a policy breach."
+      - "IMPLEMENTED (this task's PR): FRIDAY escalation.py — classify_task_complexity (deterministic heuristics: REL-044 kinds, tool depth, length, reasoning/multi-step markers checked BEFORE the simple shapes — arithmetic, short lookup, short rewrite; NO model call on either path) + MODEL_PROFILES capability tags (fast/quality/standard tiers) + adaptive_escalation_decision (simple -> gemini-3.5-flash-lite; complex -> the REL-044 quality picks); the decision is logged on every escalated call (routing=<level>:<reason>), recorded on the turn context, the escalation event (both the complex/depth path and the pool-exhausted path) and the message metadata (routing_level/routing_reason/routing_tier). Inference v1_core_routes.py — gemini-3.5-flash-lite admitted to MODEL_CATALOG with MODEL_CLASSES economy, MODEL_CONTEXT_WINDOWS 1048576, and places in every MODEL_SUITABILITY ranking (last-but-one, ahead of the nemotron economy rung), plus a new 'simple' task type whose ranking leads with it; _infer_task_type gains the simple shapes checked LAST, after vision/code/long-context/reasoning, so a short-but-structural request never falls to the fast tier. Voice is untouched: channel=voice still never complexity-escalates (REL-044 rule; regression-pinned)."
+      - "DESIGN DECISION (disclosed): no generic short-text simple rule — a short instruction with no provably-small shape ('explain recursion') keeps the REL-044 kind-less quality default. The first battery run proved the broader rule broke test_inference_provider_parses_answer_and_provenance's premise; simple is a narrow verdict (the owner's enumerated shapes), not a length verdict."
+      - "TESTS: FRIDAY new tests/test_llm_adaptive_routing.py 33 (fixed battery of 12 tasks x classifier + decision, long-input, depth, determinism, profile tiers, wire-path audit metadata, exhaustion-of-a-simple-task -> fast model, voice exclusion) + existing test_llm_escalation.py 28 = 61 passed on branch; on pristine main the new file fails at COLLECTION (the classifier does not exist there). Inference new tests/test_inf016_adaptive_routing.py 14 passed on branch; on pristine main 9 of 14 fail (catalogue admission, simple inference, fast selection, named fast serve) and the 5 unchanged-behaviour guards pass on both. Neighbours on branch: test_rel030 6 + test_inf012 5 + test_rel043 15 all pass. One existing assertion updated WITH DISCLOSURE: test_ig_inf01_long_context_routing.py's fit-filter expectation gains gemini-3.5-flash-lite (its declared 1M window fits the 200k case; the property under test — ranking order preserved — is unchanged). One PRE-EXISTING failure reproduced identically on pristine main and branch (not a regression, not fixed here): test_ig_inf01...::test_overflow_with_big_windows_unavailable_picks_largest_remaining (line 110)."
+      - "DISCLOSURE: live generation of gemini-3.5-flash-lite with this deployment's keys is NOT probed by this task (no keys in the sandbox) — the same post-merge on-host probe owed under TASK-INF-015 gates production reliance on the fast route."
+    next_action: "Supervisor review -> serial-lane merge (board-only union resolution vs TASK-INF-015's PR, whichever merges second) -> deploy -> live probe: one simple + one complex escalated turn in the FRIDAY journal showing routing=simple/complex with the expected served models -> VERIFIED."
+    files:
+      - FRIDAY/src/friday/llm/escalation.py
+      - FRIDAY/tests/test_llm_adaptive_routing.py
+      - Inference/app/api/v1_core_routes.py
+      - Inference/tests/test_inf016_adaptive_routing.py
+      - Inference/tests/test_ig_inf01_long_context_routing.py
+      - docs/collaboration/WORK_BOARD.yaml
+task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
     description: "PR #23 is labelled TASK-CI-003 but does not match TASK-CI-003's current Master Plan acceptance criteria (workspace test runner)."

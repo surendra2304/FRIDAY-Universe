@@ -75,6 +75,20 @@ entirely (the factory then builds exactly the pre-REL-044 stack).
 Depth threshold: ``FRIDAY_LLM_ESCALATION_DEPTH`` (default 3).
 Inference call timeout: ``FRIDAY_LLM_ESCALATION_TIMEOUT_S``
 (default 150).
+
+TASK-INF-016 (owner decision, 2026-11-18) — adaptive routing: the
+escalation target is no longer one fixed quality model for everything
+that escalates. The owner, in his words: let the system choose,
+because sometimes quality matters most and sometimes speed matters
+most — a complex task goes to the quality model; a simple task (a
+math sum, a lookup, a short rewrite) goes to the fast model.
+:func:`classify_task_complexity` makes that choice at the escalation
+point with cheap deterministic heuristics (no model call — a
+classification call would burn the very quota the fast path exists to
+save), :data:`MODEL_PROFILES` carries the catalogue capability tags
+the choice reads, and every escalated call logs and records its
+level + reason so the choice is auditable. Neither provider is a
+fixed first choice: the task decides.
 """
 
 from __future__ import annotations
@@ -247,6 +261,10 @@ class TurnRouteContext:
     intent: str | None = None
     tool_iterations: int = 0
     events: list[dict[str, Any]] = field(default_factory=list)
+    # TASK-INF-016: the adaptive-routing decision for this turn, filled
+    # in by adaptive_escalation_decision when an escalated call is made.
+    complexity_level: str = ""
+    complexity_reason: str = ""
 
     @property
     def is_complex(self) -> bool:
@@ -327,6 +345,179 @@ def preferred_escalation_model(ctx: TurnRouteContext | None) -> str:
             if kind in ctx.task_kinds:
                 return _MODEL_FOR_KIND[kind]
     return _DEFAULT_ESCALATION_MODEL
+
+
+# ---------------------------------------------------------------------------
+# TASK-INF-016 — adaptive routing: per-task model choice at escalation
+# ---------------------------------------------------------------------------
+
+#: The fast catalogue model: Gemini Flash-Lite (free tier 15 RPM /
+#: 500 RPD — the high-quota tier; TASK-INF-015/016 catalogue admission).
+FAST_ESCALATION_MODEL = "gemini-3.5-flash-lite"
+
+#: Catalogue capability tags for every model an escalated call may
+#: request. ``tier`` is the routing class the adaptive choice reads:
+#: "fast" models serve simple tasks; "quality" models serve complex
+#: ones. Tags name what a model is FOR, following Inference's own
+#: suitability rationale (REL-043): gpt-oss-120b is the strongest
+#: reasoner/coder at Groq speed; the Gemini flashes are the
+#: long-context / synthesis class; Flash-Lite is the speed/economy
+#: class. A model missing here is treated as tier "unknown" and is
+#: never picked by the adaptive path.
+MODEL_PROFILES: dict[str, dict[str, Any]] = {
+    FAST_ESCALATION_MODEL: {
+        "tier": "fast",
+        "tags": frozenset({"speed", "economy", "simple", "chat", "lookup"}),
+    },
+    "openai/gpt-oss-120b": {
+        "tier": "quality",
+        "tags": frozenset({"reasoning", "code", "multi_step", "delegation", "research"}),
+    },
+    "gemini-3.8-flash": {
+        "tier": "quality",
+        "tags": frozenset({"synthesis", "long_context", "reasoning"}),
+    },
+    "gemini-3.6-flash": {
+        "tier": "standard",
+        "tags": frozenset({"chat", "synthesis", "long_context"}),
+    },
+}
+
+
+@dataclass(frozen=True)
+class TaskComplexityDecision:
+    """One adaptive-routing verdict: level, why, and the model it picks."""
+
+    level: str  # "simple" | "complex"
+    reason: str
+    model: str
+    kinds: frozenset[str] = frozenset()
+
+
+_MATH_RES = (
+    re.compile(r"\b(?:what is|calculate|compute|evaluate)\b[^.?!]{0,60}?\d", re.IGNORECASE),
+    re.compile(r"\d+\s*(?:\+|-|\*|/|×|÷)\s*\d+"),
+    re.compile(r"\b\d+(?:\.\d+)?\s*(?:percent|%)\b", re.IGNORECASE),
+    re.compile(r"\b(?:sum|total|average|mean|product|difference|quotient)\s+of\b[^.?!]{0,40}?\d", re.IGNORECASE),
+    re.compile(r"\bhow\s+(?:many|much)\b[^.?!]{0,60}?\d", re.IGNORECASE),
+)
+
+_LOOKUP_RES = (
+    re.compile(r"^(?:what|who|when|where|which|how many|how much)\b[^.?!]{0,80}\??$", re.IGNORECASE),
+    re.compile(r"\b(?:capital of|meaning of|definition of|translate)\b", re.IGNORECASE),
+    re.compile(r"\bcurrent\s+(?:time|date|price|status)\b", re.IGNORECASE),
+)
+
+_REWRITE_RES = (
+    re.compile(r"\b(?:rewrite|rephrase|reword|paraphrase|shorten)\b", re.IGNORECASE),
+    re.compile(r"\bmake\s+(?:this|it)\s+(?:shorter|simpler|more\s+polite|more\s+formal)\b", re.IGNORECASE),
+    re.compile(r"\bfix\s+(?:the\s+)?(?:grammar|spelling)\b", re.IGNORECASE),
+)
+
+_REASONING_RES = (
+    re.compile(r"\b(?:prove|derive|theorem|trade[-\s]?offs?|pros\s+and\s+cons|root\s+cause|explain\s+why)\b", re.IGNORECASE),
+    re.compile(r"\bstep[-\s]by[-\s]step\b", re.IGNORECASE),
+    re.compile(r"\bcompare\b[^.?!]{0,60}?\b(?:and|with|versus|vs\b)", re.IGNORECASE),
+)
+
+
+def classify_task_complexity(
+    goal: str,
+    *,
+    task_kinds: frozenset[str] | None = None,
+    tool_iterations: int = 0,
+) -> tuple[str, str, frozenset[str]]:
+    """Classify one task as ("simple"|"complex", reason, kinds).
+
+    Deterministic heuristics only — pattern tables, length and the
+    REL-044 kind signals; NO model call on either path. Complex
+    signals are checked first and always win: a request that is both
+    short and structural (code, research, multi-step, reasoning) is
+    complex, because the cost of under-powering a complex task (a
+    wrong or shallow answer) is worse than the cost of over-powering
+    a simple one (a slower answer). The simple verdict is reserved
+    for tasks whose shape is provably small: arithmetic, a short
+    lookup, a short rewrite, or any short instruction with no complex
+    signal at all.
+    """
+    text = " ".join((goal or "").strip().lower().split())
+    kinds = set(task_kinds or ()) | set(classify_turn_complexity(text))
+
+    if kinds & COMPLEX_KINDS:
+        return "complex", f"complex_kind:{'+'.join(sorted(kinds & COMPLEX_KINDS))}", frozenset(kinds)
+    if tool_iterations >= 2:
+        return "complex", f"tool_chain_depth:{tool_iterations}", frozenset(kinds)
+    if len(text) >= 1200:
+        return "complex", "long_input", frozenset(kinds)
+    if "```" in text or _matches_any(_REASONING_RES, text):
+        return "complex", "reasoning_marker", frozenset(kinds)
+    if (
+        sum(1 for m in _MULTISTEP_MARKERS if m in f" {text} ") >= 2
+        or re.search(r"\b1[.)]\s.*\b2[.)]\s", text)
+        or len({v for v in _ACTION_VERBS if re.search(rf"\b{v}\b", text)}) >= 3
+    ):
+        return "complex", "multi_step_structure", frozenset(kinds)
+    if _matches_any(_MATH_RES, text):
+        return "simple", "math_expression", frozenset(kinds)
+    if _matches_any(_REWRITE_RES, text) and len(text) <= 600:
+        return "simple", "short_rewrite", frozenset(kinds)
+    if _matches_any(_LOOKUP_RES, text) and len(text) <= 200:
+        return "simple", "short_lookup", frozenset(kinds)
+    # No other short-text simple rule, deliberately: a short instruction
+    # with no provably-small shape ("explain recursion") keeps the
+    # REL-044 kind-less default — the quality model. Simple is a narrow
+    # verdict, not a length verdict.
+    if len(text) >= 400:
+        return "complex", "long_instruction", frozenset(kinds)
+    return "complex", "default_quality", frozenset(kinds)
+
+
+def _quality_model_for_kinds(kinds: frozenset[str]) -> str:
+    """The quality model for a kind set (REL-044 priority order)."""
+    if KIND_CODE_GENERATION in kinds:
+        return _MODEL_FOR_KIND[KIND_CODE_GENERATION]
+    for kind in (KIND_DELEGATION, KIND_RESEARCH, KIND_MULTISTEP, KIND_SYNTHESIS):
+        if kind in kinds:
+            return _MODEL_FOR_KIND[kind]
+    return _DEFAULT_ESCALATION_MODEL
+
+
+def adaptive_escalation_decision(
+    ctx: TurnRouteContext | None,
+    messages: list[Message] | None = None,
+) -> TaskComplexityDecision:
+    """Choose the escalation model for one call, per task (INF-016).
+
+    Simple tasks route to the fast catalogue model; complex tasks keep
+    the REL-044 quality picks. The decision is recorded on the turn
+    context (level + reason) and returned for the provider's log line
+    and message metadata, so every escalated call is auditable.
+    """
+    goal = ""
+    if ctx is not None and ctx.goal:
+        goal = ctx.goal
+    elif messages:
+        for m in reversed(messages):
+            if m.role == Role.USER and (m.content or "").strip():
+                goal = m.content
+                break
+    level, reason, kinds = classify_task_complexity(
+        goal,
+        task_kinds=ctx.task_kinds if ctx is not None else None,
+        tool_iterations=ctx.tool_iterations if ctx is not None else 0,
+    )
+    if level == "simple":
+        model = FAST_ESCALATION_MODEL
+    elif ctx is not None:
+        model = preferred_escalation_model(ctx)
+    elif kinds:
+        model = _quality_model_for_kinds(kinds)
+    else:
+        model = _DEFAULT_ESCALATION_MODEL
+    if ctx is not None:
+        ctx.complexity_level = level
+        ctx.complexity_reason = reason
+    return TaskComplexityDecision(level=level, reason=reason, model=model, kinds=kinds)
 
 
 # ---------------------------------------------------------------------------
@@ -446,7 +637,8 @@ class InferenceChatProvider(BaseLLMProvider):
         import httpx
 
         ctx = current_turn_route_context()
-        model = preferred_escalation_model(ctx)
+        decision = adaptive_escalation_decision(ctx, messages)
+        model = decision.model
         payload = {
             "model": model,
             "messages": _to_chat_messages(messages, tools),
@@ -492,6 +684,7 @@ class InferenceChatProvider(BaseLLMProvider):
         logger.info(
             f"ESCALATION served by Inference: requested={model} "
             f"served={served_model} latency={latency:.1f}s "
+            f"routing={decision.level}:{decision.reason} "
             f"provenance={provenance if provenance else 'none (served as requested)'}"
         )
         metadata: dict[str, Any] = {
@@ -500,6 +693,10 @@ class InferenceChatProvider(BaseLLMProvider):
             "requested_model": model,
             "inference_provenance": provenance,
             "escalation_latency_s": round(latency, 2),
+            # TASK-INF-016: the adaptive choice, auditable per call.
+            "routing_level": decision.level,
+            "routing_reason": decision.reason,
+            "routing_tier": MODEL_PROFILES.get(model, {}).get("tier", "unknown"),
         }
         if tools:
             from friday.llm.tool_markup import extract_markup_tool_calls
@@ -613,6 +810,8 @@ class EscalatingLLMProvider(BaseLLMProvider):
                     "model": msg.metadata.get("model"),
                     "requested_model": msg.metadata.get("requested_model"),
                     "provenance": msg.metadata.get("inference_provenance"),
+                    "routing_level": msg.metadata.get("routing_level"),
+                    "routing_reason": msg.metadata.get("routing_reason"),
                 })
             msg.metadata.setdefault("llm_route", "inference")
             msg.metadata.setdefault("escalation_trigger", trigger)
@@ -653,6 +852,8 @@ class EscalatingLLMProvider(BaseLLMProvider):
                     "model": msg.metadata.get("model"),
                     "requested_model": msg.metadata.get("requested_model"),
                     "provenance": msg.metadata.get("inference_provenance"),
+                    "routing_level": msg.metadata.get("routing_level"),
+                    "routing_reason": msg.metadata.get("routing_reason"),
                 })
             msg.metadata.setdefault("llm_route", "inference")
             msg.metadata.setdefault("escalation_trigger", "pool_exhausted")
