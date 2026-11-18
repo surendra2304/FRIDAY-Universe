@@ -48,6 +48,33 @@ log = logging.getLogger("vyralx.viral_framing")
 _WORDS_PER_SECOND = 2.45
 _HOOK_WORD_CAP = 18
 
+# Render-fit profile (TASK-VYR-021). The first supervised loop cycle
+# (2026-11-18) lost both framed renders to the 2,400s production
+# timeout: at the old profile (1080x1920, libx264 veryfast/crf20) a
+# 40s framed render costs 70.5 CPU-seconds on one core (1.76 per
+# output second) with a 378MB peak RSS — on the shared ~956MB S2 host
+# that working set invites swap pressure and the encode starves.
+# Profiled stage split: the x264 encode is ~66% of the CPU, decode +
+# filters ~23%, the audio chain ~7%; the caption burn-in is only
+# ~3 CPU-s, so the captions stay exactly as they are.
+#
+# This profile measures 30.4 CPU-s for the same 40s render (0.76 per
+# output second, 2.3x cheaper), 39.2 CPU-s for the longest possible
+# 58s excerpt, and a 243MB peak RSS; a 60fps source gets 3.9x cheaper
+# because the fps cap halves its frames before scaling. Quality:
+# SSIM 0.965 against the old profile on a grain-heavy fixture, and a
+# dark-gradient banding probe is indistinguishable (0.9993) from a
+# superfast/crf21 encode. The output is still a 9:16 Short with the
+# same burned captions (the ASS PlayRes is unchanged — libass scales
+# proportionally), the same ducking and the same loudnorm target.
+# Pinned by tests/test_viral_framing.py — do not retune casually.
+_RENDER_WIDTH = 720
+_RENDER_HEIGHT = 1280
+_RENDER_MAX_FPS = 30
+_X264_PRESET = "ultrafast"
+_X264_CRF = "23"
+_X264_THREADS = "2"
+
 
 def excerpt_window(
     duration: float,
@@ -326,7 +353,10 @@ def render_framed(
     """Assemble the framed edit.
 
     Video: the excerpt window, channel format + burned captions via
-    the production filter. Audio: the source at full level except
+    the production filter, encoded at the render-fit profile above
+    (720x1280, TASK-VYR-021 — the framed path runs on the fleet's
+    smallest host; the commentary path keeps the 1080x1920 default).
+    Audio: the source at full level except
     under her two lines (ducked to 0.22, the production duck level),
     her lines placed at the two ends, and the BGM bed at full level
     in the stretches where nobody speaks and ducked under her lines.
@@ -335,7 +365,14 @@ def render_framed(
     settings = get_settings()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     ass_path = vr._write_ass(cues, output_path.with_suffix(".ass"))
-    video_chain = vr._base_video_filter(cues, category, ass_path)
+    video_chain = vr._base_video_filter(
+        cues,
+        category,
+        ass_path,
+        width=_RENDER_WIDTH,
+        height=_RENDER_HEIGHT,
+        max_fps=_RENDER_MAX_FPS,
+    )
     end = excerpt_start + excerpt_seconds
     duck_hook_end = min(excerpt_seconds, hook_seconds + 0.15)
     duck_payoff_start = max(0.0, excerpt_seconds - payoff_seconds - 0.15)
@@ -380,8 +417,9 @@ def render_framed(
     cmd += [
         "-filter_complex", ";".join(filters),
         "-map", "[v]", "-map", "[a]",
-        "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+        "-c:v", "libx264", "-preset", _X264_PRESET, "-crf", _X264_CRF,
         "-pix_fmt", "yuv420p",
+        "-threads", _X264_THREADS,
         "-c:a", "aac", "-b:a", "192k",
         "-movflags", "+faststart",
         "-t", f"{excerpt_seconds:.2f}",
