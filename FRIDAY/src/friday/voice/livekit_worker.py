@@ -878,18 +878,27 @@ def _classify_probe_error(exc: BaseException) -> str:
     return "other"
 
 
-# TASK-VOI-020: the probe's stage-1 text ping runs on the catalogue
-# Flash-Lite model (Inference SUPPORTED_MODELS), NOT on the voice/chat
-# Flash model. Stage 1 only classifies the key (auth / quota /
-# transport); it never certifies. On gemini-3.8-flash the ping drew on
-# that model's free-tier DAILY bucket (~20 requests/day/project), and
-# the key keeper's re-resolution rounds drained it — at re-acceptance
-# #12 (2026-11-18 00:25 IST) every key was condemned for voice on the
-# TEXT bucket's exhaustion without the Live stage ever being tested
-# (quota forensics, ~/workspace/voice-quota-diag/STATE.md). Flash-Lite's
-# documented free tier is ~500 requests/day, so routine probing no
-# longer drains the scarce bucket.
-_PROBE_TEXT_MODEL = "gemini-2.5-flash-lite"
+# TASK-VOI-020: the probe's stage-1 text ping runs on the Flash-Lite
+# model, NOT on the voice/chat Flash model. Stage 1 only classifies
+# the key (auth / quota / transport); it never certifies. On
+# gemini-3.8-flash the ping drew on that model's free-tier DAILY
+# bucket (~20 requests/day/project), and the key keeper's
+# re-resolution rounds drained it — at re-acceptance #12 (2026-11-18
+# 00:25 IST) every key was condemned for voice on the TEXT bucket's
+# exhaustion without the Live stage ever being tested (quota
+# forensics, ~/workspace/voice-quota-diag/STATE.md). Flash-Lite's
+# free tier is ~500 requests/day, so routine probing no longer
+# drains the scarce bucket.
+#
+# TASK-VOI-021: the pin is gemini-3.5-flash-lite, the current
+# Flash-Lite id (free tier verified first-hand 2026-11-18: 15 RPM /
+# 500 RPD; the full Flash models are 5 RPM / 20 RPD). VOI-020 pinned
+# the legacy gemini-2.5-flash-lite id from the Inference catalogue;
+# that id is access-limited and Google routes it to
+# gemini-3.5-flash-lite from 2026-12-01, so the alias would silently
+# become this id anyway — pin the real id. (The Inference catalogue
+# still lists the 2.5 id; aligning it is a separate follow-up.)
+_PROBE_TEXT_MODEL = "gemini-3.5-flash-lite"
 
 
 def _probe_gemini_live_sync(key: str, client) -> bool:
