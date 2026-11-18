@@ -11243,6 +11243,20 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Inference/app/providers/gemini.py
       - Inference/tests/test_inf015_flash_lite_catalogue.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-FRG-017
+    title: "Forge idle experiment loop (Self-Upgrade Programme slice 1): when Forge has no assigned work it runs pre-declared experiments on its own build behaviour — hypothesis from its own failure clusters, champion-vs-challenger starting-manifest A/B over the golden build shapes via the deterministic synthesizer, keep/discard by a pre-declared score bar, champion registry, and lessons written as procedural-type memories (PROMOTE to Forge's private section; failed experiments also copied to the universal section per the owner's standing rule R)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/forge-idle-experiment-loop
+    evidence:
+      - "Design: ~/workspace/self-upgrade/DESIGN.md (the shared self-upgrade mechanism for all 10 agents; owner's self-upgrade law and memory promotion decisions, 2026-11-18). Programme state: ~/workspace/self-upgrade/STATE.md."
+      - "Implementation (this PR, additive only): Forge/app/improvement/idle_loop.py — IdleExperimentLoop (idle gate over Forge's own StateStore, daily cap 6, per-arm 120 s time box, FORGE_IDLE_EXPERIMENTS=off kill switch), GoldenBattery (deterministic synthesis in a temp sandbox + the generated project's own pytest suite; composite = 0.5 tests + 0.3 manifest + 0.2 compile, declared in advance), a closed challenger-mutation catalogue (library_shape / drop_readme / py_only), a champion registry + append-only experiment ledger + lessons ledger under the Forge data dir, and FabricLessonWriter over mesh.memory_fabric (procedural type; AGENT scope = Forge's private section; DISCARD lessons also delivered at UNIVERSAL scope per standing rule R; failed deliveries stay pending in the ledger and are retried). NOT wired into the FastAPI lifespan in this slice — run_forever() is the driver a follow-up wires after review; the champion registry is the loop's own record and production build roles do not read it yet (adoption travels the Universe change path)."
+      - "Tests: Forge/tests/test_frg017_idle_experiments.py — 14/14 pass locally (CPython 3.12.3; staging tree extracted byte-identical from origin/main 3b24321b, blob-verified): kill switch, busy gate, daily cap, cluster-taxonomy parity with self_improve, hypothesis formation with and without failures, PROMOTE (champion registry updated, private-only lesson), DISCARD (champion untouched, private + universal lesson), the test-regression guard blocking a higher-composite challenger, pending-lesson retry, the real fabric writer's call shape (owner FORGE, type procedural, AGENT vs UNIVERSAL scope), and the REAL battery on the CLI golden shape (manifest 1.0, compile 1.0, generated tests > 0.9, composite > 80). Claim: issue #35 comment 6971433191."
+    next_action: "Supervisor review -> coordinator merge -> follow-ups in order: (1) wire run_forever into Forge's lifespan behind the kill switch, then deploy; (2) champion adoption into the build path via the Universe change path (Forge builds, Sentinel gates, Cortex schedules, fleet CD deploys); (3) copy the loop shape to the other nine agents, each as its own task and PR."
+    files:
+      - Forge/app/improvement/idle_loop.py
+      - Forge/tests/test_frg017_idle_experiments.py
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
