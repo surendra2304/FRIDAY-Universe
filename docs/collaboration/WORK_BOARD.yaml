@@ -10988,6 +10988,35 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     files:
       - VyralX/scripts/sync_youtube_metrics.py
       - VyralX/tests/test_sync_youtube_metrics.py
+  - id: TASK-VYR-019
+    title: "VyralX autonomous find->edit->produce loop (owner order 2026-11-18): all-category trending discovery filed as per-category series; voiced sources FRAMED (source voice kept, her hook/payoff around it, source speech subtitled), voiceless sources get full commentary; every output held UNLISTED pending_approval for owner review; BGM mandatory via the switchable policy (growth = popular/chart tracks with PHONK as a named first-class style, monetisation = YouTube library), synth bed only as a labelled fallback; long-form compilation lane at low cadence; loop defaults OFF"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-vyr-019-autonomous-loop
+    created: 2026-11-18
+    updated_at: 2026-11-18
+    evidence:
+      - "Owner shape locked 2026-11-18: all categories as separate series/playlists (1B), short excerpts only with her English narration carrying each video (2A/3A), UNLISTED review-first - she never publishes (4B), volume = as many as pass the quality gates (5C); audio rule: subtitles on EVERY video, voiced source keeps its voice with her framing + ducking, voiceless source gets her full commentary; BGM mandatory in every video; BGM policy = C (growth popular/chart tracks -> monetisation YouTube-library, switchable setting, default growth); length = B (shorts staple + low-cadence long-form lane); phonk sharpening ~12:25 IST - phonk is a NAMED first-class BGM source category in growth mode."
+      - "Claim: issue #35 comment 6971392673 (also carries the gated render #2 outcome: NO_CANDIDATE_PASSED_AUDITION - the same stale 12-candidate lane pool flipped at the single-call speech audition; publish_jobs 54 == 54; nothing uploaded; the breadth problem this loop's trending sweep exists to fix)."
+      - "IMPLEMENTATION (this branch, from origin/main 3b24321b): NEW app/services/viral_series.py (14 assignable YouTube categories -> editorial labels -> series/playlist identity), viral_trending.py (mostPopular sweep per category via the official API, Candidate objects, reuse_licensed policy yields nothing honestly), viral_framing.py (excerpt window on the event-arc peak; framing editorial gated by the production consistency checker + 18-word hook cap + deterministic hook repair + measured window fit; source Whisper cues shifted/clipped onto the excerpt timeline; render ducks source to 0.22 under her hook/payoff, source full level between, bed ducked under her lines), viral_bgm.py (policy switch growth|monetisation; catalog + bare-file library; styles list with phonk first-class - filename inference, PHONK_PREFERRED_CATEGORIES = SPORTS/GAMING/AUTOS/VIRAL, library_status reports phonk coverage, render labels record growth:<title>:phonk; prepare_music_bed never returns no-bed - synth fallback is labelled), viral_loop.py (fail-closed guards LOOP_DISABLED/BGM_REQUIRED/PRIVACY_NOT_UNLISTED/NO_COOKIES; merged trending+lane pool deduped vs used/rejected/manifest; one audition routes voiced->framed / voiceless->commentary / voiced-without-transcript->skip; series slug tagged onto the held job; manifest + cycle state incl. BGM/phonk warnings), viral_longform.py (compilation from a series' unconsumed held renders, 1920x1080 blurred-pad, clips keep their own beds, held job, clips consumed in the manifest), scripts/run_viral_loop.py (bootstrap mirroring the autopilot, own lock port 8766, --loop/--force). viral_remix.produce_viral_short gains hold_for_review (default off = legacy behaviour byte-identical) and takes its bed from the BGM policy; config gains viral_bgm_policy/viral_bgm_library_dir/viral_bgm_catalog_path + viral_loop_* settings, all loop defaults OFF."
+      - "SAFETY SHAPE: the loop creates publish jobs ONLY as pending_approval + approved_at=None + privacy from autonomous_publish_privacy, and refuses to run when that setting is not unlisted; it never calls the upload worker and never drains a queue (the autopilot keeps that job, timer still disabled). Chart/phonk track FILES are operator-provisioned into data/bgm/ - the build provides the shelf, preference and labelling, it does not scrape copyrighted tracks."
+    next_action: "Local test suites (VyralX/tests/test_viral_series.py, test_viral_bgm.py, test_viral_trending.py, test_viral_framing.py, test_viral_loop.py) -> PR from this branch -> supervisor review -> coordinator merge decision. NO deploy, NO timer, NO loop enablement in this task: first supervised cycle is a separate coordinator order after merge + deploy, with the BGM library stocked (popular + phonk tracks) by the operator."
+    files:
+      - VyralX/app/config.py
+      - VyralX/app/services/viral_series.py
+      - VyralX/app/services/viral_bgm.py
+      - VyralX/app/services/viral_trending.py
+      - VyralX/app/services/viral_framing.py
+      - VyralX/app/services/viral_loop.py
+      - VyralX/app/services/viral_longform.py
+      - VyralX/app/services/viral_remix.py
+      - VyralX/scripts/run_viral_loop.py
+      - VyralX/tests/test_viral_series.py
+      - VyralX/tests/test_viral_bgm.py
+      - VyralX/tests/test_viral_trending.py
+      - VyralX/tests/test_viral_framing.py
+      - VyralX/tests/test_viral_loop.py
+      - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-VOI-017
     title: "Voice first-session frame-flow fixes (F1/F2/F3): the recovery ladder may declare success only on a real user transcript or a completed re-asked turn (F1), permanent per-session frame counters are journalled (F2), and the first session is built in-job via the rebuild path (F3)"
     status: IN_REVIEW
