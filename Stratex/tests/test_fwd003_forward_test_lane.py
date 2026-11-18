@@ -881,6 +881,12 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         "choppiness_breakout",
         "psar_trend_af001_max010",
         "psar_trend_af002_max020",
+        "tsmom2_dual_crypto",
+        "ts_momentum",
+        "ts_momentum_roc42",
+        "ts_momentum_roc168",
+        "ts_momentum_roc42_4h",
+        "ts_momentum_roc168_rd001",
     } | overlay
 
 
@@ -970,6 +976,13 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "choppiness_breakout",
         "psar_trend_af001_max010",
         "psar_trend_af002_max020",
+        # TASK-STR-FWD-019 Wave-2 crew A: ts_momentum/tsmom2 cells.
+        "ts_momentum",
+        "ts_momentum_roc42",
+        "ts_momentum_roc168",
+        "ts_momentum_roc42_4h",
+        "ts_momentum_roc168_rd001",
+        "tsmom2_dual_crypto",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -1026,6 +1039,12 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "choppiness_breakout",
         "psar_trend_af001_max010",
         "psar_trend_af002_max020",
+        "tsmom2_dual_crypto",
+        "ts_momentum",
+        "ts_momentum_roc42",
+        "ts_momentum_roc168",
+        "ts_momentum_roc42_4h",
+        "ts_momentum_roc168_rd001",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
