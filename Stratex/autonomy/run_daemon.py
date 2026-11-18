@@ -215,6 +215,8 @@ class StratexTradingEngine:
         # pre-gate exits pass and the post-gate entries pass).
         self._last_overlay_exits = 0.0
         self._last_overlay_entries = 0.0
+        # TASK-STR-FWD-022: WF-selection hook throttle.
+        self._last_wf_select_check = 0.0
         self._last_summary_date = ""
         # TASK-STR-PHASE2-001 measurement hooks (best-effort, never fatal):
         # shadow-trade tracker for OBSERVE_ONLY strategies, the hourly
@@ -555,6 +557,11 @@ class StratexTradingEngine:
         # once per UTC day in the auto-prune slot below, and not at all
         # on days the daemon restarted.
         self._maybe_apply_forward_guard()
+
+        # TASK-STR-FWD-022: refresh walk-forward selection picks whose
+        # epoch has rolled (places no orders; the entrant modules read
+        # the persisted pick on their own evaluation path).
+        self._maybe_run_wf_selection()
 
         # Check daily loss limit. get_risk_summary() runs the daily reset and
         # seeds daily_start_equity on first call, so the breaker below has a
@@ -1842,6 +1849,119 @@ class StratexTradingEngine:
             return "held"
         _log("open", qty)
         return "acted"
+
+    def _maybe_run_wf_selection(self) -> None:
+        """TASK-STR-FWD-022: run due walk-forward selections.
+
+        For each FORWARD_TEST registry entry with execution_mode
+        "wf_select", when the persisted pick belongs to an older
+        epoch than the current one (or none exists), gather the lane
+        panel's candle history from an attested demo venue and run
+        the judged selection rule (wf_select_service.run_selection —
+        strictly bars closed before the epoch start), persist the
+        decision (state + append-only log) and log the pick with its
+        in-sample table. Places no orders. Throttled to one check
+        per 10 minutes; a failed run leaves the previous pick in
+        place and retries on the next check.
+        """
+        now = time.time()
+        if now - getattr(self, "_last_wf_select_check", 0.0) < 600:
+            return
+        self._last_wf_select_check = now
+        try:
+            from config_strategy import PRODUCTION_STRATEGY_REGISTRY
+
+            import pandas as pd
+
+            import wf_select_service as wfs
+        except Exception as e:
+            logger.warning(f"[STRATEX] WF selection unavailable: {e}")
+            return
+        entries = {
+            key: entry
+            for key, entry in PRODUCTION_STRATEGY_REGISTRY.items()
+            if entry.get("status") == "FORWARD_TEST"
+            and entry.get("execution_mode") == "wf_select"
+            and entry.get("forward_protocol")
+            and entry.get("lane_assets")
+        }
+        if not entries:
+            return
+        try:
+            demo_venues = strategy_registry.demo_venues()
+        except Exception as e:
+            logger.warning(
+                f"[STRATEX] WF selection demo-venue attestation read failed: {e}"
+            )
+            return
+        epoch_start = wfs.epoch_start_for()
+        for key in sorted(entries):
+            entry = entries[key]
+            spec_ref = entry.get("wf_select") or {}
+            procedure_id = spec_ref.get("procedure")
+            if procedure_id not in wfs.PROCEDURES:
+                logger.warning(
+                    f"[STRATEX] WF selection: {key} names unregistered "
+                    f"procedure {procedure_id!r}; skipped"
+                )
+                continue
+            state = wfs.load_state(procedure_id)
+            if state and state.get("epoch_start") == epoch_start.isoformat():
+                continue
+            tf = str(entry.get("timeframe") or "1d")
+            venue = None
+            for candidate, symbols in self.symbols.items():
+                if candidate in demo_venues and candidate in self.engine.venues:
+                    if any(s in symbols for s in entry["lane_assets"]):
+                        venue = candidate
+                        break
+            if venue is None:
+                logger.warning(
+                    f"[STRATEX] WF selection for {key}: no attested demo "
+                    "venue carries the lane panel; pick not refreshed"
+                )
+                continue
+            try:
+                frames = {}
+                for symbol in entry["lane_assets"]:
+                    candles = self.engine.get_candles(venue, symbol, tf, 1500)
+                    if not candles:
+                        continue
+                    frame = pd.DataFrame(candles)
+                    frame.index = pd.to_datetime(
+                        frame["timestamp"], unit="s", utc=True
+                    )
+                    frames[symbol] = frame.sort_index()
+                if not frames:
+                    logger.warning(
+                        f"[STRATEX] WF selection for {key}: no candle "
+                        f"history on {venue}; pick not refreshed"
+                    )
+                    continue
+                decision = wfs.run_selection(procedure_id, frames, epoch_start)
+                if decision["pick"] is None:
+                    logger.warning(
+                        f"[STRATEX] WF selection for {key}: no variant "
+                        f"qualified for epoch {epoch_start.date()} "
+                        "(empty in-sample table); previous pick kept"
+                    )
+                    continue
+                wfs.save_selection(decision)
+                table = ", ".join(
+                    f"{v}: PF {m['profit_factor_net']:.3f} / {m['trades']} tr"
+                    if m["profit_factor_net"] is not None
+                    else f"{v}: no IS trades"
+                    for v, m in sorted(decision["is_table"].items())
+                )
+                logger.info(
+                    f"[STRATEX] WF selection {key}: epoch "
+                    f"{epoch_start.date()} pick={decision['pick']} "
+                    f"(IS: {table}; history {decision['history']})"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"[STRATEX] WF selection run failed for {key}: {e}"
+                )
 
     def _manage_forward_time_exits(self) -> None:
         """Enforce judged bracket_time exits (e.g. dow_effect max_bars=5).
