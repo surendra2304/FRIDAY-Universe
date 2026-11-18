@@ -30,10 +30,19 @@ class GeminiProvider(BaseLLMProvider):
     # ("no longer available to new users") with this deployment's keys.
     # gemini-3.6-flash (verified generating) and gemini-3.8-flash (verified
     # listed; demand-limited on the free tier) added.
+    # TASK-INF-015: gemini-3.5-flash-lite added — the current Flash-Lite
+    # id (free tier 15 RPM / 500 RPD, verified from two independent
+    # free-project readings, Sep + Oct 2026). gemini-2.5-flash-lite is
+    # kept: it is a legacy access-limited id that Google routes to
+    # gemini-3.5-flash-lite from 2026-12-01, and existing callers still
+    # name it (TASK-VOI-020's probe pin among them). NOTE: listing here
+    # is the provider-adapter catalogue only; live generation with this
+    # deployment's keys is a post-merge probe, not claimed by INF-015.
     SUPPORTED_MODELS = [
         "gemini-flash-latest",
         "gemini-3.8-flash",
         "gemini-3.6-flash",
+        "gemini-3.5-flash-lite",
         "gemini-2.5-flash-lite",
         "gemini-2.5-pro",
         "gemini-pro-latest",
