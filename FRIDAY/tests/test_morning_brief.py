@@ -126,6 +126,118 @@ class TestMorningBrief:
         assert brief.startswith("Good morning") or "could not read today's goal" in brief
 
 
+class _FakeReport:
+    """Minimal stand-in for agentic_inbox.TriageReport."""
+
+    def __init__(self, status="ok", counts=None, subjects=None):
+        self.status = status
+        self._counts = counts or {}
+        self.items = [
+            type("Item", (), {"message": type("M", (), {"subject": s})()})()
+            for s in (subjects or [])
+        ]
+
+    def counts(self):
+        return dict(self._counts)
+
+
+class TestInboxLine:
+    """TASK-FRD-027: overnight mail triage joins the brief (OpenJarvis parity)."""
+
+    def test_counts_and_most_urgent_subject(self) -> None:
+        report = _FakeReport(
+            counts={"action_required": 1, "newsletter": 1},
+            subjects=["Password reset for your account", "Weekly digest"],
+        )
+        line = mb._inbox_line(triage=lambda **kw: report)
+        assert "2 unread" in line
+        assert "1 needing action" in line
+        assert "1 newsletters" in line
+        assert "most urgent: Password reset for your account" in line
+
+    def test_unconfigured_mailbox_omits_the_section(self) -> None:
+        report = _FakeReport(status="not_configured: FRIDAY_EMAIL_ADDRESS unset")
+        assert mb._inbox_line(triage=lambda **kw: report) == ""
+
+    def test_failed_fetch_is_an_honest_line(self) -> None:
+        report = _FakeReport(status="fetch_failed: ConnectionError: boom")
+        line = mb._inbox_line(triage=lambda **kw: report)
+        assert "could not read your inbox" in line
+        assert "won't guess" in line
+
+    def test_empty_inbox_says_so(self) -> None:
+        line = mb._inbox_line(triage=lambda **kw: _FakeReport())
+        assert "no unread mail" in line
+
+
+class _FakeCalendarTool:
+    def __init__(self, content, is_error=False):
+        self._content = content
+        self._is_error = is_error
+
+    def execute(self):
+        return type(
+            "R", (), {"content": self._content, "is_error": self._is_error}
+        )()
+
+
+class TestCalendarLine:
+    """TASK-FRD-027: today's first meeting joins the brief (OpenJarvis parity)."""
+
+    def test_first_meeting_is_named(self) -> None:
+        tool = _FakeCalendarTool(
+            "You have 2 meetings scheduled today:\n"
+            "1. Weekly sync at 09:00 AM - 09:30 AM\n"
+            "2. Client call at 12:00 PM - 12:30 PM"
+        )
+        line = mb._calendar_line(tool=tool)
+        assert line == "First meeting: Weekly sync at 09:00 AM - 09:30 AM."
+
+    def test_unconfigured_feed_omits_the_section(self) -> None:
+        tool = _FakeCalendarTool(
+            "No calendar feed configured. Set FRIDAY_CALENDAR_ICS_URL in your .env file."
+        )
+        assert mb._calendar_line(tool=tool) == ""
+
+    def test_failed_feed_is_an_honest_line(self) -> None:
+        tool = _FakeCalendarTool("Failed to fetch calendar feed: boom", is_error=True)
+        line = mb._calendar_line(tool=tool)
+        assert "could not read today's calendar" in line
+        assert "won't guess" in line
+
+    def test_empty_day_says_so(self) -> None:
+        tool = _FakeCalendarTool("You have no meetings scheduled for today.")
+        assert mb._calendar_line(tool=tool) == "Calendar: nothing scheduled today."
+
+
+class TestBriefIncludesParitySections:
+    def test_mail_and_calendar_sections_compose(self, monkeypatch) -> None:
+        _in_window(monkeypatch)
+        mb.reset_for_tests()
+        with patch.object(mb, "_goal_line", return_value="Good morning."), \
+             patch.object(mb, "_fleet_line", return_value="Fleet: 9/9 up"), \
+             patch.object(mb, "_portfolio_line", return_value="Portfolio: Balance: 1"), \
+             patch.object(mb, "_inbox_line", return_value="Mail: 2 unread — 1 needing action."), \
+             patch.object(mb, "_calendar_line", return_value="First meeting: Weekly sync at 09:00 AM - 09:30 AM."):
+            brief = mb.compose_morning_brief(_FakeNotifications())
+        assert brief
+        assert "Mail: 2 unread" in brief
+        assert "First meeting: Weekly sync" in brief
+
+    def test_unconfigured_sources_add_no_sections(self, monkeypatch) -> None:
+        _in_window(monkeypatch)
+        mb.reset_for_tests()
+        with patch.object(mb, "_goal_line", return_value="Good morning."), \
+             patch.object(mb, "_fleet_line", return_value="Fleet: 9/9 up"), \
+             patch.object(mb, "_portfolio_line", return_value="Portfolio: Balance: 1"), \
+             patch.object(mb, "_inbox_line", return_value=""), \
+             patch.object(mb, "_calendar_line", return_value=""):
+            brief = mb.compose_morning_brief(_FakeNotifications())
+        assert brief
+        assert "Mail:" not in brief
+        assert "First meeting" not in brief
+
+
 class TestGreetingDelivery:
     """The owner's first greeting of the morning carries the brief."""
 
