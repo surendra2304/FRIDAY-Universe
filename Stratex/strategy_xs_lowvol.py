@@ -94,13 +94,17 @@ def current_membership() -> Optional[Dict[str, Any]]:
 def _closed_frame(df: pd.DataFrame, now_s: Optional[float] = None) -> pd.DataFrame:
     """Drop still-forming trailing bars (bar open + duration > now).
 
-    Epoch seconds come from the index's int64 nanosecond view
-    (asi8), which is stable across pandas versions.
+    Epoch seconds are computed by timedelta division
+    (resolution-independent); the index's int64 view (asi8)
+    returns the index's native unit — microseconds under
+    pandas 3 — which silently disables the drop
+    (TASK-STR-FWD-025).
     """
     if df is None or len(df) == 0:
         return df
     now = time.time() if now_s is None else now_s
-    opens = df.index.asi8 / 1e9
+    epoch = pd.Timestamp("1970-01-01", tz=df.index.tz)
+    opens = (df.index - epoch).total_seconds().to_numpy(dtype=float)
     keep = int(np.sum(opens + BAR_SECONDS <= now))
     if keep < len(df):
         return df.iloc[:keep]

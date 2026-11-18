@@ -118,13 +118,20 @@ def entries_for_frame(
 # ---------------------------------------------------------------------------
 
 def _closed_frame(df: pd.DataFrame, now_s: Optional[float] = None) -> pd.DataFrame:
-    """Drop still-forming trailing bars (bar open + duration > now)."""
+    """Drop still-forming trailing bars (bar open + duration > now).
+
+    Epoch seconds are computed by timedelta division (resolution-
+    independent); the index's int64 view returns its native unit
+    (microseconds under pandas 3), which silently disables the
+    drop when divided by 1e9 (TASK-STR-FWD-025).
+    """
     if df is None or len(df) == 0:
         return df
     now = time.time() if now_s is None else now_s
     idx = df.index
     try:
-        opens = idx.view("int64") / 1e9
+        epoch = pd.Timestamp("1970-01-01", tz=idx.tz)
+        opens = (idx - epoch).total_seconds().to_numpy(dtype=float)
     except Exception:
         return df
     keep = int(np.sum(opens + BAR_SECONDS <= now))
