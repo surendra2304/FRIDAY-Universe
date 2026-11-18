@@ -11343,6 +11343,37 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - FRIDAY/docs/WAKE_WORD.md
       - FRIDAY/ui/out/
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-STR-EXP-001
+    title: "Stratex self-experimentation (Self-Upgrade Programme, Stratex slice 1): an autonomous research loop INSIDE Stratex that proposes experiments from a closed catalogue, pre-declares each in its own ledger (enforced by the record format — a run without a matching prior declaration is refused), runs them on a provenance-verified stream store exported from the RD-002 records, judges under the frozen bars (full bar PROVEN / owner's second tier FORWARD_TEST), increments a persistent global trial counter seeded at 3,899, admits passers to the FORWARD_TEST lane in the FWD-003 registry shape, and banks Memora lessons via mesh.memory_fabric (failures private + universal per owner rule R). Slice 1 implements combinations of admitted streams end-to-end (pairs, triples, cluster-champion ensembles, greedy forward selection with every candidate evaluation counted); parameter-variant and exit/sizing/gate types are declared in the catalogue, not yet implemented"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/stratex-self-experiments
+    created: 2026-11-18
+    updated_at: 2026-11-18
+    evidence:
+      - "Owner order 2026-11-18 ~14:44 IST: 'make Stratex experiment by itself' — applying the standing self-upgrade doctrine (~/workspace/self-upgrade/DESIGN.md, owner's law 2026-11-18) to Stratex; mirrors Forge's idle loop (TASK-FRG-017, PR #971) including its review condition C2 (host-load gate ships from the start). Design: Stratex/docs/SELF_EXPERIMENTS_DESIGN.md in this PR; build record ~/workspace/str-selfexp/STATE.md. Claim: issue #35 comment 6974308208 (no TASK-STR-EXP id existed on the board or hub)."
+      - "Implementation (additive only — NO existing file edited; config_strategy.py and run_daemon.py untouched): Stratex/self_experiments/ package — bounds.py (frozen bars + lane terms as constants; risk-touch guard), catalogue.py (closed catalogue; mechanism clusters; greedy cap 10), counter.py (persistent trial counter, seed 3,899, sources: rd020-record/STATE.md 'Programme trial counter now 3,899' + near-miss REPORT headline; below-seed file raises), ledger.py (append-only; declaration hash enforced at run time), store.py (manifest sha256 verification at load; unrecognised admission class refused), runner.py (pooled metrics over stored per-trade OOS returns; t-stat/normal-p construction verified to reproduce bollinger p50_sd2.0's recorded t 3.1823 / p 0.0007305), judge.py (full bar incl. Bonferroni at the post-increment N and pooled-holdout leg, fail-closed when any member lacks holdout; second tier; FAIL), admissions.py (FWD-003-shaped entries; frozen lane terms stamped, never inputs; merged_registry refuses to shadow governed entries; revoke() reverses), lessons.py (fabric writer, owner STRATEX, procedural; FAIL also UNIVERSAL per rule R; pending retry), loop.py (gates in order: kill switch STRATEX_SELF_EXPERIMENTS must be exactly 'on' — DEFAULT OFF — host-load gate, work probe, daily cap 4, 600 s time box; run_forever driver + start_if_enabled wiring point, deliberately NOT hooked into the daemon lifespan), export_stream_store.py (builds stores from RD-002 backup rows; asserts derived per-fold trades/wins EXACT vs the recorded per_fold, expectancy/PF within 1e-6, holdout exact, trade_stats t/p within 1e-3/1e-5 — a stream that fails reconciliation is refused)."
+      - "Fixture + first light: Stratex/tests/fixtures/selfexp_stream_store/ — 6 real crypto30 1d streams exported with all assertions passing, figures identical to the audit (bollinger p50 420 tr PF 1.4562; shock k1.0 732 tr PF 1.3179; vol_adaptive ema12_26 299 tr PF 1.6956; donchian n55_b26 298 tr PF 1.6502; ts_momentum roc72 334 tr PF 1.6049; stoch_reversion k14_raw 688 tr PF 1.0510). On this fixture the loop's first cycle judges the cluster-champion ensemble (vol_adaptive + shock + stoch_reversion): pooled PF 1.2643, 1,719 trades, 4/5 folds, p ~1.2e-05 vs Bonferroni 1.28e-05 at N=3,900, holdout +2.9% — PROVEN on the pooled record, admitted to the lane registry as proven-eligible with execution PENDING_ENSEMBLE_MODULE (no ensemble module exists yet; the daemon fail-closes unregistered modules, so nothing can trade on it — stated on the entry itself)."
+      - "Tests: Stratex/tests/test_exp001_self_experiments.py — 26/26 pass on this branch (CPython 3.12.3): kill switch (unset/off/'yes' all disabled; exact 'on' required), load gate, work-probe gate, daily cap, pre-declaration refusal (missing + tampered), counter seed/persistence/below-seed refusal, judge bars (PROVEN / FORWARD_TEST / FAIL / holdout-absence cap / Bonferroni-at-N), full cycle on the real fixture (declaration precedes evaluation in the ledger; trial number = seed+1; admission entry carries the frozen lane terms), merged-registry classification through the daemon's OWN strategies.strategy_registry.governance_status_for (FORWARD_TEST), admission revocation, risk-touch refusal at declaration AND admission (synthetic payloads), FAIL-verdict admission refusal, governed-entry shadowing refusal, rule-R lesson routing (FAIL -> private + universal; pass -> private only), pending-lesson retry, the real fabric writer's call shape (owner STRATEX, procedural, AGENT vs UNIVERSAL scope), catalogue family declarations, greedy evaluation counting (counter delta == evaluation records). A/B: the suite errors at collection on pristine main 9f1d187d (self_experiments absent) and passes 26/26 here. Base: board unioned onto main 80706f0e at ship time; code files are all new paths."
+    next_action: "Supervisor review -> coordinator merge. NO deploy and NO enablement in this task: activation is a separate coordinator step (build the production stream store with the exporter over the full RD-002 backup, reconcile the trial counter upward if RD-021/RD-025 have moved the recorded programme counter, set STRATEX_SELF_EXPERIMENTS=on, wire run_forever with the daemon-activity probe, watch the first cycles). Follow-up slices: (2) the ensemble execution module that makes admitted combinations executable lane members; (3) the harness re-runner so the catalogue's parameter-variant and exit/sizing/gate types can be implemented."
+    files:
+      - Stratex/self_experiments/__init__.py
+      - Stratex/self_experiments/admissions.py
+      - Stratex/self_experiments/bounds.py
+      - Stratex/self_experiments/catalogue.py
+      - Stratex/self_experiments/counter.py
+      - Stratex/self_experiments/export_stream_store.py
+      - Stratex/self_experiments/judge.py
+      - Stratex/self_experiments/ledger.py
+      - Stratex/self_experiments/lessons.py
+      - Stratex/self_experiments/loop.py
+      - Stratex/self_experiments/runner.py
+      - Stratex/self_experiments/store.py
+      - Stratex/docs/SELF_EXPERIMENTS_DESIGN.md
+      - Stratex/tests/test_exp001_self_experiments.py
+      - Stratex/tests/fixtures/selfexp_stream_store/manifest.json
+      - Stratex/tests/fixtures/selfexp_stream_store/streams_spec.json
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
