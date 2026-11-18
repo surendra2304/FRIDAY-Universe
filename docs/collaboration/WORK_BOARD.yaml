@@ -11170,6 +11170,20 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - FRIDAY/tests/test_voice_key_resolution.py
       - FRIDAY/tests/test_voice_gemini_only.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-INF-015
+    title: "Inference catalogue: add gemini-3.5-flash-lite to the Gemini adapter SUPPORTED_MODELS (keep the legacy gemini-2.5-flash-lite)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-inf-015-catalogue-flash-lite
+    evidence:
+      - "Trigger: WS1 discovery on PR #950 (2026-11-18) — Inference's Gemini adapter catalogue still lists only the legacy gemini-2.5-flash-lite (access-limited; Google routes it to gemini-3.5-flash-lite from 2026-12-01). The current Flash-Lite id is the high-quota free tier (15 RPM / 500 RPD; two independent free-project readings, Sep + Oct 2026) vs full Flash at 5 RPM / 20 RPD — the bucket that killed voice re-acceptance #12. Claim: issue #35 comment 6971400049."
+      - "Fix (this task's PR): GeminiProvider.SUPPORTED_MODELS gains gemini-3.5-flash-lite; the 2.5 entry is kept for existing callers (TASK-VOI-020's probe pin among them). Scope is the provider-adapter catalogue only — admission to Inference's verified MODEL_CATALOG (/v1/models + best-suitable selection) is TASK-INF-016, which needs it there so a named fast request actually serves instead of being substituted."
+      - "Tests: new Inference/tests/test_inf015_flash_lite_catalogue.py (catalogue membership, legacy kept, capabilities passthrough, no duplicates) — A/B evidence recorded in the PR body. DISCLOSURE: live generation with this deployment's keys is NOT probed by this task (no keys in the sandbox); a post-merge on-host probe is owed before anyone routes production traffic to the new id by name through the adapter."
+    next_action: "Supervisor review -> serial-lane merge -> post-merge live probe of gemini-3.5-flash-lite generation on Server 1 -> VERIFIED."
+    files:
+      - Inference/app/providers/gemini.py
+      - Inference/tests/test_inf015_flash_lite_catalogue.py
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
