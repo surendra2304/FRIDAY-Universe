@@ -29,6 +29,7 @@ from friday.autonomous.enhanced_controller import (
     ExecutionPlan,
     SubTask,
 )
+from friday.autonomous.task_source import DaemonTaskSource
 from friday.api.response_synthesizer import synthesize_answer
 
 logger = get_logger("autonomous.daemon")
@@ -173,6 +174,18 @@ class AutonomousDaemon:
         except ValueError:
             self._heartbeat_interval_s = 300.0
         self._last_heartbeat_at = 0.0
+        # Self-generated task source (TASK-FRD-024): evaluated on a
+        # throttled cadence inside the loop. The source enforces the
+        # flag gate, cooldowns, dedupe and the daily cap itself; the
+        # daemon only gives it the opportunity to run.
+        try:
+            self._task_source_interval_s = float(
+                os.getenv("FRIDAY_AUTONOMOUS_TASK_SOURCE_INTERVAL_S", "300")
+            )
+        except ValueError:
+            self._task_source_interval_s = 300.0
+        self._last_task_source_eval_at = 0.0
+        self._task_source: DaemonTaskSource | None = None
         self._persistence_path = Path(__file__).resolve().parents[3] / ".data" / "autonomous_goals.json"
         self._load_state()
 
@@ -433,6 +446,21 @@ class AutonomousDaemon:
                         len(self._goal_queue),
                         len(self._running_goals),
                     )
+
+                # Self-generated task source (TASK-FRD-024): evaluate
+                # on the same cadence. A failing source must never
+                # break the loop, and the source seeds only into an
+                # idle daemon, so this can never delay submitted work.
+                if now - self._last_task_source_eval_at >= self._task_source_interval_s:
+                    self._last_task_source_eval_at = now
+                    try:
+                        if self._task_source is None:
+                            self._task_source = DaemonTaskSource()
+                        await self._task_source.maybe_seed(self)
+                    except Exception as exc:
+                        logger.warning(
+                            "Autonomous task source evaluation failed: %s", exc
+                        )
 
             except Exception as exc:
                 logger.error("Autonomous daemon loop error: %s", exc)
