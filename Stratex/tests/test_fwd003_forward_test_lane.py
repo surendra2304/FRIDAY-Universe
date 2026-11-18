@@ -809,7 +809,14 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         if entry.get("status") == "FORWARD_TEST"
         and entry.get("forward_protocol") is True
     }
-    assert protocol == {"bollinger_trend", "shock_breakout", "adx_ema_bare"}
+    # TASK-STR-FWD-019 Wave-2 crew A adds the vol_adaptive_trend cells.
+    assert protocol == {
+        "bollinger_trend", "shock_breakout", "adx_ema_bare",
+        "vol_adaptive_trend", "vol_adaptive_trend_ema20_50_nogate",
+        "vol_adaptive_trend_ema20_50_nogate_4h",
+        "vol_adaptive_trend_ema12_26_nogate_4h",
+        "vol_adaptive_trend_ema20_50_gate_4h",
+    }
 
 
 def test_non_tradable_lane_registrations_are_nulled_not_counted():
@@ -838,6 +845,12 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "bollinger_trend",
         "shock_breakout",
         "adx_ema_bare",
+        # TASK-STR-FWD-019 Wave-2 crew A: vol_adaptive_trend cells.
+        "vol_adaptive_trend",
+        "vol_adaptive_trend_ema20_50_nogate",
+        "vol_adaptive_trend_ema20_50_nogate_4h",
+        "vol_adaptive_trend_ema12_26_nogate_4h",
+        "vol_adaptive_trend_ema20_50_gate_4h",
     }
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -846,7 +859,15 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         assert entry["oos_win_rate_prior"] is None, key
         assert entry["expected_net_edge_bps"] is None, key
         assert entry["runtime_priors_nulled"] is True, key
-    for key in ("bollinger_trend", "shock_breakout", "adx_ema_bare"):
+    for key in (
+        "bollinger_trend", "shock_breakout", "adx_ema_bare",
+        # TASK-STR-FWD-019 Wave-2 crew A: vol_adaptive_trend cells are
+        # lane-executable too — priors live, stamp False.
+        "vol_adaptive_trend", "vol_adaptive_trend_ema20_50_nogate",
+        "vol_adaptive_trend_ema20_50_nogate_4h",
+        "vol_adaptive_trend_ema12_26_nogate_4h",
+        "vol_adaptive_trend_ema20_50_gate_4h",
+    ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
         assert entry["oos_win_rate_prior"] is not None, key
