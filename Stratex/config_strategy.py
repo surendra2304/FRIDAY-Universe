@@ -441,6 +441,74 @@ TREND_PULLBACK_EMA200_STRATEGY = {
 }
 
 # ==============================================================================
+# TASK-STR-FWD-019 WAVE-2 (2026-11-18): stoch_reversion near-miss admissions.
+# RD-002 rows meeting the owner's second tier (expectancy > 0, PF >= 1.05,
+# >= 200 OOS trades, pre-Bonferroni) but NOT the full frozen bar — see
+# ~/workspace/str-nearmiss/REPORT.md §1.4 rows 12/88/92. The parameter
+# sets below ARE the judged configurations (rigorous_backtest/rd2/
+# families3.py sig_stoch; bracket BR24; warmup 260). The forex k14_raw
+# cell is the family's canonical core (best forex row in the audit).
+# ==============================================================================
+
+STOCH_REVERSION_STRATEGY = {
+    "NAME": "Stochastic Reversion (%K(14) SMA3 crosses 20 up / 80 down) — FOREX28 / OANDA",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "STOCH_PERIOD": 14,
+    "STOCH_SMOOTH": 3,
+    "STOCH_LO": 20.0,
+    "STOCH_HI": 80.0,
+    "FILTERED": False,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (grid_rows record):
+    "OOS_TRADES": 365,
+    "OOS_WIN_RATE": 0.3863,
+    "OOS_PROFIT_FACTOR": 1.2623,
+    "OOS_EXPECTANCY_PCT": 0.286,
+}
+
+STOCH_REVERSION_K14_FILT_STRATEGY = {
+    "NAME": "Stochastic Reversion (%K(14) SMA3 crosses, EMA200-gated) — FOREX28 / OANDA",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "STOCH_PERIOD": 14,
+    "STOCH_SMOOTH": 3,
+    "STOCH_LO": 20.0,
+    "STOCH_HI": 80.0,
+    "FILTERED": True,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    "OOS_TRADES": 216,
+    "OOS_WIN_RATE": 0.3519,
+    "OOS_PROFIT_FACTOR": 1.0613,
+    "OOS_EXPECTANCY_PCT": 0.072,
+}
+
+STOCH_REVERSION_CRYPTO_STRATEGY = {
+    "NAME": "Stochastic Reversion (%K(14) SMA3 crosses 20 up / 80 down) — CRYPTO30",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "STOCH_PERIOD": 14,
+    "STOCH_SMOOTH": 3,
+    "STOCH_LO": 20.0,
+    "STOCH_HI": 80.0,
+    "FILTERED": False,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    "OOS_TRADES": 688,
+    "OOS_WIN_RATE": 0.3706,
+    "OOS_PROFIT_FACTOR": 1.0510,
+    "OOS_EXPECTANCY_PCT": 0.518,
+}
+
+# ==============================================================================
 # FX MEAN REVERSION v4 — OANDA PRACTICE VENUE (TASK-STR-FWD-004, 2026-11-15)
 # Connors RSI(2) reversion behind an EMA(200) regime gate. The runtime
 # parameters live in oanda_demo/strategy.py (MeanReversionConfig) — the SAME
@@ -784,7 +852,83 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "lane_note": "entered sample-starved; forward evidence is the settler",
         "reason": "EXCLUDED from live lane execution (TASK-STR-FWD-003, RD-003 additions): TASK-STR-RD-003 watchlist cell trend_pullback/pb_ema200 @ comm7 1d — 109 OOS trades, expectancy +0.642%/trade, PF 1.182, 3 positive folds, max symbol profit share 0.37. It failed ONLY the >=200-trade floor (a data-span limit, not a performance failure) and failed Bonferroni significance; its PF of 1.182 is also marginally below the 1.2 line, recorded exactly as measured. Entered sample-starved; forward evidence is the settler. Unmappable-universe exclusion exactly as for vol_regime_switch_a: demo-fapi is crypto-only and the OANDA practice account holds 68 FX-only instruments (verified live 2026-11-15); substitution prohibited. Documentary registration only.",
-    }
+    },
+    # ------------------------------------------------------------------
+    # TASK-STR-FWD-019 WAVE-2: stoch_reversion near-miss admissions
+    # (audit ~/workspace/str-nearmiss/REPORT.md §1.4 rows 12/88/92).
+    # FWD-012 stop check (fixtures fwd002, 2.0 x ATR(14) / close at
+    # entry bars): forex maxima 2.06% (EURUSD) / 2.64% (GBPJPY) /
+    # 1.74% (USDJPY) — no override for the OANDA entries. Crypto
+    # k14_raw: SOLUSDT 1d max 58.74% (BTCUSDT 12.38%) — above the
+    # 0.15 engine-global cap, so the crypto entry carries
+    # max_stop_pct 0.90 (sleeve precedent; sanity bound only).
+    # ------------------------------------------------------------------
+    "stoch_reversion": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: stochastic %K(14, window includes current bar) smoothed by SMA(3) crosses up through 20. SHORT: %K crosses down through 80. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_stoch(df, filtered=False, warmup) on the FOREX28 panel, warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3863,
+        "total_friction_bps": 10.0,
+        "expected_net_edge_bps": 28.6,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": FOREX28_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "forward_venues": ["oanda_practice"],
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): stoch_reversion/k14_raw @ FOREX28 1d meets the second tier (OOS expectancy +0.286%/trade, PF 1.2623, 365 OOS trades, 4/5 positive folds, PF @2x costs 1.1796) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. This is the BEST forex row in the audit and a measured member of the low-correlation forex28 3-stream combo (mean correlation 0.083, audit §4). Judged cost basis is the RD-002 forex model (rigorous_backtest/rd2/costs2.py: 6 bps round trip majors, 10 bps minors/crosses); total_friction_bps carries the 10.0 panel maximum. Stop check (TASK-STR-FWD-012): judged stops measured max 2.06% (EURUSD), 2.64% (GBPJPY), 1.74% (USDJPY) at entry bars on the fwd002 FX fixtures — far below the 0.15 engine-global cap, so no max_stop_pct override. OANDA entry: execution rides the governed OANDA runner (separate PR); this entry carries forward_venues [oanda_practice] so that runner can discover it.",
+    },
+    "stoch_reversion_k14_filt": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: stochastic %K(14, window includes current bar) smoothed by SMA(3) crosses up through 20 AND close > EMA(200). SHORT: %K crosses down through 80 AND close < EMA(200). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_stoch(df, filtered=True, warmup) on the FOREX28 panel, warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3519,
+        "total_friction_bps": 10.0,
+        "expected_net_edge_bps": 7.2,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": FOREX28_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "forward_venues": ["oanda_practice"],
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): stoch_reversion/k14_filt @ FOREX28 1d meets the second tier (OOS expectancy +0.072%/trade, PF 1.0613, 216 OOS trades, 2/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Judged cost basis is the RD-002 forex model (costs2.py: 6 bps majors, 10 bps minors/crosses); total_friction_bps carries the 10.0 panel maximum. Stop check (TASK-STR-FWD-012): judged stops measured max 1.27% (EURUSD), 2.14% (GBPJPY), 1.39% (USDJPY) at entry bars on the fwd002 FX fixtures — no max_stop_pct override needed. OANDA entry: execution rides the governed OANDA runner (separate PR); forward_venues [oanda_practice] carried for discovery.",
+    },
+    "stoch_reversion_crypto": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: stochastic %K(14, window includes current bar) smoothed by SMA(3) crosses up through 20. SHORT: %K crosses down through 80. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_stoch(df, filtered=False, warmup) on the CRYPTO30 panel, warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3706,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 51.8,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): stoch_reversion/k14_raw @ CRYPTO30 1d meets the second tier (OOS expectancy +0.518%/trade, PF 1.0510, 688 OOS trades, 2/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Stop-cap override (TASK-STR-FWD-012): judged 2.0 x ATR(14) stops measured up to 58.74% of price at entry bars on the SOLUSDT 1d fixture (BTCUSDT 12.38%) — above the 0.15 engine-global cap — so max_stop_pct 0.90 is declared (sanity bound only; admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
 }
 
 # Stored research estimates are not runtime priors unless a strategy has been
