@@ -876,6 +876,9 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         "rsi_momentum",
         "rsi_momentum_rsi7_60_40",
         "rsi_momentum_forex",
+        # TASK-STR-FWD-019 Wave-2 (PR #989): RD-001 choppiness + volatility breakout:
+        "volatility_breakout",
+        "choppiness_breakout",
     } | overlay
 
 
@@ -960,6 +963,9 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "rsi_momentum",
         "rsi_momentum_rsi7_60_40",
         "rsi_momentum_forex",
+        # TASK-STR-FWD-019 Wave-2 (PR #989): RD-001 choppiness + volatility breakout:
+        "volatility_breakout",
+        "choppiness_breakout",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -1012,6 +1018,8 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "rsi_momentum",
         "rsi_momentum_rsi7_60_40",
         "rsi_momentum_forex",
+        "volatility_breakout",
+        "choppiness_breakout",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key
