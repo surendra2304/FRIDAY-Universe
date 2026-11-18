@@ -11170,6 +11170,20 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - FRIDAY/tests/test_voice_key_resolution.py
       - FRIDAY/tests/test_voice_gemini_only.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-FRD-025
+    title: "FRIDAY Telegram reach: a severity-gated owner-notify path over the existing Telegram gateway — she messages the owner the moment something matters (owner decision 1A, 2026-11-18), with dedupe/cooldown so she can never spam him"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-frd-025-owner-notify
+    evidence:
+      - "Trigger: owner answers 2026-11-18 ~12:19 IST — FRIDAY (1) 'she messages him on Telegram the moment something matters'. Grounding (origin/main 3b24321b git objects): FRIDAY already owns the fleet's Bot API path (proactive/telegram_gateway.py — env credentials for @fridayuniverse_bot, sendMessage with chunking + pacing, send_owner_message used by agent_watch / market_watch / daily_self_report), and Cortex's escalations use the same sendMessage shape (chat_id from env at delivery time). What was missing is the GATE: today's callers send ungated, with no severity bar, no cross-caller dedupe/cooldown and no daily cap."
+      - "Fix (this task's PR): new proactive/owner_notify.py — notify_owner(text, severity, event_key) -> NotifyResult. Only Severity.ALERT sends; ROUTINE returns BELOW_BAR (morning-briefing material). Anti-spam, persisted in .data/owner_notify/state.json (agent_watch store pattern): per-event-key cooldown 6h, identical-text dedupe 1h, global floor 120s between sends, daily cap 20 on the owner's IST day. FRIDAY_OWNER_NOTIFY=off kill switch re-checked per call; unconfigured gateway reports NOT_CONFIGURED; a failed send latches no state (genuine retries stay possible); never raises into a caller. Sends reuse telegram_gateway.send_owner_message — no new credentials, no second sender. 12 tests in FRIDAY/tests/test_owner_notify.py (fake clock + recording sender). Claim: issue #35 comment 6971438352."
+      - "Disclosed follow-up, NOT in this PR: wiring the gate into the daemon's finding path lands after PR #951 (TASK-FRD-024 task source) merges — that producer does not exist on main yet; existing ungated callers (agent_watch / market_watch digests) adopt the gate as their own follow-up so their latched digest behaviour is not changed silently here."
+    next_action: "PR open -> supervisor review -> serial-lane merge -> deploy with the FRIDAY wave -> production proof: one drilled ALERT (fleet-down drill) lands on the owner's Telegram exactly once, a repeat inside the cooldown does not -> VERIFIED."
+    files:
+      - FRIDAY/src/friday/proactive/owner_notify.py
+      - FRIDAY/tests/test_owner_notify.py
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
