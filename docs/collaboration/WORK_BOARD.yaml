@@ -11392,6 +11392,27 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Futuris (named first consumer): memora_event_consumer gains notice_domain() + subscribed_domains() (env FUTURIS_INTELX_FEED_DOMAINS; unset/'all' = every domain, her default — she forecasts everything). An out-of-subscription notice is acknowledged but not persisted, so it cannot jam the feed for later notices; in-subscription behaviour is byte-identical to before."
       - "Tests (local, sandbox Python 3.12.3, scratch-dir PYTHONPATH method as in INT-013): IntelX/tests/test_int014_universe_feed.py 10/10 PASS (broadcast shape, finding-text composition, subscription matrix incl. env override, hook publish/off-by-default/failure-isolation/not-delivered counting); Futuris/tests/test_int014_feed_subscription.py 4/4 PASS (domain extraction, env narrowing, ack-without-persist); regressions: IntelX watch suites 15/15 + 13/13 still PASS with the hook present, Futuris's existing test_memora_event_consumer.py 9/9 PASS against the modified consumer. Futuris tests need an Oracle-shaped DATABASE_URL to import the storage layer (no connection is made; the session factory is monkeypatched, same as the existing tests)."
     next_action: "Supervisor review -> merge AFTER PR #959 (stack). NOT deployed by this crew. Enablement is a separate coordinator step: INTELX_WATCH_FEED_ENABLED=1 in IntelX's env (plus the publisher's existing INTELX_MEMORA_EVENTS_ENABLED gate outside production) once the coordinator wants watch alerts flowing to the feed; Futuris consumes with her default all-domain subscription unless FUTURIS_INTELX_FEED_DOMAINS narrows her."
+  - id: TASK-INT-015
+    title: "Alert policy: instant alert for big breaks, one digest for the rest (owner decision 2026-11-18)"
+    owner: muse_ai
+    status: IN_REVIEW
+    pr: null
+    branch: claude/task-int-015-alert-policy
+    created_at: "2026-11-18T14:05:00+05:30"
+    updated_at: "2026-11-18T14:05:00+05:30"
+    files:
+      - "IntelX/intelx/watches/engine.py"
+      - "IntelX/tests/test_int015_alert_policy.py"
+      - "IntelX/tests/test_standing_watches.py"
+      - "IntelX/docs/STANDING_WATCHES.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    evidence:
+      - "Claim: issue #35 comment 6971458003. STACKED on TASK-INT-014 (PR #962, head 938dc80e): this branch's base is the INT-014 head; merge 013 -> 014 -> 015 in order."
+      - "Change: WatchDefinition gains instant_min_score. An alert scoring at/above the bar is instant-class: envelope alert_class='instant', severity='high' (the fleet's existing severity vocabulary from intelx/api/v1/signal_detection.py), quiet_hours_exempt=true, and a copy appended to the instant outbox (default sibling instant_outbox.jsonl, INTELX_WATCH_INSTANT_OUTBOX_PATH override). Below the bar, alerts are digest-class with the exact v1 contract. The main outbox remains the complete record for both classes; consumers dedupe on dedupe_key, its documented purpose — so no alert can be lost by this change, only delivered faster once a fast-lane drainer reads the instant file (PRO-001's follow-up, named in STANDING_WATCHES.md section 7)."
+      - "Bars are derived from the rule weights, not picked — each is the heaviest rule plus independent corroboration: ai_model_releases 6 (release_language 3 + model_name_with_version 3), crypto_market_structure 6 (two weight-3 rules), india_tech_regulatory 6 (regulator_action 3 + payments_structure 3), platform_policy 6 (policy_surface 3 + change_language 2 + platform_name 1), fleet_tools 7 (security_event 3 + python_version 2 + release_event 2), world_events 5 (infra_outage 3 + impact_scale 2 — an outage WITH impact; a bare outage mention stays digest). None disables the instant class per watch. PollResult.alerted_instant makes the policy observable per poll."
+      - "Supersession, recorded plainly: this replaces the INT-007 design rule 'quiet_hours_exempt is always false for watch alerts' — for instant class only, per the owner's decision. The INT-007 pin in test_standing_watches.py (the fixture frontier release, score 8) is updated in this PR with the reason in a comment; digest-class values are pinned unchanged in the new tests."
+      - "Tests (local, sandbox Python 3.12.3, scratch-dir PYTHONPATH method): IntelX/tests/test_int015_alert_policy.py 5/5 PASS (bar pins, both envelope classes with identical dedupe identity, a mixed platform poll splitting instant/digest across both outboxes, the world-events outage-with-impact bar, a no-bar watch never alerting instantly); full watch stack regression 43/43 PASS (5 INT-015 + 10 INT-014 + 13 INT-013 + 15 INT-007). Deltas verified against the layer bases on disk (quota blocked fetching the INT-014 head into the shared clone; engine.py combined INT-014+015 delta vs the INT-013 state is 152 lines = the 87-line additive feed hook + this policy; test_standing_watches.py delta vs main is exactly the pin update)."
+    next_action: "Supervisor review -> merge AFTER PRs #959 and #962 (stack order). NOT deployed by this crew. Follow-up for the coordinator/PRO-001 lane: a fast-lane drainer for instant_outbox.jsonl; until it exists, instant alerts still arrive via the main outbox digest path exactly as before."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
