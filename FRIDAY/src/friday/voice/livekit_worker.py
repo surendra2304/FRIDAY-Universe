@@ -2466,6 +2466,9 @@ def _new_input_watch() -> dict:
         # The session_started_ts the dead-input trigger fired for
         # (one ladder run per broken session, never a loop).
         "fired_for_session": None,
+        # The session_started_ts the TASK-VOI-022 input-forward
+        # check already warned for (one WARNING per build).
+        "input_forward_warned_for": None,
     }
 
 
@@ -2773,6 +2776,164 @@ def _install_activity_frame_counter() -> bool:
 _install_activity_frame_counter()
 
 
+# ---- TASK-VOI-022: per-build input evidence (lifecycle diagnosis) ----
+# The lifecycle diagnosis (2026-11-18; ~/workspace/voice-lifecycle-diag,
+# issue #35 comment 6983117421) localized the deaf-rebuild defect (D1)
+# to the rtc AudioStream creation/delivery boundary inside a process
+# already degraded by the D2 wedge substrate, with two sub-hypotheses
+# left open: H1a (an AudioStream created after degradation onset is
+# dead on creation in the FFI core) vs H1b (the rebuilt RoomIO's async
+# _init_task never links — sess.start() does NOT await linking, so the
+# TASK-VOI-016 comment in _start states an assumption the framework
+# does not guarantee). This section is the FIX.md §3 hardening: pure
+# instrumentation that makes the next occurrence self-report which
+# side of the boundary it is on, in the journal the acceptance crew
+# already captures per build. At every session start it journals the
+# owner participant's audio publications from room state — the
+# worker-side equivalent evidence; the framework's own "RoomIO linked
+# to participant" line stays the framework's, and the acceptance
+# probe (DIAGNOSIS §5) still captures it live. And ~5 s after start
+# a one-shot check evaluates the compound signature (owner audio
+# publication present + this session's F2 counters all zero + the
+# job's room-level energy monitor saw energy in the last ~10 s) and
+# WARNINGs once per build. Nothing here subscribes, rebuilds, gates,
+# or otherwise touches session behaviour.
+#
+# RUNBOOK (standing wedge instruction, FIX.md §2): on the next D2
+# wedge — executor-unresponsive warnings with a job thread that
+# never recovers — capture a native stack BEFORE any restorative
+# restart: `py-spy dump --pid <worker-pid>` plus a
+# /proc/<pid>/task/*/stat wchan snapshot. The restart cures the
+# wedge and destroys the evidence; the one unproven gap in the D2
+# mechanism (DIAGNOSIS §3.4) is the exact native call a wedged
+# thread sits in, and only a pre-restart dump can close it.
+
+_INPUT_FORWARD_CHECK_DELAY_S = 5.0
+_INPUT_FORWARD_ENERGY_WINDOW_S = 10.0
+
+
+def _is_audio_publication(pub) -> bool:
+    """True for an audio track publication. Mirrors the kind test
+    the track_subscribed handler applies to tracks (the rtc enum,
+    its int value, and the string shapes all accepted)."""
+    kind = getattr(pub, "kind", None)
+    audio_kind = getattr(_rtc.TrackKind, "KIND_AUDIO", 1) if _rtc else 1
+    return kind == audio_kind or str(kind).lower() in (
+        "1", "audio", "kind_audio")
+
+
+def _owner_audio_publications(room) -> list:
+    """The owner participant's audio publications, read from room
+    state: one dict per publication carrying its source, sid and
+    subscription state. Owner = the identity rule the rest of the
+    job uses (identity starts with "owner"). Best-effort by design:
+    any room-state failure returns what was gathered (or an empty
+    list) — this is evidence, never a gate."""
+    pubs: list = []
+    try:
+        participants = getattr(room, "remote_participants", None) or {}
+        for participant in list(participants.values()):
+            try:
+                identity = str(getattr(participant, "identity", "") or "")
+                if not identity.startswith("owner"):
+                    continue
+                publications = (
+                    getattr(participant, "track_publications", None) or {}
+                )
+                for pub in list(publications.values()):
+                    if not _is_audio_publication(pub):
+                        continue
+                    pubs.append({
+                        "source": getattr(pub, "source", None),
+                        "sid": getattr(pub, "sid", None),
+                        "subscribed": bool(getattr(pub, "subscribed", False)),
+                    })
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return pubs
+
+
+def _journal_owner_audio_publications(room, build_label: str) -> list:
+    """TASK-VOI-022: one INFO line per session start carrying the
+    owner audio publications room state shows for this build —
+    "session build N: owner audio publications: [...]". Returns
+    the snapshot for callers that want it."""
+    pubs = _owner_audio_publications(room)
+    rendered = ", ".join(
+        "source=%s sid=%s subscribed=%s"
+        % (p["source"], p["sid"], p["subscribed"])
+        for p in pubs
+    )
+    logger.info(
+        "VOICE %s: owner audio publications: [%s]", build_label, rendered)
+    return pubs
+
+
+def _input_forward_dead(watch: dict, counters, publications,
+                        now: float) -> bool:
+    """TASK-VOI-022 dead-forward signature (pure, unit-tested).
+
+    True exactly when the compound D1 signature holds for the
+    CURRENT build: an owner audio publication exists in the room,
+    this session's F2 counters are ALL zero (no frame crossed any
+    hop — a session whose input accepted the track shows counts),
+    and the job's room-level energy monitor saw energy on the
+    owner's track within the last _INPUT_FORWARD_ENERGY_WINDOW_S
+    (the track is live and carrying audio; the session is the deaf
+    side). A session with no registered counters never fires:
+    unknown is not zero."""
+    if not publications:
+        return False
+    if counters is None:
+        return False
+    if int(counters.get("activity_push_audio") or 0) > 0:
+        return False
+    if int(counters.get("plugin_push_audio") or 0) > 0:
+        return False
+    if int(counters.get("plugin_send_audio_events") or 0) > 0:
+        return False
+    energy = watch.get("last_energy_ts")
+    if energy is None:
+        return False
+    return 0.0 <= now - float(energy) <= _INPUT_FORWARD_ENERGY_WINDOW_S
+
+
+async def _check_input_forward(room, session, watch: dict, started_ts,
+                               build_label: str, *,
+                               delay_s: float = _INPUT_FORWARD_CHECK_DELAY_S
+                               ) -> None:
+    """TASK-VOI-022: the one-shot post-start check. Sleeps ~5 s,
+    then — only if this build is still the job's current session
+    (a rebuild's fresh start stamp supersedes a stale check) and
+    it has not already warned for this build — evaluates the
+    dead-forward signature and WARNINGs once. Never raises; a
+    cancelled check (job teardown) simply ends."""
+    try:
+        await asyncio.sleep(delay_s)
+        if started_ts is None or watch.get("session_started_ts") != started_ts:
+            return
+        if watch.get("input_forward_warned_for") == started_ts:
+            return
+        publications = _owner_audio_publications(room)
+        counters = _frame_counters_for(session)
+        if not _input_forward_dead(watch, counters, publications,
+                                   time.time()):
+            return
+        watch["input_forward_warned_for"] = started_ts
+        logger.warning(
+            "VOICE input forward dead on %s: owner publication present, "
+            "monitor sees energy, session counters 0 — see lifecycle "
+            "diagnosis H1a/H1b",
+            build_label,
+        )
+    except asyncio.CancelledError:
+        raise
+    except Exception as exc:
+        logger.info("VOICE input-forward check unavailable: %s", exc)
+
+
 # ---- TASK-VOI-009: fixed lines are pre-recorded WAVs ----
 # The greeting, the recovery-exhausted ("unconfirmed") outcomes and the
 # voice-unavailable notice used to be spoken through a synthesized
@@ -2960,6 +3121,9 @@ async def entrypoint(ctx: JobContext):
     session_listening = asyncio.Event()
     input_watch = _new_input_watch()
     energy_tasks: dict = {}
+    # TASK-VOI-022: the one-shot input-forward check tasks — one
+    # per session start, each discarding itself on completion.
+    input_forward_tasks: set = set()
     # TASK-VOI-017 (F2): per-job session build sequence for the
     # frame counters' labels — the first session is build 1 and
     # every ladder rung adds one. Incremented in _make_session.
@@ -3574,6 +3738,25 @@ async def entrypoint(ctx: JobContext):
         # moment; whichever fires first opens it).
         input_watch["session_started_ts"] = time.time()
         session_listening.set()
+        # TASK-VOI-022 (lifecycle instrumentation, FIX.md §3):
+        # journal this build's owner audio publications from room
+        # state and arm the one-shot input-forward check (~5 s:
+        # publication present + counters 0 + monitor energy ->
+        # WARNING). Evidence only — neither touches the session.
+        _counters = _frame_counters_for(sess)
+        _build_label = (
+            str(_counters.get("label")) if _counters
+            else f"session build {session_build_seq['n']}"
+        )
+        _journal_owner_audio_publications(ctx.room, _build_label)
+        _fwd_task = asyncio.ensure_future(
+            _check_input_forward(
+                ctx.room, sess, input_watch,
+                input_watch["session_started_ts"], _build_label,
+            )
+        )
+        input_forward_tasks.add(_fwd_task)
+        _fwd_task.add_done_callback(input_forward_tasks.discard)
 
     # Honest greeting (remote main, 2026-11-13): a greeting must never
     # claim fleet health it has not probed. Since TASK-VOI-009 the fixed
