@@ -172,7 +172,9 @@ async def test_matrix_assembles_a_mix_of_aware_and_naive_forecasts(monkeypatch):
     response = await build_universe_matrix(session=object())
 
     assert response.total_active_targets == len(UNIVERSE_TARGETS)
-    assert response.total_domains == 9
+    # TASK-FUT-012: UniverseDomain gained VYRALX (Futuris forecasts
+    # everything), so the domain count is 10, not 9.
+    assert response.total_domains == 10
     # The newest forecast per target wins, whichever shape it arrived in.
     by_target = {item.target: item for d in response.domains for item in d.targets}
     assert len(by_target) == len(UNIVERSE_TARGETS)

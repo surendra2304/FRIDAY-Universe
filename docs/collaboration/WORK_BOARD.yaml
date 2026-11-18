@@ -11413,6 +11413,22 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Supersession, recorded plainly: this replaces the INT-007 design rule 'quiet_hours_exempt is always false for watch alerts' — for instant class only, per the owner's decision. The INT-007 pin in test_standing_watches.py (the fixture frontier release, score 8) is updated in this PR with the reason in a comment; digest-class values are pinned unchanged in the new tests."
       - "Tests (local, sandbox Python 3.12.3, scratch-dir PYTHONPATH method): IntelX/tests/test_int015_alert_policy.py 5/5 PASS (bar pins, both envelope classes with identical dedupe identity, a mixed platform poll splitting instant/digest across both outboxes, the world-events outage-with-impact bar, a no-bar watch never alerting instantly); full watch stack regression 43/43 PASS (5 INT-015 + 10 INT-014 + 13 INT-013 + 15 INT-007). Deltas verified against the layer bases on disk (quota blocked fetching the INT-014 head into the shared clone; engine.py combined INT-014+015 delta vs the INT-013 state is 152 lines = the 87-line additive feed hook + this policy; test_standing_watches.py delta vs main is exactly the pin update)."
     next_action: "Supervisor review -> merge AFTER PRs #959 and #962 (stack order). NOT deployed by this crew. Follow-up for the coordinator/PRO-001 lane: a fast-lane drainer for instant_outbox.jsonl; until it exists, instant alerts still arrive via the main outbox digest path exactly as before."
+  - id: TASK-FUT-012
+    title: "Futuris forecasts everything: open target registry + measured-series provider path (VyralX domain, IntelX/VyralX volume + fleet forecast-demand targets)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-fut-012-forecast-registry
+    evidence:
+      - "Trigger: owner decisions 2026-11-18 — Futuris forecasts EVERYTHING, not markets only; IntelX shares its data with all agents (TASK-INT-014). Claim: issue #35 comment 6971458003 (crew claim covering INT-013/014/015 + FUT-012)."
+      - "Build (this task's PR, based on main dad3b9f9 — no file overlap with the INT-013/014/015 stack beyond this board file): UniverseDomain gains VYRALX; DomainTargetSpec gains series_provider; register_target() opens the registry at runtime (duplicate refused unless replace=True); new futuris/core/series_providers.py reads zero-filled daily series from Futuris's own stored data (IntelX notices, topic-tagged notices, forecast rows); generate_universe_forecast gains a third honest path — provider series fitted via select_best_adapter (injectable selector/fetcher for tests), labelled EvidenceClass.LIVE. Three new targets: vyralx:trends:topic_volume_24h, intelx:research:finding_volume_24h, friday:fleet:forecast_demand_24h."
+      - "Refusal preserved: short series (<10 points), an unreadable provider, a missing session, and StatsForecastUnavailableError (every deployment until the Fri py3.12 flip lands statsforecast in the live venv) all return insufficient_data with the reason recorded. Tests: Futuris/tests/test_fut012_forecast_registry.py — registry/provider/forecast-path evidence recorded in the PR body; A/B: the suite fails collection on pristine main."
+    next_action: "Supervisor review -> serial-lane merge -> after the Fri py3.12 flip (statsforecast live), first real provider-path forecast on Server 1 -> VERIFIED."
+    files:
+      - Futuris/futuris/core/universe_domains.py
+      - Futuris/futuris/core/universe_forecasting.py
+      - Futuris/futuris/core/series_providers.py
+      - Futuris/tests/test_fut012_forecast_registry.py
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
