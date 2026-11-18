@@ -1,0 +1,8 @@
+[
+ {"row": "bollinger_trend__p50_sd2.0__crypto30__1d.json", "admission": "FORWARD_TEST", "round": "TASK-STR-RD-002"},
+ {"row": "shock_breakout__k1.0__crypto30__1d.json", "admission": "FORWARD_TEST", "round": "TASK-STR-RD-002"},
+ {"row": "vol_adaptive_trend__ema12_26_nogate__crypto30__1d.json", "admission": "TIER_ADMITTED", "round": "TASK-STR-RD-002"},
+ {"row": "donchian_turtle__n55_b26__crypto30__1d.json", "admission": "TIER_ADMITTED", "round": "TASK-STR-RD-002"},
+ {"row": "ts_momentum__roc72__crypto30__1d.json", "admission": "TIER_ADMITTED", "round": "TASK-STR-RD-002"},
+ {"row": "stoch_reversion__k14_raw__crypto30__1d.json", "admission": "TIER_ADMITTED", "round": "TASK-STR-RD-002"}
+]
