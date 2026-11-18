@@ -1441,6 +1441,78 @@ TS_MOMENTUM_STRATEGY = {
     "OOS_EXPECTANCY_PCT": 4.376,
 }
 
+HA_TREND_ONE_CANDLE_4H_STRATEGY = {
+    "NAME": "HA Trend (single wickless Heikin-Ashi candle)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "TWO_CANDLE": False,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (6082 trades, 3/5 folds,
+    # second tier only — Bonferroni FAIL at N=3,899, not a promotion):
+    "OOS_WIN_RATE": 0.3671,
+    "OOS_PROFIT_FACTOR": 1.0625,
+    "OOS_EXPECTANCY_PCT": 0.239,
+    "OOS_TRADES": 6082,
+    "OOS_POSITIVE_FOLDS": 3,
+}
+
+HA_TREND_ONE_CANDLE_STRATEGY = {
+    "NAME": "HA Trend (single wickless Heikin-Ashi candle)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "TWO_CANDLE": False,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (877 trades, 2/5 folds,
+    # second tier only — Bonferroni FAIL at N=3,899, not a promotion):
+    "OOS_WIN_RATE": 0.3455,
+    "OOS_PROFIT_FACTOR": 1.0684,
+    "OOS_EXPECTANCY_PCT": 0.634,
+    "OOS_TRADES": 877,
+    "OOS_POSITIVE_FOLDS": 2,
+}
+
+HA_TREND_TWO_CANDLE_4H_STRATEGY = {
+    "NAME": "HA Trend (two consecutive wickless Heikin-Ashi candles)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "4h",
+    "TWO_CANDLE": True,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (5639 trades, 4/5 folds,
+    # second tier only — Bonferroni FAIL at N=3,899, not a promotion):
+    "OOS_WIN_RATE": 0.3685,
+    "OOS_PROFIT_FACTOR": 1.0764,
+    "OOS_EXPECTANCY_PCT": 0.290,
+    "OOS_TRADES": 5639,
+    "OOS_POSITIVE_FOLDS": 4,
+}
+
+HA_TREND_STRATEGY = {
+    "NAME": "HA Trend (two consecutive wickless Heikin-Ashi candles)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
+    "TIMEFRAME": "1d",
+    "TWO_CANDLE": True,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for (families2)
+    # TASK-STR-RD-002 pooled OOS evidence (775 trades, 3/5 folds,
+    # second tier only — Bonferroni FAIL at N=3,899, not a promotion):
+    "OOS_WIN_RATE": 0.3639,
+    "OOS_PROFIT_FACTOR": 1.1878,
+    "OOS_EXPECTANCY_PCT": 1.671,
+    "OOS_TRADES": 775,
+    "OOS_POSITIVE_FOLDS": 3,
+}
+
 # ==============================================================================
 # TASK-STR-CLEANUP-001 (owner directive, 2026-11-15): every strategy whose
 # verified out-of-sample profit factor (net of costs, TASK-STR-BT-001 /
@@ -3404,6 +3476,94 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "max_stop_pct": 0.25,
         "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): tsmom2_dual/roc90_ema200 @ CRYPTO30 4h meets the second tier (OOS expectancy +0.402%/trade, PF 1.0965, 1,580 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.5 x ATR(14) measured up to 16.3% of price over all post-warmup bars on the fwd002 SOLUSDT 4h fixture slice (10.4% at entry bars) — above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.25 (sanity bound only; FWD-006 sizes by risk / stop distance). Registry key is tsmom2_dual_crypto because the plain tsmom2_dual key is taken by the EXCLUDED comm7 documentary registration (roc30_ema200 @ comm7 4h) — a different judged object; records never blended.",
+    },
+    "ha_trend": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "Heikin-Ashi trend (HA candles recursive from the frame start): LONG after TWO consecutive bull HA candles with no lower wick (HA-close > HA-open and HA-open == HA-low); SHORT after two consecutive bear HA candles with no upper wick (HA-close < HA-open and HA-open == HA-high). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_ha(df, True, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3639,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 167.1,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): ha_trend/two_candle @ CRYPTO30 1d meets the second tier (OOS expectancy +1.671%/trade, PF 1.1878, 775 OOS trades, 3/5 positive folds, PF @2x costs 1.1682) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. TASK-STR-FWD-012 stop check: judged stop 2.0 x ATR(14) on 1d crypto fixtures reaches 71.28% of price at an entry bar (SOL 1d crash bar) — structurally above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.90 (sanity bound above the measured max; the override changes admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "ha_trend_two_candle_4h": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "Heikin-Ashi trend (HA candles recursive from the frame start): LONG after TWO consecutive bull HA candles with no lower wick (HA-close > HA-open and HA-open == HA-low); SHORT after two consecutive bear HA candles with no upper wick (HA-close < HA-open and HA-open == HA-high). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_ha(df, True, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3685,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 29.0,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.30,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): ha_trend/two_candle @ CRYPTO30 4h meets the second tier (OOS expectancy +0.290%/trade, PF 1.0764, 5,639 OOS trades, 4/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. TASK-STR-FWD-012 stop check: judged stop 2.0 x ATR(14) on 4h fixtures measures at most 13.0% of price across all BTC/SOL bars (entry-bar max in this entry's record), under the 0.15 engine-global cap on the fixtures — but the CRYPTO30 tail (INJ/SUI/APT-class names) plausibly exceeds it, so this entry carries max_stop_pct 0.30 (rounded sanity bound above the measured max; admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "ha_trend_one_candle": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "Heikin-Ashi trend (HA candles recursive from the frame start): LONG on a bull HA candle with no lower wick (HA-close > HA-open and HA-open == HA-low); SHORT on a bear HA candle with no upper wick (HA-close < HA-open and HA-open == HA-high). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_ha(df, False, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3455,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 63.4,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.90,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): ha_trend/one_candle @ CRYPTO30 1d meets the second tier (OOS expectancy +0.634%/trade, PF 1.0684, 877 OOS trades, 2/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. TASK-STR-FWD-012 stop check: judged stop 2.0 x ATR(14) on 1d crypto fixtures reaches 71.28% of price at an entry bar (SOL 1d crash bar) — structurally above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.90 (sanity bound above the measured max; the override changes admissibility only, FWD-006 sizes by risk / stop distance).",
+    },
+    "ha_trend_one_candle_4h": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-019)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "Heikin-Ashi trend (HA candles recursive from the frame start): LONG on a bull HA candle with no lower wick (HA-close > HA-open and HA-open == HA-low); SHORT on a bear HA candle with no upper wick (HA-close < HA-open and HA-open == HA-high). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_ha(df, False, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3671,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 23.9,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "max_stop_pct": 0.30,
+        "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): ha_trend/one_candle @ CRYPTO30 4h meets the second tier (OOS expectancy +0.239%/trade, PF 1.0625, 6,082 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. TASK-STR-FWD-012 stop check: judged stop 2.0 x ATR(14) on 4h fixtures measures at most 13.0% of price across all BTC/SOL bars (entry-bar max in this entry's record), under the 0.15 engine-global cap on the fixtures — but the CRYPTO30 tail (INJ/SUI/APT-class names) plausibly exceeds it, so this entry carries max_stop_pct 0.30 (rounded sanity bound above the measured max; admissibility only, FWD-006 sizes by risk / stop distance).",
     },
 }
 
