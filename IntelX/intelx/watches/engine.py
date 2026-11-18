@@ -100,6 +100,11 @@ class WatchDefinition:
     baseline_max_age_hours: int = 72
     poll_interval_seconds: int = 1800
     enabled: bool = False
+    # Topic domain (TASK-INT-013): every watch declares exactly one domain
+    # from intelx.watches.domains.DOMAINS. The domain is the subscription
+    # unit for the Universe intel feed (TASK-INT-014) and is stamped on
+    # every envelope. "general" is the undeclared fallback, not a home.
+    domain: str = "general"
 
 
 _AI_RELEASE_RULES = (
@@ -160,6 +165,7 @@ WATCH_AI_MODEL_RELEASES = WatchDefinition(
     baseline_max_age_hours=72,
     poll_interval_seconds=1800,
     enabled=True,
+    domain="ai_models",
 )
 
 WATCH_CRYPTO_MARKET_STRUCTURE = WatchDefinition(
@@ -235,6 +241,7 @@ WATCH_CRYPTO_MARKET_STRUCTURE = WatchDefinition(
     baseline_max_age_hours=72,
     poll_interval_seconds=1800,
     enabled=False,  # designed; enables after its own live proof (design doc §5)
+    domain="markets",
 )
 
 WATCH_INDIA_TECH_REGULATORY = WatchDefinition(
@@ -280,6 +287,181 @@ WATCH_INDIA_TECH_REGULATORY = WatchDefinition(
     baseline_max_age_hours=72,
     poll_interval_seconds=3600,
     enabled=True,  # live proof passed 2026-11-15/16: 1 alert + 1 cap-suppressed, dedupe exact, zero false positives (design doc §5)
+    domain="india_regulatory",
+)
+
+WATCH_PLATFORM_POLICY = WatchDefinition(
+    id="platform_policy",
+    title="Creator-platform policy & monetisation changes",
+    owner_value=(
+        "VyralX publishes on YouTube and the owner's presence runs on "
+        "Meta's platforms; partner-programme, monetisation, recommendation "
+        "and community-guideline changes decide what she may post and "
+        "whether it earns. Product launches and creator marketing do not "
+        "pass — policy only."
+    ),
+    sources=(
+        # Fetch-verified 2026-11-18 for TASK-INT-013 (both feeds serving
+        # fresh items the same day).
+        FeedSource("https://blog.youtube/rss/", "YouTube Official Blog"),
+        FeedSource("https://about.fb.com/news/feed/", "Meta Newsroom"),
+    ),
+    rules=(
+        ScoreRule(
+            "policy_surface",
+            r"\b(partner program(me)?|monetization|monetisation|community "
+            r"guidelines|community standards|recommendation guidelines|"
+            r"content polic\w+|copyright polic\w+|policies)\b",
+            3,
+        ),
+        ScoreRule("recommendation_system", r"\brecommend\w*\b", 2),
+        ScoreRule(
+            "change_language",
+            r"\b(chang(e|es|ing|ed)|updat(e|es|ing|ed)|new (rule|policy|"
+            r"requirement|guideline)s?|eligibility|enforcement|"
+            r"demonetiz\w+|demonetis\w+|takedown)\b",
+            2,
+            where="title_summary",
+        ),
+        ScoreRule(
+            "platform_name",
+            r"\b(youtube|instagram|facebook|meta|shorts|reels)\b",
+            1,
+        ),
+    ),
+    excludes=(
+        r"\bsurvey\w*\b", r"\bpodcast\b", r"\bwebinar\b", r"\brecap\b",
+        r"\bsponsored\b", r"\bcelebrat\w+\b", r"\bawards?\b",
+    ),
+    min_score=4,
+    max_alerts_per_poll=1,
+    max_alerts_per_day=2,
+    baseline_max_age_hours=72,
+    poll_interval_seconds=3600,
+    enabled=False,  # designed (TASK-INT-013); enables after its own live proof
+    domain="platforms_policy",
+)
+
+WATCH_FLEET_TOOLS = WatchDefinition(
+    id="fleet_tools",
+    title="Fleet tools & infrastructure changes",
+    owner_value=(
+        "Every agent in the Universe is Python on GitHub: CPython security "
+        "releases, end-of-life notices and GitHub platform deprecations land "
+        "directly on the fleet's runtime and CI. Language-summit talks, "
+        "elections and pre-releases do not pass."
+    ),
+    sources=(
+        # Fetch-verified 2026-11-18 for TASK-INT-013 (both feeds serving
+        # fresh items the same day; Python Insider carried the 3.12.16
+        # security release the fleet's cutover depends on).
+        FeedSource("https://blog.python.org/feeds/posts/default", "Python Insider"),
+        FeedSource("https://github.blog/feed/", "GitHub Blog"),
+    ),
+    rules=(
+        ScoreRule(
+            "security_event",
+            r"\b(vulnerabilit\w+|authentication bypass|compromised|"
+            r"security advisory|cve-\d{4})\b",
+            3,
+        ),
+        ScoreRule(
+            "platform_breaking",
+            r"\b(deprecat\w+|sunset|breaking change|end[- ]of[- ]life)\b",
+            3,
+        ),
+        ScoreRule("python_version", r"\bpython 3\.\d+(\.\d+)?\b", 2),
+        ScoreRule(
+            "release_event",
+            r"\b(security (release|update|advisory|fix)|are out|"
+            r"now available|is here|released|final release)\b",
+            2,
+            where="title_summary",
+        ),
+        ScoreRule(
+            "infra_name",
+            r"\b(python\.org|pypi|cpython|github)\b",
+            1,
+            where="title_summary",
+        ),
+    ),
+    excludes=(
+        r"\balpha\b", r"\bbeta\b", r"\bcandidate\b", r"\bpreview\b",
+        r"\bsummit\b", r"\blightning talks\b", r"\belection\b",
+        r"\bnominations?\b", r"\bsponsors?\b",
+    ),
+    min_score=4,
+    max_alerts_per_poll=1,
+    max_alerts_per_day=2,
+    baseline_max_age_hours=72,
+    poll_interval_seconds=3600,
+    enabled=False,  # designed (TASK-INT-013); enables after its own live proof
+    domain="tools_infra",
+)
+
+WATCH_WORLD_EVENTS = WatchDefinition(
+    id="world_events",
+    title="World events with fleet impact",
+    owner_value=(
+        "Submarine-cable cuts, large Internet or cloud outages, major cyber "
+        "events, disasters and escalations can take fleet infrastructure, "
+        "exchanges or the owner's connectivity down with no warning. Only "
+        "events with that blast radius pass; general world news, opinion "
+        "and sport do not."
+    ),
+    sources=(
+        # Fetch-verified 2026-11-18 for TASK-INT-013 (feed serving fresh
+        # items the same day). BBC World was the first choice but its feed
+        # could not be verified from the build environment, so it is not
+        # shipped on faith.
+        FeedSource("https://www.aljazeera.com/xml/rss/all.xml", "Al Jazeera"),
+    ),
+    rules=(
+        ScoreRule(
+            "infra_outage",
+            r"\b(outage|blackout|internet shutdown|undersea cable|"
+            r"submarine cable|data ?cent(re|er) fire|offline across)\b",
+            3,
+        ),
+        ScoreRule(
+            "cyber_event",
+            r"\b(cyberattack|cyber attack|ransomware|internet disruption|ddos)\b",
+            3,
+        ),
+        ScoreRule(
+            "disaster",
+            r"\b(earthquake|tsunami|hurricane|cyclone|typhoon|wildfire|floods?)\b",
+            2,
+        ),
+        ScoreRule(
+            "escalation",
+            r"\b(missile strike|airstrikes?|blockade|invasion|"
+            r"ceasefire\b[^.]{0,30}\bcollaps\w+)\b",
+            2,
+        ),
+        ScoreRule(
+            "impact_scale",
+            r"\b(millions? (without|lose|left)|power grid|state of "
+            r"emergency|evacuat\w+|death toll|without (power|internet|"
+            r"electricity))\b",
+            2,
+            where="title_summary",
+        ),
+        ScoreRule("sanctions", r"\bsanctions\b", 2, where="title_summary"),
+    ),
+    excludes=(
+        # Denials and commentary about an event are not the event (the
+        # crypto watch's D1 lesson, applied here from day one).
+        r"\brules out\b", r"\bdenies\b", r"\bdenied\b",
+        r"\bopinion\b", r"\bpodcast\b", r"\binterview\b", r"\bexplainer\b",
+    ),
+    min_score=4,
+    max_alerts_per_poll=1,
+    max_alerts_per_day=2,
+    baseline_max_age_hours=72,
+    poll_interval_seconds=1800,
+    enabled=False,  # designed (TASK-INT-013); enables after its own live proof
+    domain="world_events",
 )
 
 WATCHES: dict[str, WatchDefinition] = {
@@ -288,6 +470,9 @@ WATCHES: dict[str, WatchDefinition] = {
         WATCH_AI_MODEL_RELEASES,
         WATCH_CRYPTO_MARKET_STRUCTURE,
         WATCH_INDIA_TECH_REGULATORY,
+        WATCH_PLATFORM_POLICY,
+        WATCH_FLEET_TOOLS,
+        WATCH_WORLD_EVENTS,
     )
 }
 
@@ -542,6 +727,7 @@ def build_envelope(
         "envelope_id": hashlib.sha256(f"{watch.id}:{fp}".encode()).hexdigest(),
         "dedupe_key": f"intelx.watch:{watch.id}:{fp[:16]}",
         "watch_id": watch.id,
+        "domain": watch.domain,
         "severity": "info",
         "quiet_hours_exempt": False,
         "title": item.title,
@@ -719,13 +905,26 @@ class WatchService:
 class WatchRunner:
     """Background loop over enabled watches; mirrors NewsIngester's shape."""
 
-    def __init__(self, service: WatchService | None = None) -> None:
+    def __init__(
+        self,
+        service: WatchService | None = None,
+        *,
+        domains: set[str] | None = None,
+    ) -> None:
         self.service = service or WatchService()
+        # TASK-INT-013: a runner can be scoped to a set of domains (e.g. a
+        # second process that owns only the new domains while they prove
+        # themselves). None = every domain, the historical behaviour.
+        self.domains = domains
         self._task: asyncio.Task | None = None
         self._running = False
 
     async def _loop(self) -> None:
-        enabled = [w for w in WATCHES.values() if w.enabled]
+        enabled = [
+            w
+            for w in WATCHES.values()
+            if w.enabled and (self.domains is None or w.domain in self.domains)
+        ]
         logger.info(
             "[WatchRunner] Standing watches started: %s",
             ", ".join(w.id for w in enabled) or "(none enabled)",

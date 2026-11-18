@@ -165,3 +165,34 @@ defaults were untouched. Full transcript: issue #35 completion comment.
   That is deliberate for v1 (explainable, testable, zero quota cost);
   an LLM re-rank of *candidates only* is a possible v2, never a
   replacement for the dedupe/budget machinery.
+
+## 6. Topic domains — TASK-INT-013 (2026-11-18)
+
+Owner decision 2026-11-18: IntelX researches **everything** the Universe
+works in, not only trading. The unit of that widening is the *domain*
+(`intelx/watches/domains.py`): every watch declares exactly one domain via
+`WatchDefinition.domain`, the envelope carries it (`"domain"` key), and a
+`WatchRunner` can be scoped to a set of domains. Adding a research area is
+one `DomainSpec` plus its watches — never an engine change.
+
+| Domain | Watches | State |
+|---|---|---|
+| `ai_models` | `ai_model_releases` | enabled (INT-007 proof) |
+| `markets` | `crypto_market_structure` | designed, disabled |
+| `india_regulatory` | `india_tech_regulatory` | enabled (INT-007 proof) |
+| `platforms_policy` | `platform_policy` | **new, disabled** |
+| `tools_infra` | `fleet_tools` | **new, disabled** |
+| `world_events` | `world_events` | **new, disabled** |
+| `general` | — (undeclared fallback) | classification debt, not a home |
+
+The three new watches follow the INT-007 discipline exactly: deterministic
+rules tuned on real headlines from their feeds (fetch-verified 2026-11-18),
+denial/commentary exclusions from day one, per-poll and per-day caps, and
+`enabled=False` until each passes its own live proof of the §5 shape.
+Sources: YouTube Official Blog + Meta Newsroom (`platforms_policy`);
+Python Insider + GitHub Blog (`fleet_tools`); Al Jazeera (`world_events` —
+BBC World was first choice but its feed could not be verified from the
+build environment, so it is not shipped on faith). Ops:
+`python -m intelx.watches.run_once --domain <id>` polls a whole domain.
+Domains are also the subscription unit for the Universe intel feed
+(TASK-INT-014).
