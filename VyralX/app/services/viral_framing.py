@@ -50,7 +50,7 @@ from app.config import get_settings
 from app.models import Asset, PublishJob, RenderJob, Source, VideoProject, utcnow
 from app.services import viral_quality as vq
 from app.services import viral_remix as vr
-from app.services.scene_analysis import analyze_scene, scene_text
+from app.services.scene_analysis import analyze_scene, record_visual_defects, scene_text
 from app.services.viral_series import normalise_label
 
 log = logging.getLogger("vyralx.viral_framing")
@@ -1172,6 +1172,49 @@ def _cut_excerpt(source_path: Path, destination: Path, start: float, seconds: fl
     return destination
 
 
+# --------------------------------------------------------------------------- #
+# render binding (TASK-VYR-024) — a held job's title, series, source
+# and render must never diverge. Production writes every one of those
+# from the single candidate object, and the cycle-5 records prove the
+# pipeline's own bindings held: publish_jobs, render_jobs, assets,
+# sources, video_projects, the loop manifest and the physical files
+# (names and probed durations) all agree for jobs 821-825. The pairing
+# that crossed — job 823's title read against job 824's render file —
+# was assembled OUTSIDE the pipeline, by pairing two separately
+# enumerated lists by position. These checks give the pipeline's own
+# record the means to prove the binding by key instead: the finished
+# render is probed before anything is persisted, a mismatch fails the
+# production closed (no publish job is created), and the probe result
+# is stamped into the render job's options so any later enumeration
+# can verify — by key, not by position — that the file on disk is the
+# render this job produced.
+# --------------------------------------------------------------------------- #
+_RENDER_BINDING_DURATION_TOLERANCE = 1.0
+
+
+def render_binding_violations(
+    *,
+    video_id: str,
+    render_name: str,
+    render_duration: float,
+    excerpt_seconds: float,
+) -> list[str]:
+    """Ways a finished render fails to bind to the job that ordered it."""
+    problems: list[str] = []
+    if not str(render_name).startswith(f"framed-{video_id}-"):
+        problems.append(
+            f"render file {render_name!r} does not carry source id {video_id!r}"
+        )
+    if not render_duration or float(render_duration) <= 0:
+        problems.append("render probe returned no duration")
+    elif abs(float(render_duration) - float(excerpt_seconds)) > _RENDER_BINDING_DURATION_TOLERANCE:
+        problems.append(
+            f"render duration {float(render_duration):.2f}s does not match "
+            f"the excerpt it was cut from ({float(excerpt_seconds):.2f}s)"
+        )
+    return problems
+
+
 def produce_framed_short(
     candidate: Any,
     db: Session,
@@ -1286,6 +1329,26 @@ def produce_framed_short(
             return {
                 "status": "SKIPPED", "reason": "static_scene",
                 "video_id": candidate.video_id, "event_arc": arc_info,
+            }
+        # Visible-text defects (TASK-VYR-024): a creator watermark
+        # stamped on the footage or burned-in captions piled up
+        # unreadably are defects of the source's pixels — no later
+        # stage can remove them, so the candidate is rejected here,
+        # at the only pre-render look at those pixels. Cycle 5 held
+        # both (a "@WARPATROL" watermark throughout one render;
+        # overlapping source captions in another) because the vision
+        # record was never asked about on-screen text.
+        defects = record_visual_defects(record)
+        if defects:
+            log.info(
+                "Skipping %s: visible-text defect in source frames (%s)",
+                candidate.video_id, ", ".join(defects),
+            )
+            return {
+                "status": "SKIPPED", "reason": defects[0],
+                "video_id": candidate.video_id,
+                "visual_defects": defects,
+                "watermark_text": str(record.get("watermark_text") or ""),
             }
         scene = scene_text(record)
     else:
@@ -1470,6 +1533,24 @@ def produce_framed_short(
         music_bed_path=bed_path,
     )
 
+    # Render binding (TASK-VYR-024): probe the finished file and prove
+    # it is the render THIS candidate ordered before anything is
+    # persisted — on a mismatch the production fails closed and no
+    # publish job is created. The probe is stamped into the render
+    # job's options below, so the binding stays verifiable by key.
+    render_probe = vr.probe_media(render_path)
+    binding_problems = render_binding_violations(
+        video_id=candidate.video_id,
+        render_name=render_path.name,
+        render_duration=float(render_probe.duration or 0.0),
+        excerpt_seconds=excerpt_seconds,
+    )
+    if binding_problems:
+        raise RuntimeError(
+            f"render binding check failed for {candidate.video_id}: "
+            + "; ".join(binding_problems)
+        )
+
     thumbnail_path = settings.render_dir / f"{project_key}-thumb.jpg"
     try:
         from app.services.thumbnail_designer import generate_genre_thumbnail
@@ -1595,6 +1676,8 @@ def produce_framed_short(
             "bgm_source": bgm_source,
             "excerpt": {"start": excerpt_start, "seconds": excerpt_seconds},
             "series": category,
+            "render_duration_seconds": round(float(render_probe.duration or 0.0), 3),
+            "render_bytes": render_path.stat().st_size if render_path.is_file() else 0,
         }),
         completed_at=utcnow(),
     )

@@ -172,12 +172,20 @@ _RECORD_PROMPT = (
     '"objects": ["visible object", "..."], '
     '"summary": "one short present-tense sentence: what happens in this beat"}], '
     '"event_arc": "one sentence: what changes from the start beat to the end beat", '
-    '"static": false}\n'
+    '"static": false, '
+    '"watermark_text": "a watermark, username (for example @name) or channel '
+    'name stamped onto the footage by the clip\'s creator as an overlay, '
+    'copied exactly as it appears, or an empty string when there is none. '
+    'Text that is part of the scene being filmed (a TV broadcast shown in '
+    'the clip, signs, screens, printed words) is NOT a watermark", '
+    '"caption_overlap": false}\n'
     "Exactly three beats. Set \"static\" to true only if essentially nothing "
     "changes across all three frames. Set a field to \"unknown\" whenever the "
     "frames do not show it clearly - an honest unknown is far better than a "
     "guess, because every word of the narration will be checked against "
-    "this record."
+    "this record. Set \"caption_overlap\" to true when in any frame two or "
+    "more burned-in text overlays or captions overlap each other so that "
+    "any line cannot be read."
 )
 
 _TIME_VALUES = {"day", "night", "indoor", "unknown"}
@@ -265,7 +273,46 @@ def _coerce_record(payload: Any) -> dict[str, Any] | None:
         "beats": beats,
         "event_arc": _clean_field(payload.get("event_arc"), 300),
         "static": bool(payload.get("static")),
+        # Visible-text defects (TASK-VYR-024): the record is the only
+        # pre-render look at the source's pixels, so it is where a
+        # creator watermark or an unreadable burned-in caption pile-up
+        # must be reported — after the render, both are baked in.
+        # Replies that omit the fields (older prompts) coerce to the
+        # clean defaults.
+        "watermark_text": _clean_field(payload.get("watermark_text"), 80),
+        "caption_overlap": bool(payload.get("caption_overlap")),
     }
+
+
+def record_visual_defects(record: dict[str, Any] | None) -> list[str]:
+    """Visible-text defect kinds a scene record reports (TASK-VYR-024).
+
+    Both kinds are defects of the SOURCE footage's pixels that no
+    subtitle-track fix can repair after the fact:
+
+    * ``watermark_visible`` — a third-party watermark, username or
+      channel branding stamped on the footage (supervised cycle 5
+      held a render carrying "@WARPATROL" centre-frame throughout;
+      the record never reported it because the vision pass was never
+      asked about on-screen text).
+    * ``caption_overlap`` — two or more burned-in caption/text layers
+      overlapping so a line is unreadable (cycle 5, job 822 ~12.8s:
+      the source's own captions printed over each other; VyralX's
+      framing captions were fine — the defect is in the pixels, not
+      the cue track PR #1053 deduplicated).
+
+    Returns the kinds in a stable order; empty when the record is
+    clean. A ``None`` record yields no defects — absence of ground
+    truth is the caller's separate ``vision_unavailable`` case.
+    """
+    if not isinstance(record, dict):
+        return []
+    defects: list[str] = []
+    if str(record.get("watermark_text") or "").strip():
+        defects.append("watermark_visible")
+    if bool(record.get("caption_overlap")):
+        defects.append("caption_overlap")
+    return defects
 
 
 def analyze_scene(source_path: Path | str, duration: float) -> dict[str, Any] | None:
