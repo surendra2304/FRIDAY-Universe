@@ -82,7 +82,7 @@ jobs:
             tests/test_cross_tenant_context_isolation.py \
             tests/test_schema_init_migrations.py \
             tests/test_rel015_reconciliation.py \
-            tests/test_mem009_deploy_migrations.py
+            tests/test_mem009_deploy_migrations.py\
             tests/test_mem013_memory_promotion.py
           # TASK-REL-001: the viking durability suite runs as its own
           # invocation in the same step. Its store-failure simulations fail
