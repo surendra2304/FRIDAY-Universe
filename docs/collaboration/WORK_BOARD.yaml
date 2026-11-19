@@ -10961,6 +10961,20 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Sentinel/sentinel/storage/database/session.py
       - Sentinel/sentinel/apps/api/main.py
       - Sentinel/tests/security/test_bootstrap_signal_regressions.py
+  - id: TASK-SEN-020
+    title: "Sentinel finding-validation gate: a finding may be marked verified only after passing a 7-question false-positive gate over the existing finding contract (pattern adopted from the Claude-BugHunter bundle, IG intake round 2)"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-sen-020-bughunter-sentinel
+    evidence:
+      - "Source (IG intake round 2, 2026-11-18): post DfoioTRhRTr (Claude-BugHunter, via @githubprojects) — a Claude Code skill bundle for bug hunting whose WHAT-CHANGED list names a '7-QUESTION VALIDATION GATE — kills false positives before reports'. Full-watch item file: ~/workspace/ig-fullwatch/items/DfoioTRhRTr.md (FULL, 27 points); classification: ~/workspace/ig-intake-2/ROLLUP.md item 7. PATTERN ADOPTION ONLY — the external red-team bundle is not imported into the fleet."
+      - "Gap (verified on main 75f06f3e): Sentinel/contracts/finding.schema.json already defines the lifecycle (open / verified / false_positive / remediated / accepted / review_required) and demands findings be 'strictly anchored to raw evidence artifacts', but no code decided when a finding has earned 'verified' — grep of Sentinel/app/services finds no validation gate (false-positive handling exists only inside threat matching internals)."
+      - "Build (this task's PR): new Sentinel/app/services/finding_validation_gate.py — deterministic, stdlib-only validate_finding(finding, existing) returning a GateResult over 7 checks: evidence_attached, target_identified, severity_justified (impact required for high/critical), exploitability_stated (high/critical), confidence_floor (per-severity floors 0.0/0.3/0.5/0.7/0.8), not_duplicate (same target + same title or shared CVE vs non-closed findings), remediation_stated. All pass -> recommended_status 'verified'; any fail -> 'review_required' with the failed questions named. The gate never mutates the finding; wiring it into the finding lifecycle is a follow-up, not this PR. Claim: issue #35 comment 6972059487."
+    next_action: "PR open -> supervisor review -> serial-lane merge (board-only union resolution if TASK-SEN-019's or TASK-FRD-027's board appends land first) -> follow-up wires validate_finding into the finding lifecycle -> VERIFIED."
+    files:
+      - Sentinel/app/services/finding_validation_gate.py
+      - Sentinel/tests/test_sen020_finding_validation_gate.py
+      - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-INF-014
     title: "Inference: delete the log-only SIGTERM handler so uvicorn owns shutdown (Inference's graceful drain has never run in production; 9 hung-stop SIGKILLs in 24h)"
     status: IN_REVIEW
