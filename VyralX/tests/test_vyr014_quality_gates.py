@@ -813,3 +813,27 @@ def test_produce_repairs_an_overlong_hook_and_renders(monkeypatch, tmp_path):
         "Watch his face when the phone photo appears in bright daylight.")
     publish_jobs = [o for o in session.added if type(o).__name__ == "PublishJob"]
     assert len(publish_jobs) == 1
+
+
+# --- TASK-VYR-025: the remix path honours the source-captioned gate --- #
+# Same pre-render rejection as the framed path: a source that already
+# carries a full burned-in caption track is skipped with
+# source_captioned before any editorial or render work, because the
+# remix's own caption track would double it (cycle 6, job 841).
+
+
+def test_produce_skips_a_captioned_source_before_editorial(monkeypatch, tmp_path):
+    _wire_common(monkeypatch, tmp_path)
+    monkeypatch.setattr(vq, "measure_event_arc", lambda *a, **k: None)
+    captioned = dict(RECORD_761)
+    captioned["source_caption_track"] = True
+    captioned["caption_beats"] = 3
+    monkeypatch.setattr(vr, "analyze_scene", lambda *a, **k: captioned)
+    editorial_calls = []
+    monkeypatch.setattr(vr, "generate_editorial",
+                        lambda *a, **k: editorial_calls.append(1) or {})
+    result = vr.produce_viral_short(_candidate(), _FakeSession(), publish=False)
+    assert result["status"] == "SKIPPED"
+    assert result["reason"] == "source_captioned"
+    assert result["visual_defects"] == ["source_captioned"]
+    assert editorial_calls == []  # rejected before any editorial/render work

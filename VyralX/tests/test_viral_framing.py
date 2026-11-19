@@ -1060,3 +1060,133 @@ def test_cycle5_swapped_titles_are_rejected_by_the_grounding_gate():
     )
     assert any(v.kind == "title_ungrounded" for v in news_on_police)
     assert any(v.kind == "title_ungrounded" for v in police_on_news)
+
+
+# --- TASK-VYR-025: the source-captioned gate --------------------------- #
+# Cycle 6, job 841: the mascot-race source already carried a complete
+# word-by-word burned-in caption track, and the render added VyralX's
+# own caption track carrying the same narration out of sync — two
+# tracks doubling for the whole video (the pattern the owner rejected
+# in cycle-5 job 823). VYR-024's caption_overlap could not see it: the
+# source's captions never overlapped EACH OTHER. The record now
+# reports per-beat caption presence; a strict majority of beats means
+# the source is already captioned and the candidate is skipped with
+# reason source_captioned before any render work.
+
+
+def _captioned_payload(flags):
+    return {
+        "beats": [{
+            "setting": "running track", "time_of_day": "day",
+            "subjects": [], "objects": ["mascot costume"],
+            "summary": "A mascot races a runner down the track.",
+            "captions_present": flag,
+        } for flag in flags],
+        "event_arc": "the race is run",
+        "static": False,
+    }
+
+
+def test_caption_track_majority_rule():
+    assert scene_analysis.source_caption_track(3, 3) is True
+    assert scene_analysis.source_caption_track(2, 3) is True
+    assert scene_analysis.source_caption_track(1, 3) is False
+    assert scene_analysis.source_caption_track(0, 3) is False
+    assert scene_analysis.source_caption_track(1, 2) is False
+    assert scene_analysis.source_caption_track(2, 2) is True
+    assert scene_analysis.source_caption_track(0, 0) is False
+
+
+def test_record_flags_a_full_caption_track():
+    record = scene_analysis._coerce_record(_captioned_payload([True, True, True]))
+    assert record is not None
+    assert record["caption_beats"] == 3
+    assert record["source_caption_track"] is True
+
+
+def test_record_flags_a_majority_caption_track():
+    record = scene_analysis._coerce_record(_captioned_payload([True, False, True]))
+    assert record is not None
+    assert record["caption_beats"] == 2
+    assert record["source_caption_track"] is True
+
+
+def test_record_ignores_a_single_captioned_beat():
+    # One beat with a title card or a single captioned moment is not a
+    # track — the skip is final for the cycle, so it must not fire.
+    record = scene_analysis._coerce_record(_captioned_payload([True, False, False]))
+    assert record is not None
+    assert record["caption_beats"] == 1
+    assert record["source_caption_track"] is False
+
+
+def test_record_defaults_clean_when_vision_omits_caption_flags():
+    record = scene_analysis._coerce_record(_record_payload())
+    assert record is not None
+    assert record["caption_beats"] == 0
+    assert record["source_caption_track"] is False
+
+
+def test_visual_defects_flag_source_captioned():
+    assert scene_analysis.record_visual_defects(
+        {"watermark_text": "", "caption_overlap": False,
+         "source_caption_track": True}
+    ) == ["source_captioned"]
+    assert scene_analysis.record_visual_defects(
+        {"watermark_text": "", "caption_overlap": False,
+         "source_caption_track": False}
+    ) == []
+    # Stable order alongside the VYR-024 kinds: the paths skip with the
+    # first defect, so a watermarked AND captioned source still reports
+    # watermark_visible as its reason, with source_captioned recorded.
+    assert scene_analysis.record_visual_defects(
+        {"watermark_text": "@WARPATROL", "caption_overlap": True,
+         "source_caption_track": True}
+    ) == ["watermark_visible", "caption_overlap", "source_captioned"]
+
+
+def test_framed_path_skips_a_captioned_source_before_editorial(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    from app.services import viral_quality as vq
+    from app.services import viral_remix as vr
+
+    monkeypatch.setattr(viral_framing, "get_settings", lambda: SimpleNamespace(
+        prepare_directories=lambda: None,
+        render_dir=tmp_path / "renders",
+        media_dir=tmp_path / "media",
+        ffmpeg_bin="ffmpeg",
+        viral_quality_gates_enabled=True,
+        viral_max_source_seconds=58.0,
+    ))
+    monkeypatch.setattr(vr, "download_audio_only",
+                        lambda video_id, dest: tmp_path / "probe.webm")
+    monkeypatch.setattr(vr, "detect_speech", lambda path: SimpleNamespace(
+        has_speech=True,
+        cues=[{"start": 0.0, "end": 1.0, "text": "go"}],
+        text="go go go",
+    ))
+    monkeypatch.setattr(vr, "download_source_video",
+                        lambda video_id, dest: tmp_path / "source.mp4")
+    monkeypatch.setattr(vr, "probe_media", lambda path: SimpleNamespace(
+        duration=30.0, width=1080, height=1920, has_audio=True))
+    monkeypatch.setattr(viral_framing, "_cut_excerpt",
+                        lambda *a, **k: tmp_path / "excerpt.mp4")
+    monkeypatch.setattr(viral_framing, "measure_tail_trim",
+                        lambda *a, **k: (None, ""))
+    monkeypatch.setattr(vq, "measure_event_arc", lambda *a, **k: None)
+    record = scene_analysis._coerce_record(_captioned_payload([True, True, False]))
+    monkeypatch.setattr(viral_framing, "analyze_scene", lambda *a, **k: record)
+    editorial_calls = []
+    monkeypatch.setattr(viral_framing, "generate_framing",
+                        lambda *a, **k: editorial_calls.append(1) or {})
+
+    candidate = SimpleNamespace(
+        video_id="Pfxp6mysc90", title="Can You Beat The Fastest Mascot?",
+        channel="BoltMotivation", duration=30.0, category="SPORTS",
+    )
+    result = viral_framing.produce_framed_short(candidate, None, publish=False)
+    assert result["status"] == "SKIPPED"
+    assert result["reason"] == "source_captioned"
+    assert result["visual_defects"] == ["source_captioned"]
+    assert editorial_calls == []  # rejected before any editorial/render work

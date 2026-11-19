@@ -12217,6 +12217,31 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Stratex/tests/test_pep001_pepperstone_ctrader_adapter.py
       - docs/collaboration/WORK_BOARD.yaml
 
+  - id: TASK-VYR-025
+    title: "VyralX source-captioned gate: skip candidates whose source already carries a full burned-in caption track (new skip reason source_captioned) instead of doubling it with VyralX's own caption track"
+    status: MERGED
+    owner: muse_ai
+    branch: claude/task-vyr-025-source-captioned-gate
+    pr: 1103
+    priority: P2
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Claim: GitHub issue #35 comment 7013181591 by Muse before any editing (TASK-VYR-025; next free VYR id \u2014 board max was TASK-VYR-024). Base: main d6a7cd38640e71c223623052201965e2941dc5b6."
+      - "Trigger: the coordinator's personal watch of supervised cycle 6 job 841 (source Pfxp6mysc90, mascot race) \u2014 the source already carries a complete word-by-word burned-in caption track throughout, and the render added VyralX's own large word-by-word caption track carrying the same narration out of sync: two caption tracks doubling for the whole video, plus the title line at times. The owner already rejected exactly this pattern (cycle-5 job 823 FAILED for doubled captions)."
+      - "Gap: TASK-VYR-024's caption_overlap gate fired 0 times in cycle 6 \u2014 it detects pile-up WITHIN the source's captions, not 'the source is already fully captioned, so ours must not be added'. Decided behaviour (coordinator, owner's standing rules: her subtitles always on; a doubled render is a failed render): skip pre-render with the new reason source_captioned, same class as watermark_visible/caption_overlap. No render-without-captions mode."
+    next_action: "Supervisor review -> merge. Acceptance: next supervised cycle on U2 skips already-captioned candidates with source_captioned counted in the cycle summary (viral_loop counts result reasons generically); coordinator re-watches held renders. NOT deployed by this PR."
+    evidence_build:
+      - "Design (3 lines): the vision record prompt now asks per-beat captions_present (burned-in text transcribing speech; in-scene text \u2014 signs, jerseys, score bugs, screens \u2014 and one-off title/name cards explicitly excluded); _coerce_record carries the per-beat flags and collapses them via scene_analysis.source_caption_track to a record-level verdict only on a strict majority of sampled beats (2 of 3), stored as source_caption_track + caption_beats; record_visual_defects appends source_captioned (stable order, after watermark_visible/caption_overlap), and BOTH production paths already reject on record_visual_defects pre-render \u2014 a captioned-only candidate skips with reason source_captioned, counted by viral_loop's generic reason counter. No changes were needed in viral_framing.py/viral_remix.py: the VYR-024 gate is the single wiring point."
+      - "Tests: 8 new \u2014 test_viral_framing.py 55 -> 62 (majority rule; full/majority/single-beat classification through _coerce_record; clean defaults when the vision reply omits the flags; defects incl. stable ordering; framed path skips pre-editorial with reason source_captioned) and test_vyr014_quality_gates.py +1 (remix path skips pre-editorial with reason source_captioned). Head: both files 95 passed; full CI ring (owner-workflows VyralX step's 4 files + test_vyr014_quality_gates) 109 passed, 0 failures/errors/skips (junit-verified) \u2014 exactly VYR-024's 101 + 8 new."
+      - "A/B on pristine base d6a7cd38 (head test files over base code): all 8 new tests FAIL for the intended reasons \u2014 AttributeError (scene_analysis.source_caption_track missing), KeyError caption_beats, and the remix path proceeding to a script_unverifiable skip instead of source_captioned. Non-vacuous."
+      - "CI collection: test_viral_framing.py is in owner-workflows.yml's VyralX step pytest list; test_vyr014_quality_gates.py is collected in the same ring run locally (it is not a workflow-list file \u2014 unchanged from VYR-024). GitHub CI state reported at ship time in the PR."
+    files:
+      - VyralX/app/services/scene_analysis.py
+      - VyralX/tests/test_viral_framing.py
+      - VyralX/tests/test_vyr014_quality_gates.py
+      - docs/collaboration/WORK_BOARD.yaml
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
