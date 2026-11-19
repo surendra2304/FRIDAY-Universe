@@ -32,18 +32,22 @@ class GeminiProvider(BaseLLMProvider):
     # listed; demand-limited on the free tier) added.
     # TASK-INF-015: gemini-3.5-flash-lite added — the current Flash-Lite
     # id (free tier 15 RPM / 500 RPD, verified from two independent
-    # free-project readings, Sep + Oct 2026). gemini-2.5-flash-lite is
-    # kept: it is a legacy access-limited id that Google routes to
-    # gemini-3.5-flash-lite from 2026-12-01, and existing callers still
-    # name it (TASK-VOI-020's probe pin among them). NOTE: listing here
-    # is the provider-adapter catalogue only; live generation with this
+    # free-project readings, Sep + Oct 2026). NOTE: listing here is the
+    # provider-adapter catalogue only; live generation with this
     # deployment's keys is a post-merge probe, not claimed by INF-015.
+    # TASK-INF-017: gemini-2.5-flash-lite REMOVED. INF-015 kept the
+    # legacy access-limited id only because existing callers still
+    # named it (TASK-VOI-020's voice key-probe pin among them);
+    # TASK-VOI-021 moved that pin to the explicit gemini-3.5-flash-lite
+    # id, leaving the legacy entry with no production caller. Owner
+    # order 2026-11-19: the fleet pins gemini-3.5-flash-lite — the
+    # legacy id (which Google would silently route to 3.5 from
+    # 2026-12-01 anyway) no longer spends this deployment's keys.
     SUPPORTED_MODELS = [
         "gemini-flash-latest",
         "gemini-3.8-flash",
         "gemini-3.6-flash",
         "gemini-3.5-flash-lite",
-        "gemini-2.5-flash-lite",
         "gemini-2.5-pro",
         "gemini-pro-latest",
     ]
