@@ -43,6 +43,18 @@ operator's cookie file, same as the autopilot).
 
 Every Nth cycle the long-form lane gets one compilation attempt when
 ``viral_loop_longform_enabled`` is on (owner decision B).
+
+Vision rate limits (TASK-VYR-026): the scene-analysis call behind
+both production paths rides a free-tier token budget (8k tokens/min,
+200k/day) that cycles 6/7 exhausted — 14/24 and 22/24 attempts died
+as ``vision_unavailable``. The loop now paces scene calls (minimum
+interval, seeded across processes from the persisted state), tracks
+the day's estimated vision-token spend in ``viral_loop_state.json``,
+and stops the cycle cleanly — ``vision_daily_budget`` when the day's
+budget is spent, ``vision_rate_limited`` after a run of consecutive
+rate-limit-exhausted calls — instead of burning downloads against a
+drained day. The client-side retry lives in
+:mod:`app.services.scene_analysis`.
 """
 from __future__ import annotations
 
@@ -57,7 +69,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.models import PublishJob, Source
-from app.services import viral_bgm, viral_framing, viral_remix as vr
+from app.services import scene_analysis, viral_bgm, viral_framing, viral_remix as vr
 from app.services.viral_discovery import Candidate, discover_candidates_api
 from app.services.viral_longform import append_manifest, produce_compilation
 from app.services.viral_series import SERIES_BY_LABEL, normalise_label
@@ -262,6 +274,29 @@ def run_viral_loop_cycle(db: Session, *, force: bool = False) -> dict[str, Any]:
     max_attempts = int(getattr(settings, "viral_loop_max_attempts_per_cycle", 24))
     budget = float(getattr(settings, "viral_loop_cycle_budget_seconds", 5400))
 
+    # TASK-VYR-026: the day's estimated vision-token spend lives in
+    # the loop's persisted state so it survives across the separate
+    # processes that run supervised cycles. The date is UTC — the
+    # provider's daily limits are day-scoped, and UTC is the only
+    # day boundary both sides agree on. The pacing clock is seeded
+    # from the persisted last-call epoch for the same reason.
+    vision_min_interval = float(
+        getattr(settings, "viral_loop_vision_min_interval_seconds", 65.0)
+    )
+    vision_daily_budget = int(
+        getattr(settings, "viral_loop_vision_daily_token_budget", 180000)
+    )
+    vision_stop_threshold = int(
+        getattr(settings, "viral_loop_vision_rate_limit_stop_threshold", 3)
+    )
+    today = datetime.now(timezone.utc).date().isoformat()
+    vision_budget_state = state.get("vision_budget")
+    if not isinstance(vision_budget_state, dict) or vision_budget_state.get("date") != today:
+        vision_budget_state = {"date": today, "estimated_tokens": 0, "last_call_at": None}
+    state["vision_budget"] = vision_budget_state
+    scene_analysis.seed_vision_clock(vision_budget_state.get("last_call_at"))
+    consecutive_rate_limited = 0
+
     exclude = _used_source_ids(db) | _rejected_ids(settings) | _manifest_ids(manifest_file)
     pool: dict[str, Candidate] = {}
     for candidate in trending_candidates(
@@ -299,6 +334,33 @@ def run_viral_loop_cycle(db: Session, *, force: bool = False) -> dict[str, Any]:
     def skip(reason: str) -> None:
         summary["skips"][reason] = summary["skips"].get(reason, 0) + 1
 
+    def _persist_vision_budget() -> None:
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        state_file.write_text(json.dumps(state, indent=2), encoding="utf-8")
+
+    def _account_vision(seq_before: int) -> bool:
+        """Fold one attempt's vision outcome into budget + streak.
+
+        Returns True when the attempt's vision call died rate-limited
+        after all retries. A call that succeeded — or failed for any
+        other reason — resets the consecutive-exhaustion streak.
+        Attempts that made no vision call leave both untouched.
+        """
+        nonlocal consecutive_rate_limited
+        outcome = scene_analysis.last_vision_outcome()
+        if int(outcome.get("seq") or 0) == seq_before:
+            return False
+        vision_budget_state["estimated_tokens"] = int(
+            vision_budget_state.get("estimated_tokens") or 0
+        ) + int(outcome.get("estimated_tokens") or 0)
+        if outcome.get("called_at"):
+            vision_budget_state["last_call_at"] = outcome["called_at"]
+        _persist_vision_budget()
+        if outcome.get("rate_limit_exhausted"):
+            return True
+        consecutive_rate_limited = 0
+        return False
+
     audio_dir = settings.media_dir / "viral_audio_probe"
     for candidate in ranked:
         if summary["attempts"] >= max_attempts:
@@ -323,6 +385,36 @@ def run_viral_loop_cycle(db: Session, *, force: bool = False) -> dict[str, Any]:
             summary["audition_second_passes"] += 1
         if audition["disagreement"]:
             summary["audition_disagreements"] += 1
+        # TASK-VYR-026: only the two production routes consume vision.
+        # Candidates that skip without producing (no transcript, too
+        # long for commentary) never touch the budget or the pacing
+        # clock, so the gate sits exactly here — the last point before
+        # a scene-analysis call can happen.
+        vision_seq = scene_analysis.vision_call_seq()
+        needs_vision = bool(speech.cues) if speech.has_speech else (
+            float(candidate.duration or 0) <= commentary_cap
+        )
+        if needs_vision:
+            if (
+                vision_daily_budget > 0
+                and int(vision_budget_state.get("estimated_tokens") or 0)
+                >= vision_daily_budget
+            ):
+                summary["stopped"] = "vision_daily_budget"
+                log.warning(
+                    "Viral loop cycle %d stopped: vision daily budget spent "
+                    "(%d >= %d estimated tokens)",
+                    cycle_no,
+                    int(vision_budget_state.get("estimated_tokens") or 0),
+                    vision_daily_budget,
+                )
+                break
+            waited = scene_analysis.wait_for_vision_pacing(vision_min_interval)
+            if waited > 0:
+                log.info(
+                    "Vision pacing: waited %.1fs before %s",
+                    waited, candidate.video_id,
+                )
         try:
             if speech.has_speech:
                 if not speech.cues:
@@ -343,9 +435,11 @@ def run_viral_loop_cycle(db: Session, *, force: bool = False) -> dict[str, Any]:
                 "Production failed for %s (%s: %s)",
                 candidate.video_id, type(exc).__name__, str(exc)[:200],
             )
+            _account_vision(vision_seq)
             skip("render_failed")
             continue
         if result.get("status") in {"QUEUED_FOR_PUBLISH", "RENDERED"}:
+            _account_vision(vision_seq)
             summary["produced"] += 1
             summary["by_series"][label] = summary["by_series"].get(label, 0) + 1
             if result.get("publish_job_id"):
@@ -365,7 +459,30 @@ def run_viral_loop_cycle(db: Session, *, force: bool = False) -> dict[str, Any]:
                 "status": "HELD",
             })
         else:
-            skip(str(result.get("reason") or "unknown"))
+            exhausted = _account_vision(vision_seq)
+            reason = str(result.get("reason") or "unknown")
+            if reason == "vision_unavailable" and exhausted:
+                consecutive_rate_limited += 1
+                if consecutive_rate_limited >= vision_stop_threshold:
+                    # The day is drained: stop cleanly under the
+                    # distinct reason instead of burning the remaining
+                    # attempt budget on downloads that cannot pass the
+                    # vision stage (cycle 7 lost 22 attempts this way).
+                    skip("vision_rate_limited")
+                    summary["stopped"] = "vision_rate_limited"
+                    log.warning(
+                        "Viral loop cycle %d stopped: %d consecutive "
+                        "rate-limit-exhausted vision calls",
+                        cycle_no, consecutive_rate_limited,
+                    )
+                    break
+            skip(reason)
+
+    summary["vision"] = {
+        "estimated_tokens_today": int(vision_budget_state.get("estimated_tokens") or 0),
+        "daily_budget": vision_daily_budget,
+        "rate_limit_streak": consecutive_rate_limited,
+    }
 
     if bool(getattr(settings, "viral_loop_longform_enabled", False)):
         every_n = int(getattr(settings, "viral_loop_longform_every_n_cycles", 6))
