@@ -57,7 +57,7 @@ from app.services.source_analysis import (
     download_audio_only,
     probe_media,
 )
-from app.services.scene_analysis import analyze_scene, describe_scene, scene_text
+from app.services.scene_analysis import analyze_scene, describe_scene, record_visual_defects, scene_text
 log = logging.getLogger("vyralx.viral_remix")
 
 # One voice for the whole channel: the first four uploads all use Guy, so a
@@ -1845,6 +1845,23 @@ def produce_viral_short(
             return {
                 "status": "SKIPPED", "reason": "static_scene",
                 "video_id": candidate.video_id, "event_arc": arc_info,
+            }
+        # Visible-text defects (TASK-VYR-024): same pre-render gate as
+        # the framed path — a creator watermark or an unreadable
+        # burned-in caption pile-up is baked into the pixels and no
+        # later stage can remove it, so the candidate is rejected at
+        # the only look at those pixels.
+        defects = record_visual_defects(record)
+        if defects:
+            log.info(
+                "Skipping %s: visible-text defect in source frames (%s)",
+                candidate.video_id, ", ".join(defects),
+            )
+            return {
+                "status": "SKIPPED", "reason": defects[0],
+                "video_id": candidate.video_id,
+                "visual_defects": defects,
+                "watermark_text": str(record.get("watermark_text") or ""),
             }
         scene = scene_text(record)
     else:
