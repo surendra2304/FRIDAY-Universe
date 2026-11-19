@@ -172,7 +172,8 @@ jobs:
           python -m pip install 'edge-tts>=6.1,<8.0' 'yt-dlp>=2025.1'
           python -m pytest -q VyralX/tests/test_review_required_project.py \
             VyralX/tests/test_project_pipeline_e2e.py VyralX/tests/test_project_review.py \
-            VyralX/tests/test_viral_framing.py
+            VyralX/tests/test_viral_framing.py VyralX/tests/test_vyr014_quality_gates.py \
+            VyralX/tests/test_viral_loop.py
       - name: Compile fresh research and deployed voice wiring
         run: >-
           python -m compileall -q IntelX/intelx/api/router.py
