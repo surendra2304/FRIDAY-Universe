@@ -16,6 +16,16 @@ What this adds to CORTEX:
 Deliberate limits: repairs are local and idempotent (re-probe, reset breaker, drop cached
 state, re-register a worker). Anything that cannot be proven from a post-repair probe is
 escalated, never claimed as fixed.
+
+Probes may report a tri-state ``ProbeResult`` instead of a plain bool (TASK-COR-014):
+``HEALTHY`` / ``UNHEALTHY`` behave exactly like ``True`` / ``False``, while
+``UNCONFIGURED`` means the subsystem was never configured in this deployment (for
+example no base URL in the environment). An unconfigured subsystem is not down: the
+registry records no circuit outcome for it and the supervisor treats it as a standing
+configuration notice — logged once per unconfigured streak, never repaired, never
+counted as a repair failure and never escalated. That distinction is the root-cause
+fix for the 2026-11-17→19 escalation spam, where ``probe_ai_universe`` returned
+``False`` for an unset URL and the supervisor escalated an absent provider every cycle.
 """
 
 from __future__ import annotations
@@ -46,6 +56,33 @@ class CircuitState(str, Enum):
     CLOSED = "CLOSED"
     OPEN = "OPEN"
     HALF_OPEN = "HALF_OPEN"
+
+
+class ProbeResult(str, Enum):
+    """Tri-state outcome of a health probe (TASK-COR-014).
+
+    ``HEALTHY`` and ``UNHEALTHY`` are the classic bool outcomes. ``UNCONFIGURED``
+    is distinct from ``UNHEALTHY``: the subsystem has no configuration to probe
+    (e.g. its base-URL environment variables are unset), so there is nothing
+    that could be repaired and nothing to escalate — only a configuration
+    notice to record. Probes that return a plain bool keep working: ``True``
+    is read as ``HEALTHY`` and ``False`` as ``UNHEALTHY``.
+    """
+
+    HEALTHY = "HEALTHY"
+    UNHEALTHY = "UNHEALTHY"
+    UNCONFIGURED = "UNCONFIGURED"
+
+    @classmethod
+    def coerce(cls, value: Any) -> "ProbeResult":
+        """Normalise a probe return value (``ProbeResult`` or bool) to a result."""
+        if isinstance(value, cls):
+            return value
+        return cls.HEALTHY if bool(value) else cls.UNHEALTHY
+
+    @property
+    def healthy(self) -> bool:
+        return self is ProbeResult.HEALTHY
 
 
 class SubsystemCircuit:
@@ -185,7 +222,7 @@ class HealthRegistry:
 
     def __init__(self) -> None:
         self._circuits: dict[str, SubsystemCircuit] = {}
-        self._probes: dict[str, Callable[[], Awaitable[bool]]] = {}
+        self._probes: dict[str, Callable[[], Awaitable[Any]]] = {}
         self._last_probe: dict[str, dict[str, Any]] = {}
 
     def circuit(self, name: str, **kwargs: Any) -> SubsystemCircuit:
@@ -193,29 +230,62 @@ class HealthRegistry:
             self._circuits[name] = SubsystemCircuit(name, **kwargs)
         return self._circuits[name]
 
-    def register_probe(self, name: str, probe: Callable[[], Awaitable[bool]]) -> None:
-        """A probe returns True when the subsystem is healthy. Used by the supervisor."""
+    def register_probe(self, name: str, probe: Callable[[], Awaitable[Any]]) -> None:
+        """Register a probe for the supervisor.
+
+        A probe returns a ``ProbeResult`` (or, for legacy probes, a bool:
+        True = healthy). ``ProbeResult.UNCONFIGURED`` means the subsystem is
+        not configured in this deployment and must not be scored as a failure.
+        """
         self._probes[name] = probe
         self.circuit(name)
 
-    async def run_probe(self, name: str) -> bool:
+    async def run_probe_result(self, name: str) -> ProbeResult:
+        """Run a probe and return its tri-state result.
+
+        Circuit outcomes are recorded only for genuine observations:
+        ``HEALTHY`` records a success and ``UNHEALTHY`` a failure, while
+        ``UNCONFIGURED`` records *no* outcome — an absent configuration is
+        not evidence about the subsystem's health, and counting it as a
+        failure is what opened circuits and burned repair budgets for a
+        provider that was never configured (TASK-COR-014).
+        """
         probe = self._probes.get(name)
         circuit = self.circuit(name)
         if probe is None:
             self._last_probe[name] = {"checked_at": _utcnow().isoformat(), "healthy": None, "reason": "no probe"}
-            return True
+            return ProbeResult.HEALTHY
         try:
-            healthy = bool(await probe())
+            result = ProbeResult.coerce(await probe())
         except Exception as exc:  # a probe that raises is a failed probe
-            healthy = False
-            self._last_probe[name] = {"checked_at": _utcnow().isoformat(), "healthy": False, "error": str(exc)[:200]}
+            result = ProbeResult.UNHEALTHY
+            self._last_probe[name] = {
+                "checked_at": _utcnow().isoformat(),
+                "healthy": False,
+                "result": result.value,
+                "error": str(exc)[:200],
+            }
         else:
-            self._last_probe[name] = {"checked_at": _utcnow().isoformat(), "healthy": healthy}
-        if healthy:
+            self._last_probe[name] = {
+                "checked_at": _utcnow().isoformat(),
+                "healthy": result.healthy if result is not ProbeResult.UNCONFIGURED else None,
+                "result": result.value,
+            }
+        if result is ProbeResult.HEALTHY:
             await circuit.record_success()
-        else:
+        elif result is ProbeResult.UNHEALTHY:
             await circuit.record_failure("health probe failed")
-        return healthy
+        return result
+
+    async def run_probe(self, name: str) -> bool:
+        """Bool view of ``run_probe_result``: True only when HEALTHY.
+
+        Kept for existing callers. Note an UNCONFIGURED subsystem reads as
+        False here but records no circuit failure — callers that need to
+        distinguish "down" from "not configured" should use
+        ``run_probe_result`` (the supervisor does).
+        """
+        return (await self.run_probe_result(name)) is ProbeResult.HEALTHY
 
     def status(self) -> list[SubsystemStatus]:
         return [
@@ -261,6 +331,7 @@ class HealingRun:
     started_at: datetime
     checked: list[str] = field(default_factory=list)
     unhealthy: list[str] = field(default_factory=list)
+    unconfigured: list[str] = field(default_factory=list)
     repairs: list[RepairOutcome] = field(default_factory=list)
     escalations_delivered: list[dict[str, Any]] = field(default_factory=list)
     duration_ms: float = 0.0
@@ -278,6 +349,7 @@ class HealingRun:
             "started_at": self.started_at.isoformat(),
             "checked": list(self.checked),
             "unhealthy": list(self.unhealthy),
+            "unconfigured": list(self.unconfigured),
             "repaired": self.repaired,
             "escalated": self.escalated,
             "repairs": [r.as_dict() for r in self.repairs],
@@ -303,6 +375,12 @@ class SelfHealingSupervisor:
         self._attempts: dict[str, int] = {}
         self._repair_fns: dict[str, Callable[[], Awaitable[bool]]] = {}
         self.escalations: list[dict[str, Any]] = []
+        # Subsystems already given a configuration notice during their current
+        # unconfigured streak (TASK-COR-014): the notice is logged once per
+        # streak, and the entry is cleared as soon as a probe observes the
+        # subsystem configured again (healthy or unhealthy), so a later
+        # unconfigured period is noticed afresh.
+        self._unconfigured_noticed: set[str] = set()
         self.notifier = notifier or EscalationNotifier()
 
     def register_repair(self, subsystem: str, repair: Callable[[], Awaitable[bool]]) -> None:
@@ -333,7 +411,25 @@ class SelfHealingSupervisor:
             # breaker that had never opened was never probed either — no observation, no
             # samples, no way to ever open. Detection has to come from probing, not from
             # waiting for a failure to announce itself.
-            healthy = await self.registry.run_probe(status.name)
+            probe_result = await self.registry.run_probe_result(status.name)
+            if probe_result is ProbeResult.UNCONFIGURED:
+                # Not configured in this deployment: a standing configuration
+                # notice, not a failure (TASK-COR-014). No circuit outcome was
+                # recorded, and the subsystem must not enter the repair /
+                # escalation path or consume repair attempts — logged once
+                # per unconfigured streak and listed on the run as
+                # ``unconfigured``, never as ``unhealthy``.
+                run.unconfigured.append(status.name)
+                if status.name not in self._unconfigured_noticed:
+                    self._unconfigured_noticed.add(status.name)
+                    logger.info(
+                        "self-healing: subsystem %s is not configured; "
+                        "treating as a standing configuration notice (no repair, no escalation)",
+                        status.name,
+                    )
+                continue
+            self._unconfigured_noticed.discard(status.name)
+            healthy = probe_result is ProbeResult.HEALTHY
             if healthy and circuit.state is CircuitState.CLOSED:
                 continue
             run.unhealthy.append(status.name)
@@ -386,7 +482,10 @@ class SelfHealingSupervisor:
                 continue
 
             # A repair is only a repair if the subsystem is verifiably healthy afterwards.
-            verified = repaired and await self.registry.run_probe(status.name)
+            # (run_probe_result, not the bool view: a repair that leaves the subsystem
+            # UNCONFIGURED has not restored health either, and the verifying probe must
+            # not record a second failure outcome for the same observation.)
+            verified = repaired and (await self.registry.run_probe_result(status.name)) is ProbeResult.HEALTHY
             if verified:
                 circuit = self.registry.circuit(status.name)
                 await circuit.reset("self-healing repair verified")
@@ -488,6 +587,7 @@ class SelfHealingLoop:
             "last_error": self.last_error,
             "last_checked_at": self.last_run.started_at.isoformat() if self.last_run else None,
             "last_unhealthy": list(self.last_run.unhealthy) if self.last_run else [],
+            "last_unconfigured": list(self.last_run.unconfigured) if self.last_run else [],
             "last_repairs": [
                 r.as_dict() if hasattr(r, "as_dict") else r for r in (self.last_run.repairs if self.last_run else [])
             ],

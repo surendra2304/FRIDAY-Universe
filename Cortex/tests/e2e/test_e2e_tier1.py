@@ -72,7 +72,11 @@ async def test_f1_self_healing_probe_async_dns(monkeypatch):
         mock_get_loop.return_value = mock_loop
 
         result = await probe_ai_universe()
-        assert result is True
+        # TASK-COR-014: the probe is tri-state now; a configured host that
+        # resolves is HEALTHY (previously the bool True).
+        from cortex_core.resilience import ProbeResult
+
+        assert result is ProbeResult.HEALTHY
         mock_loop.getaddrinfo.assert_awaited_once()
 
 
