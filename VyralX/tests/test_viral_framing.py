@@ -1190,3 +1190,258 @@ def test_framed_path_skips_a_captioned_source_before_editorial(monkeypatch, tmp_
     assert result["reason"] == "source_captioned"
     assert result["visual_defects"] == ["source_captioned"]
     assert editorial_calls == []  # rejected before any editorial/render work
+
+
+# --- TASK-VYR-026: vision rate-limit hardening ------------------------ #
+# Cycles 6/7 lost 14/24 and 22/24 attempts to vision_unavailable: the
+# single Groq scene call hit HTTP 429 (free-tier token limits), the
+# code made one attempt, discarded the 429 body/headers, and returned
+# None. The pins below cover the client half of the fix: failures are
+# logged WITH the rate-limit headers and body (fix 0), only 429 is
+# retried — Retry-After honoured, 30/60/120s fallback ladder, bounded
+# total wait (fix 1) — the pacing clock keeps calls apart (fix 2's
+# client half), and the token estimator the loop budgets with is
+# deterministic. All clocks/sleeps are faked: no test here sleeps.
+import httpx
+from types import SimpleNamespace
+
+from app.services import scene_analysis as _sa026
+
+
+class _FakeClock:
+    """Deterministic stand-in for the time module in scene_analysis."""
+
+    def __init__(self):
+        self.now = 1000.0
+        self.epoch = 1_763_000_000.0
+        self.sleeps: list[float] = []
+
+    def monotonic(self):
+        return self.now
+
+    def time(self):
+        return self.epoch
+
+    def sleep(self, seconds):
+        self.sleeps.append(seconds)
+        self.now += seconds
+        self.epoch += seconds
+
+
+class _VisionResponse:
+    def __init__(self, status_code=200, payload=None, headers=None, text=""):
+        self.status_code = status_code
+        self._payload = payload if payload is not None else {}
+        self.headers = headers or {}
+        self.text = text
+
+    def json(self):
+        return self._payload
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise httpx.HTTPStatusError(
+                f"Client error '{self.status_code}'", request=None, response=self
+            )
+
+
+_RECORD_JSON = json.dumps({
+    "beats": [{
+        "setting": "roadside", "time_of_day": "day", "subjects": [],
+        "objects": ["motorcycle"],
+        "summary": "A rider sits beside a stopped motorcycle.",
+    }],
+    "event_arc": "an officer speaks with the rider",
+    "static": False,
+})
+
+
+def _ok_payload():
+    return {"choices": [{"message": {"content": _RECORD_JSON}}]}
+
+
+@pytest.fixture()
+def vision_env(tmp_path, monkeypatch):
+    clock = _FakeClock()
+    monkeypatch.setattr(_sa026, "time", clock, raising=False)
+    monkeypatch.setattr(_sa026, "_VISION_OUTCOME", {
+        "seq": 0, "status": None, "rate_limit_exhausted": False,
+        "attempts": 0, "estimated_tokens": 0, "called_at": None,
+    }, raising=False)
+    monkeypatch.setattr(_sa026, "_LAST_VISION_REQUEST_MONO", None, raising=False)
+    settings = SimpleNamespace(
+        vision_api_key="test-key",
+        vision_base_url="https://api.groq.com/openai/v1",
+        vision_model="qwen/qwen3.8-27b",
+        vision_timeout_seconds=90,
+        vision_max_retries=3,
+        vision_retry_wait_cap_seconds=240,
+        ffmpeg_bin="ffmpeg",
+    )
+    monkeypatch.setattr(_sa026, "get_settings", lambda: settings)
+
+    def fake_extract(source, seconds, destination):
+        destination.write_bytes(b"\xff\xd8\xff" + b"0" * 2048)
+        return True
+
+    monkeypatch.setattr(_sa026, "_extract_frame", fake_extract)
+    source = tmp_path / "clip.mp4"
+    source.write_bytes(b"fake video bytes")
+    return SimpleNamespace(clock=clock, settings=settings, source=source)
+
+
+def _post_script(monkeypatch, responses):
+    calls = []
+
+    def fake_post(url, **kwargs):
+        calls.append(url)
+        index = min(len(calls) - 1, len(responses) - 1)
+        return responses[index]
+
+    monkeypatch.setattr(_sa026.httpx, "post", fake_post)
+    return calls
+
+
+def test_vision_retry_recovers_after_429(vision_env, monkeypatch):
+    calls = _post_script(monkeypatch, [
+        _VisionResponse(429, headers={"retry-after": "30"}),
+        _VisionResponse(200, payload=_ok_payload()),
+    ])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is not None
+    assert record["beats"][0]["summary"].startswith("A rider sits")
+    assert len(calls) == 2
+    outcome = _sa026.last_vision_outcome()
+    assert outcome["status"] == 200
+    assert outcome["attempts"] == 2
+    assert outcome["rate_limit_exhausted"] is False
+
+
+def test_vision_retry_honours_retry_after_header(vision_env, monkeypatch):
+    _post_script(monkeypatch, [
+        _VisionResponse(429, headers={"retry-after": "45"}),
+        _VisionResponse(200, payload=_ok_payload()),
+    ])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is not None
+    assert vision_env.clock.sleeps == [45.0]
+
+
+def test_vision_retry_fallback_ladder_without_retry_after(vision_env, monkeypatch):
+    _post_script(monkeypatch, [
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(200, payload=_ok_payload()),
+    ])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is not None
+    assert vision_env.clock.sleeps == [30.0, 60.0]
+
+
+def test_vision_retries_exhausted_returns_none_and_marks_outcome(vision_env, monkeypatch):
+    calls = _post_script(monkeypatch, [_VisionResponse(429)])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is None
+    assert len(calls) == 4  # first attempt + 3 retries, then it stops
+    assert vision_env.clock.sleeps == [30.0, 60.0, 120.0]
+    outcome = _sa026.last_vision_outcome()
+    assert outcome["status"] == 429
+    assert outcome["attempts"] == 4
+    assert outcome["rate_limit_exhausted"] is True
+
+
+def test_vision_non_429_error_does_not_retry(vision_env, monkeypatch):
+    calls = _post_script(monkeypatch, [_VisionResponse(500, text="server error")])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is None
+    assert len(calls) == 1
+    assert vision_env.clock.sleeps == []
+    outcome = _sa026.last_vision_outcome()
+    assert outcome["status"] == 500
+    assert outcome["rate_limit_exhausted"] is False
+
+
+def test_vision_wait_cap_stops_retrying(vision_env, monkeypatch):
+    # Retry-After of 300s exceeds the 240s per-call cap: no sleep, no
+    # retry — the call gives up exhausted instead of stalling.
+    calls = _post_script(monkeypatch, [
+        _VisionResponse(429, headers={"retry-after": "300"}),
+    ])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is None
+    assert len(calls) == 1
+    assert vision_env.clock.sleeps == []
+    assert _sa026.last_vision_outcome()["rate_limit_exhausted"] is True
+
+
+def test_vision_failure_logs_rate_limit_headers_and_body(vision_env, monkeypatch, caplog):
+    vision_env.settings.vision_max_retries = 0
+    _post_script(monkeypatch, [_VisionResponse(
+        429,
+        headers={
+            "x-ratelimit-limit-tokens": "8000",
+            "x-ratelimit-remaining-tokens": "0",
+            "x-ratelimit-reset-tokens": "12s",
+            "retry-after": "12",
+        },
+        text='{"error":{"message":"Rate limit reached"}}',
+    )])
+    with caplog.at_level("WARNING", logger="vyralx.scene_analysis"):
+        record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is None
+    assert "HTTP 429" in caplog.text
+    assert "x-ratelimit-limit-tokens" in caplog.text
+    assert "'8000'" in caplog.text
+    assert "Rate limit reached" in caplog.text
+
+
+def test_describe_scene_also_retries_429(vision_env, monkeypatch):
+    payload = {"choices": [{"message": {
+        "content": "1) a rider waits\n2) an officer arrives\n3) they talk",
+    }}]}
+    _post_script(monkeypatch, [
+        _VisionResponse(429, headers={"retry-after": "10"}),
+        _VisionResponse(200, payload=payload),
+    ])
+    text = _sa026.describe_scene(vision_env.source, 30.0)
+    assert "a rider waits" in text
+    assert vision_env.clock.sleeps == [10.0]
+
+
+def test_vision_pacing_waits_for_min_interval(vision_env, monkeypatch):
+    _post_script(monkeypatch, [_VisionResponse(200, payload=_ok_payload())])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is not None
+    # The call landed at fake-monotonic 1000; 30s later a 65s interval
+    # still owes 35s.
+    vision_env.clock.now += 30.0
+    waited = _sa026.wait_for_vision_pacing(65.0)
+    assert waited == 35.0
+    assert vision_env.clock.sleeps[-1] == 35.0
+    # Long after the interval, no wait.
+    vision_env.clock.now += 600.0
+    assert _sa026.wait_for_vision_pacing(65.0) == 0.0
+
+
+def test_vision_pacing_seed_from_persisted_epoch(vision_env):
+    # A previous process's call 20s ago (by the wall clock) still
+    # paces this process: seeding converts the epoch onto the
+    # monotonic clock.
+    _sa026.seed_vision_clock(vision_env.clock.epoch - 20.0)
+    waited = _sa026.wait_for_vision_pacing(65.0)
+    assert waited == 45.0
+
+
+def test_estimate_vision_tokens_is_deterministic():
+    body = {
+        "model": "qwen/qwen3.8-27b",
+        "max_tokens": 1100,
+        "messages": [{"role": "user", "content": [
+            {"type": "text", "text": "x" * 300},
+            {"type": "image_url", "image_url": {"url": "data:..."}},
+            {"type": "image_url", "image_url": {"url": "data:..."}},
+            {"type": "image_url", "image_url": {"url": "data:..."}},
+        ]}],
+    }
+    # 300 chars / 3 = 100 text + 3 x 1000 images + 1100 max_tokens.
+    assert _sa026.estimate_vision_tokens(body) == 4200

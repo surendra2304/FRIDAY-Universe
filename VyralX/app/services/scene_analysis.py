@@ -22,8 +22,12 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import math
 import subprocess
 import tempfile
+import time
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Any
 
@@ -35,7 +39,11 @@ log = logging.getLogger("vyralx.scene_analysis")
 
 # Positions through the clip: the setup, the middle beat and the payoff.
 _FRAME_POSITIONS = (0.15, 0.5, 0.85)
-_MAX_EDGE = 640
+# TASK-VYR-026 (fix 3): frames were 640px on the long edge; 512px keeps
+# the record's subjects/objects legible while cutting the per-call
+# image tokens an estimated 25-40% — the vision model's free-tier
+# token limits (8k/min, 200k/day) are what cycles 6/7 starved on.
+_MAX_EDGE = 512
 
 _PROMPT = (
     "These frames are sampled from one short vertical comedy clip, in order: "
@@ -75,6 +83,274 @@ def _data_url(path: Path) -> str:
     return "data:image/jpeg;base64," + base64.b64encode(path.read_bytes()).decode("ascii")
 
 
+# --------------------------------------------------------------------------- #
+# Vision transport: rate-limit instrumentation, bounded 429 retry, pacing
+# (TASK-VYR-026).
+#
+# Diagnosis (2026-11-19, ~/workspace/vyralx-vision-429/DIAGNOSIS.md):
+# supervised cycles 6 and 7 lost 14/24 and 22/24 attempts to
+# vision_unavailable. Every failure was this module's single Groq call
+# returning HTTP 429 — the free plan for the vision model allows
+# 8,000 tokens/min and 200,000 tokens/day per organization, and one
+# scene call costs an estimated 3,000-5,500 tokens. The old code made
+# exactly one attempt, discarded the 429 body and rate-limit headers
+# (so nobody could tell WHICH limit bound), and converted any failure
+# to None. The helpers below are the fixes 0-2 client half:
+#
+# * every non-200 response is logged with its status, truncated body
+#   and the x-ratelimit-* / retry-after headers before it fails;
+# * HTTP 429 — and only 429 — is retried, honouring Retry-After with
+#   a 30/60/120s fallback ladder and a bounded total wait;
+# * each logical call records an outcome (see last_vision_outcome)
+#   so the viral loop can pace calls, budget the day's estimated
+#   token spend, and stop cleanly when the day is drained.
+# --------------------------------------------------------------------------- #
+
+# Fallback waits before retries 1/2/3 when the provider sends no
+# Retry-After. Their sum (210s) stays under the default total cap.
+_RETRY_FALLBACK_WAITS = (30.0, 60.0, 120.0)
+
+# The headers that name WHICH limit bound; logged on every failure.
+_RATE_LIMIT_HEADERS = (
+    "x-ratelimit-limit-tokens",
+    "x-ratelimit-remaining-tokens",
+    "x-ratelimit-reset-tokens",
+    "x-ratelimit-limit-requests",
+    "x-ratelimit-remaining-requests",
+    "retry-after",
+)
+
+# Token estimator constants. The provider charges admission as
+# prompt + max_tokens and accounts images per tile; exact accounting
+# is the provider's, so the budget only needs a stable, slightly
+# conservative estimate: JSON-dense prompts tokenise at roughly
+# 3 chars/token (prose is ~4), and one 512px JPEG frame lands in the
+# same few-hundred-to-~1k range across providers — 1,000 flat keeps
+# the estimate at the top of the diagnosed 3,000-5,500/call range.
+_TEXT_CHARS_PER_TOKEN = 3
+_IMAGE_TOKEN_ESTIMATE = 1000
+
+# Outcome of the most recent logical vision call, and the monotonic
+# timestamp of the most recent HTTP request (pacing). Module-level
+# because the call sites are plain functions; the viral loop reads
+# the outcome after each production attempt.
+_VISION_OUTCOME: dict[str, Any] = {
+    "seq": 0,
+    "status": None,
+    "rate_limit_exhausted": False,
+    "attempts": 0,
+    "estimated_tokens": 0,
+    "called_at": None,
+}
+_LAST_VISION_REQUEST_MONO: float | None = None
+
+
+def estimate_vision_tokens(body: dict[str, Any]) -> int:
+    """Estimated provider tokens for one vision request.
+
+    estimate = text chars / 3 + 1,000 per image + max_tokens.
+    Deterministic and dependency-free by design — it feeds the
+    loop's daily budget bookkeeping, never a billing decision.
+    """
+    text_chars = 0
+    images = 0
+    for message in body.get("messages") or []:
+        if not isinstance(message, dict):
+            continue
+        content = message.get("content")
+        if isinstance(content, str):
+            text_chars += len(content)
+        elif isinstance(content, list):
+            for part in content:
+                if not isinstance(part, dict):
+                    continue
+                if part.get("type") == "text":
+                    text_chars += len(str(part.get("text") or ""))
+                elif part.get("type") == "image_url":
+                    images += 1
+    return (
+        math.ceil(text_chars / _TEXT_CHARS_PER_TOKEN)
+        + images * _IMAGE_TOKEN_ESTIMATE
+        + int(body.get("max_tokens") or 0)
+    )
+
+
+def _retry_after_seconds(response: httpx.Response) -> float | None:
+    """Parse a Retry-After header (seconds or HTTP-date), or None."""
+    raw = str(response.headers.get("retry-after") or "").strip()
+    if not raw:
+        return None
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        pass
+    try:
+        moment = parsedate_to_datetime(raw)
+    except (TypeError, ValueError):
+        return None
+    if moment is None:
+        return None
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    return max(0.0, (moment - datetime.now(timezone.utc)).total_seconds())
+
+
+def _log_vision_failure(context: str, response: httpx.Response) -> None:
+    """Fix 0: make every vision failure say WHICH limit bound."""
+    headers = {
+        name: response.headers.get(name)
+        for name in _RATE_LIMIT_HEADERS
+        if response.headers.get(name) is not None
+    }
+    try:
+        body_text = response.text[:300]
+    except Exception:  # noqa: BLE001 - logging must never raise
+        body_text = "<unreadable>"
+    log.warning(
+        "Vision request failed (%s): HTTP %s rate-limit headers=%s body=%s",
+        context, response.status_code, headers, body_text,
+    )
+
+
+def _record_vision_outcome(
+    *, status: int | None, attempts: int, estimated_tokens: int,
+    called_at: float | None, rate_limit_exhausted: bool,
+) -> None:
+    global _VISION_OUTCOME
+    _VISION_OUTCOME = {
+        "seq": int(_VISION_OUTCOME.get("seq") or 0) + 1,
+        "status": status,
+        "rate_limit_exhausted": rate_limit_exhausted,
+        "attempts": attempts,
+        "estimated_tokens": estimated_tokens,
+        "called_at": called_at,
+    }
+
+
+def vision_call_seq() -> int:
+    """Sequence number of the most recent logical vision call."""
+    return int(_VISION_OUTCOME.get("seq") or 0)
+
+
+def last_vision_outcome() -> dict[str, Any]:
+    """Outcome of the most recent logical vision call (a copy).
+
+    ``rate_limit_exhausted`` is True only when the call's final
+    response was HTTP 429 after the bounded retries — the signal the
+    viral loop's clean-stop counts. ``estimated_tokens`` charges the
+    per-request estimate once per HTTP attempt, retries included.
+    """
+    return dict(_VISION_OUTCOME)
+
+
+def seed_vision_clock(epoch: float | None) -> None:
+    """Seed the pacing clock from a persisted last-call epoch.
+
+    Supervised cycles run as separate processes; the loop persists
+    the last call's epoch and seeds it back here so the minimum
+    interval is honoured across process boundaries too.
+    """
+    global _LAST_VISION_REQUEST_MONO
+    if not epoch:
+        return
+    age = max(0.0, time.time() - float(epoch))
+    _LAST_VISION_REQUEST_MONO = time.monotonic() - age
+
+
+def wait_for_vision_pacing(min_interval_seconds: float) -> float:
+    """Sleep until the last vision request is >= the interval old.
+
+    Returns the seconds waited (0.0 when no wait was needed — first
+    call ever, or the interval already elapsed).
+    """
+    if _LAST_VISION_REQUEST_MONO is None or min_interval_seconds <= 0:
+        return 0.0
+    remaining = (_LAST_VISION_REQUEST_MONO + float(min_interval_seconds)) - time.monotonic()
+    if remaining <= 0:
+        return 0.0
+    time.sleep(remaining)
+    return remaining
+
+
+def _vision_request(body: dict[str, Any], *, context: str) -> httpx.Response:
+    """POST one vision chat-completion with bounded 429 retry.
+
+    Returns the final response — callers keep their existing
+    raise_for_status flow, so non-429 failures behave exactly as
+    before. Transport errors propagate (and are recorded). Only
+    HTTP 429 is retried: up to ``vision_max_retries`` retries,
+    waiting Retry-After when present (the fallback ladder
+    otherwise), with the total wait capped at
+    ``vision_retry_wait_cap_seconds`` per logical call.
+    """
+    global _LAST_VISION_REQUEST_MONO
+    settings = get_settings()
+    key = str(getattr(settings, "vision_api_key", "") or "").strip()
+    url = settings.vision_base_url.rstrip("/") + "/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+        "User-Agent": "VyralX/1.0",
+    }
+    timeout = float(getattr(settings, "vision_timeout_seconds", 90))
+    max_retries = max(0, int(getattr(settings, "vision_max_retries", 3)))
+    wait_cap = max(0.0, float(getattr(settings, "vision_retry_wait_cap_seconds", 240)))
+    estimated = estimate_vision_tokens(body)
+    attempts = 0
+    waited = 0.0
+    while True:
+        attempts += 1
+        _LAST_VISION_REQUEST_MONO = time.monotonic()
+        called_at = time.time()
+        try:
+            response = httpx.post(url, headers=headers, json=body, timeout=timeout)
+        except Exception:
+            _record_vision_outcome(
+                status=None, attempts=attempts,
+                estimated_tokens=estimated * attempts,
+                called_at=called_at, rate_limit_exhausted=False,
+            )
+            raise
+        if response.status_code == 200:
+            _record_vision_outcome(
+                status=200, attempts=attempts,
+                estimated_tokens=estimated * attempts,
+                called_at=called_at, rate_limit_exhausted=False,
+            )
+            return response
+        _log_vision_failure(context, response)
+        exhausted = response.status_code == 429 and attempts > max_retries
+        if response.status_code != 429 or exhausted:
+            _record_vision_outcome(
+                status=response.status_code, attempts=attempts,
+                estimated_tokens=estimated * attempts,
+                called_at=called_at,
+                rate_limit_exhausted=response.status_code == 429,
+            )
+            return response
+        wait = _retry_after_seconds(response)
+        if wait is None:
+            wait = _RETRY_FALLBACK_WAITS[min(attempts - 1, len(_RETRY_FALLBACK_WAITS) - 1)]
+        if waited + wait > wait_cap:
+            log.warning(
+                "Vision %s: 429 retry wait %.0fs would exceed the %.0fs "
+                "per-call cap (already waited %.0fs); giving up",
+                context, wait, wait_cap, waited,
+            )
+            _record_vision_outcome(
+                status=429, attempts=attempts,
+                estimated_tokens=estimated * attempts,
+                called_at=called_at, rate_limit_exhausted=True,
+            )
+            return response
+        log.info(
+            "Vision %s rate-limited (429); retry %d/%d in %.0fs",
+            context, attempts, max_retries, wait,
+        )
+        time.sleep(wait)
+        waited += wait
+
+
 def describe_scene(source_path: Path | str, duration: float) -> str:
     """Return a grounded description of the clip, or "" when vision is unavailable."""
     settings = get_settings()
@@ -109,16 +385,7 @@ def describe_scene(source_path: Path | str, duration: float) -> str:
             "max_tokens": 300,
         }
         try:
-            response = httpx.post(
-                settings.vision_base_url.rstrip("/") + "/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {key}",
-                    "Content-Type": "application/json",
-                    "User-Agent": "VyralX/1.0",
-                },
-                json=body,
-                timeout=float(getattr(settings, "vision_timeout_seconds", 90)),
-            )
+            response = _vision_request(body, context="describe_scene")
             response.raise_for_status()
             payload = response.json()
             text = str(payload["choices"][0]["message"]["content"] or "").strip()
@@ -396,16 +663,7 @@ def analyze_scene(source_path: Path | str, duration: float) -> dict[str, Any] | 
             "max_tokens": 1100,
         }
         try:
-            response = httpx.post(
-                settings.vision_base_url.rstrip("/") + "/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {key}",
-                    "Content-Type": "application/json",
-                    "User-Agent": "VyralX/1.0",
-                },
-                json=body,
-                timeout=float(getattr(settings, "vision_timeout_seconds", 90)),
-            )
+            response = _vision_request(body, context="analyze_scene")
             response.raise_for_status()
             payload = response.json()
             text = str(payload["choices"][0]["message"]["content"] or "").strip()

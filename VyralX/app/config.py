@@ -138,6 +138,18 @@ class Settings(BaseSettings):
     viral_loop_longform_enabled: bool = False
     viral_loop_longform_every_n_cycles: int = Field(default=6, ge=1, le=100)
     viral_loop_longform_min_clips: int = Field(default=3, ge=2, le=20)
+    # TASK-VYR-026: vision pacing + daily budget for the loop. Scene
+    # calls are kept at least this many seconds apart inside a cycle
+    # (the provider's per-minute token limit is clipped whenever two
+    # calls land inside one minute window), the cycle stops cleanly
+    # once the day's estimated vision-token spend reaches the budget
+    # (0 = no budget), and it also stops after this many CONSECUTIVE
+    # rate-limit-exhausted vision calls (summary reason
+    # vision_rate_limited) instead of burning the remaining attempt
+    # budget against a drained day.
+    viral_loop_vision_min_interval_seconds: float = Field(default=65.0, ge=0.0, le=3600.0)
+    viral_loop_vision_daily_token_budget: int = Field(default=180000, ge=0, le=10000000)
+    viral_loop_vision_rate_limit_stop_threshold: int = Field(default=3, ge=1, le=24)
     # --- IG2 B7-C1: optional MoneyPrinterTurbo producer lane --------------
     # The autopilot's producer lane. "viral_remix" (default) is the native
     # lane; "mpt" routes produce_one to app.services.mpt_lane, which renders
@@ -168,6 +180,13 @@ class Settings(BaseSettings):
     vision_base_url: str = "https://api.groq.com/openai/v1"
     vision_model: str = "qwen/qwen3.8-27b"
     vision_timeout_seconds: int = 90
+    # TASK-VYR-026: bounded retry for the vision stage. Only HTTP 429
+    # is retried (up to this many retries after the first attempt),
+    # waiting the provider's Retry-After when it sends one and a
+    # 30/60/120s ladder otherwise; the total wait per call is capped
+    # so a drained day cannot stall a cycle indefinitely.
+    vision_max_retries: int = Field(default=3, ge=0, le=10)
+    vision_retry_wait_cap_seconds: int = Field(default=240, ge=0, le=3600)
     tts_provider: str = "espeak"
     espeak_bin: str = "espeak-ng"
     espeak_voice: str = "en-us"
