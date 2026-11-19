@@ -12,6 +12,14 @@ Covers the fail-closed standard with a mocked broker transport:
   * demo-only guards (live host / TRADING_MODE=LIVE refused);
   * wire codec field numbers pinned against Spotware's published protos.
 
+TASK-STR-PEP-002 (PR #1097 supervisor conditions) adds:
+  * a MARKET order whose stream yields only non-terminal events fails
+    closed (raise + venue halt), never an unverified PENDING;
+  * the endpoint pin is a strict allowlist (demo.ctraderapi.com:5035
+    only — any other host or port raises at construction);
+  * the shakedown --dry-run verdict is labelled DRY-RUN ONLY and never
+    prints the gate-clearing OVERALL: PASS banner.
+
 Run: pytest Stratex/tests/test_pep001_pepperstone_ctrader_adapter.py
 """
 import os
@@ -63,6 +71,8 @@ class FakeTransport:
 
     def __init__(self, sltp_mode="attach"):
         self.sltp_mode = sltp_mode
+        self.order_mode = "normal"   # or "accepted_only" (PEP-002 edge)
+        self.fast_empty_stream = False
         self.connected = False
         self.refuse_connect = False
         self.fail_trader = False
@@ -236,8 +246,9 @@ class FakeTransport:
         return msg_id, q
 
     def next_in_stream(self, stream, timeout=15.0):
+        wait = 0.05 if self.fast_empty_stream else max(timeout, 0.05)
         try:
-            return stream.get(timeout=max(timeout, 0.05))
+            return stream.get(timeout=wait)
         except queue.Empty:
             raise TimeoutError("stream timed out (fake)")
 
@@ -252,6 +263,18 @@ class FakeTransport:
         volume = int(fields["volume"])
         ref = EURUSD_ASK if side == oa.SIDE_BUY else EURUSD_BID
         if int(fields["order_type"]) == oa.OT_MARKET:
+            if self.order_mode == "accepted_only":
+                # TASK-STR-PEP-002 edge: the broker acknowledges the
+                # market order (non-terminal ACCEPTED) and then never
+                # sends a terminal event — the stream goes silent and
+                # no position is ever created.
+                return [(oa.PT_EXECUTION_EVENT, {
+                    "execution_type": oa.EXEC_ORDER_ACCEPTED,
+                    "order": {
+                        "order_id": order_id, "order_type": oa.OT_MARKET,
+                        "order_status": 1, "executed_volume": 0,
+                    },
+                })]
             position_id = self._next_position_id
             self._next_position_id += 1
             position = {
@@ -505,6 +528,31 @@ def test_readback_missing_and_amend_fails_closes_and_halts():
     assert len(fake.requests) + len(fake.streams_opened) == traffic_before
 
 
+def test_market_order_non_terminal_events_only_halts_and_raises():
+    # TASK-STR-PEP-002 (PR #1097 review condition): a MARKET order whose
+    # stream yields only a non-terminal ACCEPTED and then silence must
+    # fail closed — raise + venue halt — never an unverified PENDING
+    # with no protection check (the pre-fix _send_order returned the
+    # last event, and place_order reported PENDING).
+    adapter, fake = make_adapter()
+    fake.order_mode = "accepted_only"
+    fake.fast_empty_stream = True
+    with pytest.raises(RuntimeError, match="UNCONFIRMED"):
+        adapter.place_order(
+            "EURUSD", "BUY", "MARKET", 0.01,
+            stop_loss=1.07520, take_profit=1.09020,
+        )
+    assert adapter.halted is True
+    # Halted venue: further orders raise with ZERO additional traffic.
+    traffic_before = len(fake.requests) + len(fake.streams_opened)
+    with pytest.raises(VenueHaltedError):
+        adapter.place_order(
+            "EURUSD", "BUY", "MARKET", 0.01,
+            stop_loss=1.07520, take_profit=1.09020,
+        )
+    assert len(fake.requests) + len(fake.streams_opened) == traffic_before
+
+
 def test_limit_order_absolute_sltp_verified_on_order():
     adapter, fake = make_adapter()
     result = adapter.place_order(
@@ -638,6 +686,27 @@ def test_trading_mode_live_is_refused(monkeypatch):
         make_adapter()
 
 
+def test_demo_endpoint_is_the_allowlisted_default():
+    adapter, fake = make_adapter()
+    assert adapter.host == "demo.ctraderapi.com"
+    assert adapter.port == 5035
+
+
+def test_non_demo_host_is_refused(monkeypatch):
+    # TASK-STR-PEP-002: the strict allowlist refuses ANY non-demo host,
+    # not just hosts with "live" in the name (the pre-fix check's gap —
+    # this host sailed through it).
+    monkeypatch.setenv("PEPPERSTONE_CTRADER_HOST", "demo.ctraderapi.example.com")
+    with pytest.raises(PermissionError):
+        make_adapter()
+
+
+def test_non_demo_port_is_refused(monkeypatch):
+    monkeypatch.setenv("PEPPERSTONE_CTRADER_PORT", "5036")
+    with pytest.raises(PermissionError):
+        make_adapter()
+
+
 # ----------------------------------------------------------------------
 # Market data honesty
 # ----------------------------------------------------------------------
@@ -661,3 +730,33 @@ def test_ticker_uses_live_spot():
     ticker = adapter.get_ticker("EURUSD")
     assert ticker.bid == pytest.approx(EURUSD_BID)
     assert ticker.ask == pytest.approx(EURUSD_ASK)
+
+
+# ----------------------------------------------------------------------
+# Shakedown dry-run labelling (TASK-STR-PEP-002)
+# ----------------------------------------------------------------------
+def _load_shakedown_module():
+    import importlib.util
+    path = os.path.join(
+        os.path.dirname(__file__), "..", "scripts", "pepperstone_shakedown.py"
+    )
+    spec = importlib.util.spec_from_file_location("pepperstone_shakedown", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_shakedown_dry_run_verdict_never_claims_the_gate(capsys):
+    module = _load_shakedown_module()
+    module.check("read-only dummy check", True)
+    rc = module.verdict(dry_run=True)
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "DRY-RUN ONLY" in out
+    assert "does NOT clear" in out
+    assert "OVERALL: PASS" not in out
+    # The full-run verdict keeps the gate-clearing banner.
+    rc_full = module.verdict(dry_run=False)
+    out_full = capsys.readouterr().out
+    assert rc_full == 0
+    assert "OVERALL: PASS" in out_full

@@ -43,7 +43,8 @@ every check passes):
 
 Usage:
   python Stratex/scripts/pepperstone_shakedown.py [--dry-run]
-  --dry-run stops after check 4 (no orders are placed).
+  --dry-run stops after check 4 (no orders are placed) and its verdict
+  is labelled DRY-RUN ONLY — it does NOT clear the gate below.
 
 Env (names only): PEPPERSTONE_CTRADER_CLIENT_ID,
 PEPPERSTONE_CTRADER_CLIENT_SECRET, PEPPERSTONE_CTRADER_ACCESS_TOKEN,
@@ -98,7 +99,7 @@ def check(name: str, ok: bool, detail: str = "") -> bool:
     return ok
 
 
-def verdict() -> int:
+def verdict(dry_run: bool = False) -> int:
     failed = [n for n, ok, _ in RESULTS if not ok]
     print("\n================ SHAKEDOWN VERDICT ================")
     for name, ok, detail in RESULTS:
@@ -107,6 +108,15 @@ def verdict() -> int:
         print(f"OVERALL: FAIL ({len(failed)} check(s) failed). "
               "No strategy may trade this venue.")
         return 1
+    if dry_run:
+        # TASK-STR-PEP-002 (PR #1097 review condition): a dry run must
+        # never print the gate-clearing banner — the order-path checks
+        # were not run, so the gate has NOT been passed.
+        print("OVERALL: DRY-RUN ONLY — the read-only checks passed, but "
+              "the order-path checks (5-9) were NOT run. This does NOT "
+              "clear the fail-closed gate: no strategy may trade this "
+              "venue until a full shakedown passes end-to-end.")
+        return 0
     print("OVERALL: PASS — the Pepperstone demo venue clears the "
           "fail-closed gate. Activation wiring (engine + env) is still a "
           "separate reviewed step.")
@@ -123,10 +133,10 @@ def main() -> int:
     missing = [n for n in REQUIRED_ENV if not os.getenv(n)]
     if not check("env credentials present (names only)", not missing,
                  f"missing: {', '.join(missing)}" if missing else "all set"):
-        return verdict()
+        return verdict(args.dry_run)
     if not check("TRADING_MODE is not LIVE",
                  os.environ.get("TRADING_MODE", "TESTNET").upper() != "LIVE"):
-        return verdict()
+        return verdict(args.dry_run)
 
     expected_balance = float(
         os.getenv("PEPPERSTONE_SHAKEDOWN_EXPECTED_BALANCE_USD", "10000.00")
@@ -140,7 +150,7 @@ def main() -> int:
               f"ctid={adapter.account_id}")
     except Exception as e:
         check("connect + application auth + account auth", False, str(e))
-        return verdict()
+        return verdict(args.dry_run)
     trader = adapter._trader
     check("account is DEMO (trader record loaded)",
           bool(trader) and not adapter.halted,
@@ -158,7 +168,7 @@ def main() -> int:
                  abs(balance - expected_balance) <= 0.01,
                  f"broker balance={balance:.2f}, expected={expected_balance:.2f}, "
                  f"moneyDigits={trader.get('money_digits')}"):
-        return verdict()
+        return verdict(args.dry_run)
 
     # -- Check 3: instruments ---------------------------------------------
     unresolved = []
@@ -199,7 +209,7 @@ def main() -> int:
 
     if args.dry_run:
         print("\n--dry-run: stopping before any order placement.")
-        return verdict()
+        return verdict(args.dry_run)
 
     # -- Check 5: pre-trade reconcile ---------------------------------------
     eur_id = int(adapter._resolve_symbol("EURUSD")["symbol_id"])
@@ -208,7 +218,7 @@ def main() -> int:
                 if int((p.get("trade_data", {}) or {}).get("symbol_id", -1)) == eur_id]
     if not check("no EURUSD position already open", not eur_open,
                  f"{len(eur_open)} EURUSD position(s) open"):
-        return verdict()
+        return verdict(args.dry_run)
     start_balance = balance
 
     # -- Check 6: tiny protected trade + independent read-back --------------
@@ -232,7 +242,7 @@ def main() -> int:
     except Exception as e:
         check("0.01-lot EURUSD BUY filled with adapter read-back verified",
               False, str(e))
-        return verdict()
+        return verdict(args.dry_run)
 
     # Independent confirmation straight off a fresh reconcile (not the
     # adapter's cached view of its own order).
@@ -247,7 +257,7 @@ def main() -> int:
                  f"broker sl={None if raw is None else raw.get('stop_loss')} "
                  f"tp={None if raw is None else raw.get('take_profit')} "
                  f"(intended {stop_loss}/{take_profit})"):
-        return verdict()
+        return verdict(args.dry_run)
 
     # -- Check 7: balance reconciliation -------------------------------------
     try:
@@ -299,7 +309,7 @@ def main() -> int:
     except Exception as e:
         check("test position closed; account flat; balance sane", False, str(e))
 
-    return verdict()
+    return verdict(args.dry_run)
 
 
 if __name__ == "__main__":
