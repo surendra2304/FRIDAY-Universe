@@ -895,3 +895,168 @@ def test_framing_description_repair_is_noop_without_violations():
     assert repaired is False
     assert repaired_framing is framing
     assert remaining == []
+
+
+# --- TASK-VYR-024: cycle-5 watch fixes -------------------------------- #
+# (1) The 823/824 title<->footage pairing: production's own records
+# (publish_jobs, render_jobs, assets, sources, video_projects, the
+# loop manifest, the physical files' names and probed durations) all
+# agree — the pairing crossed outside the pipeline. The pins below
+# prove the title grounding gate rejects each job's title against the
+# OTHER job's evidence and accepts it against its own, using the two
+# jobs' real transcripts and production descriptions as the evidence:
+# a title that had actually crossed inside production could not have
+# survived the gate. The render-binding tests pin the new in-pipeline
+# assertion that keeps the job<->render binding provable by key.
+# (2)+(3) The visible-text defects: the vision record now reports a
+# creator watermark and burned-in caption pile-ups, and both
+# production paths reject such candidates before any render.
+from app.services import scene_analysis
+
+
+def _record_payload(**overrides):
+    payload = {
+        "beats": [{
+            "setting": "roadside", "time_of_day": "day",
+            "subjects": [], "objects": ["motorcycle"],
+            "summary": "A rider sits beside a stopped motorcycle.",
+        }],
+        "event_arc": "an officer speaks with the rider",
+        "static": False,
+    }
+    payload.update(overrides)
+    return payload
+
+
+def test_record_carries_watermark_text_and_caption_overlap():
+    record = scene_analysis._coerce_record(_record_payload(
+        watermark_text="@WARPATROL", caption_overlap=True,
+    ))
+    assert record is not None
+    assert record["watermark_text"] == "@WARPATROL"
+    assert record["caption_overlap"] is True
+
+
+def test_record_defaults_clean_when_vision_omits_text_fields():
+    record = scene_analysis._coerce_record(_record_payload())
+    assert record is not None
+    assert record["watermark_text"] == ""
+    assert record["caption_overlap"] is False
+
+
+def test_visual_defects_flag_watermark_and_caption_overlap():
+    assert scene_analysis.record_visual_defects(
+        {"watermark_text": "@WARPATROL", "caption_overlap": False}
+    ) == ["watermark_visible"]
+    assert scene_analysis.record_visual_defects(
+        {"watermark_text": "", "caption_overlap": True}
+    ) == ["caption_overlap"]
+    assert scene_analysis.record_visual_defects(
+        {"watermark_text": "@WARPATROL", "caption_overlap": True}
+    ) == ["watermark_visible", "caption_overlap"]
+    assert scene_analysis.record_visual_defects(
+        {"watermark_text": "", "caption_overlap": False}
+    ) == []
+    assert scene_analysis.record_visual_defects(None) == []
+
+
+def test_render_binding_accepts_the_matching_render():
+    # Job 823's real binding: the PLGSvGqLyc4 render, probed at exactly
+    # the excerpt length production cut for it.
+    assert viral_framing.render_binding_violations(
+        video_id="PLGSvGqLyc4",
+        render_name="framed-PLGSvGqLyc4-b983b8.mp4",
+        render_duration=43.93,
+        excerpt_seconds=43.93,
+    ) == []
+
+
+def test_render_binding_rejects_the_other_jobs_render():
+    # The crossed pairing the watch was shown: job 823's excerpt
+    # (43.93s) against job 824's render file (PMMg1GbeJHA, 23.03s).
+    problems = viral_framing.render_binding_violations(
+        video_id="PLGSvGqLyc4",
+        render_name="framed-PMMg1GbeJHA-52e6fe.mp4",
+        render_duration=23.03,
+        excerpt_seconds=43.93,
+    )
+    assert len(problems) == 2
+
+
+def test_render_binding_rejects_a_duration_mismatch_and_a_missing_probe():
+    assert viral_framing.render_binding_violations(
+        video_id="PLGSvGqLyc4",
+        render_name="framed-PLGSvGqLyc4-b983b8.mp4",
+        render_duration=23.03,
+        excerpt_seconds=43.93,
+    )
+    assert viral_framing.render_binding_violations(
+        video_id="PLGSvGqLyc4",
+        render_name="framed-PLGSvGqLyc4-b983b8.mp4",
+        render_duration=0.0,
+        excerpt_seconds=43.93,
+    )
+
+
+# The two jobs' real evidence. Transcripts are the sources' own words
+# (from the renders' subtitle tracks, source cues only); the scene
+# lines are the jobs' production descriptions, which the pipeline
+# generated from each job's own vision record.
+_C5_NEWS_TITLE = "Crazy India News Bombardment Clip 😱🚀 #Shorts"
+_C5_NEWS_TRANSCRIPT = (
+    "One thing I find so funny is the contrast between literally every "
+    "other country's news channels and then whatever the hell they got "
+    "going on in India. For example let's just take a quick look at BBC "
+    "News. Everything looks pretty normal right? Then over on CNN same "
+    "kind of vibe. Everything's pretty chill down. Here's Al Jazeera "
+    "also very similar very chill very basic. But then let's go over to "
+    "India. They got fighter jets flying across the screen. Another "
+    "AI-generated video of some sort of like missile dropping down. "
+    "Here's another one of a fighter jet dropping a bunch of bombs. "
+    "Then they got this graphic of Trump and Netanyahu on the front "
+    "page. Explosions everywhere. I mean genuinely guys this looks more "
+    "like a meme page and it does like legitimate state news. It's "
+    "mind blowing."
+)
+_C5_NEWS_SCENE = (
+    "The clip shows a young man speaking while a female anchor overlays "
+    "intense war visuals. Fighter jets, explosions and a breaking "
+    "banner dominate the broadcast."
+)
+_C5_POLICE_TITLE = "Police Car Stops Biker, Boots on Dirt 😱 #Shorts"
+_C5_POLICE_TRANSCRIPT = (
+    "I'm gonna get you. It's a public place sir. Sir why is it a "
+    "public place? I'm gonna get you."
+)
+_C5_POLICE_SCENE = (
+    "A police car pulls up next to a stopped motorcycle and the rider "
+    "sits on the dirt, showing his boots. The officer repeats his "
+    "warning as the scene unfolds."
+)
+
+
+def _title_violations(title, transcript, scene):
+    return [
+        violation
+        for violation in viral_framing.framing_grounding_violations(
+            hook="", payoff="", title=title,
+            transcript=transcript, scene=scene, record=None,
+        )
+        if violation.field == "title"
+    ]
+
+
+def test_cycle5_titles_ground_against_their_own_footage():
+    assert _title_violations(_C5_NEWS_TITLE, _C5_NEWS_TRANSCRIPT, _C5_NEWS_SCENE) == []
+    assert _title_violations(_C5_POLICE_TITLE, _C5_POLICE_TRANSCRIPT, _C5_POLICE_SCENE) == []
+
+
+def test_cycle5_swapped_titles_are_rejected_by_the_grounding_gate():
+    news_on_police = _title_violations(
+        _C5_NEWS_TITLE, _C5_POLICE_TRANSCRIPT, _C5_POLICE_SCENE
+    )
+    police_on_news = _title_violations(
+        _C5_POLICE_TITLE, _C5_NEWS_TRANSCRIPT, _C5_NEWS_SCENE
+    )
+    assert any(v.kind == "title_ungrounded" for v in news_on_police)
+    assert any(v.kind == "title_ungrounded" for v in police_on_news)
