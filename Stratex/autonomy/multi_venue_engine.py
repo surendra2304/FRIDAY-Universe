@@ -1,7 +1,9 @@
 """
 autonomy/multi_venue_engine.py — Multi-Venue Trading Engine for Stratex.
 
-Orchestrates trading across Binance Futures (Crypto) and OANDA (Forex/Indices/Commodities).
+Orchestrates trading on Binance Futures (Crypto).
+(The OANDA venue was removed in TASK-REL-054 after the owner retired it
+on 2026-11-19; forex execution returns with the Pepperstone cTrader lane.)
 Unified risk management, balance tracking, and position management across venues.
 """
 from __future__ import annotations
@@ -38,7 +40,6 @@ class MultiVenueEngine:
     
     Manages trading across:
     - Binance Futures: Crypto perpetual futures (24/7)
-    - OANDA: Forex, Indices, Commodities, Crypto CFDs (24/5)
     
     Features:
     - Unified balance tracking across venues
@@ -52,9 +53,6 @@ class MultiVenueEngine:
         binance_api_key: str = "",
         binance_secret: str = "",
         binance_testnet: bool = True,
-        oanda_api_key: str = "",
-        oanda_account_id: str = "",
-        oanda_practice: bool = True,
         starting_balance: float = 1000.0,
         max_positions_per_venue: int = 9999,
         max_total_positions: int = 9999,
@@ -89,23 +87,6 @@ class MultiVenueEngine:
                 logger.warning(f"[MULTI_VENUE] Binance Futures init failed: {e}")
         else:
             logger.info("[MULTI_VENUE] Binance Futures skipped (no API key)")
-
-        # OANDA (Forex/Indices/Commodities)
-        oanda_key = oanda_api_key or os.getenv("OANDA_API_KEY", "")
-        oanda_acct = oanda_account_id or os.getenv("OANDA_ACCOUNT_ID", "")
-        if oanda_key and oanda_acct:
-            try:
-                from exchanges.oanda_adapter import OandaExchangeAdapter
-                self.venues["oanda"] = OandaExchangeAdapter(
-                    api_key=oanda_key,
-                    account_id=oanda_acct,
-                    practice=oanda_practice,
-                )
-                logger.info("[MULTI_VENUE] OANDA adapter initialized")
-            except Exception as e:
-                logger.warning(f"[MULTI_VENUE] OANDA init failed: {e}")
-        else:
-            logger.info("[MULTI_VENUE] OANDA skipped (credentials not configured)")
 
         # Venue health (TASK-STR-PHASE2-001): venue name ->
         # {"ok": bool, "checked_at": epoch}. A venue whose account reads
@@ -1154,14 +1135,6 @@ class MultiVenueEngine:
                 "ADAUSDT", "DOGEUSDT", "AVAXUSDT", "MATICUSDT", "DOTUSDT",
                 "LTCUSDT", "LINKUSDT", "BCHUSDT", "UNIUSDT", "ATOMUSDT",
             ],
-            "oanda": [
-                "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "USDCAD", "NZDUSD",
-                "EURGBP", "EURJPY", "EURAUD", "EURCAD", "EURCHF",
-                "GBPJPY", "GBPAUD", "GBPCAD", "GBPCHF",
-                "AUDJPY", "CADJPY", "CHFJPY", "NZDJPY",
-                "XAUUSD", "XAGUSD", "US30", "US500", "USTEC", "DE30", "UK100",
-                "USOIL", "UKOIL", "BCOUSD", "NATGAS",
-            ],
         }
 
     def get_symbol_venue(self, symbol: str) -> Optional[str]:
@@ -1178,9 +1151,6 @@ def create_multi_venue_engine(
     binance_api_key: str = "",
     binance_secret: str = "",
     binance_testnet: bool = True,
-    oanda_api_key: str = "",
-    oanda_account_id: str = "",
-    oanda_practice: bool = True,
     **kwargs
 ) -> "MultiVenueEngine":
     """Create multi-venue engine from environment or parameters."""
@@ -1188,8 +1158,5 @@ def create_multi_venue_engine(
         binance_api_key=binance_api_key,
         binance_secret=binance_secret,
         binance_testnet=binance_testnet,
-        oanda_api_key=oanda_api_key,
-        oanda_account_id=oanda_account_id,
-        oanda_practice=oanda_practice,
         **kwargs
     )

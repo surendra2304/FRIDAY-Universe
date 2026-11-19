@@ -4,11 +4,13 @@ Covers the four mechanisms the package introduced:
   * forward_guard mark-to-market drawdown (closed + unrealized),
     per-strategy venue-equity denomination, sleeve MTM combined;
   * the daemon heat-cap budget function and open-risk aggregation;
-  * sleeve runner / OANDA trader per-trade budgets under a heat cap.
 
 Everything is offline: fake adapters/engines only, no network, no
 orders. The pre-FWD-006 behaviour with default arguments is pinned
 where the package promised no change (closed-only, composite basis).
+
+The sleeve runner / OANDA trader budget tests that once sat here were
+removed in TASK-REL-054 with the oanda_demo package they exercised.
 """
 
 from __future__ import annotations
@@ -165,60 +167,3 @@ def test_open_unrealized_by_strategy():
     # mark: (49 - 50) x 1 = -1. alpha total -7; beta +5.
     assert out["strategy_alpha"] == -7.0
     assert out["strategy_beta"] == 5.0
-
-
-# ----------------------------------------------------------------------
-# sleeve runner / trader: heat-budgeted position sizing
-# ----------------------------------------------------------------------
-
-def _sleeve_runner():
-    from oanda_demo.sleeve_runner import SleeveRunner
-
-    runner = SleeveRunner.__new__(SleeveRunner)
-    return runner
-
-
-def test_sleeve_position_units_heat_budget():
-    runner = _sleeve_runner()
-    pricing = {"EURUSD": {"mid": 1.10, "bid": 1.10, "ask": 1.10}}
-    # Full budget: 0.1% of $10k = $10 risk; sl_dist 0.01, conv 1 -> 1000u.
-    full = runner._position_units("EURUSD", 0.01, pricing, 10_000.0, 10_000.0, 0.02)
-    assert full == 1000
-    # Remaining heat budget $4 -> 400 units.
-    capped = runner._position_units(
-        "EURUSD", 0.01, pricing, 10_000.0, 10_000.0, 0.02, risk_budget_usd=4.0
-    )
-    assert capped == 400
-    # Exhausted budget -> no trade.
-    assert runner._position_units(
-        "EURUSD", 0.01, pricing, 10_000.0, 10_000.0, 0.02, risk_budget_usd=0.0
-    ) == 0
-
-
-def test_trader_position_units_heat_budget():
-    from oanda_demo.trader import OandaDemoTrader
-
-    trader = OandaDemoTrader.__new__(OandaDemoTrader)
-    # Binary-exact prices: sl_dist = 0.25 exactly (no float dust).
-    signal = SimpleNamespace(entry=1.25, stop=1.00)
-    pricing = {"EURUSD": {"mid": 1.25, "bid": 1.25, "ask": 1.25}}
-    full = trader._position_units("EURUSD", signal, pricing, 10_000.0, 10_000.0)
-    assert full == 40  # $10 risk / $0.25 per unit
-    capped = trader._position_units(
-        "EURUSD", signal, pricing, 10_000.0, 10_000.0, risk_budget_usd=3.0
-    )
-    assert capped == 12  # $3 remaining heat budget / $0.25 per unit
-    assert trader._position_units(
-        "EURUSD", signal, pricing, 10_000.0, 10_000.0, risk_budget_usd=0.0
-    ) == 0
-
-
-def test_package_constants():
-    from oanda_demo import sleeve_runner, trader
-
-    assert sleeve_runner.RISK_PER_TRADE_PCT == 0.001
-    assert sleeve_runner.MAX_HEAT_PCT == 0.02
-    assert trader.RISK_PER_TRADE_PCT == 0.001
-    assert trader.MAX_HEAT_PCT == 0.02
-    assert forward_guard.DD_LIMIT_PCT == 0.05
-    assert forward_guard.MIN_TRADES_FOR_KILL == 50

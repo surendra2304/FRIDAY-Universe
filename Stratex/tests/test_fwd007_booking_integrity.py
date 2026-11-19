@@ -3,13 +3,10 @@
 From the FWD-005 untracked-position verification (live evidence
 2026-11-16, OANDA trade 470 — a sleeve-owned USDJPY long the daemon
 had adopted): four defects that could lose or double-count a forward
-fill, or misreport its protection:
+fill, or misreport its protection (items 1 and 4 covered the OANDA
+sleeve runner and adapter; their tests were removed in TASK-REL-054
+with the venue — the daemon-side items 2 and 3 remain pinned here):
 
-  1. The sleeve runner popped a closed trade from own_trades BEFORE
-     booking it, and _book_close swallowed all exceptions — one
-     transient broker failure at close time permanently lost the fill.
-     Now: book first, pop only on success; failure keeps the trade in
-     own_trades (the retry queue) and latches unrecorded_close.
   2. The daemon reconciler booked closes for positions it had ADOPTED
      (never opened) as strategy "unknown" — possibly from a ticker
      estimate — and accrued them into realized_pnl, double-counting
@@ -19,10 +16,6 @@ fill, or misreport its protection:
      ever called clear_alert). Now: a complete sweep that finds zero
      untracked positions clears it; an incomplete sweep (a venue read
      failed) must NOT clear it.
-  4. The OANDA adapter's open_trades() read the legacy stopLoss /
-     takeProfit fields, which are null in the current API, reporting
-     SL/TP as 0.0 for protected trades. Now it reads the linked
-     stopLossOrder / takeProfitOrder records.
 """
 
 from __future__ import annotations
@@ -45,119 +38,6 @@ def _isolated_state_dir(tmp_path, monkeypatch):
     """All fill-ledger / alert writes land in a tmp state dir."""
     monkeypatch.setenv("STRATEX_STATE_DIR", str(tmp_path / "mstate"))
     yield
-
-
-# ---------------------------------------------------------------------------
-# 1. Sleeve runner: book-first-then-pop with retry
-# ---------------------------------------------------------------------------
-
-_TRADE_META = {
-    "symbol": "USDJPY",
-    "side": "LONG",
-    "units": 15,
-    "entry_price": 159.691,
-    "entry_time": 1794780546.0,
-    "order_id": "470",
-}
-
-_CLOSED_RECORD = {
-    "trade": {
-        "id": "470",
-        "state": "CLOSED",
-        "realizedPL": "1.23",
-        "averageClosePrice": "160.100",
-        "price": "159.691",
-        "closeTime": "2026-11-16T01:00:00.000000000Z",
-    }
-}
-
-
-class _SleeveFakeAdapter:
-    account_id = "acct-1"
-
-    def __init__(self):
-        self.fail_fetch = True
-        self.record = None
-
-    def get_account_summary(self):
-        return {"equity": 10000.0, "margin_available": 10000.0, "margin_rate": 0.02}
-
-    def open_trades(self):
-        return []  # trade 470 is gone from the account -> close detected
-
-    def _request(self, method, path, params=None):
-        if "/trades/" in path:
-            if self.fail_fetch:
-                raise RuntimeError("transient broker failure")
-            return self.record
-        return {}
-
-
-def _make_sleeve_runner(tmp_path, adapter):
-    from oanda_demo.sleeve_runner import SleeveRunner
-
-    state_file = tmp_path / "sleeve_state.json"
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    state_file.write_text(json.dumps({
-        "day": today,
-        "day_start_nav": 10000.0,
-        "own_trades": {"470": dict(_TRADE_META)},
-    }))
-    (tmp_path / "sleeve_entries_paused").write_text("test pause")
-    return SleeveRunner(
-        adapter=adapter, dry_run=False,
-        state_file=state_file, data_dir=tmp_path,
-    ), state_file
-
-
-def test_sleeve_booking_failure_keeps_trade_and_latches_alert(tmp_path):
-    adapter = _SleeveFakeAdapter()  # fetch raises
-    runner, state_file = _make_sleeve_runner(tmp_path, adapter)
-
-    out = runner.run_once()
-
-    assert out.get("closes_unbooked") == ["470"]
-    state = json.loads(state_file.read_text())
-    assert "470" in state["own_trades"], "failed booking must keep the trade for retry"
-    assert fill_ledger.read_fills() == []
-    assert "unrecorded_close" in fill_ledger.active_alerts()
-
-
-def test_sleeve_booking_retry_succeeds_next_scan(tmp_path):
-    adapter = _SleeveFakeAdapter()
-    runner, state_file = _make_sleeve_runner(tmp_path, adapter)
-
-    runner.run_once()  # fails, trade kept
-    assert "470" in json.loads(state_file.read_text())["own_trades"]
-
-    adapter.fail_fetch = False
-    adapter.record = _CLOSED_RECORD
-    out = runner.run_once()  # retry succeeds
-
-    assert out.get("closes") == ["470"]
-    state = json.loads(state_file.read_text())
-    assert state["own_trades"] == {}
-    rows = fill_ledger.read_fills()
-    assert len(rows) == 1
-    row = rows[0]
-    assert row["strategy"] == "strategy_sleeve_tsmom2_dual"
-    assert row["sleeve"] == "best_per_class"
-    assert row["engine"] == "oanda_sleeve"
-    assert row["order_id"] == "470"
-    assert row["net_pnl"] == pytest.approx(1.23)
-
-
-def test_sleeve_unclosed_broker_record_is_not_booked(tmp_path):
-    adapter = _SleeveFakeAdapter()
-    adapter.fail_fetch = False
-    adapter.record = {"trade": {"id": "470", "state": "OPEN"}}
-    runner, state_file = _make_sleeve_runner(tmp_path, adapter)
-
-    runner.run_once()
-
-    assert "470" in json.loads(state_file.read_text())["own_trades"]
-    assert fill_ledger.read_fills() == []
-    assert "unrecorded_close" in fill_ledger.active_alerts()
 
 
 # ---------------------------------------------------------------------------
@@ -312,68 +192,3 @@ def test_incomplete_sweep_does_not_clear_alert(tmp_path, monkeypatch):
 
     assert "untracked_position" in fill_ledger.active_alerts(), \
         "a sweep that could not read a venue must not clear the alert"
-
-
-# ---------------------------------------------------------------------------
-# 4. OANDA adapter: SL/TP from the linked order records
-# ---------------------------------------------------------------------------
-
-def _adapter_with_payload(payload):
-    from exchanges.oanda_adapter import OandaExchangeAdapter
-
-    adapter = OandaExchangeAdapter(api_key="x", account_id="acc", practice=True)
-    adapter._request = lambda method, path, params=None, json=None: payload
-    return adapter
-
-
-def _trade(**overrides):
-    base = {
-        "id": "470",
-        "instrument": "USD_JPY",
-        "currentUnits": "15",
-        "price": "159.691",
-        "unrealizedPL": "0.0069",
-        "openTime": "2026-11-15T22:09:05.810Z",
-        "financing": "0",
-        "stopLoss": None,
-        "takeProfit": None,
-    }
-    base.update(overrides)
-    return base
-
-
-def test_open_trades_reads_linked_sl_tp_orders():
-    payload = {"trades": [_trade(
-        stopLossOrder={"id": "472", "price": "157.543",
-                       "state": "PENDING", "timeInForce": "GTC"},
-        takeProfitOrder={"id": "471", "price": "163.838",
-                         "state": "PENDING", "timeInForce": "GTC"},
-    )]}
-    trades = _adapter_with_payload(payload).open_trades()
-    assert len(trades) == 1
-    assert trades[0]["stop_loss"] == pytest.approx(157.543)
-    assert trades[0]["take_profit"] == pytest.approx(163.838)
-
-
-def test_open_trades_cancelled_sl_order_is_not_protection():
-    payload = {"trades": [_trade(
-        stopLossOrder={"id": "472", "price": "157.543", "state": "CANCELLED"},
-    )]}
-    trades = _adapter_with_payload(payload).open_trades()
-    assert trades[0]["stop_loss"] == 0.0
-    assert trades[0]["take_profit"] == 0.0
-
-
-def test_open_trades_legacy_fields_still_parse():
-    payload = {"trades": [_trade(
-        stopLoss={"price": "157.543"}, takeProfit={"price": "163.838"},
-    )]}
-    trades = _adapter_with_payload(payload).open_trades()
-    assert trades[0]["stop_loss"] == pytest.approx(157.543)
-    assert trades[0]["take_profit"] == pytest.approx(163.838)
-
-
-def test_open_trades_without_orders_reports_zero():
-    trades = _adapter_with_payload({"trades": [_trade()]}).open_trades()
-    assert trades[0]["stop_loss"] == 0.0
-    assert trades[0]["take_profit"] == 0.0
