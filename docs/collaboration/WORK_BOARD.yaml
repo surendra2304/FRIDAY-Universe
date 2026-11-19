@@ -11653,6 +11653,24 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     files:
       - .github/workflows/friday-universe-ci.yml
       - .github/workflows/owner-workflows.yml
+  - id: TASK-VYR-022
+    title: "VyralX excerpt-stage render-fit (720x1280 box, fps 30, ultrafast/crf23, threads 2) + framed-path description-question repair parity with the commentary path"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-vyr-022-excerpt-fit
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Claim: GitHub issue #35 comment 7003972842 by Muse (TASK-VYR-022 crew) before any editing. Base: main b248fca4fab9bc32bab010ca21247218a507b23b."
+      - "Trigger: supervised cycle 2 (2026-11-18/19, ~/workspace/vyr-supervised-2/STATE.md) produced 4 held renders but lost 3 of 12 attempts to TimeoutExpired on the EXCERPT ffmpeg (veryfast/crf18 at full source resolution, 600s _run default) — the one encode PR #1026's render-fit profile did not touch; and script_unverifiable was the largest skip class (5 of 12)."
+      - "Excerpt fit: _cut_excerpt's output is analysis-only (viral_quality.measure_event_arc reads 96x170 gray frames; scene_analysis extracts vision frames at scale=640:-2; the final composition trims from the ORIGINAL source at the unchanged #1026 profile), so the excerpt is capped to the render fit itself via _excerpt_command/_excerpt_video_filter (fps 30, scale min(720,iw)xmin(1280,ih) force_original_aspect_ratio=decrease — aspect preserved, never upscaled, never cropped). Local benchmark (1080x1920@60, ~10Mbps testsrc2 fixture, 24s cut = the shortest cycle-2 failure at 23.64s): OLD 52.3 CPU-s / 72.0s wall / 373MB RSS / 33.4MB / 1080x1920@60 out -> NEW 18.1 CPU-s / 31.6s wall / 135MB RSS / 18.6MB / 720x1280@30 out (repeat 17.7 CPU-s / 32.4s); SSIM 0.981 vs the old excerpt; vision-frame extraction from both excerpts identical at 640x1138. The 600s excerpt timeout is NOT raised — the encode is made to fit, as #1026 treated the 2400s timeout. Filter semantics verified on 5 source shapes (1080x1920->720x1280, 1920x1080->720x406, 640x360 and 480x854 and 720x1280 unchanged)."
+      - "Script diagnosis (cycle-2 record, counts stated honestly — per-violation kinds for the 3 framed candidates and -iFEJl2koe8 are NOT in the local record; the S2 log was out of scope, no live-server commands): of the 5 script_unverifiable skips, the one fully documented candidate (1s_rHwFWHqA, commentary route) failed 3 drafts as question_ungrounded x2 + unverified_garment_colour x1 — the garment claim is genuinely content-side (model invented a colour the record does not hold; gates did their job). CODE-LEVEL CAUSE FOUND for the question class: the commentary path has repaired question-only failures deterministically since TASK-VYR-014 (viral_remix post-loop repair_description_question + full re-gate), but the framed path — identical description check via check_consistency, identical mandated question+CTA format in its prompt — had NO such step, so a fully grounded framed package died on packaging mechanics. Fix: viral_framing.repair_framing_description wired into produce_framed_short (fires only when ALL remaining violations are question_ungrounded/cta_without_question; repaired package must pass the full framing suite again; factual violations are never repaired), plus the generate_framing prompt now states the question must name a concrete object/person/action from the frame analysis. The remaining framed candidates' kinds are unrecorded locally, so no claim is made that this fix would have rescued a specific cycle-2 candidate — it removes a proven asymmetry for the documented largest sub-cause."
+      - "Tests: VyralX/tests/test_viral_framing.py (CI-collected via owner-workflows.yml VyralX step since PR #1055) 14 -> 20 tests, all passing locally (sandbox, proxies unset, edge-tts/yt-dlp installed as CI does); neighbours: test_vyr014_quality_gates 32 passed; the CI VyralX step's other files + viral_loop + viral_loop_audition + script_quality = 69 passed total across the 7-file ring. New tests pin the exact excerpt command (incl. timeout staying 600) and the repair's three behaviours (rescue question-only, refuse factual, no-op clean). NOT deployed; no cycle run; loop stays OFF; nothing uploaded."
+    next_action: "Supervisor review, then merge via the next merge lane. Acceptance: the next supervised cycle should show zero excerpt TimeoutExpired skips and a reduced script_unverifiable share; deploy rides the normal fleet pull to Server 2."
+    files:
+      - VyralX/app/services/viral_framing.py
+      - VyralX/tests/test_viral_framing.py
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

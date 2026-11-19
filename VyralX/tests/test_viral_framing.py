@@ -323,3 +323,105 @@ def test_excerpt_fit_profile_constants_match_the_render_fit():
     assert viral_framing._EXCERPT_WIDTH == viral_framing._RENDER_WIDTH
     assert viral_framing._EXCERPT_HEIGHT == viral_framing._RENDER_HEIGHT
     assert viral_framing._EXCERPT_MAX_FPS == viral_framing._RENDER_MAX_FPS
+
+
+# --------------------------------------------------------------------------- #
+# TASK-VYR-022: the framed path gains the commentary path's
+# description-question repair. Cycle-2 diagnosis: script_unverifiable
+# was the largest skip class (5/12); the only violation kind the
+# cycle record documents more than once is question_ungrounded, and
+# the framed path — running the identical description check on the
+# identical mandated question format — had no deterministic escape
+# from it, while the commentary path has repaired exactly that class
+# since TASK-VYR-014. The repair must fire ONLY for question-kind
+# violations and the repaired package must re-pass every gate.
+# --------------------------------------------------------------------------- #
+_REPAIR_BEAT = {
+    "setting": "kitchen", "time_of_day": "day",
+    "subjects": [{
+        "hair": "brown hair", "clothing": "red shirt",
+        "posture": "standing", "action": "holding a trophy",
+        "emotion": "smiling", "eyes": "open",
+    }],
+    "objects": ["trophy", "table"],
+    "summary": "A man holds a trophy in a kitchen",
+}
+_REPAIR_RECORD = {
+    "beats": [dict(_REPAIR_BEAT) for _ in range(3)],
+    "event_arc": "A man lifts a trophy and smiles",
+    "static": False,
+}
+_REPAIR_HOOK = "He lifts the trophy and smiles at the table."
+_REPAIR_PAYOFF = "The trophy stays high while he keeps smiling."
+_REPAIR_TITLE = "Man Lifts Trophy In Kitchen #Shorts"
+_UNGROUNDED_DESCRIPTION = (
+    "He lifts the trophy in the kitchen while everyone watches the table.\n\n"
+    "🤔 What did the elephant whisper? Drop your answer below!\n\n"
+    "#Shorts #viral"
+)
+
+
+def _repair(framing, violations):
+    return viral_framing.repair_framing_description(
+        framing, violations,
+        hook=_REPAIR_HOOK, payoff=_REPAIR_PAYOFF,
+        record=_REPAIR_RECORD, excerpt_seconds=20.0,
+    )
+
+
+def test_framing_description_question_repair_rescues_grounded_package():
+    framing = {
+        "title": _REPAIR_TITLE, "hook": _REPAIR_HOOK, "payoff": _REPAIR_PAYOFF,
+        "description": _UNGROUNDED_DESCRIPTION,
+    }
+    violations = viral_framing.framing_violations(
+        hook=_REPAIR_HOOK, payoff=_REPAIR_PAYOFF, title=_REPAIR_TITLE,
+        description=_UNGROUNDED_DESCRIPTION, record=_REPAIR_RECORD,
+        excerpt_seconds=20.0,
+    )
+    assert [v.kind for v in violations] == ["question_ungrounded"]
+    repaired_framing, remaining, repaired = _repair(framing, violations)
+    assert repaired is True
+    assert remaining == []
+    # The ungrounded question is gone; the record's own grounded
+    # question (about the trophy, a recorded object) replaced it.
+    assert "elephant" not in repaired_framing["description"]
+    assert "trophy" in repaired_framing["description"]
+    # Factual fields are never touched by the repair.
+    assert repaired_framing["title"] == framing["title"]
+    assert repaired_framing["hook"] == framing["hook"]
+
+
+def test_framing_description_repair_refuses_factual_violations():
+    # A title claiming an unverified garment colour is a factual
+    # defect: the package must still die as script_unverifiable,
+    # never be edited into compliance — even though it ALSO carries
+    # a repairable question violation.
+    framing = {
+        "title": "Man In Blue Shirt Lifts Trophy #Shorts",
+        "hook": _REPAIR_HOOK, "payoff": _REPAIR_PAYOFF,
+        "description": _UNGROUNDED_DESCRIPTION,
+    }
+    violations = viral_framing.framing_violations(
+        hook=_REPAIR_HOOK, payoff=_REPAIR_PAYOFF, title=framing["title"],
+        description=_UNGROUNDED_DESCRIPTION, record=_REPAIR_RECORD,
+        excerpt_seconds=20.0,
+    )
+    kinds = {v.kind for v in violations}
+    assert "unverified_garment_colour" in kinds
+    assert "question_ungrounded" in kinds
+    repaired_framing, remaining, repaired = _repair(framing, violations)
+    assert repaired is False
+    assert repaired_framing is framing
+    assert remaining == violations
+
+
+def test_framing_description_repair_is_noop_without_violations():
+    framing = {
+        "title": _REPAIR_TITLE, "hook": _REPAIR_HOOK, "payoff": _REPAIR_PAYOFF,
+        "description": "He lifts the trophy in the kitchen.",
+    }
+    repaired_framing, remaining, repaired = _repair(framing, [])
+    assert repaired is False
+    assert repaired_framing is framing
+    assert remaining == []
