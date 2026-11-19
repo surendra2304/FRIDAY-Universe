@@ -11865,6 +11865,25 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Stratex/tests/test_fwd028_overlay_allowlist_gate.py
       - .github/workflows/owner-workflows.yml
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-SEN-019-HARDENING
+    title: "TASK-SEN-019 hardening follow-up: (b1) bare credential nouns (lone token/secret, plurals, compounds, details-smuggled) prompt as credential_change in classify_approval, with whole-token precision so ordinary actions still auto-approve; (b2) non-string action/risk_level inputs return the fail-closed OWNER_PROMPT decision (invalid_input) instead of raising"
+    status: MERGED
+    owner: muse_ai
+    branch: claude/task-sen-019-hardening
+    pr: 1065
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Source: the two hardening conditions carried from the PR #956 (TASK-SEN-019) supervisor review; PR #956 is merged and deployed on S2. Distinct board id because TASK-SEN-020 is already claimed by another crew for a different build. Claim: issue #35 comment 7004018728. Base: origin/main b248fca4fab9bc32bab010ca21247218a507b23b (full 40-char sha, verified via bridge ref-sha and anonymous git ls-remote equivalent clone)."
+      - "Defects reproduced on pristine base b248fca4 before any edit: (b1) at LOW, 'check token', 'read token', 'fetch secret', 'read secret', 'check secrets', 'list tokens', 'status token', 'check token expiry', 'read access_token' and 'read privatekey' all returned AUTO_APPROVE/read_only, and bare nouns smuggled in details ({'note': 'token'}, {'target': 'secret'}, {'token': 'abc'}) also auto-approved — the credential pass matched only exact phrases plus 'secret' next to a policy-change verb. (b2) action=123/bytes/list/dict raised TypeError in the haystack join and risk_level=123/list raised AttributeError on .strip, despite classify_approval's documented never-raises contract; fail-closed was an accident of the crash."
+      - "Fix (Sentinel/sentinel/gatekeeper/approval_policy.py ONLY — hard-bound categories and the auto-approve policy are unchanged): bare credential nouns matched as whole tokens — secret/secrets and single-token compounds (privatekey, accesstoken, ...) always fire credential_change in action or details; token/tokens in details always fire (a details key literally named token is credential material by name); token/tokens in the action fire unless EVERY occurrence is usage-qualified (token usage / count tokens / token consumption — LLM metering), an action-only, token-only exception. Whole-token matching keeps lookalikes in the low-risk class (tokenizer, tokenization, secretary, keyboard) and a bare 'key' is deliberately not a noun (list key metrics still auto-approves; credential uses remain phrases — access key / auth key / encryption key / master key / passphrase phrases added). The old secret+change-verb pass is superseded by the strictly broader bare pass. (b2) classify_approval validates types up front: non-string action or risk_level returns OWNER_PROMPT/invalid_input naming the TYPE only (never the value); a non-dict details payload prompts as invalid_input unless a hard bound fires over its text first; the implementation body is guarded so the function never raises."
+      - "Tests (sandbox CPython 3.12.3, proxy vars unset): Sentinel/tests/security/test_approval_policy_tiering.py — 93 passed on the branch (41 pre-existing + 52 new: 22 bare-noun attack cases, 9 precision cases, 1 dispatcher-level pin that a LOW 'check token' stays PENDING with zero audit entries, 20 non-string/odd-shape cases) vs 41 passed on pristine base. A/B control: the new test file alone on the pristine base policy = 41 failed / 52 passed (every bare-noun attack, the dispatcher pin, and all non-string action/risk cases fail on base — non-vacuous). Neighbour ring (test_approval_dispatcher_credentials + test_operations_alert_dispatch + test_approval_links_require_post + test_approvals): 21 passed on the branch AND the identical 21 on pristine base — zero regression delta. Ruff under Sentinel's config on the two shipped code/test files: 1 finding (UP042, the codebase-standard StrEnum shim) on both base and branch — parity, no new classes. CI collection, stated plainly as in PR #956: root monorepo CI does not run Sentinel/tests (pre-existing for every Sentinel suite); Sentinel's own CI (Sentinel/.github/workflows/ci.yml, mirrored subrepo) runs bare pytest over the package and collects this same file, so the new tests are collected exactly where the original 41 are."
+    next_action: "Supervisor review -> serial-lane merge -> deploy with the next Sentinel wave (no env or activation step of its own; the classifier is pure and ships with the code) -> production proof is the dispatcher's behaviour on the next LOW bare-noun drill. NOT merged or deployed by the builder."
+    files:
+      - Sentinel/sentinel/gatekeeper/approval_policy.py
+      - Sentinel/tests/security/test_approval_policy_tiering.py
+      - docs/collaboration/WORK_BOARD.yaml
+task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

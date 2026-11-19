@@ -18,7 +18,14 @@ and prompts the owner only for high-risk ones. These tests pin:
 - pending-queue persistence (SENTINEL_PENDING_APPROVALS_PATH): a pending
   item survives a dispatcher restart with its approve/deny token intact,
   an expired pending restores as EXPIRED, and a decided item restores as
-  a record so its status still resolves.
+  a record so its status still resolves;
+- the SEN-019 hardening follow-up: (b1) bare credential nouns (a lone
+  token / secret, plurals, compounds, details-smuggled) prompt as
+  credential_change at LOW, with whole-token precision pins so ordinary
+  actions (tokenizer, secretary, key metrics, usage-qualified token
+  metering in the action) still auto-approve; (b2) non-string
+  action / risk_level / details inputs return the fail-closed
+  OWNER_PROMPT decision instead of raising.
 """
 
 import asyncio
@@ -340,3 +347,184 @@ def test_no_queue_file_no_persistence(monkeypatch, tmp_path, _restore_singleton)
     )
     second = _fresh_dispatcher()
     assert second.get_pending_list() == []
+
+
+# ----------------------------------------------------------------------
+# SEN-019 hardening (b1): bare credential nouns
+# ----------------------------------------------------------------------
+# On the pre-hardening classifier every action below AUTO_APPROVED at
+# LOW when it led with a read verb: the credential pass only matched
+# exact phrases ("api key", "bot token", "secret key", ...) plus
+# "secret" next to a policy-change verb, so a lone "token" / "secret"
+# named by a read-only action escaped it entirely.
+
+@pytest.mark.parametrize(
+    "action,details",
+    [
+        ("check token", {}),
+        ("read token", {}),
+        ("fetch secret", {}),
+        ("read secret", {}),
+        ("check secrets", {}),
+        ("list tokens", {}),
+        ("status token", {}),
+        ("check token expiry", {}),
+        ("rotate token", {}),
+        ("token", {}),
+        ("secret", {}),
+        # Underscore compounds tokenise apart and are caught by the
+        # bare-noun pass; single-token compounds are caught as compounds.
+        ("read access_token", {}),
+        ("read privatekey", {}),
+        ("read access key", {}),
+        ("fetch passphrase", {}),
+        # A reversible attestation never excuses a hard bound.
+        ("check token", {"reversible": True}),
+        # Bare nouns smuggled in the details payload.
+        ("status check", {"note": "token"}),
+        ("status check", {"target": "secret"}),
+        ("status check", {"token": "abc123"}),
+        # The usage exception is action-only: it never applies to the
+        # details payload, even with the qualifier word present.
+        ("status check", {"note": "token usage"}),
+        # ... and a usage-qualified action cannot launder a secret in
+        # the details.
+        ("check token usage", {"note": "also read the secret"}),
+        # Secret is never usage-excused.
+        ("check secret usage", {}),
+    ],
+)
+def test_bare_credential_nouns_prompt_at_low(action, details):
+    result = classify_approval(
+        agent_name="FRIDAY", action=action, risk_level="LOW", details=details
+    )
+    assert result.tier is ApprovalTier.OWNER_PROMPT
+    assert result.hard_bound is True
+    assert result.category == "credential_change"
+
+
+@pytest.mark.parametrize(
+    "action,category",
+    [
+        # Whole-token matching: lookalikes are different tokens, not
+        # credential nouns — substring matching would false-positive
+        # every one of these ordinary actions.
+        ("check tokenizer health", "read_only"),
+        ("scan tokenization pipeline", "read_only"),
+        ("fetch secretary report", "read_only"),
+        ("read keyboard layout", "read_only"),
+        # A bare "key" is an ordinary adjective, deliberately not a
+        # credential noun on its own (credential uses are phrases).
+        ("list key metrics", "read_only"),
+        # Usage-qualified token metering in the ACTION: LLM token
+        # usage is an ordinary fleet measurement, not credential
+        # material. Every token occurrence must be qualified.
+        ("check token usage metrics", "read_only"),
+        ("count tokens used", "read_only"),
+        ("measure token consumption", "read_only"),
+        ("report token counts by agent", "read_only"),
+    ],
+)
+def test_bare_noun_precision_ordinary_actions_still_auto_approve(action, category):
+    result = classify_approval(
+        agent_name="FRIDAY", action=action, risk_level="LOW", details={}
+    )
+    assert result.tier is ApprovalTier.AUTO_APPROVE
+    assert result.category == category
+
+
+def test_bare_token_dispatcher_does_not_auto_approve(monkeypatch, tmp_path):
+    """Dispatcher-level pin for (b1): a LOW 'check token' submission
+    must stay PENDING for the owner — pre-hardening it was APPROVED
+    with no prompt — and no audit-ledger auto-approval is written."""
+    dispatcher = _fresh_dispatcher()
+    audit = _tmp_audit_logger(tmp_path)
+    dispatcher._audit_logger = audit
+    pending = dispatcher.submit_approval(
+        agent_name="FRIDAY",
+        action="check token",
+        details={},
+        risk_level="LOW",
+    )
+    assert pending.status.value == "PENDING"
+    assert pending.policy_tier == "OWNER_PROMPT"
+    assert pending.policy_category == "credential_change"
+    assert audit.entry_count() == 0
+
+
+# ----------------------------------------------------------------------
+# SEN-019 hardening (b2): non-string inputs never raise
+# ----------------------------------------------------------------------
+# Pre-hardening, classify_approval raised on these shapes despite its
+# "never raises" contract (action=123 -> TypeError in the haystack
+# join; risk_level=123 -> AttributeError on .strip) — submissions were
+# fail-closed only because the exception aborted them. Now they return
+# the fail-closed OWNER_PROMPT decision (category "invalid_input").
+
+@pytest.mark.parametrize(
+    "action",
+    [None, 123, 12.5, True, b"check fleet health", ["check", "health"], {"a": 1}, ("check",)],
+)
+def test_non_string_action_prompts_instead_of_raising(action):
+    result = classify_approval(
+        agent_name="FRIDAY", action=action, risk_level="LOW", details={}
+    )
+    assert result.tier is ApprovalTier.OWNER_PROMPT
+    assert result.category == "invalid_input"
+    assert result.auto_approve is False
+
+
+@pytest.mark.parametrize(
+    "risk_level",
+    [None, 123, 1.0, b"LOW", ["LOW"], {"level": "LOW"}],
+)
+def test_non_string_risk_level_prompts_instead_of_raising(risk_level):
+    result = classify_approval(
+        agent_name="FRIDAY", action="check fleet health",
+        risk_level=risk_level, details={},
+    )
+    assert result.tier is ApprovalTier.OWNER_PROMPT
+    assert result.category == "invalid_input"
+    assert result.auto_approve is False
+
+
+def test_both_inputs_non_string_prompt_instead_of_raising():
+    result = classify_approval(
+        agent_name="FRIDAY", action=123, risk_level=456, details={}
+    )
+    assert result.tier is ApprovalTier.OWNER_PROMPT
+    assert result.category == "invalid_input"
+
+
+@pytest.mark.parametrize(
+    "details,category,hard_bound",
+    [
+        # A non-mapping payload the policy cannot structurally inspect
+        # prompts as invalid input...
+        (123, "invalid_input", False),
+        ("plain note", "invalid_input", False),
+        # ...unless a hard bound still fires over its text first: the
+        # more specific, safer verdict wins.
+        ("token", "credential_change", True),
+        (["delete", "the", "archive"], "owner_data_deletion", True),
+    ],
+)
+def test_non_dict_details_never_raise_and_never_auto_approve(details, category, hard_bound):
+    result = classify_approval(
+        agent_name="FRIDAY", action="check fleet health",
+        risk_level="LOW", details=details,
+    )
+    assert result.tier is ApprovalTier.OWNER_PROMPT
+    assert result.category == category
+    assert result.hard_bound is hard_bound
+
+
+def test_non_string_agent_name_still_classifies():
+    # agent_name is deliberately unused by the policy (a trusted name
+    # must never make an action auto-approvable); an odd value there
+    # neither raises nor changes the verdict.
+    result = classify_approval(
+        agent_name=123, action="check fleet health", risk_level="LOW", details={}
+    )
+    assert result.tier is ApprovalTier.AUTO_APPROVE
+    assert result.category == "read_only"
