@@ -350,6 +350,78 @@ def test_rung_unproven_reason_names_deaf_vs_silent():
     assert "silent room" in silent
 
 
+def test_frames_flowed_reads_the_f2_counters():
+    # TASK-VOI-023: any hop above zero means frames crossed the
+    # forward; a row of zeros — or no registered counters at all —
+    # does not. Unknown is not flowed: the energy-only criteria
+    # then decide, unchanged.
+    counters = worker._new_frame_counters("session build 2")
+    assert worker._frames_flowed(counters) is False
+    assert worker._frames_flowed(None) is False
+    for key in ("activity_push_audio", "plugin_push_audio",
+                "plugin_send_audio_events"):
+        flowed = worker._new_frame_counters("session build 2")
+        flowed[key] = 1
+        assert worker._frames_flowed(flowed) is True
+
+
+def test_rung_unproven_reason_counters_outrank_the_energy_estimate():
+    # TASK-VOI-023, acceptance run #16's exact counters: build 2
+    # received 356 frames and build 3 received 6,796, yet the
+    # ladder declared both rungs failed as "silent room" because
+    # the RMS energy monitor stamped nothing in the prove window.
+    # Counters that flowed must win: the reason is the deaf one,
+    # never silence, and it names the frame evidence.
+    for frames in (356, 6796):
+        counters = worker._new_frame_counters("session build 2")
+        counters["activity_push_audio"] = frames
+        counters["plugin_push_audio"] = frames
+        counters["plugin_send_audio_events"] = frames - 1
+        reason = worker._rung_unproven_reason(
+            "gemini", energy_seen=False,
+            frames_flowed=worker._frames_flowed(counters),
+        )
+        assert "stayed deaf" in reason
+        assert "frames flowed" in reason
+        assert "silent room" not in reason
+    # With the monitor ALSO reporting energy, the counters still
+    # name the evidence.
+    reason = worker._rung_unproven_reason(
+        "gemini", energy_seen=True, frames_flowed=True
+    )
+    assert "stayed deaf" in reason
+    assert "frames flowed" in reason
+
+
+def test_rung_unproven_reason_zero_counters_keep_the_energy_verdicts():
+    # TASK-VOI-023: counters zero + no energy keeps the pre-fix
+    # silent-room verdict, and counters zero + energy keeps the
+    # pre-fix deaf verdict — the criterion changed only where
+    # the counters actually flowed.
+    counters = worker._new_frame_counters("session build 2")
+    flowed = worker._frames_flowed(counters)
+    assert flowed is False
+    silent = worker._rung_unproven_reason(
+        "gemini", energy_seen=False, frames_flowed=flowed
+    )
+    assert "unproven" in silent
+    assert "silent room" in silent
+    deaf = worker._rung_unproven_reason(
+        "gemini", energy_seen=True, frames_flowed=flowed
+    )
+    assert "stayed deaf" in deaf
+    assert "track energy was present" in deaf
+
+
+def test_entrypoint_rungs_consult_the_frame_counters():
+    # TASK-VOI-023 source shape: the rung's failure reason is
+    # computed from the rung session's own counters, not the
+    # energy estimate alone.
+    src = inspect.getsource(worker.entrypoint)
+    assert "_frames_flowed(_frame_counters_for(sess))" in src
+    assert "frames_flowed=frames_flowed" in src
+
+
 def test_entrypoint_rungs_judge_proof_via_rung_proven():
     src = inspect.getsource(worker.entrypoint)
     assert "_rung_proven(" in src
