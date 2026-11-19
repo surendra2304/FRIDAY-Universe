@@ -141,6 +141,175 @@ def test_failing_subsystem_is_detected_and_escalated_after_bounded_repairs():
     assert supervisor.escalations[-1]["reason"].startswith("2 repair attempts")
 
 
+class _RecordingNotifier:
+    """Notifier seam double: records deliveries instead of sending them."""
+
+    channel = "test:recording"
+
+    def __init__(self) -> None:
+        self.calls: list[dict] = []
+
+    async def deliver(self, escalation):
+        self.calls.append(dict(escalation))
+        return {"delivered": True, "subsystem": escalation.get("subsystem"), "channel": self.channel}
+
+
+def test_supervisor_escalates_once_per_failure_streak():
+    """TASK-COR-013 regression: a permanently failing subsystem must page the
+    operator once per continuous outage — not once per cycle. (In production
+    this defect delivered one identical Telegram message every ~10 minutes
+    for two days.) A recovery ends the streak, so a later outage pages again.
+    """
+    registry = HealthRegistry()
+    healthy = {"ok": False}
+
+    async def probe() -> bool:
+        return healthy["ok"]
+
+    async def repair() -> bool:
+        return False  # cannot fix it
+
+    registry.register_probe("redis", probe)
+    notifier = _RecordingNotifier()
+    supervisor = SelfHealingSupervisor(
+        registry, repair_cooldown_seconds=0.0, max_repairs_per_subsystem=2, notifier=notifier
+    )
+    supervisor.register_repair("redis", repair)
+
+    _run(supervisor.run_cycle())  # repair attempt 1
+    _run(supervisor.run_cycle())  # repair attempt 2
+    third = _run(supervisor.run_cycle())  # budget exhausted -> escalate + deliver
+    assert third.escalated == ["redis"]
+    assert len(notifier.calls) == 1
+    assert third.escalations_delivered[0]["delivered"] is True
+
+    # The outage continues: cycles keep recording the escalation, but the
+    # operator is NOT paged again within the same failure streak.
+    for _ in range(3):
+        run = _run(supervisor.run_cycle())
+        assert run.escalated == ["redis"]
+        assert run.escalations_delivered[0]["delivered"] is False
+        assert "failure streak" in run.escalations_delivered[0]["detail"]
+    assert len(notifier.calls) == 1
+
+    # Recovery ends the streak…
+    healthy["ok"] = True
+    _run(supervisor.run_cycle())
+    # …so a genuinely new outage escalates (and delivers) again.
+    healthy["ok"] = False
+    _run(supervisor.run_cycle())  # repair attempt 1
+    _run(supervisor.run_cycle())  # repair attempt 2
+    again = _run(supervisor.run_cycle())  # budget exhausted -> escalate + deliver
+    assert again.escalated == ["redis"]
+    assert len(notifier.calls) == 2
+
+
+class _FlakyNotifier:
+    """Notifier seam double: the first ``failures`` deliveries fail the way a
+    channel answering HTTP 500 would; later deliveries succeed."""
+
+    channel = "test:flaky"
+
+    def __init__(self, failures: int = 1) -> None:
+        self.calls: list[dict] = []
+        self._failures = failures
+
+    async def deliver(self, escalation):
+        self.calls.append(dict(escalation))
+        if self._failures > 0:
+            self._failures -= 1
+            return {
+                "delivered": False,
+                "subsystem": escalation.get("subsystem"),
+                "channel": self.channel,
+                "detail": "channel returned 500",
+            }
+        return {"delivered": True, "subsystem": escalation.get("subsystem"), "channel": self.channel}
+
+
+def test_supervisor_retries_escalation_after_failed_delivery():
+    """TASK-COR-013 fix-up (review C1): a failed first delivery must not
+    consume the failure streak. The next cycle retries the escalation; only
+    a delivery that lands marks the streak and starts suppression."""
+    registry = HealthRegistry()
+
+    async def probe() -> bool:
+        return False
+
+    async def repair() -> bool:
+        return False  # cannot fix it
+
+    registry.register_probe("redis", probe)
+    notifier = _FlakyNotifier(failures=1)
+    supervisor = SelfHealingSupervisor(
+        registry, repair_cooldown_seconds=0.0, max_repairs_per_subsystem=1, notifier=notifier
+    )
+    supervisor.register_repair("redis", repair)
+
+    _run(supervisor.run_cycle())  # repair attempt 1 - budget now exhausted
+    failed = _run(supervisor.run_cycle())  # escalate -> delivery FAILS
+    assert failed.escalated == ["redis"]
+    assert failed.escalations_delivered[0]["delivered"] is False
+    assert len(notifier.calls) == 1
+
+    retried = _run(supervisor.run_cycle())  # streak unmarked -> retry, lands
+    assert retried.escalations_delivered[0]["delivered"] is True
+    assert len(notifier.calls) == 2
+
+    # Delivered at last: the rest of the streak is suppressed as before.
+    for _ in range(2):
+        run = _run(supervisor.run_cycle())
+        assert run.escalations_delivered[0]["delivered"] is False
+        assert "failure streak" in run.escalations_delivered[0]["detail"]
+    assert len(notifier.calls) == 2
+
+
+def test_supervisor_delivers_once_channel_enabled_mid_outage():
+    """TASK-COR-013 fix-up (review C1): a first escalation attempted while NO
+    channel is configured must not consume the streak either. Enabling the
+    channel mid-outage - the fleet's deploy-then-re-enable sequence - has to
+    deliver on a later cycle, not silently swallow the outage's only page."""
+    registry = HealthRegistry()
+
+    async def probe() -> bool:
+        return False
+
+    async def repair() -> bool:
+        return False  # cannot fix it
+
+    registry.register_probe("redis", probe)
+    supervisor = SelfHealingSupervisor(
+        registry,
+        repair_cooldown_seconds=0.0,
+        max_repairs_per_subsystem=1,
+        notifier=EscalationNotifier(),  # no channel configured, as in production
+    )
+    supervisor.register_repair("redis", repair)
+
+    _run(supervisor.run_cycle())  # repair attempt 1 - budget now exhausted
+    no_channel = _run(supervisor.run_cycle())  # escalate, but nowhere to send it
+    assert no_channel.escalations_delivered[0]["delivered"] is False
+    assert "no escalation channel configured" in no_channel.escalations_delivered[0]["detail"]
+
+    notifier = _RecordingNotifier()
+    supervisor.notifier = notifier  # operator enables the channel mid-outage
+    delivered = _run(supervisor.run_cycle())
+    assert delivered.escalations_delivered[0]["delivered"] is True
+    assert len(notifier.calls) == 1
+
+    # ...and from there the streak behaves normally: repeats are suppressed.
+    suppressed = _run(supervisor.run_cycle())
+    assert suppressed.escalations_delivered[0]["delivered"] is False
+    assert "failure streak" in suppressed.escalations_delivered[0]["detail"]
+    assert len(notifier.calls) == 1
+
+
+def test_notifier_default_dedupe_window_is_six_hours():
+    """TASK-COR-013: the 600s default was the spam cadence's other half; the
+    fleet owner-notification policy (FRD-025) uses a 6h per-key cooldown."""
+    assert EscalationNotifier().dedupe_window_seconds == 21600.0
+
+
 def test_successful_repair_is_only_claimed_when_verified_by_probe():
     registry = HealthRegistry()
     healthy = {"ok": False}
