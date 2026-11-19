@@ -11254,6 +11254,20 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - FRIDAY/src/friday/autonomous/daemon.py
       - FRIDAY/tests/test_autonomous_daemon_task_source.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-FRD-027
+    title: "FRIDAY morning-brief OpenJarvis parity: overnight mail triage line (agentic inbox) + first-meeting line (calendar tool) join the spoken morning brief"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-frd-027-morning-brief-parity
+    evidence:
+      - "Source (IG intake round 2, 2026-11-18): reel Df12EVmO3EL (OpenJarvis, @pragmaticcoder.ai) — a spoken morning briefing that sums up overnight email, names the first meeting, flags missed texts and reports sleep. Full-watch item file: ~/workspace/ig-fullwatch/items/Df12EVmO3EL.md (PARTIAL, 17 points); classification: ~/workspace/ig-intake-2/ROLLUP.md item 1. The briefing theme itself is round-1 covered (W1-IMPL-006 / TASK-VOI-002); this task is the uncovered delta."
+      - "Gap (verified on main 75f06f3e): proactive/morning_brief.py composes goal + fleet + portfolio + overnight notifications + long-term goals, but never reads mail or calendar — although FRIDAY already owns both sources: proactive/agentic_inbox.py (TASK-IG2-FRD-01; triage_inbox() returns counts by category, priority-sorted items) and tools/builtin/calendar.py (GetTodaysEventsTool over FRIDAY_CALENDAR_ICS_URL)."
+      - "Build (this task's PR): morning_brief.py gains _inbox_line() (read-only triage of unread mail: counts by category + most urgent subject; unconfigured mailbox omits the section; a failed read contributes the brief's honest 'could not read … won't guess' line; NO drafts created, nothing sent) and _calendar_line() (first meeting today; unconfigured feed omits; failed feed is honest; empty day says so), wired into compose_morning_brief under the same per-section failure isolation as the existing lines. NOT composed, by design: the reel's sleep line (FRIDAY has no health-data feed) and missed-texts line (phone lane is owner-paired) — absent rather than invented. Claim: issue #35 comment 6972059487."
+    next_action: "PR open -> supervisor review -> serial-lane merge -> deploy with a watched FRIDAY restart -> morning brief in the 09:00-12:00 IST window contains the Mail line (when the mailbox is configured) and the First-meeting line (when a calendar feed is configured) -> VERIFIED."
+    files:
+      - FRIDAY/src/friday/proactive/morning_brief.py
+      - FRIDAY/tests/test_morning_brief.py
+      - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-INF-015
     title: "Inference catalogue: add gemini-3.5-flash-lite to the Gemini adapter SUPPORTED_MODELS (keep the legacy gemini-2.5-flash-lite)"
     status: IN_REVIEW

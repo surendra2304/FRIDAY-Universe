@@ -7,7 +7,17 @@ notification so it is spoken/surfaced on the owner's first interaction:
 * the daily focus goal (DailyRhythmManager, existing);
 * live fleet status (FleetStatusTool — the same truth as /api/agents/status);
 * the portfolio snapshot (StratexPortfolioTool — Binance demo, read-only);
+* overnight mail triage (agentic inbox — unread counts by category plus the
+  most urgent subject; TASK-FRD-027);
+* today's first meeting (calendar tool, when a feed is configured;
+  TASK-FRD-027);
 * overnight events (pending proactive notifications — system alerts etc.).
+
+TASK-FRD-027 is the OpenJarvis-parity delta (IG intake round 2, reel
+Df12EVmO3EL): a spoken morning brief that sums up overnight email and names
+the first meeting. The same reel's sleep line and missed-texts line are NOT
+composed — FRIDAY has no health-data feed, and the phone lane is paired by
+the owner — so they are absent rather than invented.
 
 Truthfulness rules (unchanged from the tools it composes from):
 - every line comes from a real probe/record — nothing invented;
@@ -86,6 +96,87 @@ def _portfolio_line() -> str:
     return "Portfolio: " + "; ".join(x.lstrip("- ") for x in picked)
 
 
+#: Spoken-friendly labels for the agentic-inbox categories, in the order a
+#: morning brief should name them (most owner-relevant first).
+_INBOX_CATEGORY_LABELS: list[tuple[str, str]] = [
+    ("security", "security"),
+    ("action_required", "needing action"),
+    ("finance", "finance"),
+    ("meeting", "meetings"),
+    ("personal", "personal"),
+    ("newsletter", "newsletters"),
+    ("other", "other"),
+]
+
+
+def _inbox_line(triage: Any | None = None) -> str:
+    """Overnight mail triage (TASK-FRD-027; OpenJarvis parity).
+
+    Uses the agentic inbox's own deterministic triage — unread counts by
+    category plus the single highest-priority subject. Read-only: no
+    drafts are created and nothing is sent. An unconfigured mailbox omits
+    the section (an optional source, not a failure); a configured mailbox
+    that cannot be read contributes the brief's usual honest line.
+    """
+    if triage is None:
+        from friday.proactive.agentic_inbox import triage_inbox
+
+        triage = triage_inbox
+    report = triage(limit=20, only_unread=True)
+    status = str(getattr(report, "status", "") or "")
+    if status.startswith("not_configured"):
+        return ""
+    if status != "ok":
+        return (
+            "Mail: I could not read your inbox just now "
+            f"({status[:120]}), so I won't guess."
+        )
+    items = list(getattr(report, "items", []) or [])
+    if not items:
+        return "Mail: no unread mail this morning."
+    counts = report.counts()
+    parts = [
+        f"{counts[key]} {label}"
+        for key, label in _INBOX_CATEGORY_LABELS
+        if counts.get(key)
+    ]
+    line = f"Mail: {len(items)} unread"
+    if parts:
+        line += " — " + ", ".join(parts)
+    subject = str(
+        getattr(getattr(items[0], "message", None), "subject", "") or ""
+    ).strip()
+    if subject:
+        line += f"; most urgent: {subject[:80]}"
+    return line + "."
+
+
+def _calendar_line(tool: Any | None = None) -> str:
+    """Today's first meeting (TASK-FRD-027; OpenJarvis parity).
+
+    Uses the existing calendar tool (FRIDAY_CALENDAR_ICS_URL). No feed
+    configured omits the section; a feed that fails to load contributes
+    the honest line; a configured empty day says so.
+    """
+    if tool is None:
+        from friday.tools.builtin.calendar import GetTodaysEventsTool
+
+        tool = GetTodaysEventsTool()
+    result = tool.execute()
+    if getattr(result, "is_error", False):
+        return "Calendar: I could not read today's calendar just now, so I won't guess."
+    content = str(getattr(result, "content", "") or "")
+    if content.startswith("No calendar feed configured"):
+        return ""
+    if "no meetings scheduled for today" in content:
+        return "Calendar: nothing scheduled today."
+    for raw in content.splitlines():
+        entry = raw.strip()
+        if entry.startswith("1. "):
+            return f"First meeting: {entry[3:]}."
+    return ""
+
+
 def _goal_line() -> str:
     from friday.autonomous.daily_rhythm import daily_rhythm
 
@@ -137,6 +228,24 @@ def compose_morning_brief(notifications: Any | None = None) -> str | None:
             except Exception as exc:
                 sections.append(
                     f"Portfolio: Stratex unreachable ({type(exc).__name__}), so no numbers yet."
+                )
+
+            try:
+                inbox = _inbox_line()
+                if inbox:
+                    sections.append(inbox)
+            except Exception as exc:
+                sections.append(
+                    f"Mail: probe failed ({type(exc).__name__}), so I won't guess."
+                )
+
+            try:
+                calendar = _calendar_line()
+                if calendar:
+                    sections.append(calendar)
+            except Exception as exc:
+                sections.append(
+                    f"Calendar: probe failed ({type(exc).__name__}), so I won't guess."
                 )
 
             if notifications is not None:
