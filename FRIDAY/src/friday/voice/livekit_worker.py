@@ -2626,6 +2626,11 @@ def _new_frame_counters(label: str) -> dict:
         "activity_push_audio": 0,
         "plugin_push_audio": 0,
         "plugin_send_audio_events": 0,
+        # TASK-VOI-024: hop 3b — send_realtime_input calls carrying
+        # audio (bytes actually sent to Google), and silence events
+        # shed at enqueue by the send-path pacing guard below.
+        "plugin_sent_audio_events": 0,
+        "plugin_shed_silence_events": 0,
     }
 
 
@@ -2645,7 +2650,7 @@ def _frame_counters_for(session) -> "dict | None":
 
 
 def _journal_frame_counters(session, reason: str, *, drop: bool = False) -> None:
-    """One journal line carrying a session's three frame counts.
+    """One journal line carrying a session's frame counts.
 
     Called at session end (drop=True — the registry entry goes
     with the line) and at watchdog firing (drop=False — the
@@ -2661,10 +2666,13 @@ def _journal_frame_counters(session, reason: str, *, drop: bool = False) -> None
         return
     logger.info(
         "VOICE frame counters [%s]: activity_push_audio=%d "
-        "plugin_push_audio=%d plugin_send_audio_events=%d (%s)",
+        "plugin_push_audio=%d plugin_send_audio_events=%d "
+        "plugin_sent_audio_events=%d plugin_shed_silence_events=%d (%s)",
         counters.get("label"), counters["activity_push_audio"],
         counters["plugin_push_audio"],
-        counters["plugin_send_audio_events"], reason,
+        counters["plugin_send_audio_events"],
+        counters["plugin_sent_audio_events"],
+        counters["plugin_shed_silence_events"], reason,
     )
     if drop:
         _FRAME_COUNTERS.pop(id(session), None)
@@ -2680,12 +2688,130 @@ def _is_audio_client_event(event) -> bool:
     return getattr(event, "audio", None) is not None
 
 
+# ---- TASK-VOI-024: send-path pacing + the hop-3b (wire) counter ----
+# The transcript-gap diagnosis (~/workspace/voice-transcript-gap) left
+# one hop unobserved in production: the F2 counters stopped at
+# _send_client_event — "what actually queued for the websocket" — so
+# no run could prove a single audio byte reached Google. The
+# 2026-11-19 A/B experiment (~/workspace/voice-exp-ab) instrumented
+# that hop externally and CONVICTED the mechanism: on a calm box the
+# plugin's send task delivered 380 of 577 queued audio events
+# (~15.2 sends/s against the 20/s realtime stream), so speech sat in
+# the plugin's FIFO channel behind seconds of unsent silence until
+# the no-transcript watchdog tore the session down; the arm whose
+# sends kept pace (1,242/1,242) transcribed everything. Two changes:
+#
+# (1) Pacing. The backlog is visible in the counters themselves
+# (queued minus sent). Once it reaches _SEND_BACKLOG_SHED_FRAMES,
+# an audio event whose PCM carries no energy (below the worker's own
+# _ENERGY_RMS_FLOOR — the floor the dead-input monitor already uses
+# to define "audio energy") is shed at enqueue: it never enters the
+# channel, so the silence backlog cannot grow past the threshold and
+# speech is never stuck behind more than the threshold's worth of
+# queued audio. Speech frames are never shed, and below the
+# threshold nothing changes at all — a healthy send path queues
+# every frame exactly as before. Sheds are counted, not silent.
+#
+# (2) The hop-3b counter. The genai session the plugin is currently
+# connected to (its _active_session) is wrapped lazily — the same
+# patch point the experiment's external instrumentation used and
+# verified against production — so plugin_sent_audio_events counts
+# send_realtime_input calls that carry audio: what was actually
+# sent to Google, per session build, journaled in the same F2 line
+# as the queued counts. A reconnect creates a fresh genai session;
+# the wrap is re-attempted on every client event until it lands,
+# and each genai session is wrapped at most once. Counting is
+# defensive throughout, exactly like the rest of this section: any
+# failure leaves the session's behaviour untouched.
+
+# Queued-but-unsent audio events at which silence shedding engages:
+# 40 events x 50 ms = ~2 s of audio. A send path keeping realtime
+# pace holds a backlog of ~0-2; 2 s of backlog is unambiguous lag,
+# and capping the silence share there bounds a speech frame's wait
+# behind non-speech to ~2 s of drain.
+_SEND_BACKLOG_SHED_FRAMES = 40
+
+
+def _send_backlog(counters: dict) -> int:
+    """Audio events queued for the websocket but not yet sent —
+    the send path's lag, in 50 ms frames, read off the counters."""
+    return max(
+        0,
+        int(counters.get("plugin_send_audio_events") or 0)
+        - int(counters.get("plugin_sent_audio_events") or 0),
+    )
+
+
+def _is_silence_audio_event(event) -> bool:
+    """True when an audio client event's PCM carries no energy —
+    RMS below _ENERGY_RMS_FLOOR, the same floor the input monitor
+    uses to stamp "audio energy" (digital silence is ~0; speech at
+    any sane mic gain is far above it). The plugin's audio payload
+    is a genai Blob (``data`` = 16 kHz int16 PCM); a bare bytes
+    payload is read directly. Anything unrecognised is NOT silence
+    (the frame is queued — shedding must never eat a frame it
+    cannot classify)."""
+    audio = getattr(event, "audio", None)
+    data = getattr(audio, "data", None)
+    if data is None and isinstance(audio, (bytes, bytearray, memoryview)):
+        data = audio
+    if data is None:
+        return False
+    return _frame_rms(data) < _ENERGY_RMS_FLOOR
+
+
+def _should_shed_audio_event(counters: dict, event) -> bool:
+    """The pacing decision for one audio event: shed only when the
+    send path is provably behind (backlog at the shed threshold)
+    AND this frame is silence. Any doubt — an unclassifiable frame,
+    a counters surprise — resolves to queue (the pre-fix
+    behaviour). Never raises."""
+    try:
+        if _send_backlog(counters) < _SEND_BACKLOG_SHED_FRAMES:
+            return False
+        return _is_silence_audio_event(event)
+    except Exception:
+        return False
+
+
+def _wrap_genai_wire_session(rt_session, counters: dict) -> None:
+    """Wrap the plugin session's CURRENT genai session so its
+    send_realtime_input calls carrying audio increment
+    plugin_sent_audio_events (hop 3b). Lazy and idempotent per
+    genai session (flagged on the instance); a no-op until the
+    plugin connects (_active_session is None before that) and on
+    any failure — counting can never take a session down."""
+    try:
+        genai_session = getattr(rt_session, "_active_session", None)
+        if genai_session is None:
+            return
+        if getattr(genai_session, "_friday_wire_counter", False):
+            return
+        orig_send = genai_session.send_realtime_input
+
+        async def _counting_send_realtime_input(*args, **kwargs):
+            audio = kwargs.get("audio")
+            if audio is None and args:
+                audio = args[0]
+            if audio is not None:
+                counters["plugin_sent_audio_events"] += 1
+            return await orig_send(*args, **kwargs)
+
+        genai_session.send_realtime_input = _counting_send_realtime_input
+        genai_session._friday_wire_counter = True
+    except Exception:
+        pass
+
+
 def _wrap_plugin_session(rt_session, counters: dict) -> bool:
     """Count one plugin realtime session's push_audio calls and
     its audio client events, via instance-attribute shims. The
     framework's own calls resolve through the instance first —
     including push_audio's internal _send_client_event — so both
     the external and internal paths are counted exactly once.
+    The shim also carries TASK-VOI-024: it lazily wraps the
+    session's genai wire session (hop-3b counting) and sheds
+    silence at enqueue when the send path is behind (pacing).
     Returns False (and changes nothing) when the session cannot
     be wrapped."""
     try:
@@ -2698,7 +2824,17 @@ def _wrap_plugin_session(rt_session, counters: dict) -> bool:
 
         def _counting_send_client_event(event):
             if _is_audio_client_event(event):
+                if _should_shed_audio_event(counters, event):
+                    # TASK-VOI-024 pacing: the send path is behind
+                    # and this frame carries no audio energy — it
+                    # never queues, so speech behind it does not
+                    # wait on silence. Counted, never hidden. The
+                    # plugin's _send_client_event returns None, so
+                    # the shed is indistinguishable to its caller.
+                    counters["plugin_shed_silence_events"] += 1
+                    return None
                 counters["plugin_send_audio_events"] += 1
+            _wrap_genai_wire_session(rt_session, counters)
             return orig_send(event)
 
         rt_session.push_audio = _counting_push_audio
