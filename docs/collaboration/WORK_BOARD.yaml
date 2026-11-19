@@ -11637,6 +11637,29 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Stratex/strategy_xs_lowvol.py
       - Stratex/strategy_xs_momentum.py
       - Stratex/tests/test_fwd025_pandas3_forming_bar.py
+  - id: TASK-INF-017
+    title: "Unified/agent-role Groq size-guard steering: an oversized auto-routed prompt skips Groq BEFORE dispatch (TASK-INF-004 recommendation 2) instead of being diverted by the gateway guard into the catalogue-blind dynamic ladder"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-inf-017-unified-groq-guard
+    pr: null
+    priority: P2
+    created_at: "2026-11-19T14:05:00+05:30"
+    dependencies:
+      - TASK-INF-004
+      - TASK-INF-012
+      - TASK-REL-047
+    files:
+      - Inference/app/providers/unified_manager.py
+      - Inference/tests/test_inf017_unified_groq_size_guard.py
+      - docs/collaboration/WORK_BOARD.yaml
+    evidence:
+      - "Origin: TASK-INF-004 section 7 recommendation 2 (docs/verification/INF004_INFERENCE_LATENCY_COST_PROFILE.md) — chat/completions steers over-limit prompts away from Groq at selection time (REL-043 + INF-012 overlay); the unified path resolves targets statically (ROLE_PROVIDER_MAPPING: trading_analyst/code_generator/devops_engineer/critic -> groq/openai/gpt-oss-120b, plus the groq default) with no size check, so an oversized auto-routed prompt reached the gateway as a Groq primary and the TASK-REL-047 gateway guard diverted it to the catalogue-blind dynamic fallback ladder (arbitrary discovered free model) instead of a deliberate verified one. Verified still true on main 2240ebb8: unified_manager.py contained no GROQ_PROMPT_TOKEN_LIMIT reference at all."
+      - "Fix: UnifiedProviderManager.execute — when provider='auto' resolved the target to Groq (agent primary / role mapping / default; NOT an explicit caller-named provider, NOT the fast-lane contract, model unpinned or a Groq gpt-oss id) and the built ProviderRequest estimates over GROQ_PROMPT_TOKEN_LIMIT via the gateway's own estimate_prompt_tokens (steering boundary == guard boundary by construction), the primary is rerouted before dispatch to gemini/gemini-flash-latest (the unified path's established Gemini role default; adapter-supported, 1M window), the Groq-only reasoning_effort extra param is dropped, a journal warning is logged, and the reason is disclosed on UnifiedExecutionResponse.fallback_reason and in the cache meta (so cache hits disclose identically) whenever the gateway reports no fallback of its own. The gateway guard remains the safety net for explicit-Groq and speculative paths."
+      - "Claim: issue #35 comment 7004011173 (2026-11-19) before editing. Base: main 2240ebb8eae92e768ab5348d3b8c7950e4707623 (verified via git ls-remote + bridge ref read)."
+      - "Tests: new Inference/tests/test_inf017_unified_groq_size_guard.py 7 passed on branch; on pristine main the 3 steering tests fail and the 4 scope guards pass (true regression set). Neighbour ring on branch (inf017 + unified cache scope + INF-010 + INF-006 cache + REL-047 guards + INF-013 + INF-016 + gateway key rotation): 77 passed, 0 failed. Root CI-collected tests/test_inference_explicit_model_contract.py: 17 passed. Ruff (full + F821 gate) clean on both changed code/test files. CI note: root workflows run root tests/ + ruff F821 over Inference; Inference/tests is not collected by root CI (same as INF-013/015/016) — sandbox evidence above is the test evidence."
+      - "DISCLOSURE: no live-server probe in this task (sandbox only, per lane discipline). Post-deploy probe owed: one oversized agent-role unified call (e.g. code_generator with a >7k-token prompt) in the S1 journal showing the TASK-INF-017 reroute warning and a gemini serve, plus one under-limit control still serving from Groq."
+    next_action: "Supervisor review -> serial-lane merge -> deploy -> post-deploy live probe (see evidence disclosure) -> VERIFIED."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
