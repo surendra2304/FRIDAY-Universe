@@ -37,6 +37,7 @@ from apps.api.routers import (
     mesh_events_router,
     v1_resilience_router,
     v1_collaboration_router,
+    v1_promotion_router,
     semantic_search_router,
     encrypted_vector_router,
     causal_graph_router,
@@ -339,6 +340,7 @@ app.include_router(mesh_events_router)
 app.include_router(audit_router)
 app.include_router(v1_resilience_router)
 app.include_router(v1_collaboration_router)
+app.include_router(v1_promotion_router)  # memory scope promotion (/v1/promotion/*)
 from apps.api.routers.enhanced_memory import router as enhanced_memory_router
 from apps.api.routers.knowledge_graph import router as knowledge_graph_router
 from apps.api.routers.multimodal_memory import router as multimodal_memory_router
