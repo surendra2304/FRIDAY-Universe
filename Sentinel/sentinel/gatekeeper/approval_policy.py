@@ -31,7 +31,21 @@ so risk cannot be smuggled past the classifier in the details):
   irreversible by definition, and the dispatcher cannot prove a deletion
   target is not owner data, so every deletion prompts.
 - ``credential_change`` — credential / password / secret / API-key /
-  signing-key material being changed, rotated, or read out.
+  signing-key material being changed, rotated, or read out. This includes
+  BARE credential nouns (a lone ``token`` / ``secret``, their plurals, and
+  single-token compounds such as ``privatekey`` / ``access_token``):
+  the SEN-019 hardening follow-up found that an action naming only the
+  bare noun escaped the exact-phrase pass and could auto-approve at LOW
+  (``check token``, ``read secret``). Bare nouns are matched as whole
+  tokens, never substrings, so lookalikes stay in the low-risk class
+  (``tokenizer``, ``secretary``, ``keyboard``, a bare ``key`` in
+  ``key metrics``), and a bare ``token`` in the ACTION is excused only
+  when every occurrence is usage-qualified (``token usage``,
+  ``count tokens``, ``token consumption`` — LLM-usage metering, not
+  credential material). The exception never applies to ``secret`` and
+  never to the details payload: a bare noun smuggled in details always
+  prompts, and a details key literally named ``token`` is credential
+  material by name.
 - ``sentinel_policy_change`` — anything that would alter the approval
   machinery itself (approval policy, auto-approve configuration, kill
   switch). Sentinel can never approve a change to its own policy.
@@ -53,6 +67,15 @@ Auto-approve requires ALL of the following:
      is True`` (attestation alone is never enough — the hard-bound and
      destructive checks above still apply, and the caller's risk claim
      must still be low).
+
+Never-raises hardening (SEN-019 follow-up): ``classify_approval`` claims
+above that it never raises on odd input, but non-string ``action`` /
+``risk_level`` values used to raise inside it (``TypeError`` /
+``AttributeError``) — callers were fail-closed only by accident, because
+the exception happened to abort the submission. Non-string inputs now
+return the fail-closed OWNER_PROMPT decision (category
+``invalid_input``) BY DESIGN, and the classifier body is guarded so no
+unexpected shape can raise out of it.
 """
 from __future__ import annotations
 
@@ -134,8 +157,32 @@ _MONEY_MOVEMENT_TOKENS = frozenset({
 _CREDENTIAL_PHRASES = (
     "credential", "password", "passwd", "api key", "api_key", "apikey",
     "access token", "auth token", "bot token", "signing key",
-    "private key", "secret key",
+    "private key", "secret key", "access key", "auth key",
+    "encryption key", "master key", "passphrase",
 )
+# --- Bare credential nouns (SEN-019 hardening) ----------------------------
+# Matched as WHOLE tokens (the _tokens regex splits on non-alphanumerics,
+# so "access_token" tokenises to "access" + "token" and is caught by the
+# bare-noun pass, while "tokenizer" / "secretary" are single different
+# tokens and are NOT caught). A bare "key" is deliberately NOT in these
+# sets: it is an ordinary adjective in this fleet ("key metrics",
+# "key findings") and every credential use of it is a phrase above.
+_BARE_SECRET_NOUNS = frozenset({"secret", "secrets"})
+_BARE_TOKEN_NOUNS = frozenset({"token", "tokens"})
+# Single-token compounds whose spaced forms are phrases above.
+_CREDENTIAL_COMPOUND_TOKENS = frozenset({
+    "privatekey", "secretkey", "accesstoken", "authtoken", "bottoken",
+    "signingkey", "accesskey", "encryptionkey",
+})
+# A bare token noun in the ACTION is excused only when EVERY occurrence
+# sits next to one of these usage qualifiers ("token usage",
+# "count tokens used", "token consumption"): that is metering of LLM
+# tokens, not credential material. The exception is action-only and
+# token-only — see the module docstring.
+_TOKEN_USAGE_QUALIFIERS = frozenset({
+    "usage", "used", "count", "counts", "counted", "counting",
+    "consumption", "quota", "budget", "spend", "spending",
+})
 _POLICY_CHANGE_VERBS = frozenset({
     "change", "update", "modify", "set", "edit", "alter", "disable",
     "enable", "configure", "write",
@@ -148,14 +195,59 @@ def _tokens(text: str) -> list[str]:
     return _TOKEN_RE.findall(text.lower())
 
 
+def _details_text(details: dict | None) -> str:
+    if not details:
+        return ""
+    try:
+        return json.dumps(details, default=str, sort_keys=True)
+    except (TypeError, ValueError):
+        return str(details)
+
+
 def _haystack(action: str, details: dict | None) -> str:
     parts = [action or ""]
-    if details:
-        try:
-            parts.append(json.dumps(details, default=str, sort_keys=True))
-        except (TypeError, ValueError):
-            parts.append(str(details))
+    details_text = _details_text(details)
+    if details_text:
+        parts.append(details_text)
     return " ".join(parts)
+
+
+def _token_noun_is_usage_only(tokens: list[str]) -> bool:
+    """True when every token/tokens occurrence is usage-qualified."""
+    occurrences = [i for i, tok in enumerate(tokens) if tok in _BARE_TOKEN_NOUNS]
+    if not occurrences:
+        return False
+    for i in occurrences:
+        neighbours = set()
+        if i > 0:
+            neighbours.add(tokens[i - 1])
+        if i + 1 < len(tokens):
+            neighbours.add(tokens[i + 1])
+        if not (neighbours & _TOKEN_USAGE_QUALIFIERS):
+            return False
+    return True
+
+
+def _has_bare_credential(action: str, details: dict | None) -> bool:
+    """Bare credential nouns (SEN-019 hardening): see module docstring."""
+    action_tokens = _tokens(action or "")
+    details_tokens = _tokens(_details_text(details))
+    # Secrets and credential compounds are never excused, in the action
+    # or smuggled in the details payload.
+    if (set(action_tokens) | set(details_tokens)) & (
+        _BARE_SECRET_NOUNS | _CREDENTIAL_COMPOUND_TOKENS
+    ):
+        return True
+    # A bare token noun in the DETAILS always fires: the payload cannot
+    # prove a usage context, and a key literally named "token" is
+    # credential material by name.
+    if set(details_tokens) & _BARE_TOKEN_NOUNS:
+        return True
+    # A bare token noun in the ACTION fires unless every occurrence is
+    # usage-qualified (LLM token metering).
+    if set(action_tokens) & _BARE_TOKEN_NOUNS:
+        return not _token_noun_is_usage_only(action_tokens)
+    return False
 
 
 def _hard_bound_category(action: str, details: dict | None) -> str | None:
@@ -185,7 +277,11 @@ def _hard_bound_category(action: str, details: dict | None) -> str | None:
     lowered = text.lower()
     if any(phrase in lowered for phrase in _CREDENTIAL_PHRASES):
         return "credential_change"
-    if "secret" in token_set and token_set & _POLICY_CHANGE_VERBS:
+    # Bare credential nouns (SEN-019 hardening). This supersedes the
+    # original narrow pass, which fired only when "secret" co-occurred
+    # with a policy-change verb — a lone "token" / "secret" named by a
+    # read-only action escaped it and auto-approved at LOW.
+    if _has_bare_credential(action, details):
         return "credential_change"
 
     # Changes to Sentinel's own approval/policy machinery.
@@ -197,6 +293,14 @@ def _hard_bound_category(action: str, details: dict | None) -> str | None:
         return "sentinel_policy_change"
 
     return None
+
+
+def _invalid_input(reason: str) -> ApprovalClassification:
+    return ApprovalClassification(
+        tier=ApprovalTier.OWNER_PROMPT,
+        category="invalid_input",
+        reason=reason,
+    )
 
 
 def classify_approval(
@@ -213,7 +317,46 @@ def classify_approval(
     submission signature and for future per-agent policy; the current
     policy is deliberately agent-agnostic (a trusted name must never be
     what makes an action auto-approvable).
+
+    SEN-019 hardening: non-string ``action`` / ``risk_level`` values
+    return the fail-closed OWNER_PROMPT decision (category
+    ``invalid_input``) instead of raising — earlier they raised
+    ``TypeError`` / ``AttributeError`` inside this function, so the
+    fail-closed outcome was an accident of the crash, not the design.
+    The reason names the offending TYPE only, never the value (an odd
+    value may itself be credential material). Any other unexpected
+    shape is caught by the guard around the implementation and also
+    prompts: this function never raises.
     """
+    if not isinstance(action, str):
+        return _invalid_input(
+            f"Action is not a string (got {type(action).__name__}); "
+            "cannot positively classify as low-risk, so the owner decides."
+        )
+    if not isinstance(risk_level, str):
+        return _invalid_input(
+            f"Risk level is not a string (got {type(risk_level).__name__}); "
+            "only an explicit LOW string claim can auto-approve, so the owner decides."
+        )
+    try:
+        return _classify_approval_impl(
+            agent_name=agent_name, action=action,
+            risk_level=risk_level, details=details,
+        )
+    except Exception:  # never raises: any odd shape prompts the owner
+        return _invalid_input(
+            "Unparseable approval input; cannot positively classify "
+            "as low-risk, so the owner decides."
+        )
+
+
+def _classify_approval_impl(
+    *,
+    agent_name: str,
+    action: str,
+    risk_level: str = "GUARDED",
+    details: dict | None = None,
+) -> ApprovalClassification:
     hard = _hard_bound_category(action or "", details)
     if hard is not None:
         return ApprovalClassification(
@@ -221,6 +364,13 @@ def classify_approval(
             category=hard,
             reason=f"Hard bound '{hard}': Sentinel can never auto-approve this category; the owner decides.",
             hard_bound=True,
+        )
+
+    if details is not None and not isinstance(details, dict):
+        return _invalid_input(
+            f"Details is not a mapping (got {type(details).__name__}); "
+            "a payload the policy cannot structurally inspect cannot "
+            "positively classify as low-risk, so the owner decides."
         )
 
     claim = (risk_level or "").strip().upper()
