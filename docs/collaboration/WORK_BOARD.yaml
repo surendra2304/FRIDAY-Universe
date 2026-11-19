@@ -11637,6 +11637,22 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Stratex/strategy_xs_lowvol.py
       - Stratex/strategy_xs_momentum.py
       - Stratex/tests/test_fwd025_pandas3_forming_bar.py
+  - id: TASK-REL-053
+    title: "CI pytest lists: collect the merged-but-uncollected suites (FRD-024 task source, Stratex fwd018/fwd021/fwd024 + exp001/exp002, voice voi016/017/018/022, VyralX viral_framing)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-rel-053-ci-pytest-lists
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Claim: issue #35 comment 6995890124. Base: main 39e1ce7c5cc2cda5dba80ee1cf467d5b90b8c0ce."
+      - "Defect: five merged programmes' suites are named in NO CI workflow (verified by grep over .github/workflows/ on main 39e1ce7c), so green CI has not been test evidence for them: FRIDAY/tests/test_autonomous_daemon_task_source.py (TASK-FRD-024), Stratex fwd018 x4 + fwd021 + fwd024, Stratex self-experiments exp001 (PR #986 activation condition A3 explicitly requires CI collection) + exp002, FRIDAY voice voi016/voi017/voi018/voi022 (the #1041 review noted the voice-regressions step's explicit list excludes them), VyralX/tests/test_viral_framing.py."
+      - "Local verification on pristine main 39e1ce7c (Python 3.12.3): Stratex 8 suites in one invocation = 191 passed (fwd018 bollinger 14, ichimoku 16, lane_visibility 4, shock 10; fwd021 33; fwd024 21; exp001 26; exp002 67) under pandas 3.1.1/numpy 2.5.5. FRIDAY task-source = 16 passed standalone and 626 passed in the full owner-workflows contracts-step list with it appended. Voice 4 suites = 58 passed + 7 skipped + 1 failed: voi017 test_real_realtime_model_factory_wrap_installs fails ONLY on ModuleNotFoundError: livekit.plugins in the local env — FRIDAY/requirements.txt:26 declares livekit-plugins-google>=1.0.0 and the voice-regressions job installs it, so the import surface exists in CI (disclosed in the PR body). VyralX framing = 14 passed standalone; the VyralX step's 4 files together = 28 passed / 0 failed (junitxml)."
+      - "Wiring (each suite added to the list its area already uses): voice suites -> friday-universe-ci.yml voice-regressions explicit list (its detect filter already globs FRIDAY/tests/test_voice_*.py); task-source -> owner-workflows.yml contracts step list; Stratex suites -> NEW owner-workflows.yml step (in-step pip install 'pandas>=2.2,<4' requests, mirroring requirements-ci.txt bounds; job deps already carry httpx + pytest-asyncio) + 'Stratex/**' added to both trigger path lists (the workflow previously never fired on Stratex changes); viral_framing -> owner-workflows.yml VyralX step list + in-step pip install 'edge-tts>=6.1,<8.0' 'yt-dlp>=2025.1' (VyralX/pyproject.toml bounds — viral_remix imports both at module level and the job's base install lacks them). No source or test files touched."
+    next_action: "Supervisor review, then merge. First live CI exercise: the owner-workflows additions run on this PR itself (the workflow file is in its own trigger paths); the voice-regressions additions first run on the next voice-path change (the job is path-filtered and the workflow file is not in its filter) — the reviewer can confirm via a follow-up voice-touching PR if wanted."
+    files:
+      - .github/workflows/friday-universe-ci.yml
+      - .github/workflows/owner-workflows.yml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
