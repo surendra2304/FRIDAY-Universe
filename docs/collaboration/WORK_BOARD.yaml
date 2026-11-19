@@ -12051,6 +12051,29 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Overlap note: PR #1054 (TASK-COR-013) also touches resilience.py run_cycle and this board file; whichever merges second needs a union resolution there (this PR's run_cycle hunk is confined to the probe-result branch at the top of the loop and composes with #1054's escalate-once-per-streak)."
     blockers: []
     next_action: "Supervisor review -> serial-lane merge (union vs PR #1054 if it lands first) -> deploy to S2 with a watched Cortex restart -> production proof: with INFERENCE_BASE_URL/AI_UNIVERSE_BASE_URL still unset, the self-healing status shows ai_universe under unconfigured (not unhealthy/escalated) across several cycles and zero escalation deliveries -> VERIFIED. Do NOT re-enable the S2 escalation webhook before this and #1054 are both deployed."
+  - id: TASK-REL-055
+    title: "Remove dead VyralX media_kit (fabricated figures) and the spent bridge-recover workflow"
+    status: MERGED
+    owner: muse_ai
+    branch: claude/task-rel-055-dead-code-vyralx-bridge
+    pr: 1079
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Owner purge delegation 2026-11-19 ('Delete what you judge dead'); media_kit carried a standing never-revive note (its rate card and pitch email invent figures from a projected-views input)."
+      - "Claim posted on issue #35 (comment 7004468080). Shipped on the same main as TASK-REL-054's PR #1078."
+      - "media_kit zero-reference proof: repo-wide grep finds the module only in itself, one docstring sentence in brand_pitch.py (adjusted here), and its exclusive test in test_monetization_and_growth.py (import + one test method removed here). No router, main, worker, render or loop import."
+      - "bridge-recover.yml zero-reference proof: repo-wide grep for 'bridge-recover' returns zero references; the workflow was the one-shot emergency bridge restore (PR #1059, used once 2026-11-19); coordinator ordered its removal after use."
+      - "Local tests: test_monetization_and_growth.py + test_brand_pitch.py = 15 passed, 1 failed (test_multiplatform_packager - sandbox tempfile pathology in its TemporaryDirectory; the same test passed in the first run of this same edited tree; unrelated to this change). CI collection: no workflow references media_kit, the adjusted test file, or bridge-recover (verified against .github/workflows/)."
+      - "REPORTED, NOT DELETED (coordinator scope addition, verified first): the Path C source-catalogue JSONs (VyralX/app/data/source_catalog_lane1/2/3.json) still have live loader code - app/services/source_catalog{,_lane2,_lane3}.py load them (no missing-file tolerance) and are consumed by content_factory.py and previs.py, which today are referenced only by tests. Deleting the JSONs alone would break the loaders' suites and leave importable modules that raise on call. Recommendation in the PR body: retire the whole Path C lane machinery as one scoped task, or keep the JSONs as the stock record."
+      - "Hunts (assessed, not deleted): Binance classic-testnet remnants are branches inside LIVE modules (adapter env resolver, config hosts, unified_portfolio_hub probes, async_pipeline default) - excision is surgery on the live Binance path, needs its own task. Groq VOICE remnants: nothing to delete - the pipeline was removed by TASK-VOI-009 (PR #284); remaining hits are historical docstrings; Groq TEXT routing is live and untouched."
+    next_action: "Coordinator review and merge (union with PR #1078's board append). Decide the Path C catalogue retirement scope from the PR body report."
+    files:
+      - VyralX/app/services/media_kit.py (deleted)
+      - VyralX/tests/test_monetization_and_growth.py
+      - VyralX/app/services/brand_pitch.py
+      - .github/workflows/bridge-recover.yml (deleted)
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
