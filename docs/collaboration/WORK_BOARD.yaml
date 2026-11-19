@@ -12241,6 +12241,34 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - VyralX/tests/test_viral_framing.py
       - VyralX/tests/test_vyr014_quality_gates.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-VYR-026
+    title: "VyralX vision rate-limit hardening — instrument/retry/pace/budget/shrink: log 429 headers+body, bounded Retry-After retry in the scene client, loop pacing + persisted daily vision-token budget, clean vision_rate_limited stop, 512px frames"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-vyr-026-vision-rate-limit-hardening
+    pr: 1106
+    priority: P1
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Claim: GitHub issue #35 comment 7015740513 by Muse before any editing (TASK-VYR-026; next free VYR id — board max was TASK-VYR-025). Base: main 66b7b79ebf0b6922690b237b6141464e02662682."
+      - "Diagnosis (~/workspace/vyralx-vision-429/DIAGNOSIS.md, read-only, 2026-11-19): supervised cycles 6/7 on U2 lost 14/24 and 22/24 attempts to vision_unavailable; every 429 is the single Groq scene call (qwen/qwen3.8-27b, free plan 8k TPM / 200k TPD per organization, ~3,000-5,500 est. tokens/call); the client made exactly one attempt, discarded the 429 body + x-ratelimit headers, and the loop had no pacing, no retry and no daily accounting."
+    next_action: "Supervisor review -> merge. Acceptance: next supervised cycle on U2 — vision failures log their binding limit (fix 0), TPM collisions are absorbed by retry/pacing, and a drained day stops cleanly as vision_daily_budget / vision_rate_limited instead of dozens of vision_unavailable skips. NOT deployed by this PR; loop stays OFF."
+    evidence_build:
+      - "FIX 0 (instrument): scene_analysis._vision_request (the shared transport for analyze_scene + describe_scene) logs status + truncated body + x-ratelimit-limit/remaining/reset-tokens, limit/remaining-requests and retry-after on EVERY non-200 via _log_vision_failure. Non-429 behaviour unchanged."
+      - "FIX 1 (retry): _vision_request retries HTTP 429 only — up to vision_max_retries (default 3) retries, Retry-After honoured (seconds or HTTP-date), fallback ladder 30/60/120s, total wait capped at vision_retry_wait_cap_seconds (default 240s). Each logical call records last_vision_outcome (seq, status, attempts, estimated tokens charged per HTTP attempt, rate_limit_exhausted, called_at). Transport errors are recorded and propagate into the callers' existing None/'' handling."
+      - "FIX 2 (pace + budget): viral_loop enforces viral_loop_vision_min_interval_seconds (default 65s) between scene calls via scene_analysis.wait_for_vision_pacing, seeded across processes from the persisted last-call epoch (supervised cycles are separate processes); the day's estimated spend (UTC date) accumulates in viral_loop_state.json's vision_budget, persisted after every vision-consuming attempt, and a cycle stops with stopped=vision_daily_budget at viral_loop_vision_daily_token_budget (default 180000, 0 = off); consecutive rate-limit-exhausted calls stop the cycle at viral_loop_vision_rate_limit_stop_threshold (default 3) with the triggering candidate counted under the distinct skip reason vision_rate_limited. Estimator (scene_analysis.estimate_vision_tokens, documented in code): text chars/3 + 1000 per image + max_tokens — stable and deliberately at the top of the diagnosed range."
+      - "FIX 3 (shrink): scene frame max edge 640 -> 512 px (_MAX_EDGE, shared by both vision passes). max_tokens deliberately unchanged — the diagnosis allows trimming only after fix 0 measures real record sizes."
+      - "Tests: 16 new — test_viral_framing.py 62 -> 73 (retry recovery after 429; Retry-After honoured; fallback ladder; retries exhausted -> None + exhausted outcome; non-429 does NOT retry; wait-cap give-up; header/body logging via fake response + caplog; describe_scene retries too; pacing wait; pacing seed from persisted epoch; deterministic estimator) and test_viral_loop.py +5 (consecutive-exhaustion clean stop with pacing consulted per attempt; streak reset on success; daily-budget stop; budget persistence across cycles; pacing only for candidates that produce). All clocks/sleeps faked — no test sleeps. Head: CI ring (owner-workflows VyralX step's 4 files + test_vyr014_quality_gates) 120 passed (109 baseline + 11 new), 0 failures/errors/skips; loop files (test_viral_loop + test_viral_loop_audition) 15 passed."
+      - "A/B on pristine base 66b7b79e with head test files: all 16 new tests FAIL for the intended reasons — retry tests get None (base makes exactly 1 call vs 4 on the exhausted test: assert 1 == 4); the logging test fails on the old log line, which carries no headers/body; pacing/seed/estimator/outcome functions are absent on base (AttributeError); the base loop has no vision wiring (stops/pacing never happen). Non-vacuous."
+      - "CI collection: test_viral_framing.py IS in owner-workflows.yml's VyralX step pytest list; test_viral_loop.py is NOT a workflow-list file (same posture as test_vyr014_quality_gates.py in VYR-024/025) — its 5 tests run in the local ring reported above. GitHub CI state reported at ship time in the PR."
+    files:
+      - VyralX/app/services/scene_analysis.py
+      - VyralX/app/services/viral_loop.py
+      - VyralX/app/config.py
+      - VyralX/tests/test_viral_framing.py
+      - VyralX/tests/test_viral_loop.py
+      - docs/collaboration/WORK_BOARD.yaml
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
