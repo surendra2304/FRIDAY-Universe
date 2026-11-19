@@ -33,6 +33,7 @@ from app.improvement.idle_loop import (
     FabricLessonWriter,
     GoldenBattery,
     GoldenSpec,
+    HostLoadSnapshot,
     IdleExperimentLoop,
     challenger_mutations,
     champion_manifest,
@@ -108,6 +109,18 @@ def read_jsonl(path: Path) -> list[dict]:
 
 
 def make_loop(tmp_path: Path, tasks, battery, writer, **kwargs) -> IdleExperimentLoop:
+    # Slice-2 C2 disclosure: the loop gained a host-load gate whose
+    # default probe reads the REAL host. These slice-1 tests pin
+    # non-gate behaviour, so they inject a calm-host probe to stay
+    # deterministic on a loaded machine; the gate itself (refusals,
+    # fail-closed readings, boundaries) is pinned in
+    # test_frg017_wiring_gates.py.
+    kwargs.setdefault(
+        "load_probe",
+        lambda: HostLoadSnapshot(
+            load1=0.2, cpu_count=4, mem_available_fraction=0.9
+        ),
+    )
     return IdleExperimentLoop(
         store=FakeStore(tasks),
         data_dir=tmp_path / "idle",
@@ -297,9 +310,15 @@ def test_fabric_writer_writes_procedural_type_to_the_right_sections():
 
     captured: list[dict] = []
 
+    # Slice-2 C3 contract (disclosed update to this slice-1 test): the
+    # writer delivers through record_and_confirm_cloud and counts a
+    # lesson delivered only when the fabric reports Memora confirmed
+    # it — a record()-only fabric can no longer confirm delivery (see
+    # test_frg017_wiring_gates.py for the full C3 suite).
     class FakeFabric:
-        def record(self, **kwargs):
+        def record_and_confirm_cloud(self, **kwargs):
             captured.append(kwargs)
+            return object(), True
 
     writer = FabricLessonWriter(fabric=FakeFabric())
     assert writer.deliver("a lesson", {"experiment_id": "exp_x"}, universal=False) is True
@@ -315,10 +334,12 @@ def test_fabric_writer_writes_procedural_type_to_the_right_sections():
 
 def test_fabric_writer_failure_is_a_pending_not_an_exception():
     class ExplodingFabric:
-        def record(self, **kwargs):
+        def record_and_confirm_cloud(self, **kwargs):
             raise RuntimeError("memora unreachable")
 
-    writer = FabricLessonWriter(fabric=ExplodingFabric())
+    writer = FabricLessonWriter(
+        fabric=ExplodingFabric(), max_attempts=1, backoff_seconds=0
+    )
     assert writer.deliver("a lesson", {}, universal=False) is False
 
 

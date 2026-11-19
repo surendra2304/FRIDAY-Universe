@@ -113,7 +113,9 @@ jobs:
             Forge/tests/unit/test_task_forge_002_recovery_escalation.py \
             Forge/tests/unit/test_task_forge_002_routing.py \
             Forge/tests/unit/test_task_forge_002_truthful_completion.py \
-            Forge/tests/unit/test_developer_ai_universe.py
+            Forge/tests/unit/test_developer_ai_universe.py \
+            Forge/tests/test_frg017_idle_experiments.py \
+            Forge/tests/test_frg017_wiring_gates.py
       - name: Direct memory evidence outranks graph-only context
         env:
           PYTHONPATH: Memora
