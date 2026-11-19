@@ -36,9 +36,39 @@ services, production data, another agent, or any risk parameter. The
 champion registry this loop maintains is its own record — production
 build roles do NOT read it yet; adopting a champion into the build path
 is a change that travels the Universe's change path (Forge builds it,
-Sentinel gates it, Cortex schedules it, fleet CD deploys it). This
-module is deliberately NOT wired into the FastAPI lifespan in this
-slice; run_forever() is the driver a follow-up wires after review.
+Sentinel gates it, Cortex schedules it, fleet CD deploys it).
+
+Slice 2 (the lifespan-wiring follow-up) adds the two review conditions
+that blocked wiring, and the wiring itself:
+
+  C2 — host-load gate. A cycle starts only when the host is calm: the
+  1-minute load average must be below LOAD_GATE_FRACTION of the CPU
+  count (the same fraction Stratex's self-experiment loop adopted from
+  this review) AND at least MIN_MEM_AVAILABLE_FRACTION of memory must
+  be available. A refusal is logged with the measured values. The gate
+  fails closed: an unreadable load or memory reading refuses the cycle.
+  The fleet hosts have ~956 MB of RAM for seven agents; an experiment
+  battery that spawns pytest subprocesses must never compete with
+  production work for that memory.
+
+  C3 — Memora-confirmed lesson delivery. Slice 1 counted a lesson as
+  delivered when fabric.record() returned without raising — but the
+  fabric records locally and discards the cloud dispatch result, so
+  "delivered" meant fabric-accepted, not Memora-accepted. The writer
+  now delivers through the fabric's record_and_confirm_cloud() and
+  counts a lesson delivered ONLY when Memora itself answered the
+  dispatch (HTTP 200/201). Unconfirmed deliveries are retried with
+  exponential backoff inside deliver(), and still stay "pending" in
+  the lessons ledger for flush_pending_lessons() afterwards.
+
+  Wiring — app.main's lifespan starts run_forever() ONLY through
+  start_if_enabled(): the loop is wired behind FORGE_IDLE_EXPERIMENTS
+  and starts solely when that flag is explicitly "on". Unset, "off",
+  or any other value leaves the loop unstarted — the default is OFF,
+  and setting the flag is a coordinator activation step, never part of
+  a code change. (A directly constructed loop driven by hand keeps
+  slice 1's experiments_enabled() kill-switch semantics: the "off"
+  family of values vetoes every cycle.)
 """
 
 from __future__ import annotations
@@ -54,7 +84,7 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 from app.agents.pattern_library import match_pattern
 from app.agents.synthesis import synthesize_files_for_goal, synthesize_project
@@ -95,6 +125,24 @@ DEFAULT_DAILY_CAP = 6
 DEFAULT_ARM_TIMEOUT_S = 120.0
 DEFAULT_POLL_SECONDS = 300.0
 
+#: C2 host-load gate (slice 2): a cycle may start only while the
+#: 1-minute load average is below this fraction of the CPU count.
+#: Mirrors Stratex self-experiments' LOAD_GATE_FRACTION, which adopted
+#: the value from this task's review condition.
+LOAD_GATE_FRACTION = 0.7
+
+#: C2 host-load gate (slice 2): a cycle may start only while at least
+#: this fraction of total memory is available (MemAvailable / MemTotal
+#: from /proc/meminfo). On a ~956 MB fleet host this reserves ~143 MB
+#: of headroom the experiment battery may not consume.
+MIN_MEM_AVAILABLE_FRACTION = 0.15
+
+#: C3 delivery retry (slice 2): attempts per deliver() call before the
+#: lesson is left pending in the ledger, and the first backoff delay —
+#: each subsequent delay doubles (1 s, 2 s with the defaults).
+DELIVERY_MAX_ATTEMPTS = 3
+DELIVERY_BACKOFF_SECONDS = 1.0
+
 #: Failure-cluster taxonomy — deliberately mirrors
 #: app.improvement.self_improve so idle-loop hypotheses and the existing
 #: improvement proposals speak the same language.
@@ -114,6 +162,92 @@ def cluster_of(error_message: str | None) -> str:
         if any(n in err for n in needles):
             return cluster
     return "runtime_failures"
+
+
+# ---------------------------------------------------------------------------
+# C2 — host-load gate (slice 2)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class HostLoadSnapshot:
+    """One reading of the host's load and memory pressure."""
+
+    load1: float
+    cpu_count: int
+    mem_available_fraction: float | None  # None = memory reading unavailable
+
+    @property
+    def load_fraction(self) -> float:
+        return self.load1 / max(1, self.cpu_count)
+
+    def refusal_reason(
+        self,
+        max_load_fraction: float = LOAD_GATE_FRACTION,
+        min_mem_available_fraction: float = MIN_MEM_AVAILABLE_FRACTION,
+    ) -> str | None:
+        """Why this snapshot refuses a cycle, or None when it is calm."""
+        if self.load_fraction >= max_load_fraction:
+            return (
+                f"load1 {self.load1:.2f} is {self.load_fraction:.2f} of "
+                f"{self.cpu_count} cpu(s), at/above the "
+                f"{max_load_fraction:.2f} gate"
+            )
+        if self.mem_available_fraction is None:
+            return "memory availability unreadable (/proc/meminfo)"
+        if self.mem_available_fraction < min_mem_available_fraction:
+            return (
+                f"memory available fraction "
+                f"{self.mem_available_fraction:.3f} is below the "
+                f"{min_mem_available_fraction:.3f} gate"
+            )
+        return None
+
+
+def mem_available_fraction(meminfo_text: str) -> float | None:
+    """MemAvailable / MemTotal from /proc/meminfo text, or None."""
+    total = available = None
+    for line in meminfo_text.splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[0] == "MemTotal:":
+            try:
+                total = float(parts[1])
+            except ValueError:
+                return None
+        elif len(parts) >= 2 and parts[0] == "MemAvailable:":
+            try:
+                available = float(parts[1])
+            except ValueError:
+                return None
+    if not total or available is None:
+        return None
+    return available / total
+
+
+def read_host_load(meminfo_path: str = "/proc/meminfo") -> HostLoadSnapshot | None:
+    """Read the current host load + memory pressure.
+
+    Returns None when the load average itself is unreadable — the gate
+    treats an unreadable host as a loaded host (fail closed). A missing
+    or unparseable meminfo leaves mem_available_fraction None, which
+    the gate also treats as a refusal.
+    """
+    try:
+        load1 = os.getloadavg()[0]
+    except (OSError, AttributeError):
+        return None
+    mem_fraction: float | None = None
+    try:
+        mem_fraction = mem_available_fraction(
+            Path(meminfo_path).read_text(encoding="utf-8")
+        )
+    except OSError:
+        mem_fraction = None
+    return HostLoadSnapshot(
+        load1=load1,
+        cpu_count=os.cpu_count() or 1,
+        mem_available_fraction=mem_fraction,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -349,14 +483,35 @@ class FabricLessonWriter:
     """Delivers lessons to Memora through mesh.memory_fabric.
 
     The fabric write is the fleet's sanctioned path (the agent's own
-    key, graceful local degrade inside the fabric). A delivery counts
-    as made when record() returns without raising; anything else —
-    fabric unimportable, Memora-side error surfacing as an exception —
-    leaves the lesson pending in the loop's local ledger for retry.
+    key, graceful local degrade inside the fabric).
+
+    C3 (slice 2): a delivery counts as made ONLY when Memora itself
+    confirmed acceptance — the fabric's record_and_confirm_cloud()
+    reports True only when Memora answered the cloud dispatch with
+    HTTP 200/201. Slice 1 counted record() returning without raising,
+    but the fabric records locally (in-memory / SQLite) and discards
+    the dispatch result, so "delivered" meant fabric-accepted, never
+    Memora-accepted. A fabric that offers no confirmation path can
+    therefore never confirm a delivery here. Unconfirmed attempts are
+    retried with exponential backoff (DELIVERY_MAX_ATTEMPTS attempts,
+    DELIVERY_BACKOFF_SECONDS doubling); a lesson that still is not
+    confirmed returns False and stays "pending" in the loop's local
+    ledger for flush_pending_lessons() on later cycles. Retrying is
+    safe against double-banking: Memora's POST /v1/memories suppresses
+    duplicate content server-side.
     """
 
-    def __init__(self, fabric: Any | None = None):
+    def __init__(
+        self,
+        fabric: Any | None = None,
+        max_attempts: int = DELIVERY_MAX_ATTEMPTS,
+        backoff_seconds: float = DELIVERY_BACKOFF_SECONDS,
+        sleeper: Callable[[float], None] = time.sleep,
+    ):
         self._fabric = fabric
+        self.max_attempts = max(1, max_attempts)
+        self.backoff_seconds = backoff_seconds
+        self._sleeper = sleeper
 
     def _get_fabric(self) -> Any:
         if self._fabric is None:
@@ -370,20 +525,48 @@ class FabricLessonWriter:
             from mesh.memory_fabric import MemoryScope
 
             fabric = self._get_fabric()
-            fabric.record(
-                owner_agent="FORGE",
-                content_text=content,
-                scope=MemoryScope.UNIVERSAL if universal else MemoryScope.AGENT,
-                memory_type="procedural",
-                source="forge_idle_experiment",
-                importance=0.8,
-                confidence=1.0,
-                metadata=metadata,
-            )
-            return True
         except Exception as exc:
             logger.warning(f"idle-loop lesson delivery failed: {exc}")
             return False
+        confirm = getattr(fabric, "record_and_confirm_cloud", None)
+        if not callable(confirm):
+            logger.warning(
+                "idle-loop lesson NOT delivered: the memory fabric offers "
+                "no cloud-confirmation path (record_and_confirm_cloud), so "
+                "Memora acceptance cannot be verified; lesson stays pending"
+            )
+            return False
+        scope = MemoryScope.UNIVERSAL if universal else MemoryScope.AGENT
+        delay = self.backoff_seconds
+        for attempt in range(1, self.max_attempts + 1):
+            try:
+                _entry, confirmed = confirm(
+                    owner_agent="FORGE",
+                    content_text=content,
+                    scope=scope,
+                    memory_type="procedural",
+                    source="forge_idle_experiment",
+                    importance=0.8,
+                    confidence=1.0,
+                    metadata=metadata,
+                )
+            except Exception as exc:
+                logger.warning(
+                    f"idle-loop lesson delivery attempt {attempt}/"
+                    f"{self.max_attempts} failed: {exc}"
+                )
+                confirmed = False
+            if confirmed:
+                return True
+            logger.warning(
+                f"idle-loop lesson not confirmed by Memora (attempt "
+                f"{attempt}/{self.max_attempts}, scope={scope.value}); "
+                "local fabric acceptance does not count as delivery"
+            )
+            if attempt < self.max_attempts:
+                self._sleeper(delay)
+                delay *= 2
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -485,6 +668,9 @@ class IdleExperimentLoop:
         battery: GoldenBattery | None = None,
         lesson_writer: FabricLessonWriter | None = None,
         daily_cap: int = DEFAULT_DAILY_CAP,
+        load_probe: Callable[[], HostLoadSnapshot | None] | None = None,
+        max_load_fraction: float = LOAD_GATE_FRACTION,
+        min_mem_available_fraction: float = MIN_MEM_AVAILABLE_FRACTION,
     ):
         self.store = store
         self.data_dir = Path(data_dir)
@@ -492,6 +678,9 @@ class IdleExperimentLoop:
         self.battery = battery or GoldenBattery()
         self.lesson_writer = lesson_writer or FabricLessonWriter()
         self.daily_cap = daily_cap
+        self._load_probe = load_probe or read_host_load
+        self.max_load_fraction = max_load_fraction
+        self.min_mem_available_fraction = min_mem_available_fraction
 
     @classmethod
     def from_settings(cls, store: "StateStore", **kwargs: Any) -> "IdleExperimentLoop":
@@ -513,6 +702,63 @@ class IdleExperimentLoop:
             "false",
             "no",
         }
+
+    @staticmethod
+    def lifespan_enabled() -> bool:
+        """The lifespan-wiring gate: True ONLY for an explicit "on".
+
+        Stricter than experiments_enabled() on purpose. The kill
+        switch's historical default (unset = cycles allowed) was safe
+        while nothing started the loop; wiring run_forever() into the
+        FastAPI lifespan inverts that risk, so the wiring arms only on
+        an explicit FORGE_IDLE_EXPERIMENTS=on. Unset, "off", or any
+        other value leaves the loop unstarted — default OFF. Setting
+        the flag is the coordinator's activation step.
+        """
+        return os.getenv("FORGE_IDLE_EXPERIMENTS", "").strip().lower() == "on"
+
+    @classmethod
+    def start_if_enabled(
+        cls,
+        store: "StateStore",
+        data_dir: Path | None = None,
+        **kwargs: Any,
+    ) -> "IdleExperimentLoop | None":
+        """The lifespan wiring point: a loop when explicitly enabled.
+
+        Returns None (and logs why) unless lifespan_enabled() — the
+        caller in app.main's lifespan treats None as "not started" and
+        never creates the driver task. Mirrors the start_if_enabled
+        activation point Stratex's self-experiment loop shipped.
+        """
+        if not cls.lifespan_enabled():
+            logger.info(
+                "idle experiment loop not started: FORGE_IDLE_EXPERIMENTS "
+                "is not explicitly 'on' (default off; activation is a "
+                "coordinator step)"
+            )
+            return None
+        if data_dir is not None:
+            return cls(store=store, data_dir=Path(data_dir), **kwargs)
+        return cls.from_settings(store, **kwargs)
+
+    def host_load_refusal(self) -> str | None:
+        """C2: why the host-load gate refuses a cycle now, or None.
+
+        Reads load average + memory pressure through the loop's load
+        probe. Fails closed: an unreadable host refuses the cycle,
+        exactly as an overloaded one does.
+        """
+        try:
+            snapshot = self._load_probe()
+        except Exception as exc:
+            return f"host load probe failed: {exc}"
+        if snapshot is None:
+            return "host load average unreadable (getloadavg)"
+        return snapshot.refusal_reason(
+            max_load_fraction=self.max_load_fraction,
+            min_mem_available_fraction=self.min_mem_available_fraction,
+        )
 
     async def is_idle(self) -> bool:
         tasks = await self.store.list_tasks(limit=200)
@@ -575,6 +821,12 @@ class IdleExperimentLoop:
     async def run_one_cycle(self) -> CycleReport:
         if not self.experiments_enabled():
             return CycleReport(status="skipped", reason="kill_switch_off")
+        load_refusal = self.host_load_refusal()
+        if load_refusal is not None:
+            logger.warning(
+                f"idle experiment cycle refused by host-load gate: {load_refusal}"
+            )
+            return CycleReport(status="skipped", reason="host_load_gate")
         if not await self.is_idle():
             return CycleReport(status="skipped", reason="forge_busy")
         ledger = self._read_jsonl(self._ledger_path)
@@ -814,8 +1066,10 @@ class IdleExperimentLoop:
     ) -> None:
         """Poll for idle windows and run one cycle per window.
 
-        Not wired into the FastAPI lifespan in this slice (see module
-        docstring). A failing cycle is logged and never kills the loop.
+        Wired into the FastAPI lifespan in slice 2 through
+        start_if_enabled() — the driver task exists only when
+        FORGE_IDLE_EXPERIMENTS is explicitly "on" (default off).
+        A failing cycle is logged and never kills the loop.
         """
         stop = stop_event or asyncio.Event()
         while not stop.is_set():
