@@ -357,6 +357,11 @@ class AutonomousController:
             }
         self._persist_history()
         try:
+            # TASK-FRD-030: the frame carries the entry's recorded_at as
+            # its own field, and `timestamp` is that same captured instant
+            # (not a second clock read) — the live path gets exactly the
+            # instant the seed path (get_status recent_actions) ships, so
+            # a row renders the same time however it was delivered.
             _emit_activity({
                 "type": "activity",
                 "agent": target,
@@ -365,7 +370,8 @@ class AutonomousController:
                 "directive": directive,
                 "result": result,
                 "success": success,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": entry.recorded_at,
+                "recorded_at": entry.recorded_at,
             })
         except Exception:
             pass
