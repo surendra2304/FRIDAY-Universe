@@ -24,6 +24,21 @@ Honesty rules (identical to every FRIDAY surface):
   fabricated all-clear;
 - every scheduled pass is latched per period (once per day / week) and a
   send failure retries next cycle without latching (same as G7/G8).
+
+TASK-FRD-025 call-site wiring: the production delivery path (no injected
+``deliver``) routes through the severity gate in
+``friday.proactive.owner_notify`` — only Severity.ALERT reaches the
+owner's Telegram. Classification: a site sweep that found degradation
+is ALERT; a healthy sweep, the watchlist briefing and the Sentinel
+digest are ROUTINE (briefing material, held by the gate); a Sentinel
+digest that could not reach Sentinel at all is ALERT. Each pass's
+report carries ``notify_result`` (the gate's verdict) and ``gate_held``
+(True when the gate deliberately held the message — see
+``owner_notify.is_held_result``); the scheduler below keeps its latch
+on a held result and only unlatches for a retry-worthy failure
+(FAILED / NOT_CONFIGURED), so a held digest is never re-offered every
+tick. An injected ``deliver`` callable keeps the pre-gate behaviour
+exactly (tests and alternate wiring own that channel).
 """
 
 from __future__ import annotations
@@ -40,8 +55,32 @@ from datetime import datetime
 from typing import Any, Awaitable, Callable
 
 from friday.core.owner_time import OWNER_TZ, now_owner_tz, owner_today
+from friday.proactive.owner_notify import (
+    NotifyResult,
+    Severity,
+    is_held_result,
+    notify_owner,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def _deliver_via_gate(
+    text: str, *, severity: Severity, event_key: str
+) -> tuple[bool, NotifyResult]:
+    """Production delivery through the TASK-FRD-025 severity gate.
+
+    Returns (sent_to_owner_telegram, gate_result). The gate never
+    raises; this wrapper keeps that contract even if the gate call
+    itself somehow fails, reporting FAILED so the caller unlatches
+    and retries instead of believing a held/sent outcome.
+    """
+    try:
+        result = notify_owner(text, severity=severity, event_key=event_key)
+    except Exception as exc:  # pragma: no cover - the gate never raises
+        logger.warning("[WATCH] owner-notify gate failed: %s", exc)
+        return False, NotifyResult.FAILED
+    return result is NotifyResult.SENT, result
 
 # ---------------------------------------------------------------------------
 # windows (owner's IST clock; see owner_time module docstring)
@@ -233,17 +272,11 @@ async def run_watchlist_briefing(
 
     ``deliver``: async callable returning True when the owner received the
     message (the server wires the Telegram gateway + notifications surface).
+    When omitted, delivery goes through the FRD-025 severity gate as
+    ROUTINE — a scheduled briefing is briefing material, not an alert.
     """
-    if deliver is None:
-        async def deliver(text: str) -> bool:  # noqa: F811
-            from friday.proactive.telegram_gateway import send_owner_message
-
-            try:
-                return bool(send_owner_message(text))
-            except Exception:
-                return False
-
-    report: dict[str, Any] = {"date": owner_today(), "topics": 0, "delivered": False, "lines": []}
+    gated = deliver is None
+    report: dict[str, Any] = {"date": owner_today(), "topics": 0, "delivered": False, "lines": [], "notify_result": None, "gate_held": False}
     entries = watchlist_store.topics()
     if not entries:
         return report  # nothing watched — no message, no noise
@@ -278,7 +311,17 @@ async def run_watchlist_briefing(
     text = "\n".join(sections)
     report["lines"] = sections
     try:
-        report["delivered"] = bool(await deliver(text))
+        if gated:
+            sent, gate_result = _deliver_via_gate(
+                text,
+                severity=Severity.ROUTINE,
+                event_key=f"watchlist_brief:{owner_today()}",
+            )
+            report["delivered"] = sent
+            report["notify_result"] = gate_result.value
+            report["gate_held"] = is_held_result(gate_result)
+        else:
+            report["delivered"] = bool(await deliver(text))
     except Exception as exc:
         logger.warning("[WATCH] delivery failed: %s", exc)
     return report
@@ -307,18 +350,15 @@ async def run_site_health_sweep(
     probe_fn: Callable[[str], Awaitable[tuple[bool, int, str]]] | None = None,
 ) -> dict[str, Any]:
     """Daily 08:00 IST sweep of owned properties (F14/F15). Alerts only on
-    degradation; a fully healthy fleet produces ONE compact line."""
-    if deliver is None:
-        async def deliver(text: str) -> bool:  # noqa: F811
-            from friday.proactive.telegram_gateway import send_owner_message
+    degradation; a fully healthy fleet produces ONE compact line.
 
-            try:
-                return bool(send_owner_message(text))
-            except Exception:
-                return False
-
+    Production delivery (no injected ``deliver``) goes through the
+    FRD-025 severity gate: degradation is ALERT (it reaches the owner),
+    a healthy sweep is ROUTINE (the gate holds it for the briefing).
+    """
+    gated = deliver is None
     probe = probe_fn or (lambda url: _probe_url(url))
-    results: dict[str, Any] = {"date": owner_today(), "checked": 0, "healthy": 0, "degraded": [], "delivered": False}
+    results: dict[str, Any] = {"date": owner_today(), "checked": 0, "healthy": 0, "degraded": [], "delivered": False, "notify_result": None, "gate_held": False}
 
     # 1. Public gateway routes (the owned ingress + every agent behind it).
     for route in GATEWAY_ROUTES:
@@ -352,7 +392,17 @@ async def run_site_health_sweep(
         lines.append(f"✅ Site sweep {owner_today()}: {results['healthy']}/{results['checked']} gateway routes healthy.")
     text = "\n".join(lines)
     try:
-        results["delivered"] = bool(await deliver(text))
+        if gated:
+            sent, gate_result = _deliver_via_gate(
+                text,
+                severity=Severity.ALERT if results["degraded"] else Severity.ROUTINE,
+                event_key=f"fleet_site_sweep:{owner_today()}",
+            )
+            results["delivered"] = sent
+            results["notify_result"] = gate_result.value
+            results["gate_held"] = is_held_result(gate_result)
+        else:
+            results["delivered"] = bool(await deliver(text))
     except Exception as exc:
         logger.warning("[WATCH] site sweep delivery failed: %s", exc)
     return results
@@ -367,15 +417,14 @@ async def run_sentinel_digest(
     *,
     sentinel_fn: Callable[[], Awaitable[tuple[dict[str, Any], dict[str, Any]]]] | None = None,
 ) -> dict[str, Any]:
-    """Weekly Monday digest from Sentinel's REAL posture + findings (F20)."""
-    if deliver is None:
-        async def deliver(text: str) -> bool:  # noqa: F811
-            from friday.proactive.telegram_gateway import send_owner_message
+    """Weekly Monday digest from Sentinel's REAL posture + findings (F20).
 
-            try:
-                return bool(send_owner_message(text))
-            except Exception:
-                return False
+    Production delivery (no injected ``deliver``) goes through the
+    FRD-025 severity gate: the digest itself is ROUTINE, but a digest
+    that could not reach Sentinel at all is ALERT — a fleet agent being
+    unreachable is exactly what the owner wants to know now.
+    """
+    gated = deliver is None
 
     if sentinel_fn is None:
         async def sentinel_fn() -> tuple[dict[str, Any], dict[str, Any]]:  # noqa: F811
@@ -391,14 +440,15 @@ async def run_sentinel_digest(
                 await client.aclose()
             return posture, findings
 
-    results: dict[str, Any] = {"date": owner_today(), "delivered": False}
+    results: dict[str, Any] = {"date": owner_today(), "delivered": False, "notify_result": None, "gate_held": False}
     try:
         posture, findings = await sentinel_fn()
     except Exception as exc:
         logger.warning("[WATCH] Sentinel digest failed: %s", exc)
         posture, findings = {}, {}
 
-    if not posture and not findings:
+    sentinel_unreachable = not posture and not findings
+    if sentinel_unreachable:
         text = (
             f"🛡️ Sentinel weekly digest {owner_today()}: I could not reach Sentinel's "
             "posture or findings engines — no numbers this week. Reported honestly, not guessed."
@@ -418,7 +468,21 @@ async def run_sentinel_digest(
             lines.append("Open findings: none reported.")
         text = "\n".join(lines)
     try:
-        results["delivered"] = bool(await deliver(text))
+        if gated:
+            sent, gate_result = _deliver_via_gate(
+                text,
+                severity=Severity.ALERT if sentinel_unreachable else Severity.ROUTINE,
+                event_key=(
+                    f"sentinel_unreachable:{owner_today()}"
+                    if sentinel_unreachable
+                    else f"sentinel_digest:{owner_today()}"
+                ),
+            )
+            results["delivered"] = sent
+            results["notify_result"] = gate_result.value
+            results["gate_held"] = is_held_result(gate_result)
+        else:
+            results["delivered"] = bool(await deliver(text))
     except Exception as exc:
         logger.warning("[WATCH] sentinel digest delivery failed: %s", exc)
     return results
@@ -574,13 +638,16 @@ async def agent_watch_tick(
                 outcome["sentinel"] = {"error": type(exc).__name__}
 
         # A pass that failed to deliver unlatches so the next tick retries.
-        if isinstance(outcome.get("site"), dict) and outcome["site"].get("delivered") is False:
+        # A pass the FRD-025 gate deliberately HELD (gate_held: briefing
+        # material, a repeat, the daily cap, the kill switch) stays
+        # latched — re-offering it every tick would only re-ask the gate.
+        if isinstance(outcome.get("site"), dict) and outcome["site"].get("delivered") is False and not outcome["site"].get("gate_held"):
             _last_site_date = None
-        if isinstance(outcome.get("watch"), dict) and outcome["watch"].get("delivered") is False:
+        if isinstance(outcome.get("watch"), dict) and outcome["watch"].get("delivered") is False and not outcome["watch"].get("gate_held"):
             _last_watch_date = None
-        if isinstance(outcome.get("sentinel"), dict) and outcome["sentinel"].get("delivered") is False:
+        if isinstance(outcome.get("sentinel"), dict) and outcome["sentinel"].get("delivered") is False and not outcome["sentinel"].get("gate_held"):
             _last_sentinel_date = None
-        if isinstance(outcome.get("portfolio"), dict) and outcome["portfolio"].get("delivered") is False:
+        if isinstance(outcome.get("portfolio"), dict) and outcome["portfolio"].get("delivered") is False and not outcome["portfolio"].get("gate_held"):
             _last_portfolio_date = None
         # Forecast passes: re-latch only on a clean run with stored forecasts.
         if isinstance(outcome.get("forecast"), dict) and outcome["forecast"].get("error"):
