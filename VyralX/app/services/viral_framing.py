@@ -224,7 +224,10 @@ def generate_framing(
         "engagement filler.\n"
         "description: two short sentences about the moment, then a blank line, then a "
         "one-line question starting with an emoji and ending with 'Drop your answer "
-        "below!', then a blank line, then ten hashtags starting with #Shorts."
+        "below!', then a blank line, then ten hashtags starting with #Shorts. The "
+        "question must name a concrete object, person or action from the frame "
+        "analysis — a question naming anything else is rejected by the footage "
+        "checker."
     )
     if taken:
         prompt += (
@@ -916,6 +919,77 @@ def _duplicates_framing_line(speech_text: str, framing_text: str) -> bool:
     return bool(union) and len(speech_tokens & framing_tokens) / len(union) >= 0.5
 
 
+# The only framing violations with a deterministic, fact-free repair:
+# the description's question/CTA mechanics. Everything else a gate can
+# raise is a factual claim about the footage and must fail, never be
+# edited into compliance (viral_quality.repair_description_question's
+# own contract).
+_DESCRIPTION_QUESTION_KINDS = frozenset({"question_ungrounded", "cta_without_question"})
+
+
+def repair_framing_description(
+    framing: dict[str, str],
+    violations: list[vq.Violation],
+    *,
+    hook: str,
+    payoff: str,
+    record: dict[str, Any],
+    excerpt_seconds: float,
+    transcript: str = "",
+    scene: str = "",
+) -> tuple[dict[str, str], list[vq.Violation], bool]:
+    """Repair a framing package whose ONLY defect is its question.
+
+    TASK-VYR-023 diagnosis: the commentary path has had this escape
+    since TASK-VYR-014 — after its retries, a package whose remaining
+    violations are all description-question kinds gets
+    :func:`viral_quality.repair_description_question` and a full
+    re-gate. The framed path never got the same step, even though it
+    runs the identical description check (via check_consistency) on
+    the identical mandated description format (a question ending in
+    'Drop your answer below!'). The TASK-VYR-022 grounding fallback
+    covers ungrounded hook/payoff LINES; nothing covered the
+    description's question. A framed package whose hook, payoff and
+    title were fully grounded therefore died as script_unverifiable
+    over packaging mechanics the commentary path repairs
+    deterministically — in supervised cycle 2 the question_ungrounded
+    kind is the only violation kind documented more than once (2 of
+    the commentary candidate's 3 rejected drafts), and the framed
+    path had no way out of it at all.
+
+    The repair is applied ONLY when every remaining violation is a
+    description-question kind, and the repaired package must pass
+    the FULL framing gate suite again (transcript/scene evidence
+    included, exactly as the production caller gates) to be
+    accepted — factual violations (colours, garments, posture,
+    identity, time of day, grounding) are never repaired. Returns
+    (framing, violations, repaired).
+    """
+    if not violations or any(
+        violation.kind not in _DESCRIPTION_QUESTION_KINDS for violation in violations
+    ):
+        return framing, violations, False
+    repaired_description = vq.repair_description_question(
+        str(framing.get("description") or ""), record
+    )
+    if repaired_description == str(framing.get("description") or ""):
+        return framing, violations, False
+    repaired_framing = {**framing, "description": repaired_description}
+    remaining = framing_violations(
+        hook=hook,
+        payoff=payoff,
+        title=str(repaired_framing.get("title") or ""),
+        description=repaired_description,
+        record=record,
+        excerpt_seconds=excerpt_seconds,
+        transcript=transcript,
+        scene=scene,
+    )
+    if remaining:
+        return framing, violations, False
+    return repaired_framing, [], True
+
+
 def framed_cues(
     speech_cues: Any,
     *,
@@ -1307,6 +1381,22 @@ def produce_framed_short(
                 )
                 hook, payoff, violations = sub_hook, sub_payoff, []
                 grounding_fallback_used = True
+    if gates_on and record is not None and violations:
+        # Same deterministic escape the commentary path has had since
+        # TASK-VYR-014 (TASK-VYR-023): a package grounded in every
+        # factual claim whose only remaining defect is the
+        # description's question gets that question repaired and is
+        # re-gated in full; anything else still skips, unrepaired.
+        framing, violations, description_repaired = repair_framing_description(
+            framing, violations,
+            hook=hook, payoff=payoff, record=record,
+            excerpt_seconds=excerpt_seconds,
+            transcript=speech.text, scene=scene,
+        )
+        if description_repaired:
+            log.info(
+                "Description question repaired for %s", candidate.video_id,
+            )
     if gates_on and record is not None and violations:
         return {
             "status": "SKIPPED", "reason": "script_unverifiable",
