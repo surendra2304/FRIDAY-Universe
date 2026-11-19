@@ -86,6 +86,67 @@ _X264_PRESET = "ultrafast"
 _X264_CRF = "23"
 _X264_THREADS = "2"
 
+# Excerpt-fit profile (TASK-VYR-023). Supervised cycle 2 (2026-11-18/19)
+# lost 3 of 12 attempts to TimeoutExpired on the EXCERPT cut — the one
+# encode the render-fit profile above did not touch: it still cut at
+# full source resolution (up to 1080x1920) at 60fps with
+# veryfast/crf18 under the 600s _run default. That cost is pure waste:
+# the excerpt file is an ANALYSIS-ONLY intermediate. It never reaches
+# the final composition (render_framed trims from the original source),
+# and its only consumers are
+#   * viral_quality.measure_event_arc — frames at 96x170 grayscale,
+#   * scene_analysis.analyze_scene / describe_scene — frames extracted
+#     at scale=640:-2 (a 720-wide excerpt yields the identical
+#     640x1138 vision frames a 1080-wide one does; verified locally).
+# So the excerpt is capped to the render fit itself (720x1280 box,
+# fps 30, ultrafast/crf23, threads 2), aspect preserved, never
+# upscaled, never cropped — the vision record must see the whole
+# frame, only smaller. Measured locally on a 1080x1920@60, ~10Mbps
+# fixture, 24s cut (the shortest cycle-2 failure was 23.64s):
+# OLD 52.3 CPU-s / 72.0s wall / 373MB RSS / 33.4MB out ->
+# NEW 18.1 CPU-s / 31.6s wall / 135MB RSS / 18.6MB out (720x1280@30),
+# SSIM 0.981 vs the old excerpt. The 600s excerpt timeout is NOT
+# raised — the encode is made to fit inside it, exactly as #1026
+# treated the 2,400s composition timeout. Pinned by
+# tests/test_viral_framing.py — do not retune casually.
+_EXCERPT_WIDTH = 720
+_EXCERPT_HEIGHT = 1280
+_EXCERPT_MAX_FPS = 30
+_EXCERPT_PRESET = "ultrafast"
+_EXCERPT_CRF = "23"
+_EXCERPT_THREADS = "2"
+
+
+def _excerpt_video_filter() -> str:
+    """The excerpt-fit scale chain: cap to the 720x1280 box at 30fps.
+
+    ``min(W,iw)``/``min(H,ih)`` in the scale target plus
+    ``force_original_aspect_ratio=decrease`` means a smaller source
+    passes through at its own size (never upscaled), a landscape
+    source keeps its aspect (720x406 for 16:9 — no crop, no
+    distortion), and a portrait source lands on 720x1280.
+    """
+    return (
+        f"fps={_EXCERPT_MAX_FPS},"
+        f"scale='min({_EXCERPT_WIDTH},iw)':'min({_EXCERPT_HEIGHT},ih)':"
+        "force_original_aspect_ratio=decrease:force_divisible_by=2"
+    )
+
+
+def _excerpt_command(
+    ffmpeg_bin: str, source_path: Path, destination: Path, start: float, seconds: float
+) -> list[str]:
+    """The full excerpt ffmpeg command at the excerpt-fit profile."""
+    return [
+        ffmpeg_bin, "-hide_banner", "-nostdin", "-y",
+        "-ss", f"{start:.3f}", "-i", str(source_path),
+        "-t", f"{seconds:.3f}",
+        "-vf", _excerpt_video_filter(),
+        "-c:v", "libx264", "-preset", _EXCERPT_PRESET, "-crf", _EXCERPT_CRF,
+        "-threads", _EXCERPT_THREADS,
+        "-an", str(destination),
+    ]
+
 
 def excerpt_window(
     duration: float,
@@ -1023,16 +1084,17 @@ def render_framed(
 
 
 def _cut_excerpt(source_path: Path, destination: Path, start: float, seconds: float) -> Path:
-    """Cut the excerpt window to its own file for vision analysis."""
+    """Cut the excerpt window to its own file for vision analysis.
+
+    Encoded at the excerpt-fit profile above (TASK-VYR-023): the file
+    feeds only the event-arc measurement and the vision record, so it
+    is capped to what those consumers — and the 720x1280 final
+    render — can use. The final composition is unaffected: it trims
+    from the original source at the render-fit profile.
+    """
     settings = get_settings()
     destination.parent.mkdir(parents=True, exist_ok=True)
-    vr._run([
-        settings.ffmpeg_bin, "-hide_banner", "-nostdin", "-y",
-        "-ss", f"{start:.3f}", "-i", str(source_path),
-        "-t", f"{seconds:.3f}",
-        "-c:v", "libx264", "-preset", "veryfast", "-crf", "18",
-        "-an", str(destination),
-    ])
+    vr._run(_excerpt_command(settings.ffmpeg_bin, source_path, destination, start, seconds))
     return destination
 
 
