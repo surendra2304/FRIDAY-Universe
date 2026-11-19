@@ -7,6 +7,7 @@ import { Conversation } from "../stage/Conversation";
 import { UltronOrb } from "./UltronOrb";
 import {
   clockTime,
+  clockTimeOrBlank,
   fetchAutonomy,
   fetchFleet,
   fetchTelemetry,
@@ -138,7 +139,10 @@ export function UltronStage() {
     if (!autonomy?.recent_actions || log.length > 0) return;
     const seed: LogEntry[] = autonomy.recent_actions.slice(0, 7).map((a) => ({
       id: ++logSeq,
-      at: clockTime(a.timestamp ?? a.recorded_at),
+      /* recorded_at is the full ISO instant (TASK-FRD-029); the bare
+         `timestamp` is a time-of-day string that never parses, and an
+         entry with neither renders no time rather than "--:--:--". */
+      at: clockTimeOrBlank(a.recorded_at || a.timestamp),
       text: oneLine(a.directive || a.action_type || a.target || "action", 110),
       done: a.success === true,
     }));
@@ -149,7 +153,7 @@ export function UltronStage() {
   useEffect(() => {
     const socket = openActivitySocket((frame) => {
       setLog((current) =>
-        [...current, { id: ++logSeq, at: clockTime(frame.timestamp ?? Date.now()), text: frameText(frame), done: frame.success === true }].slice(-7),
+        [...current, { id: ++logSeq, at: clockTimeOrBlank(frame.timestamp ?? Date.now()), text: frameText(frame), done: frame.success === true }].slice(-7),
       );
     });
     return () => socket?.close();
@@ -281,18 +285,24 @@ export function UltronStage() {
                 <span className="ultron-tag">{agents.length || 10} UNITS</span>
               </div>
               {agents.length > 0 ? (
-                agents.map((agent) => {
-                  const tone = toneFor(agent.status);
-                  return (
-                    <div className="ultron-kv" key={agent.id}>
-                      <span className="k">{agent.name}</span>
-                      <span className={`ultron-st ${tone === "good" ? "ok" : tone === "warn" ? "warn" : ""}`}>
-                        <i />
-                        {agent.status.toUpperCase()}
-                      </span>
-                    </div>
-                  );
-                })
+                /* The rows scroll inside the panel (TASK-FRD-029): the
+                   panel is a flex child with min-height 0, so an
+                   unbounded list spilled past its border and the last
+                   rows painted under the VOICE STATE band below. */
+                <div className="ultron-mod-scroll">
+                  {agents.map((agent) => {
+                    const tone = toneFor(agent.status);
+                    return (
+                      <div className="ultron-kv" key={agent.id}>
+                        <span className="k">{agent.name}</span>
+                        <span className={`ultron-st ${tone === "good" ? "ok" : tone === "warn" ? "warn" : ""}`}>
+                          <i />
+                          {agent.status.toUpperCase()}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               ) : (
                 <p className="ultron-nodata">Fleet unreachable — module states unknown, not guessed.</p>
               )}

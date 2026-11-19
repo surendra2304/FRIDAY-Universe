@@ -125,6 +125,10 @@
   box-shadow: 0 0 8px rgba(255, 106, 38, 0.55); transition: width 1.1s ease;
 }
 
+/* Core Modules rows scroll within their panel (TASK-FRD-029) — the
+   panel header stays pinned and no row can spill under the waveband. */
+.ultron-mod-scroll { flex: 1; min-height: 0; overflow-y: auto; }
+
 .ultron-kv { display: flex; justify-content: space-between; align-items: baseline; padding: 4.5px 0; border-bottom: 1px dashed #151c23; font-size: 11px; gap: 8px; }
 .ultron-kv:last-child { border-bottom: none; }
 .ultron-kv .k { color: var(--u-muted); letter-spacing: 0.06em; }
@@ -220,7 +224,10 @@
 .ultron-vision-label {
   position: absolute; left: 50%; top: calc(50% + 34px); transform: translateX(-50%);
   font-family: var(--u-mono); font-size: 8.5px; letter-spacing: 0.3em; color: rgba(200, 214, 228, 0.5);
-  white-space: nowrap; text-align: center;
+  /* TASK-FRD-029: the full sentence is wider than the frame at this
+     size/spacing, and the frame hides overflow — nowrap clipped both
+     ends ("ED — NO CAMERA … IN TH"). Wrap inside the frame instead. */
+  width: calc(100% - 28px); line-height: 1.9; text-align: center;
 }
 
 /* ---------------------------------------------------------------- waveform */
@@ -284,7 +291,10 @@
 .ultron-stage .voice-main:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
 .ultron-stage .voice-note { font-family: var(--u-mono); font-size: 9.5px; letter-spacing: 0.06em; color: var(--u-faint); text-align: center; margin: 0; }
 
-.ultron-chat-panel { min-height: 300px; }
+/* TASK-FRD-029: a bounded panel, so the conversation's own .stream
+   scroll (overflow-y auto, flex 1) engages and a long history scrolls
+   inside the panel instead of stretching the whole page. */
+.ultron-chat-panel { min-height: 300px; height: clamp(300px, 42dvh, 480px); }
 .ultron-stage .stream-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .ultron-stage .stream { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 9px; min-height: 120px; padding-right: 2px; }
 .ultron-stage .stream-empty { font-size: 12px; line-height: 1.6; color: var(--u-faint); }

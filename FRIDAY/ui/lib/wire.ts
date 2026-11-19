@@ -284,11 +284,16 @@ export function openActivitySocket(onFrame: (frame: ActivityFrame) => void): Web
 
 /* ------------------------------------------------------------- wording */
 
-/** Wall-clock in the fleet's home zone, for timestamps the owner reads. */
-export function clockTime(value?: string | number | Date | null): string {
-  if (value === undefined || value === null || value === "") return "--:--:--";
+/** Parse a timestamp the backend sent; null when there is no real
+    instant to show (missing, empty, or a format Date cannot read —
+    e.g. the autonomous log's old bare "HH:MM:SS" with no date). */
+function parseClockDate(value?: string | number | Date | null): Date | null {
+  if (value === undefined || value === null || value === "") return null;
   const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "--:--:--";
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatClock(date: Date): string {
   return date.toLocaleTimeString("en-IN", {
     timeZone: "Asia/Kolkata",
     hour12: false,
@@ -296,6 +301,21 @@ export function clockTime(value?: string | number | Date | null): string {
     minute: "2-digit",
     second: "2-digit",
   });
+}
+
+/** Wall-clock in the fleet's home zone, for timestamps the owner reads. */
+export function clockTime(value?: string | number | Date | null): string {
+  const date = parseClockDate(value);
+  return date ? formatClock(date) : "--:--:--";
+}
+
+/** Same clock, but renders nothing instead of the placeholder when
+    the entry genuinely carries no parseable time (TASK-FRD-029:
+    the activity log showed "--:--:--" on every row because the
+    backend's bare time-of-day string never parses). */
+export function clockTimeOrBlank(value?: string | number | Date | null): string {
+  const date = parseClockDate(value);
+  return date ? formatClock(date) : "";
 }
 
 /** Call timer: seconds as MM:SS. */
