@@ -314,13 +314,14 @@ class SelfHealingSupervisor:
         """A repair returns True when it *verified* the subsystem works again."""
         self._repair_fns[subsystem] = repair
 
-    async def _notify(self, escalation: dict[str, Any], run: HealingRun) -> None:
+    async def _notify(self, escalation: dict[str, Any], run: HealingRun) -> dict[str, Any]:
         """Hand the escalation to the operator channel; never let delivery break healing."""
         try:
             delivery = await self.notifier.deliver(escalation)
         except Exception as exc:  # noqa: BLE001 - defensive: the notifier already guards itself
             delivery = {"delivered": False, "detail": f"{type(exc).__name__}: {exc}"}
         run.escalations_delivered.append(delivery)
+        return delivery
 
     async def _escalate(self, escalation: dict[str, Any], run: HealingRun) -> None:
         """Record an escalation and deliver it — once per failure streak.
@@ -335,6 +336,12 @@ class SelfHealingSupervisor:
         is still recorded every cycle; delivery happens on the transition
         into the escalated state and repeats within the same streak are
         recorded as suppressed.
+
+        Fix-up (review C1): the streak is marked only when a delivery
+        actually lands (``delivered=True``). A failed first delivery (the
+        channel answered 500) or a first attempt made while no channel is
+        configured must not consume the streak — the escalation is retried
+        on a later cycle, so enabling the channel mid-outage still pages.
         """
         self.escalations.append(escalation)
         self.escalations = self.escalations[-20:]
@@ -351,8 +358,9 @@ class SelfHealingSupervisor:
                 }
             )
             return
-        self._escalated_streaks.add(subsystem)
-        await self._notify(escalation, run)
+        delivery = await self._notify(escalation, run)
+        if delivery.get("delivered"):
+            self._escalated_streaks.add(subsystem)
 
     def _throttled(self, subsystem: str) -> bool:
         history = [t for t in self._repairs.get(subsystem, []) if time.monotonic() - t < self.repair_cooldown_seconds]
