@@ -29,7 +29,7 @@ from friday.autonomous.enhanced_controller import (
     ExecutionPlan,
     SubTask,
 )
-from friday.autonomous.task_source import DaemonTaskSource
+from friday.autonomous.task_source import SOURCE_TAG, DaemonTaskSource
 from friday.api.response_synthesizer import synthesize_answer
 
 logger = get_logger("autonomous.daemon")
@@ -565,6 +565,42 @@ class AutonomousDaemon:
             self._live_plans.pop(goal.id, None)
             await self._finish_goal(goal)
 
+    def _notify_finding(self, goal: AutonomousGoal) -> None:
+        """TASK-FRD-025 call-site wiring: report a finished source-seeded
+        goal's finding through the severity gate.
+
+        Only goals the autonomous task source seeded (metadata source ==
+        SOURCE_TAG) are findings — an owner-submitted goal's completion
+        is the owner's own work returning, not a finding, and is never
+        offered. A seeded goal that FAILED or PARTIAL is ALERT; a
+        completed one is ROUTINE (briefing material). The gate event
+        key is the seed's trigger key, the same key the task source
+        alerted with at detection time, so the gate's cooldown
+        suppresses a same-anomaly repeat instead of double-messaging
+        the owner. Never raises.
+        """
+        metadata = goal.metadata or {}
+        if metadata.get("source") != SOURCE_TAG:
+            return
+        try:
+            from friday.proactive.owner_notify import Severity, notify_owner
+
+            severity = (
+                Severity.ALERT
+                if goal.status in ("FAILED", "PARTIAL")
+                else Severity.ROUTINE
+            )
+            trigger = str(metadata.get("trigger") or "autonomous_task_source")
+            body = (goal.summary or goal.goal or "").strip()
+            text = f"Autonomous finding ({trigger}): {body}"[:500]
+            notify_owner(
+                text,
+                severity=severity,
+                event_key=str(metadata.get("trigger_key") or f"daemon_finding:{goal.id}"),
+            )
+        except Exception as exc:
+            logger.warning("Owner notify for daemon finding %s failed: %s", goal.id, exc)
+
     async def _finish_goal(self, goal: AutonomousGoal) -> None:
         """Move goal from running to completed."""
         self._running_goals.pop(goal.id, None)
@@ -573,6 +609,7 @@ class AutonomousDaemon:
             self._completed_goals = self._completed_goals[-100:]
         self._persist_state()
         logger.info("Goal %s finished with status: %s", goal.id, goal.status)
+        self._notify_finding(goal)
 
     async def _check_running_goals(self) -> None:
         """Check running goals for stalls/timeouts."""

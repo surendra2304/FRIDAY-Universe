@@ -85,6 +85,29 @@ class NotifyResult(str, Enum):
     FAILED = "failed"  # send attempted (or text unusable) and did not land
 
 
+#: Results that mean the gate DELIBERATELY held a message — it was
+#: briefing material, a repeat inside a window, over the daily cap, or
+#: the path is switched off. A caller that latches per period (the
+#: agent_watch scheduler) treats a held result as handled for the
+#: period: unlatching would only re-offer the same message to the gate
+#: on every tick. FAILED and NOT_CONFIGURED are NOT held — nothing was
+#: decided about the message, so a latched caller must retry it.
+_HELD_RESULTS = frozenset(
+    {
+        NotifyResult.BELOW_BAR,
+        NotifyResult.DUPLICATE,
+        NotifyResult.COOLDOWN,
+        NotifyResult.DAILY_CAP,
+        NotifyResult.DISABLED,
+    }
+)
+
+
+def is_held_result(result: NotifyResult) -> bool:
+    """True when the gate deliberately held ``result`` (see _HELD_RESULTS)."""
+    return result in _HELD_RESULTS
+
+
 def _kill_switch_active() -> bool:
     return (os.getenv(KILL_SWITCH_ENV) or "").strip().lower() in _KILL_VALUES
 
