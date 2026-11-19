@@ -20,6 +20,7 @@ on:
       - 'tests/test_safe_fleet_deploy.py'
       - '.github/workflows/deploy-monorepo.yml'
       - '.github/workflows/owner-workflows.yml'
+      - 'Stratex/**'
   push:
     branches: [main, 'arena/TASK-WF-004-*']
     paths:
@@ -39,6 +40,7 @@ on:
       - 'tests/test_safe_fleet_deploy.py'
       - '.github/workflows/deploy-monorepo.yml'
       - '.github/workflows/owner-workflows.yml'
+      - 'Stratex/**'
 
 permissions:
   contents: read
@@ -80,7 +82,8 @@ jobs:
             FRIDAY/tests/test_gemini_tool_schema_validity.py \
             FRIDAY/tests/test_rel_010_pool_exhaustion.py \
             FRIDAY/tests/test_telegram_webhook.py \
-            FRIDAY/tests/test_rel018_scrubber_prose.py
+            FRIDAY/tests/test_rel018_scrubber_prose.py \
+            FRIDAY/tests/test_autonomous_daemon_task_source.py
       - name: Generated-code ingestion and saved verification status
         env:
           PYTHONPATH: Forge
@@ -136,6 +139,18 @@ jobs:
             Inference/tests/test_python_fence_boundaries.py \
             Inference/tests/test_forge_output_is_verified.py \
             Inference/tests/test_source_repair_context.py
+      - name: Stratex forward-test and self-experiment contracts
+        run: |
+          python -m pip install 'pandas>=2.2,<4' requests
+          python -m pytest -q \
+            Stratex/tests/test_fwd018_bollinger_variants.py \
+            Stratex/tests/test_fwd018_ichimoku_variants.py \
+            Stratex/tests/test_fwd018_lane_visibility.py \
+            Stratex/tests/test_fwd018_shock_variants.py \
+            Stratex/tests/test_fwd021_overlay_service.py \
+            Stratex/tests/test_fwd024_panel_xs.py \
+            Stratex/tests/test_exp001_self_experiments.py \
+            Stratex/tests/test_exp002_ensemble_book.py
       - name: Review-required project persistence and worker boundaries
         env:
           APP_ENV: development
@@ -144,8 +159,10 @@ jobs:
           RENDER_DIR: /tmp/vyralx-contract-renders
           PYTHONPATH: VyralX
         run: |
+          python -m pip install 'edge-tts>=6.1,<8.0' 'yt-dlp>=2025.1'
           python -m pytest -q VyralX/tests/test_review_required_project.py \
-            VyralX/tests/test_project_pipeline_e2e.py VyralX/tests/test_project_review.py
+            VyralX/tests/test_project_pipeline_e2e.py VyralX/tests/test_project_review.py \
+            VyralX/tests/test_viral_framing.py
       - name: Compile fresh research and deployed voice wiring
         run: >-
           python -m compileall -q IntelX/intelx/api/router.py

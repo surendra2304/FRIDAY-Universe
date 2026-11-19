@@ -200,7 +200,11 @@ jobs:
             tests/test_gemini_model_configuration_audit.py \
             tests/test_model_configuration_consistency.py \
             tests/test_gemini_provider_runtime_audit.py \
-            tests/test_ux_and_cli.py
+            tests/test_ux_and_cli.py \
+            tests/test_voice_dead_input_voi016.py \
+            tests/test_voice_frame_counters_voi017.py \
+            tests/test_voice_noise_robustness_voi018.py \
+            tests/test_voice_input_forward_voi022.py
 
   docker:
     runs-on: ubuntu-latest
