@@ -73,7 +73,10 @@ Env names:
                                        (the demo account number); used
                                        to pick the account from the
                                        token's account list
-  PEPPERSTONE_CTRADER_HOST / _PORT     endpoint override (demo only)
+  PEPPERSTONE_CTRADER_HOST / _PORT     endpoint override — allowlist-pinned
+                                       to demo.ctraderapi.com:5035; any
+                                       other value is refused at
+                                       construction (TASK-STR-PEP-002)
 
 UNVERIFIED-UNTIL-SHAKEDOWN: protocol field numbers/encodings are taken
 from Spotware's published .proto files (verified 2026-11-19), but demo
@@ -226,20 +229,22 @@ class PepperstoneCTraderAdapter(BaseExchange):
             "PEPPERSTONE_CTRADER_ACCOUNT_NUMBER", ""
         )
 
-        # DEMO endpoint only. A live host is refused outright (the fleet
-        # invariant makes _live_trading_authorized() False in shipped
-        # code, so in practice this always raises for live hosts).
+        # DEMO endpoint only, pinned by strict allowlist (TASK-STR-PEP-002,
+        # supervisor condition on PR #1097): the sole accepted endpoint is
+        # demo.ctraderapi.com:5035. ANY other host or port — the live host
+        # included — raises at construction; there is no authorization
+        # escape hatch on the endpoint itself. (TRADING_MODE=LIVE is
+        # refused above by _enforce_no_live_trading(), and a resolved LIVE
+        # account is refused at account resolution.)
         self.host = os.getenv("PEPPERSTONE_CTRADER_HOST", DEMO_HOST).strip() or DEMO_HOST
         self.port = int(os.getenv("PEPPERSTONE_CTRADER_PORT", str(DEMO_PORT)))
-        if self.host == LIVE_HOST or "live" in self.host.split(".")[0]:
-            if not _live_trading_authorized():
-                raise PermissionError(
-                    "SECURITY CRITICAL: refusing the LIVE cTrader Open API "
-                    f"endpoint ({self.host}); this adapter is demo-only and "
-                    "live trading requires ALLOW_LIVE_TRADING=true AND the "
-                    "code-level LIVE_TRADING_ENABLED invariant in config.py "
-                    "(venue=pepperstone_ctrader)."
-                )
+        if self.host != DEMO_HOST or self.port != DEMO_PORT:
+            raise PermissionError(
+                "SECURITY CRITICAL: refusing cTrader Open API endpoint "
+                f"{self.host}:{self.port}; this adapter is demo-only and "
+                f"the sole allowlisted endpoint is {DEMO_HOST}:{DEMO_PORT} "
+                f"(venue={VENUE})."
+            )
 
         self.request_timeout = request_timeout
         self.base_url = f"openapi://{self.host}:{self.port}"  # venue_env tag parity
@@ -1149,9 +1154,16 @@ class PepperstoneCTraderAdapter(BaseExchange):
             deadline = time.time() + max(self.request_timeout, 20.0)
             last_event: Optional[dict] = None
             while time.time() < deadline:
-                payload_type, event = transport.next_in_stream(
-                    stream, timeout=max(deadline - time.time(), 0.1)
-                )
+                try:
+                    payload_type, event = transport.next_in_stream(
+                        stream, timeout=max(deadline - time.time(), 0.1)
+                    )
+                except (TimeoutError, oa.TransportTimeout):
+                    # The stream went quiet. If a non-terminal event was
+                    # already seen, the tail below decides (fail closed);
+                    # with no event at all this is the plain no-response
+                    # timeout, also decided below.
+                    break
                 if payload_type == oa.PT_ORDER_ERROR_EVENT:
                     raise RuntimeError(
                         f"[{VENUE.upper()}] Order error: "
@@ -1174,7 +1186,21 @@ class PepperstoneCTraderAdapter(BaseExchange):
                 ) != oa.OT_MARKET:
                     return event  # pending LIMIT/STOP accepted
             if last_event is not None:
-                return last_event
+                # Only non-terminal events arrived (e.g. a MARKET order
+                # stuck at ACCEPTED until the deadline): the broker may
+                # be holding an order/position whose protection was
+                # never verified. Fail closed (TASK-STR-PEP-002,
+                # supervisor condition on PR #1097): halt the venue and
+                # raise instead of returning the event, which made
+                # place_order report an unverified PENDING.
+                reason = (
+                    "order outcome UNCONFIRMED: no terminal execution "
+                    "event before the deadline (last execution_type="
+                    f"{last_event.get('execution_type')}); the order may "
+                    "be open at the broker with unverified protection"
+                )
+                self._halt(reason)
+                raise RuntimeError(f"[{VENUE.upper()}] {reason}; venue halted.")
             raise RuntimeError(f"[{VENUE.upper()}] Order timed out with no execution event.")
         finally:
             transport.close_stream(msg_id)
