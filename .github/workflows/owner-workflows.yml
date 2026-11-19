@@ -159,7 +159,8 @@ jobs:
             Stratex/tests/test_fwd028_overlay_allowlist_gate.py \
             Stratex/tests/test_fwd024_panel_xs.py \
             Stratex/tests/test_exp001_self_experiments.py \
-            Stratex/tests/test_exp002_ensemble_book.py
+            Stratex/tests/test_exp002_ensemble_book.py \
+            Stratex/tests/test_pep001_pepperstone_ctrader_adapter.py
       - name: Review-required project persistence and worker boundaries
         env:
           APP_ENV: development
