@@ -23,11 +23,22 @@ instead of shipping.
 Short excerpts only (owner decision 2A): a source up to
 ``viral_max_source_seconds`` is used whole; a longer source contributes
 one window around its event-arc peak, never the whole thing.
+
+TASK-VYR-022 (the coordinator's full watch of cycle 2's renders):
+her framing captions render in their own top band so they never stack
+over the source's captions; hook/payoff/title are grounding-checked
+against the source transcript and the vision record (invented objects
+and title-promised actions the camera never showed are rejected, with
+a claim-free generic fallback for lines); an excerpt that ends on a
+disconnected still/reaction insert is trimmed where the insert
+begins.
 """
 from __future__ import annotations
 
 import json
 import logging
+import re
+import subprocess
 import uuid
 from pathlib import Path
 from typing import Any
@@ -233,6 +244,8 @@ def framing_violations(
     description: str,
     record: dict[str, Any] | None,
     excerpt_seconds: float,
+    transcript: str = "",
+    scene: str = "",
 ) -> list[vq.Violation]:
     """Gate suite for a framing package.
 
@@ -241,7 +254,11 @@ def framing_violations(
     lines, not a 3-7 sentence commentary), but it enforces the same
     disciplines: the 18-word hook cap, no missing half, and an
     estimated-length fit against each line's duck window at the
-    production spoken rate.
+    production spoken rate. On top of those, TASK-VYR-022 adds the
+    transcript/record grounding gate and the engagement-bait closer
+    check (see :func:`framing_grounding_violations`); the grounding
+    half runs only when the caller supplies evidence (the production
+    caller always passes the source transcript and scene text).
     """
     violations: list[vq.Violation] = []
     if record is not None:
@@ -249,6 +266,21 @@ def framing_violations(
             commentary=f"{hook} {payoff}".strip(),
             title=title,
             description=description,
+            record=record,
+        )
+    if _ENGAGEMENT_BAIT.search(payoff or ""):
+        violations.append(vq.Violation(
+            "payoff_engagement_bait", "payoff",
+            "the payoff closes with engagement bait instead of landing "
+            "the moment (the editorial prompt forbids like/subscribe closers)",
+        ))
+    if transcript or scene or record is not None:
+        violations += framing_grounding_violations(
+            hook=hook,
+            payoff=payoff,
+            title=title,
+            transcript=transcript,
+            scene=scene,
             record=record,
         )
     if not hook:
@@ -287,6 +319,542 @@ def framing_violations(
     return violations
 
 
+# --------------------------------------------------------------------------- #
+# grounding (TASK-VYR-022) — her lines may only claim what the evidence
+# holds. The cycle-2 watch caught job 804's payoff inventing a "safety
+# sign" and a "folder" that exist nowhere in the footage, and job 803's
+# title promising a journal-strip tear the excerpt never shows. Root
+# cause: vq.check_consistency claim-checks only the closed classes
+# (colours, garments, postures, emotions, eyes, time of day) — the
+# concrete nouns and actions in a framing line were never compared
+# with anything. This gate compares them with the two evidence sources
+# the production already holds: the source's verified transcript and
+# the vision record (the "verified description"). A line carrying two
+# or more significant words that appear in NEITHER is rejected as
+# ungrounded; the retry loop then re-asks with the words named, and if
+# a package's only remaining sins are ungrounded hook/payoff lines,
+# produce_framed_short substitutes the claim-free generic lines below
+# (and logs it) instead of shipping invented specifics.
+# --------------------------------------------------------------------------- #
+_ENGAGEMENT_BAIT = re.compile(
+    r"\b(leave a like|like and subscribe|drop a like|smash (the|that) like|"
+    r"like this video|hit subscribe|subscribe for more|follow for more|"
+    r"please subscribe)\b",
+    re.I,
+)
+
+# Discourse and relational words: they frame or locate the moment but
+# make no checkable claim about what the footage contains.
+_FRAMING_GENERIC_WORDS = {
+    "watch", "wait", "happen", "happens", "happened", "happening",
+    "comes", "coming", "keep", "keeps", "kept", "stay", "stays", "stayed",
+    "resume", "resumes", "resumed", "continue", "continues", "continued",
+    "ends", "screen", "camera", "starts", "stops", "again", "back",
+    "beside", "behind", "near", "under", "above", "below", "around",
+    "between", "against", "toward", "towards", "along", "across",
+    "front", "whole", "every", "never", "always", "really", "actually",
+    "together",
+}
+
+# A handful of high-frequency paraphrase pairs: the claim word counts
+# as grounded when its synonym is what the evidence happens to say.
+# Deliberately tiny — this absorbs ordinary rewording (the record
+# says "walking", her hook says "stroll"), it is not a thesaurus.
+_WORD_SYNONYMS = {
+    "stroll": "walk", "strolls": "walk", "strolling": "walk",
+    "jog": "run", "jogs": "run", "jogging": "run",
+    "sprint": "run", "sprints": "run", "dash": "run",
+    "leap": "jump", "leaps": "jump", "leaping": "jump",
+}
+
+# Judgement/teaser adjectives: they colour a claim without adding a
+# checkable object or action (the consistency gates police the factual
+# adjectives — colours — separately).
+_DESCRIPTIVE_WORDS = {
+    "tiny", "little", "small", "big", "huge", "large", "weird", "funny",
+    "sudden", "unexpected", "bold", "quick", "crazy", "wild", "mystery",
+    "secret", "hidden", "simple", "easy", "perfect", "amazing",
+    "incredible", "unbelievable", "hilarious", "adorable", "clever",
+}
+
+# Action verbs a Shorts title commonly promises. A title naming one of
+# these must find it in the vision record's own account of the action —
+# the transcript alone does not prove the camera showed it (job 803's
+# source TALKS about tearing strips; the footage never tears one).
+# The list is CLOSED by construction: an off-list verb escapes this
+# record-only rule and is judged by the general union rule alone —
+# a recorded residual (see framing_grounding_violations). "shatter"
+# and its kin were added after review C2 on PR #1053 demonstrated
+# "He Shatters the Journal Strip" evading the rule against job 803's
+# evidence; the list grows as evasions are observed, it is never
+# complete.
+_TITLE_ACTION_WORDS = {
+    "tear", "rip", "flip", "break", "smash", "catch", "drop", "throw",
+    "build", "open", "close", "pour", "cut", "hit", "kick", "jump",
+    "fall", "crash", "spill", "poke", "crack", "scribble", "press",
+    "push", "pull", "shake", "spin", "slide", "climb", "chase", "bite",
+    "steal", "hide", "reveal", "unbox", "paint", "draw", "cook",
+    "drive", "ride", "swim", "dive", "rescue", "escape", "transform",
+    "shatter", "crush", "squash", "melt", "burn", "freeze", "burst",
+    "pop", "snap", "bend", "twist", "fold", "toss", "grab", "lift",
+    "drag", "roll", "bounce", "dig", "wrap", "stack",
+}
+
+# Tangible-object nouns that are classic editorial inventions. One of
+# these, ungrounded, flags a line on its own: if the object were
+# really in the footage, the transcript or the vision record would
+# name it (a real folder in frame is recorded as a folder). Ordinary
+# paraphrase drift ("stroll" for the record's "walking") is NOT in
+# this class and needs the two-word threshold below. Listed objects
+# are grounded ONLY by their own spellings appearing verbatim in the
+# evidence (see _is_grounded): the stem/prefix fuzzy routes that
+# absorb paraphrase for other words are closed for this class,
+# because they let morphological cousins ("posted", "folding",
+# "signing") vouch for objects that were never there.
+_UNGROUNDED_OBJECT_WORDS = {
+    "folder", "sign", "trophy", "envelope", "ladder", "balloon",
+    "candle", "suitcase", "umbrella", "bicycle", "guitar", "piano",
+    "sword", "banner", "poster", "bucket", "basket", "microphone",
+    "phone", "laptop", "notebook", "backpack", "wallet",
+}
+
+# Claim-free fallbacks (see produce_framed_short): each line's
+# significant words are all generic, so both pass this gate by
+# construction — they promise nothing about the footage at all.
+_GENERIC_HOOK = "Watch what happens in this clip."
+_GENERIC_PAYOFF = "And that is how it ends."
+_GROUNDING_KINDS = {"framing_ungrounded", "title_ungrounded", "title_action_ungrounded"}
+
+
+def _ungrounded_is_violation(missing: list[str]) -> bool:
+    """The rejection rule: two or more ungrounded specifics, or one
+    invented tangible object (see _UNGROUNDED_OBJECT_WORDS)."""
+    return len(missing) >= 2 or any(
+        _object_base(word) is not None for word in missing
+    )
+
+
+def _object_base(word: str) -> str | None:
+    """The listed tangible object a claim word names, if any.
+
+    Matches the word itself or its singular ("folders" -> "folder",
+    "trophies" -> "trophy"): the single-object invariant is about
+    the object, not about which spelling the line happened to use.
+    """
+    if word in _UNGROUNDED_OBJECT_WORDS:
+        return word
+    singulars: set[str] = set()
+    if word.endswith("ies") and len(word) > 4:
+        singulars.add(word[:-3] + "y")
+    if word.endswith("es") and len(word) > 4:
+        singulars.add(word[:-2])
+    if word.endswith("s") and len(word) > 3:
+        singulars.add(word[:-1])
+    for singular in singulars:
+        if singular in _UNGROUNDED_OBJECT_WORDS:
+            return singular
+    return None
+
+
+def _object_family(word: str) -> set[str]:
+    """Inflectional spellings of an object noun: the word itself, its
+    singular, and their plurals — nothing else.
+
+    Deliberately NOT :func:`_word_forms`. That family's derivational
+    stem guesses jump lexemes: "signing" stems down to "sign" and
+    "folding" spawns the non-word stem "folde", so a stem-intersection
+    (or a prefix match against such a stem) lets a morphological
+    cousin vouch for an object that was never in the footage. An
+    object is vouched for only by the object word's own spellings
+    appearing verbatim in the evidence.
+    """
+    family = {word}
+    if word.endswith("ies") and len(word) > 4:
+        family.add(word[:-3] + "y")
+    if word.endswith("es") and len(word) > 4:
+        family.add(word[:-2])
+    if word.endswith("s") and len(word) > 3:
+        family.add(word[:-1])
+    for form in list(family):
+        family.add(form + "s")
+        if form.endswith("y") and len(form) > 1 and form[-2] not in "aeiou":
+            family.add(form[:-1] + "ies")
+        if form.endswith(("s", "x", "z", "ch", "sh")):
+            family.add(form + "es")
+    return family
+
+
+def _word_forms(word: str) -> set[str]:
+    """Crude morphological family of a word (tear/tears/tearing).
+
+    Deliberately simple suffix rules, applied to BOTH the claim and
+    the evidence side (plus the narrow prefix backstop in
+    :func:`_is_grounded`). It exists so a line is not rejected for
+    using the record's own word in another tense.
+    """
+    forms = {word}
+    if word.endswith("ies") and len(word) > 4:
+        forms.add(word[:-3] + "y")
+    if word.endswith("ing") and len(word) > 5:
+        stem = word[:-3]
+        forms.add(stem)
+        forms.add(stem + "e")
+        if len(stem) > 1 and stem[-1] == stem[-2]:
+            forms.add(stem[:-1])
+    if word.endswith("ed") and len(word) > 4:
+        stem = word[:-2]
+        forms.add(stem)
+        forms.add(stem + "e")
+        if len(stem) > 1 and stem[-1] == stem[-2]:
+            forms.add(stem[:-1])
+    if word.endswith("es") and len(word) > 4:
+        forms.add(word[:-2])
+    if word.endswith("s") and len(word) > 3:
+        forms.add(word[:-1])
+    return forms
+
+
+def _evidence_tokens(texts: list[str]) -> set[str]:
+    """Raw evidence tokens, exactly as written (no stemming).
+
+    This is the only evidence view the tangible-object check may
+    use: an object counts as vouched for when the evidence names
+    the object itself, not a stemmed or prefixed relative of it.
+    """
+    tokens: set[str] = set()
+    for text in texts:
+        tokens.update(re.findall(r"[a-z]{4,}", str(text or "").lower()))
+    return tokens
+
+
+def _evidence_forms(texts: list[str]) -> set[str]:
+    forms: set[str] = set()
+    for token in _evidence_tokens(texts):
+        forms |= _word_forms(token)
+    return forms
+
+
+def _common_prefix(a: str, b: str) -> int:
+    count = 0
+    for left, right in zip(a, b):
+        if left != right:
+            break
+        count += 1
+    return count
+
+
+def _is_grounded(
+    word: str, evidence_forms: set[str], evidence_tokens: set[str]
+) -> bool:
+    if _object_base(word) is not None:
+        # Tangible objects take the strict route only (review C1 on
+        # PR #1053): the evidence must name the object itself or its
+        # plural, verbatim. Both fuzzy routes below are closed for
+        # this class — stem-form intersection let "signing" vouch
+        # for an invented "sign", and the prefix backstop let
+        # "posted" vouch for an invented "poster" and the generated
+        # stem "folde" (from "folding") for an invented "folder".
+        return bool(_object_family(word) & evidence_tokens)
+    forms = _word_forms(word)
+    if forms & evidence_forms:
+        return True
+    synonym = _WORD_SYNONYMS.get(word)
+    if synonym and _word_forms(synonym) & evidence_forms:
+        return True
+    # Prefix kinship as a narrow backstop (waterfall/water). The
+    # floor is a 5-char common prefix: "sign"/"side" share 2 and
+    # "sign"/"signal" share 4 — neither may ground the other, because
+    # a sign is not a signal and neither is a safe side.
+    return any(
+        _common_prefix(form, evidence) >= 5
+        for form in forms
+        for evidence in evidence_forms
+    )
+
+
+def _claim_words(text: str) -> list[str]:
+    """Significant words of a line that assert something checkable.
+
+    Excludes stopwords (vq.content_words), framing/discourse words,
+    judgement adjectives, and every class the consistency gates
+    already police on their own (colours, emotions, postures, hair,
+    identity labels) so a word is never double-flagged.
+    """
+    words: list[str] = []
+    for token in vq.content_words(text):
+        if token in _FRAMING_GENERIC_WORDS or token in _DESCRIPTIVE_WORDS:
+            continue
+        if token in vq._EMOTION_CANON or token in vq._POSTURE_CANON:
+            continue
+        if vq._canon_colour(token) in vq.COLOURS:
+            continue
+        if token in vq._HAIR_WORDS or token in vq._IDENTITY_WORDS:
+            continue
+        words.append(token)
+    return words
+
+
+def _ungrounded_words(
+    text: str, evidence_forms: set[str], evidence_tokens: set[str]
+) -> list[str]:
+    return [
+        word
+        for word in _claim_words(text)
+        if not _is_grounded(word, evidence_forms, evidence_tokens)
+    ]
+
+
+def framing_grounding_violations(
+    *,
+    hook: str,
+    payoff: str,
+    title: str,
+    transcript: str = "",
+    scene: str = "",
+    record: dict[str, Any] | None = None,
+) -> list[vq.Violation]:
+    """Reject framing copy whose specifics the footage never vouches for.
+
+    Hook, payoff and title are checked against the union evidence
+    (source transcript + verified scene record) under
+    :func:`_ungrounded_is_violation`: two or more ungrounded
+    specifics, or a single invented tangible object. A single stray
+    paraphrase word is deliberately tolerated — job 804's own good
+    hook says "stroll" where the record says "walking", and a gate
+    that rejects ordinary paraphrase would strangle the retry loop;
+    job 804's bad payoff, by contrast, carried three invented
+    specifics (a flipped "sign", a handed-over "folder"). The title
+    additionally obeys the stricter record-only rule for action
+    verbs — a title may only promise an action the vision record
+    says the camera showed.
+
+    Known residuals (deliberate, recorded — review C1/C2 on
+    PR #1053):
+
+    - A single invented tangible object that is NOT in
+      _UNGROUNDED_OBJECT_WORDS, used with an otherwise grounded
+      verb, still passes: "He walks the path with a ribbon." flags
+      only 'ribbon', below the two-word threshold. Listed objects
+      no longer enjoy any such slack — since the C1 fix they are
+      grounded only by their own spellings in the evidence, never
+      by the stem/prefix fuzzy routes — but the list itself is
+      closed, so an unlisted object rides on the general threshold.
+    - The title record-only rule likewise covers only the closed
+      _TITLE_ACTION_WORDS list. A title promising an unshown action
+      with an off-list verb is judged by the general union rule
+      alone and can pass it when the rest of the title is grounded
+      (before the list was extended, "He Shatters the Journal
+      Strip" passed both title rules against job 803's evidence).
+      The list is extended as evasions are observed, but it remains
+      closed by construction; the coordinator's watch is the
+      backstop for both residuals.
+    """
+    record_texts = vq._record_strings(record) if record is not None else []
+    union_texts = [transcript or "", scene or "", *record_texts]
+    union_forms = _evidence_forms(union_texts)
+    union_tokens = _evidence_tokens(union_texts)
+    violations: list[vq.Violation] = []
+    for field_name, line in (("hook", hook), ("payoff", payoff)):
+        if not line:
+            continue
+        missing = _ungrounded_words(line, union_forms, union_tokens)
+        if _ungrounded_is_violation(missing):
+            violations.append(vq.Violation(
+                "framing_ungrounded", field_name,
+                f"the {field_name} names {', '.join(repr(w) for w in missing)}, "
+                "which appear nowhere in the source transcript or the "
+                "verified scene record — describe only what the footage shows",
+            ))
+    if title:
+        # Hashtags are channel metadata, not claims ("#Shorts" rides
+        # every title by design); they are stripped before checking.
+        title_text = re.sub(r"#\w+", "", title)
+        missing = _ungrounded_words(title_text, union_forms, union_tokens)
+        if _ungrounded_is_violation(missing):
+            violations.append(vq.Violation(
+                "title_ungrounded", "title",
+                f"the title names {', '.join(repr(w) for w in missing)}, "
+                "which appear nowhere in the source transcript or the "
+                "verified scene record",
+            ))
+        record_forms = _evidence_forms(record_texts)
+        record_tokens = _evidence_tokens(record_texts)
+        if record is not None:
+            for token in re.findall(r"[a-z]+", title_text.lower()):
+                forms = _word_forms(token)
+                if forms & _TITLE_ACTION_WORDS and not _is_grounded(
+                    token, record_forms, record_tokens
+                ):
+                    violations.append(vq.Violation(
+                        "title_action_ungrounded", "title",
+                        f"the title promises the action '{token}', which the "
+                        "vision record never shows happening — retitle from "
+                        "what the excerpt actually shows",
+                    ))
+                    break
+    return violations
+
+
+def grounding_fallback_fields(violations: list[vq.Violation]) -> set[str] | None:
+    """Which lines may be replaced by the claim-free generic lines.
+
+    Substitution is allowed only when EVERY remaining violation is an
+    ungrounded hook or payoff — a title problem, a consistency claim
+    or a structural defect still skips the candidate, because a
+    generic title would be its own false promise and the other gates
+    protect facts, not phrasing. Returns the set of fields to replace
+    (subset of {"hook", "payoff"}), or None when substitution is not
+    permitted.
+    """
+    if not violations:
+        return None
+    fields: set[str] = set()
+    for violation in violations:
+        if violation.kind != "framing_ungrounded" or violation.field not in {"hook", "payoff"}:
+            return None
+        fields.add(violation.field)
+    return fields or None
+
+
+# --------------------------------------------------------------------------- #
+# tail trim (TASK-VYR-022) — a disconnected still/reaction insert at the
+# excerpt's tail is not the clip's ending. Job 802's excerpt closed on
+# an unrelated black-and-white reaction still. Detection reuses the
+# event arc's frame-difference machinery (vq.frame_change_metrics over
+# the same greyscale samples vq.measure_event_arc extracts): a hard
+# scene cut inside the tail window followed by near-zero change to the
+# end is an inserted still. A merely quiet ending (no cut) is the main
+# scene's own ending and is left alone, and an insert that leaves too
+# little real clip when trimmed skips the candidate instead of
+# shipping a video that is mostly a borrowed still.
+# --------------------------------------------------------------------------- #
+_TAIL_WINDOW_SECONDS = 8.0
+_TAIL_SAMPLES = 12
+_TAIL_CUT_MIN_CHANGE = 0.06    # a scene cut; the arc's "real event" floor is 0.02
+_TAIL_MIN_STILL_SECONDS = 1.2
+_MIN_EXCERPT_SECONDS = 8.0
+
+
+def detect_tail_still(
+    changes: Any,
+    *,
+    interval_seconds: float,
+    cut_threshold: float = _TAIL_CUT_MIN_CHANGE,
+    still_epsilon: float = vq._STATIC_EPSILON,
+    min_still_seconds: float = _TAIL_MIN_STILL_SECONDS,
+) -> float | None:
+    """Offset where a still insert begins, or None.
+
+    ``changes[i]`` is the frame change between evenly spaced samples
+    i and i+1. Returns the offset (seconds from the first sample) of
+    the first still frame — just after the LAST cut that is followed
+    only by stillness lasting at least ``min_still_seconds`` — or
+    None when the tail is the main scene's own ending: no cut at all,
+    or motion resumes after the cut.
+    """
+    series = [float(change) for change in changes or ()]
+    if interval_seconds <= 0 or len(series) < 2:
+        return None
+    last_cut: int | None = None
+    for index, change in enumerate(series):
+        if change >= cut_threshold:
+            last_cut = index
+    if last_cut is None:
+        return None
+    still_after = series[last_cut + 1:]
+    if not still_after:
+        return None
+    if any(change >= still_epsilon for change in still_after):
+        return None
+    if len(still_after) * interval_seconds < min_still_seconds:
+        return None
+    return round((last_cut + 1) * interval_seconds, 3)
+
+
+def measure_tail_trim(
+    excerpt_path: Path,
+    excerpt_seconds: float,
+    *,
+    ffmpeg_bin: str = "ffmpeg",
+) -> tuple[float | None, str]:
+    """(new_excerpt_seconds, reason) for a still-insert tail.
+
+    Reasons: "trimmed" (new length returned), "no_still_tail" (the
+    ending is the main scene's own), "still_dominates" (an insert
+    exists but trimming it would leave less than the minimum viable
+    excerpt — the caller skips), "not_measured" (too short to judge
+    or frame extraction failed; production proceeds untrimmed, as
+    before this gate existed).
+    """
+    length = float(excerpt_seconds or 0.0)
+    source = Path(excerpt_path)
+    if length < _MIN_EXCERPT_SECONDS + 2.0 or not source.is_file():
+        return None, "not_measured"
+    window = min(_TAIL_WINDOW_SECONDS, length * 0.4)
+    interval = window / _TAIL_SAMPLES
+    window_start = length - window
+    frames: list[bytes] = []
+    for index in range(_TAIL_SAMPLES):
+        at = window_start + (index + 0.5) * interval
+        cmd = [
+            ffmpeg_bin, "-hide_banner", "-loglevel", "error", "-nostdin",
+            "-ss", f"{at:.2f}", "-i", str(source),
+            "-frames:v", "1",
+            "-vf", (f"scale={vq._FRAME_WIDTH}:{vq._FRAME_HEIGHT}:"
+                    "force_original_aspect_ratio=increase,"
+                    f"crop={vq._FRAME_WIDTH}:{vq._FRAME_HEIGHT},format=gray"),
+            "-f", "rawvideo", "-",
+        ]
+        try:
+            proc = subprocess.run(cmd, capture_output=True, timeout=60)
+        except (subprocess.SubprocessError, OSError) as exc:
+            log.warning("Tail-trim frame extraction failed at %.1fs: %s", at, exc)
+            return None, "not_measured"
+        if proc.returncode == 0 and len(proc.stdout) == vq._FRAME_WIDTH * vq._FRAME_HEIGHT:
+            frames.append(proc.stdout)
+    if len(frames) < 6:
+        log.warning("Tail-trim measurement got only %d usable frames", len(frames))
+        return None, "not_measured"
+    arc = vq.frame_change_metrics(frames)
+    # Samples sit at (index + 0.5) * interval into the window; the
+    # detected offset counts whole intervals from the window start, so
+    # the trim lands up to half an interval BEFORE the first still
+    # frame — the safe direction (it can only shave moving frames,
+    # never leave still ones).
+    cut_offset = detect_tail_still(arc.changes, interval_seconds=interval)
+    if cut_offset is None:
+        return None, "no_still_tail"
+    new_seconds = round(window_start + cut_offset, 3)
+    if new_seconds < _MIN_EXCERPT_SECONDS:
+        return None, "still_dominates"
+    if length - new_seconds < 1.0:
+        return None, "no_still_tail"
+    return new_seconds, "trimmed"
+
+
+def _cue_tokens(text: str) -> set[str]:
+    return set(re.findall(r"[a-z0-9]+", str(text or "").lower()))
+
+
+def _duplicates_framing_line(speech_text: str, framing_text: str) -> bool:
+    """True when a source speech cue repeats her framing line's words.
+
+    The cycle-2 watch (job 801) showed the source's final spoken line
+    captioned twice at once — once as the Whisper speech cue and again
+    inside her payoff, which had quoted it. When the words are the
+    same, one caption carries them: hers, in her band, while the
+    source audio is ducked under her voice anyway.
+    """
+    speech_tokens = _cue_tokens(speech_text)
+    framing_tokens = _cue_tokens(framing_text)
+    if len(speech_tokens) < 2 or not framing_tokens:
+        return False
+    if speech_tokens <= framing_tokens:
+        return True
+    union = speech_tokens | framing_tokens
+    return bool(union) and len(speech_tokens & framing_tokens) / len(union) >= 0.5
+
+
 def framed_cues(
     speech_cues: Any,
     *,
@@ -302,9 +870,21 @@ def framed_cues(
     The source's own speech keeps its measured Whisper timings
     (shifted into the excerpt and clipped to it — a cue that falls
     outside the excerpt is dropped, never stretched). Her hook and
-    payoff cues sit at the two ends, where she actually speaks.
-    Subtitles are on the whole video, always.
+    payoff cues sit at the two ends, where she actually speaks, and
+    carry ``framing: True`` so the ASS writer puts them in their own
+    top band (TASK-VYR-022) instead of the lower-third zone the
+    source's captions occupy. A source speech cue that merely repeats
+    her framing line inside that line's window is dropped — the words
+    stay on screen exactly once. Subtitles are on the whole video,
+    always.
     """
+    framing_windows: list[tuple[float, float, str]] = []
+    if hook and hook_seconds > 0:
+        framing_windows.append((0.0, min(hook_seconds, excerpt_seconds), hook))
+    if payoff and payoff_seconds > 0:
+        framing_windows.append(
+            (max(0.0, excerpt_seconds - payoff_seconds), excerpt_seconds, payoff)
+        )
     cues: list[dict[str, Any]] = []
     for cue in speech_cues or ():
         start = float(cue.get("start") or 0.0) - excerpt_start
@@ -314,9 +894,20 @@ def framed_cues(
         text = str(cue.get("text") or "").strip()
         if not text:
             continue
+        start = max(0.0, start)
+        end = min(excerpt_seconds, end)
+        if any(
+            start < window_end and end > window_start
+            and _duplicates_framing_line(text, window_text)
+            for window_start, window_end, window_text in framing_windows
+        ):
+            log.info(
+                "Dropping source speech cue duplicating a framing line: %r", text[:80]
+            )
+            continue
         cues.append({
-            "start": round(max(0.0, start), 2),
-            "end": round(min(excerpt_seconds, end), 2),
+            "start": round(start, 2),
+            "end": round(end, 2),
             "text": text,
             "speech": True,
         })
@@ -325,12 +916,14 @@ def framed_cues(
             "start": 0.0,
             "end": round(min(hook_seconds, excerpt_seconds), 2),
             "text": hook,
+            "framing": True,
         })
     if payoff and payoff_seconds > 0:
         cues.append({
             "start": round(max(0.0, excerpt_seconds - payoff_seconds), 2),
             "end": round(excerpt_seconds, 2),
             "text": payoff,
+            "framing": True,
         })
     cues.sort(key=lambda item: (item["start"], item["end"]))
     return vr._sanitize_cues(cues)
@@ -501,6 +1094,36 @@ def produce_framed_short(
         excerpt_seconds,
     )
 
+    # 2b. Tail trim (TASK-VYR-022): if the excerpt ends on a
+    # disconnected still/reaction insert, the excerpt ends where the
+    # insert begins — before any analysis, so the vision record and
+    # the editorial describe the clip that will actually ship. An
+    # insert that dominates the excerpt skips the candidate.
+    tail_trim_reason = ""
+    if gates_on:
+        trimmed_seconds, tail_trim_reason = measure_tail_trim(
+            excerpt_path, excerpt_seconds, ffmpeg_bin=settings.ffmpeg_bin
+        )
+        if tail_trim_reason == "still_dominates":
+            log.info(
+                "Skipping %s: excerpt tail is a disconnected still insert "
+                "with too little real clip before it",
+                candidate.video_id,
+            )
+            return {
+                "status": "SKIPPED", "reason": "tail_still_dominates",
+                "video_id": candidate.video_id,
+            }
+        if trimmed_seconds is not None:
+            log.info(
+                "Trimming still-insert tail for %s: excerpt %.2fs -> %.2fs",
+                candidate.video_id, excerpt_seconds, trimmed_seconds,
+            )
+            excerpt_seconds = trimmed_seconds
+            excerpt_path = _cut_excerpt(
+                source_path, excerpt_path, excerpt_start, excerpt_seconds
+            )
+
     record: dict[str, Any] | None = None
     arc_info: dict[str, Any] | None = None
     if gates_on:
@@ -544,6 +1167,7 @@ def produce_framed_short(
     violations: list[vq.Violation] = []
     gate_attempts = 0
     hook_repaired = False
+    grounding_fallback_used = False
     feedback: list[str] | None = None
     attempts_allowed = 3 if (gates_on and record is not None) else 1
     for attempt in range(attempts_allowed):
@@ -570,6 +1194,8 @@ def produce_framed_short(
             description=str(framing.get("description") or ""),
             record=record,
             excerpt_seconds=excerpt_seconds,
+            transcript=speech.text,
+            scene=scene,
         )
         if not violations:
             break
@@ -582,12 +1208,43 @@ def produce_framed_short(
                 description=str(framing.get("description") or ""),
                 record=record,
                 excerpt_seconds=excerpt_seconds,
+                transcript=speech.text,
+                scene=scene,
             ):
                 hook = repaired_hook
                 hook_repaired = True
                 violations = []
                 break
         feedback = [violation.detail for violation in violations]
+    # Grounding fallback (TASK-VYR-022): when the ONLY remaining
+    # defect is an ungrounded hook/payoff — the model kept inventing
+    # specifics the footage never shows — the invented line is
+    # replaced by a claim-free generic line and the rejection is
+    # logged with the rejected text. The substituted package must
+    # re-pass the whole gate suite; anything else still skips.
+    if gates_on and record is not None and violations:
+        fallback_fields = grounding_fallback_fields(violations)
+        if fallback_fields:
+            sub_hook = _GENERIC_HOOK if "hook" in fallback_fields else hook
+            sub_payoff = _GENERIC_PAYOFF if "payoff" in fallback_fields else payoff
+            if not framing_violations(
+                hook=sub_hook,
+                payoff=sub_payoff,
+                title=str(framing.get("title") or ""),
+                description=str(framing.get("description") or ""),
+                record=record,
+                excerpt_seconds=excerpt_seconds,
+                transcript=speech.text,
+                scene=scene,
+            ):
+                log.warning(
+                    "Framing grounding fallback for %s: rejected ungrounded "
+                    "%s (hook=%r, payoff=%r); substituted claim-free "
+                    "generic line(s)",
+                    candidate.video_id, sorted(fallback_fields), hook, payoff,
+                )
+                hook, payoff, violations = sub_hook, sub_payoff, []
+                grounding_fallback_used = True
     if gates_on and record is not None and violations:
         return {
             "status": "SKIPPED", "reason": "script_unverifiable",
@@ -780,6 +1437,8 @@ def produce_framed_short(
             "event_arc": arc_info,
             "quality_gate_attempts": gate_attempts,
             "hook_repaired": hook_repaired,
+            "grounding_fallback": grounding_fallback_used,
+            "tail_trim": tail_trim_reason,
             "hold_for_review": hold_for_review,
             "bgm_source": bgm_source,
             "excerpt": {"start": excerpt_start, "seconds": excerpt_seconds},
@@ -825,6 +1484,8 @@ def produce_framed_short(
         "event_arc": arc_info,
         "quality_gate_attempts": gate_attempts,
         "hook_repaired": hook_repaired,
+        "grounding_fallback": grounding_fallback_used,
+        "tail_trim": tail_trim_reason,
         "hold_for_review": hold_for_review,
         "bgm_source": bgm_source,
         "excerpt": {"start": excerpt_start, "seconds": excerpt_seconds},

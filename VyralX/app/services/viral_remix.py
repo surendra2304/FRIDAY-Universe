@@ -1303,6 +1303,25 @@ def _ass_time(seconds: float) -> str:
     return f"{hours}:{minutes:02d}:{secs:05.2f}"
 
 
+# TASK-VYR-022: cues carrying "framing": True (VyralX's own hook/payoff
+# lines in a framed edit) render in a dedicated TOP band with an opaque
+# backing box, never in the lower-third zone where the source clip's own
+# burned-in captions and the source-speech cues live. The coordinator's
+# full watch of cycle 2 (2026-11-19) found her lines stacked two and
+# three layers deep over the source's captions at clip start/end in all
+# four renders. Alignment 8 = top-centre; BorderStyle 3 = opaque box
+# (BackColour &H99000000, ~60% opaque black) so her text stays readable
+# and visibly hers wherever the source's own graphics sit. The style is
+# emitted ONLY when a framing cue is present — a cue list without one
+# produces byte-identical output to the historical single-style file,
+# so the commentary renderers are untouched.
+_FRAMING_STYLE_NAME = "AntonFraming"
+_ASS_FRAMING_STYLE = (
+    "Style: AntonFraming,Anton,120,&H00FFFFFF,&H000000FF,&H00000000,"
+    "&H99000000,0,0,0,0,100,100,1.2,0,3,12.0,0,8,50,50,150,1"
+)
+
+
 def _write_ass(cues: list[dict[str, Any]], ass_path: Path) -> Path:
     """Anton 120pt uppercase captions, one solid accent colour per row.
 
@@ -1310,6 +1329,11 @@ def _write_ass(cues: list[dict[str, Any]], ass_path: Path) -> Path:
     frame (64pt looked tiny, 96pt with full-width rows looked oversized). Each
     row takes the next colour in the palette, and numbers / payoff words punch
     through in white at 110% for contrast.
+
+    A cue marked ``"framing": True`` (the framed path's hook/payoff)
+    uses the AntonFraming style instead — the top band defined in
+    ``_ASS_FRAMING_STYLE`` — so VyralX's own lines never share a screen
+    zone with the source's captions (TASK-VYR-022).
     """
     events: list[str] = []
     for cue_index, cue in enumerate(cues):
@@ -1327,12 +1351,18 @@ def _write_ass(cues: list[dict[str, Any]], ass_path: Path) -> Path:
                 styled.append(f"{_ASS_WHITE}{_ASS_POP}{word}{accent}")
             else:
                 styled.append(word)
+        style = _FRAMING_STYLE_NAME if cue.get("framing") else "AntonBold"
         events.append(
-            f"Dialogue: 0,{_ass_time(start)},{_ass_time(end)},AntonBold,,0,0,0,,"
+            f"Dialogue: 0,{_ass_time(start)},{_ass_time(end)},{style},,0,0,0,,"
             + " ".join(styled)
         )
+    header = _ASS_HEADER
+    if any(cue.get("framing") for cue in cues):
+        header = _ASS_HEADER.replace(
+            "\n\n[Events]", f"\n{_ASS_FRAMING_STYLE}\n\n[Events]"
+        )
     ass_path.parent.mkdir(parents=True, exist_ok=True)
-    ass_path.write_text(_ASS_HEADER + "\n".join(events), encoding="utf-8")
+    ass_path.write_text(header + "\n".join(events), encoding="utf-8")
     return ass_path
 
 
