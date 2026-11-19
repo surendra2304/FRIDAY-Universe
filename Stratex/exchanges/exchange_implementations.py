@@ -77,6 +77,11 @@ try:
 except ImportError:
     BinanceFuturesAdapter = None
 
+try:
+    from exchanges.pepperstone_ctrader_adapter import PepperstoneCTraderAdapter
+except ImportError:
+    PepperstoneCTraderAdapter = None
+
 
 class BinanceExchangeAdapter(BaseExchange):
     """
@@ -936,6 +941,8 @@ def get_exchange_adapter(exchange_id: str) -> BaseExchange:
         "okx": OKXExchangeAdapter,
         "coinbase": CoinbaseExchangeAdapter,
         "binance_futures": BinanceFuturesAdapter,
+        "pepperstone_ctrader": PepperstoneCTraderAdapter,
+        "ctrader_openapi": PepperstoneCTraderAdapter,
     }
     adapter_cls = ex_map.get(exchange_id.lower())
     if not adapter_cls:
