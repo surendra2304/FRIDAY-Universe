@@ -11637,6 +11637,23 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Stratex/strategy_xs_lowvol.py
       - Stratex/strategy_xs_momentum.py
       - Stratex/tests/test_fwd025_pandas3_forming_bar.py
+  - id: TASK-STR-FWD-026
+    title: "adoption time-exit clock fix: restore position_opened_at from the tag stream's original entry timestamp"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-str-fwd-026-adoption-opened-at
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Claim: issue #35 comment 6999867234. Base: main 39e1ce7c5cc2cda5dba80ee1cf467d5b90b8c0ce. Defect (book audit 2026-11-19, live-verified): multi_venue_engine.adopt_existing_positions() stamped position_opened_at = now_ms for every adopted position and never restored the true fill time, although the position_tags.jsonl stream it already reads for attribution (TASK-STR-FWD-008) carries the original entry timestamps. The dow_effect max_bars=5 time exit (run_daemon._manage_forward_time_exits via forward_guard.time_exit_due) therefore re-anchored to every daemon restart: the book entered 2026-11-17 (judged exit 2026-11-22T00:00Z) computed 2026-11-23 after the 2026-11-19 00:59 IST restart, slipping again on each further restart."
+      - "Fix: fill_ledger gains earliest_position_tag() (oldest fingerprint-matching tag — later tags are adoption corrections stamped at restart time, so the newest tag must NOT anchor the clock); adopt_existing_positions restores position_opened_at from that tag's ts via a never-raising helper, falling back to now_ms ONLY when no tag/timestamp exists, logged at WARNING. Re-adoption idempotent by construction (same stream, same earliest tag). No exit rule, judged max_bars value, or risk parameter changed."
+      - "Tests (ti-venv, pandas 3.1.1 / py3.12): new suite test_fwd026_adoption_opened_at.py (5 tests) — restore-from-tag, idempotency across restarts, earliest-tag anchoring vs a later correction tag, restored-age dow position firing its time exit through the daemon's own _manage_forward_time_exits (younger restored position untouched), tag-missing fallback to now + WARNING. A/B: all 5 FAIL on the pristine base code, all 5 pass on the fix. Regression rings on the fix: fwd026+attribution+fwd002+fwd003+fwd007+fwd014+fwd023+unrecorded-close = 120 passed; second ring (rd010 execution quality, fwd002 sleeve, fwd011, measurement phase2, nautilus hardening, oanda forward, supervision scorecard) = 105 passed with 2 failures proven byte-identical on pristine base (pre-existing, unrelated). CI: NO workflow on main collects Stratex/tests files (PR #1055's Stratex step is unmerged and does not list this suite) — local runs are the only evidence; a REL-053-pattern wiring follow-up is needed."
+    next_action: "Supervisor review, then merge via the next merge lane. Deploy rides the normal fleet pull / Stratex migration to Universe-1; after deploy, the first daemon restart restores the dow book's clock to the 2026-11-17 entry (judged exit 2026-11-22T00:00Z) instead of re-anchoring."
+    files:
+      - Stratex/autonomy/multi_venue_engine.py
+      - Stratex/measurement/fill_ledger.py
+      - Stratex/tests/test_fwd026_adoption_opened_at.py
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

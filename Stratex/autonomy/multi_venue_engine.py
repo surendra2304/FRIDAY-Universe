@@ -156,7 +156,9 @@ class MultiVenueEngine:
                     if key in self.positions:
                         continue
                     self.positions[key] = pos
-                    self.position_opened_at[key] = now_ms
+                    self.position_opened_at[key] = self._adopted_opened_at_ms(
+                        venue, pos, now_ms
+                    )
                     adopted += 1
                     # Ownership tag + attribution (TASK-STR-PHASE2-001,
                     # TASK-STR-FWD-008): restore from the tag stream when
@@ -169,6 +171,53 @@ class MultiVenueEngine:
         if adopted:
             logger.info(f"[MULTI_VENUE] Adopted {adopted} existing position(s) into tracking")
         return adopted
+
+    def _adopted_opened_at_ms(self, venue: str, pos: Any, now_ms: int) -> int:
+        """Open time (ms epoch) for one adopted position (TASK-STR-FWD-026).
+
+        Adoption used to stamp position_opened_at with the adoption
+        instant, so every daemon restart re-anchored the judged time
+        exit (dow_effect max_bars=5, run_daemon._manage_forward_time_exits
+        via forward_guard.time_exit_due) to the restart: the book entered
+        2026-11-17 (judged exit 2026-11-22T00:00Z) computed its exit as
+        2026-11-23 after the 2026-11-19 restart, and each further restart
+        would slip it again. The tag stream carries the original entry
+        timestamp — restore from the EARLIEST fingerprint-matching tag
+        (later tags are adoption corrections stamped at restart time, so
+        anchoring to them would keep the defect). Restoring from the
+        stream also makes re-adoption idempotent: the same book adopted
+        twice yields the same opened_at.
+
+        Falls back to now_ms ONLY when the stream holds no tag with a
+        usable timestamp for this position, and logs that fallback at
+        WARNING — a position on the fallback clock exits late, which
+        must be visible, never silent. Never raises: a clock lookup must
+        not break adoption.
+        """
+        key = f"{venue}:{pos.symbol}"
+        try:
+            from measurement import fill_ledger as _fl
+
+            tag = _fl.earliest_position_tag(
+                venue,
+                pos.symbol,
+                side=str(getattr(pos, "side", "") or ""),
+                qty=float(getattr(pos, "quantity", 0.0) or 0.0),
+                entry_price=float(getattr(pos, "entry_price", 0.0) or 0.0),
+            )
+            ts = float(tag.get("ts") or 0.0) if tag else 0.0
+            if ts > 0:
+                return int(ts * 1000)
+            logger.warning(
+                f"[MULTI_VENUE] Adoption: no tag timestamp for {key}; "
+                "time-exit clock anchored to adoption time"
+            )
+        except Exception as e:
+            logger.warning(
+                f"[MULTI_VENUE] Adoption: tag timestamp lookup failed for "
+                f"{key} ({e}); time-exit clock anchored to adoption time"
+            )
+        return now_ms
 
     def _tag_adopted_position(self, venue: str, adapter: Any, pos: Any) -> None:
         """Attribution for one adopted position (TASK-STR-FWD-008).
