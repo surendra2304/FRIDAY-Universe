@@ -200,6 +200,24 @@ intelx_watch_state: dict[str, Any] = {
     "last_report": None,
 }
 
+# TASK-INT-016: the instant fast lane runs the SAME drainer (same kill
+# switch, same persisted delivered keys) on a short cadence against
+# IntelX's instant_outbox.jsonl, so a big break (TASK-INT-015
+# instant-class) is delivered in seconds instead of waiting for the
+# main lane's cycle. Inert while FRIDAY_PROACTIVE_INTELX_WATCH is off.
+try:
+    INTELX_INSTANT_WATCH_INTERVAL_SECONDS = max(
+        5, int(os.getenv("FRIDAY_PROACTIVE_INTELX_INSTANT_WATCH_INTERVAL_SECONDS", "15"))
+    )
+except ValueError:
+    INTELX_INSTANT_WATCH_INTERVAL_SECONDS = 15
+intelx_instant_watch_state: dict[str, Any] = {
+    "running": False,
+    "interval_seconds": INTELX_INSTANT_WATCH_INTERVAL_SECONDS,
+    "last_completed_at": None,
+    "last_report": None,
+}
+
 
 async def _fleet_supervision_loop() -> None:
     """Continuously refresh peer reachability while the cloud FRIDAY process is alive."""
@@ -430,6 +448,34 @@ async def _intelx_watch_loop() -> None:
         intelx_watch_state["running"] = False
 
 
+async def _intelx_instant_watch_loop() -> None:
+    """TASK-INT-016: fast-lane drain of IntelX's instant outbox.
+
+    Same drainer, same kill switch and dedupe state as
+    ``_intelx_watch_loop`` — only the file (instant_outbox.jsonl) and
+    the cadence differ. A cycle failure is logged and never takes the
+    service down.
+    """
+    intelx_instant_watch_state["running"] = True
+    try:
+        while True:
+            await asyncio.sleep(INTELX_INSTANT_WATCH_INTERVAL_SECONDS)
+            try:
+                from friday.proactive.intelx_watch import run_instant_drain_cycle
+
+                report = await asyncio.to_thread(run_instant_drain_cycle, agent.notifications)
+                intelx_instant_watch_state["last_completed_at"] = datetime.now(timezone.utc).isoformat()
+                intelx_instant_watch_state["last_report"] = report
+                if report.get("posted") or report.get("held"):
+                    logger.info("IntelX instant watch drain: %s", report)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                logger.exception("IntelX instant watch drain cycle error (continuing)")
+    finally:
+        intelx_instant_watch_state["running"] = False
+
+
 #: The server's main event loop, captured at startup so worker threads (the
 #: Telegram gateway, the mission executor) can schedule coroutines onto the
 #: SAME loop instead of racing a second one (G5/G6).
@@ -582,6 +628,8 @@ async def lifespan(_: FastAPI):
     # TASK-PRO-002: IntelX watch outbox drainer (inert unless the
     # FRIDAY_PROACTIVE_INTELX_WATCH kill switch is enabled).
     intelx_watch_task = asyncio.create_task(_intelx_watch_loop(), name="friday-intelx-watch")
+    # TASK-INT-016: instant fast lane on the same drainer + kill switch.
+    intelx_instant_watch_task = asyncio.create_task(_intelx_instant_watch_loop(), name="friday-intelx-instant-watch")
     # TASK-FRD-023: arm the autonomous goal-execution daemon at boot when
     # the owner has enabled autonomous mode. Until this block existed, the
     # daemon's only callers were the manual toggle endpoint (runtime-only,
@@ -595,8 +643,8 @@ async def lifespan(_: FastAPI):
         yield
     finally:
         logger.info("Graceful shutdown initiated: stopping background tasks and listener loops...")
-        background_tasks = [repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task, agent_watch_task, history_task, stratex_watch_task, intelx_watch_task]
-        for task in (repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task, agent_watch_task, history_task, stratex_watch_task, intelx_watch_task):
+        background_tasks = [repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task, agent_watch_task, history_task, stratex_watch_task, intelx_watch_task, intelx_instant_watch_task]
+        for task in (repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task, agent_watch_task, history_task, stratex_watch_task, intelx_watch_task, intelx_instant_watch_task):
             task.cancel()
         try:
             await asyncio.wait_for(

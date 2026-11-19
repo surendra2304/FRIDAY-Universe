@@ -11684,6 +11684,25 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     files:
       - Stratex/measurement/fill_ledger.py
       - Stratex/autonomy/multi_venue_engine.py
+  - id: TASK-INT-016
+    title: "IntelX instant-alert fast lane: FRIDAY's PRO-002 drainer tails instant_outbox.jsonl on a short cadence with cross-lane dedupe (TASK-INT-015 follow-up)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-int-016-instant-fast-lane
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Claim: issue #35 comment 7004006984. Base: main b99775f23e072ce3e3c9625ef8bc05f5cbbaa358. Defect: TASK-INT-015 (PR #963, merged via union #1005) appends every instant-class envelope to instant_outbox.jsonl for a fast-lane drainer that was never built (its next_action names it as this follow-up; STANDING_WATCHES.md section 7 states it plainly) — a big break waited for the main lane's 120s drain cycle like any digest item. Audit on true main also found the PRO-002 drainer silently clamped INT-015's severity 'high' to 'info'."
+      - "Change: IntelxWatchDrainer gains run_instant_cycle — tails the instant outbox (INTELX_WATCH_INSTANT_OUTBOX_PATH override, else the main outbox's sibling, mirroring IntelX's default_instant_outbox_path) with its own offset + silent baseline in the SAME persisted state, delivering through the shared _deliver_envelopes so delivered_keys/held are one cross-lane dedupe record: whichever lane reaches an envelope first posts it, the other counts a duplicate. The envelope's quiet_hours_exempt flag stays the policy input on both lanes; held instant envelopes flush via the main lane's digest. VALID_SEVERITIES now includes 'high' so big breaks keep their severity. server.py adds _intelx_instant_watch_loop (FRIDAY_PROACTIVE_INTELX_INSTANT_WATCH_INTERVAL_SECONDS, default 15s, floor 5s) on the process-global drainer under the SAME kill switch FRIDAY_PROACTIVE_INTELX_WATCH (code default OFF — this task enables nothing and flips no watch or flag)."
+      - "Tests (sandbox Python 3.12.3, proxy vars unset): new FRIDAY/tests/test_int016_instant_lane.py 13/13 PASS on the branch and 13/13 FAIL on pristine base (non-vacuous); regressions FRIDAY/tests/test_pro002_intelx_watch.py 11/11 + test_pro001_stratex_watch.py 13/13 PASS; shared-process check with test_intelx_research_dispatch.py + test_autonomous_daemon_task_source.py = 57 passed. CI collection: both the new suite and the previously uncollected test_pro002_intelx_watch.py are added to owner-workflows.yml's contracts step (the workflow triggers on FRIDAY/tests/** and on itself, so this PR exercises them). ruff clean on both changed source files; every shipped file diffed against the true base blobs at b99775f2."
+    next_action: "Supervisor review -> serial-lane merge. NOT deployed by this crew. Post-merge: nothing to enable separately — the fast lane rides the existing FRIDAY_PROACTIVE_INTELX_WATCH switch the coordinator already controls; it changes delivery latency only when that switch is on. Flip VERIFIED after a production instant-class alert is observed delivered once (fast lane) with the main lane counting the duplicate."
+    files:
+      - FRIDAY/src/friday/proactive/intelx_watch.py
+      - FRIDAY/src/friday/api/server.py
+      - FRIDAY/tests/test_int016_instant_lane.py
+      - .github/workflows/owner-workflows.yml
+      - IntelX/docs/STANDING_WATCHES.md
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
