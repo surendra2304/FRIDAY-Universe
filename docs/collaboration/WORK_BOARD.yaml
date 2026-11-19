@@ -11684,6 +11684,22 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     files:
       - Stratex/measurement/fill_ledger.py
       - Stratex/autonomy/multi_venue_engine.py
+  - id: TASK-VOI-023
+    title: "Voice silence-criterion fix: the recovery ladder's prove-window verdict and the dead-input watchdog must consult the F2 frame counters — frames flowing means NOT silent and NOT dead-input, whatever the RMS energy estimate says"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-voi-023-ladder-watchdog-counters
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Claim: issue #35 comment 6995479043. Base: main 39e1ce7c5cc2cda5dba80ee1cf467d5b90b8c0ce. Defect (environment-independent, first-hand from acceptance run #16, ~/workspace/voice-rerun16/STATE.md §4/§9): the recovery ladder declared both rebuilt rungs FAILED at 05:08:12 IST with 'no user transcript and no track energy in the prove window (silent room)' while the same builds' F2 counters prove frames flowed — build 2: 356/356/355, build 3: 6796/6796/6795 (activity_push/plugin_push/plugin_send). The ladder's energy_seen came only from the RMS energy monitor (input_watch.last_energy_ts), which stamped nothing in the window; the counters were never consulted. Same defect class owed since re-run #14 for the input watchdog: _dead_input_verdict fired on energy + zero transcripts while the session's counters printed 1,045 forwarded frames."
+      - "Fix (criterion only; thresholds and ladder structure unchanged): new pure helper _frames_flowed(counters) in the F2 section — any of the three hops above zero, the exact negation of TASK-VOI-022's all-zero dead-forward signature, read from the same counters so the criteria cannot disagree; None (unregistered) returns False ('unknown is not flowed', mirroring VOI-022's 'unknown is not zero') and callers fall back to their energy-only criteria. _rung_unproven_reason gains frames_flowed: counters flowed -> the deaf reason naming the frame evidence, never 'silent room'; the entrypoint rung call site passes _frames_flowed(_frame_counters_for(sess)) for the rung's own session. _dead_input_verdict gains frames_flowed: counters flowed -> False (the input forward is not dead; the failure sits downstream and a rebuild cannot cure it); the watchdog call site passes the live session's counters. Existing verdicts are preserved wherever the counters are zero or unregistered."
+      - "Tests: test_voice_recovery_ladder.py gains _frames_flowed unit pins (zero row, None, each hop alone), the run-#16 fixtures (356 and 6,796 frames with energy_seen=False -> 'stayed deaf' + 'frames flowed', never 'silent room'), zero-counter preservation of both pre-fix reasons, and an entrypoint source-shape pin. test_voice_dead_input_voi016.py gains the #14 fixture (energy + no transcripts + past threshold + counters 1045/1045/1044 -> verdict False), the zero/None-counters preservation (the #10d signature still fires), and a watchdog source-shape pin. Local ring results are recorded in the PR body; NOTE: CI's voice-regressions step uses an explicit file list that excludes the voi016/voi017/voi018/voi022 suites (standing CI pytest-list follow-up) — whether it collects test_voice_recovery_ladder.py is stated in the PR body from the workflow file itself."
+    next_action: "Supervisor review -> serial-lane merge -> deploy with a watched FRIDAY-Voice restart -> the next calm-window acceptance run's journal shows the corrected verdicts (a rung with flowing counters can no longer be declared 'silent room'; the watchdog can no longer declare dead input over flowing counters) -> VERIFIED. No FIX.md branch A/B work is part of this task (mechanism unproven in #16; not commissioned)."
+    files:
+      - FRIDAY/src/friday/voice/livekit_worker.py
+      - FRIDAY/tests/test_voice_recovery_ladder.py
+      - FRIDAY/tests/test_voice_dead_input_voi016.py
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

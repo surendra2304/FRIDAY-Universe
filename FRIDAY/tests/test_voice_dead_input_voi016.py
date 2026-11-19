@@ -203,6 +203,43 @@ def test_dead_input_fires_on_energy_without_transcripts():
     ) is True
 
 
+def test_dead_input_never_fires_when_frames_flowed():
+    # TASK-VOI-023, the re-run #14 false positive: the watchdog
+    # declared the input dead while the session's own frame
+    # counters printed 1,045 forwarded frames. The firing setup
+    # below (energy arrived, zero transcripts, past the
+    # threshold) must stand down when the counters show frames
+    # crossing the forward — the failure then sits downstream
+    # of the input, and a rebuild cannot be its cure.
+    watch = _watch(session_started_ts=100.0, last_energy_ts=110.0)
+    counters = w._new_frame_counters("session build 1")
+    counters["activity_push_audio"] = 1045
+    counters["plugin_push_audio"] = 1045
+    counters["plugin_send_audio_events"] = 1044
+    assert w._dead_input_verdict(
+        watch, 130.0, owner_present=True, session_live=True,
+        frames_flowed=w._frames_flowed(counters),
+    ) is False
+
+
+def test_dead_input_still_fires_when_counters_are_zero():
+    # TASK-VOI-023: the counters criterion changes nothing when
+    # no frame crossed any hop — the #10d signature (energy
+    # arriving, counters 0/0/0, no transcripts) still fires.
+    # Unregistered counters (None) likewise leave the verdict
+    # on its energy-only criteria.
+    watch = _watch(session_started_ts=100.0, last_energy_ts=110.0)
+    counters = w._new_frame_counters("session build 1")
+    assert w._dead_input_verdict(
+        watch, 130.0, owner_present=True, session_live=True,
+        frames_flowed=w._frames_flowed(counters),
+    ) is True
+    assert w._dead_input_verdict(
+        watch, 130.0, owner_present=True, session_live=True,
+        frames_flowed=w._frames_flowed(None),
+    ) is True
+
+
 def test_dead_input_never_fires_in_a_silent_room():
     # No energy at all: the owner simply has not spoken yet. This
     # is the false-positive the energy condition exists to prevent.
@@ -362,6 +399,10 @@ def test_watchdog_carries_the_dead_input_trigger():
     assert "_note_inactivity_close(input_watch, err)" in watch_src
     assert "_INACTIVITY_CLOSE_LIMIT" in watch_src
     assert "_dead_input_verdict(" in watch_src
+    # TASK-VOI-023: the trigger consults the live session's own
+    # frame counters — flowing frames veto the dead-input call.
+    assert "frames_flowed=_frames_flowed(" in watch_src
+    assert "_frame_counters_for(live.get(\"session\"))" in watch_src
     # The trigger runs the EXISTING ladder — no second recovery path.
     assert "await _recover(pending_text)" in watch_src
     assert 'input_watch["fired_for_session"]' in watch_src

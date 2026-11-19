@@ -2365,12 +2365,30 @@ def _rung_proven(pending_text, *, turn_completed: bool,
     return bool(transcript_landed)
 
 
-def _rung_unproven_reason(kind: str, *, energy_seen: bool) -> str:
+def _rung_unproven_reason(kind: str, *, energy_seen: bool,
+                          frames_flowed: bool = False) -> str:
     """TASK-VOI-017 (F1): the honest failure reason for a rung whose
     prove window expired with no transcript and no pending turn.
     Energy present means the owner was speaking into a session that
     never transcribed — still deaf. No energy means a silent room:
-    recovery is unproven, not disproven, and the reason says so."""
+    recovery is unproven, not disproven, and the reason says so.
+
+    TASK-VOI-023: the session's F2 frame counters outrank the
+    energy estimate. Acceptance run #16's ladder declared rungs
+    failed as "silent room" whose own counters proved 356 and
+    6,796 frames had flowed across the rebuilt sessions' forwards
+    — the RMS monitor is an estimate and can miss; frames that
+    demonstrably crossed the forward are proof the room was not
+    silent. When the counters flowed, the reason is the deaf one
+    (input arrived; no transcript landed), whatever the monitor
+    stamped."""
+    if frames_flowed:
+        return (
+            f"{kind} rebuilt session stayed deaf: session frame "
+            f"counters advanced in the prove window (frames flowed) "
+            f"but no user transcript landed in the prove window "
+            f"(survival is not proof)"
+        )
     if energy_seen:
         return (
             f"{kind} rebuilt session stayed deaf: track energy was "
@@ -2517,7 +2535,7 @@ def _note_inactivity_close(watch: dict, err) -> int:
 
 
 def _dead_input_verdict(watch: dict, now: float, *, owner_present: bool,
-                        session_live: bool,
+                        session_live: bool, frames_flowed: bool = False,
                         threshold_s: float = _DEAD_INPUT_THRESHOLD_S) -> bool:
     """TASK-VOI-016 dead-input trigger (pure, unit-tested).
 
@@ -2529,13 +2547,26 @@ def _dead_input_verdict(watch: dict, now: float, *, owner_present: bool,
     session's life. A silent room (no energy) never fires; a session
     whose STT works (any transcript) never fires; a session that
     already fired never re-fires (its rebuild gets a fresh start
-    stamp, and with it a fresh chance)."""
+    stamp, and with it a fresh chance).
+
+    TASK-VOI-023: ``frames_flowed`` is the CURRENT session's F2
+    frame-counter evidence (see _frames_flowed). When frames
+    demonstrably crossed the session's forward in its life, the
+    input is NOT dead — whatever is wrong sits downstream of the
+    forward, and a rebuild (which re-creates the input) cannot be
+    the cure this trigger exists to run. Re-run #14's watchdog
+    declared the input dead while its own journal printed 1,045
+    forwarded frames: the energy/transcript state may corroborate
+    a dead-input call, but it may never override counters that
+    show frames flowing."""
     if not owner_present or not session_live:
         return False
     started = watch.get("session_started_ts")
     if not started or now - float(started) < threshold_s:
         return False
     if watch.get("fired_for_session") == started:
+        return False
+    if frames_flowed:
         return False
     energy = watch.get("last_energy_ts")
     if energy is None or float(energy) < float(started):
@@ -2642,6 +2673,32 @@ def _frame_counters_for(session) -> "dict | None":
     if session is None:
         return None
     return _FRAME_COUNTERS.get(id(session))
+
+
+def _frames_flowed(counters) -> bool:
+    """TASK-VOI-023: True when a session's F2 counters show frames
+    actually crossed its forward — any of the three hops above
+    zero. This is the exact negation of the TASK-VOI-022
+    dead-forward signature (all three zero), read from the same
+    counters, so the two criteria can never disagree about the
+    same session. Silence/dead-input determinations (the ladder's
+    prove-window reason, the dead-input watchdog) consult this:
+    energy estimates may corroborate, but may never override
+    counters that show frames flowing. A session with no
+    registered counters returns False — unknown is not flowed,
+    mirroring _input_forward_dead's "unknown is not zero" — and
+    the callers fall back to their energy-only criteria,
+    unchanged."""
+    if counters is None:
+        return False
+    return any(
+        int(counters.get(key) or 0) > 0
+        for key in (
+            "activity_push_audio",
+            "plugin_push_audio",
+            "plugin_send_audio_events",
+        )
+    )
 
 
 def _journal_frame_counters(session, reason: str, *, drop: bool = False) -> None:
@@ -4025,7 +4082,15 @@ async def entrypoint(ctx: JobContext):
         energy_seen = bool(
             energy_ts is not None and float(energy_ts) >= sess_started_ts
         )
-        return False, _rung_unproven_reason(kind, energy_seen=energy_seen)
+        # TASK-VOI-023: this rung session's own F2 counters outrank
+        # the energy estimate — frames that flowed in this session's
+        # life prove the room was not silent even when the RMS
+        # monitor stamped nothing (run #16: builds at 356 and 6,796
+        # frames were declared "silent room").
+        frames_flowed = _frames_flowed(_frame_counters_for(sess))
+        return False, _rung_unproven_reason(
+            kind, energy_seen=energy_seen, frames_flowed=frames_flowed
+        )
 
     async def _speak_unconfirmed(pending_text: str) -> None:
         """Ladder exhausted: the owner hears the truth, not silence —
@@ -4558,6 +4623,14 @@ async def entrypoint(ctx: JobContext):
                     input_watch, time.time(),
                     owner_present=bool(humans),
                     session_live=live.get("session") is not None,
+                    # TASK-VOI-023: the live session's F2 counters
+                    # outrank the energy/transcript state — frames
+                    # flowing means the input forward is not dead
+                    # (re-run #14: declared dead over 1,045
+                    # forwarded frames).
+                    frames_flowed=_frames_flowed(
+                        _frame_counters_for(live.get("session"))
+                    ),
                 )
                 if not wedged and not session_dead and not dead_input:
                     continue
