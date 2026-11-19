@@ -11808,6 +11808,42 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Inference/app/providers/gemini.py
       - Inference/tests/test_inf015_flash_lite_catalogue.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-REL-054
+    title: "Remove the retired OANDA venue code (oanda_demo package, OANDA adapter, engine venue branch)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-rel-054-oanda-removal
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Owner retired OANDA on 2026-11-19; fleet-side removal verified complete the same day (units deleted, credentials scrubbed on S1+S2). This PR removes the code."
+      - "Claim posted on issue #35 (comment 7004451223). Recon base: main 43ba8b53504f5a310f9e799a2386c5801e8c0329; shipped on main 3fa77cdd3e9559f51ad18d1f1ebdd0a2f3e818ef (the only upstream changes in between were Inference gemini files + this board - none of this PR's files changed upstream, verified by tree diff)."
+      - "Zero-reference proof: oanda_demo importers were only its tests and the deleted deployment unit; OandaExchangeAdapter importers were the engine's credential-gated branch, a guarded registry import with no callers of get_exchange_adapter, and tests. Production config carries no OANDA credentials (fleet scrub), so the branch could never initialise."
+      - "Engine surgery kept Binance-only: MultiVenueEngine and create_multi_venue_engine lose the oanda params/init branch/symbol list; the two factory call sites (run_daemon, telegram_bot) lose the matching kwargs. AST-verified post-edit; all edited files compile."
+      - "Local tests (sandbox py3.12.3, proxy vars unset): adjusted suites test_fwd002_sleeve + test_fwd006_sizing + test_fwd007_booking_integrity + test_trust001_oanda_ctrader_honesty = 32 passed; neighbour ring (measurement_phase2, execution_quality_rd010, daemon_book_composition, forward_scorecard, fwd019 x8, fwd003, fwd026, daemon_heartbeat x2) = 218 passed, 1 failed (rd010 test_gate_accepts_same_trade_at_legacy_fees_only_rate - proven pre-existing, fails identically on pristine base); CI-collected Stratex set (fwd018 x4, fwd021, fwd024, exp001, exp002) = 185 passed, 6 skipped."
+      - "CI collection: no workflow references any deleted or adjusted file (owner-workflows.yml Stratex list verified); the adjusted suites are local-run evidence only."
+      - "Deliberately left: run_daemon's defensive oanda references (universe list, sleeve state readers, equity fold with 0.0 fallback, min-notional skip) - production-proven safe with the venue absent; config_strategy forward_venues registry data for the ~23 forex rows awaiting the Pepperstone cTrader lane (pinned by the fwd019/scorecard suites); portfolio_v2/oanda_client.py (outside the ordered scope)."
+    next_action: "Coordinator review and merge. Forex execution re-homes with the Pepperstone cTrader adapter task, not here."
+    files:
+      - Stratex/oanda_demo (deleted, 10 files)
+      - Stratex/exchanges/oanda_adapter.py (deleted)
+      - Stratex/deployment/stratex-oanda-demo.service (deleted)
+      - Stratex/autonomy/multi_venue_engine.py
+      - Stratex/exchanges/exchange_implementations.py
+      - Stratex/autonomy/run_daemon.py
+      - Stratex/notifications/telegram_bot.py
+      - Stratex/tests/test_oanda_demo.py (deleted)
+      - Stratex/tests/test_oanda_entries_pause.py (deleted)
+      - Stratex/tests/test_oanda_forward_activation.py (deleted)
+      - Stratex/tests/test_oanda_practice_guard.py (deleted)
+      - Stratex/tests/test_fwd019_oanda_ft_runner.py (deleted)
+      - Stratex/tests/test_fwd011_sleeve_close_hardening.py (deleted)
+      - Stratex/tests/test_fwd014_untracked_alert_integrity.py (deleted)
+      - Stratex/tests/test_fwd002_sleeve.py
+      - Stratex/tests/test_fwd006_sizing.py
+      - Stratex/tests/test_fwd007_booking_integrity.py
+      - Stratex/tests/test_trust001_oanda_ctrader_honesty.py
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
