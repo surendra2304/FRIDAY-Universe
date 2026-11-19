@@ -19,6 +19,17 @@ Honesty rules (identical to every FRIDAY surface): a market query that
 fails or returns no signal is reported as such, never invented into an
 all-clear. An alert that cannot be evaluated is silent (it does not fire
 on a missing reading).
+
+TASK-FRD-025 call-site wiring: production delivery (no injected
+``deliver``) routes through the severity gate in
+``friday.proactive.owner_notify`` — only Severity.ALERT reaches the
+owner's Telegram. A fired alert rule (F6) is ALERT, keyed per rule per
+day so the gate's cooldown backs up the alert store's own latch; the
+daily portfolio report (F5) is ROUTINE — briefing material the gate
+holds. Each report carries the gate's verdict (``notify_result`` /
+``gate_held``, and per-rule results for the alert check) so a held
+message is never mistaken for a delivered one. An injected ``deliver``
+callable keeps the pre-gate behaviour exactly.
 """
 
 from __future__ import annotations
@@ -35,8 +46,31 @@ from datetime import datetime, timedelta
 from typing import Any, Awaitable, Callable
 
 from friday.core.owner_time import OWNER_TZ, now_owner_tz, owner_today
+from friday.proactive.owner_notify import (
+    NotifyResult,
+    Severity,
+    is_held_result,
+    notify_owner,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def _deliver_via_gate(
+    text: str, *, severity: Severity, event_key: str
+) -> tuple[bool, NotifyResult]:
+    """Production delivery through the TASK-FRD-025 severity gate.
+
+    Returns (sent_to_owner_telegram, gate_result). Never raises — the
+    gate never raises, and a failure here reports FAILED so callers
+    treat the message as undelivered, never as held or sent.
+    """
+    try:
+        result = notify_owner(text, severity=severity, event_key=event_key)
+    except Exception as exc:  # pragma: no cover - the gate never raises
+        logger.warning("[MARKET-WATCH] owner-notify gate failed: %s", exc)
+        return False, NotifyResult.FAILED
+    return result is NotifyResult.SENT, result
 
 # ---------------------------------------------------------------------------
 # windows (IST clock)
@@ -574,17 +608,13 @@ async def run_daily_portfolio_report(
     *,
     snapshot_fn: Callable[[], Awaitable[str]] | None = None,
 ) -> dict[str, Any]:
-    """F5: push the live Stratex snapshot to the owner at 09:00 IST."""
-    if deliver is None:
-        async def deliver(text: str) -> bool:  # noqa: F811
-            from friday.proactive.telegram_gateway import send_owner_message
+    """F5: push the live Stratex snapshot to the owner at 09:00 IST.
 
-            try:
-                return bool(send_owner_message(text))
-            except Exception:
-                return False
-
-    results: dict[str, Any] = {"date": owner_today(), "delivered": False}
+    Production delivery goes through the FRD-025 gate as ROUTINE: a
+    scheduled daily snapshot is briefing material, not an alert.
+    """
+    gated = deliver is None
+    results: dict[str, Any] = {"date": owner_today(), "delivered": False, "notify_result": None, "gate_held": False}
     try:
         snapshot = await (snapshot_fn or _portfolio_snapshot)()
     except Exception as exc:
@@ -592,7 +622,17 @@ async def run_daily_portfolio_report(
         snapshot = f"Stratex portfolio report could not be generated ({type(exc).__name__}). Reported honestly."
     text = f"💼 Daily portfolio report — {owner_today()} (IST):\n\n{snapshot}\n\nRead-only snapshot; no orders were placed (fail-closed, D-015)."
     try:
-        results["delivered"] = bool(await deliver(text))
+        if gated:
+            sent, gate_result = _deliver_via_gate(
+                text,
+                severity=Severity.ROUTINE,
+                event_key=f"portfolio_report:{owner_today()}",
+            )
+            results["delivered"] = sent
+            results["notify_result"] = gate_result.value
+            results["gate_held"] = is_held_result(gate_result)
+        else:
+            results["delivered"] = bool(await deliver(text))
     except Exception as exc:
         logger.warning("[F5] delivery failed: %s", exc)
     return results
@@ -650,19 +690,17 @@ async def run_alert_check(
     query_fn: Callable[[str], Awaitable[dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     """F6: evaluate every alert rule against the live market; fire+push when
-    a rule crosses its threshold. Once per rule per day (latched)."""
-    if deliver is None:
-        async def deliver(text: str) -> bool:  # noqa: F811
-            from friday.proactive.telegram_gateway import send_owner_message
+    a rule crosses its threshold. Once per rule per day (latched).
 
-            try:
-                return bool(send_owner_message(text))
-            except Exception:
-                return False
-
+    Production delivery goes through the FRD-025 gate as ALERT — the
+    owner defined this rule precisely so it reaches him the moment it
+    fires; the gate's per-key cooldown is a second latch behind the
+    alert store's per-day one.
+    """
+    gated = deliver is None
     query = query_fn or _stratex_market_query
     rules = alert_store.list()
-    results: dict[str, Any] = {"date": owner_today(), "evaluated": 0, "fired": 0, "deliveries": 0, "skipped_missing": 0}
+    results: dict[str, Any] = {"date": owner_today(), "evaluated": 0, "fired": 0, "deliveries": 0, "skipped_missing": 0, "gate_held": 0, "notify_results": []}
     today = owner_today()
     for r_dict in rules:
         rule = AlertRule.from_dict(r_dict)
@@ -691,7 +729,18 @@ async def run_alert_check(
                 f"Read-only market query; no orders were placed (fail-closed, D-015)."
             )
             try:
-                if await deliver(text):
+                if gated:
+                    sent, gate_result = _deliver_via_gate(
+                        text,
+                        severity=Severity.ALERT,
+                        event_key=f"market_alert:{rule.rule_id}:{today}",
+                    )
+                    results["notify_results"].append(gate_result.value)
+                    if sent:
+                        results["deliveries"] += 1
+                    if is_held_result(gate_result):
+                        results["gate_held"] += 1
+                elif await deliver(text):
                     results["deliveries"] += 1
             except Exception as exc:
                 logger.warning("[F6] delivery failed: %s", exc)

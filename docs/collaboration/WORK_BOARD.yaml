@@ -11393,17 +11393,26 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-FRD-025
     title: "FRIDAY Telegram reach: a severity-gated owner-notify path over the existing Telegram gateway — she messages the owner the moment something matters (owner decision 1A, 2026-11-18), with dedupe/cooldown so she can never spam him"
-    status: IN_PROGRESS
+    status: MERGED
     owner: muse_ai
     branch: claude/task-frd-025-owner-notify
+    pr: 1071
     evidence:
       - "Trigger: owner answers 2026-11-18 ~12:19 IST — FRIDAY (1) 'she messages him on Telegram the moment something matters'. Grounding (origin/main 3b24321b git objects): FRIDAY already owns the fleet's Bot API path (proactive/telegram_gateway.py — env credentials for @fridayuniverse_bot, sendMessage with chunking + pacing, send_owner_message used by agent_watch / market_watch / daily_self_report), and Cortex's escalations use the same sendMessage shape (chat_id from env at delivery time). What was missing is the GATE: today's callers send ungated, with no severity bar, no cross-caller dedupe/cooldown and no daily cap."
       - "Fix (this task's PR): new proactive/owner_notify.py — notify_owner(text, severity, event_key) -> NotifyResult. Only Severity.ALERT sends; ROUTINE returns BELOW_BAR (morning-briefing material). Anti-spam, persisted in .data/owner_notify/state.json (agent_watch store pattern): per-event-key cooldown 6h, identical-text dedupe 1h, global floor 120s between sends, daily cap 20 on the owner's IST day. FRIDAY_OWNER_NOTIFY=off kill switch re-checked per call; unconfigured gateway reports NOT_CONFIGURED; a failed send latches no state (genuine retries stay possible); never raises into a caller. Sends reuse telegram_gateway.send_owner_message — no new credentials, no second sender. 12 tests in FRIDAY/tests/test_owner_notify.py (fake clock + recording sender). Claim: issue #35 comment 6971438352."
       - "Disclosed follow-up, NOT in this PR: wiring the gate into the daemon's finding path lands after PR #951 (TASK-FRD-024 task source) merges — that producer does not exist on main yet; existing ungated callers (agent_watch / market_watch digests) adopt the gate as their own follow-up so their latched digest behaviour is not changed silently here."
-    next_action: "PR open -> supervisor review -> serial-lane merge -> deploy with the FRIDAY wave -> production proof: one drilled ALERT (fleet-down drill) lands on the owner's Telegram exactly once, a repeat inside the cooldown does not -> VERIFIED."
+      - "CALL-SITE WIRING FOLLOW-UP (this task, same TASK-FRD-025 id — no new board id; claim: issue #35 comment 7004009481; branch claude/task-frd-025-callsite-wiring on main 2240ebb8): the gate is now wired at every call site in the three classes its docstring names. (1) Autonomous daemon findings: DaemonTaskSource offers each seeded finding to notify_owner as ALERT keyed by the seed's trigger key (fleet_agent_unhealthy / fleet_poll_failing / stratex_heartbeat_stale / daemon_goals_failing), and AutonomousDaemon._finish_goal offers a finished source-seeded goal's report (ALERT if FAILED/PARTIAL, ROUTINE if COMPLETED, same trigger key so the gate cooldown suppresses the repeat); owner-submitted goals are never offered. (2) Fleet alerts: agent_watch production delivery routes through the gate — site sweep ALERT only when degraded (healthy = ROUTINE), watchlist briefing ROUTINE, Sentinel digest ROUTINE unless Sentinel was unreachable (ALERT); reports carry notify_result + gate_held, and agent_watch_tick keeps its per-day latch on a gate-held result (only FAILED/NOT_CONFIGURED unlatch for retry) so held digests are not re-offered every tick. (3) Trade events: market_watch alert-rule firings are ALERT keyed market_alert:<rule_id>:<day>, the daily portfolio report is ROUTINE; StratexWatcher still posts every event to the NotificationManager exactly as before AND offers it to the gate (verdict recorded as owner_notify on the alert-log entry) — daily breaker / kill criterion / measurement alert are ALERT, trade opens/closes + morning self-check + quiet-hours digest are ROUTINE. owner_notify gains is_held_result (BELOW_BAR/DUPLICATE/COOLDOWN/DAILY_CAP/DISABLED = deliberately held). An injected deliver callable at any wired site keeps the pre-gate behaviour exactly. daily_self_report (G7/G8 scheduled daily/weekly reports) is deliberately NOT wired: it is none of the three classes and its latch contract is untouched. Tests: new FRIDAY/tests/test_frd025_callsite_wiring.py = 20 tests driven through a REAL OwnerNotifier (fake clock + recording sender) — 18 failed / 2 passed (guards) on pristine main 2240ebb8, 20/20 on the branch; gate suite test_owner_notify.py 12/12; affected rings (batch6, batch7, pro001, frd021 serve, task_source, daemon arm, daemon timeout, batch5, telegram webhook) 203 passed on the branch, identical 203 on pristine base. CI collection: FRIDAY/tests are collected only via explicit lists — test_owner_notify.py was in NO CI list; this PR adds both test_owner_notify.py and test_frd025_callsite_wiring.py to owner-workflows.yml's pytest list so CI actually runs them."
+    next_action: "Wiring PR open -> supervisor review -> serial-lane merge -> deploy with the FRIDAY wave -> production proof: one drilled ALERT (fleet-down drill) lands on the owner's Telegram exactly once, a repeat inside the cooldown does not -> VERIFIED."
     files:
       - FRIDAY/src/friday/proactive/owner_notify.py
       - FRIDAY/tests/test_owner_notify.py
+      - FRIDAY/src/friday/autonomous/task_source.py
+      - FRIDAY/src/friday/autonomous/daemon.py
+      - FRIDAY/src/friday/proactive/agent_watch.py
+      - FRIDAY/src/friday/proactive/market_watch.py
+      - FRIDAY/src/friday/proactive/stratex_watch.py
+      - FRIDAY/tests/test_frd025_callsite_wiring.py
+      - .github/workflows/owner-workflows.yml
       - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-FRD-026
     title: "Wake word ARMED BY DEFAULT: the stage listens for 'Hey FRIDAY' from first load; only an explicit disarm turns it off (owner decision FRIDAY-2A, 2026-11-18)"
@@ -11949,6 +11958,23 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Stratex/tests/test_fwd007_booking_integrity.py
       - Stratex/tests/test_trust001_oanda_ctrader_honesty.py
 
+  - id: TASK-FRD-028
+    title: "Route daily_self_report through the FRIDAY owner-notify severity gate, or record a permanent exemption in the gate docstring"
+    status: AVAILABLE
+    owner: muse_ai
+    branch: null
+    pr: null
+    priority: P2
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Filed by the wave merge lane in the PR #1071 (TASK-FRD-025) union, per the brief: the supervisor review of PR #1071 (comment 7005080079) returned APPROVE-WITH-CONDITIONS; condition 1, verbatim: \"`daily_self_report` remains an ungated direct Telegram path — disclosed in the PR; file a follow-up to route it through the gate or record a permanent exemption in the gate docstring.\""
+      - "Review bypass audit (same comment): grep of FRIDAY/src for send_owner_message found the remaining direct Telegram sends are (a) the gate itself, (b) daily_self_report G7/G8 daily/weekly reports — deliberately NOT wired and disclosed as such in the PR's board entry, (c) the gateway transport / conversational bot path (not proactive owner notification)."
+    next_action: "Coordinator decides: wire daily_self_report's G7/G8 sends through notify_owner with an explicit severity (report-class, expected ROUTINE/below-bar except failure flags), or record a permanent exemption with reasons in the owner_notify gate docstring. Either way the bypass audit must end with zero undisclosed ungated proactive paths."
+    files:
+      - FRIDAY/src/friday/api/server.py
+      - FRIDAY/src/friday/proactive/owner_notify.py
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

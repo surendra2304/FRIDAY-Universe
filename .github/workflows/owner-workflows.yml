@@ -82,6 +82,8 @@ jobs:
             FRIDAY/tests/test_gemini_tool_schema_validity.py \
             FRIDAY/tests/test_rel_010_pool_exhaustion.py \
             FRIDAY/tests/test_telegram_webhook.py \
+            FRIDAY/tests/test_owner_notify.py \
+            FRIDAY/tests/test_frd025_callsite_wiring.py \
             FRIDAY/tests/test_rel018_scrubber_prose.py \
             FRIDAY/tests/test_autonomous_daemon_task_source.py
       - name: Generated-code ingestion and saved verification status

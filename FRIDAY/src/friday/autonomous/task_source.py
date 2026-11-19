@@ -49,6 +49,16 @@ Trigger evidence is logged (INFO) and stored on the goal's metadata
 for every seed. Source state (cooldowns, daily counts, reported
 failure ids) persists beside the daemon's own state file so restarts
 do not reset the bounds.
+
+TASK-FRD-025 call-site wiring: a submitted seed IS a finding — the
+catalogue only fires on anomalies — so each seed is also offered to
+the severity gate in ``friday.proactive.owner_notify`` as ALERT with
+the seed's own key as the gate event key. The gate's per-key cooldown
+(6 h) matches this source's fleet/Stratex cooldowns, so the owner
+hears about a persistent anomaly once, at detection, not on every
+evaluation; the daemon's completion report for the seeded goal is
+offered separately by the daemon itself (same event key — the gate
+suppresses the repeat). A gate failure never affects seeding.
 """
 
 from __future__ import annotations
@@ -122,6 +132,7 @@ class DaemonTaskSource:
         fleet_statuses: Callable[[], Awaitable[list[Any]]] | None = None,
         stratex_heartbeat_age_s: Callable[[], float | None] | None = None,
         now_fn: Callable[[], float] = time.time,
+        notify_fn: Callable[..., Any] | None = None,
     ) -> None:
         self._state_path = state_path or (
             Path(__file__).resolve().parents[3] / ".data" / "autonomous_task_source.json"
@@ -131,6 +142,9 @@ class DaemonTaskSource:
             stratex_heartbeat_age_s or self._default_stratex_heartbeat_age_s
         )
         self._now = now_fn
+        # FRD-025 gate entry point (owner_notify.notify_owner); injectable
+        # for tests, resolved lazily when None.
+        self._notify_fn = notify_fn
         self._last_seeded: dict[str, float] = {}
         self._daily: dict[str, int] = {}
         self._reported_failure_ids: list[str] = []
@@ -372,6 +386,60 @@ class DaemonTaskSource:
             )
         ]
 
+    # -- owner notification (TASK-FRD-025) --------------------------------
+
+    @staticmethod
+    def _finding_text(seed: TriggerSeed) -> str:
+        """One owner-readable line for a seeded finding (not the goal text:
+        the goal text is an instruction to FRIDAY, this is a report)."""
+        ev = seed.evidence or {}
+        if seed.trigger == "fleet_agent_unhealthy":
+            agent = str(ev.get("agent") or "a fleet agent")
+            status = str(ev.get("status") or "UNHEALTHY")
+            return (
+                f"FRIDAY finding: fleet agent {agent} is {status}. "
+                "I have queued a read-only verification goal."
+            )
+        if seed.trigger == "fleet_poll_failing":
+            return (
+                "FRIDAY finding: my fleet status poll is failing "
+                f"({ev.get('error') or 'unknown error'}). "
+                "I have queued a read-only check."
+            )
+        if seed.trigger == "stratex_heartbeat_stale":
+            age = ev.get("heartbeat_age_s")
+            age_text = "missing entirely" if age is None else f"{age} seconds old"
+            return (
+                f"FRIDAY finding: Stratex's daemon heartbeat is stale ({age_text}). "
+                "I have queued a read-only status check."
+            )
+        if seed.trigger == "daemon_goals_failing":
+            return (
+                f"FRIDAY finding: {ev.get('count') or 'several'} autonomous goals "
+                "failed in the last six hours. I have queued a read-only review."
+            )
+        return f"FRIDAY finding ({seed.trigger}): {seed.goal_text}"[:300]
+
+    def _notify_finding(self, seed: TriggerSeed) -> None:
+        """Offer one seeded finding to the FRD-025 gate as ALERT.
+
+        Never raises: a gate failure is logged and seeding continues —
+        the finding still exists as a queued goal either way.
+        """
+        try:
+            from friday.proactive.owner_notify import Severity, notify_owner
+
+            fn = self._notify_fn or notify_owner
+            fn(
+                self._finding_text(seed),
+                severity=Severity.ALERT,
+                event_key=seed.key,
+            )
+        except Exception as exc:
+            logger.warning(
+                "Owner notify for task-source finding %s failed: %s", seed.key, exc
+            )
+
     # -- evaluation ----------------------------------------------------------
 
     async def maybe_seed(self, daemon: Any) -> list[str]:
@@ -423,6 +491,7 @@ class DaemonTaskSource:
                     "evidence": seed.evidence,
                 },
             )
+            self._notify_finding(seed)
             self._last_seeded[seed.key] = now
             self._daily[today] = self._daily.get(today, 0) + 1
             if seed.mark_failure_ids:

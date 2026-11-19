@@ -51,6 +51,20 @@ the morning summary) — never an invented number. This module never
 writes to Stratex state and never places, pauses or modifies a trade;
 governance stays with Stratex's daemon and forward guard.
 
+TASK-FRD-025 call-site wiring: every event this watcher posts to the
+NotificationManager is ALSO offered to the severity gate in
+``friday.proactive.owner_notify`` (the result is recorded as
+``owner_notify`` on the alert-log entry). Only ALERT reaches the
+owner's Telegram: the daily loss breaker, a kill-criterion trip and a
+measurement alert are ALERT — the owner wants those the moment they
+happen. Trade opens/closes, the morning self-check and the
+quiet-hours digest are ROUTINE: they keep posting to the in-app
+notification surface exactly as before and the gate holds them from
+Telegram as briefing material. The gate's own cooldown/dedupe/cap
+apply on top of this watcher's dedupe keys (the gate event key is
+``stratex:<dedupe_key>``), and a gate failure never affects the
+NotificationManager post — the two channels are independent.
+
 TASK-FRD-021 adds ``read_status_snapshot`` below: the same source
 files compose the status figures Stratex's /v1/task/execute summary
 serves, gated on the daemon heartbeat's freshness (60 s, Stratex's
@@ -764,10 +778,15 @@ class StratexWatcher:
         paths: StratexPaths | None = None,
         state_path: Path | None = None,
         enabled_fn: Callable[[], bool] = watch_enabled,
+        notify_fn: Callable[..., Any] | None = None,
     ) -> None:
         self._paths = paths if paths is not None else resolve_stratex_paths()
         self._state_path = state_path if state_path is not None else _default_state_path()
         self._enabled_fn = enabled_fn
+        # FRD-025 gate entry point (owner_notify.notify_owner); injectable
+        # for tests, resolved lazily when None so importing this module
+        # never pulls the gate in.
+        self._notify_fn = notify_fn
         self._lock = threading.Lock()
         self._state: dict[str, Any] | None = None
 
@@ -800,6 +819,46 @@ class StratexWatcher:
             logger.warning(f"proactive watch: could not persist watcher state: {exc}")
 
     # -- delivery ---------------------------------------------------------
+
+    #: Triggers whose events are worth the owner's Telegram the moment
+    #: they happen (FRD-025). Any post with severity "critical" is also
+    #: ALERT regardless of trigger. Everything else is ROUTINE.
+    _GATE_ALERT_TRIGGERS = frozenset(
+        {"daily_breaker_tripped", "kill_criterion_tripped", "measurement_alert"}
+    )
+
+    def _notify_gate(
+        self,
+        *,
+        message: str,
+        severity: str,
+        trigger: str,
+        dedupe_key: str,
+    ) -> str:
+        """Offer one posted event to the FRD-025 severity gate.
+
+        Returns the gate's NotifyResult value for the alert log. Never
+        raises and never affects the NotificationManager post that
+        already happened: Telegram is a second, gated channel.
+        """
+        try:
+            from friday.proactive.owner_notify import Severity, notify_owner
+
+            fn = self._notify_fn or notify_owner
+            gate_severity = (
+                Severity.ALERT
+                if trigger in self._GATE_ALERT_TRIGGERS or severity == "critical"
+                else Severity.ROUTINE
+            )
+            result = fn(
+                message,
+                severity=gate_severity,
+                event_key=f"stratex:{dedupe_key}",
+            )
+            return str(getattr(result, "value", result))
+        except Exception as exc:
+            logger.warning(f"proactive watch: owner-notify gate failed ({trigger}): {exc}")
+            return "failed"
 
     def _post(
         self,
@@ -841,6 +900,11 @@ class StratexWatcher:
             }
         )
         state["alert_log"] = state["alert_log"][-MAX_ALERT_LOG:]
+        # FRD-025: the same event is offered to the Telegram severity
+        # gate; its verdict rides on the alert-log entry just appended.
+        state["alert_log"][-1]["owner_notify"] = self._notify_gate(
+            message=message, severity=severity, trigger=trigger, dedupe_key=dedupe_key
+        )
         logger.info(f"proactive watch [{trigger}] {message}")
         return True
 
