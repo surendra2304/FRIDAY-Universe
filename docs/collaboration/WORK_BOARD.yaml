@@ -11562,4 +11562,104 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     updated_at: "2026-11-18"
     evidence:
       - "Trigger: the first supervised VyralX cycle (2026-11-18) produced zero videos — both framed renders died at the ~2,400s final-composition timeout on Server 2, leaving unplayable partial files. Profiling (build record ~/workspace/vyr-render-fit/STATE.md; claim issue #35 comment 6980256431, completion 6980597231): the libx264 encode is ~66% of the framed composition CPU (baseline 40s framed render = 70.5 CPU-s at 1 core, peak RSS 378MB on the 956MB host, whose swap pressure throttles delivery further); caption burn-in costs only ~3 CPU-s — the encode profile, not the subtitles, is the lever."
-      - "Build (PR #1026, single commit on base 11807832): viral_framing.render_framed passes width=720, height=1280, max_fps=30 and encodes -preset ultrafast -crf 23 -threads 2; viral_remix._base_video_filter gains keyword-only width/height/max_fps parameters whose defaults reproduce the previous chain byte-for-byte, so the commentary renderers are untouched (a test pins the default string exactly). The 2,400s timeout is NOT moved (2400 at every _run site in both revisions). Locked rules intact: captions burned with the unchanged ASS PlayRes, 0.22 ducking, loudnorm I=-14, BGM bed path, held/unlisted publish behaviour. Measured before/after (full command, 1 core): 40s framed 70.5 -> 30.4 CPU-s, peak RSS 378 -> 243MB; 58s worst case 39.2 CPU-s measured; SSIM vs the old profile 0.965 on the build 
+      - "Build (PR #1026, single commit on base 11807832): viral_framing.render_framed passes width=720, height=1280, max_fps=30 and encodes -preset ultrafast -crf 23 -threads 2; viral_remix._base_video_filter gains keyword-only width/height/max_fps parameters whose defaults reproduce the previous chain byte-for-byte, so the commentary renderers are untouched (a test pins the default string exactly). The 2,400s timeout is NOT moved (2400 at every _run site in both revisions). Locked rules intact: captions burned with the unchanged ASS PlayRes, 0.22 ducking, loudnorm I=-14, BGM bed path, held/unlisted publish behaviour. Measured before/after (full command, 1 core): 40s framed 70.5 -> 30.4 CPU-s, peak RSS 378 -> 243MB; 58s worst case 39.2 CPU-s measured; SSIM vs the old profile 0.965 on the build fixture."
+      - "Supervisor review APPROVE-WITH-CONDITIONS (comment 6981331995; ~/workspace/vyr-render-fit/REVIEW.md): diff is exactly 3 files +175/-6, framed-path-only verified by full-command capture (audio chain byte-identical); the reviewer independently reproduced the headline on their own fixture — OLD 51.9 CPU-s / RSS 312MB -> NEW 23.5 CPU-s / RSS 179MB = 2.21x cheaper — and measured the locked rules in the NEW output (720x1280@30fps, caption styling, duck -11.6 dB, loudness -13.85 LUFS, SSIM 0.9768); core test ring 40 passed with the 3 profile pins failing on pristine base as designed. CONDITION C1 (acceptance — gates any production claim, NOT the merge): after merge + deploy, the first supervised cycle on S2 must produce a held render inside the 2,400s timeout before this task is called production-verified."
+    next_action: "Merged by mini merge lane 1 (union onto main; board entry added by the lane from the PR/review records, since the PR shipped no board change). NOT deployed by the lane. Next: deploy to Server 2 -> supervised cycle re-run -> the coordinator watches the first produced video personally before any owner review step (owner standing order 2026-11-18) -> condition C1 satisfied -> VERIFIED."
+    files:
+      - VyralX/app/services/viral_framing.py
+      - VyralX/app/services/viral_remix.py
+      - VyralX/tests/test_viral_framing.py
+  - id: TASK-VOI-022
+    title: "Voice lifecycle instrumentation (FIX.md section 3): a per-build owner-audio-publications journal line plus the no-track-accepted WARNING in the FRIDAY voice worker, so the next acceptance run discriminates H1a vs H1b in the rebuilt-session deafness diagnosis"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-voi-022-lifecycle-instrumentation
+    created_at: "2026-11-18"
+    updated_at: "2026-11-18"
+    evidence:
+      - "Diagnosis (~/workspace/voice-lifecycle-diag/DIAGNOSIS.md; issue #35 comment 6983117421): D2 (the voice worker wedges after jobs) is PROVEN at the architecture level — jobs run as threads in the one worker process, framework supervision is ping/pong logging with no kill/quarantine path, and shutdown is cooperative asyncio cancellation, which a thread blocked in a native call or stalled in cgroup memory reclaim never honours (the worker lives mostly in swap under its 300M cap). D1 (sessions rebuilt by the recovery ladder are deaf: F2 counters 0/0/0 despite a correctly published SOURCE_MICROPHONE track, in retests #14 and #15B) is LOCALIZED to rtc.AudioStream creation/delivery inside the Rust FFI core in an already-degraded process — degradation precedes deafness (executor warnings began +28s into build 1 of #15B). Two sub-hypotheses remain: H1a (FFI stream dead on creation under degradation) vs H1b (the rebuilt RoomIO's async init task never links — sess.start() does not await linking). The framework Python rebuild path WORKS in a unit reproduction (build 2 received 40 frames), so no speculative fix ships; this task ships the instrumentation that discriminates."
+      - "Build (PR #1041, single commit on base 911b81c6; build record ~/workspace/voice-lifecycle-diag/INSTRUMENTATION.md; claim issue #35 comment 6983262651, completion 6984044495): livekit_worker.py +183/-0, purely additive. (1) Per-build publications line: in _start, immediately after the session_started_ts stamp, one INFO line per build (first builds and rebuilds alike) journaling the owner participant's audio publications (source/sid/subscribed) from room state. (2) The owed WARNING hardening: _check_input_forward, a one-shot ~5s check armed per build — if an owner audio publication exists AND this session's F2 counters are all zero AND the job's energy monitor saw energy within ~10s, it journals the exact spec WARNING (input forward dead on build N: owner publication present, monitor sees energy, session counters 0 — see lifecycle diagnosis H1a/H1b); it fires at most once per build, stands down when its build was superseded by a rebuild, never fires when no counters are registered (unknown is not zero), and never raises. (3) The FIX.md standing wedge instruction (py-spy dump before any restorative restart) recorded as a comment block in the worker. NO session behaviour changes: nothing subscribes, rebuilds, gates, or alters any session path. New suite FRIDAY/tests/test_voice_input_forward_voi022.py: 18/18 pass; neighbour voice suites' failure sets byte-identical to pristine base (pre-existing sandbox environment limits only)."
+      - "Supervisor review APPROVE (comment 6984713840; ~/workspace/voice-lifecycle-diag/REVIEW-1041.md): instrumentation-only PROVEN against the true base blob (base worker 7d7a1ada, sha256 byte-identical to the deployed production worker that ran retests #13/#14/#15B); spec fidelity vs FIX.md section 3 proven (the worker deliberately does NOT touch the framework's own RoomIO-linked line — that stays the acceptance probe's live capture, and together the two discriminate H1a vs H1b); the reviewer's own runs reproduce 18/18 on head and 18 failures on pristine base (non-vacuous); safety probes pass (check task set bounded at one per _start and drains to 0, arming never blocks _start, room-state raises never propagate). CI on the head: 9 check-runs, 8 success + docker skipped. Precision for the record: CI's voice-regressions pytest step uses an explicit file list that excludes the voi022 suite (and voi016/017/018) — the suite's evidence is the local runs; it rides the standing CI pytest-list follow-up. Not a merge condition."
+    next_action: "Merged by mini merge lane 1 (union onto main; board entry added by the lane from the PR/review records, since the PR shipped no board change). NOT deployed by the lane. Next: deploy with a watched FRIDAY-Voice restart -> calm-window acceptance run #16 captures this PR's per-build lines plus the framework's RoomIO-linked lines (DIAGNOSIS section 5 decision table) -> H1a vs H1b discriminated -> FIX.md branch A or B implemented against the proven mechanism -> VERIFIED."
+    files:
+      - FRIDAY/src/friday/voice/livekit_worker.py
+      - FRIDAY/tests/test_voice_input_forward_voi022.py
+  - id: TASK-STR-FWD-025
+    title: "pandas-3 forming-bar fix: resolution-independent epoch seconds in every lane module's _closed_frame"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-str-fwd-025-pandas3-forming-bar
+    created_at: "2026-11-18"
+    updated_at: "2026-11-18"
+    evidence:
+      - "Claim: issue #35 comment 6985750679. Base: main c52933e102d7773b6a76eb95e1a6c3bd80fdde8e. Defect: the lane modules' _closed_frame computed bar-open epoch seconds as idx.view(\"int64\")/1e9 (or idx.asi8/1e9) — correct only for nanosecond-resolution indexes. pandas 3.1.1 infers non-ns resolutions (verified: to_datetime unit='ms'/'s', date_range and string parsing all yield datetime64[us]), so opens came out 1000x too small, every bar passed the closed test, and the still-forming bar was evaluated. Reproduced on c52933e1: test_fwd003 test_forming_bar_is_never_evaluated returned 4 bars vs 3 (the kept 4th bar opened 1h before now on a 1d timeframe — forming, not closed) and test_fwd020's supertrend forming-bar test failed the same way."
+      - "Fix (module layer, the mtf_confluence family's existing pattern): epoch seconds by timedelta division — (idx - epoch).total_seconds() with epoch in the index's own tz — in all 34 files carrying the buggy inline computation (incl. the donchian_turtle/ts_momentum/turtle2/vol_adaptive cores and the keltner/ha/bar_patterns/psar _closed_frame_s cores). 35 thin wrappers delegate to those cores and inherit the fix (delegate->core imports verified file by file); the 5 mtf-family files were already correct (docstring tense touch only). Scoped OUT with evidence: rigorous_backtest/rd5/run_rd5.py asi8 uses (frozen research harness, self-consistent within a run, not the live signal path)."
+      - "Tests (civenv, pandas 3.1.1): the two originally failing tests pass; rings fwd002+fwd003+fwd012+fwd020+fwd024+fwd025 = 133 passed, fwd019 ring (18 files) = 262 passed; exp001/exp002/fwd018/fwd021/fwd022 = 179 passed with 3 failures proven byte-identical on pristine base (2 exp002 refusal tests fail BY DESIGN post-lane-4 per the lane's own finding; 1 exp001 fabric-writer test, unrelated). New suite test_fwd025_pandas3_forming_bar.py (13 tests) pins the invariant at ns/us/ms/s resolutions across every fixed template class + a delegating wrapper + the weekly sleeve: A/B on the unfixed tree = 10 failed / 3 passed (only the ns parametrizations pass — the old code was correct for ns only)."
+    next_action: "Supervisor review, then merge via the next merge lane. No deploy step of its own: the fix rides the normal fleet pull; it is a precondition-grade safety fix for the Fri py3.12 window (venv312 carries pandas 3.1.1, where the guard was silently off for effectively all real frames)."
+    files:
+      - Stratex/strategy_adx_ema_bare.py
+      - Stratex/strategy_bar_patterns.py
+      - Stratex/strategy_bb_reversion.py
+      - Stratex/strategy_bollinger_trend.py
+      - Stratex/strategy_bollinger_trend_4h.py
+      - Stratex/strategy_bollinger_trend_p20.py
+      - Stratex/strategy_bollinger_trend_p20_fx28.py
+      - Stratex/strategy_choppiness_breakout.py
+      - Stratex/strategy_donchian_turtle.py
+      - Stratex/strategy_dow_effect.py
+      - Stratex/strategy_factory_winner_3.py
+      - Stratex/strategy_factory_winner_4.py
+      - Stratex/strategy_ha_trend.py
+      - Stratex/strategy_ichimoku_trend.py
+      - Stratex/strategy_ichimoku_trend_1d.py
+      - Stratex/strategy_ichimoku_trend_raw.py
+      - Stratex/strategy_keltner_breakout.py
+      - Stratex/strategy_macd_trend.py
+      - Stratex/strategy_mtf_confluence.py
+      - Stratex/strategy_psar_trend_af001_max010.py
+      - Stratex/strategy_rsi_momentum.py
+      - Stratex/strategy_shock_breakout.py
+      - Stratex/strategy_shock_breakout_k15.py
+      - Stratex/strategy_sleeve_shock_breakout.py
+      - Stratex/strategy_stoch_reversion.py
+      - Stratex/strategy_supertrend_bare.py
+      - Stratex/strategy_ts_momentum.py
+      - Stratex/strategy_ts_momentum_roc24_fx12.py
+      - Stratex/strategy_ts_momentum_roc72_fx28.py
+      - Stratex/strategy_tsmom2_dual_crypto.py
+      - Stratex/strategy_turtle2.py
+      - Stratex/strategy_vol_adaptive_trend.py
+      - Stratex/strategy_vol_compression.py
+      - Stratex/strategy_vol_regime_trend.py
+      - Stratex/strategy_volatility_breakout.py
+      - Stratex/strategy_volume_breakout.py
+      - Stratex/strategy_wf_select_tsmom.py
+      - Stratex/strategy_xs_lowvol.py
+      - Stratex/strategy_xs_momentum.py
+      - Stratex/tests/test_fwd025_pandas3_forming_bar.py
+  - id: TASK-VOI-023
+    title: "Voice silence-criterion fix: the recovery ladder's prove-window verdict and the dead-input watchdog must consult the F2 frame counters — frames flowing means NOT silent and NOT dead-input, whatever the RMS energy estimate says"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-voi-023-ladder-watchdog-counters
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Claim: issue #35 comment 6995479043. Base: main 39e1ce7c5cc2cda5dba80ee1cf467d5b90b8c0ce. Defect (environment-independent, first-hand from acceptance run #16, ~/workspace/voice-rerun16/STATE.md §4/§9): the recovery ladder declared both rebuilt rungs FAILED at 05:08:12 IST with 'no user transcript and no track energy in the prove window (silent room)' while the same builds' F2 counters prove frames flowed — build 2: 356/356/355, build 3: 6796/6796/6795 (activity_push/plugin_push/plugin_send). The ladder's energy_seen came only from the RMS energy monitor (input_watch.last_energy_ts), which stamped nothing in the window; the counters were never consulted. Same defect class owed since re-run #14 for the input watchdog: _dead_input_verdict fired on energy + zero transcripts while the session's counters printed 1,045 forwarded frames."
+      - "Fix (criterion only; thresholds and ladder structure unchanged): new pure helper _frames_flowed(counters) in the F2 section — any of the three hops above zero, the exact negation of TASK-VOI-022's all-zero dead-forward signature, read from the same counters so the criteria cannot disagree; None (unregistered) returns False ('unknown is not flowed', mirroring VOI-022's 'unknown is not zero') and callers fall back to their energy-only criteria. _rung_unproven_reason gains frames_flowed: counters flowed -> the deaf reason naming the frame evidence, never 'silent room'; the entrypoint rung call site passes _frames_flowed(_frame_counters_for(sess)) for the rung's own session. _dead_input_verdict gains frames_flowed: counters flowed -> False (the input forward is not dead; the failure sits downstream and a rebuild cannot cure it); the watchdog call site passes the live session's counters. Existing verdicts are preserved wherever the counters are zero or unregistered."
+      - "Tests: test_voice_recovery_ladder.py gains _frames_flowed unit pins (zero row, None, each hop alone), the run-#16 fixtures (356 and 6,796 frames with energy_seen=False -> 'stayed deaf' + 'frames flowed', never 'silent room'), zero-counter preservation of both pre-fix reasons, and an entrypoint source-shape pin. test_voice_dead_input_voi016.py gains the #14 fixture (energy + no transcripts + past threshold + counters 1045/1045/1044 -> verdict False), the zero/None-counters preservation (the #10d signature still fires), and a watchdog source-shape pin. Local ring results are recorded in the PR body; NOTE: CI's voice-regressions step uses an explicit file list that excludes the voi016/voi017/voi018/voi022 suites (standing CI pytest-list follow-up) — whether it collects test_voice_recovery_ladder.py is stated in the PR body from the workflow file itself."
+    next_action: "Supervisor review -> serial-lane merge -> deploy with a watched FRIDAY-Voice restart -> the next calm-window acceptance run's journal shows the corrected verdicts (a rung with flowing counters can no longer be declared 'silent room'; the watchdog can no longer declare dead input over flowing counters) -> VERIFIED. No FIX.md branch A/B work is part of this task (mechanism unproven in #16; not commissioned)."
+    files:
+      - FRIDAY/src/friday/voice/livekit_worker.py
+      - FRIDAY/tests/test_voice_recovery_ladder.py
+      - FRIDAY/tests/test_voice_dead_input_voi016.py
+task_id_warnings:
+  - id: "WARN-TASK-ID-001"
+    severity: "high"
+    description: "PR #23 is labelled TASK-CI-003 but does not match TASK-CI-003's current Master Plan acceptance criteria (workspace test runner)."
+    resolution_owner: "claude"
+  - id: "WARN-TASK-ID-002"
+    severity: "high"
+    description: "PR #34 is labelled TASK-CI-004 but the Master Plan currently describes TASK-CI-004 as narrowing the bridge/** gitignore rule. PR #34 is a separate broad root-cause CI change. RESOLVED 2026-11-11 (ZAI): the Master Plan backlog TASK-CI-004 (bridge gitignore) was implemented and closed as commit 57c5868 (.gitignore bridge/** narrowed to artifact classes + tests/test_gitignore_bridge_source.py 19-case contract, 21 tests green with the bridge-auth suite); PR #34's fleet-validation work remains recorded under its own merged entry. The two TASK-CI-004 scopes are now both closed and no longer collide; warning retired."
+    resolution_owner: "claude"
+    resolution_note: "Closed by ZAI 2026-11-11; see ACTIVITY_LOG ORCH-008 session entry and the TASK-CI-004 backlog tick in the Master Completion Checklist infra notes."
