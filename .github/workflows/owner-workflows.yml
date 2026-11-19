@@ -148,6 +148,7 @@ jobs:
             Stratex/tests/test_fwd018_lane_visibility.py \
             Stratex/tests/test_fwd018_shock_variants.py \
             Stratex/tests/test_fwd021_overlay_service.py \
+            Stratex/tests/test_fwd028_overlay_allowlist_gate.py \
             Stratex/tests/test_fwd024_panel_xs.py \
             Stratex/tests/test_exp001_self_experiments.py \
             Stratex/tests/test_exp002_ensemble_book.py

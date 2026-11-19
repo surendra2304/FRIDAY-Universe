@@ -1748,6 +1748,37 @@ class StratexTradingEngine:
         }
         if not configs:
             return
+        # TASK-STR-FWD-028: the signal path skips any strategy missing
+        # from a non-empty STRATEX_STRATEGY_ALLOWLIST, but this manager
+        # never consulted it — on 2026-11-19 the daemon opened 30
+        # unprotected overlay positions (the overlay path places orders
+        # with no venue SL/TP brackets) while the allowlist held only
+        # the four signal-path names. Mirror the signal path: with a
+        # non-empty allowlist, an overlay config outside it is skipped
+        # entirely — no entries and no management. An empty allowlist
+        # keeps the previous behaviour (every overlay config managed).
+        allowlist = getattr(self, "strategy_allowlist", set())
+        if allowlist:
+            skipped = sorted(
+                "strategy_" + key
+                for key in configs
+                if "strategy_" + key not in allowlist
+            )
+            if skipped:
+                configs = {
+                    key: entry
+                    for key, entry in configs.items()
+                    if "strategy_" + key in allowlist
+                }
+                if now - getattr(self, "_last_overlay_allowlist_log", 0.0) >= 60:
+                    self._last_overlay_allowlist_log = now
+                    logger.warning(
+                        "[STRATEX] Overlay WARNING: overlay strategies "
+                        "are NOT in STRATEX_STRATEGY_ALLOWLIST and will "
+                        f"not be managed: {skipped}"
+                    )
+                if not configs:
+                    return
         try:
             demo_venues = strategy_registry.demo_venues()
         except Exception as e:
