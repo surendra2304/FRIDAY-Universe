@@ -85,7 +85,9 @@ jobs:
             FRIDAY/tests/test_owner_notify.py \
             FRIDAY/tests/test_frd025_callsite_wiring.py \
             FRIDAY/tests/test_rel018_scrubber_prose.py \
-            FRIDAY/tests/test_autonomous_daemon_task_source.py
+            FRIDAY/tests/test_autonomous_daemon_task_source.py \
+            FRIDAY/tests/test_pro002_intelx_watch.py \
+            FRIDAY/tests/test_int016_instant_lane.py
       - name: Generated-code ingestion and saved verification status
         env:
           PYTHONPATH: Forge

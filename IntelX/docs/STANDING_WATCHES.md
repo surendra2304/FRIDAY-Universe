@@ -236,3 +236,14 @@ outbox is a new file for a fast-lane drainer to deliver from; until one
 reads it, instant-class alerts still reach the owner through the main
 outbox exactly as before — the policy change can make delivery faster,
 never slower or lost.
+
+**Fast lane landed (TASK-INT-016):** FRIDAY's PRO-002 drainer now
+tails `instant_outbox.jsonl` on a short cadence
+(`FRIDAY_PROACTIVE_INTELX_INSTANT_WATCH_INTERVAL_SECONDS`, default
+15s) through the SAME drainer state as the main lane — the persisted
+`dedupe_key` record is shared, so an instant envelope is delivered
+exactly once across both lanes, by whichever reaches it first. The
+fast lane has its own silent baseline, honours the envelope's
+`quiet_hours_exempt` flag, and runs under the same
+`FRIDAY_PROACTIVE_INTELX_WATCH` kill switch (code default OFF;
+enabling it in production remains a separate coordinator step).

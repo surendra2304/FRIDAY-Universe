@@ -19,11 +19,12 @@ anti-spam rules):
   once, ever — delivered keys are persisted in the drainer state, so
   restarts, offset resets and a swapped/rebuilt outbox can never
   re-deliver an alert;
-- ``quiet_hours_exempt`` is always false for watch alerts: quiet hours
-  23:00-07:00 IST (the shared PRO-001 policy) hold them like any other
-  non-breaker alert, and held alerts flush as ONE digest notification
-  at/after 07:00. The envelope's flag is the policy input — IntelX
-  sets it, this drainer enforces it;
+- ``quiet_hours_exempt`` is the policy input — IntelX sets it, this
+  drainer enforces it: digest-class envelopes carry it false, so quiet
+  hours 23:00-07:00 IST (the shared PRO-001 policy) hold them like any
+  other non-breaker alert and held alerts flush as ONE digest
+  notification at/after 07:00; since TASK-INT-015, instant-class
+  envelopes (big breaks) carry it true and post immediately;
 - the first cycle on a fresh drainer state is a silent BASELINE —
   envelopes already sitting in the outbox are recorded as seen, never
   announced (enabling the drainer late never floods the owner with
@@ -39,6 +40,19 @@ anti-spam rules):
 - kill switch: ``FRIDAY_PROACTIVE_INTELX_WATCH`` env flag. The code
   default is OFF (fail-safe), exactly like PRO-001's Stratex watch;
   production enables it only as a separate, deliberate step.
+
+TASK-INT-016 adds the fast lane TASK-INT-015 named as its downstream
+follow-up (STANDING_WATCHES.md §7): instant-class envelopes are ALSO
+appended by IntelX to a sibling ``instant_outbox.jsonl``
+(``INTELX_WATCH_INSTANT_OUTBOX_PATH`` override). ``run_instant_cycle``
+tails that file on the server's short instant cadence and delivers
+through the same state — the SAME persisted ``delivered_keys`` — so an
+instant envelope is delivered exactly once across both lanes: whichever
+lane reaches it first posts it, the other lane counts it as a
+duplicate. The instant lane has its own silent baseline and offset in
+the same state file, honours the envelope's ``quiet_hours_exempt``
+flag exactly like the main lane, and never enables any watch or flag:
+it is inert under the same kill switch.
 
 Truthfulness: every figure in every message comes from the envelope
 itself (title, summary, publisher, url, score as IntelX recorded
@@ -70,6 +84,13 @@ MAX_ALERT_LOG = 200
 MAX_HELD = 50
 
 SOURCE_TAG = "TASK-PRO-002"
+INSTANT_SOURCE_TAG = "TASK-INT-016"
+
+#: Severities a notification may carry. "high" is the fleet vocabulary
+#: TASK-INT-015 stamps on instant-class envelopes (from
+#: intelx/api/v1/signal_detection.py); before TASK-INT-016 the drainer
+#: silently clamped it to "info", downgrading every big break.
+VALID_SEVERITIES = {"info", "warning", "critical", "high"}
 
 
 def drain_enabled() -> bool:
@@ -108,6 +129,20 @@ def resolve_outbox_path() -> Path:
     )
 
 
+def resolve_instant_outbox_path(main_outbox_path: Path | None = None) -> Path:
+    """Locate IntelX's instant outbox (TASK-INT-015's fast-lane file).
+
+    ``INTELX_WATCH_INSTANT_OUTBOX_PATH`` (IntelX's own env name) wins;
+    otherwise the sibling of the main outbox — the exact rule IntelX's
+    ``default_instant_outbox_path`` uses on the producer side.
+    """
+    override = (os.getenv("INTELX_WATCH_INSTANT_OUTBOX_PATH") or "").strip()
+    if override:
+        return Path(override)
+    main = main_outbox_path if main_outbox_path is not None else resolve_outbox_path()
+    return main.parent / "instant_outbox.jsonl"
+
+
 # ---------------------------------------------------------------------------
 # the drainer
 # ---------------------------------------------------------------------------
@@ -126,6 +161,11 @@ def _empty_state() -> dict[str, Any]:
         "version": 1,
         "baseline_done": False,
         "offset": 0,
+        # TASK-INT-016 fast lane: the instant outbox has its own offset
+        # and baseline in the SAME state file, so both lanes share the
+        # delivered_keys / held queue below (cross-lane dedupe).
+        "instant_baseline_done": False,
+        "instant_offset": 0,
         "delivered_keys": [],
         "held": [],
         "alert_log": [],
@@ -170,10 +210,16 @@ class IntelxWatchDrainer:
         self,
         *,
         outbox_path: Path | None = None,
+        instant_outbox_path: Path | None = None,
         state_path: Path | None = None,
         enabled_fn: Callable[[], bool] = drain_enabled,
     ) -> None:
         self._outbox_path = outbox_path if outbox_path is not None else resolve_outbox_path()
+        self._instant_outbox_path = (
+            instant_outbox_path
+            if instant_outbox_path is not None
+            else resolve_instant_outbox_path(self._outbox_path)
+        )
         self._state_path = state_path if state_path is not None else _default_state_path()
         self._enabled_fn = enabled_fn
         self._lock = threading.Lock()
@@ -210,28 +256,36 @@ class IntelxWatchDrainer:
     # -- outbox reading -----------------------------------------------------
 
     def _read_new_envelopes(
-        self, state: dict[str, Any], report: dict[str, Any]
+        self,
+        state: dict[str, Any],
+        report: dict[str, Any],
+        *,
+        path: Path | None = None,
+        offset_key: str = "offset",
+        present_key: str = "outbox_present",
     ) -> list[dict[str, Any]]:
         """Envelopes from complete lines past the persisted offset.
 
-        Advances ``state['offset']`` past every complete line consumed
+        Advances ``state[offset_key]`` past every complete line consumed
         (valid, duplicate and malformed alike — a poison line must
         never wedge the tail). A trailing partial line is left for the
         next cycle. A file that shrank below the offset was replaced:
         restart from 0 and let the persisted dedupe keys do their job.
+        Defaults read the main outbox; the TASK-INT-016 fast lane passes
+        the instant outbox with its own offset/presence keys.
         """
-        path = self._outbox_path
+        path = path if path is not None else self._outbox_path
         try:
             size = path.stat().st_size
         except FileNotFoundError:
-            report["outbox_present"] = False
+            report[present_key] = False
             return []
         except OSError as exc:
             report["source_errors"].append(f"outbox unreadable: {exc}")
             return []
-        report["outbox_present"] = True
+        report[present_key] = True
 
-        offset = int(state.get("offset") or 0)
+        offset = int(state.get(offset_key) or 0)
         if size < offset:
             logger.info(
                 f"intelx watch drain: outbox shrank ({offset} -> {size} bytes); "
@@ -239,7 +293,7 @@ class IntelxWatchDrainer:
             )
             offset = 0
         if size == offset:
-            state["offset"] = offset
+            state[offset_key] = offset
             return []
         try:
             with path.open("rb") as fh:
@@ -252,10 +306,10 @@ class IntelxWatchDrainer:
         last_nl = chunk.rfind(b"\n")
         if last_nl < 0:
             # No complete line yet — the writer is mid-append.
-            state["offset"] = offset
+            state[offset_key] = offset
             return []
         complete = chunk[: last_nl + 1]
-        state["offset"] = offset + len(complete)
+        state[offset_key] = offset + len(complete)
 
         envelopes: list[dict[str, Any]] = []
         for raw_line in complete.split(b"\n"):
@@ -295,10 +349,11 @@ class IntelxWatchDrainer:
         trigger: str,
         dedupe_key: str,
         extra: dict[str, Any] | None = None,
+        source: str = SOURCE_TAG,
         now: datetime,
     ) -> bool:
         metadata = {
-            "source": SOURCE_TAG,
+            "source": source,
             "trigger": trigger,
             "dedupe_key": dedupe_key,
         }
@@ -387,6 +442,76 @@ class IntelxWatchDrainer:
 
     # -- the cycle ------------------------------------------------------------
 
+    def _deliver_envelopes(
+        self,
+        notifications: Any,
+        state: dict[str, Any],
+        envelopes: list[dict[str, Any]],
+        *,
+        now: datetime,
+        report: dict[str, Any],
+        trigger: str,
+        source: str,
+        lane: str,
+    ) -> None:
+        """Deliver fresh envelopes under the shared dedupe/quiet policy.
+
+        Shared by the main lane and the TASK-INT-016 instant lane: the
+        persisted delivered_keys + held queue are the single cross-lane
+        dedupe record, so an envelope present in both outboxes is
+        posted exactly once, by whichever lane reaches it first.
+        """
+        delivered = set(state["delivered_keys"])
+        held_keys = {h["dedupe_key"] for h in state["held"]}
+        for envelope in envelopes:
+            dedupe_key = str(envelope["dedupe_key"])
+            if dedupe_key in delivered or dedupe_key in held_keys:
+                report["duplicates"] += 1
+                continue
+            severity = str(envelope.get("severity") or "info")
+            if severity not in VALID_SEVERITIES:
+                severity = "info"
+            post = {
+                "message": _envelope_message(envelope),
+                "severity": severity,
+                "trigger": trigger,
+                "dedupe_key": dedupe_key,
+                "source": source,
+                "extra": {
+                    "watch_id": str(envelope.get("watch_id") or ""),
+                    "envelope_id": str(envelope.get("envelope_id") or ""),
+                    "publisher": str(envelope.get("publisher") or ""),
+                    "url": str(envelope.get("url") or ""),
+                    "alert_class": str(envelope.get("alert_class") or ""),
+                    "lane": lane,
+                },
+            }
+            # _hold stores the flattened event shape the digest
+            # reads (message/severity/trigger/dedupe_key).
+            flat = {
+                "message": post["message"],
+                "severity": severity,
+                "trigger": trigger,
+                "dedupe_key": dedupe_key,
+            }
+            if bool(envelope.get("quiet_hours_exempt")) or not in_quiet_hours(now):
+                if self._post(notifications, state, now=now, **post):
+                    self._mark_delivered(state, dedupe_key)
+                    delivered.add(dedupe_key)
+                    report["posted"] += 1
+                else:
+                    report["post_failures"] += 1
+                    self._hold(state, flat, now=now, reason="held_post_failed", report=report)
+                    held_keys.add(dedupe_key)
+            else:
+                self._hold(state, flat, now=now, reason="held_quiet_hours", report=report)
+                held_keys.add(dedupe_key)
+            # Persist after every consumed envelope: alerts are
+            # rare (a few per day), and this keeps the
+            # delivered-key record as close to the post as
+            # possible across a crash/restart.
+            self._persist_state()
+
     def run_cycle(self, notifications: Any, *, now: datetime | None = None) -> dict[str, Any]:
         """One drain cycle. Never raises; returns a report dict."""
         report: dict[str, Any] = {
@@ -433,66 +558,105 @@ class IntelxWatchDrainer:
                     self._persist_state()
                     return report
 
-                delivered = set(state["delivered_keys"])
-                held_keys = {h["dedupe_key"] for h in state["held"]}
-
                 self._flush_held(notifications, state, now=moment, report=report)
-                delivered = set(state["delivered_keys"])
-                held_keys = {h["dedupe_key"] for h in state["held"]}
 
-                for envelope in envelopes:
-                    dedupe_key = str(envelope["dedupe_key"])
-                    if dedupe_key in delivered or dedupe_key in held_keys:
-                        report["duplicates"] += 1
-                        continue
-                    severity = str(envelope.get("severity") or "info")
-                    if severity not in {"info", "warning", "critical"}:
-                        severity = "info"
-                    event = {
-                        "dedupe_key": dedupe_key,
-                        "exempt": bool(envelope.get("quiet_hours_exempt")),
-                        "post": {
-                            "message": _envelope_message(envelope),
-                            "severity": severity,
-                            "trigger": "intelx_watch_alert",
-                            "dedupe_key": dedupe_key,
-                            "extra": {
-                                "watch_id": str(envelope.get("watch_id") or ""),
-                                "envelope_id": str(envelope.get("envelope_id") or ""),
-                                "publisher": str(envelope.get("publisher") or ""),
-                                "url": str(envelope.get("url") or ""),
-                            },
-                        },
-                    }
-                    # _hold stores the flattened event shape the digest
-                    # reads (message/severity/trigger/dedupe_key).
-                    flat = {
-                        "message": event["post"]["message"],
-                        "severity": severity,
-                        "trigger": "intelx_watch_alert",
-                        "dedupe_key": dedupe_key,
-                    }
-                    if event["exempt"] or not in_quiet_hours(moment):
-                        if self._post(notifications, state, now=moment, **event["post"]):
-                            self._mark_delivered(state, dedupe_key)
-                            delivered.add(dedupe_key)
-                            report["posted"] += 1
-                        else:
-                            report["post_failures"] += 1
-                            self._hold(state, flat, now=moment, reason="held_post_failed", report=report)
-                            held_keys.add(dedupe_key)
-                    else:
-                        self._hold(state, flat, now=moment, reason="held_quiet_hours", report=report)
-                        held_keys.add(dedupe_key)
-                    # Persist after every consumed envelope: alerts are
-                    # rare (a few per day), and this keeps the
-                    # delivered-key record as close to the post as
-                    # possible across a crash/restart.
-                    self._persist_state()
+                self._deliver_envelopes(
+                    notifications,
+                    state,
+                    envelopes,
+                    now=moment,
+                    report=report,
+                    trigger="intelx_watch_alert",
+                    source=SOURCE_TAG,
+                    lane="main",
+                )
 
                 self._persist_state()
             except Exception as exc:  # a drain failure must never take FRIDAY down
                 logger.exception(f"intelx watch drain cycle failed: {exc}")
+                report["source_errors"].append(f"cycle error: {type(exc).__name__}")
+            return report
+
+    def run_instant_cycle(
+        self, notifications: Any, *, now: datetime | None = None
+    ) -> dict[str, Any]:
+        """One TASK-INT-016 fast-lane cycle over the instant outbox.
+
+        Same contract as ``run_cycle`` — kill switch, silent first
+        baseline (the instant lane's own), the envelope's
+        ``quiet_hours_exempt`` flag as the policy input, malformed /
+        partial-line tolerance, never raises — but delivery goes
+        through the shared ``_deliver_envelopes``, so the persisted
+        delivered_keys dedupe across lanes. Held envelopes (quiet-hours
+        or failed posts) join the shared held queue and flush through
+        the main lane's digest exactly as before.
+        """
+        report: dict[str, Any] = {
+            "enabled": False,
+            "lane": "instant",
+            "baseline": False,
+            "outbox_present": False,
+            "instant_outbox_present": False,
+            "lines_read": 0,
+            "envelopes": 0,
+            "posted": 0,
+            "held": 0,
+            "flushed": 0,
+            "duplicates": 0,
+            "malformed": 0,
+            "post_failures": 0,
+            "source_errors": [],
+        }
+        if notifications is None:
+            report["source_errors"].append("no notification manager")
+            return report
+        with self._lock:
+            try:
+                if not self._enabled_fn():
+                    return report
+                report["enabled"] = True
+                moment = now or now_owner_tz()
+                state = self._load_state()
+
+                envelopes = self._read_new_envelopes(
+                    state,
+                    report,
+                    path=self._instant_outbox_path,
+                    offset_key="instant_offset",
+                    present_key="instant_outbox_present",
+                )
+                report["envelopes"] = len(envelopes)
+
+                if not state.get("instant_baseline_done"):
+                    # Silent instant baseline, mirroring the main lane:
+                    # a pre-existing instant backlog is recorded as
+                    # seen, never announced.
+                    for envelope in envelopes:
+                        self._mark_delivered(state, str(envelope["dedupe_key"]))
+                    state["instant_baseline_done"] = True
+                    report["baseline"] = True
+                    if envelopes:
+                        logger.info(
+                            f"intelx watch drain: instant baseline established "
+                            f"({len(envelopes)} pre-existing envelopes recorded as seen)"
+                        )
+                    self._persist_state()
+                    return report
+
+                self._deliver_envelopes(
+                    notifications,
+                    state,
+                    envelopes,
+                    now=moment,
+                    report=report,
+                    trigger="intelx_watch_instant_alert",
+                    source=INSTANT_SOURCE_TAG,
+                    lane="instant",
+                )
+
+                self._persist_state()
+            except Exception as exc:  # a drain failure must never take FRIDAY down
+                logger.exception(f"intelx watch instant drain cycle failed: {exc}")
                 report["source_errors"].append(f"cycle error: {type(exc).__name__}")
             return report
 
@@ -505,11 +669,26 @@ _GLOBAL_DRAINER: IntelxWatchDrainer | None = None
 _GLOBAL_LOCK = threading.Lock()
 
 
-def run_drain_cycle(notifications: Any, *, now: datetime | None = None) -> dict[str, Any]:
-    """Run one cycle on the process-global drainer (server loop entry)."""
+def _global_drainer() -> IntelxWatchDrainer:
     global _GLOBAL_DRAINER
     with _GLOBAL_LOCK:
         if _GLOBAL_DRAINER is None:
             _GLOBAL_DRAINER = IntelxWatchDrainer()
-        drainer = _GLOBAL_DRAINER
-    return drainer.run_cycle(notifications, now=now)
+        return _GLOBAL_DRAINER
+
+
+def run_drain_cycle(notifications: Any, *, now: datetime | None = None) -> dict[str, Any]:
+    """Run one cycle on the process-global drainer (server loop entry)."""
+    return _global_drainer().run_cycle(notifications, now=now)
+
+
+def run_instant_drain_cycle(
+    notifications: Any, *, now: datetime | None = None
+) -> dict[str, Any]:
+    """Run one TASK-INT-016 fast-lane cycle on the SAME global drainer.
+
+    Sharing the instance (and its lock + state) with the main lane is
+    what makes cross-lane dedupe a property of the delivery record,
+    not a hope.
+    """
+    return _global_drainer().run_instant_cycle(notifications, now=now)
