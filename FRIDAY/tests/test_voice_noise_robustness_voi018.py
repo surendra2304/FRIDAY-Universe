@@ -32,6 +32,20 @@ that makes a GENUINE barge-in work is untouched:
   syllable);
 - env FRIDAY_VOICE_AAD_START_SENSITIVITY=high restores the old
   behaviour as a rollback; any other/junk value resolves to LOW.
+
+TASK-VOI-024 (2026-11-19) REVERTED the default to HIGH — the pins
+below now assert the reverted contract. Reason: the transcript-gap
+diagnosis found every transcript-positive session on record ran
+HIGH and every zero-transcript run since the VOI-018 flip
+(retests #14, #15B, #16) ran LOW, and the decisive A/B experiment
+could not exonerate LOW (its LOW arm's send cadence collapsed —
+the defect TASK-VOI-024's pacing fix addresses — so the clean
+sensitivity test never occurred). HIGH is the precautionary
+default again; LOW remains available as the explicit env
+override (FRIDAY_VOICE_AAD_START_SENSITIVITY=low) if the fan
+defect above returns with transcripts proven healthy. The
+barge-in guards (activity handling, prefix padding, end
+sensitivity, silence) are exactly as VOI-018 left them.
 """
 
 import sys
@@ -64,28 +78,30 @@ def _aad(monkeypatch, env=None):
 # ---------------------------------------------------------------------------
 
 
-def test_default_start_sensitivity_is_low(monkeypatch):
-    """No env override -> LOW: the server demands real speech evidence
-    before committing to a start-of-speech, so a fan's steady noise
-    floor does not interrupt FRIDAY mid-answer. (On pre-fix code this
-    is HIGH and the test fails — that is the defect.)"""
+def test_default_start_sensitivity_is_high(monkeypatch):
+    """No env override -> HIGH (TASK-VOI-024 revert): HIGH is the
+    configuration of every transcript-positive session on record;
+    the VOI-018 LOW default correlated perfectly with the
+    zero-transcript runs that followed it. (On VOI-018/VOI-023
+    code this is LOW and the test fails — that is the defect this
+    revert removes.)"""
     aad = _aad(monkeypatch)
     assert aad.start_of_speech_sensitivity == (
-        _TYPES.StartSensitivity.START_SENSITIVITY_LOW
+        _TYPES.StartSensitivity.START_SENSITIVITY_HIGH
     )
 
 
-def test_helper_default_is_low(monkeypatch):
+def test_helper_default_is_high(monkeypatch):
     monkeypatch.delenv("FRIDAY_VOICE_AAD_START_SENSITIVITY", raising=False)
-    assert w._start_sensitivity() == _TYPES.StartSensitivity.START_SENSITIVITY_LOW
+    assert w._start_sensitivity() == _TYPES.StartSensitivity.START_SENSITIVITY_HIGH
 
 
-def test_junk_env_value_falls_back_to_low(monkeypatch):
-    """A typo'd override must land on the noise-safe side, never back
-    on the interrupting one."""
+def test_junk_env_value_falls_back_to_high(monkeypatch):
+    """A typo'd override must land on the default side — HIGH —
+    never silently re-enable the suspect LOW setting."""
     aad = _aad(monkeypatch, env="loud")
     assert aad.start_of_speech_sensitivity == (
-        _TYPES.StartSensitivity.START_SENSITIVITY_LOW
+        _TYPES.StartSensitivity.START_SENSITIVITY_HIGH
     )
 
 
@@ -125,11 +141,23 @@ def test_end_sensitivity_and_silence_unchanged(monkeypatch):
     assert aad.silence_duration_ms == 500
 
 
-def test_env_override_restores_high(monkeypatch):
-    """Rollback path: FRIDAY_VOICE_AAD_START_SENSITIVITY=high restores
-    the pre-VOI-018 VOI-012 behaviour exactly."""
+def test_env_high_selects_high(monkeypatch):
+    """FRIDAY_VOICE_AAD_START_SENSITIVITY=high selects HIGH
+    explicitly (now also the default)."""
     aad = _aad(monkeypatch, env="high")
     assert aad.start_of_speech_sensitivity == (
         _TYPES.StartSensitivity.START_SENSITIVITY_HIGH
     )
     assert w._start_sensitivity() == _TYPES.StartSensitivity.START_SENSITIVITY_HIGH
+
+
+def test_env_override_selects_low(monkeypatch):
+    """The env override still wins over the default:
+    FRIDAY_VOICE_AAD_START_SENSITIVITY=low selects the VOI-018
+    value exactly — the rollback path if the fan defect returns
+    with transcripts proven healthy."""
+    aad = _aad(monkeypatch, env="low")
+    assert aad.start_of_speech_sensitivity == (
+        _TYPES.StartSensitivity.START_SENSITIVITY_LOW
+    )
+    assert w._start_sensitivity() == _TYPES.StartSensitivity.START_SENSITIVITY_LOW

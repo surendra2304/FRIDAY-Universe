@@ -1396,26 +1396,34 @@ def _env_int(name: str, default: int) -> int:
 
 def _start_sensitivity():
     """Gemini start-of-speech sensitivity for the realtime config
-    (TASK-VOI-018). Pure — unit-tested.
+    (TASK-VOI-018; default reverted by TASK-VOI-024). Pure —
+    unit-tested.
 
-    Default LOW (env FRIDAY_VOICE_AAD_START_SENSITIVITY=high restores
-    the pre-VOI-018 behaviour): LOW is the documented setting for
-    noisy environments — the server demands stronger speech evidence
-    before committing to a start-of-speech, so steady background
-    noise (a fan) and low-level room audio no longer register as a
-    user turn and interrupt the agent mid-answer. Genuine barge-in
-    is close-mic, full-level speech and still commits; the 200 ms
-    prefix padding preserves its first syllable. Any value other
-    than "high" (including junk) resolves to LOW — the safe side
-    for this defect. Returns None when the genai SDK lacks the
-    sensitivity enum (the caller then builds no config at all).
+    Default HIGH — the pre-VOI-018 (VOI-012) value (env
+    FRIDAY_VOICE_AAD_START_SENSITIVITY=low selects the VOI-018
+    value explicitly): VOI-018 shipped LOW so steady background
+    noise (a fan) would not register as a user turn and interrupt
+    the agent mid-answer. The transcript-gap diagnosis then found
+    the correlation that outweighs it: every transcript-positive
+    session on record ran HIGH, and every zero-transcript run
+    since the flip (retests #14, #15B, #16) ran LOW; the
+    2026-11-19 A/B experiment could not exonerate LOW (its LOW
+    arm's send cadence collapsed, so the clean sensitivity test
+    never occurred), and HIGH is the configuration of the
+    experiment's fully working arm. HIGH is therefore the
+    precautionary default again; LOW stays one env var away if
+    the fan defect returns with transcripts proven healthy.
+    Any value other than "low" (including junk) resolves to
+    HIGH — the default side. Returns None when the genai SDK
+    lacks the sensitivity enum (the caller then builds no
+    config at all).
     """
     if genai_types is None:
         return None
     raw = (os.getenv("FRIDAY_VOICE_AAD_START_SENSITIVITY") or "").strip().lower()
-    if raw == "high":
-        return genai_types.StartSensitivity.START_SENSITIVITY_HIGH
-    return genai_types.StartSensitivity.START_SENSITIVITY_LOW
+    if raw == "low":
+        return genai_types.StartSensitivity.START_SENSITIVITY_LOW
+    return genai_types.StartSensitivity.START_SENSITIVITY_HIGH
 
 
 def _realtime_input_config():
@@ -1427,18 +1435,22 @@ def _realtime_input_config():
     and turn finalization. Google's configuration guidance is to pin
     all four explicitly. Shipped values (each env-overridable):
 
-    - start_of_speech_sensitivity LOW (TASK-VOI-018; env
-      FRIDAY_VOICE_AAD_START_SENSITIVITY=high restores the VOI-012
-      value): VOI-012 shipped HIGH so a barge-in would raise Gemini's
-      `interrupted` signal promptly — but the owner's 2026-11-17 live
-      test showed the cost: ordinary background noise (a fan)
-      registered as user turns and stopped FRIDAY mid-answer at a
-      1–4 s cadence (journal: >=9 speaking->listening flips in ~37 s,
-      fragment transcripts in the gaps). LOW demands stronger speech
-      evidence before a start-of-speech commits, so steady noise no
-      longer interrupts; real speech still does (activity_handling
-      below is unchanged, and prefix padding keeps the first
-      syllable of a genuine barge-in).
+    - start_of_speech_sensitivity HIGH (the VOI-012 value;
+      TASK-VOI-018 shipped LOW, TASK-VOI-024 reverted the default;
+      env FRIDAY_VOICE_AAD_START_SENSITIVITY=low selects LOW):
+      VOI-012 shipped HIGH so a barge-in would raise Gemini's
+      `interrupted` signal promptly; VOI-018 flipped the default
+      to LOW after the owner's 2026-11-17 live test showed
+      ordinary background noise (a fan) registering as user turns
+      and stopping FRIDAY mid-answer at a 1-4 s cadence. The
+      transcript-gap diagnosis (2026-11-19) then found every
+      transcript-positive session on record ran HIGH and every
+      zero-transcript run since the flip ran LOW, and the A/B
+      experiment could not exonerate LOW — so the default is
+      HIGH again as a precaution, and LOW remains available by
+      env if the fan defect returns with transcripts proven
+      healthy (activity_handling below is unchanged, and prefix
+      padding keeps the first syllable of a genuine barge-in).
     - activity_handling START_OF_ACTIVITY_INTERRUPTS: stated
       explicitly (it is the API default) so the interrupt contract
       does not drift with plugin/API defaults: detected user activity
