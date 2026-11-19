@@ -450,6 +450,28 @@ def latest_position_tag(
     return best
 
 
+def earliest_position_tag(
+    venue: str,
+    symbol: str,
+    side: str = "",
+    qty: float = 0.0,
+    entry_price: float = 0.0,
+) -> Optional[Dict[str, Any]]:
+    """Oldest fingerprint-matching tag for the position — the tag
+    stream's record of when THIS position was opened (TASK-STR-FWD-026).
+
+    Adoption restores the time-exit clock (position_opened_at) from this
+    tag's ``ts``. Later tags for the same position are adoption
+    corrections stamped at restart time; anchoring to any of them would
+    re-anchor the clock to a restart, which is the defect being fixed.
+    ``position_tags_for`` is already oldest-first, so the first
+    fingerprint match is the open record."""
+    for tag in position_tags_for(venue, symbol):
+        if _tag_matches_position(tag, side, qty, entry_price):
+            return tag
+    return None
+
+
 def position_closed_in_ledger(
     venue: str,
     symbol: str,
