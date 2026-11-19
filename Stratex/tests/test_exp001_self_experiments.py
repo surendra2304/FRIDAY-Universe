@@ -44,6 +44,7 @@ sys.path.insert(
 
 from self_experiments import bounds, catalogue
 from self_experiments.admissions import (
+    GOVERNANCE_STAMPED_FIELDS,
     AdmissionError,
     AdmissionsRegistry,
     merged_registry,
@@ -600,3 +601,134 @@ def test_greedy_counts_every_evaluation(tmp_path, monkeypatch):
     assert evaluations  # the search actually evaluated candidates
     assert loop.counter.value - before == len(evaluations)
     assert report.n_global == loop.counter.value
+
+
+# ---------------------------------------------------------------------------
+# A1 (PR #986 activation condition, TASK-STR-EXP-003) — governance stamps
+# are structurally impossible to override via extra=
+# ---------------------------------------------------------------------------
+
+
+def _a1_registry(tmp_path, name="admissions.json"):
+    return AdmissionsRegistry(
+        tmp_path / name,
+        lane_assets_resolver=lambda panel: ["BTCUSDT"],
+    )
+
+
+def _a1_args():
+    store = StreamStore(FIXTURE_STORE)
+    members = [store.stream(BOLLINGER), store.stream(SHOCK)]
+    m = pooled_metrics(members)
+    return dict(
+        members=members,
+        metrics=m,
+        verdict=judge(m, 3900),
+        declaration_id="decl_x",
+        n_global=3900,
+        panel="crypto30",
+        timeframe="1d",
+    )
+
+
+def test_extra_cannot_override_any_governance_stamped_field(tmp_path):
+    """Attack sweep: EVERY stamped field is attempted, one at a time.
+
+    Each attempt must be refused (AdmissionError, or RiskTouchRefused
+    for the fields whose names are also risk-fragment keys — refused
+    either way) and must persist NOTHING (fail-closed).
+    """
+    assert GOVERNANCE_STAMPED_FIELDS  # the sweep below is non-vacuous
+    for i, field in enumerate(sorted(GOVERNANCE_STAMPED_FIELDS)):
+        registry = _a1_registry(tmp_path, f"adm_{i}.json")
+        with pytest.raises((AdmissionError, RiskTouchRefused)):
+            registry.admit(**_a1_args(), extra={field: "OVERRIDE_ATTEMPT"})
+        assert registry.entries() == {}, field
+
+
+def test_extra_governance_attack_pack_is_refused_and_stamps_hold(tmp_path):
+    """The concrete A1 attack pack: lane, tier, execution and the
+    kill-criteria-bearing reason, restamped in one extra dict."""
+    registry = _a1_registry(tmp_path)
+    attack = {
+        "status": "LIVE",
+        "forward_lane": "LIVE",
+        "forward_protocol": False,
+        "execution": "EXECUTABLE_NOW",
+        "minimum_required_edge": 0.0,
+        "self_experiment": False,
+        "self_experiment_verdict": "PROVEN",
+        "declaration_id": "forged",
+        "members": ["attacker/stream@crypto30/1d"],
+        "lane_assets": ["DOGEUSDT"],
+        "reason": "forged reason with no kill criteria",
+        "timeframe": "1m",
+    }
+    with pytest.raises(AdmissionError) as excinfo:
+        registry.admit(**_a1_args(), extra=attack)
+    # The refusal names the colliding fields, and nothing persisted.
+    for field in ("status", "forward_lane", "execution", "reason"):
+        assert field in str(excinfo.value)
+    assert registry.entries() == {}
+
+    # A clean admit on the SAME registry afterwards stamps the true
+    # governance values — the refusal did not poison or pre-stamp it.
+    key = registry.admit(**_a1_args())
+    entry = registry.get(key)
+    assert entry["status"] == "FORWARD_TEST"
+    assert entry["forward_lane"] == "FORWARD_TEST"
+    assert entry["forward_protocol"] is True
+    assert entry["execution"] == "PENDING_ENSEMBLE_MODULE"
+    assert entry["minimum_required_edge"] == bounds.LANE_MINIMUM_REQUIRED_EDGE
+    assert entry["risk_per_trade_pct"] == bounds.LANE_RISK_PER_TRADE_PCT
+    assert entry["max_heat_pct"] == bounds.LANE_MAX_HEAT_PCT
+    assert entry["self_experiment"] is True
+    assert entry["declaration_id"] == "decl_x"
+    assert entry["lane_assets"] == ["BTCUSDT"]
+    assert bounds.LANE_KILL_CRITERIA in entry["reason"]
+
+
+def test_extra_mixed_legit_and_colliding_keys_is_refused_wholesale(tmp_path):
+    """One colliding key poisons the whole extra dict (fail-closed):
+    the legitimate sibling key must not be smuggled in either."""
+    registry = _a1_registry(tmp_path)
+    with pytest.raises(AdmissionError):
+        registry.admit(
+            **_a1_args(),
+            extra={"operator_note": "looks harmless", "status": "LIVE"},
+        )
+    assert registry.entries() == {}
+
+
+def test_legitimate_extra_metadata_still_works_and_stamps_hold(tmp_path):
+    """The legitimate extra path: non-colliding metadata is stored,
+    and every governance stamp on the same entry is the true value."""
+    registry = _a1_registry(tmp_path)
+    key = registry.admit(
+        **_a1_args(),
+        extra={
+            "operator_note": "reviewed at A1 fix",
+            "source_review": "PR986-A1",
+            "review_refs": {"ticket": "TASK-STR-EXP-003"},
+        },
+    )
+    entry = registry.get(key)
+    assert entry["operator_note"] == "reviewed at A1 fix"
+    assert entry["source_review"] == "PR986-A1"
+    assert entry["review_refs"] == {"ticket": "TASK-STR-EXP-003"}
+    assert entry["status"] == "FORWARD_TEST"
+    assert entry["forward_lane"] == "FORWARD_TEST"
+    assert entry["risk_per_trade_pct"] == bounds.LANE_RISK_PER_TRADE_PCT
+    assert entry["max_heat_pct"] == bounds.LANE_MAX_HEAT_PCT
+    assert entry["execution"] == "PENDING_ENSEMBLE_MODULE"
+
+
+def test_governance_stamped_fields_match_real_entry_shape(tmp_path):
+    """The documented GOVERNANCE_STAMPED_FIELDS set equals the keys a
+    real admission actually stamps (no drift between list and code)."""
+    registry = _a1_registry(tmp_path)
+    key = registry.admit(
+        **_a1_args(), extra={"operator_note": "extra key, not a stamp"}
+    )
+    entry = registry.get(key)
+    assert set(entry) - {"operator_note"} == set(GOVERNANCE_STAMPED_FIELDS)

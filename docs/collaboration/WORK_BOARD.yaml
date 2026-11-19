@@ -11604,6 +11604,24 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Stratex/tests/fixtures/exp002_book_3905_slice.json
       - Stratex/tests/test_fwd003_forward_test_lane.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-STR-EXP-003
+    title: "PR #986 activation condition A1 (structural fix): admissions.admit(extra=...) can no longer override governance-stamped fields"
+    status: MERGED
+    owner: muse_ai
+    branch: claude/task-str-exp-003-a1-governance-stamp
+    pr: 1064
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Claim: issue #35 comment 7003973261. Base: main 0fa7b016dd37f8de7215d1b3837f3ad02c7e35a8 (post-PR #1055, which CI-collects the exp001/exp002 suites per TASK-REL-053)."
+      - "Defect PROVEN on pristine base b248fca with a direct probe: admit(extra={status:LIVE, forward_lane:LIVE, execution:EXECUTABLE_NOW, minimum_required_edge:0.0, self_experiment:False, reason:forged}) was ADMITTED and persisted with every one of those stamps overridden — entry.update(extra) ran after stamping and the post-update invariant checked only risk_per_trade_pct/max_heat_pct; the risk-fragment scan does not fire on these governance field names."
+      - "Fix (Stratex/self_experiments/admissions.py only, plus tests): admit() snapshots the constructed entry (copy.deepcopy) BEFORE merging extra; any extra key colliding with the snapshot's key set — derived from the constructed entry itself, not a hand-maintained list, so future stamped fields are protected automatically — raises AdmissionError naming the colliding fields and persists NOTHING (fail-closed). After the legitimate merge, a full snapshot invariant re-verifies EVERY stamped field (replacing the old 2-field check). GOVERNANCE_STAMPED_FIELDS (23 fields: status, version, timeframe, execution_model, entry_conditions, sl_method, tp_method, oos_win_rate_prior, total_friction_bps, expected_net_edge_bps, minimum_required_edge, lane_assets, validated_assets, forward_protocol, risk_per_trade_pct, max_heat_pct, forward_lane, self_experiment, self_experiment_verdict, declaration_id, members, execution, reason) is exported for callers/tests and pinned equal to a real entry's shape by a test. No risk parameter touched (bounds.py constants unchanged); the only production caller (loop.py) passes no extra."
+      - "Tests (sandbox CPython 3.12.3, proxy vars unset): test_exp001_self_experiments.py 31/31 PASS on head (base 26/26; +5 new A1 tests: per-field override sweep over all 23 stamped fields — each refused and nothing persisted; the concrete attack pack incl. lane/tier/execution/kill-criteria-reason, refused wholesale with stamps proven intact on a subsequent clean admit; mixed legit+colliding extra refused wholesale; legitimate extra metadata stored with stamps intact; GOVERNANCE_STAMPED_FIELDS == real entry shape). Neighbours unchanged: test_exp002_ensemble_book.py 67/67, test_fwd003_forward_test_lane.py 29/29. A/B: the identical attack probe script ADMITTED the override on pristine base and is REFUSED (AdmissionError) on head. CI collection: owner-workflows.yml step 'Stratex forward-test and self-experiment contracts' names test_exp001_self_experiments.py explicitly (PR #1055), so the new tests run in CI."
+    next_action: "Supervisor review -> coordinator merge. Does NOT activate anything: no env flip, no production stream-store build, no daemon interaction (daemon is stopped for the coordinated fresh start); A1 is satisfied by this fix once merged, activation remains a separate coordinator step."
+    files:
+      - Stratex/self_experiments/admissions.py
+      - Stratex/tests/test_exp001_self_experiments.py
+      - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-STR-FWD-024
     title: "Panel-signal machinery: xs_momentum + xs_lowvol FORWARD_TEST (panel_signal_service, daemon ranking hook, registry context passing)"
     status: IN_REVIEW
