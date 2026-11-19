@@ -14,6 +14,7 @@ from apps.api.routers.v1_user_model import router as v1_user_model_router
 from apps.api.routers.v1_events import router as v1_events_router, mesh_router as mesh_events_router
 from apps.api.routers.v1_resilience import router as v1_resilience_router
 from apps.api.routers.v1_collaboration import router as v1_collaboration_router
+from apps.api.routers.v1_promotion import router as v1_promotion_router
 from apps.api.routers.v1_reflection import router as v1_reflection_router
 from apps.api.routers.memory_consolidation_engine import router as consolidation_router
 from apps.api.routers.temporal_context_retriever import router as temporal_router
@@ -43,6 +44,7 @@ __all__ = [
     "mesh_events_router",
     "v1_resilience_router",
     "v1_collaboration_router",
+    "v1_promotion_router",
     "v1_reflection_router",
     "consolidation_router",
     "temporal_router",

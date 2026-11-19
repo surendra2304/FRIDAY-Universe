@@ -10636,6 +10636,24 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Part A: Memora's VmSwap stays bounded at the 32M cap in production and the >=25s journal-gap rate collapses versus the 9-in-2h baseline over a >=30-45 min after-window covering >=6 background cycles, with zero OOM events and fleet health 10/10."
       - "Part B: background passes execute off the event loop (loop-lag test), never overlap, and keep the 300s cadence, pass ordering and log lines; restarts stop cleanly inside TimeoutStopSec=60."
     next_action: "None — complete and production-verified (Part A measured 2026-11-17 07:32 IST; Part B merged via PR #868 -> 763f587d with the post-deploy census clean, 2026-11-17). Any residual >=25s Memora journal gap outside a deploy restart storm reopens the diagnosis."
+  - id: TASK-MEM-013
+    title: "Memora memory promotion paths — complete (A) owner promotion to UNIVERSAL and build (C) auto-promotion on repeated cross-agent need"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-mem-013-memory-promotion
+    pr: null
+    priority: P1
+    created_at: "2026-11-19T13:59:00+05:30"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-7003928839"
+    defect: "Owner rule 2026-11-18: promotion is BOTH (A) owning agent promotes private -> inter-agent -> universal on its own judgement AND (C) Memora auto-promotes when many agents repeatedly need the same memory; failed-experiment lessons stay private AND go universal. Verified on origin/main 2240ebb8: (A) existed only as PRIVATE -> SHARED (write-time shared_with in Memora/core/memory/service.py and Memora/core/memory/pipeline/write_service.py; CollaborationService.contribute -> share_record_with for one recipient); UNIVERSAL authoring was reserved to the memora service identity at write time (service.py create_memory refusal) with NO post-creation owner promotion to UNIVERSAL. (C) did not exist: no need/demand recording, no repeated-need detection, no auto-promotion sweep anywhere in Memora."
+    evidence:
+      - "THIS PR: Memora/core/memory/promotion.py — MemoryPromotionService.promote_scope completes (A) (owner-only, monotonic, idempotent, AuditLog action MEMORY_SCOPE_PROMOTED with path=owner_judgement); record_need + need_evidence + run_auto_promotion_sweep build (C) on the existing AuditLog trail (no new table/migration): PRIVATE -> SHARED at >=2 distinct non-owner agents and >=3 needs in 30d, SHARED -> UNIVERSAL at >=4 distinct, >=8 needs and >=2 distinct needers outside the current allow-list, one rung per sweep; failed-experiment lessons (provenance failed_experiment / experiment_outcome=failed / lesson_type=failed_experiment) promote to UNIVERSAL as a dual copy — original stays PRIVATE/SHARED, universal twin carries promoted_from_memory_id. Router Memora/apps/api/routers/v1_promotion.py (/v1/promotion/promote|need|sweep; sweep gated to the memora service identity), wired in apps/api/main.py + routers/__init__.py; CI collection added in .github/workflows/friday-universe-ci.yml Memora step."
+      - "TESTS: Memora/tests/test_mem013_memory_promotion.py — 12 passed on the branch; on pristine base 2240ebb8 the suite errors at collection (core.memory.promotion absent). Neighbours identical on both trees (test_collaboration + test_memory_write_share_authorization + test_mem_compress_promotion_fix: 25 passed). Ruff clean on the new files. Code + local tests only — no live-server or production DB writes."
+    acceptance:
+      - "An owning agent can promote its own memory PRIVATE -> SHARED (named recipients) -> UNIVERSAL post-creation, audited; non-owners are refused; demotion is refused; re-promotion is idempotent."
+      - "Repeated cross-agent need (recorded via /v1/promotion/need) auto-promotes one rung per sweep at the stated thresholds, with the need evidence stored in the promotion audit row; unchanged evidence earns no second rung."
+      - "A failed-experiment lesson promoted to UNIVERSAL keeps its original at its prior scope and gains exactly one UNIVERSAL copy."
+    next_action: "Coordinator: review and merge the TASK-MEM-013 PR, then flip VERIFIED on the shipped suite + CI. No deploy step in this task — the sweep runs via POST /v1/promotion/sweep (memora identity) after the next regular Memora deploy."
   - id: TASK-IG3-VYR-07
     title: "VyralX cluster-7 (B114): motion templates — the 12 source-named templates"
     status: MERGED
