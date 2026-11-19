@@ -11790,6 +11790,24 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - FRIDAY/tests/test_voice_send_path_voi024.py
       - FRIDAY/tests/test_voice_frame_counters_voi017.py
       - FRIDAY/tests/test_voice_noise_robustness_voi018.py
+  - id: TASK-STR-FWD-028
+    title: "Overlay allowlist gate: _manage_overlay_positions must honour STRATEX_STRATEGY_ALLOWLIST — with a non-empty allowlist, overlay configs outside it are skipped entirely (no entries, no management); empty allowlist unchanged"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-str-fwd-028-overlay-allowlist-gate
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Claim: issue #35 comment 7004571431. Base: main 43ba8b53504f5a310f9e799a2386c5801e8c0329. Defect (proven by the 2026-11-19 fresh-start pre-flight, ~/workspace/freshstart-snapshot.txt + freshstart-govdump.txt): Stratex/autonomy/run_daemon.py _manage_overlay_positions() is called unconditionally every scan cycle (exits pass + entries pass) and executes all 21 strategy_overlay_* configs from PRODUCTION_STRATEGY_REGISTRY without ever consulting STRATEX_STRATEGY_ALLOWLIST — the signal path skips non-allowlisted strategies, the overlay manager did not. The overlay path places orders with NO venue SL/TP brackets, so on 2026-11-19 the daemon opened 30 unprotected overlay shorts while the allowlist held only the 4 signal-path names; the fresh start was correctly STOPPED at pre-flight because no allowlist value could have kept the overlays out."
+      - "Fix (run_daemon.py, one gate inside _manage_overlay_positions, mirroring the signal path's semantics): when the configured allowlist is non-empty, configs whose strat_name is not in it are filtered out before any evaluation — no entries and no management of existing positions; the skipped names are logged loudly (WARNING, FWD-018 style, at most once per 60s across both passes) so a start journal proves the gate is working. Empty/unset allowlist = behaviour byte-identical to pre-fix. Overlay sizing, exits, the denylist, the signal path and all risk parameters are untouched; no brackets are added to overlays (separate follow-up)."
+      - "Tests: new suite Stratex/tests/test_fwd028_overlay_allowlist_gate.py, 5 tests — non-allowlisted config opens nothing; non-allowlisted config's existing position is left completely unmanaged (crash-series close not executed); allowlisted config managed while a gated config that sorts first is skipped; empty allowlist manages all (back-compat); skipped names appear in a WARNING record. Local results: 5/5 pass on the branch head; on the pristine base blob the 4 gate tests FAIL and only the back-compat test passes (identical behaviour pre/post by construction — the non-vacuity A/B). CI step list (owner-workflows.yml 'Stratex forward-test and self-experiment contracts': fwd018 x3, fwd021, fwd028, fwd024, exp001, exp002): 190 passed, 6 skipped. Full daemon-touching neighbour sweep (33 files): 514 passed with exactly the 4 failures that also fail on the pristine base (test_daemon_governance x3, test_execution_quality_rd010 x1 — pre-existing, unrelated to the overlay manager)."
+      - "CI collection: the new suite is wired into the same owner-workflows.yml step in this PR (one added line, REL-053 pattern), so CI collects it from this PR onward; the local runs above are its evidence for this PR itself."
+    next_action: "Supervisor review -> serial-lane merge -> deploy with the controlled Stratex fresh start: the daemon start journal must show the Overlay WARNING naming the 21 strategy_overlay_* configs as not in STRATEX_STRATEGY_ALLOWLIST and zero overlay orders, while the allowlisted lane evaluates normally -> VERIFIED. Follow-up (separate task): venue SL/TP brackets for overlay entries, after which overlays may join the allowlist."
+    files:
+      - Stratex/autonomy/run_daemon.py
+      - Stratex/tests/test_fwd028_overlay_allowlist_gate.py
+      - .github/workflows/owner-workflows.yml
+      - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
