@@ -177,6 +177,12 @@ class AutonomousActionLog:
     result: str
     success: bool
     details: dict[str, Any] = field(default_factory=dict)
+    # Full ISO-8601 instant the action was recorded (TASK-FRD-029).
+    # `timestamp` above is a bare "%H:%M:%S" with no date, which the
+    # dashboard's clock renderer cannot parse — it showed "--:--:--"
+    # for every log entry. Entries persisted before this field existed
+    # load with "" and render no time rather than a placeholder.
+    recorded_at: str = ""
 
 
 class AutonomousController:
@@ -230,6 +236,7 @@ class AutonomousController:
                     result=str(raw.get("result", "")),
                     success=bool(raw.get("success", False)),
                     details=raw.get("details") or {},
+                    recorded_at=str(raw.get("recorded_at", "")),
                 )
             except Exception:
                 continue
@@ -303,6 +310,7 @@ class AutonomousController:
             "recent_actions": [
                 {
                     "timestamp": l.timestamp,
+                    "recorded_at": l.recorded_at,
                     "action_type": l.action_type,
                     "target": l.target,
                     "directive": l.directive,
@@ -323,14 +331,16 @@ class AutonomousController:
         details: dict[str, Any] | None = None,
     ) -> None:
         """Record an autonomous event into system trace."""
+        now = datetime.now(timezone.utc)
         entry = AutonomousActionLog(
-            timestamp=datetime.now(timezone.utc).strftime("%H:%M:%S"),
+            timestamp=now.strftime("%H:%M:%S"),
             action_type=action_type,
             target=target,
             directive=directive,
             result=result,
             success=success,
             details=details or {},
+            recorded_at=now.isoformat(),
         )
         self.action_history.append(entry)
         if len(self.action_history) > self._max_history:

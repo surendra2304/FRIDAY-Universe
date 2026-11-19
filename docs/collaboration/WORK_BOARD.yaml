@@ -12095,6 +12095,33 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - .github/workflows/owner-workflows.yml
       - IntelX/docs/STANDING_WATCHES.md
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-FRD-029
+    title: "ULTRON stage UI fixes from the owner's live sweep: vision banner wraps inside its frame, Core Modules rows scroll inside their panel instead of spilling under the VOICE STATE band, Activity Log renders real timestamps (backend records a full ISO recorded_at), and the conversation panel is height-bounded so its own scroll engages"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-frd-029-ultron-ui-fixes
+    pr: null
+    priority: P2
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Claim: issue #35 comment 7007629914. Base: main 2ae5e5599833879ece02f0f527720ff76ffe7537. Source: the owner's live sweep of https://friday-universe.duckdns.org/ in his own Chrome (2026-11-19 ~16:43 IST, viewport 1438x832) found three site defects plus an over-long conversation panel. The two '1.00' controls also seen at the top of the page are owner-verified as his own Chrome extension overlay — NOT site code, explicitly out of scope, untouched."
+      - "Defect 1 (vision banner clipped both sides): .ultron-vision-label was white-space:nowrap at 8.5px mono with 0.3em letter-spacing — the 57-char sentence measures ~436px against the frame's ~268px inner width, and .ultron-vision has overflow:hidden, so both ends were cut ('ED — NO CAMERA OR SCREEN SOURCE IN TH'). Fix (app/ultron.css): the label now wraps — width calc(100% - 28px), line-height 1.9, nowrap removed; text and styling otherwise unchanged."
+      - "Defect 2 (Core Modules last row hidden behind the VOICE STATE band): .ultron-panel is a flex child with min-height:0 and no overflow control, so when the 10 module rows exceed the panel's flexed height they spill past its border and paint under the following .ultron-waveband (later in DOM, opaque background). Fix: the rows now live in a .ultron-mod-scroll region (flex:1, min-height:0, overflow-y:auto) inside the panel — header pinned, rows scroll, nothing spills (UltronStage.tsx + ultron.css)."
+      - "Defect 3 (Activity Log '--:--:--' on every row) — root cause in the backend: AutonomousActionLog.timestamp is a bare '%H:%M:%S' (no date), and get_status() recent_actions shipped only that, which new Date() cannot parse; the /api/ws/activity backlog fell back to the same string because the entry had no recorded_at attribute (server.py already preferred one via getattr). Fix at the source (FRIDAY/src/friday/autonomous/controller.py): entries now record a full ISO-8601 recorded_at (one captured instant drives both fields), _load_history restores it (legacy rows load ''), and get_status() ships it — the WS backlog picks it up with no server.py change. UI (lib/wire.ts + UltronStage.tsx): new clockTimeOrBlank (clockTime's placeholder behaviour unchanged for other callers), the seed prefers recorded_at, and an entry with no parseable time renders blank instead of the placeholder."
+      - "Defect 4 (conversation stretches the page): the ULTRON chat panel sat in an auto-height grid row, so .stream's overflow-y:auto never engaged and the panel grew with the full history. Fix (ultron.css): .ultron-chat-panel height clamp(300px, 42dvh, 480px) — the stream now scrolls inside the panel; Conversation.tsx is untouched, so its scroll-to-newest behaviour works exactly as before. ULTRON-scoped only; Halo never sees these rules."
+      - "Tests: FRIDAY/tests/test_frd029_activity_timestamps.py 4/4 PASS on the branch, 4/4 FAIL on pristine base (non-vacuous); neighbours test_autonomous_diagnostics_truth + test_autonomous_mode_source_of_truth + test_autonomous_daemon_task_source green alongside (29 passed total). The new suite is added to owner-workflows.yml's contracts pytest list (it triggers on FRIDAY/tests/**, so the PR exercises it). FRIDAY/ui/lib/wire.test.ts (plain-Node pattern, as lib/theme.test.ts): all expectations pass on the branch, fails on base wire.ts (clockTimeOrBlank absent). Frontend build: next build (Next 16.3.4) — Turbopack compiled successfully; tsc --noEmit shows exactly the 5 pre-existing SplitText.tsx errors (gsap absent from the sandbox install) and ZERO errors in any touched file; eslint on the touched files shows the same 2 pre-existing UltronStage errors as base, none new. A local visual render check is not possible in the sandbox (client-rendered SPA + live backend); verification is code-level plus the compiled build."
+    next_action: "Supervisor review -> merge lane. NOT deployed by this crew: the coordinator times the FRIDAY.service restart (slow page-in under swap) and re-sweeps the live page afterwards. Post-deploy check: vision sentence fully visible, VyralX row readable at scroll-top, seeded/backlog/live activity rows show real IST times (pre-fix persisted entries legitimately show blank), conversation scrolls inside its panel."
+    files:
+      - FRIDAY/src/friday/autonomous/controller.py
+      - FRIDAY/tests/test_frd029_activity_timestamps.py
+      - FRIDAY/ui/lib/wire.ts
+      - FRIDAY/ui/lib/wire.test.ts
+      - FRIDAY/ui/components/ultron/UltronStage.tsx
+      - FRIDAY/ui/app/ultron.css
+      - .github/workflows/owner-workflows.yml
+      - docs/collaboration/WORK_BOARD.yaml
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
