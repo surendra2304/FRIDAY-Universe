@@ -5091,6 +5091,12 @@ async def activity_ws_endpoint(websocket: WebSocket) -> None:
                 "result": entry.result,
                 "success": entry.success,
                 "timestamp": getattr(entry, "recorded_at", None) or entry.timestamp,
+                # TASK-FRD-030: recorded_at rides as its own field, as in
+                # the get_status() seed payload. Collapsing it into
+                # `timestamp` alone left the dashboard's live-append rows
+                # with only the bare "%H:%M:%S" fallback (unparseable)
+                # for every entry whose recorded_at is empty.
+                "recorded_at": getattr(entry, "recorded_at", "") or "",
             })
     except Exception as exc:  # pragma: no cover - best effort
         logger.debug("Activity backlog send failed: %s", exc)

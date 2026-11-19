@@ -132,6 +132,10 @@ export interface ActivityFrame {
   agents_involved?: string;
   success?: boolean;
   timestamp?: string;
+  /* Full ISO instant the action was recorded (TASK-FRD-030); the
+     backend ships it on both live frame producers — the broadcast and
+     the connect backlog — exactly as the status seed payload does. */
+  recorded_at?: string;
 }
 
 export interface HistoryEntry {
@@ -316,6 +320,18 @@ export function clockTime(value?: string | number | Date | null): string {
 export function clockTimeOrBlank(value?: string | number | Date | null): string {
   const date = parseClockDate(value);
   return date ? formatClock(date) : "";
+}
+
+/** The activity socket's live-append clock (TASK-FRD-030): a frame's
+    own recorded_at instant wins — the same preference the seeded log
+    applies — then its timestamp, and for the frame types that carry
+    no time at all, the moment the frame arrived. Before FRD-030 the
+    live handler read only `timestamp`, and the socket's backlog
+    collapsed recorded_at into that one key with a bare time-of-day
+    fallback, so live-appended rows rendered no time even though the
+    entry's instant existed on the seed path. */
+export function activityFrameTime(frame: ActivityFrame): string {
+  return clockTimeOrBlank((frame.recorded_at || frame.timestamp) ?? Date.now());
 }
 
 /** Call timer: seconds as MM:SS. */

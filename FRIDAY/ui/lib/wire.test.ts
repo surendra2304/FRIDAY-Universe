@@ -3,7 +3,7 @@
    Node (>= 22, native type stripping):  node lib/wire.test.ts
    It exits non-zero on the first failed expectation. */
 import assert from "node:assert/strict";
-import { clockTime, clockTimeOrBlank } from "./wire.ts";
+import { activityFrameTime, clockTime, clockTimeOrBlank } from "./wire.ts";
 
 // A full ISO instant renders as the fleet-zone wall clock either way.
 // 2026-11-19T11:13:05Z is 16:43:05 in Asia/Kolkata (UTC+5:30).
@@ -27,5 +27,21 @@ assert.equal(clockTime(undefined), "--:--:--");
 assert.equal(clockTimeOrBlank(""), "");
 assert.equal(clockTimeOrBlank(null), "");
 assert.equal(clockTimeOrBlank(undefined), "");
+
+// TASK-FRD-030: the live-append clock for activity socket frames. A
+// frame's recorded_at wins over its timestamp — in particular a frame
+// whose timestamp is the backlog's bare time-of-day fallback still
+// renders its real time when recorded_at rides along (the FRD-030 bug
+// was live rows rendering blank while the seed path showed the time).
+assert.equal(
+  activityFrameTime({ recorded_at: "2026-11-19T11:13:05.000Z", timestamp: "16:43:05" }),
+  "16:43:05",
+);
+assert.equal(activityFrameTime({ timestamp: "2026-11-19T11:13:05.000Z" }), "16:43:05");
+// A legacy frame (no recorded_at, bare timestamp) honestly shows no time.
+assert.equal(activityFrameTime({ timestamp: "16:43:05" }), "");
+assert.equal(activityFrameTime({ recorded_at: "", timestamp: "16:43:05" }), "");
+// A frame carrying no time at all falls back to its arrival time.
+assert.match(activityFrameTime({}), /^\d{2}:\d{2}:\d{2}$/);
 
 console.log("wire.test.ts: all expectations passed");

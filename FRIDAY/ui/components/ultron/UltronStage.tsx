@@ -6,6 +6,7 @@ import type { VoiceLinkControls, VoicePhase } from "../VoiceCall";
 import { Conversation } from "../stage/Conversation";
 import { UltronOrb } from "./UltronOrb";
 import {
+  activityFrameTime,
   clockTime,
   clockTimeOrBlank,
   fetchAutonomy,
@@ -153,7 +154,12 @@ export function UltronStage() {
   useEffect(() => {
     const socket = openActivitySocket((frame) => {
       setLog((current) =>
-        [...current, { id: ++logSeq, at: clockTimeOrBlank(frame.timestamp ?? Date.now()), text: frameText(frame), done: frame.success === true }].slice(-7),
+        /* activityFrameTime prefers the frame's recorded_at, the same
+           instant the seed above reads (TASK-FRD-030); reading only
+           frame.timestamp left live-appended rows blank whenever the
+           socket's backlog had collapsed the instant into its bare
+           time-of-day fallback. */
+        [...current, { id: ++logSeq, at: activityFrameTime(frame), text: frameText(frame), done: frame.success === true }].slice(-7),
       );
     });
     return () => socket?.close();

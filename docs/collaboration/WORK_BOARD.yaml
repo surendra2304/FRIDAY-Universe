@@ -12122,6 +12122,32 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - FRIDAY/ui/app/ultron.css
       - .github/workflows/owner-workflows.yml
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-FRD-030
+    title: "FRIDAY Activity Log live entries render no timestamp: the activity socket's live path has no recorded_at channel — broadcast and backlog frames carry the instant only collapsed into 'timestamp', whose backlog fallback is the unparseable bare time-of-day for every entry with an empty recorded_at"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-frd-030-live-activity-timestamp
+    pr: null
+    priority: P2
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Claim: issue #35 comment 7009670697. Base: main a901b564ddc001f9e114584cd8d61289fd1f9565. Source: the coordinator's rendered re-check of https://friday-universe.duckdns.org/ (2026-11-19 ~18:06 IST) after PR #1095 made FRD-029 live — the newest Activity Log entries (INFERENCE plan-step rows: 'Analyze goal and gather context' / 'Plan execution approach' / 'Execute planned actions', produced by the autonomous daemon via enhanced_controller._record_action -> record_agent_action) show a blank time slot, neither a real time nor the old '--:--:--', while timestamps render fine elsewhere on the page and the get_status() seed payload carries a usable recorded_at for the same history."
+      - "Root cause (payload-proven from code, not inference): the live path has no recorded_at channel anywhere. (1) The broadcast frame built in AutonomousController._log_action (FRIDAY/src/friday/autonomous/controller.py) sends the instant only under the key 'timestamp' — no recorded_at field. (2) The /api/ws/activity connect backlog (FRIDAY/src/friday/api/server.py) — the frames that populate the log on page load through the live-append handler — collapses the instant into 'timestamp' as entry.recorded_at or entry.timestamp, so for any entry whose recorded_at is empty (every entry persisted before FRD-029; the entire production history when the fix deployed, loaded at the 17:33 IST restart with recorded_at '') the frame's timestamp is the bare '%H:%M:%S' string, which new Date() cannot parse. (3) UltronStage.tsx's live-append handler reads only frame.timestamp (frame.timestamp ?? Date.now()) and wire.ts's ActivityFrame did not declare recorded_at at all. The seed path is asymmetric: get_status() recent_actions ships recorded_at as its own field and the seed handler prefers it (a.recorded_at || a.timestamp)."
+      - "Fix (smallest change consistent with FRD-029's 'recorded_at everywhere' design): controller.py — the broadcast frame now carries 'recorded_at': entry.recorded_at and its 'timestamp' becomes the entry's one captured instant instead of a second clock read; server.py — backlog frames carry 'recorded_at' as their own field (getattr-guarded, '' when absent) with the legacy 'timestamp' fallback byte-unchanged for other consumers; wire.ts — ActivityFrame gains recorded_at and a new activityFrameTime(frame) live-append clock (recorded_at, then timestamp, then arrival time for the frame types that carry no time); UltronStage.tsx — the live handler uses activityFrameTime. Legacy entries still render no time (no invented instant — FRD-029's accepted honesty rule); what changes is that the field now EXISTS on the live path, so every entry recorded since FRD-029 renders its real time however it is delivered."
+      - "Tests: new FRIDAY/tests/test_frd030_live_activity_timestamp.py (4 tests) covers the LIVE payload path FRD-029's suite missed — it captures the real broadcast frame through a registered activity_stream client and drives the REAL /api/ws/activity endpoint with a fake socket for fresh and legacy entries, and pins live-vs-seed recorded_at agreement. On pristine main a901b564 all 4 FAIL with KeyError: 'recorded_at' (non-vacuous); on the branch 4/4 pass, alongside FRD-029's suite and neighbours (33 passed) and the wider autonomous/batch rings (104 passed). The suite is added to owner-workflows.yml's contracts pytest list (with the trailing backslash on the FRD-029 line restored so the list still parses as one command). FRIDAY/ui/lib/wire.test.ts gains activityFrameTime expectations: all pass on the branch; on base wire.ts it fails (activityFrameTime not exported, node exit 1)."
+      - "Export (the #1093/#1095 lesson — source-only ships do not reach the site): this PR also ships the regenerated FRIDAY/ui/out from the branch's UI source (npm ci + npm run build, Next static export, 5 pages). Verified in the built bundle before shipping: the chunks carry the new activityFrameTime function as function(t){return f((t.recorded_at||t.timestamp)??Date.now())} alongside the unchanged seed expression clockTimeOrBlank(e.recorded_at||e.timestamp); the stale export at a901b564 contains only the seed expression. Shipped FRIDAY/ui/out tree hash equals the locally built export's tree hash (verified by git object read-back after the ship)."
+    next_action: "Coordinator review -> merge. On merge the fleet CD auto-pulls and StaticFiles serves the new export from disk (no FRIDAY.service restart needed for the assets; the backend frame changes ride the CD's FRIDAY.service restart). Coordinator then re-checks the rendered page: activity rows delivered over the socket (fresh page load backlog + live daemon rows) show real IST times for entries recorded since FRD-029; pre-FRD-029 persisted entries legitimately remain blank."
+    files:
+      - FRIDAY/src/friday/autonomous/controller.py
+      - FRIDAY/src/friday/api/server.py
+      - FRIDAY/tests/test_frd030_live_activity_timestamp.py
+      - FRIDAY/ui/lib/wire.ts
+      - FRIDAY/ui/lib/wire.test.ts
+      - FRIDAY/ui/components/ultron/UltronStage.tsx
+      - FRIDAY/ui/out
+      - .github/workflows/owner-workflows.yml
+      - docs/collaboration/WORK_BOARD.yaml
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
