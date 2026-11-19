@@ -48,6 +48,9 @@ def test_new_frame_counters_start_at_zero():
     assert counters["activity_push_audio"] == 0
     assert counters["plugin_push_audio"] == 0
     assert counters["plugin_send_audio_events"] == 0
+    # TASK-VOI-024: hop-3b sent + shed counters ride the same dict.
+    assert counters["plugin_sent_audio_events"] == 0
+    assert counters["plugin_shed_silence_events"] == 0
 
 
 def test_registry_roundtrip_and_drop():
@@ -59,18 +62,21 @@ def test_registry_roundtrip_and_drop():
     assert w._frame_counters_for(session) is None
 
 
-def test_journal_line_carries_all_three_counts(caplog):
+def test_journal_line_carries_all_counts(caplog):
     session, counters = _registered()
     counters["activity_push_audio"] = 41
     counters["plugin_push_audio"] = 40
     counters["plugin_send_audio_events"] = 39
+    counters["plugin_sent_audio_events"] = 38
+    counters["plugin_shed_silence_events"] = 2
     with caplog.at_level(logging.INFO, logger="friday.voice"):
         w._journal_frame_counters(session, "watchdog firing")
     lines = [r.getMessage() for r in caplog.records]
     assert any(
         "VOICE frame counters [session build 1]: "
         "activity_push_audio=41 plugin_push_audio=40 "
-        "plugin_send_audio_events=39 (watchdog firing)" in line
+        "plugin_send_audio_events=39 plugin_sent_audio_events=38 "
+        "plugin_shed_silence_events=2 (watchdog firing)" in line
         for line in lines
     )
     # drop=False: the session is still live; its end line comes later.
