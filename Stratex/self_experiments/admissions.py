@@ -14,9 +14,17 @@ NEVER overwrites a governed entry — a key collision raises.
 
 Two honesty limits, stated here and in every admission's reason
 string:
-1. The risk fields on an admission are the frozen lane constants from
-   bounds.py. They are stamped, never chosen: admit() takes no risk
-   input, and any caller-supplied extra field is risk-scanned.
+1. The governance fields on an admission (lane, tier/status, risk
+   caps, kill-criteria-bearing reason, and every other stamped field)
+   are the frozen constants/derived values from bounds.py and the
+   judged evidence. They are stamped, never chosen: admit() takes no
+   risk input, any caller-supplied extra field is risk-scanned, and
+   (PR #986 activation condition A1, TASK-STR-EXP-003) any extra key
+   that collides with a stamped field is REFUSED — the collision set
+   is derived from the constructed entry itself, so a stamped field
+   added tomorrow is protected automatically, and a full stamped-
+   snapshot invariant re-verifies every stamped field after the
+   legitimate extra metadata is merged.
 2. An admitted combination has no executable ensemble module yet, so
    the daemon's governance fail-closes it (unregistered module) and
    it cannot place an order until the slice-2 ensemble module lands.
@@ -31,6 +39,7 @@ caller logs the revocation in the experiment ledger).
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import os
@@ -49,6 +58,42 @@ UTC = timezone.utc
 
 class AdmissionError(Exception):
     """An admission was refused (fail-closed)."""
+
+
+#: The governance-stamped fields of an admission entry: every key
+#: admit() itself writes into the entry, in construction order. An
+#: extra= key naming any of these is refused (see admit()). This set
+#: is documentation/introspection for callers and tests — the
+#: enforcement in admit() derives the collision set from the
+#: constructed entry dict itself, so it cannot drift from this list
+#: silently (a test pins the two equal on a real admission).
+GOVERNANCE_STAMPED_FIELDS = frozenset(
+    {
+        "status",
+        "version",
+        "timeframe",
+        "execution_model",
+        "entry_conditions",
+        "sl_method",
+        "tp_method",
+        "oos_win_rate_prior",
+        "total_friction_bps",
+        "expected_net_edge_bps",
+        "minimum_required_edge",
+        "lane_assets",
+        "validated_assets",
+        "forward_protocol",
+        "risk_per_trade_pct",
+        "max_heat_pct",
+        "forward_lane",
+        "self_experiment",
+        "self_experiment_verdict",
+        "declaration_id",
+        "members",
+        "execution",
+        "reason",
+    }
+)
 
 
 def default_lane_assets(panel: str) -> list[str] | None:
@@ -137,7 +182,11 @@ class AdmissionsRegistry:
 
         Refuses (AdmissionError) for a FAIL verdict, an unsupported
         panel, or a key collision with different members. Any
-        caller-supplied extra fields are risk-scanned first.
+        caller-supplied extra fields are risk-scanned first, and any
+        extra key colliding with a governance-stamped field is
+        refused (fail-closed: nothing is persisted) — extra is for
+        non-governance metadata only and can never restamp the lane,
+        tier, risk caps or kill criteria this method stamps.
         """
         if extra:
             assert_no_risk_touch(extra)
@@ -215,17 +264,36 @@ class AdmissionsRegistry:
                 f"until that module lands — registered, not substituted."
             ),
         }
+        # A1 structural seal: snapshot the entry exactly as stamped,
+        # BEFORE any caller metadata is merged. The collision set is
+        # this snapshot's key set — i.e. derived from the constructed
+        # entry itself, not a hand-maintained list — so every stamped
+        # field, including any added by a future edit of the dict
+        # above, is override-proof by construction.
+        stamped = copy.deepcopy(entry)
         if extra:
+            collisions = sorted(set(extra) & set(stamped))
+            if collisions:
+                raise AdmissionError(
+                    "extra fields collide with governance-stamped "
+                    f"admission fields {collisions} — refused "
+                    "(fail-closed): extra may carry non-governance "
+                    "metadata only and can never restamp the lane, "
+                    "tier, risk caps or kill criteria"
+                )
             entry.update(extra)
-        # Internal invariant: the stamped risk fields are the frozen
-        # constants, whatever happened above.
-        if (
-            entry["risk_per_trade_pct"] != bounds.LANE_RISK_PER_TRADE_PCT
-            or entry["max_heat_pct"] != bounds.LANE_MAX_HEAT_PCT
-        ):
+        # Internal invariant: EVERY stamped field still equals the
+        # snapshot, whatever happened above (defence in depth behind
+        # the collision refusal — a divergence here means the merge
+        # path itself changed, and the admission is refused rather
+        # than persisted with a restamped field).
+        diverged = sorted(
+            k for k, v in stamped.items() if entry.get(k) != v
+        )
+        if diverged:
             raise AdmissionError(
-                "admission risk fields diverged from the frozen lane "
-                "terms — refused"
+                f"stamped admission fields diverged from the stamped "
+                f"values {diverged} — refused"
             )
         self._entries[key] = entry
         self._persist()
