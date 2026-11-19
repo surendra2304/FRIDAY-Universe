@@ -12269,6 +12269,24 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - VyralX/tests/test_viral_framing.py
       - VyralX/tests/test_viral_loop.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-VYR-027
+    title: "CI: collect test_vyr014_quality_gates.py + test_viral_loop.py in owner-workflows VyralX step"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-vyr-027-ci-collection
+    pr: 1108
+    priority: P2
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Claim: GitHub issue #35 comment 7017457702 by Muse before any editing (TASK-VYR-027; next free VYR id — board max was TASK-VYR-026, and a check of the hub's newest comments found no VYR-027 claim). Base: main f98d93efd7b1237f8c343d5864b376caa567b8ed. Ship incident, handled: the claim POST's first two bridge attempts failed on transport AFTER landing server-side, producing duplicate claim comments 7017464692 and 7017469068 — both deleted via the API (HTTP 204) and re-verified: exactly one claim comment stands."
+      - "Gap: owner-workflows.yml's VyralX pytest step ('Review-required project persistence and worker boundaries') listed 4 files; VyralX/tests/test_vyr014_quality_gates.py (33 tests — the VYR-014/024/025 gate evidence) and VyralX/tests/test_viral_loop.py (9 tests — the VYR-026 loop pacing/budget/stop evidence) exist on main but were never collected by GitHub CI. Flagged in the TASK-VYR-024 and TASK-VYR-025 supervisor reviews; collecting test_viral_loop.py was a supervisor condition on PR #1106 (review comment 7016683806). Cross-check at main: no other workflow file contains a VyralX pytest invocation (all 25 workflow files grepped); the py311-import-gate and other jobs enumerate no VyralX test files."
+      - "Change: the two files are appended to that one step's pytest list in the existing path style (+2/-1 lines in .github/workflows/owner-workflows.yml, blob 22d70d35 -> dc27d043). No test edits, no source edits, no other workflow edits."
+      - "Pre-ship verification at main f98d93ef (workflow-faithful: Python 3.12 venv with the contracts job's install sequence in order — base dependency set, Forge/requirements-verification.txt, Memora/requirements.txt, Inference/requirements.txt, pandas+requests, then the step's own edge-tts+yt-dlp; workflow env APP_ENV=development DATA_DIR/MEDIA_DIR/RENDER_DIR under /tmp, PYTHONPATH=VyralX; proxies unset; repo-root cwd): the two added files pass standalone — 42 tests (33 + 9), 0 failures/errors/skips, junit-verified; the full post-change 6-file step passes — 129 tests, 0 failures/errors/skips, junit-verified."
+    next_action: "Supervisor review -> merge. Acceptance: a contracts run on the merged workflow collects all 6 VyralX files in the step. CI-definition change only — no deploy, no service touched."
+    files:
+      - .github/workflows/owner-workflows.yml
+      - docs/collaboration/WORK_BOARD.yaml
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
