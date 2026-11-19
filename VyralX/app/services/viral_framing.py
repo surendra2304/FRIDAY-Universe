@@ -86,6 +86,67 @@ _X264_PRESET = "ultrafast"
 _X264_CRF = "23"
 _X264_THREADS = "2"
 
+# Excerpt-fit profile (TASK-VYR-023). Supervised cycle 2 (2026-11-18/19)
+# lost 3 of 12 attempts to TimeoutExpired on the EXCERPT cut — the one
+# encode the render-fit profile above did not touch: it still cut at
+# full source resolution (up to 1080x1920) at 60fps with
+# veryfast/crf18 under the 600s _run default. That cost is pure waste:
+# the excerpt file is an ANALYSIS-ONLY intermediate. It never reaches
+# the final composition (render_framed trims from the original source),
+# and its only consumers are
+#   * viral_quality.measure_event_arc — frames at 96x170 grayscale,
+#   * scene_analysis.analyze_scene / describe_scene — frames extracted
+#     at scale=640:-2 (a 720-wide excerpt yields the identical
+#     640x1138 vision frames a 1080-wide one does; verified locally).
+# So the excerpt is capped to the render fit itself (720x1280 box,
+# fps 30, ultrafast/crf23, threads 2), aspect preserved, never
+# upscaled, never cropped — the vision record must see the whole
+# frame, only smaller. Measured locally on a 1080x1920@60, ~10Mbps
+# fixture, 24s cut (the shortest cycle-2 failure was 23.64s):
+# OLD 52.3 CPU-s / 72.0s wall / 373MB RSS / 33.4MB out ->
+# NEW 18.1 CPU-s / 31.6s wall / 135MB RSS / 18.6MB out (720x1280@30),
+# SSIM 0.981 vs the old excerpt. The 600s excerpt timeout is NOT
+# raised — the encode is made to fit inside it, exactly as #1026
+# treated the 2,400s composition timeout. Pinned by
+# tests/test_viral_framing.py — do not retune casually.
+_EXCERPT_WIDTH = 720
+_EXCERPT_HEIGHT = 1280
+_EXCERPT_MAX_FPS = 30
+_EXCERPT_PRESET = "ultrafast"
+_EXCERPT_CRF = "23"
+_EXCERPT_THREADS = "2"
+
+
+def _excerpt_video_filter() -> str:
+    """The excerpt-fit scale chain: cap to the 720x1280 box at 30fps.
+
+    ``min(W,iw)``/``min(H,ih)`` in the scale target plus
+    ``force_original_aspect_ratio=decrease`` means a smaller source
+    passes through at its own size (never upscaled), a landscape
+    source keeps its aspect (720x406 for 16:9 — no crop, no
+    distortion), and a portrait source lands on 720x1280.
+    """
+    return (
+        f"fps={_EXCERPT_MAX_FPS},"
+        f"scale='min({_EXCERPT_WIDTH},iw)':'min({_EXCERPT_HEIGHT},ih)':"
+        "force_original_aspect_ratio=decrease:force_divisible_by=2"
+    )
+
+
+def _excerpt_command(
+    ffmpeg_bin: str, source_path: Path, destination: Path, start: float, seconds: float
+) -> list[str]:
+    """The full excerpt ffmpeg command at the excerpt-fit profile."""
+    return [
+        ffmpeg_bin, "-hide_banner", "-nostdin", "-y",
+        "-ss", f"{start:.3f}", "-i", str(source_path),
+        "-t", f"{seconds:.3f}",
+        "-vf", _excerpt_video_filter(),
+        "-c:v", "libx264", "-preset", _EXCERPT_PRESET, "-crf", _EXCERPT_CRF,
+        "-threads", _EXCERPT_THREADS,
+        "-an", str(destination),
+    ]
+
 
 def excerpt_window(
     duration: float,
@@ -163,7 +224,10 @@ def generate_framing(
         "engagement filler.\n"
         "description: two short sentences about the moment, then a blank line, then a "
         "one-line question starting with an emoji and ending with 'Drop your answer "
-        "below!', then a blank line, then ten hashtags starting with #Shorts."
+        "below!', then a blank line, then ten hashtags starting with #Shorts. The "
+        "question must name a concrete object, person or action from the frame "
+        "analysis — a question naming anything else is rejected by the footage "
+        "checker."
     )
     if taken:
         prompt += (
@@ -855,6 +919,77 @@ def _duplicates_framing_line(speech_text: str, framing_text: str) -> bool:
     return bool(union) and len(speech_tokens & framing_tokens) / len(union) >= 0.5
 
 
+# The only framing violations with a deterministic, fact-free repair:
+# the description's question/CTA mechanics. Everything else a gate can
+# raise is a factual claim about the footage and must fail, never be
+# edited into compliance (viral_quality.repair_description_question's
+# own contract).
+_DESCRIPTION_QUESTION_KINDS = frozenset({"question_ungrounded", "cta_without_question"})
+
+
+def repair_framing_description(
+    framing: dict[str, str],
+    violations: list[vq.Violation],
+    *,
+    hook: str,
+    payoff: str,
+    record: dict[str, Any],
+    excerpt_seconds: float,
+    transcript: str = "",
+    scene: str = "",
+) -> tuple[dict[str, str], list[vq.Violation], bool]:
+    """Repair a framing package whose ONLY defect is its question.
+
+    TASK-VYR-023 diagnosis: the commentary path has had this escape
+    since TASK-VYR-014 — after its retries, a package whose remaining
+    violations are all description-question kinds gets
+    :func:`viral_quality.repair_description_question` and a full
+    re-gate. The framed path never got the same step, even though it
+    runs the identical description check (via check_consistency) on
+    the identical mandated description format (a question ending in
+    'Drop your answer below!'). The TASK-VYR-022 grounding fallback
+    covers ungrounded hook/payoff LINES; nothing covered the
+    description's question. A framed package whose hook, payoff and
+    title were fully grounded therefore died as script_unverifiable
+    over packaging mechanics the commentary path repairs
+    deterministically — in supervised cycle 2 the question_ungrounded
+    kind is the only violation kind documented more than once (2 of
+    the commentary candidate's 3 rejected drafts), and the framed
+    path had no way out of it at all.
+
+    The repair is applied ONLY when every remaining violation is a
+    description-question kind, and the repaired package must pass
+    the FULL framing gate suite again (transcript/scene evidence
+    included, exactly as the production caller gates) to be
+    accepted — factual violations (colours, garments, posture,
+    identity, time of day, grounding) are never repaired. Returns
+    (framing, violations, repaired).
+    """
+    if not violations or any(
+        violation.kind not in _DESCRIPTION_QUESTION_KINDS for violation in violations
+    ):
+        return framing, violations, False
+    repaired_description = vq.repair_description_question(
+        str(framing.get("description") or ""), record
+    )
+    if repaired_description == str(framing.get("description") or ""):
+        return framing, violations, False
+    repaired_framing = {**framing, "description": repaired_description}
+    remaining = framing_violations(
+        hook=hook,
+        payoff=payoff,
+        title=str(repaired_framing.get("title") or ""),
+        description=repaired_description,
+        record=record,
+        excerpt_seconds=excerpt_seconds,
+        transcript=transcript,
+        scene=scene,
+    )
+    if remaining:
+        return framing, violations, False
+    return repaired_framing, [], True
+
+
 def framed_cues(
     speech_cues: Any,
     *,
@@ -1023,16 +1158,17 @@ def render_framed(
 
 
 def _cut_excerpt(source_path: Path, destination: Path, start: float, seconds: float) -> Path:
-    """Cut the excerpt window to its own file for vision analysis."""
+    """Cut the excerpt window to its own file for vision analysis.
+
+    Encoded at the excerpt-fit profile above (TASK-VYR-023): the file
+    feeds only the event-arc measurement and the vision record, so it
+    is capped to what those consumers — and the 720x1280 final
+    render — can use. The final composition is unaffected: it trims
+    from the original source at the render-fit profile.
+    """
     settings = get_settings()
     destination.parent.mkdir(parents=True, exist_ok=True)
-    vr._run([
-        settings.ffmpeg_bin, "-hide_banner", "-nostdin", "-y",
-        "-ss", f"{start:.3f}", "-i", str(source_path),
-        "-t", f"{seconds:.3f}",
-        "-c:v", "libx264", "-preset", "veryfast", "-crf", "18",
-        "-an", str(destination),
-    ])
+    vr._run(_excerpt_command(settings.ffmpeg_bin, source_path, destination, start, seconds))
     return destination
 
 
@@ -1245,6 +1381,22 @@ def produce_framed_short(
                 )
                 hook, payoff, violations = sub_hook, sub_payoff, []
                 grounding_fallback_used = True
+    if gates_on and record is not None and violations:
+        # Same deterministic escape the commentary path has had since
+        # TASK-VYR-014 (TASK-VYR-023): a package grounded in every
+        # factual claim whose only remaining defect is the
+        # description's question gets that question repaired and is
+        # re-gated in full; anything else still skips, unrepaired.
+        framing, violations, description_repaired = repair_framing_description(
+            framing, violations,
+            hook=hook, payoff=payoff, record=record,
+            excerpt_seconds=excerpt_seconds,
+            transcript=speech.text, scene=scene,
+        )
+        if description_repaired:
+            log.info(
+                "Description question repaired for %s", candidate.video_id,
+            )
     if gates_on and record is not None and violations:
         return {
             "status": "SKIPPED", "reason": "script_unverifiable",
