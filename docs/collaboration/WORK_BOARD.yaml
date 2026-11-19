@@ -10703,14 +10703,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-COR-013
     title: "Cortex self-healing escalation spam: ai_universe escalation re-delivered every ~10 min for 2 days (247 Telegram messages in 48h) — escalate once per failure streak + 6h notifier dedupe"
-    status: IN_REVIEW
+    status: VERIFIED
     owner: muse_ai
     branch: claude/task-cor-013-escalation-streak
     prs: []
     contributors: []
     priority: P1
     created_at: "2026-11-19T04:45:00+05:30"
-    updated_at: "2026-11-19T04:45:00+05:30"
+    updated_at: "2026-11-19T15:00:00+05:30"
     files:
       - "Cortex/packages/core/src/cortex_core/resilience.py"
       - "Cortex/tests/unit/test_self_healing_and_self_model.py"
@@ -10723,6 +10723,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Diagnosis + fix record: ~/workspace/telegram-spam/STATE.md (journal counts, timestamps, code citations, cleared services, fix + silence verification)."
       - "Claim: issue #35 comment 6994469484."
+      - "DEPLOYED + PRODUCTION-VERIFIED 2026-11-19: S2 Cortex checkout pulled to main 43ba8b53 (streak logic confirmed in the deployed resilience.py), SELF_HEALING_ESCALATION_WEBHOOK re-enabled in Cortex/.env (post-edit file byte-identical to the pre-spamfix backup; exactly one line changed), watched restart healthy (GET /health 200). Observation 14:23-15:00 IST (36.75 min, webhook armed, ai_universe probe failing as designed): 71 escalation events, exactly 1 Telegram delivery (streak start 14:24:51 IST), 70 recorded streak suppressions - the ~10-minute spam cadence (247 sends/48h pre-fix) is gone. Flipped to VERIFIED in the TASK-STR-FWD-028 union board."
     blockers: []
     next_action: "Supervisor review, then merge. After merge + fleet deploy, coordinator re-enables SELF_HEALING_ESCALATION_WEBHOOK in Cortex/.env on S2 (uncomment, watched Cortex restart) and verifies one full hour with zero ai_universe deliveries while the supervisor records suppressed streak repeats; then flip VERIFIED. Follow-ups (not this task): identify Stratex-Daemon's periodic 3-message report trigger from the 2026-11-18 evening window if it recurs; consider wiring Cortex escalations through the FRIDAY #953 severity gate instead of a raw webhook."
 
@@ -11807,6 +11808,25 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     files:
       - Inference/app/providers/gemini.py
       - Inference/tests/test_inf015_flash_lite_catalogue.py
+      - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-STR-FWD-028
+    title: "Overlay allowlist gate: _manage_overlay_positions must honour STRATEX_STRATEGY_ALLOWLIST — with a non-empty allowlist, overlay configs outside it are skipped entirely (no entries, no management); empty allowlist unchanged"
+    status: MERGED
+    owner: muse_ai
+    branch: claude/task-str-fwd-028-overlay-allowlist-gate
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Claim: issue #35 comment 7004571431. Base: main 43ba8b53504f5a310f9e799a2386c5801e8c0329. Defect (proven by the 2026-11-19 fresh-start pre-flight, ~/workspace/freshstart-snapshot.txt + freshstart-govdump.txt): Stratex/autonomy/run_daemon.py _manage_overlay_positions() is called unconditionally every scan cycle (exits pass + entries pass) and executes all 21 strategy_overlay_* configs from PRODUCTION_STRATEGY_REGISTRY without ever consulting STRATEX_STRATEGY_ALLOWLIST — the signal path skips non-allowlisted strategies, the overlay manager did not. The overlay path places orders with NO venue SL/TP brackets, so on 2026-11-19 the daemon opened 30 unprotected overlay shorts while the allowlist held only the 4 signal-path names; the fresh start was correctly STOPPED at pre-flight because no allowlist value could have kept the overlays out."
+      - "Fix (run_daemon.py, one gate inside _manage_overlay_positions, mirroring the signal path's semantics): when the configured allowlist is non-empty, configs whose strat_name is not in it are filtered out before any evaluation — no entries and no management of existing positions; the skipped names are logged loudly (WARNING, FWD-018 style, at most once per 60s across both passes) so a start journal proves the gate is working. Empty/unset allowlist = behaviour byte-identical to pre-fix. Overlay sizing, exits, the denylist, the signal path and all risk parameters are untouched; no brackets are added to overlays (separate follow-up)."
+      - "Tests: new suite Stratex/tests/test_fwd028_overlay_allowlist_gate.py, 5 tests — non-allowlisted config opens nothing; non-allowlisted config's existing position is left completely unmanaged (crash-series close not executed); allowlisted config managed while a gated config that sorts first is skipped; empty allowlist manages all (back-compat); skipped names appear in a WARNING record. Local results: 5/5 pass on the branch head; on the pristine base blob the 4 gate tests FAIL and only the back-compat test passes (identical behaviour pre/post by construction — the non-vacuity A/B). CI step list (owner-workflows.yml 'Stratex forward-test and self-experiment contracts': fwd018 x3, fwd021, fwd028, fwd024, exp001, exp002): 190 passed, 6 skipped. Full daemon-touching neighbour sweep (33 files): 514 passed with exactly the 4 failures that also fail on the pristine base (test_daemon_governance x3, test_execution_quality_rd010 x1 — pre-existing, unrelated to the overlay manager)."
+      - "CI collection: the new suite is wired into the same owner-workflows.yml step in this PR (one added line, REL-053 pattern), so CI collects it from this PR onward; the local runs above are its evidence for this PR itself."
+      - "MERGED 2026-11-19 via union PR into main (supervisor APPROVE on PR #1077, comment 7005216742); board union-resolved alongside TASK-INF-017. Deploy rides the controlled Stratex fresh start (separate crew) -> VERIFIED after the start journal shows the overlay gate WARNING and zero overlay orders."
+    next_action: "Supervisor review -> serial-lane merge -> deploy with the controlled Stratex fresh start: the daemon start journal must show the Overlay WARNING naming the 21 strategy_overlay_* configs as not in STRATEX_STRATEGY_ALLOWLIST and zero overlay orders, while the allowlisted lane evaluates normally -> VERIFIED. Follow-up (separate task): venue SL/TP brackets for overlay entries, after which overlays may join the allowlist."
+    files:
+      - Stratex/autonomy/run_daemon.py
+      - Stratex/tests/test_fwd028_overlay_allowlist_gate.py
+      - .github/workflows/owner-workflows.yml
       - docs/collaboration/WORK_BOARD.yaml
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
