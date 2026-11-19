@@ -73,11 +73,6 @@ def _live_trading_authorized() -> bool:
 
 # Import new adapters
 try:
-    from exchanges.oanda_adapter import OandaExchangeAdapter
-except ImportError:
-    OandaExchangeAdapter = None
-
-try:
     from exchanges.binance_futures_adapter import BinanceFuturesAdapter
 except ImportError:
     BinanceFuturesAdapter = None
@@ -941,7 +936,6 @@ def get_exchange_adapter(exchange_id: str) -> BaseExchange:
         "okx": OKXExchangeAdapter,
         "coinbase": CoinbaseExchangeAdapter,
         "binance_futures": BinanceFuturesAdapter,
-        "oanda": OandaExchangeAdapter,
     }
     adapter_cls = ex_map.get(exchange_id.lower())
     if not adapter_cls:

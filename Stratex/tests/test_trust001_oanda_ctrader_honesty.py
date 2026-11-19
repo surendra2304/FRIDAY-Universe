@@ -1,12 +1,10 @@
 """
 tests/test_trust001_oanda_ctrader_honesty.py — TASK-TRUST-001 regression coverage.
 
-Two contracts locked in:
-
-1. OANDA get_positions reports the REAL per-side unrealizedPL that the
-   account payload already carries (previously every position reported
-   0.0 because of a wrong "OANDA provides it separately" comment).
-2. CTraderFixAdapter is demo-first and fail-closed: defaults point at the
+One contract locked in (a second, for the OANDA adapter's
+get_positions unrealizedPL reporting, was removed in TASK-REL-054
+together with the OANDA venue):
+1. CTraderFixAdapter is demo-first and fail-closed: defaults point at the
    demo FIX endpoint, credentials are never defaulted (the hardcoded
    "stratex" password fallback and the live account id default are gone),
    the LIVE endpoint requires ALLOW_LIVE_TRADING=true, and logon without
@@ -19,7 +17,6 @@ import pytest
 
 import config  # collection-time import (clean env): config validates the
 # environment at import, so tests must not first-import it mid-test.
-from exchanges.oanda_adapter import OandaExchangeAdapter
 
 
 _ENV_KEYS = (
@@ -31,66 +28,6 @@ _ENV_KEYS = (
     "CTRADER_FIX_ENABLED",
     "ALLOW_LIVE_TRADING",
 )
-
-FAKE_ACCOUNT = {
-    "account": {
-        "positions": [
-            {
-                "instrument": "EUR_USD",
-                "long": {"units": "10000", "averagePrice": "1.0850",
-                         "unrealizedPL": "42.50", "marginRate": "0.0333"},
-                "short": {"units": "0", "averagePrice": "0", "unrealizedPL": "0.0"},
-            },
-            {
-                "instrument": "USD_JPY",
-                "long": {"units": "0", "averagePrice": "0", "unrealizedPL": "0.0"},
-                "short": {"units": "5000", "averagePrice": "152.10",
-                          "unrealizedPL": "-17.25", "marginRate": "0.04"},
-            },
-        ]
-    }
-}
-
-
-@pytest.fixture
-def oanda(monkeypatch):
-    for key in ("OANDA_API_KEY", "OANDA_ACCOUNT_ID", "OANDA_PRACTICE"):
-        monkeypatch.delenv(key, raising=False)
-    adapter = OandaExchangeAdapter(api_key="test-key", account_id="test-acct")
-    monkeypatch.setattr(adapter, "_get_account", lambda: FAKE_ACCOUNT)
-    monkeypatch.setattr(
-        OandaExchangeAdapter, "get_current_price", lambda self, symbol: 1.0875
-    )
-    return adapter
-
-
-def test_oanda_positions_report_real_unrealized_pnl(oanda):
-    positions = oanda.get_positions()
-    by_symbol = {p.symbol: p for p in positions}
-    assert set(by_symbol) == {"EURUSD", "USDJPY"}
-    assert by_symbol["EURUSD"].unrealized_pnl == pytest.approx(42.50)
-    assert by_symbol["USDJPY"].unrealized_pnl == pytest.approx(-17.25)
-    assert by_symbol["EURUSD"].side == "LONG"
-    assert by_symbol["USDJPY"].side == "SHORT"
-
-
-def test_oanda_positions_never_report_zero_when_pnl_exists(oanda):
-    """The old behaviour reported 0.0 for every position — regression lock."""
-    for p in oanda.get_positions():
-        assert p.unrealized_pnl != 0.0
-
-
-def test_oanda_empty_account_returns_empty_list(oanda, monkeypatch):
-    monkeypatch.setattr(oanda, "_get_account", lambda: {"account": {"positions": []}})
-    assert oanda.get_positions() == []
-
-
-def test_oanda_unconfigured_returns_empty_list(monkeypatch):
-    for key in ("OANDA_API_KEY", "OANDA_ACCOUNT_ID"):
-        monkeypatch.delenv(key, raising=False)
-    adapter = OandaExchangeAdapter()
-    assert adapter.get_positions() == []
-
 
 class TestCTraderFixDefaults:
     def _adapter(self, monkeypatch):
