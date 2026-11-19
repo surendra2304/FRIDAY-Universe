@@ -119,10 +119,35 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as exc:
         logger.warning(f"Stale-task reconciliation not started: {exc}")
 
+    # TASK-FRG-017 slice 2: wire the idle experiment loop into the
+    # lifespan — behind its enable flag, default OFF. start_if_enabled
+    # returns a loop only when FORGE_IDLE_EXPERIMENTS is explicitly
+    # "on"; unset/off leaves the loop unstarted, and setting the flag
+    # is a coordinator activation step, not part of this wiring. The
+    # loop's own gates (kill switch, C2 host-load gate, idle gate,
+    # daily cap) still govern every cycle it runs.
+    idle_loop_task: asyncio.Task | None = None
+    try:
+        from app.improvement.idle_loop import IdleExperimentLoop
+        from app.memory.state_store import StateStore
+
+        idle_loop = IdleExperimentLoop.start_if_enabled(StateStore(db_manager))
+        if idle_loop is not None:
+            idle_loop_task = asyncio.create_task(idle_loop.run_forever())
+            logger.info(
+                "Forge idle experiment loop started "
+                "(FORGE_IDLE_EXPERIMENTS=on; host-load, idle and "
+                "daily-cap gates active)"
+            )
+    except Exception as exc:
+        logger.warning(f"Idle experiment loop not started: {exc}")
+
     yield
 
     if reaper_task is not None:
         reaper_task.cancel()
+    if idle_loop_task is not None:
+        idle_loop_task.cancel()
 
     logger.info(f"Shutting down {settings.app_name}...")
     # Safe cleanup of in-flight execution sandboxes within 5 seconds

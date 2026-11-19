@@ -296,7 +296,76 @@ class UniversalMemoryFabric:
         source: str = "agent_operation",
         metadata: Optional[Dict[str, Any]] = None,
     ) -> MemoryEntry:
-        """Record an entry into the fabric across the designated scope."""
+        """Record an entry into the fabric across the designated scope.
+
+        Historical contract: the entry is returned whether or not the
+        cloud dispatch to Memora succeeded — record() never raises on
+        cloud failure and its return value says nothing about Memora.
+        Callers that need to know whether Memora accepted the entry
+        must use record_and_confirm_cloud() instead (TASK-FRG-017 C3).
+        """
+        entry, _cloud_confirmed = self._record_impl(
+            owner_agent=owner_agent,
+            content_text=content_text,
+            scope=scope,
+            group_name=group_name,
+            memory_type=memory_type,
+            importance=importance,
+            confidence=confidence,
+            source=source,
+            metadata=metadata,
+        )
+        return entry
+
+    def record_and_confirm_cloud(
+        self,
+        owner_agent: str,
+        content_text: str,
+        scope: MemoryScope = MemoryScope.AGENT,
+        group_name: Optional[str] = None,
+        memory_type: str = "episodic",
+        importance: float = 0.7,
+        confidence: float = 1.0,
+        source: str = "agent_operation",
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> tuple[MemoryEntry, bool]:
+        """Record an entry AND report whether Memora accepted it.
+
+        Returns (entry, cloud_confirmed). cloud_confirmed is True only
+        when the cloud dispatch itself was answered by Memora with
+        HTTP 200/201 (see _dispatch_to_cloud: no resolvable owner key,
+        a connection error, or a non-2xx answer all yield False).
+        Local acceptance — the in-memory cache or the SQLite store —
+        NEVER counts as confirmation. The entry is recorded locally
+        exactly as record() records it, confirmed or not, so an
+        unconfirmed entry is degraded, not lost; retrying the delivery
+        is the caller's job (Memora's POST /v1/memories suppresses
+        duplicate content server-side).
+        """
+        return self._record_impl(
+            owner_agent=owner_agent,
+            content_text=content_text,
+            scope=scope,
+            group_name=group_name,
+            memory_type=memory_type,
+            importance=importance,
+            confidence=confidence,
+            source=source,
+            metadata=metadata,
+        )
+
+    def _record_impl(
+        self,
+        owner_agent: str,
+        content_text: str,
+        scope: MemoryScope = MemoryScope.AGENT,
+        group_name: Optional[str] = None,
+        memory_type: str = "episodic",
+        importance: float = 0.7,
+        confidence: float = 1.0,
+        source: str = "agent_operation",
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> tuple[MemoryEntry, bool]:
         owner = owner_agent.upper().strip()
         namespace = self.build_namespace(owner, scope, group_name)
 
@@ -321,8 +390,11 @@ class UniversalMemoryFabric:
         # Persist locally in SQLite
         self._save_local_record(entry)
 
-        # Asynchronously dispatch to Cloud Memora
-        self._dispatch_to_cloud(entry)
+        # Dispatch to Cloud Memora. The boolean result is Memora's
+        # acceptance verdict (True only on an HTTP 200/201 answer);
+        # record() discards it for backward compatibility, while
+        # record_and_confirm_cloud() surfaces it to the caller.
+        cloud_confirmed = self._dispatch_to_cloud(entry)
 
         # Mirror into the agent's layered viking:// subtree so the same memory
         # can be read as an abstract (L0), an outline (L1) or full text (L2).
@@ -330,7 +402,7 @@ class UniversalMemoryFabric:
         self.record_context(owner, title, content_text,
                             kind=memory_type, tags=[memory_type, scope.value])
 
-        return entry
+        return entry, cloud_confirmed
 
     def _save_local_record(self, entry: MemoryEntry) -> None:
         if not _local_cache_enabled():
