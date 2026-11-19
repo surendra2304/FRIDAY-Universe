@@ -251,3 +251,75 @@ def test_render_fit_profile_constants_are_the_measured_ones():
     assert viral_framing._X264_PRESET == "ultrafast"
     assert viral_framing._X264_CRF == "23"
     assert viral_framing._X264_THREADS == "2"
+
+
+# --------------------------------------------------------------------------- #
+# TASK-VYR-022: the excerpt cut gets the same render-fit treatment.
+# Supervised cycle 2 lost 3 of 12 attempts to TimeoutExpired on this
+# step alone (veryfast/crf18 at full source resolution, under the
+# 600s _run default) while every composition the #1026 profile
+# touched finished in ~1-2 minutes. The excerpt is analysis-only —
+# the event-arc probe reads 96x170 gray frames and the vision record
+# extracts frames at scale=640:-2 — so it is capped to the render
+# fit (720x1280 box, fps 30, ultrafast/crf23, threads 2), aspect
+# preserved, never upscaled, never cropped. These tests pin the
+# exact command so the heavy profile cannot silently return, and pin
+# that the fix is the encode, NOT a longer timeout.
+# --------------------------------------------------------------------------- #
+def _capture_excerpt(monkeypatch, tmp_path):
+    captured = {}
+
+    def fake_run(cmd, *, timeout=600):
+        captured["cmd"] = [str(part) for part in cmd]
+        captured["timeout"] = timeout
+
+    monkeypatch.setattr(viral_remix, "_run", fake_run)
+    viral_framing._cut_excerpt(
+        tmp_path / "source.mp4", tmp_path / "excerpt.mp4", 12.5, 23.64
+    )
+    return captured
+
+
+def test_cut_excerpt_uses_excerpt_fit_profile(monkeypatch, tmp_path):
+    captured = _capture_excerpt(monkeypatch, tmp_path)
+    cmd = captured["cmd"]
+    chain = _flag_value(cmd, "-vf")
+    assert chain == viral_framing._excerpt_video_filter()
+    assert "fps=30" in chain
+    assert "min(720,iw)" in chain and "min(1280,ih)" in chain
+    assert _flag_value(cmd, "-preset") == "ultrafast"
+    assert _flag_value(cmd, "-crf") == "23"
+    assert _flag_value(cmd, "-threads") == "2"
+    # The old heavy profile is gone.
+    assert "veryfast" not in cmd
+    assert _flag_value(cmd, "-crf") != "18"
+    # The window mechanics are unchanged: input-side seek, exact -t,
+    # silent (the excerpt feeds vision, not audio analysis).
+    assert _flag_value(cmd, "-ss") == "12.500"
+    assert _flag_value(cmd, "-t") == "23.640"
+    assert "-an" in cmd
+    # The timeout is NOT the fix — the 600s _run default stays and
+    # the encode is made to fit inside it.
+    assert captured["timeout"] == 600
+
+
+def test_excerpt_filter_preserves_frame_and_never_upscales():
+    chain = viral_framing._excerpt_video_filter()
+    # No crop: the vision record must see the whole frame.
+    assert "crop" not in chain
+    # Aspect preserved by construction, dimensions divisible by 2
+    # for libx264, and the min() caps forbid upscaling small sources.
+    assert "force_original_aspect_ratio=decrease" in chain
+    assert "force_divisible_by=2" in chain
+
+
+def test_excerpt_fit_profile_constants_match_the_render_fit():
+    assert (viral_framing._EXCERPT_WIDTH, viral_framing._EXCERPT_HEIGHT) == (720, 1280)
+    assert viral_framing._EXCERPT_MAX_FPS == 30
+    assert viral_framing._EXCERPT_PRESET == "ultrafast"
+    assert viral_framing._EXCERPT_CRF == "23"
+    assert viral_framing._EXCERPT_THREADS == "2"
+    # The excerpt never exceeds what the final render itself uses.
+    assert viral_framing._EXCERPT_WIDTH == viral_framing._RENDER_WIDTH
+    assert viral_framing._EXCERPT_HEIGHT == viral_framing._RENDER_HEIGHT
+    assert viral_framing._EXCERPT_MAX_FPS == viral_framing._RENDER_MAX_FPS
