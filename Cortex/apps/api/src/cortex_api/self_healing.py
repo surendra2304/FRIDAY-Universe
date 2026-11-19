@@ -23,7 +23,7 @@ import logging
 import os
 from typing import Any
 
-from cortex_core.resilience import EscalationNotifier, SelfHealingSupervisor, global_health_registry
+from cortex_core.resilience import EscalationNotifier, ProbeResult, SelfHealingSupervisor, global_health_registry
 from cortex_core.self_model import SelfModel, SelfModificationEngine
 
 logger = logging.getLogger("cortex-api.self-healing")
@@ -39,8 +39,18 @@ EXPECTED_AGENT_IDS = (
 )
 
 
-async def probe_ai_universe() -> bool:
-    """Non-blocking DNS and reachability check for the AI Universe backend."""
+async def probe_ai_universe() -> ProbeResult:
+    """Non-blocking DNS and reachability check for the AI Universe backend.
+
+    Tri-state (TASK-COR-014): when neither ``INFERENCE_BASE_URL`` nor
+    ``AI_UNIVERSE_BASE_URL`` is set — the production state — the provider is
+    *unconfigured*, not down, and the probe says so. Returning False there
+    made the supervisor burn its repair budget and escalate an absent
+    provider every cycle (the 2026-11-17→19 Telegram spam: 247 sends).
+    A configured-but-unparseable URL is likewise UNCONFIGURED (there is no
+    host to probe); a configured host that fails DNS resolution is
+    UNHEALTHY, exactly as before.
+    """
     import asyncio
     import urllib.parse
 
@@ -49,17 +59,17 @@ async def probe_ai_universe() -> bool:
         or os.getenv("AI_UNIVERSE_BASE_URL", "")  # legacy migration fallback
     ).rstrip("/")
     if not url:
-        return False
+        return ProbeResult.UNCONFIGURED
 
     host = urllib.parse.urlparse(url).hostname
     if not host:
-        return False
+        return ProbeResult.UNCONFIGURED
     try:
         loop = asyncio.get_running_loop()
         await loop.getaddrinfo(host, None)
-        return True
+        return ProbeResult.HEALTHY
     except OSError:
-        return False
+        return ProbeResult.UNHEALTHY
 
 
 def build_supervisor(registry: Any, max_collaboration_rounds: int = 3) -> SelfHealingSupervisor:
@@ -122,9 +132,11 @@ def build_supervisor(registry: Any, max_collaboration_rounds: int = 3) -> SelfHe
     async def repair_ai_universe() -> bool:
         """Degrade gracefully: the deterministic fallback keeps deliberations working.
 
-        Verification note: with no provider configured the probe intentionally stays False, so
-        the supervisor escalates this subsystem instead of claiming it was repaired. That is
-        the honest outcome — CORTEX is functional, the external provider is simply absent.
+        Verification note (TASK-COR-014): with no provider configured the probe reports
+        UNCONFIGURED, so the supervisor never reaches this repair for an absent provider —
+        it records a standing configuration notice instead of escalating. This repair runs
+        only for a configured-but-unhealthy provider, and it still never claims success:
+        the fallback is graceful degradation, not a repaired provider.
         """
         from cortex_api.friday_router import _get_orchestrator
 

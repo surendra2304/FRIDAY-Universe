@@ -12018,6 +12018,39 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - VyralX/app/services/viral_framing.py
       - VyralX/tests/test_viral_framing.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-COR-014
+    title: "Cortex unconfigured-probe honesty fix: tri-state probe result (HEALTHY / UNHEALTHY / UNCONFIGURED) — an unset INFERENCE_BASE_URL / AI_UNIVERSE_BASE_URL is a standing configuration notice, never an escalation"
+    status: MERGED
+    owner: muse_ai
+    branch: claude/task-cor-014-unconfigured-probe
+    pr: 1070
+    contributors: []
+    priority: P1
+    created_at: "2026-11-19T14:06:00+05:30"
+    updated_at: "2026-11-19T14:06:00+05:30"
+    files:
+      - "Cortex/packages/core/src/cortex_core/resilience.py"
+      - "Cortex/apps/api/src/cortex_api/self_healing.py"
+      - "Cortex/tests/unit/test_cor014_unconfigured_probe.py"
+      - "Cortex/tests/unit/test_e2e_tier1.py"
+      - "Cortex/tests/e2e/test_e2e_tier1.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-7004022524"
+    defect: "Root cause of the 2026-11-17→19 Telegram spam (247 sends, TASK-COR-013): probe_ai_universe returns False whenever INFERENCE_BASE_URL and AI_UNIVERSE_BASE_URL are both unset — both are unset in production — so the supervisor cannot distinguish UNCONFIGURED from DOWN: it records a circuit failure every cycle, burns the bounded repair budget on a provider that was never configured, and escalates. PR #1054 (TASK-COR-013) stops re-delivery within a failure streak but the probe still misclassifies, so a configured-out deployment still escalates once per streak and its health record still reads as failures."
+    acceptance:
+      - "cortex_core.resilience gains ProbeResult (HEALTHY / UNHEALTHY / UNCONFIGURED, str Enum) with ProbeResult.coerce so legacy bool probes keep working unchanged (True=HEALTHY, False=UNHEALTHY)."
+      - "HealthRegistry.run_probe_result returns the tri-state result and records a circuit outcome only for genuine observations: HEALTHY=success, UNHEALTHY=failure, UNCONFIGURED=no outcome (no failure counting, breaker never opens on absence of config). run_probe keeps its bool contract for existing callers (True only when HEALTHY) on top of it."
+      - "SelfHealingSupervisor treats UNCONFIGURED as a standing configuration notice: the subsystem is listed on HealingRun.unconfigured (never unhealthy), logged once per unconfigured streak (re-noticed only after it is observed configured again), and never enters the repair path — no repair attempts consumed, no escalation, no escalation delivery. HealingRun.as_dict and SelfHealingLoop.status expose the unconfigured list."
+      - "probe_ai_universe returns ProbeResult: both URLs unset or a set-but-unparseable URL (no host) = UNCONFIGURED; configured host failing DNS = UNHEALTHY; configured host resolving = HEALTHY — behaviour identical to before whenever the URLs are set. repair_ai_universe doc updated (it now runs only for configured-but-unhealthy; it still never claims success)."
+      - "Sibling-probe audit: database/schema/redis/agents probes have no env-URL configuration gate (local resources, always configured), so ai_universe is the only probe with the unconfigured-as-failed pattern; cortex_upgrade/health.py Readiness is a separate bool readiness aggregator, not the supervisor path."
+      - "Tests: Cortex/tests/unit/test_cor014_unconfigured_probe.py (14 tests: probe unset/unparseable/set-down/set-healthy, registry no-outcome, supervisor no-escalation/no-repair/no-failure-count + once-per-streak logging + streak re-notice, configured-down existing failure path, configured-healthy pass, end-to-end env-driven). F1.2 assertions in Cortex/tests/unit/test_e2e_tier1.py and Cortex/tests/e2e/test_e2e_tier1.py updated to the tri-state contract (assert ProbeResult.HEALTHY; disclosed — the only existing-test change)."
+    evidence:
+      - "Claim: issue #35 comment 7004022524 (Muse, cortex-probe-fix crew). Base: fresh main b248fca4fab9bc32bab010ca21247218a507b23b (PR #1055 merge); all shipped files verified byte-identical to their main blobs by git hash-object before editing."
+      - "Local verification (sandbox, proxy env unset, Python 3.12.3): new suite 14/14 PASS on the branch; on pristine main it errors at collection (ProbeResult absent) — the expected feature-PR signature. Neighbour Cortex/tests/unit/test_self_healing_and_self_model.py: 21 passed on branch == 21 passed on pristine main. F1.2 (both copies share the unit run): PASS on branch with the updated assertion, PASS on main with the old assertion."
+      - "CI collection: no root workflow names Cortex unit suites (the TASK-REL-053 defect class); the suite is collected by the Cortex package CI (Cortex/.github/workflows/ci.yml: pytest tests) in the mirrored Cortex repo, same as TASK-COR-012's suite. Green root CI is therefore not test evidence for this PR — the local A/B above is."
+      - "Overlap note: PR #1054 (TASK-COR-013) also touches resilience.py run_cycle and this board file; whichever merges second needs a union resolution there (this PR's run_cycle hunk is confined to the probe-result branch at the top of the loop and composes with #1054's escalate-once-per-streak)."
+    blockers: []
+    next_action: "Supervisor review -> serial-lane merge (union vs PR #1054 if it lands first) -> deploy to S2 with a watched Cortex restart -> production proof: with INFERENCE_BASE_URL/AI_UNIVERSE_BASE_URL still unset, the self-healing status shows ai_universe under unconfigured (not unhealthy/escalated) across several cycles and zero escalation deliveries -> VERIFIED. Do NOT re-enable the S2 escalation webhook before this and #1054 are both deployed."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
