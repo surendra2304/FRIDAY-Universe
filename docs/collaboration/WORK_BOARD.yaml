@@ -12124,10 +12124,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-FRD-030
     title: "FRIDAY Activity Log live entries render no timestamp: the activity socket's live path has no recorded_at channel — broadcast and backlog frames carry the instant only collapsed into 'timestamp', whose backlog fallback is the unparseable bare time-of-day for every entry with an empty recorded_at"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_ai
     branch: claude/task-frd-030-live-activity-timestamp
-    pr: null
+    pr: 1096
     priority: P2
     created_at: "2026-11-19"
     updated_at: "2026-11-19"
