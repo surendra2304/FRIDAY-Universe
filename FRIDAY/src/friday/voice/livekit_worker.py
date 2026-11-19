@@ -2789,7 +2789,9 @@ def _should_shed_audio_event(counters: dict, event) -> bool:
 def _wrap_genai_wire_session(rt_session, counters: dict) -> None:
     """Wrap the plugin session's CURRENT genai session so its
     send_realtime_input calls carrying audio increment
-    plugin_sent_audio_events (hop 3b). Lazy and idempotent per
+    plugin_sent_audio_events (hop 3b) once each send returns
+    without raising — a failed send delivered nothing and is
+    never counted. Lazy and idempotent per
     genai session (flagged on the instance); a no-op until the
     plugin connects (_active_session is None before that) and on
     any failure — counting can never take a session down."""
@@ -2805,9 +2807,15 @@ def _wrap_genai_wire_session(rt_session, counters: dict) -> None:
             audio = kwargs.get("audio")
             if audio is None and args:
                 audio = args[0]
+            # Count only once the send has actually gone out: a
+            # send that raises delivered nothing, and counting it
+            # would overstate the wire and understate the backlog
+            # exactly when the wire is broken (TASK-VOI-024 review
+            # condition C1). The exception propagates unchanged.
+            result = await orig_send(*args, **kwargs)
             if audio is not None:
                 counters["plugin_sent_audio_events"] += 1
-            return await orig_send(*args, **kwargs)
+            return result
 
         genai_session.send_realtime_input = _counting_send_realtime_input
         genai_session._friday_wire_counter = True

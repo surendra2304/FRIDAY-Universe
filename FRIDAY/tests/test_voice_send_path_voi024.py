@@ -70,6 +70,22 @@ class _FakeGenaiSession:
         return None
 
 
+class _RaisingGenaiSession:
+    """A genai session whose wire is broken: send_realtime_input
+    raises until .fail is cleared (a closed websocket delivers
+    nothing, however often it is called)."""
+
+    def __init__(self):
+        self.attempts = 0
+        self.fail = True
+
+    async def send_realtime_input(self, *args, **kwargs):
+        self.attempts += 1
+        if self.fail:
+            raise RuntimeError("websocket closed")
+        return None
+
+
 class _FakePluginSession:
     """Stand-in for the plugin RealtimeSession: _send_client_event
     appends to a list standing in for the _msg_ch channel;
@@ -300,3 +316,35 @@ def test_wrap_without_active_session_attribute_is_quiet():
     assert counters["plugin_send_audio_events"] == 1
     assert counters["plugin_sent_audio_events"] == 0
     assert counters["plugin_shed_silence_events"] == 0
+
+
+def test_wire_counter_counts_only_successful_sends():
+    """Review condition C1 regression: a send_realtime_input that
+    raises delivered nothing — the wire counter must stay at 0
+    (counting it would overstate what reached Google and understate
+    the backlog exactly when the wire is broken), and the exception
+    must propagate to the caller unchanged. A send that returns
+    counts exactly once."""
+    counters = w._new_frame_counters("raising send")
+    genai = _RaisingGenaiSession()
+    plugin = _FakePluginSession(genai)
+    assert w._wrap_plugin_session(plugin, counters) is True
+    plugin._send_client_event(_audio_event(_speech_pcm()))  # lands the wrap
+
+    async def _attempt():
+        await genai.send_realtime_input(audio=SimpleNamespace(data=b"x"))
+
+    try:
+        _run(_attempt())
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("the send's exception must propagate")
+    assert genai.attempts == 1
+    assert counters["plugin_sent_audio_events"] == 0
+
+    # The wire recovers: a send that returns counts exactly once.
+    genai.fail = False
+    _run(_attempt())
+    assert genai.attempts == 2
+    assert counters["plugin_sent_audio_events"] == 1

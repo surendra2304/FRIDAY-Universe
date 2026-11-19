@@ -31,7 +31,9 @@ that makes a GENUINE barge-in work is untouched:
 - prefix padding stays 200 ms (a genuine barge-in keeps its first
   syllable);
 - env FRIDAY_VOICE_AAD_START_SENSITIVITY=high restores the old
-  behaviour as a rollback; any other/junk value resolves to LOW.
+  behaviour as a rollback; any other/junk value resolved to LOW
+  under VOI-018 (TASK-VOI-024: junk now resolves to HIGH — see
+  the revert note below).
 
 TASK-VOI-024 (2026-11-19) REVERTED the default to HIGH — the pins
 below now assert the reverted contract. Reason: the transcript-gap
