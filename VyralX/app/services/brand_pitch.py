@@ -15,9 +15,10 @@ when a human copies it out.
 Honesty rule: every figure in a draft comes from the channel's real
 ``video_metrics`` store (populated by the VYR-882 metrics sync). A metric
 with no stored value renders as a visible blank marker — never as an
-invented, projected, or "typical" number. This module is the honest
-counterpart to ``app.services.media_kit.generate_brand_pitch_email``, whose
-projected figures must not be quoted to brands.
+invented, projected, or "typical" number. (The projected-figure
+generator that once sat beside this module, ``app.services.media_kit``,
+was removed in TASK-REL-055; projected figures must never be quoted
+to brands.)
 """
 from __future__ import annotations
 

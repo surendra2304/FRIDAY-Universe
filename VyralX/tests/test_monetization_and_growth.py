@@ -10,10 +10,6 @@ from app.services.link_cloaker import (
     create_vanity_slug,
     generate_tracked_link,
 )
-from app.services.media_kit import (
-    generate_brand_pitch_email,
-    generate_sponsorship_rate_card,
-)
 from app.services.multiplatform_publisher import package_multiplatform_release
 from app.services.seo_optimizer import (
     build_seo_description,
@@ -59,14 +55,6 @@ class TestMonetizationAndGrowth(unittest.TestCase):
         self.assertIn("FEATURED GEAR", desc)
         self.assertIn("Fair Use Notice", desc)
 
-    def test_media_kit_and_brand_deals(self):
-        card = generate_sponsorship_rate_card(projected_monthly_views=1_500_000)
-        self.assertEqual(len(card["packages"]), 3)
-        self.assertGreater(card["packages"][0]["rate_usd"], 100)
-
-        pitch = generate_brand_pitch_email("ApexGear", "Adventure Action Cam", "Wildlife & Extreme Adventure", 1_000_000)
-        self.assertIn("ApexGear", pitch)
-        self.assertIn("partnerships@vyralx.media", pitch)
 
     def test_drip_scheduler_slots(self):
         start = datetime(2026, 10, 23, 0, 0, 0, tzinfo=timezone.utc)
