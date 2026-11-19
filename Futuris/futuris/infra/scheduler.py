@@ -33,6 +33,24 @@ from futuris.upgrade.scheduler import DistributedLeaseTable, SafeScheduler
 logger = get_logger("futuris.scheduler")
 
 
+async def _recover_scheduler_session(session: Any) -> None:
+    """Roll back a session a failed universe refresh left unusable.
+
+    Mirrors ``universe_forecasting._recover_session``: a write cancelled
+    or failed mid-flush leaves the session in pending-rollback state, in
+    which every later target's write would fail too. Only the failed
+    target's write is lost -- completed targets commit inside
+    ``generate_universe_forecast`` itself.
+    """
+    if getattr(session, "is_active", True):
+        return
+    try:
+        await session.rollback()
+        logger.info("universe_provider_refresh_session_recovered")
+    except Exception as exc:
+        logger.warning("universe_provider_refresh_session_recovery_failed", error=str(exc))
+
+
 @dataclass
 class ForecastSubscription:
     """Subscription configuration defining scheduled forecast refresh requirements."""
@@ -233,6 +251,69 @@ class ForecastScheduler:
                 except Exception as exc:
                     logger.debug("friday_forecast_dispatch_skipped", error=str(exc))
 
+        return refreshed
+
+    async def universe_provider_refresh_job(self) -> list[Forecast]:
+        """Refresh the TASK-FUT-012 series-provider universe targets.
+
+        TASK-FUT-013: until this job existed, no scheduled path ever called
+        :func:`generate_universe_forecast` -- the scheduler's only forecast
+        job runs the telemetry pipeline over its eight subscriptions, so
+        the provider targets (the only LIVE-evidence universe targets)
+        could forecast only when a human or the matrix backfill happened
+        to ask, and the matrix backfill in turn treated their pre-flip
+        ``insufficient_data`` rows as present forever. This job closes the
+        unattended path: hourly, one attempt per provider target, each
+        refusal logged with its reason and never aborting the others.
+        Persistence is ``generate_universe_forecast``'s own (it commits
+        per target through the supplied session).
+        """
+        logger.info("universe_provider_refresh_job_started")
+        from futuris.core.universe_domains import UNIVERSE_TARGETS
+        from futuris.core.universe_forecasting import generate_universe_forecast
+
+        targets = [t for t, spec in UNIVERSE_TARGETS.items() if spec.series_provider]
+        if not targets:
+            return []
+        session = self.forecast_repo.session if self.forecast_repo is not None else None
+        if session is None:
+            logger.warning(
+                "universe_provider_refresh_skipped_no_session",
+                targets=targets,
+            )
+            return []
+
+        refreshed: list[Forecast] = []
+        for target in targets:
+            try:
+                forecast = await generate_universe_forecast(target, session=session)
+            except Exception as exc:
+                logger.warning(
+                    "universe_provider_refresh_target_failed",
+                    target=target,
+                    error=str(exc),
+                )
+                await _recover_scheduler_session(session)
+                continue
+            refreshed.append(forecast)
+            if forecast.status == ForecastStatus.INSUFFICIENT_DATA:
+                logger.warning(
+                    "universe_provider_refresh_insufficient_data",
+                    target=target,
+                    error=(forecast.model_metadata or {}).get("error"),
+                )
+            else:
+                logger.info(
+                    "universe_provider_refresh_forecast",
+                    target=target,
+                    prediction=forecast.prediction,
+                    model_version=forecast.model_version,
+                )
+        logger.info(
+            "universe_provider_refresh_job_completed",
+            generated=len(refreshed),
+            active=sum(1 for f in refreshed if f.status == ForecastStatus.ACTIVE),
+        )
         return refreshed
 
     async def lifecycle_sweep_job(self) -> Any:
@@ -580,6 +661,12 @@ class ForecastScheduler:
         self.scheduler.add_job(self.ingest_job, "interval", minutes=15, id="ingest_job")
         self.scheduler.add_job(
             self.forecast_refresh_job, "interval", minutes=60, id="forecast_refresh_job"
+        )
+        self.scheduler.add_job(
+            self.universe_provider_refresh_job,
+            "interval",
+            minutes=60,
+            id="universe_provider_refresh_job",
         )
         self.scheduler.add_job(
             self.lifecycle_sweep_job, "interval", minutes=30, id="lifecycle_sweep_job"

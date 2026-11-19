@@ -11317,9 +11317,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-FRG-017
     title: "Forge idle experiment loop (Self-Upgrade Programme slice 1): when Forge has no assigned work it runs pre-declared experiments on its own build behaviour — hypothesis from its own failure clusters, champion-vs-challenger starting-manifest A/B over the golden build shapes via the deterministic synthesizer, keep/discard by a pre-declared score bar, champion registry, and lessons written as procedural-type memories (PROMOTE to Forge's private section; failed experiments also copied to the universal section per the owner's standing rule R)"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_ai
     branch: claude/frg017-wiring
+    pr: 1074
     evidence:
       - "Design: ~/workspace/self-upgrade/DESIGN.md (the shared self-upgrade mechanism for all 10 agents; owner's self-upgrade law and memory promotion decisions, 2026-11-18). Programme state: ~/workspace/self-upgrade/STATE.md."
       - "Implementation (this PR, additive only): Forge/app/improvement/idle_loop.py — IdleExperimentLoop (idle gate over Forge's own StateStore, daily cap 6, per-arm 120 s time box, FORGE_IDLE_EXPERIMENTS=off kill switch), GoldenBattery (deterministic synthesis in a temp sandbox + the generated project's own pytest suite; composite = 0.5 tests + 0.3 manifest + 0.2 compile, declared in advance), a closed challenger-mutation catalogue (library_shape / drop_readme / py_only), a champion registry + append-only experiment ledger + lessons ledger under the Forge data dir, and FabricLessonWriter over mesh.memory_fabric (procedural type; AGENT scope = Forge's private section; DISCARD lessons also delivered at UNIVERSAL scope per standing rule R; failed deliveries stay pending in the ledger and are retried). NOT wired into the FastAPI lifespan in this slice — run_forever() is the driver a follow-up wires after review; the champion registry is the loop's own record and production build roles do not read it yet (adoption travels the Universe change path)."
@@ -11889,6 +11890,29 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Sentinel/sentinel/gatekeeper/approval_policy.py
       - Sentinel/tests/security/test_approval_policy_tiering.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-FUT-013
+    title: "Futuris first-forecast readiness: unattended provider-target refresh, refresh-pacing priority + stale-refusal retry, all-zero provider window refusal"
+    status: MERGED
+    owner: muse_ai
+    branch: claude/task-fut-013-first-forecast-readiness
+    pr: 1075
+    created_at: "2026-11-19"
+    updated_at: "2026-11-19"
+    evidence:
+      - "Claim: issue #35 comment 7004097572. Base: origin/main 2240ebb8eae92e768ab5348d3b8c7950e4707623, rebased union-clean onto 43ba8b53504f5a310f9e799a2386c5801e8c0329 before shipping (code files unchanged upstream between the bases; board entry union-appended after TASK-VOI-024). Scope: every first-real-forecast blocker besides the live-venv statsforecast absence, traced end-to-end from origin/main (full inventory in the PR body)."
+      - "Defect 1 (no unattended path): ForecastScheduler.start() registered only the telemetry-pipeline jobs; nothing scheduled ever called generate_universe_forecast, so the TASK-FUT-012 provider targets (the only LIVE-evidence universe targets) forecast only on manual/matrix demand. Fix: ForecastScheduler.universe_provider_refresh_job (hourly, per-target refusal logged, session recovered per failed target) registered in start()."
+      - "Defect 2 (stale refusals permanent + budget starvation): build_universe_matrix's backfill counted a stored insufficient_data row as present forever, so pre-flip refusals of data-path targets could never be retried after the flip; and _paced_pass visited targets in registry order with the provider targets last, behind targets that can each burn a 1.5s research-peer timeout against the shared 15s budget. Fix: refresh_missing_within_budget retries insufficient_data ONLY for data-path targets (pipeline + series_provider), and both refresh passes attempt data-path targets first (registry order preserved within groups)."
+      - "Defect 3 (all-zero window fitted as LIVE 0.0): series providers zero-fill missing days, so an empty store (Memora consumer never ran / IntelX feed never enabled) arrived as a full 28-point all-zero series. Proven A/B in a py3.12 venv (statsforecast 2.1.1, pandas 2.3.3): on clean main, generate_universe_forecast on an empty SQLite store returned status=active, evidence LIVE; with the fix it returns insufficient_data ('no observed events in the 28-day window'). Fix: the provider path refuses an all-zero window before any fit; a window with one observed event still forecasts (test-pinned)."
+      - "Local proof (same venv, project's own code, no injected selector/fetcher): seeded 146 IntelXNoticeModel rows over 28 days -> REAL_FIT status=active prediction=5.0 range=[0.94,9.06] model_version=naive@v1:44136fa355b3678a evidence_class=live, candidate_scores {naive 3.8, drift 4.5091}, forecast persisted (2 rows incl. the empty-store refusal). Pipeline path also proven: ForecastingPipeline().run -> ACTIVE seasonal_naive prediction=1045.6, synthetic-labelled, modeling stage 39.4s on the loaded 1.5-CPU sandbox (process-pool fit cost is a post-flip S1 risk, recorded in the PR body)."
+      - "Tests: Futuris/tests/test_fut013_first_forecast_readiness.py 7/7 pass; neighbours fut012 (pass, 1 backend-present skip), universe_refresh_pacing, scheduler suites pass. test_universe_predictions failure set identical on clean main and the fixed branch (1 stale total_domains==9 assertion, pre-FUT-012). CI: the new suite + fut012 added to monorepo-validation.yml's explicit Futuris list (scheduler tests importorskip apscheduler, absent from requirements-ci)."
+    next_action: "Supervisor review -> serial-lane merge -> deploy rides the fleet pull; production verification is post-py3.12-flip: after the Fri flip, watch one scheduler cycle for universe_provider_refresh_job_completed and the first ACTIVE LIVE provider forecast on Server 1, then flip TASK-FUT-012 and this entry to VERIFIED. NOT merged/deployed by this crew."
+    files:
+      - Futuris/futuris/core/universe_forecasting.py
+      - Futuris/futuris/infra/scheduler.py
+      - Futuris/tests/test_fut013_first_forecast_readiness.py
+      - .github/workflows/monorepo-validation.yml
+      - docs/collaboration/WORK_BOARD.yaml
+task_id_warnings:
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
