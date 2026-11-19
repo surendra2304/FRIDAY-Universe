@@ -370,6 +370,29 @@ async def _forecast_from_series_provider(
             intelx_findings=intelx_findings,
         )
 
+    if all(float(v) == 0.0 for _, v in series):
+        # TASK-FUT-013: the providers zero-fill missing days, so a window in
+        # which the underlying store recorded NOTHING arrives as a full-length
+        # all-zero series and would otherwise fit into an ACTIVE forecast of
+        # 0.0 labelled LIVE -- an absent intake (e.g. the Memora event consumer
+        # never ran, or the IntelX feed was never enabled) presented as a
+        # measured zero volume. A measured series and an unmeasured one are
+        # indistinguishable inside the values alone, so the honest answer for
+        # a window with zero observed events is insufficient_data, exactly as
+        # for a short series. The target recovers on its own as soon as one
+        # event lands in the window.
+        return _insufficient_data_forecast(
+            spec,
+            now,
+            error=RuntimeError(
+                f"stored series for target '{spec.target}' contains no observed "
+                f"events in the {len(series)}-day window (every daily value is "
+                "0); refusing to present an unmeasured intake as a measured "
+                "zero-volume forecast"
+            ),
+            intelx_findings=intelx_findings,
+        )
+
     try:
         import pandas as pd
 
@@ -603,13 +626,40 @@ async def _recover_session(session: AsyncSession) -> None:
         logger.warning("refresh_session_recovery_failed", error=str(exc))
 
 
+def _spec_has_data_path(spec: DomainTargetSpec) -> bool:
+    """True when a target can produce a number without caller context.
+
+    Only pipeline targets and TASK-FUT-012 series-provider targets have a
+    data path in this deployment; every other target can only ever answer
+    ``insufficient_data`` without caller-supplied context.
+    """
+    return bool(spec.pipeline_target or spec.series_provider)
+
+
+def _prioritized(targets: list[str]) -> list[str]:
+    """Order a refresh pass so data-path targets are attempted first.
+
+    TASK-FUT-013: the registry lists the three series-provider targets
+    last, and a paced pass stops when its budget runs out -- with a slow
+    IntelX peer each earlier target can burn its full research timeout,
+    so the only targets that can produce a real (LIVE) forecast were the
+    ones the budget never reached. Targets without a data path keep
+    their registry order behind them; they can only refuse, so letting
+    them go last costs nothing.
+    """
+    return sorted(
+        targets,
+        key=lambda t: 0 if _spec_has_data_path(UNIVERSE_TARGETS[t]) else 1,
+    )
+
+
 async def refresh_all_within_budget(
     session: AsyncSession,
     *,
     budget_seconds: float = REFRESH_BUDGET_SECONDS,
 ) -> int:
     """Regenerate the forecast for every universe target, within the budget."""
-    return await _paced_pass(session, list(UNIVERSE_TARGETS), budget_seconds)
+    return await _paced_pass(session, _prioritized(list(UNIVERSE_TARGETS)), budget_seconds)
 
 
 async def refresh_missing_within_budget(
@@ -621,6 +671,23 @@ async def refresh_missing_within_budget(
     """Backfill universe targets that have no active forecast yet.
 
     ``present`` is updated in place so a caller can assemble the matrix from it.
+
+    TASK-FUT-013: a data-path target whose latest stored forecast is an
+    ``insufficient_data`` refusal counts as missing too. Before this, a
+    refusal written while the statsforecast backend was absent (every
+    deployment before the py3.12 flip) satisfied the matrix forever: the
+    target was never retried, so the flip alone could not produce its
+    first real forecast through this path. Targets without a data path
+    keep the old rule -- retrying them on every read would spend the
+    budget re-refusing targets that can only answer with caller context.
     """
-    missing = [t for t in UNIVERSE_TARGETS if t not in present]
-    return await _paced_pass(session, missing, budget_seconds, sink=present)
+    missing = [
+        target
+        for target, spec in UNIVERSE_TARGETS.items()
+        if present.get(target) is None
+        or (
+            _spec_has_data_path(spec)
+            and getattr(present[target], "status", None) == ForecastStatus.INSUFFICIENT_DATA
+        )
+    ]
+    return await _paced_pass(session, _prioritized(missing), budget_seconds, sink=present)
