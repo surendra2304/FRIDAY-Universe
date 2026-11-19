@@ -10,7 +10,11 @@ from app.inference_runtime.config import RuntimeConfig
 from app.inference_runtime.response_cache import CachePolicy, SafeResponseCache
 from app.performance_cache import as_answer_pair, perf_cache
 from app.providers.base import ProviderMessage, ProviderRequest, ProviderResponse
-from app.providers.gateway import model_gateway
+from app.providers.gateway import (
+    GROQ_PROMPT_TOKEN_LIMIT,
+    estimate_prompt_tokens,
+    model_gateway,
+)
 from app.utils.errors import provider_failure_reason
 from app.utils.logger import logger
 
@@ -35,6 +39,13 @@ response_cache = SafeResponseCache(
     )
 )
 UNIFIED_CACHE_NAMESPACE = "provider.unified"
+
+#: TASK-INF-017: where an auto-routed unified request is steered when
+#: the Groq size guard fires — the Gemini Flash default the role
+#: mapping already uses for its Gemini roles, on the 1M-token-window
+#: tier that can actually hold an oversized prompt.
+_GROQ_GUARD_REROUTE_PROVIDER = "gemini"
+_GROQ_GUARD_REROUTE_MODEL = "gemini-flash-latest"
 
 
 class UnifiedExecutionRequest(BaseModel):
@@ -275,6 +286,61 @@ class UnifiedProviderManager:
             extra_params=extra_params,
         )
 
+        # TASK-INF-017: Groq size-guard steering on the unified path.
+        # TASK-INF-004 recommendation 2 asked for the oversized-prompt
+        # guard REL-043/INF-012 gave chat/completions at selection time
+        # to exist here too. This path has no selection step: the target
+        # above is resolved statically (agent primary / role mapping /
+        # default), and four of the role defaults plus the fallback
+        # default are groq/openai/gpt-oss-120b — the model whose free
+        # tier caps a request at 8,000 TPM. An over-guard prompt sent
+        # there is diverted by the gateway's TASK-REL-047 guard into
+        # the catalogue-blind dynamic fallback ladder, so the caller
+        # gets an arbitrary discovered free model instead of a
+        # deliberate verified one. Steer BEFORE dispatch instead,
+        # using the gateway's own estimator so the steering boundary
+        # is exactly the guard boundary. Scope discipline:
+        #   * only provider="auto" resolutions — a caller who named
+        #     Groq explicitly keeps today's gateway-guard behaviour;
+        #   * not the fast lane (an explicit low-latency contract;
+        #     the gateway guard remains its protection);
+        #   * only when the model is unpinned or a Groq gpt-oss id —
+        #     a caller-pinned non-Groq model id is left untouched.
+        # The gateway guard stays in place as the safety net for the
+        # explicit and speculative paths.
+        size_guard_note: str | None = None
+        if (
+            req.provider == "auto"
+            and not req.fast_lane
+            and target_provider == "groq"
+            and (req.model is None or "gpt-oss" in (target_model or ""))
+        ):
+            estimated_tokens = estimate_prompt_tokens(prov_req)
+            if estimated_tokens > GROQ_PROMPT_TOKEN_LIMIT:
+                size_guard_note = (
+                    f"groq_size_guard: prompt estimated at {estimated_tokens} tokens exceeds "
+                    f"the {GROQ_PROMPT_TOKEN_LIMIT}-token Groq guard; unified auto-route "
+                    f"rerouted from groq/{target_model} to "
+                    f"{_GROQ_GUARD_REROUTE_PROVIDER}/{_GROQ_GUARD_REROUTE_MODEL} "
+                    "before dispatch (TASK-INF-017)"
+                )[:300]
+                logger.warning(
+                    "Unified Groq size guard: prompt ~%d tokens > %d guard; rerouting "
+                    "role '%s' from groq/%s to %s/%s before dispatch (TASK-INF-017).",
+                    estimated_tokens,
+                    GROQ_PROMPT_TOKEN_LIMIT,
+                    req.agent_role,
+                    target_model,
+                    _GROQ_GUARD_REROUTE_PROVIDER,
+                    _GROQ_GUARD_REROUTE_MODEL,
+                )
+                target_provider = _GROQ_GUARD_REROUTE_PROVIDER
+                target_model = _GROQ_GUARD_REROUTE_MODEL
+                prov_req.model = target_model
+                # reasoning_effort=low was set for the Groq gpt-oss
+                # target above; it is not a Gemini parameter.
+                prov_req.extra_params.pop("reasoning_effort", None)
+
         # 2. Speculative Racing (Concurrent Execution across fastest providers)
         if req.speculative:
             try:
@@ -370,6 +436,13 @@ class UnifiedProviderManager:
             provenance = (resp.raw_response or {}).get("fallback_provenance") or {}
             if provenance.get("actual_provider"):
                 actual_provider = str(provenance["actual_provider"])
+            # TASK-INF-017: when the size guard steered this request and
+            # the gateway itself reports no fallback, the guard note is
+            # the honest reason the role-mapped provider did not serve.
+            gateway_fallback_reason = (
+                str(provenance["fallback_reason"])[:300] if provenance.get("fallback_reason") else None
+            )
+            effective_fallback_reason = gateway_fallback_reason or size_guard_note
 
             if not req.no_cache:
                 result_pair = (
@@ -381,7 +454,7 @@ class UnifiedProviderManager:
                         "finish_reason": resp.finish_reason,
                         "served_by_provider": actual_provider if actual_provider != target_provider else None,
                         "served_by_policy": provenance.get("fallback_reason") == "local_preferred",
-                        "fallback_reason": str(provenance["fallback_reason"])[:300] if provenance.get("fallback_reason") else None,
+                        "fallback_reason": effective_fallback_reason,
                     },
                 )
                 if safe_cache is not None:
@@ -429,9 +502,7 @@ class UnifiedProviderManager:
                 served_by_policy=bool(
                     provenance.get("fallback_reason") == "local_preferred"
                 ),
-                fallback_reason=(
-                    str(provenance["fallback_reason"])[:300] if provenance.get("fallback_reason") else None
-                ),
+                fallback_reason=effective_fallback_reason,
             )
         except Exception as exc:
             elapsed_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
