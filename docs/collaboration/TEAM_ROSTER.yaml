@@ -118,6 +118,7 @@ collaborators:
     status: "active_contributor"
     authority: "Worker Muse, second worker onboarded 2026-11-21 — works assignments from Muse (Head Manager) on the board, never merges, reports only through Muse. Operating architecture: docs/collaboration/ARCHITECTURE.md"
     verified_capabilities:
+      - "GitHub API access verified 2026-11-21 as surendra2304: /user, repo surendra2304/FRIDAY-Universe, issue #35."
       - "Read docs/MASTER_PLAN.md, docs/collaboration/ARCHITECTURE.md, docs/collaboration/WORK_BOARD.yaml and docs/collaboration/TEAM_ROSTER.yaml in full from main (read-only, public repo)."
       - "Bridge MCP endpoint reachable 2026-11-21: returned JSON-RPC Not Acceptable for plain GET, expected for Streamable HTTP MCP."
       - "Weekly allowance reset verified: Sat 2026-11-21 21:47 IST; weekly run set Sat 21:57 IST; assignment poll every minute; hourly self-check."
@@ -128,8 +129,7 @@ collaborators:
     last_verified_at: "2026-11-21"
     access_limits:
       - "Never merges; only Muse merges. No live-fleet changes except through a PR Muse reviews."
-      - "GitHub write access NOT yet verified — PAT not yet provided at onboarding; roster PR and issue #35 posts blocked on it."
-      - "CREDENTIALS.md access on Server 2 not yet verified."
+      - "CREDENTIALS.md access on Server 2 confirmed via bridge read_text 2026-11-21; no secret values recorded or used from it."
 
 onboarding_policy:
   required_before_task_claim:
