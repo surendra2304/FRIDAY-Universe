@@ -12352,13 +12352,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
   - id: TASK-REL-057
     title: "Inference trigger-path coverage for the five remaining Inference-step suites (rel026, cache_scope, code_review, output_is_verified, source_repair_context): enumerate them in owner-workflows.yml trigger path lists like their siblings, or switch Inference test triggers to Inference/tests/** (the FRIDAY/tests/** and VyralX/tests/** pattern). Filed as the supervisor condition on PR #1113 (comment 7031518393)."
     status: AVAILABLE
-    owner: muse_1
+    owner: muse_2
     priority: P2
     created_at: "2026-11-20"
     updated_at: "2026-11-21"
     evidence:
       - "Filed as the supervisor condition on PR #1113 (comment 7031518393), discharged by filing in the union merge of TASK-REL-056. TASK-REL-056 wired Inference/tests/test_inf015_flash_lite_catalogue.py into both owner-workflows.yml trigger path lists, but the five other Inference-step suites appear only in the step's pytest list and in neither trigger path list: Inference/tests/test_test_generation_reliability_rel026.py, Inference/tests/test_unified_manager_cache_scope.py, Inference/tests/test_forge_code_review_is_evidence_based.py, Inference/tests/test_forge_output_is_verified.py, Inference/tests/test_source_repair_context.py (each verified to occur exactly once in owner-workflows.yml at main ae2e7d43, in the step only). A change to one of those suites alone therefore does not fire the workflow that runs it. Pre-existing gap, same defect class as REL-056, explicitly flagged as out of REL-056's scope by its supervisor review."
       - "Assignment: GitHub issue #35 comment 7048074483 by Muse (Head Manager) 2026-11-21 - TASK-REL-057 assigned to Muse 1 (roster id muse_1) as its restart pilot task."
+      - "Reassignment: owner order 2026-11-21 ~00:57 IST - Muse 1 reset (its ready report and both Muse 1 assignment posts deleted from issue #35, roster PR #1132 closed unmerged, branch muse1/onboarding deleted); TASK-REL-057 moved to Muse 2, assignment post issue #35 comment 7048656160."
     next_action: "Claim on issue #35 before editing. Either enumerate the five suites in both owner-workflows.yml trigger path lists alongside their siblings, or switch the Inference test triggers to Inference/tests/** (the pattern FRIDAY/tests/** and VyralX/tests/** already use in the same lists). Acceptance: a contracts run whose trigger evaluation shows a touch to any one of the five suites fires owner-workflows, and the Inference step still passes."
     files:
       - .github/workflows/owner-workflows.yml
@@ -12486,6 +12487,21 @@ task_id_warnings:
     next_action: "Closed. ARCHITECTURE.md and PROMPT.md now carry the same polling design."
     files:
       - docs/collaboration/ARCHITECTURE.md
+      - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-REL-062
+    title: "Record the completed 6/4 fleet migration in the repo: deploy-monorepo.yml path filters, per-server agent lists and health-gate ports move to the confirmed layout (Server 1: FRIDAY, Inference, Memora, Stratex, Forge, Sentinel running + Stratex sleeper works on AWS U1; Server 2: IntelX, Futuris, Cortex running + VyralX sleeper works on AWS U2). Migration executed live 2026-11-20/21: Sentinel S2 to S1, IntelX S1 to S2, Futuris S1 to S2 with the Python 3.12 flip (statsforecast 2.1.1), all peer URLs and Caddy routes flipped and verified through the public domain, old units masked as sleepers."
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: muse/fleet-layout-rel062
+    priority: P2
+    created_at: "2026-11-21"
+    updated_at: "2026-11-21"
+    evidence:
+      - "Claim: GitHub issue #35 comment 7048500444 by Muse before any editing (TASK-REL-062; next free REL id - board max was TASK-REL-061). Base: main fb1215ec6a3301c95cbf65cee900183bf12bc301 (deploy-monorepo.yml blob 4f52f9cd and WORK_BOARD.yaml blob def27a9c, both verified against the git trees API / hash-object before editing)."
+      - "Live verification 2026-11-21: Sentinel health 200 on S1 (S2 unit masked); IntelX health 200 on S2 (S1 unit masked; exactly 2 missing deps installed at S1 pins: beautifulsoup4 4.15.0, prometheus_client 0.26.0); Futuris health 200 on S2 under venv312 with statsforecast 2.1.1 + APScheduler 3.11.3 installed, a real POST /forecast computed with backend statsforecast / backend_available true and persisted, zero statsforecast_unavailable journal lines, S1 unit masked; Caddy routes flipped (futuris and intelx to 10.0.0.120, sentinel to 127.0.0.1) and all three verified 200 through https://friday-universe.duckdns.org; all consumers restarted onto the new peer URLs (Inference, Memora, Forge, Stratex API + daemon with positions intact, FRIDAY, Cortex)."
+    next_action: "Coordinator review -> merge -> flip this record to MERGED in a follow-up board PR. Post-merge: watch the next deploy-monorepo runs on both servers go green under the new lists."
+    files:
+      - .github/workflows/deploy-monorepo.yml
       - docs/collaboration/WORK_BOARD.yaml
   - id: "WARN-TASK-ID-001"
     severity: "high"
