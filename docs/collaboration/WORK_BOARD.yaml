@@ -12409,6 +12409,26 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - VyralX/tests/test_viral_loop.py
       - docs/collaboration/WORK_BOARD.yaml
 
+  - id: TASK-REL-058
+    title: "Repo cleanup (owner order 2026-11-20): retire the other-AI collaborator entries (ZAI Agent 1, ZAI Agent 2, Arena Agent 1, ChatGPT, Grok, Vercel v0, old 'Claude') in TEAM_ROSTER.yaml and delete docs/collaboration/ZAI_AGENT_2_ONBOARDING.md — only Muse accounts work on FRIDAY Universe now. Full inventory with DELETE/PRUNE/KEEP/UNSURE verdicts at ~/workspace/repo-cleanup/INVENTORY.md (crew sandbox record; summary in the PR body)."
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-rel-058-repo-cleanup
+    priority: P2
+    created_at: "2026-11-20"
+    updated_at: "2026-11-20"
+    evidence:
+      - "Claim: GitHub issue #35 comment 7042294470 by the Muse cleanup crew before any editing (TASK-REL-058; next free REL id — board max was TASK-REL-057; a scan of the hub's last 50 comments found no REL-058 claim and the board at base carries no REL-058 record). Base: main 64ae895c472e3ba9cff5e9d566a20bcccaef35fa (board 562 records)."
+      - "Validator constraint (scripts/validate_collaboration.py read in full before editing): REQUIRED_COLLABORATORS hard-requires roster ids claude/chatgpt/grok/zai/vercel_v0, and every task owner must be a registered collaborator — board owners at base: muse_ai 458, zai 53, arena_engineering_01 15, zai_agent_2 14, claude 11, chatgpt 9, grok 1. Literal deletion of the roster records would orphan ~103 historical task-owner references and fail registry validation, so the prune retires the 7 entries in place (status removed; assignments/branches/capabilities stripped; slim id record retained; full pre-prune text preserved in git history). Literal deletion plus a validator/board migration is filed as UNSURE item U1 in the inventory."
+      - "Deletions in this PR: exactly one file — docs/collaboration/ZAI_AGENT_2_ONBOARDING.md (solely ZAI Agent 2's onboarding/lane doc; its remaining references are historical records only; not a validator-required file). Waste scan of all 7,270 tracked files at base found no junk-extension files, no tracked pycache, and only structural duplicates (__init__.py files, per-agent deploy.yml); file-level waste was already purged by earlier waves. Eight further items are filed UNSURE for the coordinator in the inventory: U1 literal roster deletion, U2 AGENTS.md ZAI protocol + scripts/agents_completion_notifier.py, U3 MUSE_AI_ONBOARDING.md, U4 the two Antigravity prompt docs, U5 Stratex Copilot instructions, U6 roster authority model, U7 FILE_OWNERSHIP/README content prunes, U8 FRIDAY/reports_and_data outputs."
+      - "Validation: python3 scripts/validate_collaboration.py on the edited tree prints COLLABORATION REGISTRY VALID with 563 task records (562 + this one). ACTIVITY_LOG.md untouched; no source code, tests, or CI touched."
+    next_action: "Coordinator (Muse) reviews and merges — this crew does not merge. After merge: coordinator rules on inventory UNSURE items U1-U8; U2 (AGENTS.md ZAI turn-completion protocol + scripts/agents_completion_notifier.py) is the recommended next cleanup PR."
+    files:
+      - docs/collaboration/TEAM_ROSTER.yaml
+      - docs/collaboration/ZAI_AGENT_2_ONBOARDING.md
+      - docs/collaboration/WORK_BOARD.yaml
+
+
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
