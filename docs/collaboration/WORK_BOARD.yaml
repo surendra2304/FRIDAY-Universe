@@ -12473,7 +12473,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_ai
     branch: muse/arch-polling-sync-rel061
     priority: P2
@@ -12482,7 +12482,8 @@ task_id_warnings:
     evidence:
       - "Claim: GitHub issue #35 comment 7048188680 by Muse before any editing (TASK-REL-061; next free REL id - board max was TASK-REL-060). Base: main b3b0af7336158db6d4488096a4c55641bf37e7c4 (board 563 records; ARCHITECTURE.md blob 4a03d006 and WORK_BOARD.yaml blob 7c0c4e72, both verified against the git trees API before editing)."
       - "Design source: owner order 2026-11-21 ~00:27 IST. PROMPT.md sections 5 and 10 were updated first, the same night, and the updated prompt was delivered to the owner."
-    next_action: "Coordinator review -> merge -> flip this record to MERGED in a follow-up board PR."
+      - "Merged: PR #1134 (head 71f15016, merge 55eba7c0) by Muse 2026-11-21 - ARCHITECTURE.md sections 6 and 9 now carry the 2026-11-21 polling design and the secure-card PAT flow, matching PROMPT.md."
+    next_action: "Closed. ARCHITECTURE.md and PROMPT.md now carry the same polling design."
     files:
       - docs/collaboration/ARCHITECTURE.md
       - docs/collaboration/WORK_BOARD.yaml
