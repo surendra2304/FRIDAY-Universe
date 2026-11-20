@@ -113,6 +113,15 @@ def _data_url(path: Path) -> str:
 # (max_tokens 1100 vs the 1000 limit) are both primary-only limits,
 # and the fail-over keeps the same request shape, the same record
 # validation, and the same outcome accounting.
+#
+# TASK-VYR-029: the fail-over exposed a budget-accounting defect —
+# the VYR-026 daily token budget counted estimated tokens per
+# attempt regardless of provider, so cycle 9 stopped at 195,560
+# estimated tokens after 10 attempts even though 7 of them spent
+# their tokens on Gemini, which never touches Groq's TPD. The
+# outcome now charges tokens per provider (see _VISION_OUTCOME /
+# _record_vision_outcome) and the viral loop gates each provider
+# against its own daily budget.
 # --------------------------------------------------------------------------- #
 
 # Fallback waits before retries 1/2/3 when the provider sends no
@@ -143,12 +152,21 @@ _IMAGE_TOKEN_ESTIMATE = 1000
 # timestamp of the most recent HTTP request (pacing). Module-level
 # because the call sites are plain functions; the viral loop reads
 # the outcome after each production attempt.
+#
+# TASK-VYR-029: the token charge is split per provider —
+# ``estimated_tokens_groq`` for primary (Groq) HTTP attempts and
+# ``estimated_tokens_gemini`` for the single fail-over attempt, so
+# the loop's daily budget can gate each provider against its own
+# limit. ``estimated_tokens`` stays the total (both providers) for
+# backward compatibility with the VYR-026 loop accounting.
 _VISION_OUTCOME: dict[str, Any] = {
     "seq": 0,
     "status": None,
     "rate_limit_exhausted": False,
     "attempts": 0,
     "estimated_tokens": 0,
+    "estimated_tokens_groq": 0,
+    "estimated_tokens_gemini": 0,
     "called_at": None,
 }
 _LAST_VISION_REQUEST_MONO: float | None = None
@@ -224,7 +242,18 @@ def _log_vision_failure(context: str, response: httpx.Response) -> None:
 def _record_vision_outcome(
     *, status: int | None, attempts: int, estimated_tokens: int,
     called_at: float | None, rate_limit_exhausted: bool,
+    estimated_tokens_groq: int | None = None,
+    estimated_tokens_gemini: int | None = None,
 ) -> None:
+    """Record one logical call's outcome (see last_vision_outcome).
+
+    ``estimated_tokens_groq`` / ``estimated_tokens_gemini`` are the
+    per-provider charges (TASK-VYR-029); when omitted they default
+    to (total, 0) — the pre-VYR-029 shape, in which every attempt
+    was a primary call. Call sites that fail over pass both
+    explicitly: the primary attempts charge Groq, the single
+    fail-over attempt charges Gemini.
+    """
     global _VISION_OUTCOME
     _VISION_OUTCOME = {
         "seq": int(_VISION_OUTCOME.get("seq") or 0) + 1,
@@ -232,6 +261,13 @@ def _record_vision_outcome(
         "rate_limit_exhausted": rate_limit_exhausted,
         "attempts": attempts,
         "estimated_tokens": estimated_tokens,
+        "estimated_tokens_groq": (
+            estimated_tokens if estimated_tokens_groq is None
+            else estimated_tokens_groq
+        ),
+        "estimated_tokens_gemini": (
+            0 if estimated_tokens_gemini is None else estimated_tokens_gemini
+        ),
         "called_at": called_at,
     }
 
@@ -247,7 +283,11 @@ def last_vision_outcome() -> dict[str, Any]:
     ``rate_limit_exhausted`` is True only when the call's final
     response was HTTP 429 after the bounded retries — the signal the
     viral loop's clean-stop counts. ``estimated_tokens`` charges the
-    per-request estimate once per HTTP attempt, retries included.
+    per-request estimate once per HTTP attempt, retries included;
+    ``estimated_tokens_groq`` / ``estimated_tokens_gemini`` split
+    that total by provider (TASK-VYR-029): primary attempts charge
+    Groq, the single fail-over attempt charges Gemini, so the loop
+    can budget each provider against its own daily limit.
     """
     return dict(_VISION_OUTCOME)
 
@@ -325,6 +365,8 @@ def _vision_request(body: dict[str, Any], *, context: str) -> httpx.Response:
             _record_vision_outcome(
                 status=None, attempts=attempts,
                 estimated_tokens=estimated * attempts,
+                estimated_tokens_groq=estimated * attempts,
+                estimated_tokens_gemini=0,
                 called_at=called_at, rate_limit_exhausted=False,
             )
             raise
@@ -332,6 +374,8 @@ def _vision_request(body: dict[str, Any], *, context: str) -> httpx.Response:
             _record_vision_outcome(
                 status=200, attempts=attempts,
                 estimated_tokens=estimated * attempts,
+                estimated_tokens_groq=estimated * attempts,
+                estimated_tokens_gemini=0,
                 called_at=called_at, rate_limit_exhausted=False,
             )
             return response
@@ -348,6 +392,8 @@ def _vision_request(body: dict[str, Any], *, context: str) -> httpx.Response:
             _record_vision_outcome(
                 status=response.status_code, attempts=attempts,
                 estimated_tokens=estimated * attempts,
+                estimated_tokens_groq=estimated * attempts,
+                estimated_tokens_gemini=0,
                 called_at=called_at,
                 rate_limit_exhausted=response.status_code == 429,
             )
@@ -369,6 +415,8 @@ def _vision_request(body: dict[str, Any], *, context: str) -> httpx.Response:
             _record_vision_outcome(
                 status=429, attempts=attempts,
                 estimated_tokens=estimated * attempts,
+                estimated_tokens_groq=estimated * attempts,
+                estimated_tokens_gemini=0,
                 called_at=called_at, rate_limit_exhausted=True,
             )
             return response
@@ -446,6 +494,12 @@ def _attempt_vision_failover(
         _record_vision_outcome(
             status=None, attempts=attempts + 1,
             estimated_tokens=estimated * (attempts + 1),
+            # TASK-VYR-029: the fail-over POST was attempted, so its
+            # estimate charges Gemini even though the transport failed
+            # (conservative, matching the old total accounting); the
+            # primary attempts already made charge Groq.
+            estimated_tokens_groq=estimated * attempts,
+            estimated_tokens_gemini=estimated,
             called_at=called_at, rate_limit_exhausted=False,
         )
         raise
@@ -454,6 +508,8 @@ def _attempt_vision_failover(
     _record_vision_outcome(
         status=response.status_code, attempts=attempts + 1,
         estimated_tokens=estimated * (attempts + 1),
+        estimated_tokens_groq=estimated * attempts,
+        estimated_tokens_gemini=estimated,
         called_at=called_at,
         rate_limit_exhausted=response.status_code == 429,
     )

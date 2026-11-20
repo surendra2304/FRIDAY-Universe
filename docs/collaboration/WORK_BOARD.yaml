@@ -12385,6 +12385,30 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - VyralX/tests/test_viral_framing.py
       - docs/collaboration/WORK_BOARD.yaml
 
+  - id: TASK-VYR-029
+    title: "Provider-aware vision token budget for VyralX: Groq budget gates Groq tokens only; Gemini fail-over tokens gate against their own budget"
+    status: MERGED
+    owner: muse_ai
+    branch: claude/task-vyr-029-provider-budget
+    pr: 1118
+    priority: P2
+    created_at: "2026-11-20"
+    updated_at: "2026-11-20"
+    evidence:
+      - "Claim: GitHub issue #35 comment 7033778040 by Muse before any editing (TASK-VYR-029; next free VYR id - board max was TASK-VYR-028; a scan of the hub newest comments (pages 679-688, through the #1114 merge note 7032476337) found no VYR-029 claim, and search showed zero VYR-029 items created on/after 2026-11-20). Base: main 08b25dc3fbeeab3f4fb6da45a809259a6c1a9883 (board 561 records)."
+      - "Trigger (cycle 9 2026-11-20, U2; coordinator re-checked /tmp/vyr9_cycle.log): fail-over fired 7/7, all Gemini 200 + valid scene records — but produced 0 renders because the VYR-026 daily token budget (180,000) counts fail-over tokens too and tripped at 195,560 after 10 attempts, even though 7 of those attempts spent their tokens on Gemini, which never touches Groq's TPD."
+      - "Change (scene_analysis.py blob 9a032cb2 -> 6760109e; viral_loop.py blob cfe91a49 -> 54e00b0e; config.py blob d61ff7ea -> 07f2556d; test_viral_framing.py blob 0e485efe -> 95494300; test_viral_loop.py blob c61e01c4 -> 17fe800d): the vision outcome now records estimated_tokens_groq and estimated_tokens_gemini alongside the unchanged total — primary attempts charge Groq, the single fail-over attempt charges Gemini (transport-error fail-over also charges the Gemini estimate, conservatively, matching the old total accounting). The loop tracks both counters in the persisted vision_budget state (same-day legacy state without the new keys attributes its whole total to Groq; legacy outcomes without the keys charge Groq), gates Groq tokens against 180,000 (reason vision_daily_budget, unchanged) and Gemini tokens against the new failover budget (reason vision_daily_budget_gemini), and reports both counters plus both budgets in the cycle summary. Fail-over trigger unchanged (429 only, after retries, one attempt); max_tokens stays 1100 (VYR-028 decision)."
+      - "Gemini budget derivation (measured, not assumed): estimate_vision_tokens on a real analyze_scene body = 4,889 tokens/request (record prompt 2,316 chars + 50 label chars -> 789 text + 3 x 1,000 images + 1,100 max_tokens). 500 RPD x 4,889 = 2,444,500 -> default 2,500,000 (~511 requests: the token budget and the 500 RPD limit trip at nearly the same point, which is what a proxy should do). DEVIATION from the brief's ~10k/request guess (~5,000,000): that would allow ~1,022 fail-over requests, double the RPD, so the cycle would hit Gemini 429s long before the budget trips and the clean stop would never fire. The 15 RPM is never binding (the loop paces vision calls >= 65s apart)."
+      - "Tests (9 new: 5 in test_viral_framing.py, 4 in test_viral_loop.py; all three files already collected by the CI VyralX step, so no CI-collection follow-up): fail-over success splits 4x per-call to Groq + 1x to Gemini (per-call estimate asserted 4,889 from the real request body); Groq-only success and Groq-only 429 without fail-over charge Gemini 0; Gemini failure still charges Gemini; wait-cap fail-over splits 1x/1x; cycle stops on the Gemini budget with Groq far below (own reason vision_daily_budget_gemini); cycle-9-shaped mixed day (pre-seeded Groq 100,000 + Gemini 90,000, then 3 fail-over attempts) does NOT stop on the Groq budget; legacy outcomes charge Groq; legacy same-day state total migrates to Groq. Local: 9/9 pass on the edited code; A/B: 9/9 fail on pristine base (new test files copied into a base worktree). Full step-10 suite locally (exact CI command, 6 files): 147 passed, 0 failed — the VYR-028 baseline was 138, plus the 9 new tests; existing VYR-026 budget tests pass unchanged. CI on the PR head DID run (contrary to the bridge/API quirk note): 10 check-runs, all completed — 8 success (contracts, test, secrets scan, fleet-layout, monorepo policy, roster/ownership, py3.12 entrypoints, detect-voice-changes), 2 skipped (docker, voice-regressions), 0 failures (supervisor review, comment 7035087041). Union PR #1119 CI: 10 check-runs, all completed — 8 success (contracts, test, secrets scan, fleet-layout, monorepo policy, roster/ownership, py3.12 entrypoints, detect-voice-changes), 2 skipped (docker, voice-regressions), 0 failures."
+    next_action: "Merged via union PR #1119. Ops step after merge (NOT this PR): deploy to U2 and run a probe cycle; a heavy-429 cycle should now keep producing while Groq tokens stay under 180,000, and the summary names which budget trips."
+    files:
+      - VyralX/app/services/scene_analysis.py
+      - VyralX/app/services/viral_loop.py
+      - VyralX/app/config.py
+      - VyralX/tests/test_viral_framing.py
+      - VyralX/tests/test_viral_loop.py
+      - docs/collaboration/WORK_BOARD.yaml
+
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

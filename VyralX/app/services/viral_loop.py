@@ -280,11 +280,20 @@ def run_viral_loop_cycle(db: Session, *, force: bool = False) -> dict[str, Any]:
     # provider's daily limits are day-scoped, and UTC is the only
     # day boundary both sides agree on. The pacing clock is seeded
     # from the persisted last-call epoch for the same reason.
+    #
+    # TASK-VYR-029: the spend is tracked per provider — Groq tokens
+    # against the Groq TPD budget, Gemini fail-over tokens against
+    # their own budget — because a heavy-429 day spends most of its
+    # tokens on Gemini, which never touches Groq's TPD (cycle 9
+    # stopped at 195,560 after 10 attempts, 7 of them fail-over).
     vision_min_interval = float(
         getattr(settings, "viral_loop_vision_min_interval_seconds", 65.0)
     )
     vision_daily_budget = int(
         getattr(settings, "viral_loop_vision_daily_token_budget", 180000)
+    )
+    vision_failover_daily_budget = int(
+        getattr(settings, "viral_loop_vision_failover_daily_token_budget", 2500000)
     )
     vision_stop_threshold = int(
         getattr(settings, "viral_loop_vision_rate_limit_stop_threshold", 3)
@@ -292,7 +301,23 @@ def run_viral_loop_cycle(db: Session, *, force: bool = False) -> dict[str, Any]:
     today = datetime.now(timezone.utc).date().isoformat()
     vision_budget_state = state.get("vision_budget")
     if not isinstance(vision_budget_state, dict) or vision_budget_state.get("date") != today:
-        vision_budget_state = {"date": today, "estimated_tokens": 0, "last_call_at": None}
+        vision_budget_state = {
+            "date": today, "estimated_tokens": 0,
+            "estimated_tokens_groq": 0, "estimated_tokens_gemini": 0,
+            "last_call_at": None,
+        }
+    else:
+        # Same-day state written before the provider split carries no
+        # per-provider counters. The whole legacy total was Groq —
+        # the fail-over did not exist when those states were written
+        # — so it attributes to Groq (the conservative side: the
+        # Groq gate sees the full spend).
+        if "estimated_tokens_groq" not in vision_budget_state:
+            vision_budget_state["estimated_tokens_groq"] = int(
+                vision_budget_state.get("estimated_tokens") or 0
+            )
+        if "estimated_tokens_gemini" not in vision_budget_state:
+            vision_budget_state["estimated_tokens_gemini"] = 0
     state["vision_budget"] = vision_budget_state
     scene_analysis.seed_vision_clock(vision_budget_state.get("last_call_at"))
     consecutive_rate_limited = 0
@@ -350,9 +375,30 @@ def run_viral_loop_cycle(db: Session, *, force: bool = False) -> dict[str, Any]:
         outcome = scene_analysis.last_vision_outcome()
         if int(outcome.get("seq") or 0) == seq_before:
             return False
-        vision_budget_state["estimated_tokens"] = int(
-            vision_budget_state.get("estimated_tokens") or 0
-        ) + int(outcome.get("estimated_tokens") or 0)
+        # TASK-VYR-029: charge each provider separately. Outcomes
+        # from before the split carry no per-provider keys — every
+        # attempt then was a primary call, so the whole total
+        # attributes to Groq (conservative). The total stays the sum
+        # of the two counters.
+        total = int(outcome.get("estimated_tokens") or 0)
+        groq = outcome.get("estimated_tokens_groq")
+        gemini = outcome.get("estimated_tokens_gemini")
+        if groq is None and gemini is None:
+            groq, gemini = total, 0
+        elif groq is None:
+            groq = max(0, total - int(gemini or 0))
+        elif gemini is None:
+            gemini = max(0, total - int(groq or 0))
+        vision_budget_state["estimated_tokens_groq"] = int(
+            vision_budget_state.get("estimated_tokens_groq") or 0
+        ) + int(groq or 0)
+        vision_budget_state["estimated_tokens_gemini"] = int(
+            vision_budget_state.get("estimated_tokens_gemini") or 0
+        ) + int(gemini or 0)
+        vision_budget_state["estimated_tokens"] = (
+            int(vision_budget_state["estimated_tokens_groq"])
+            + int(vision_budget_state["estimated_tokens_gemini"])
+        )
         if outcome.get("called_at"):
             vision_budget_state["last_call_at"] = outcome["called_at"]
         _persist_vision_budget()
@@ -395,18 +441,30 @@ def run_viral_loop_cycle(db: Session, *, force: bool = False) -> dict[str, Any]:
             float(candidate.duration or 0) <= commentary_cap
         )
         if needs_vision:
-            if (
-                vision_daily_budget > 0
-                and int(vision_budget_state.get("estimated_tokens") or 0)
-                >= vision_daily_budget
-            ):
+            # TASK-VYR-029: each provider gates against its own daily
+            # budget. Groq's is the binding TPD (180k of 200k); the
+            # Gemini fail-over budget is a separate, request-based
+            # proxy — the two counters and the stop reason name which
+            # budget tripped.
+            groq_today = int(vision_budget_state.get("estimated_tokens_groq") or 0)
+            gemini_today = int(vision_budget_state.get("estimated_tokens_gemini") or 0)
+            if vision_daily_budget > 0 and groq_today >= vision_daily_budget:
                 summary["stopped"] = "vision_daily_budget"
                 log.warning(
-                    "Viral loop cycle %d stopped: vision daily budget spent "
-                    "(%d >= %d estimated tokens)",
-                    cycle_no,
-                    int(vision_budget_state.get("estimated_tokens") or 0),
-                    vision_daily_budget,
+                    "Viral loop cycle %d stopped: Groq vision daily budget "
+                    "spent (%d >= %d estimated tokens; Gemini %d)",
+                    cycle_no, groq_today, vision_daily_budget, gemini_today,
+                )
+                break
+            if (
+                vision_failover_daily_budget > 0
+                and gemini_today >= vision_failover_daily_budget
+            ):
+                summary["stopped"] = "vision_daily_budget_gemini"
+                log.warning(
+                    "Viral loop cycle %d stopped: Gemini fail-over vision "
+                    "daily budget spent (%d >= %d estimated tokens; Groq %d)",
+                    cycle_no, gemini_today, vision_failover_daily_budget, groq_today,
                 )
                 break
             waited = scene_analysis.wait_for_vision_pacing(vision_min_interval)
@@ -480,7 +538,14 @@ def run_viral_loop_cycle(db: Session, *, force: bool = False) -> dict[str, Any]:
 
     summary["vision"] = {
         "estimated_tokens_today": int(vision_budget_state.get("estimated_tokens") or 0),
+        "estimated_tokens_groq_today": int(
+            vision_budget_state.get("estimated_tokens_groq") or 0
+        ),
+        "estimated_tokens_gemini_today": int(
+            vision_budget_state.get("estimated_tokens_gemini") or 0
+        ),
         "daily_budget": vision_daily_budget,
+        "failover_daily_budget": vision_failover_daily_budget,
         "rate_limit_streak": consecutive_rate_limited,
     }
 
