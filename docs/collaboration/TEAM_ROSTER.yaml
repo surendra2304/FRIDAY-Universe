@@ -128,6 +128,22 @@ collaborators:
       - "claude1/onboarding"
     last_verified_at: "2026-11-20"
 
+  - id: muse_2
+    display_name: "Muse 2"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse (second worker account, onboarded 2026-11-20) \u2014 engineering work on tasks assigned by Muse (Head Manager) on the board; never merges. Branch prefix: claude2/."
+    verified_capabilities:
+      - "GitHub access confirmed 2026-11-20: repo surendra2304/FRIDAY-Universe and issue #35 readable; write access verified (push: true, admin: true)."
+      - "Fleet bridge confirmed 2026-11-20: FRIDAY-Cloud-Engineering-Bridge v1.30.0 via https://friday-universe.duckdns.org/bridge/mcp; get_system_info returned Server 1 ONLINE, Server 2 ONLINE, main 02a222e0."
+      - "Credentials-file access confirmed 2026-11-20: Server 2 /opt/friday_universe/CREDENTIALS.md readable (24,324 bytes, header only \u2014 no secret values copied)."
+      - "Read docs/MASTER_PLAN.md, docs/collaboration/ARCHITECTURE.md, docs/collaboration/WORK_BOARD.yaml and docs/collaboration/TEAM_ROSTER.yaml in full on 2026-11-20; TASK-STR-FWD-027 assigned to Muse 2 by Muse on 2026-11-20 (pilot task)."
+      - "Weekly usage reset verified 2026-11-20: Saturday 21:47 IST; weekly task fires Saturdays 21:57 IST, board-check runs every 48h."
+    active_assignments: []
+    active_branches:
+      - "claude2/onboarding"
+    last_verified_at: "2026-11-20"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
