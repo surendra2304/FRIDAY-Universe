@@ -458,17 +458,38 @@ def earliest_position_tag(
     entry_price: float = 0.0,
 ) -> Optional[Dict[str, Any]]:
     """Oldest fingerprint-matching tag for the position — the tag
-    stream's record of when THIS position was opened (TASK-STR-FWD-026).
+    stream's record of when THIS position was opened (TASK-STR-FWD-026),
+    close-aware (TASK-STR-FWD-027).
 
     Adoption restores the time-exit clock (position_opened_at) from this
     tag's ``ts``. Later tags for the same position are adoption
     corrections stamped at restart time; anchoring to any of them would
     re-anchor the clock to a restart, which is the defect being fixed.
     ``position_tags_for`` is already oldest-first, so the first
-    fingerprint match is the open record."""
+    fingerprint match is the open record.
+
+    Close-awareness: a tag is skipped when the fill ledger already
+    books a close for its position at/after the tag's ``ts``
+    (``position_closed_in_ledger`` with the tag as reference). A
+    position reopened inside the fingerprint tolerances after a booked
+    close still matches its ORIGINAL open tag — anchoring to it would
+    compute the new position's time exit from the first entry and
+    market-close it on the first management pass (PR #1058 review
+    condition C1, probe-confirmed). The anchor must be the reopen
+    tag, not the original entry. A tag with no usable ``ts`` cannot be
+    proven closed, so it is returned as-is (the adoption caller falls
+    back to the adoption instant on ``ts <= 0``). None when every
+    matching tag is closed, or when no tag matches."""
     for tag in position_tags_for(venue, symbol):
-        if _tag_matches_position(tag, side, qty, entry_price):
-            return tag
+        if not _tag_matches_position(tag, side, qty, entry_price):
+            continue
+        tag_ts = _finite(tag.get("ts"), 0.0)
+        if tag_ts > 0 and position_closed_in_ledger(
+            venue, symbol, side=side, qty=qty, entry_price=entry_price,
+            since_ts=tag_ts,
+        ):
+            continue
+        return tag
     return None
 
 
