@@ -12330,6 +12330,38 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     files:
       - .github/workflows/deploy-monorepo.yml
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-REL-056
+    title: "CI pytest lists: collect test_voice_send_path_voi024.py (friday-universe-ci voice-regressions), test_fwd026_adoption_opened_at.py (owner-workflows Stratex step) + test_inf015_flash_lite_catalogue.py (owner-workflows Inference step)"
+    status: MERGED
+    owner: muse_ai
+    branch: claude/task-rel-056-ci-collection
+    pr: 1113
+    priority: P2
+    created_at: "2026-11-20"
+    updated_at: "2026-11-20"
+    evidence:
+      - "Claim: GitHub issue #35 comment 7030192541 by Muse before any editing (TASK-REL-056; next free REL id — board max was TASK-REL-055; a full scan of the hub's 74 comments since 2026-11-19 found no REL-056 claim and no claim covering this wiring; the three parent entries record the follow-up without a filed task). Base: main 4f033b02316f44f9ebf3af892d8125b0b5f9fee5."
+      - "Gap (verified at main 4f033b02): none of the three filenames appears in any of the 26 files under .github/workflows/ (every pytest invocation grepped). friday-universe-ci.yml's voice-regressions step ('Run voice, LiveKit, Gemini, and CLI regressions', working-directory FRIDAY) enumerates 26 files incl. voi016/017/018/022 but NOT tests/test_voice_send_path_voi024.py — while the detect-voice-changes filter globs FRIDAY/tests/test_voice_*.py, so the job fires on the file it never runs. owner-workflows.yml's 'Stratex forward-test and self-experiment contracts' step enumerates 10 files (fwd018 x4, fwd021, fwd028, fwd024, exp001, exp002, pep001) but NOT Stratex/tests/test_fwd026_adoption_opened_at.py. Its 'Goal-specific code and honest generated-test contracts' step (PYTHONPATH=Inference) enumerates 7 Inference suites but NOT Inference/tests/test_inf015_flash_lite_catalogue.py. The only directory-wide pytest runs (validate-monorepo.yml, monorepo-validation.yml) collect the repo-root tests/ dir only. Parent-task follow-ups on record: TASK-VOI-024 next_action ('wire test_voice_send_path_voi024.py into the CI voice-regressions list'), TASK-STR-FWD-026 evidence ('a REL-053-pattern wiring follow-up is needed'), TASK-INF-017 evidence ('wiring Inference's provider suites into CI is the standing REL-053-family follow-up')."
+      - "Change: friday-universe-ci.yml — tests/test_voice_send_path_voi024.py appended to the voice-regressions pytest list (26 -> 27 files; blob a4ef636d -> e7074d1f). owner-workflows.yml — Inference/tests/test_inf015_flash_lite_catalogue.py appended to the Inference step list (7 -> 8 files) and to both trigger path lists alongside the two already-named Inference test files, so a change to the suite itself fires the workflow; Stratex/tests/test_fwd026_adoption_opened_at.py appended to the Stratex step list (10 -> 11 files); blob dc27d043 -> f97dbd62. No test edits, no source edits, no other workflow edits."
+      - "Pre-ship verification at main 4f033b02 (workflow-faithful): owner-workflows contracts sequence (Python 3.12 venv; installs in job order — base dependency set, Forge/requirements-verification.txt, Memora/requirements.txt, Inference/requirements.txt; PYTHONPATH=Inference; proxies unset; repo-root cwd): the post-change 8-file Inference step passes — 89 tests, 0 failures/errors/skips, junit-verified; test_inf015 standalone = 4 passed. The Stratex step and the voice suite could NOT be run to completion in the sandbox: an intermittent sandbox write gate (EPERM on Python file writes; the AGENTS.md-documented episode) blocks fixture setup — Stratex/tests/conftest.py:139 (IdempotencyStore file write) errors all 5 fwd026 tests at setup, and FRIDAY/tests/conftest.py:175 (tmp_path_factory write) errors the voi024 suite at setup; both suites COLLECT and import cleanly against the main tree (voi024's livekit_worker import verified to resolve to the main checkout in the production-version voice venv, livekit-agents 1.8.12). Parent-task local evidence stands: fwd026 = 5 passed in the FWD-026 crew's venv; voi024 = 10 passed in the VOI-024 crew's production venv. Operative verification for the two owner-workflows additions is this PR's own contracts job (owner-workflows.yml is in its own trigger paths); the voice-regressions addition first executes on the next voice-path change (path-filtered job — TASK-REL-053 precedent)."
+    next_action: "Supervisor review -> merge. Acceptance: a contracts run on the merged workflow collects all 8 Inference-step files and all 11 Stratex-step files; voice-regressions collects all 27 files on its next triggered run. CI-definition change only — no deploy, no service touched."
+    files:
+      - .github/workflows/friday-universe-ci.yml
+      - .github/workflows/owner-workflows.yml
+      - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-REL-057
+    title: "Inference trigger-path coverage for the five remaining Inference-step suites (rel026, cache_scope, code_review, output_is_verified, source_repair_context): enumerate them in owner-workflows.yml trigger path lists like their siblings, or switch Inference test triggers to Inference/tests/** (the FRIDAY/tests/** and VyralX/tests/** pattern). Filed as the supervisor condition on PR #1113 (comment 7031518393)."
+    status: AVAILABLE
+    owner: muse_ai
+    priority: P2
+    created_at: "2026-11-20"
+    updated_at: "2026-11-20"
+    evidence:
+      - "Filed as the supervisor condition on PR #1113 (comment 7031518393), discharged by filing in the union merge of TASK-REL-056. TASK-REL-056 wired Inference/tests/test_inf015_flash_lite_catalogue.py into both owner-workflows.yml trigger path lists, but the five other Inference-step suites appear only in the step's pytest list and in neither trigger path list: Inference/tests/test_test_generation_reliability_rel026.py, Inference/tests/test_unified_manager_cache_scope.py, Inference/tests/test_forge_code_review_is_evidence_based.py, Inference/tests/test_forge_output_is_verified.py, Inference/tests/test_source_repair_context.py (each verified to occur exactly once in owner-workflows.yml at main ae2e7d43, in the step only). A change to one of those suites alone therefore does not fire the workflow that runs it. Pre-existing gap, same defect class as REL-056, explicitly flagged as out of REL-056's scope by its supervisor review."
+    next_action: "Claim on issue #35 before editing. Either enumerate the five suites in both owner-workflows.yml trigger path lists alongside their siblings, or switch the Inference test triggers to Inference/tests/** (the pattern FRIDAY/tests/** and VyralX/tests/** already use in the same lists). Acceptance: a contracts run whose trigger evaluation shows a touch to any one of the five suites fires owner-workflows, and the Inference step still passes."
+    files:
+      - .github/workflows/owner-workflows.yml
+      - docs/collaboration/WORK_BOARD.yaml
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
