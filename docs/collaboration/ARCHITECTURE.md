@@ -149,14 +149,25 @@ document governs.
   about 10 minutes after *that account's own* weekly usage reset (read from
   its own Settings → Usage). Every run: re-read the reset time and re-anchor
   if it moved; verify the new allowance is actually live before starting —
-  wait if it is not; confirm next week's schedule still exists.
+  wait if it is not; confirm next week's schedule still exists. That run
+  re-enters the work cycle below: work if assigned, otherwise the
+  every-minute assignment poll.
 - **Checkpoint discipline:** work in small steps and save a checkpoint after
   each step (board update + pushed branch/PR), sized so a stopped run loses
   nothing and the checkpoint itself always fits inside the free allowance.
-- **Board-check runs:** between weekly runs, each worker runs light
-  board-check runs (e.g. every 2 days) that only read the board, pick up new
-  coordinator instructions, act on anything urgent, and otherwise end
-  quietly.
+- **Assignment poll (owner order 2026-11-21):** a worker with no work
+  never waits days to notice an assignment. It runs a scheduled task
+  firing **every minute** that reads the board and issue #35 for an
+  assignment addressed to it — armed after onboarding, after every weekly
+  reset, and the moment a task closes. The moment an assignment appears,
+  the worker claims it and **cancels the poll**; when work runs out, it
+  re-arms the poll. This repeats until the weekly free usage is exhausted.
+- **Hourly self-check:** while free usage remains, each worker also runs
+  an hourly scheduled task verifying it is working properly (progress
+  real, or the poll armed if idle), until exhaustion.
+- **When free usage is exhausted:** the poll and the hourly check are
+  cancelled and only the weekly reset task stays armed, so the cycle
+  restarts by itself at the next reset.
 - Subagents spawned inside an account draw on that same account's allowance.
   They multiply speed, not budget — use them sparingly and sized to the
   allowance.
@@ -188,19 +199,23 @@ document governs.
 
 1. Muse writes (or updates) the onboarding prompt for the new account,
    named for its number (Muse 1, Muse 2, …).
-2. The owner fills the access placeholders himself (repo URL, PAT, bridge
-   URL) and pastes the prompt into the new account's chat. No secret is ever
-   placed in a prompt by Muse.
+2. The owner pastes the prompt into the new account's chat. No secret is
+   ever placed in a prompt by Muse: the GitHub token is provided to the
+   worker afterwards through the secure credential card (Secure Vault
+   entry), never as chat text.
 3. The worker sets up its access (owner's GitHub account, fleet bridge,
    credentials record), registers in `TEAM_ROSTER.yaml` via PR, creates its
-   weekly task and board-check runs per §6, and reads `docs/MASTER_PLAN.md`,
+   three scheduled tasks per §6 (every-minute assignment poll, hourly
+   self-check, weekly reset task), and reads `docs/MASTER_PLAN.md`,
    the full board and the roster so it starts from the project's real state.
    It also sets its displayed assistant name in its own account to its
    roster name (e.g. "Muse 1"), so the app display matches the name it
    signs its work with.
 4. The worker posts a ready report on issue #35 (access confirmed, roster PR
    link, its reset time, its schedule).
-5. The worker waits for Muse's first assignment on the board.
+5. The worker's every-minute poll watches the board and issue #35 for
+   Muse's first assignment; the moment one appears, the worker claims it
+   and cancels the poll.
 
 ## 10. Failure, escalation and stops
 
