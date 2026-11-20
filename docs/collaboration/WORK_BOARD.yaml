@@ -12307,9 +12307,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-VYR-028
     title: "Gemini vision fail-over for VyralX: after VYR-026 retries are spent on Groq 429, exactly one Gemini attempt via VISION_FAILOVER_* env seams"
-    status: IN_PROGRESS
+    status: IN_REVIEW
     owner: muse_ai
     branch: claude/task-vyr-028-vision-failover
+    pr: 1114
     priority: P2
     created_at: "2026-11-20"
     updated_at: "2026-11-20"
