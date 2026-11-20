@@ -283,6 +283,12 @@ class StratexTradingEngine:
         self.running = True
         self.last_scan = 0
         self.scan_count = 0
+        # TASK-STR-EXP-004: self-experiment wiring state. The flag is
+        # maintained around every scan (it is the daemon-activity
+        # probe's input); the handle stays None unless the loop is
+        # wired on at run() time — see _start_self_experiments.
+        self._scan_in_progress = False
+        self._selfexp_handle = None
         # TASK-STR-FWD-015: heartbeat pulse state. The scan loop only
         # publishes an in-memory snapshot; a dedicated pulse thread is
         # the sole writer of daemon_heartbeat.json during run(), so
@@ -3640,6 +3646,66 @@ class StratexTradingEngine:
             )
             self._flush_heartbeat_snapshot()
 
+    # -- TASK-STR-EXP-004: self-experiment loop wiring -----------------
+    #
+    # EXP-001 shipped the loop (self_experiments/loop.py) with
+    # start_if_enabled() deliberately NOT hooked into the daemon
+    # lifespan; its design doc names this activation step: wire the
+    # driver with the daemon-activity probe. The hook is inert unless
+    # STRATEX_SELF_EXPERIMENTS is exactly "on": the check in
+    # _start_self_experiments runs before any self_experiments
+    # import, so with the switch unset or any other value nothing is
+    # imported, no thread starts and no loop file is written — the
+    # daemon's behaviour is the pre-activation behaviour, unchanged.
+
+    def _daemon_idle_probe(self) -> bool:
+        """The daemon-activity probe for the self-experiment loop:
+        True when the daemon is between scan cycles, False while a
+        scan is executing. The loop consults it every cycle (on top
+        of its host-load gate) so experiments only run in the
+        daemon's idle windows."""
+        return not self._scan_in_progress
+
+    def _start_self_experiments(self) -> None:
+        """Start the self-experiment loop if the kill switch is on.
+
+        Never raises: a wiring failure (e.g. the production stream
+        store not built yet) is logged loudly and the daemon keeps
+        trading — the loop is an addition, never a dependency."""
+        if os.getenv("STRATEX_SELF_EXPERIMENTS", "off").strip().lower() != "on":
+            return
+        try:
+            from self_experiments import daemon_wiring
+
+            self._selfexp_handle = daemon_wiring.start(
+                work_probe=self._daemon_idle_probe
+            )
+            if self._selfexp_handle is not None:
+                logger.info(
+                    "[STRATEX] Self-experiment loop wired in "
+                    "(STRATEX_SELF_EXPERIMENTS=on)"
+                )
+        except Exception:
+            logger.error(
+                "[STRATEX] Self-experiment wiring failed; "
+                "daemon continues without it",
+                exc_info=True,
+            )
+
+    def _stop_self_experiments(self) -> None:
+        """Stop the self-experiment loop if it was wired in."""
+        handle = getattr(self, "_selfexp_handle", None)
+        if handle is None:
+            return
+        self._selfexp_handle = None
+        try:
+            handle.stop()
+        except Exception:
+            logger.error(
+                "[STRATEX] Self-experiment loop stop failed",
+                exc_info=True,
+            )
+
     def run(self):
         """Main trading loop."""
         logger.info(f"[STRATEX] Trading engine started - scanning every {self.scan_interval}s")
@@ -3647,6 +3713,10 @@ class StratexTradingEngine:
         # TASK-STR-FWD-015: the pulse thread owns heartbeat writes
         # from here on; the loop below only publishes snapshots.
         self._start_heartbeat_pulse()
+
+        # TASK-STR-EXP-004: wire the self-experiment loop into the
+        # lifespan (inert unless STRATEX_SELF_EXPERIMENTS is "on").
+        self._start_self_experiments()
 
         # Startup heartbeat: the daemon is alive from here on, even before
         # the first (slowest) scan cycle completes.
@@ -3660,8 +3730,16 @@ class StratexTradingEngine:
             try:
                 cycle_start = time.time()
 
-                # Run scan and execute
-                results = self.scan_and_execute()
+                # Run scan and execute. The activity flag bracketing
+                # the scan is the self-experiment loop's
+                # daemon-activity probe input (TASK-STR-EXP-004); it
+                # is maintained unconditionally and read only when
+                # that loop is wired on.
+                self._scan_in_progress = True
+                try:
+                    results = self.scan_and_execute()
+                finally:
+                    self._scan_in_progress = False
 
                 if results["executed"] > 0:
                     logger.info(f"[STRATEX] Cycle {self.scan_count}: {results}")
@@ -3683,6 +3761,7 @@ class StratexTradingEngine:
 
         self._publish_daemon_heartbeat(status="STOPPED")
         self._stop_heartbeat_pulse()
+        self._stop_self_experiments()
 
 
 def main() -> None:

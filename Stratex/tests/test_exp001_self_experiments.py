@@ -5,9 +5,13 @@ Pins:
    default off), host-load gate, work-probe gate, daily cap.
 2. PRE-DECLARATION: a run with no declaration, or with a proposal
    whose hash differs from its declaration, is refused.
-3. COUNTER: seeded at 3,899 from the recorded programme counter,
-   persistent, monotonic, refuses a below-seed file; increments
-   before judgement (the cycle's trial number is seed+1).
+3. COUNTER: seeded at 3,979 — the programme counter after RD-025,
+   reconciled upward at activation (TASK-STR-EXP-004) from EXP-001's
+   original 3,899 seed; the seed record carries the RD-021
+   reservation (trials 3,900-3,903 allocated, unexecuted; strictly
+   executed 3,975). Persistent, monotonic, refuses a below-seed
+   file; increments before judgement (the cycle's trial number is
+   seed+1).
 4. JUDGE: the frozen bars — full bar PROVEN, second tier
    FORWARD_TEST, everything else FAIL; holdout absence caps a
    combination at FORWARD_TEST.
@@ -220,12 +224,26 @@ def test_store_refuses_tampered_stream(tmp_path):
 def test_counter_seed_persistence_and_monotonicity(tmp_path):
     path = tmp_path / "counter.json"
     counter = TrialCounter(path)
-    assert counter.value == 3899
+    assert counter.value == 3979
     recorded = json.loads(path.read_text())
-    assert recorded["seed"] == 3899
-    assert "3,899" in recorded["seed_source"]
-    assert counter.next() == 3900
-    assert TrialCounter(path).value == 3900  # persists across instances
+    assert recorded["seed"] == 3979
+    assert "3,979" in recorded["seed_source"]
+    assert counter.next() == 3980
+    assert TrialCounter(path).value == 3980  # persists across instances
+
+
+def test_counter_seed_records_rd021_reservation(tmp_path):
+    # TASK-STR-EXP-004: the reconciled seed must carry the RD-021
+    # reservation alongside it, so no future reader mistakes 3,979
+    # for the strictly-executed total (3,975).
+    path = tmp_path / "counter.json"
+    TrialCounter(path)
+    recorded = json.loads(path.read_text())
+    assert recorded["seed"] == 3979
+    source = recorded["seed_source"]
+    assert "3,900-3,903" in source  # the reserved trial range
+    assert "UNEXECUTED" in source
+    assert "3,975" in source  # the strictly-executed total
 
 
 def test_counter_refuses_below_seed_file(tmp_path):
@@ -233,6 +251,19 @@ def test_counter_refuses_below_seed_file(tmp_path):
     path.write_text(json.dumps({"value": 12}))
     with pytest.raises(CounterError):
         TrialCounter(path)
+
+
+def test_counter_refuses_the_old_seed_value(tmp_path):
+    # The pre-reconciliation seed (3,899) is below the reconciled
+    # seed: a counter file still holding it is a stale/reset counter
+    # and must be refused, exactly like any other below-seed file.
+    path = tmp_path / "counter.json"
+    path.write_text(json.dumps({"value": 3899}))
+    with pytest.raises(CounterError):
+        TrialCounter(path)
+    # A file at exactly the reconciled seed loads fine.
+    path.write_text(json.dumps({"value": 3979}))
+    assert TrialCounter(path).value == 3979
 
 
 # ---------------------------------------------------------------------------
@@ -348,7 +379,7 @@ def test_full_cycle_declares_runs_admits_and_banks(tmp_path, monkeypatch):
     loop = make_loop(tmp_path, writer=writer)
     report = loop.run_one_cycle()
     assert report.status == "ran"
-    assert report.n_global == 3900  # seed 3,899 + this trial
+    assert report.n_global == 3980  # seed 3,979 + this trial
     assert report.verdict in ("PROVEN", "FORWARD_TEST")
     assert report.admission_key
 
