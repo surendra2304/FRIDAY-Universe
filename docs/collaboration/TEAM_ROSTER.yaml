@@ -112,18 +112,6 @@ collaborators:
     access_limits:
       - "Merges are owner-approved per merge-commit labels; production restarts/deployments beyond the standard Fleet CD flow still require owner authorization."
 
-  - id: muse_2
-    display_name: "Muse 2"
-    contributor_type: "ai"
-    status: "active_contributor"
-    authority: "Worker Muse account (second worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
-    verified_capabilities:
-      - "Registered by Muse (Head Manager) 2026-11-21 so its assigned board task validates; Muse 2 extends this entry with evidence-backed capabilities at its own onboarding."
-    active_assignments:
-      - "TASK-REL-057"
-    active_branches: []
-    last_verified_at: "2026-11-21"
-
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
