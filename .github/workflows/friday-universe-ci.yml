@@ -205,7 +205,8 @@ jobs:
             tests/test_voice_dead_input_voi016.py \
             tests/test_voice_frame_counters_voi017.py \
             tests/test_voice_noise_robustness_voi018.py \
-            tests/test_voice_input_forward_voi022.py
+            tests/test_voice_input_forward_voi022.py \
+            tests/test_voice_send_path_voi024.py
 
   docker:
     runs-on: ubuntu-latest
