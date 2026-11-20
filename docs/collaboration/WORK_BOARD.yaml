@@ -12387,9 +12387,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-VYR-029
     title: "Provider-aware vision token budget for VyralX: Groq budget gates Groq tokens only; Gemini fail-over tokens gate against their own budget"
-    status: IN_PROGRESS
+    status: IN_REVIEW
     owner: muse_ai
     branch: claude/task-vyr-029-provider-budget
+    pr: 1118
     priority: P2
     created_at: "2026-11-20"
     updated_at: "2026-11-20"
