@@ -33,6 +33,7 @@ from friday.core.owner_time import OWNER_TZ  # noqa: E402
 from friday.proactive import daily_self_report as dsr  # noqa: E402
 from friday.proactive import mission_queue as mq_mod  # noqa: E402
 from friday.proactive import telegram_gateway as tg  # noqa: E402
+from friday.proactive.owner_notify import OwnerNotifier  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -81,6 +82,40 @@ class _RecordingSender:
     def __call__(self, text: str, chat_id: str | None = None) -> bool:
         self.sent.append(text)
         return True
+
+
+class _FakeClock:
+    def __init__(self, start: float = 1_700_000_000.0) -> None:
+        self.now = start
+
+    def __call__(self) -> float:
+        return self.now
+
+
+class _GateHarness:
+    """TASK-FRD-028: a real OwnerNotifier (fake clock + recording sender)
+    for the G7/G8 delivery tests — the reports now go through the gate,
+    so these tests drive the gate instead of patching the raw gateway."""
+
+    def __init__(self, tmp_path: Path, sender_result: bool = True) -> None:
+        self.sent: list[str] = []
+        self._sender_result = sender_result
+        self.notifier = OwnerNotifier(
+            sender=self._send,
+            state_path=str(tmp_path / "gate_state.json"),
+            clock=_FakeClock(),
+            per_key_cooldown_seconds=6 * 3600.0,
+            text_dedupe_seconds=3600.0,
+            global_floor_seconds=0.0,
+            daily_cap=20,
+        )
+
+    def _send(self, text: str) -> bool:
+        self.sent.append(text)
+        return self._sender_result
+
+    def notify(self, text, *, severity, event_key=""):
+        return self.notifier.notify(text, severity=severity, event_key=event_key)
 
 
 # ---------------------------------------------------------------------------
@@ -378,12 +413,9 @@ class TestDailySelfReport:
         assert "could not read" in text
         assert "ImportError" in text
 
-    def test_delivery_latches_once_per_day(self, monkeypatch):
-        sends: list[str] = []
-        monkeypatch.setattr(
-            "friday.proactive.telegram_gateway.send_owner_message",
-            lambda text: sends.append(text) or True,
-        )
+    def test_delivery_latches_once_per_day(self, monkeypatch, tmp_path):
+        gate = _GateHarness(tmp_path)
+        monkeypatch.setattr(dsr, "notify_owner", gate.notify)
         evening = datetime(2026, 11, 11, 21, 30, tzinfo=OWNER_TZ)
         monkeypatch.setattr(dsr, "_conversation_stats", lambda: {"total": 0, "failed": 0})
         monkeypatch.setattr(dsr, "_task_ledger_stats", lambda: {"total": 0, "by_agent": {}})
@@ -392,25 +424,25 @@ class TestDailySelfReport:
         monkeypatch.setattr(dsr, "_memory_growth", lambda: {"stored_today": 0})
         r1 = dsr.maybe_deliver_reports(now=evening)
         r2 = dsr.maybe_deliver_reports(now=evening.replace(minute=45))
-        assert r1["daily"] == "sent" and len(sends) == 1
+        assert r1["daily"] == "sent" and len(gate.sent) == 1
         assert r2["daily"] is None  # latched
 
-    def test_no_delivery_outside_window(self, monkeypatch):
-        sends: list[str] = []
-        monkeypatch.setattr(
-            "friday.proactive.telegram_gateway.send_owner_message",
-            lambda text: sends.append(text) or True,
-        )
+    def test_no_delivery_outside_window(self, monkeypatch, tmp_path):
+        gate = _GateHarness(tmp_path)
+        monkeypatch.setattr(dsr, "notify_owner", gate.notify)
         morning = datetime(2026, 11, 11, 10, 0, tzinfo=OWNER_TZ)
         assert dsr.maybe_deliver_reports(now=morning)["daily"] is None
-        assert sends == []
+        assert gate.sent == []
 
-    def test_weekly_only_on_sunday_evening(self, monkeypatch):
-        sends: list[str] = []
-        monkeypatch.setattr(
-            "friday.proactive.telegram_gateway.send_owner_message",
-            lambda text: sends.append(text) or True,
-        )
+    def test_weekly_only_on_sunday_evening(self, monkeypatch, tmp_path):
+        # A fresh gate per scenario: the gate's per-day keys/cooldowns are
+        # real, so re-offering the same report to the same gate would be
+        # held (cooldown) — each scenario is an independent evening.
+        def fresh_gate(name):
+            gate = _GateHarness(tmp_path / name)
+            monkeypatch.setattr(dsr, "notify_owner", gate.notify)
+            return gate
+
         monkeypatch.setattr(dsr, "_conversation_stats", lambda: {"total": 0, "failed": 0})
         monkeypatch.setattr(dsr, "_task_ledger_stats", lambda: {"total": 3, "by_status": {"completed": 2, "failed": 1, "dispatched": 0}})
         monkeypatch.setattr(dsr, "_fleet_stats", lambda: {"total": 9, "reachable": 9, "last_error": None})
@@ -419,29 +451,28 @@ class TestDailySelfReport:
         # Wednesday 21:30 → daily only
         wed = datetime(2026, 11, 11, 21, 30, tzinfo=OWNER_TZ)  # a Wednesday
         assert wed.weekday() != 6
+        gate = fresh_gate("wed")
         r = dsr.maybe_deliver_reports(now=wed)
         assert r["weekly"] is None and r["daily"] == "sent"
         # Sunday 20:30 → weekly only (daily window starts 21:00)
         dsr.reset_for_tests()
-        sends.clear()
+        gate = fresh_gate("sun_early")
         sun_early = datetime(2026, 11, 15, 20, 30, tzinfo=OWNER_TZ)
         assert sun_early.weekday() == 6
         r = dsr.maybe_deliver_reports(now=sun_early)
         assert r["weekly"] == "sent" and r["daily"] is None
-        assert len(sends) == 1
+        assert len(gate.sent) == 1
         # Sunday 21:30 → the daily report follows
         dsr.reset_for_tests()
-        sends.clear()
+        gate = fresh_gate("sun_late")
         sun_late = datetime(2026, 11, 15, 21, 30, tzinfo=OWNER_TZ)
         r = dsr.maybe_deliver_reports(now=sun_late)
         assert r["weekly"] == "sent" and r["daily"] == "sent"
-        assert len(sends) == 2
+        assert len(gate.sent) == 2
 
-    def test_send_failure_does_not_latch(self, monkeypatch):
-        monkeypatch.setattr(
-            "friday.proactive.telegram_gateway.send_owner_message",
-            lambda text: False,
-        )
+    def test_send_failure_does_not_latch(self, monkeypatch, tmp_path):
+        gate = _GateHarness(tmp_path, sender_result=False)
+        monkeypatch.setattr(dsr, "notify_owner", gate.notify)
         evening = datetime(2026, 11, 11, 21, 30, tzinfo=OWNER_TZ)
         monkeypatch.setattr(dsr, "_conversation_stats", lambda: {"total": 0, "failed": 0})
         monkeypatch.setattr(dsr, "_task_ledger_stats", lambda: {"total": 0, "by_agent": {}})
