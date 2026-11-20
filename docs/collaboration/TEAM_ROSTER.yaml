@@ -1,5 +1,5 @@
 schema_version: 1
-updated_at: "2026-11-20T19:35:00Z"
+updated_at: "2026-11-20T20:10:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 collaboration_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
 authority:
@@ -111,6 +111,20 @@ collaborators:
     last_verified_at: "2026-11-14"
     access_limits:
       - "Merges are owner-approved per merge-commit labels; production restarts/deployments beyond the standard Fleet CD flow still require owner authorization."
+
+  - id: muse_1
+    display_name: "Muse 1"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (first worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    verified_capabilities:
+      - "Onboarding 2026-11-21 (Muse 1, evidence-backed only): displayed assistant name set to 'Muse 1'; read docs/MASTER_PLAN.md (409 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (478 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full, plus WORK_BOARD.yaml snapshot 2026-11-17 and TASK-REL-057 record; local clone of origin/main at 9e07a99 (Merge PR #1142)."
+      - "Onboarding 2026-11-21: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 main dddbe327); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file with secret masking (header only, no secrets copied)."
+      - "Onboarding 2026-11-21: GitHub access confirmed — PAT verified as surendra2304 via GET /user 200; public repo and issue #35 read confirmed; three scheduled tasks created (muse1-assignment-poll every 5 min, muse1-hourly-self-check every 1 h, muse1-weekly-reset Saturdays 22:07 IST; weekly reset verified Sat Nov 21 9:57 PM IST)."
+      - "Onboarding 2026-11-21: identity corrected by Surendra from 'Muse 2' to 'Muse 1' — the earlier Muse 2 onboarding work (PRs #1137/#1140, TASK-REL-057) belongs to the Muse 2 account, not this account; this account holds no assignment yet."
+    active_assignments: []
+    active_branches: []
+    last_verified_at: "2026-11-21"
 
 onboarding_policy:
   required_before_task_claim:
