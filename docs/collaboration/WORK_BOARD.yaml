@@ -11824,14 +11824,12 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     title: "adoption anchor close-awareness: earliest_position_tag must skip fingerprint-matching tags the fill ledger has already closed (PR #1058 review condition C1)"
     status: AVAILABLE
     owner: muse_ai
-    assignee: muse_2
     branch: null
     created_at: "2026-11-19"
     updated_at: "2026-11-19"
     evidence:
       - "Filed by the merge-lane-5 board union under PR #1058 (TASK-STR-FWD-026) supervisor-review condition C1 (PR #1058 review comment 7000482547): a position reopened inside the fingerprint tolerances after a booked close inherits the ORIGINAL open timestamp from earliest_position_tag(), so an adopting daemon restart computes the new position's time exit from the first entry and would market-close it on its first management pass. Probe-confirmed at review time."
       - "Non-gating for #1058 and bounded: it could not touch the book that existed at review (that book was extinguished by the owner's 2026-11-19 Binance demo-account reset and the verified close-all that followed). Land before governed-lane re-entries are common."
-      - "ASSIGNED to Muse 2 (roster id muse_2) by Muse, Head Manager, 2026-11-20 — Muse 2 pilot task. Claim on issue #35 before editing; branch prefix claude2/."
     next_action: "Make the adoption anchor close-aware: when selecting the earliest fingerprint-matching tag, skip tags whose position the fill ledger has already booked as closed; add a regression test reproducing the reopen-inside-tolerance scenario (tag stream plus a booked close -> the anchor must be the reopen tag, not the original entry)."
     files:
       - Stratex/measurement/fill_ledger.py
@@ -12355,13 +12353,11 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     title: "Inference trigger-path coverage for the five remaining Inference-step suites (rel026, cache_scope, code_review, output_is_verified, source_repair_context): enumerate them in owner-workflows.yml trigger path lists like their siblings, or switch Inference test triggers to Inference/tests/** (the FRIDAY/tests/** and VyralX/tests/** pattern). Filed as the supervisor condition on PR #1113 (comment 7031518393)."
     status: AVAILABLE
     owner: muse_ai
-    assignee: muse_1
     priority: P2
     created_at: "2026-11-20"
     updated_at: "2026-11-20"
     evidence:
       - "Filed as the supervisor condition on PR #1113 (comment 7031518393), discharged by filing in the union merge of TASK-REL-056. TASK-REL-056 wired Inference/tests/test_inf015_flash_lite_catalogue.py into both owner-workflows.yml trigger path lists, but the five other Inference-step suites appear only in the step's pytest list and in neither trigger path list: Inference/tests/test_test_generation_reliability_rel026.py, Inference/tests/test_unified_manager_cache_scope.py, Inference/tests/test_forge_code_review_is_evidence_based.py, Inference/tests/test_forge_output_is_verified.py, Inference/tests/test_source_repair_context.py (each verified to occur exactly once in owner-workflows.yml at main ae2e7d43, in the step only). A change to one of those suites alone therefore does not fire the workflow that runs it. Pre-existing gap, same defect class as REL-056, explicitly flagged as out of REL-056's scope by its supervisor review."
-      - "ASSIGNED to Muse 1 (roster id muse_1) by Muse, Head Manager, 2026-11-20 — Muse 1 pilot task: prove the full loop (claim on issue #35, branch claude1/, PR, review, merge by Muse)."
     next_action: "Claim on issue #35 before editing. Either enumerate the five suites in both owner-workflows.yml trigger path lists alongside their siblings, or switch the Inference test triggers to Inference/tests/** (the pattern FRIDAY/tests/** and VyralX/tests/** already use in the same lists). Acceptance: a contracts run whose trigger evaluation shows a touch to any one of the five suites fires owner-workflows, and the Inference step still passes."
     files:
       - .github/workflows/owner-workflows.yml

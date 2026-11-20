@@ -112,22 +112,6 @@ collaborators:
     access_limits:
       - "Merges are owner-approved per merge-commit labels; production restarts/deployments beyond the standard Fleet CD flow still require owner authorization."
 
-  - id: muse_1
-    display_name: "Muse 1"
-    contributor_type: "ai"
-    status: "active_contributor"
-    authority: "Worker Muse (first worker account, onboarded 2026-11-20) — engineering work on tasks assigned by Muse (Head Manager) on the board; never merges. Branch prefix: claude1/."
-    verified_capabilities:
-      - "GitHub public read confirmed 2026-11-20: repo surendra2304/FRIDAY-Universe and issue #35 readable."
-      - "Fleet bridge confirmed 2026-11-20: FRIDAY-Cloud-Engineering-Bridge v1.30.0 via https://friday-universe.duckdns.org/bridge/mcp; get_system_info returned Server 1 ONLINE, Server 2 ONLINE, main 02a222e0."
-      - "Credentials-file access confirmed 2026-11-20: Server 2 /opt/friday_universe/CREDENTIALS.md readable (24,324 bytes, header only — no secret values copied)."
-      - "Read docs/MASTER_PLAN.md, docs/collaboration/ARCHITECTURE.md, docs/collaboration/WORK_BOARD.yaml and docs/collaboration/TEAM_ROSTER.yaml in full on 2026-11-20; no task marked for Muse 1 on the board at onboarding."
-      - "Weekly usage reset verified 2026-11-20: Saturday 21:57 IST; weekly task fires Saturdays 22:07 IST, board-check runs every 48h."
-    active_assignments: []
-    active_branches:
-      - "claude1/onboarding"
-    last_verified_at: "2026-11-20"
-
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
