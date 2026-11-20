@@ -187,6 +187,17 @@ class Settings(BaseSettings):
     # so a drained day cannot stall a cycle indefinitely.
     vision_max_retries: int = Field(default=3, ge=0, le=10)
     vision_retry_wait_cap_seconds: int = Field(default=240, ge=0, le=3600)
+    # TASK-VYR-028: Gemini vision fail-over (fix 4). When the primary
+    # vision call exhausts its VYR-026 retries on HTTP 429, the scene
+    # pass makes exactly one attempt against this second
+    # OpenAI-compatible endpoint instead of skipping the candidate.
+    # Disabled unless BOTH a base URL and a key are set; the model
+    # defaults to gemini-3.5-flash-lite. All three are deployment env
+    # only (VISION_FAILOVER_BASE_URL / VISION_FAILOVER_MODEL /
+    # VISION_FAILOVER_API_KEY) — the key is never committed or logged.
+    vision_failover_base_url: str = ""
+    vision_failover_model: str = "gemini-3.5-flash-lite"
+    vision_failover_api_key: str = ""
     tts_provider: str = "espeak"
     espeak_bin: str = "espeak-ng"
     espeak_voice: str = "en-us"
