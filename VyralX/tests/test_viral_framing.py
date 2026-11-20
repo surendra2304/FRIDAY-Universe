@@ -1501,8 +1501,9 @@ def test_vision_failover_after_groq_429_exhaustion(vision_env, monkeypatch):
     assert len(gemini_calls) == 1
     assert gemini_calls[0][1]["model"] == "gemini-3.5-flash-lite"  # model default
     assert gemini_calls[0][1]["max_tokens"] == 1100  # same body as Groq
-    assert gemini_calls[0][2]["Authorization"] == "Bearer failover-fake-key"
-    assert groq_calls[0][2]["Authorization"] == "Bearer primary-fake-key"
+    assert gemini_calls[0][2]["Authorization"] == "Bearer " + vision_env.settings.vision_failover_api_key
+    assert groq_calls[0][2]["Authorization"] == "Bearer " + vision_env.settings.vision_api_key
+    assert gemini_calls[0][2]["Authorization"] != groq_calls[0][2]["Authorization"]  # per-endpoint keys
     assert vision_env.clock.sleeps == [30.0, 60.0, 120.0]  # VYR-026 ladder kept
     outcome = _sa026.last_vision_outcome()
     assert outcome["status"] == 200
