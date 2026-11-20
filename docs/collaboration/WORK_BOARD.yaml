@@ -12287,6 +12287,24 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     files:
       - .github/workflows/owner-workflows.yml
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-OBS-006
+    title: "Fleet CD health gate skips masked/not-found units in both deploy jobs + dirty-tree refusal emits ::error:: — the workflow half of the S2 fleet-CD failure diagnosed 2026-11-20"
+    status: MERGED
+    owner: muse_ai
+    branch: claude/task-obs-006-cd-health-gate
+    pr: 1110
+    priority: P2
+    created_at: "2026-11-20"
+    updated_at: "2026-11-20"
+    evidence:
+      - "Claim: GitHub issue #35 comment 7030177237 by Muse before any editing (TASK-OBS-006; next free OBS id — board max was TASK-OBS-005; a scan of the hub's newest 24 comments found no OBS-006 claim). Base: main 4f033b02316f44f9ebf3af892d8125b0b5f9fee5 (board 556 records)."
+      - "Diagnosis (~/workspace/s2-cd-diagnosis/DIAGNOSIS.md, 2026-11-20): 'Deploy Specialist Fleet (Server 2)' failed on all three of 2026-11-19's merge commits (66b7b79e, f98d93ef, 4f033b02). Proven first cause is on-box state — 3 uncommitted tracked deletions on S2 (the 2026-11-19 purge's lane-JSON deletions) trip the deploy script's dirty-tree guard in ~8s; that half is a separate ops restore, NOT this PR. Latent second cause: the post-deploy health gate probes every port unconditionally, but VyralX on S2 is masked (it runs on AWS U2 since the flip), so even a clean tree would fail the gate after ~3 min of probes; the gate has no LoadState exemption, unlike the restart loop in the same script."
+      - "Change (deploy-monorepo.yml blob ad344138 -> 4f52f9cd): (1) both deploy jobs' health gates check each unit's LoadState before probing (the restart loop's systemctl show idiom) and skip masked/not-found units with a log line — marked TASK-OBS-006 blocks, byte-identical across jobs. Server 1's gate has the identical unconditional-probe pattern, so the same guard is applied there too. The second-chance sweep is deliberately unchanged: it only re-probes agents already in FAILED_HEALTH, which post-fix can only contain units that were actually probed. Probe counts/timeouts for loaded units unchanged. (2) The dirty-tree refusal in both jobs now emits ::error:: before exit 1 (message text unchanged); the TASK-OBS-005 branch guard already emits ::error:: in the base blob — verified, unchanged. Nothing else changes: triggers, path filters, restart logic."
+      - "Pre-ship verification (~/workspace/obs006-build/SHELL-TEST-EVIDENCE.md): both jobs' gate sections extracted verbatim (old vs new) and executed under stubbed systemctl/curl/sleep — 8 scenarios. OLD S2 gate with VyralX masked: rc=1, :8010 probed 24x (the diagnosed latent failure reproduced). NEW S2 gate with VyralX masked or not-found: rc=0, VyralX skipped, :8010 probed 0x, Sentinel/Cortex healthy. NEW with VyralX loaded+healthy: probed, rc=0; loaded+dead: rc=1 (both sweeps); Sentinel dead with VyralX masked: rc=1 (the skip masks nothing real). NEW S1 gate with Futuris not-found: skipped, rc=0 (OLD: rc=1). All four full job scripts pass bash -n; the workflow parses as YAML; shipped diff vs the true base blob is exactly the two changes."
+    next_action: "Supervisor review -> merge. Post-merge acceptance: with the separate S2 tree restore done, a workflow_dispatch (or the next server2-matching push) shows the S2 job green — checkout fast-forwarded to main, VyralX skipped in the gate, Sentinel/Cortex probed healthy. Build phase only in this PR: no merge performed, no server touched."
+    files:
+      - .github/workflows/deploy-monorepo.yml
+      - docs/collaboration/WORK_BOARD.yaml
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

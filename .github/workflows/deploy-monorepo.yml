@@ -85,7 +85,7 @@ jobs:
             # END MAIN-BRANCH GUARD (TASK-OBS-005)
             OLD_REV=$(git rev-parse HEAD)
             if ! git diff --quiet || ! git diff --cached --quiet; then
-              echo "Tracked collaborator changes present; refusing deployment without modifying them."
+              echo "::error::Tracked collaborator changes present; refusing deployment without modifying them."
               exit 1
             fi
             git fetch --no-tags origin "$DEPLOY_REV"
@@ -212,6 +212,19 @@ jobs:
                 Stratex) PORT=8003;; Futuris) PORT=8004;; IntelX) PORT=8005;; Forge) PORT=8006;;
               esac
               [ -n "$PORT" ] || continue
+              # BEGIN MASKED/ABSENT UNIT SKIP (TASK-OBS-006) — the restart
+              # loop above only restarts units whose LoadState is loaded,
+              # but this gate probed every port unconditionally, so a unit
+              # that is deliberately masked (or not installed) on this
+              # server failed the deploy although nothing was ever expected
+              # to answer (Server 2's VyralX, masked since it moved to AWS
+              # U2, is the proven case). Mirror the restart loop's check:
+              # skip the probe for masked / not-found units, and log it.
+              if [ "$(systemctl show "${AGENT}.service" --property=LoadState --value)" = "masked" ] || [ "$(systemctl show "${AGENT}.service" --property=LoadState --value)" = "not-found" ]; then
+                echo "    $AGENT: skipped — ${AGENT}.service is masked or not-found on this server; not probed"
+                continue
+              fi
+              # END MASKED/ABSENT UNIT SKIP (TASK-OBS-006)
               OK=""
               for i in $(seq 1 $PROBES); do
                 if curl -sf -m 5 "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then OK=yes; break; fi
@@ -329,7 +342,7 @@ jobs:
             # END MAIN-BRANCH GUARD (TASK-OBS-005)
             OLD_REV=$(git rev-parse HEAD)
             if ! git diff --quiet || ! git diff --cached --quiet; then
-              echo "Tracked collaborator changes present; refusing deployment without modifying them."
+              echo "::error::Tracked collaborator changes present; refusing deployment without modifying them."
               exit 1
             fi
             git fetch --no-tags origin "$DEPLOY_REV"
@@ -376,6 +389,19 @@ jobs:
                 Sentinel) PORT=8008;; Cortex) PORT=8009;; VyralX) PORT=8010;;
               esac
               [ -n "$PORT" ] || continue
+              # BEGIN MASKED/ABSENT UNIT SKIP (TASK-OBS-006) — the restart
+              # loop above only restarts units whose LoadState is loaded,
+              # but this gate probed every port unconditionally, so a unit
+              # that is deliberately masked (or not installed) on this
+              # server failed the deploy although nothing was ever expected
+              # to answer (Server 2's VyralX, masked since it moved to AWS
+              # U2, is the proven case). Mirror the restart loop's check:
+              # skip the probe for masked / not-found units, and log it.
+              if [ "$(systemctl show "${AGENT}.service" --property=LoadState --value)" = "masked" ] || [ "$(systemctl show "${AGENT}.service" --property=LoadState --value)" = "not-found" ]; then
+                echo "    $AGENT: skipped — ${AGENT}.service is masked or not-found on this server; not probed"
+                continue
+              fi
+              # END MASKED/ABSENT UNIT SKIP (TASK-OBS-006)
               OK=""
               for i in $(seq 1 12); do
                 if curl -sf -m 5 "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then OK=yes; break; fi
