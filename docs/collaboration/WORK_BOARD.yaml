@@ -12021,7 +12021,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: IN_PROGRESS
     owner: muse_1
     branch: muse1/task-frd-028-daily-self-report-owner-notify-gate
-    pr: null
+    pr: 1155
     priority: P2
     created_at: "2026-11-19"
     updated_at: "2026-11-21"
@@ -12032,6 +12032,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Assignment: issue #35 comment 7049687666 by Muse (Head Manager) 2026-11-21 - queued to Muse 1 after TASK-STR-FWD-027. Coordinator decision recorded in this record: wire the G7/G8 sends through notify_owner at report-class severity; exemption only if structurally impossible, reasons in the gate docstring."
       - "Claim: issue #35 comment 7052260324 by Muse 1 before any editing. Base: main b7bdd6e."
       - "Wiring proved possible (no exemption): new Severity.REPORT, a sendable report class in owner_notify (explicit SENDABLE_SEVERITIES set, not a numeric bar); the G7/G8 sends in daily_self_report.py offer at REPORT with per-day event keys self_report:daily:<date> / self_report:weekly:<date>. The board's original files list named server.py, but the sends live in daily_self_report.py (server.py only runs the 10-minute _daily_report_loop tick); server.py is unchanged. A held gate verdict latches the report for the day (FRD-025 latch rule); only FAILED / NOT_CONFIGURED retries next cycle."
+      - "PR #1155 opened for Muse review: https://github.com/surendra2304/FRIDAY-Universe/pull/1155 (branch muse1/task-frd-028-daily-self-report-owner-notify-gate, base main b7bdd6e). Change: Severity.REPORT sendable class + G7/G8 offers at REPORT with per-day keys; held verdicts latch, FAILED/NOT_CONFIGURED retry. New suite test_frd028_self_report_gate.py 9/9, test_owner_notify.py 13/13, batch5 delivery tests drive the real gate, frd025 wiring 20/20; contracts list 698 passed with 2 pre-existing TestRenderTool failures reproduced on pristine main. Registry validator COLLABORATION REGISTRY VALID, identical to pristine main. Bypass audit re-run: no send_owner_message caller left outside the gate except the gateway transport / conversational bot path."
     next_action: "Coordinator decides: wire daily_self_report's G7/G8 sends through notify_owner with an explicit severity (report-class, expected ROUTINE/below-bar except failure flags), or record a permanent exemption with reasons in the owner_notify gate docstring. Either way the bypass audit must end with zero undisclosed ungated proactive paths."
     files:
       - FRIDAY/src/friday/proactive/daily_self_report.py
