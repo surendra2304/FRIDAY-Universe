@@ -149,6 +149,19 @@ class Settings(BaseSettings):
     # budget against a drained day.
     viral_loop_vision_min_interval_seconds: float = Field(default=65.0, ge=0.0, le=3600.0)
     viral_loop_vision_daily_token_budget: int = Field(default=180000, ge=0, le=10000000)
+    # TASK-VYR-029: separate daily budget for Gemini fail-over tokens.
+    # The Gemini free tier for gemini-3.5-flash-lite binds on REQUESTS
+    # (15 RPM / 500 RPD), not tokens, so a token cap is only a proxy:
+    # it must trip at about the same point as the 500 RPD limit. The
+    # measured estimate for one analyze_scene request (3 frames +
+    # ~2,316-char prompt + max_tokens 1100) is 4,889 tokens, so
+    # 500 requests x 4,889 = 2,444,500 -> 2,500,000 (~511 requests).
+    # This is deliberately NOT the 5,000,000 the brief's ~10k/request
+    # guess would give: that would allow ~1,022 fail-over requests,
+    # double the RPD, so the cycle would hit Gemini 429s long before
+    # the budget trips and the clean stop would never fire. The 15
+    # RPM is never binding (the loop paces vision calls >= 65s apart).
+    viral_loop_vision_failover_daily_token_budget: int = Field(default=2500000, ge=0, le=10000000)
     viral_loop_vision_rate_limit_stop_threshold: int = Field(default=3, ge=1, le=24)
     # --- IG2 B7-C1: optional MoneyPrinterTurbo producer lane --------------
     # The autopilot's producer lane. "viral_remix" (default) is the native
