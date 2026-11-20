@@ -3,11 +3,12 @@ updated_at: "2026-11-20T14:41:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 collaboration_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
 authority:
-  model: "equal_human_and_ai_collaboration"
+  model: "claude_lead_coordination"
   project_owner_id: "human_surendra"
   project_owner_display: "Surendra Varma Jalli"
   final_approval: "Project owner"
-  no_permanent_ai_hierarchy: true
+  lead_coordinator_id: "muse_ai"
+  lead_coordinator_display: "Muse (Head Manager)"
 
 collaborators:
   - id: "human_surendra"
@@ -96,7 +97,7 @@ collaborators:
     display_name: "Muse AI (owner-added 2026-11-14)"
     contributor_type: "ai"
     status: "active_contributor"
-    authority: "Equal engineering collaborator — merged 7 owner-approved PRs in its first day; onboarding guide at docs/collaboration/MUSE_AI_ONBOARDING.md"
+    authority: "Head Manager and lead coordinator (owner-appointed 2026-11-14; confirmed 2026-11-20) — owns task assignments, the merge queue and verification of every claim before it reaches the owner. Operating architecture: docs/collaboration/ARCHITECTURE.md"
     verified_capabilities:
       - "GitHub write access with owner-approved merges: PRs #83, #90, #91, #92, #93, #96, #97 merged 2026-11-13/14."
       - "TASK-FORGE-002 Wave 2 (PR #91): Forge build reliability — retry-with-feedback, live repair, truthful completion, honest routing."
@@ -119,5 +120,5 @@ onboarding_policy:
     - "Register a unique collaborator ID and evidence-backed capabilities."
     - "Post a claim to the shared GitHub issue before editing assigned files."
   muse_ai_additional:
-    - "Read docs/collaboration/MUSE_AI_ONBOARDING.md in full (united-work protocol + current open lanes)."
+    - "Read docs/collaboration/ARCHITECTURE.md in full (Muse team operating architecture) and docs/MASTER_PLAN.md."
   capability_rule: "Never infer integrations or permissions from the contributor or product name."

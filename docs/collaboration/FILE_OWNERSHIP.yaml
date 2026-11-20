@@ -17,353 +17,353 @@ protected_worktree:
 
 claims:
   - path: FRIDAY/ui/components/VoiceCall.tsx
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches: [arena/TASK-RUNTIME-AUDIT-002]
     status: ACTIVE_CLAIM
     task: "TASK-RUNTIME-AUDIT-002; issue35 claims6847793425/6847932557/6847960656"
   - path: FRIDAY/ui/out/
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches: [arena/TASK-RUNTIME-AUDIT-002]
     status: ACTIVE_CLAIM
     task: "TASK-RUNTIME-AUDIT-002; issue35 claims6847793425/6847932557/6847960656"
   - path: scripts/verification/runtime_audit/
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches: [arena/TASK-RUNTIME-AUDIT-002]
     status: ACTIVE_CLAIM
     task: "TASK-RUNTIME-AUDIT-002; issue35 claims6847793425/6847932557/6847960656"
   - path: .github/workflows/voice-startup-regressions.yml
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches: [arena/TASK-RUNTIME-AUDIT-002]
     status: ACTIVE_CLAIM
     task: "TASK-RUNTIME-AUDIT-002; issue35 claims6847793425/6847932557/6847960656"
   - path: tests/test_runtime_audit_contract.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches: [arena/TASK-RUNTIME-AUDIT-002]
     status: ACTIVE_CLAIM
     task: "TASK-RUNTIME-AUDIT-002; issue35 claims6847793425/6847932557/6847960656"
   - path: docs/verification/RUNTIME_AUDIT_002.md
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches: [arena/TASK-RUNTIME-AUDIT-002]
     status: ACTIVE_CLAIM
     task: "TASK-RUNTIME-AUDIT-002; issue35 claims6847793425/6847932557/6847960656"
   - path: docs/verification/RUNTIME_AUDIT_002.evidence.json
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches: [arena/TASK-RUNTIME-AUDIT-002]
     status: ACTIVE_CLAIM
     task: "TASK-RUNTIME-AUDIT-002; issue35 claims6847793425/6847932557/6847960656"
   - path: Inference/app/api/v1_core_routes.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches: [arena/TASK-WF-015-inference-model-contract]
     status: ACTIVE_CLAIM
     task: "TASK-WF-015-INFERENCE-001; issue35 claim6848266494"
   - path: Inference/app/providers/unified_manager.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches: [arena/TASK-WF-015-inference-model-contract]
     status: ACTIVE_CLAIM
     task: "TASK-WF-015-INFERENCE-001; issue35 claim6848266494"
   - path: tests/test_inference_explicit_model_contract.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches: [arena/TASK-WF-015-inference-model-contract]
     status: ACTIVE_CLAIM
     task: "TASK-WF-015-INFERENCE-001; issue35 claim6848266494"
   - path: docs/verification/WF015_INFERENCE_MODEL_CONTRACT.md
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches: [arena/TASK-WF-015-inference-model-contract]
     status: ACTIVE_CLAIM
     task: "TASK-WF-015-INFERENCE-001; issue35 claim6848266494"
   - path: IntelX/intelx/api/grounded_live_research.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-015-grounded-research
     status: ACTIVE_CLAIM
     task: TASK-WF-015 grounded draft; claim6844448930, NOT accepted for deploy
   - path: tests/test_grounded_research_synthesis.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-015-grounded-research
     status: ACTIVE_CLAIM
     task: TASK-WF-015 grounded draft; claim6844448930, NOT accepted for deploy
   - path: IntelX/intelx/models/ai_universe_provider.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-015-structured-research
     status: ACTIVE_CLAIM
     task: TASK-WF-015 schema routing; claim6844197272
   - path: IntelX/tests/test_ai_universe_provider.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-015-structured-research
     status: ACTIVE_CLAIM
     task: TASK-WF-015 schema routing; claim6844197272
   - path: tests/test_grounded_live_research.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-015-research-relevance
     status: ACTIVE_CLAIM
     task: TASK-WF-015 research evidence integrity; claim6843903294
   - path: FRIDAY/tests/test_memory_mutation_targets.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-015-safe-memory-mutations
     status: ACTIVE_CLAIM
     task: TASK-WF-015 safety; claim6843332553
   - path: FRIDAY/tests/test_memory_recall_subject.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-015-recall-subject
     status: ACTIVE_CLAIM
     task: TASK-WF-015 followup recall subject/read budget; claim6842961865
   - path: FRIDAY/tests/test_shared_memory_lifecycle.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-015-shared-memory
     status: ACTIVE_CLAIM
     task: TASK-WF-015
   - path: docs/verification/OWNER_WORKFLOW_ACCEPTANCE.yaml
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-015-shared-memory
     status: ACTIVE_CLAIM
     task: TASK-WF-015
   - path: docs/verification/TEAM_ACCEPTANCE_HANDOFF.md
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-015-shared-memory
     status: ACTIVE_CLAIM
     task: TASK-WF-015
   - path: "requirements-ci.txt"
-    owner: "zai"
+    owner: muse_ai
     prs: [42]
     branches: ["zai/TASK-CI-002-main-green"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-002 execution pass (D-019): add the Stratex/Futuris test surface missing from the CI install."
 
   - path: "tests/repo_isolation.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [42]
     branches: ["zai/TASK-CI-002-main-green"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-002 execution pass (D-019): new shared surgical module-cache purge helper for ambiguous top-level packages."
 
   - path: "tests/stub_fleet.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [42]
     branches: ["zai/TASK-CI-002-main-green"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-002 execution pass (D-019): UNIVERSAL_ACTIONS gains the documented synthetic bus-plumbing actions."
 
   - path: "tests/test_e2e_real_repo_integration.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [42]
     branches: ["zai/TASK-CI-002-main-green"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-002 execution pass (D-019): agent-class isolation via repo_isolation; Cortex auth header per PR #26; VyralX dev-SQLite env."
 
   - path: "tests/test_graceful_degradation.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [42]
     branches: ["zai/TASK-CI-002-main-green"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-002 execution pass (D-019): _clean_app uses the shared surgical purge."
 
   - path: "tests/test_futuris_stratex_positions_fail_closed.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [42]
     branches: ["zai/TASK-CI-002-main-green"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-002 execution pass (D-019): structlog-contract logger stub."
 
   - path: "tests/test_deep_modules_batch9.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [42]
     branches: ["zai/TASK-CI-002-main-green"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-002 execution pass (D-019): TestMemoraDBViewer removed (module deleted in the 1818879 sweep)."
 
   - path: "tests/test_fleet_validation.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [42]
     branches: ["zai/TASK-CI-002-main-green"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-002 execution pass (D-019): credential-scan paths follow the docs/archive moves."
 
   - path: "tests/test_real_deep_layer11.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [42]
     branches: ["zai/TASK-CI-002-main-green"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-002 execution pass (D-019): VyralX subprocess env gains MEDIA_DATABASE_URL dev SQLite."
 
   - path: "tests/test_real_universe_dashboard.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [42]
     branches: ["zai/TASK-CI-002-main-green"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-002 execution pass (D-019): stop squatting the canonical 'dashboard' module name."
 
   - path: "Stratex/app/agents/real_autohedge.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [42]
     branches: ["zai/TASK-CI-002-main-green"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-002 execution pass (D-019): real bug fix - rebalance multiplied the symbol by the price."
 
   - path: "Forge/app/main.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [42]
     branches: ["zai/TASK-CI-002-main-green"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-002 execution pass (D-019): browser router under /api/v1/forge/* per the fleet route contract."
 
   - path: "Memora/core/__init__.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [42]
     branches: ["zai/TASK-CI-002-main-green"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-002 execution pass (D-019): regular package for deterministic bare-core resolution."
 
   - path: "Memora/apps/__init__.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [42]
     branches: ["zai/TASK-CI-002-main-green"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-002 execution pass (D-019): regular package for deterministic bare-apps resolution."
 
   - path: "Memora/app/__init__.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [42]
     branches: ["zai/TASK-CI-002-main-green"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-002 execution pass (D-019): lazy PEP 562 shim; circular-import crash class eliminated."
 
   - path: ".github/workflows/validate-monorepo.yml"
-    owner: "claude"
+    owner: muse_ai
     prs: [23, 34]
     branches: ["claude/TASK-CI-003", "claude/TASK-CI-004"]
     status: "OVERLAPPING_CLAIMS"
     risk: "Both PRs modify the same validator workflow. Review and reconcile the combined diff before either merge."
 
   - path: "FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [28, 34, 44]
     branches: ["claude/TASK-DISPATCH-001", "claude/TASK-CI-004", "zai/TASK-CORE-003-task-records"]
     status: "MERGED"
     risk: "Historical: PRs #28/#34 both changed the dispatch bus and were merged in the 2026-11-10 owner-directed mass merge (OVERLAPPING_CLAIMS resolved then). Active: PR #44 (TASK-CORE-003, ZAI) adds an optional task_records store — default None keeps exactly today's behavior; retries and circuit breaker untouched; accepted (202) receipts stay at dispatched (no fabricated completion)."
 
   - path: "docs/MASTER_PLAN.md"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D022"
     risk: "Historical OVERLAPPING_CLAIMS (PRs #24/#26/#30) resolved by the 2026-11-10 owner-directed mass merge — all copies landed on main. Superseded: Master Plan v2 was written by ZAI as a direct main commit under D-022 (owner directive to recreate the plan; live-verified fleet status baked in). Any collaborator editing the plan now claims on issue #35 first."
 
   - path: "docs/handoff.md"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [24, 26, 30]
     branches: ["chatgpt/TASK-SEC-003", "chatgpt/TASK-CORE-001-cortex-route-auth", "chatgpt/TASK-DOC-SYNC-001", "zai/TASK-COLLAB-002-register-zai", "zai/TASK-DATA-001-db-architecture-audit"]
     status: "OVERLAPPING_CLAIMS"
     risk: "Multiple PRs update the handoff. Keep the most recent GitHub/runtime snapshot and include all concurrent contributors. ZAI branches append registry rows and task-specific sections only."
 
   - path: "docs/ARCHITECTURE_AS_BUILT.md"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [24, 26, 30]
     branches: ["chatgpt/TASK-SEC-003", "chatgpt/TASK-CORE-001-cortex-route-auth", "chatgpt/TASK-DOC-SYNC-001", "zai/TASK-COLLAB-002-register-zai", "zai/TASK-DATA-001-db-architecture-audit"]
     status: "OVERLAPPING_CLAIMS"
     risk: "As-built documentation needs one final reconciled update after implementation reviews. ZAI branches append PR-scoped sections only (TASK-DATA-001 adds section 20; sections 1-19 untouched)."
 
   - path: ".github/workflows/mirror-subrepos.yml"
-    owner: "claude"
+    owner: muse_ai
     prs: [27]
     branches: ["claude/TASK-MIRROR-001"]
     status: "MERGED"
     risk: "PR #27 also needs cross-repository token policy verification."
 
   - path: "Sentinel/sentinel/apps/api/main.py"
-    owner: "claude"
+    owner: muse_ai
     prs: [29]
     branches: ["claude/TASK-API-001"]
     status: "MERGED"
     risk: "Verify endpoint contract against deployed Sentinel auth middleware."
 
   - path: "bridge/auth.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [24]
     branches: ["chatgpt/TASK-SEC-003"]
     status: "MERGED"
     risk: "Production patch/runtime secret activation is not complete."
 
   - path: "Cortex/apps/api/src/cortex_api/main.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [26]
     branches: ["chatgpt/TASK-CORE-001-cortex-route-auth"]
     status: "MERGED"
     risk: "Resolve reviewer finding on read-only POST route capability."
 
   - path: ".github/workflows/secret-scan.yml"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [31]
     branches: ["chatgpt/TASK-SEC-004"]
     status: "MERGED"
     risk: "Change-range scan does not resolve the separate historical secret exposure."
 
   - path: "IntelX/intelx/db/engine.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [32]
     branches: ["chatgpt/TASK-INT-001-intelx-json"]
     status: "MERGED"
     risk: "Root monorepo validation remains red for other collection/dependency failures."
 
   - path: "IntelX/intelx/oracle_dialect_compat.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [32]
     branches: ["chatgpt/TASK-INT-001-intelx-json"]
     status: "MERGED"
     risk: "Verify actual Oracle async dialect inheritance on supported SQLAlchemy/python-oracledb versions."
 
   - path: "Futuris/futuris/connectors/trading_bot.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [33]
     branches: ["chatgpt/TASK-FUT-001-stratex-telemetry"]
     status: "MERGED"
     risk: "Telemetry-only change; verify no order/execution path was changed."
 
   - path: "Futuris/futuris/api/routers/risk.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [33]
     branches: ["chatgpt/TASK-FUT-001-stratex-telemetry"]
     status: "MERGED"
     risk: "Risk output must clearly distinguish verified position exposure from watchlist estimates."
 
   - path: "Forge/app/agents/real_optimization_advanced.py"
-    owner: "claude"
+    owner: muse_ai
     prs: [34]
     branches: ["claude/TASK-CI-004"]
     status: "MERGED"
     risk: "Optimizer rewrite must retain existing objective and thresholds; regression evidence is in PR #34."
 
   - path: "tests/conftest.py"
-    owner: "claude"
+    owner: muse_ai
     prs: [34]
     branches: ["claude/TASK-CI-004"]
     status: "MERGED"
@@ -371,14 +371,14 @@ claims:
 
 
   - path: "docs/collaboration/README.md"
-    owner: "chatgpt + vercel_v0 (consolidation required)"
+    owner: muse_ai  # reassigned 2026-11-20 (TASK-REL-060) from: chatgpt + vercel_v0 (consolidation required)
     prs: [30, 36]
     branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
     status: "OVERLAPPING_CLAIMS"
     risk: "PR #30 adds issue #35 claim protocol, validator instructions and broader operational rules; PR #36 has a separate initial guide. Compare and consolidate."
 
   - path: "docs/collaboration/TEAM_ROSTER.yaml"
-    owner: "chatgpt + vercel_v0 (consolidation required)"
+    owner: muse_ai  # reassigned 2026-11-20 (TASK-REL-060) from: chatgpt + vercel_v0 (consolidation required)
     prs: [30, 36]
     branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
     status: "OVERLAPPING_CLAIMS"
@@ -386,7 +386,7 @@ claims:
 
     workflow_followup_2026_11_12:
       path: docs/collaboration/TEAM_ROSTER.yaml
-      owner: arena_engineering_01
+      owner: muse_ai
       prs: []
       branches:
       - arena/TASK-WF-004-four-owner-workflows
@@ -404,7 +404,7 @@ claims:
     consolidation_note: "2026-11-13 (ZAI Agent 1, TASK-REGISTRY-001): removed the stranded duplicate task_id_warnings block (stale IN_PROGRESS copies of TASK-WF-005/006; live DEPLOYED/VERIFIED records under tasks: untouched), added TASK-CI-F821-MAIN and TASK-REGISTRY-001, updated TASK-STRATEX-TG409 to MERGED per PR #67 evidence. Strict duplicate-key YAML parse clean; 83 tasks; no duplicate ids."
 
   - path: "docs/collaboration/FILE_OWNERSHIP.yaml"
-    owner: "chatgpt + vercel_v0 (consolidation required)"
+    owner: muse_ai  # reassigned 2026-11-20 (TASK-REL-060) from: chatgpt + vercel_v0 (consolidation required)
     prs: [30, 36]
     branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
     status: "OVERLAPPING_CLAIMS"
@@ -419,28 +419,28 @@ claims:
     consolidation_note: "2026-11-13 (ZAI Agent 1, TASK-REGISTRY-001): conflict-marker repair at the 2d5e2a6 damage site — both sides retained in chronological order, inline repair note added; append-only contract preserved (no entries deleted or rewritten)."
 
   - path: "docs/collaboration/DECISIONS.md"
-    owner: "chatgpt + vercel_v0 (consolidation required)"
+    owner: muse_ai  # reassigned 2026-11-20 (TASK-REL-060) from: chatgpt + vercel_v0 (consolidation required)
     prs: [30, 36]
     branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
     status: "OVERLAPPING_CLAIMS"
     risk: "Merge unique decisions and preserve provenance; align names and numbering."
 
   - path: "docs/collaboration/HANDOFFS.md"
-    owner: "chatgpt + vercel_v0 (consolidation required)"
+    owner: muse_ai  # reassigned 2026-11-20 (TASK-REL-060) from: chatgpt + vercel_v0 (consolidation required)
     prs: [30, 36]
     branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
     status: "OVERLAPPING_CLAIMS"
     risk: "Combine v0's onboarding handoff with current Claude/ChatGPT/Grok and future ZAI/v0 next actions."
 
   - path: "docs/collaboration/TASK_TEMPLATE.yaml"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [30]
     branches: ["chatgpt/TASK-DOC-SYNC-001"]
     status: "MERGED"
     risk: "Not present in PR #36; ensure it follows the final shared board schema."
 
   - path: "docs/collaboration/HANDOFF_TEMPLATE.md"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [30]
     branches: ["chatgpt/TASK-DOC-SYNC-001"]
     status: "MERGED"
@@ -448,77 +448,77 @@ claims:
 
 
   - path: "Memora/storage/vector/oracle_vector_adapter.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [37]
     branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
     status: "MERGED"
     risk: "Oracle MERGE contract is tested with a recording session; live Oracle schema behavior remains unverified."
 
   - path: "Memora/tests/test_oracle_vector_tenant_isolation.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [37]
     branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
     status: "MERGED"
     risk: "SQLite tests cover tenant fallback and outer transaction boundaries; Oracle SQL behavior is contract-tested, not run against Oracle."
 
   - path: ".github/workflows/memora-vector-regression.yml"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [37, 38]
     branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit", "chatgpt/TASK-DATA-002-memory-tenant-isolation"]
     status: "MERGED"
     risk: "Focused Memora CI also runs the PR #38 legacy access-controller authorization regressions; PR #38 remains stacked on PR #37."
 
   - path: ".github/workflows/friday-universe-ci.yml"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [37, 38]
     branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit", "chatgpt/TASK-DATA-002-memory-tenant-isolation"]
     status: "MERGED"
     risk: "PR #37 adds vector regression; stacked PR #38 adds maintenance and cross-tenant context tests. Rebase #38 after #37 merges, then run final workflow on main."
 
   - path: "Memora/requirements.txt"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [37]
     branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
     status: "MERGED"
     risk: "Adds greenlet required by SQLAlchemy asyncio runtime imports."
 
   - path: "Memora/pyproject.toml"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [37]
     branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
     status: "MERGED"
     risk: "Declares same greenlet runtime dependency in package metadata."
 
   - path: "Memora/core/config.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [37]
     branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
     status: "MERGED"
     risk: "Removes unused VECTOR_DIMENSION=1536 setting; current generator/Oracle adapter are fixed at 384."
 
   - path: "Memora/.env.example"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [37]
     branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
     status: "MERGED"
     risk: "Documents 384-dimensional vector contract; does not verify deployed Qdrant collection."
 
   - path: "Memora/README.md"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [37]
     branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
     status: "MERGED"
     risk: "Documents fixed 384-dimensional vector contract and external Qdrant provisioning boundary."
 
   - path: "Memora/notes/phase-07-search-context-budgeting.md"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [37]
     branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
     status: "MERGED"
     risk: "Corrects a stale earlier statement that VECTOR_DIMENSION=1536 configured the actual embedding pipeline."
 
   - path: "Memora/notes/phase-08-storage-schema-deletion.md"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [37]
     branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
     status: "MERGED"
@@ -526,14 +526,14 @@ claims:
 
 
   - path: "Memora/apps/api/routers/v1_memories.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [38]
     branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
     status: "MERGED"
     risk: "Binds API-triggered horizon sweep to the authenticated Memora tenant; the internal background worker retains intentional multi-tenant mode."
 
   - path: "Memora/tests/test_memory_tenant_admin_maintenance_isolation.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [38]
     branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
     status: "MERGED"
@@ -541,105 +541,105 @@ claims:
 
 
   - path: "Memora/apps/api/routers/memory_access_controller.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [38]
     branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
     status: "MERGED"
     risk: "The mounted legacy in-memory access controller must remain authenticated and clearly non-canonical; grant/revoke/approval and global audit/report are restricted to the Memora service identity."
 
   - path: "Memora/tests/test_memory_access_controller_auth.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [38]
     branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
     status: "MERGED"
     risk: "Regression tests cover missing credentials, non-admin denial, subject binding, and Memora-admin grant/revoke/approval/audit access."
 
   - path: "Memora/core/memory/pipeline/write_service.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [38]
     branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
     status: "MERGED"
     risk: "Explicit shared_with recipients must not inherit access from write permission alone; owner share authorization and tenant-scoped recipient grants are enforced in the canonical write pipeline."
 
   - path: "Memora/tests/test_memory_write_share_authorization.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [38]
     branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
     status: "MERGED"
     risk: "Regression suite covers write-only escalation, wildcard/foreign-tenant recipient rejection, and authorized owner share with successful recipient read."
 
   - path: "Memora/apps/api/routers/v1_task.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [38]
     branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
     status: "MERGED"
     risk: "ActionReceipt evidence must report active ORM backend and durability; never hardcode Oracle or durable success for local/test storage."
 
   - path: "Memora/tests/test_task_receipt_truthfulness.py"
-    owner: "chatgpt"
+    owner: muse_ai
     prs: [38]
     branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
     status: "MERGED"
     risk: "Route-level regression proves local SQLite storage is reported as non-durable process-local storage rather than an Oracle durable write."
 
   - path: "Stratex/exchanges/exchange_implementations.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [39]
     branches: ["zai/TASK-STR-001-live-trading-guard"]
     status: "MERGED"
     risk: "Fail-closed live-trading guard replaces fabricated FILLED orders; unclaimed before this PR (no other open PR touches this file)."
 
   - path: "Stratex/tests/test_live_trading_guard.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [39]
     branches: ["zai/TASK-STR-001-live-trading-guard"]
     status: "MERGED"
     risk: "New regression suite (24 tests) for the live-trading guard contract."
 
   - path: "Stratex/tests/test_multi_exchange.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [39]
     branches: ["zai/TASK-STR-001-live-trading-guard"]
     status: "MERGED"
     risk: "Test fakes updated to the honest no-fabrication contract."
 
   - path: "Stratex/tests/test_multi_exchange_expansion.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [39]
     branches: ["zai/TASK-STR-001-live-trading-guard"]
     status: "MERGED"
     risk: "Router tests rewritten with labelled test doubles; honest-refusal assertions added."
 
   - path: "deploy/setup_fleet.sh"
-    owner: "zai"
+    owner: muse_ai
     prs: [41]
     branches: ["zai/TASK-DATA-001-db-architecture-audit"]
     status: "MERGED"
     risk: "TASK-DATA-001 remediation removes the dead ADMIN-privileged DSN construction that no service consumed; the script also stops demanding ADMIN passwords. Unclaimed before this PR (no other open PR touches this file). bash -n verified; not executed against either server."
 
   - path: "tests/test_proven_vertical_slice.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [43]
     branches: ["zai/TASK-CI-002-latency-stability"]
     status: "MERGED"
     risk: "Test-only statistics fix (D-020): true nearest-rank p95 of 40 samples (was max-of-20 via int(20*0.95)==19), warm-up runs excluded, host-calibrated budgets clamped [1.0, 4.0] (reference machine keeps the exact original 100ms/500ms contract). Merged to main as fca3d93; main fully green."
 
   - path: "FRIDAY/apps/core/src/friday_core/task_records.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [44]
     branches: ["zai/TASK-CORE-003-task-records"]
     status: "MERGED"
     task: "TASK-CORE-003: new unified task-record module (TaskRecord, TaskStatus lifecycle, thread-safe TaskRecordStore)."
 
   - path: "FRIDAY/apps/core/src/friday_core/universe_task_router.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [44]
     branches: ["zai/TASK-CORE-003-task-records"]
     status: "MERGED"
     task: "TASK-CORE-003: optional task_records store records submitted/assigned/routing_failed; default None keeps today's behavior."
 
   - path: "tests/test_task_records.py"
-    owner: "zai"
+    owner: muse_ai
     prs: [44]
     branches: ["zai/TASK-CORE-003-task-records"]
     status: "MERGED"
@@ -649,7 +649,7 @@ claims:
   # --- 2026-11-10 afternoon: TASK-SEC-005 + FRIDAY PRIME + M1 tranche (D-023) ---
 
   - path: "FRIDAY/src/friday/api/server.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
@@ -660,7 +660,7 @@ claims:
 
     workflow_followup_2026_11_12:
       path: FRIDAY/src/friday/api/server.py
-      owner: arena_engineering_01
+      owner: muse_ai
       prs: []
       branches:
       - arena/TASK-WF-004-four-owner-workflows
@@ -671,7 +671,7 @@ claims:
       expiry_policy: Contact owner before takeover; no automatic expiration.
     memory_safety_wf015: 'VERIFIED PR72/74/75; actualcanonical14/14/deploy43363885223; acceptancecoordinationcontinues; 2026-11-13T04:23:15.823531+00:00'
   - path: "FRIDAY/src/friday/api/app.js"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
@@ -679,28 +679,28 @@ claims:
     risk: "The chat path must stay /api/chat. Sending chat to /api/autonomous/goals is the exact owner-reported failure mode."
 
   - path: "FRIDAY/src/friday/api/index.html"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
     task: "FRIDAY PRIME dashboard rebuild (owner directive): futuristic neural-console shell — boot sequence, arc-reactor core, starfield/waveform canvases, floating HUD panels."
 
   - path: "FRIDAY/tests/test_control_session_hardening.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
     task: "TASK-SEC-005 attack regression: 15 tests replaying the forged-Origin remote mint."
 
   - path: "FRIDAY/tests/test_router_word_boundaries.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
     task: "TASK-ORCH-001 regression corpus: live misroute phrases + existing keyword phrases."
 
   - path: "FRIDAY/src/friday/routing/capability_router.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
@@ -709,7 +709,7 @@ claims:
     review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
     live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
   - path: "FRIDAY/src/friday/planning/orchestrator.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
@@ -717,14 +717,14 @@ claims:
 
 
   - path: "FRIDAY/src/friday/tools/builtin/fleet_status.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
     task: "TASK-API-002: FleetStatusTool — truthful 10-agent fleet probe behind the chat persona."
 
   - path: "FRIDAY/tests/test_fleet_status_truth.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
@@ -732,7 +732,7 @@ claims:
 
 
   - path: "FRIDAY/src/friday/tools/builtin/intelx_research.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
@@ -740,7 +740,7 @@ claims:
 
     workflow_followup_2026_11_12:
       path: FRIDAY/src/friday/tools/builtin/intelx_research.py
-      owner: arena_engineering_01
+      owner: muse_ai
       prs: []
       branches:
       - arena/TASK-WF-004-four-owner-workflows
@@ -750,7 +750,7 @@ claims:
       expected_next_update: '2026-11-12T15:56:17.706503+00:00'
       expiry_policy: Contact owner before takeover; no automatic expiration.
   - path: "FRIDAY/tests/test_intelx_research_dispatch.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
@@ -758,14 +758,14 @@ claims:
 
 
   - path: "FRIDAY/src/friday/tools/builtin/stratex_portfolio.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
     task: "TASK-STR-002: StratexPortfolioTool — read-only Binance-demo portfolio snapshot; live trading stays fail-closed (D-015)."
 
   - path: "FRIDAY/tests/test_stratex_portfolio_dispatch.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
@@ -773,7 +773,7 @@ claims:
 
 
   - path: "FRIDAY/tests/test_proactive_greeting_memory.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
@@ -781,7 +781,7 @@ claims:
 
 
   - path: "docs/security/FORGE_SANDBOX_REVIEW_2026-11-10.md"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
@@ -789,7 +789,7 @@ claims:
 
 
   - path: "FRIDAY/src/friday/tools/builtin/forge_code_task.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
@@ -797,7 +797,7 @@ claims:
 
     workflow_followup_2026_11_12:
       path: FRIDAY/src/friday/tools/builtin/forge_code_task.py
-      owner: arena_engineering_01
+      owner: muse_ai
       prs: []
       branches:
       - arena/TASK-WF-004-four-owner-workflows
@@ -811,7 +811,7 @@ claims:
     artifact_receipts_wf012: "Arena Agent 1; claim6833971149; arena/TASK-WF-012-artifact-receipts; 2026-11-12T19:41:40.428594+00:00; update2h/contact before takeover."
     artifact_receipt_schema_wf012: "Arena Agent 1; refinement6834283078; arena/TASK-WF-012-saved-manifest-schema; same lane/contact before takeover."
   - path: "FRIDAY/tests/test_forge_code_dispatch.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
@@ -820,7 +820,7 @@ claims:
 
     workflow_followup_2026_11_12:
       path: FRIDAY/tests/test_forge_code_dispatch.py
-      owner: arena_engineering_01
+      owner: muse_ai
       prs: []
       branches:
       - arena/TASK-WF-004-four-owner-workflows
@@ -830,77 +830,77 @@ claims:
       expected_next_update: '2026-11-12T15:56:17.706503+00:00'
       expiry_policy: Contact owner before takeover; no automatic expiration.
   - path: "FRIDAY/src/friday/proactive/morning_brief.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
     task: "TASK-VOI-002: proactive morning brief — real data, honest failures, once per morning."
 
   - path: "FRIDAY/tests/test_morning_brief.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
     task: "TASK-VOI-002 tests: window gating, once-per-morning, honest failures, delivery."
 
   - path: "scripts/validate_fleet_live.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-VAL-001: live fleet validation through the public gateway with per-agent evidence."
 
   - path: "scripts/val002_ingress_probes.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-VAL-002: read-only ingress security probes (round 1)."
 
   - path: "scripts/val002_probes_round2.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-VAL-002: corrected-path + bridge MCP session protocol probes (round 2)."
 
   - path: "docs/security/INGRESS_BRIDGE_REVIEW_2026-11-10.md"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-VAL-002: anonymous ingress/bridge security review with live evidence and owner decision D-024 proposal."
 
   - path: "scripts/fleet_health_watcher.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-OBS-001: crash-loop detection and health alerting watcher."
 
   - path: "FRIDAY/src/friday/core/owner_time.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-TZ-001 (D-026): IST owner-clock helper — every owner-facing time surface reads from here (watcher/voice/chat/briefings display timestamps IST per the same decision)."
 
   - path: "deploy/fleet-health-watcher.service"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-OBS-001: systemd service unit for the fleet health watcher."
 
   - path: "deploy/fleet-health-watcher.timer"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-OBS-001: 5-minute systemd timer for the fleet health watcher."
 
   - path: ".github/workflows/deploy-monorepo.yml"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
@@ -908,161 +908,161 @@ claims:
 
     authorized_deploy_followup_task_wf_004: "Arena PR56, 2026-11-12T14:32:20.987715+00:00; exact-SHA fast-forward sync and explicit voice restart; owner authorized cloud updates; preserve collaborator work."
   - path: "tests/test_fleet_health_watcher.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-OBS-001: 26 unit tests over the watcher decision logic."
 
   - path: "scripts/rollback_deploy.sh"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-OBS-002: ancestor-guarded production rollback script with receipts."
 
   - path: ".github/workflows/rollback-deploy.yml"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-OBS-002: one-click Fleet Rollback workflow (both servers, typed confirmation, post-rollback gateway check)."
 
   - path: "tests/test_rollback_deploy.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-OBS-002: 8 guard tests against a git fixture (forward/sideways refusal etc.)."
 
   - path: "docs/observability/DEPLOY_HEALTH_AND_ROLLBACK.md"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-OBS-001/002: runbook (activation commands, decision table, evidence trail)."
 
   - path: "scripts/backup_fleet_databases.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-INF-003: per-agent logical JSONL backup + config snapshot + checksum verify."
 
   - path: "scripts/restore_fleet_database.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-INF-003: read-only restore drill + guarded destructive load."
 
   - path: ".github/workflows/fleet-backup.yml"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-INF-003: weekly scheduled backup on Server 1 + manual dispatch with disk guard."
 
   - path: "tests/test_backup_fleet_databases.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-INF-003: 14 unit tests over dump/manifest/verify logic."
 
   - path: "tests/test_restore_fleet_database.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-INF-003: 11 unit tests over drill/apply guards."
 
   - path: ".github/workflows/ledger-persistence-drill.yml"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-DATA-003: owner-authorized production restart-survival drill for Memora/Stratex ledgers."
 
   - path: "tests/test_ledger_persistence_recovery.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-DATA-003: 4 real-subprocess process-death persistence tests for both ledgers."
 
   - path: "docs/observability/BACKUP_RESTORE_AND_LEDGER_DRILL.md"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-INF-003/DATA-003: backup, restore, retention and ledger-drill runbook."
 
   - path: "docs/autonomy/AUTONOMY_AUDIT_2026-11-10.md"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-ORCH-003: autonomy + fleet supervision audit with permitted/forbidden claims."
 
   - path: "FRIDAY/tests/test_fleet_supervision_loop_contracts.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-ORCH-003: 8 guard tests over supervision honesty + runtime-only autonomy."
 
   - path: "FRIDAY/scripts/voice_preflight.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-VOI-001: 9-check voice-loop preflight (no secrets printed)."
 
   - path: "docs/voice/VOICE_TEST_KIT_2026-11-10.md"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-VOI-001: the owner's 6-phrase live voice test kit with evidence checklist."
 
   - path: ".github/workflows/fleet-live-validation.yml"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-VAL-001: repeatable fleet validation workflow (public gateway + both servers' systemctl evidence)."
 
   - path: "docs/validation/fleet_live_validation_2026-11-10.json"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-VAL-001: live validation machine-readable evidence (10/10 healthy, 2026-11-10)."
 
   - path: "docs/validation/FLEET_LIVE_VALIDATION_2026-11-10.md"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-VAL-001: live validation human-readable evidence table (2026-11-10)."
 
   - path: "FRIDAY/ui/lib/api.ts"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_UI_004_2026-11-11"
     task: "CONSOLIDATED (was DIRECT_COMMIT_BRAIN_UI_2026-11-11 for TASK-UI-003): the earlier claim recorded an intent whose git add was silently swallowed by FRIDAY/.gitignore's Python-template lib/ rule — the file was NOT actually in git history (verified: git log --all -- FRIDAY/ui/lib/api.ts showed nothing before 83ad932). TASK-UI-004/D12 actually landed it: lib/api.ts reconstructed export-exact from every component usage (the .gitignore !ui/lib/ exception makes it addable), full 'next build' green; the dashboard is now rebuildable from a fresh clone. Checklist D12 fix."
 
   - path: "FRIDAY/tests/test_boss_identity_contract.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BRAIN_UI_2026-11-11"
     task: "TASK-BRAIN-001: 12 tests pinning the Boss contract (fast-path affirmation, no AI disclaimers, no misroute, prompt/persona/voice contracts)."
 
   - path: "FRIDAY/src/friday/memory/memora_client.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_MEM_005_2026-11-11"
@@ -1073,28 +1073,28 @@ claims:
     live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
     shared_lifecycle_wf015: 'VERIFIED PR72/74/75; actualcanonical14/14/deploy43363885223; acceptancecoordinationcontinues; 2026-11-13T04:23:15.823531+00:00'
   - path: "FRIDAY/src/friday/tools/builtin/task_status_query.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_ORCH_008_2026-11-11"
     task: "TASK-ORCH-008/C13: TaskStatusQueryTool — real TaskRecordStore lookups by receipt id or agent."
 
   - path: "FRIDAY/tests/test_task_status_query.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_ORCH_008_2026-11-11"
     task: "TASK-ORCH-008/C13+I8: 79-test regression suite (tool contract, fast-path matching, wiring order, contacts hijack/keep matrix, agent normalization)."
 
   - path: "FRIDAY/src/friday/devices/windows_friday.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_ORCH_008_2026-11-11"
     task: "Checklist I8: is_contact_directive tightened to explicit contact intent (delegation/memory/fleet phrasings no longer hijacked)."
 
   - path: "FRIDAY/src/friday/agent/mixins/fast_paths.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_ORCH_008_2026-11-11"
@@ -1104,7 +1104,7 @@ claims:
 
     workflow_followup_2026_11_12:
       path: FRIDAY/src/friday/agent/mixins/fast_paths.py
-      owner: arena_engineering_01
+      owner: muse_ai
       prs: []
       branches:
       - arena/TASK-WF-004-four-owner-workflows
@@ -1116,14 +1116,14 @@ claims:
     review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
     live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
   - path: "FRIDAY/src/friday/agent/mixins/cognitive.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_ORCH_008_2026-11-11"
     task: "TASK-ORCH-008/C13: task-status fast path wired before delegation in the chain."
 
   - path: "FRIDAY/src/friday/agent/mixins/tools.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_ORCH_008_2026-11-11"
@@ -1131,21 +1131,21 @@ claims:
 
     review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
   - path: "FRIDAY/src/friday/agent/prompts.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_ORCH_008_2026-11-11"
     task: "TASK-ORCH-008/C13: prompt rule — call task_status for task-outcome questions, never invent a status."
 
   - path: ".gitignore"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_CI_004_2026-11-11"
     task: "Master Plan backlog TASK-CI-004: bridge/** narrowed to artifact classes (deliberate bridge source commits unblocked)."
 
   - path: "tests/test_gitignore_bridge_source.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_CI_004_2026-11-11"
@@ -1154,35 +1154,35 @@ claims:
 
 
   - path: "mesh/universe_health.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_UI_004_2026-11-11"
     task: "Checklist I7: shadowed GET /api/v1/mesh/health duplicate registration removed (coordinator's route serves it)."
 
   - path: "FRIDAY/tests/test_agents_live_endpoint.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_UI_004_2026-11-11"
     task: "TASK-UI-004/D12: 9-test /api/agents/live contract suite."
 
   - path: "FRIDAY/ui/app/page.tsx"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_UI_004_2026-11-11"
     task: "TASK-UI-004/D12: agentsLive state + /api/agents/live polled in the 30s refresh + passed to FleetGrid."
 
   - path: "FRIDAY/ui/components/panels.tsx"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_UI_004_2026-11-11"
     task: "TASK-UI-004/D12: FleetGrid 'Working now' line + 'working <freshness>' chip from the live ledger."
 
   - path: "FRIDAY/.gitignore"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_UI_004_2026-11-11"
@@ -1190,63 +1190,63 @@ claims:
 
 
   - path: "FRIDAY/tests/test_memory_commands.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "MERGED_MEM_005_2026-11-11"
     task: "Checklist B9/B10: 34-test contract suite (client lifecycle + fast-path phrasing matrix + wiring order)."
 
   - path: "FRIDAY/tests/test_autonomous_task_dispatch.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_WAVE14_VERIFY"
     task: "100% directive WAVE 14 pass: update the 202-PENDING reply assertion to the e8420d7 voice-first honest wording (cannot confirm + still working); intent (never fabricate completion) unchanged."
 
   - path: "Memora/tests/test_scope_access_and_fallback_removal.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_WAVE14_VERIFY"
     task: "100% directive WAVE 14 pass: docstring made a raw string to clear the py_compile SyntaxWarning (Windows path escape)."
 
   - path: "FRIDAY/src/friday/tools/builtin/futuris_forecast.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_FUT_002_2026-11-11"
     task: "Checklist F10/C10: FuturisForecastTool — real POST /v1/friday/forecast via FleetClient.request_futuris_forecast; honest statuses; prediction-never-authorization stated."
 
   - path: "FRIDAY/tests/test_futuris_forecast_dispatch.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_FUT_002_2026-11-11"
     task: "Checklist F10/C10: 32-test contract suite (routing, extraction, tool, HTTP-level, fast-path fire/non-fire, registry)."
 
   - path: "FRIDAY/src/friday/tools/builtin/sentinel_security.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_SENT_001_2026-11-11"
     task: "Checklist F19/C8: SentinelSecurityTool — read-only posture + findings via FleetClient (ask_sentinel / new ask_sentinel_findings); active assessments stay behind Sentinel's owner-authorized scope gate."
 
   - path: "FRIDAY/tests/test_sentinel_security_dispatch.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_SENT_001_2026-11-11"
     task: "Checklist F19/C8: 33-test contract suite (routing, tool, HTTP-level ask_sentinel_findings, fast-path fire/non-fire, registry)."
 
   - path: "FRIDAY/src/friday/proactive/nightly_consolidation.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BRAIN_003_2026-11-11"
     task: "Checklist B7: nightly consolidation (gather via recent_memories, containment-aware dedupe, auditable supersede, idempotent day summary, 02:00–05:00 IST window)."
 
   - path: "FRIDAY/tests/test_nightly_consolidation.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BRAIN_003_2026-11-11"
@@ -1254,70 +1254,70 @@ claims:
 
 
   - path: "FRIDAY/src/friday/proactive/telegram_gateway.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH5_AGENT2"
     task: "Checklist G5: owner-gated two-way Telegram gateway (same brain, phone line)."
 
   - path: "FRIDAY/src/friday/proactive/mission_queue.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH5_AGENT2"
     task: "Checklists G6/G12: file-backed overnight mission queue + chat intake."
 
   - path: "FRIDAY/src/friday/proactive/daily_self_report.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH5_AGENT2"
     task: "Checklists G7/G8: daily self-report (21:00 IST) + Sunday weekly summary."
 
   - path: "scripts/friday_self_heal_sweep.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH5_AGENT2"
     task: "Checklists G11/H8: daily self-healing sweep (disk/certs/journald/units/backups/gateway)."
 
   - path: "deploy/friday-self-heal.service"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH5_AGENT2"
     task: "Checklist G11: systemd oneshot unit for the daily sweep."
 
   - path: "deploy/friday-self-heal.timer"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH5_AGENT2"
     task: "Checklist G11: daily 07:30 IST timer (Asia/Kolkata calendar)."
 
   - path: "FRIDAY/tests/test_batch5_autonomy.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH5_AGENT2"
     task: "Batch 5 contract suite (34 tests): gateway gate/routing/honesty, queue lifecycle/retries/intents, report composition/latches, sweep checks."
 
   - path: "FRIDAY/tests/test_mission_routing.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH5_AGENT2"
     task: "Route-level mission fast-path contracts (8 tests) against the real _dispatch_command chain."
 
   - path: "FRIDAY/src/friday/memory/importance.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH4"
     task: "Checklist B8: importance scoring (pinned/normal/trivial) + nightly aging."
 
   - path: "FRIDAY/src/friday/memory/voice_memory.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH4"
@@ -1325,7 +1325,7 @@ claims:
 
     workflow_followup_2026_11_12:
       path: FRIDAY/src/friday/memory/voice_memory.py
-      owner: arena_engineering_01
+      owner: muse_ai
       prs: []
       branches:
       - arena/TASK-WF-004-four-owner-workflows
@@ -1335,42 +1335,42 @@ claims:
       expected_next_update: '2026-11-12T15:56:17.706503+00:00'
       expiry_policy: Contact owner before takeover; no automatic expiration.
   - path: "FRIDAY/src/friday/proactive/goals.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH4"
     task: "Checklist A11: long-goal persistence (GOAL pinned memories + morning-brief lines)."
 
   - path: "FRIDAY/src/friday/proactive/followup.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH4"
     task: "Checklist A12: proactive follow-up pings on stale in-flight tasks."
 
   - path: "FRIDAY/src/friday/security/boss_gate.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH4"
     task: "Checklist A14: boss-only command gate (fail-closed, passphrase)."
 
   - path: "FRIDAY/src/friday/persona/tone.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH4"
     task: "Checklist A9: casual/sarcastic tone matching (banter table)."
 
   - path: "FRIDAY/src/friday/evaluation/reasoning_benchmark.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH4"
     task: "Checklist A7: 20-prompt reasoning benchmark with JSON report."
 
   - path: "FRIDAY/tests/test_batch4_memory_brain.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH4"
@@ -1378,63 +1378,63 @@ claims:
 
 
   - path: "FRIDAY/src/friday/proactive/agent_watch.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH6_AGENT2"
     task: "Checklists F8/F9/F14/F15/F20: watchlist store + IntelX briefings with change detection; site sweeps; Sentinel digest; the agent-watch scheduler."
 
   - path: "FRIDAY/src/friday/tools/builtin/web_fetch_summarize.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH6_AGENT2"
     task: "Checklist F13: SSRF-guarded web fetch + summarize tool."
 
   - path: "FRIDAY/tests/test_batch6_agent_depth.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH6_AGENT2"
     task: "Batch 6 contract suite (35 tests)."
 
   - path: "scripts/guard_secrets_pre_push.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH6_AGENT2"
     task: "Checklist F21: pre-push secret guard (added-line scanner + self-test)."
 
   - path: ".githooks/pre-push"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH6_AGENT2"
     task: "Checklist F21: hook entry calling the secret guard."
 
   - path: ".github/dependabot.yml"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH6_AGENT2"
     task: "Checklist F17: weekly dependency-bump config (github-actions + pip)."
 
   - path: ".github/workflows/agent-health-digest.yml"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH6_AGENT2"
     task: "Checklist F18: weekly pip-audit + CI-failures digest workflow."
 
   - path: "FRIDAY/src/friday/proactive/market_watch.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH7_AGENT2"
     task: "Checklists F3/F5/F6/F11/F12: usage tracker + rate-limit guard, daily portfolio report, price-alert rules engine, forecast refresh, prediction accuracy scoring."
 
   - path: "FRIDAY/src/friday/tools/builtin/vyralx_render.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH7_AGENT2"
@@ -1442,7 +1442,7 @@ claims:
 
     workflow_followup_2026_11_12:
       path: FRIDAY/src/friday/tools/builtin/vyralx_render.py
-      owner: arena_engineering_01
+      owner: muse_ai
       prs: []
       branches:
       - arena/TASK-WF-004-four-owner-workflows
@@ -1452,7 +1452,7 @@ claims:
       expected_next_update: '2026-11-12T15:56:17.706503+00:00'
       expiry_policy: Contact owner before takeover; no automatic expiration.
   - path: "FRIDAY/src/friday/tools/builtin/vyralx_publish.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH7_AGENT2"
@@ -1460,7 +1460,7 @@ claims:
 
     workflow_followup_2026_11_12:
       path: FRIDAY/src/friday/tools/builtin/vyralx_publish.py
-      owner: arena_engineering_01
+      owner: muse_ai
       prs: []
       branches:
       - arena/TASK-WF-004-four-owner-workflows
@@ -1470,98 +1470,98 @@ claims:
       expected_next_update: '2026-11-12T15:56:17.706503+00:00'
       expiry_policy: Contact owner before takeover; no automatic expiration.
   - path: "FRIDAY/tests/test_batch7_agent_depth_2.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH7_AGENT2"
     task: "Batch 7 contract suite (42 tests)."
 
   - path: "FRIDAY/src/friday/core/owner_preferences.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH8_AGENT2"
     task: "Checklist D17: owner preferences store (file-backed, defaults explicit)."
 
   - path: "FRIDAY/ui/components/batch8.tsx"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH8_AGENT2"
     task: "Checklists D17/E7/D18: OwnerPreferences + VoiceDiagnostics + EmptyState + OnboardingHint components."
 
   - path: "FRIDAY/ui/public/status.html"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH8_AGENT2"
     task: "Checklist H7: public status/uptime page."
 
   - path: "FRIDAY/tests/test_batch8_polish.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH8_AGENT2"
     task: "Batch 8 contract suite (21 tests)."
 
   - path: "docs/voice/BARGE_IN_TEST_KIT_E6.md"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH8_AGENT2"
     task: "Checklist E6: barge-in 5-minute test kit."
 
   - path: "docs/voice/ACCENT_CHECK_E10.md"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH8_AGENT2"
     task: "Checklist E10: Indian-English accent accuracy check."
 
   - path: "docs/infra/COST_AUDIT_H10.md"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH8_AGENT2"
     task: "Checklist H10: quarterly $0-cost audit doc."
 
   - path: ".github/workflows/lighthouse-ci.yml"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH8_AGENT2"
     task: "Checklist D16: Lighthouse CI workflow."
 
   - path: ".github/lighthouserc.json"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH8_AGENT2"
     task: "Checklist D16: Lighthouse budget (>= 0.9 all categories)."
 
   - path: ".github/workflows/cost-audit-reminder.yml"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_BATCH8_AGENT2"
     task: "Checklist H10: quarterly cost-audit reminder workflow."
 
   - path: "scripts/audit_dead_code.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_I6_CROSSLANE_AGENT2"
     task: "Checklist I6: dead-code audit script (finds unrouted registered tools)."
 
   - path: "FRIDAY/tests/test_batch8_i6_dead_code.py"
-    owner: "zai_agent_2"
+    owner: muse_ai
     prs: []
     branches: []
     status: "DIRECT_COMMIT_I6_CROSSLANE_AGENT2"
     task: "Checklist I6: dead-code regression gate (6 tests)."
 
   - path: FRIDAY/src/friday/ecosystem/fleet_client.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-004-four-owner-workflows
@@ -1574,7 +1574,7 @@ claims:
     live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
     verification_truth_wf006: 'arena/TASK-WF-006-verification-truth; scoped issue35 claim6827881797; 2026-11-12T15:31:28.134869+00:00; contact before takeover.'
   - path: FRIDAY/src/friday/voice/livekit_worker.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-004-four-owner-workflows
@@ -1585,7 +1585,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
   - path: IntelX/intelx/api/router.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-004-four-owner-workflows
@@ -1596,7 +1596,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
   - path: .github/workflows/owner-workflows.yml
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-004-four-owner-workflows
@@ -1618,7 +1618,7 @@ claims:
     portable_fixtures_wf013: "Arena Agent 1; claim6835005672; arena/TASK-WF-013-portable-fixture-repair; 2026-11-12T20:28:58.267072+00:00; update2h/contact before takeover."
     source_integrity_wf014: "VERIFIED PR71/deploy43313423891SUCCESS; realtask3212112026215130 status SUCCESS/DEGRADED/SUCCESS; 2026-11-12T21:56:05.213103+00:00"
   - path: FRIDAY/src/friday/voice/brain_bridge.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-004-four-owner-workflows
@@ -1630,7 +1630,7 @@ claims:
 
     review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
   - path: FRIDAY/tests/test_four_owner_workflows.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-004-four-owner-workflows
@@ -1644,7 +1644,7 @@ claims:
     live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
     verification_truth_wf006: 'arena/TASK-WF-006-verification-truth; scoped issue35 claim6827881797; 2026-11-12T15:31:28.134869+00:00; contact before takeover.'
   - path: IntelX/intelx/api/live_research_task.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-004-four-owner-workflows
@@ -1656,7 +1656,7 @@ claims:
 
     live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
   - path: tests/test_live_research_task_contract.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-004-four-owner-workflows
@@ -1668,7 +1668,7 @@ claims:
 
     live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
   - path: FRIDAY/src/friday/tools/builtin/__init__.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 56
     branches:
@@ -1680,7 +1680,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
   - path: FRIDAY/src/friday/tools/builtin/vyralx_project.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 56
     branches:
@@ -1692,7 +1692,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
   - path: VyralX/app/main.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 56
     branches:
@@ -1704,7 +1704,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
   - path: VyralX/app/migrations.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 56
     branches:
@@ -1716,7 +1716,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
   - path: VyralX/app/models.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 56
     branches:
@@ -1728,7 +1728,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
   - path: VyralX/app/schemas.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 56
     branches:
@@ -1740,7 +1740,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
   - path: VyralX/app/services/project_pipeline.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 56
     branches:
@@ -1752,7 +1752,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
   - path: VyralX/tests/test_project_pipeline_e2e.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 56
     branches:
@@ -1764,7 +1764,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
   - path: VyralX/tests/test_review_required_project.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 56
     branches:
@@ -1776,7 +1776,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
   - path: tests/test_safe_fleet_deploy.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 56
     branches:
@@ -1788,7 +1788,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
   - path: FRIDAY/tests/test_memora_hardening.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-005-live-acceptance
@@ -1799,7 +1799,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiry.
 
   - path: Forge/app/agents/parser.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-005-live-acceptance
@@ -1811,7 +1811,7 @@ claims:
 
     generation_boundaries_wf009: "Arena Agent 1; scope refinement6831923182; raw Python/docstring boundary; contact before takeover."
   - path: Forge/app/agents/roles.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-005-live-acceptance
@@ -1827,7 +1827,7 @@ claims:
     release_consent_wf010: "Arena Agent 1; claim6832247455; arena/TASK-WF-010-release-consent; 2026-11-12T18:26:01.667196+00:00; update2h/contact before takeover."
     source_repair_wf011: "Arena Agent 1; claim6833562740; arena/TASK-WF-011-source-backed-repair; 2026-11-12T19:23:46.438910+00:00; update2h/contact before takeover."
   - path: Forge/app/api/delegate.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-005-live-acceptance
@@ -1840,7 +1840,7 @@ claims:
     artifact_receipts_wf012: "Arena Agent 1; claim6833971149; arena/TASK-WF-012-artifact-receipts; 2026-11-12T19:41:40.428594+00:00; update2h/contact before takeover."
     source_integrity_wf014: "VERIFIED PR71/deploy43313423891SUCCESS; realtask3212112026215130 status SUCCESS/DEGRADED/SUCCESS; 2026-11-12T21:56:05.213103+00:00"
   - path: Forge/tests/unit/test_response_parser.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-005-live-acceptance
@@ -1851,7 +1851,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiry.
 
   - path: Forge/requirements-verification.txt
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-005-live-acceptance
@@ -1862,7 +1862,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiry.
 
   - path: Forge/tests/unit/test_delegate_verification_status.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-005-live-acceptance
@@ -1874,7 +1874,7 @@ claims:
 
     source_integrity_wf014: "VERIFIED PR71/deploy43313423891SUCCESS; realtask3212112026215130 status SUCCESS/DEGRADED/SUCCESS; 2026-11-12T21:56:05.213103+00:00"
   - path: Forge/tests/unit/test_generated_test_ingestion.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-005-live-acceptance
@@ -1885,7 +1885,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiry.
 
   - path: Memora/core/memory/search_service.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 57
     branches:
@@ -1896,7 +1896,7 @@ claims:
     expiry_policy: Contact before takeover; update within2h.
 
   - path: Memora/tests/test_direct_evidence_ranking.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 57
     branches:
@@ -1907,7 +1907,7 @@ claims:
     expiry_policy: Contact before takeover; update within2h.
 
   - path: Forge/app/integrations/ai_universe_client.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-006-verification-truth
@@ -1918,7 +1918,7 @@ claims:
 
     goal_fidelity_wf007: 'Arena Agent 1; arena/TASK-WF-007-goal-fidelity; issue35 claim6828563174; 2026-11-12T15:58:59.115861+00:00; update2h/contact before takeover.'
   - path: Forge/app/verification/checkers.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-006-verification-truth
@@ -1930,7 +1930,7 @@ claims:
     repair_preservation_wf008: "Arena Agent 1; issue35 claim6831092256; arena/TASK-WF-008-repair-preservation; 2026-11-12T17:39:25.982091+00:00; update2h/contact before takeover."
     generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
   - path: Forge/tests/unit/test_missing_test_truthfulness.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-006-verification-truth
@@ -1940,7 +1940,7 @@ claims:
     expiry_policy: Contact before takeover; update within2h.
 
   - path: Forge/app/core/context.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-007-goal-fidelity
@@ -1950,7 +1950,7 @@ claims:
     expiry_policy: Contact before takeover; next update2h.
 
   - path: Forge/app/core/orchestrator.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-007-goal-fidelity
@@ -1961,7 +1961,7 @@ claims:
 
     repair_preservation_wf008: "Arena Agent 1; issue35 claim6831092256; arena/TASK-WF-008-repair-preservation; 2026-11-12T17:39:25.982091+00:00; update2h/contact before takeover."
   - path: Inference/app/services/code_generation.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-007-goal-fidelity
@@ -1973,7 +1973,7 @@ claims:
     generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
     source_repair_wf011: "Arena Agent 1; claim6833562740; arena/TASK-WF-011-source-backed-repair; 2026-11-12T19:23:46.438910+00:00; update2h/contact before takeover."
   - path: Inference/app/services/test_generation.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-007-goal-fidelity
@@ -1984,7 +1984,7 @@ claims:
 
     generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
   - path: Forge/tests/unit/test_goal_fidelity_contract.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-007-goal-fidelity
@@ -1994,7 +1994,7 @@ claims:
     expiry_policy: Contact before takeover; next update2h.
 
   - path: Inference/tests/test_forge_goal_and_test_generation.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-007-goal-fidelity
@@ -2004,7 +2004,7 @@ claims:
     expiry_policy: Contact before takeover; next update2h.
 
   - path: Forge/app/agents/coordinator.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-008-repair-preservation
@@ -2015,7 +2015,7 @@ claims:
 
     source_repair_wf011: "Arena Agent 1; claim6833562740; arena/TASK-WF-011-source-backed-repair; 2026-11-12T19:23:46.438910+00:00; update2h/contact before takeover."
   - path: Forge/app/verification/python_tests.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-008-repair-preservation
@@ -2026,7 +2026,7 @@ claims:
 
     generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
   - path: Forge/tests/unit/test_repair_preservation_and_embedded_tests.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-008-repair-preservation
@@ -2037,7 +2037,7 @@ claims:
 
     source_repair_wf011: "Arena Agent 1; claim6833562740; arena/TASK-WF-011-source-backed-repair; 2026-11-12T19:23:46.438910+00:00; update2h/contact before takeover."
   - path: Forge/app/agents/synthesis.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-009-generation-boundaries
@@ -2047,7 +2047,7 @@ claims:
     expiry_policy: Contact before takeover; next update2h.
 
   - path: Forge/tests/unit/test_generation_boundary_regressions.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-009-generation-boundaries
@@ -2057,7 +2057,7 @@ claims:
     expiry_policy: Contact before takeover; next update2h.
 
   - path: Inference/tests/test_python_fence_boundaries.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-009-generation-boundaries
@@ -2067,7 +2067,7 @@ claims:
     expiry_policy: Contact before takeover; next update2h.
 
   - path: Forge/tests/unit/test_github_tool.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-010-release-consent
@@ -2077,7 +2077,7 @@ claims:
     expiry_policy: Contact before takeover; next update2h.
 
   - path: Forge/tests/unit/test_release_consent.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-010-release-consent
@@ -2087,7 +2087,7 @@ claims:
     expiry_policy: Contact before takeover; next update2h.
 
   - path: Forge/app/agents/repair.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-011-source-backed-repair
@@ -2098,7 +2098,7 @@ claims:
 
     portable_fixtures_wf013: "Arena Agent 1; claim6835005672; arena/TASK-WF-013-portable-fixture-repair; 2026-11-12T20:28:58.267072+00:00; update2h/contact before takeover."
   - path: Forge/tests/unit/test_source_backed_repair.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-011-source-backed-repair
@@ -2108,7 +2108,7 @@ claims:
     expiry_policy: Contact before takeover; next update2h.
 
   - path: Inference/tests/test_source_repair_context.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-011-source-backed-repair
@@ -2118,7 +2118,7 @@ claims:
     expiry_policy: Contact before takeover; next update2h.
 
   - path: FRIDAY/tests/test_forge_artifact_receipts.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-012-artifact-receipts
@@ -2129,7 +2129,7 @@ claims:
 
     artifact_receipt_schema_wf012: "Arena Agent 1; refinement6834283078; arena/TASK-WF-012-saved-manifest-schema; same lane/contact before takeover."
   - path: Forge/tests/unit/test_artifact_receipts.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-012-artifact-receipts
@@ -2140,7 +2140,7 @@ claims:
 
     source_integrity_wf014: "VERIFIED PR71/deploy43313423891SUCCESS; realtask3212112026215130 status SUCCESS/DEGRADED/SUCCESS; 2026-11-12T21:56:05.213103+00:00"
   - path: Forge/tests/unit/test_portable_fixture_repair.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: []
     branches:
     - arena/TASK-WF-013-portable-fixture-repair
@@ -2149,7 +2149,7 @@ claims:
     claimed_at: '2026-11-12T20:28:58.267072+00:00'
 
   - path: Stratex/notifications/telegram_bot.py
-    owner: zai_agent_2
+    owner: muse_ai
     prs:
     - 67
     branches:
@@ -2160,7 +2160,7 @@ claims:
     expiry_policy: Contact before takeover; next update2h.
 
   - path: Stratex/tests/test_telegram_bot.py
-    owner: zai_agent_2
+    owner: muse_ai
     prs:
     - 67
     branches:
@@ -2172,7 +2172,7 @@ claims:
 
   # --- ZAI Agent 1 session continuity, 2026-11-13 (TASK-CI-F821-MAIN + TASK-REGISTRY-001) ---
   - path: FRIDAY/src/friday/persona/friday.py
-    owner: zai
+    owner: muse_ai
     prs: []
     branches: []
     status: COMPLETED_CLAIM
@@ -2183,7 +2183,7 @@ claims:
 
     source_integrity_wf014: "VERIFIED PR71/deploy43313423891SUCCESS; realtask3212112026215130 status SUCCESS/DEGRADED/SUCCESS; 2026-11-12T21:56:05.213103+00:00"
   - path: FRIDAY/tests/test_friday_persona.py
-    owner: zai
+    owner: muse_ai
     prs: []
     branches: []
     status: COMPLETED_CLAIM
@@ -2193,7 +2193,7 @@ claims:
     expiry_policy: Task complete; file returns to the unclaimed pool.
 
   - path: Forge/app/verification/engine.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 71
     branches:
@@ -2204,7 +2204,7 @@ claims:
     expiry_policy: Contact before takeover/update2h.
 
   - path: Forge/app/verification/evidence.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 71
     branches:
@@ -2215,7 +2215,7 @@ claims:
     expiry_policy: Contact before takeover/update2h.
 
   - path: Forge/app/verification/source_integrity.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 71
     branches:
@@ -2226,7 +2226,7 @@ claims:
     expiry_policy: Contact before takeover/update2h.
 
   - path: Forge/tests/unit/test_source_bound_receipts.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs:
     - 71
     branches:
@@ -2237,7 +2237,7 @@ claims:
     expiry_policy: Contact before takeover/update2h.
 
   - path: FRIDAY/tests/test_persona_clock_annotations.py
-    owner: arena_engineering_01
+    owner: muse_ai
     branches:
     - arena/TASK-WF-014-source-bound-receipts
     prs:
@@ -2248,21 +2248,21 @@ claims:
       no persona logic takeover.
 
   - path: ".gitleaks.toml"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: ["main (single-branch flow, post-D-016)"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-SECRETSCAN-002: repo-root gitleaks config — [extend] useDefault = true + line-targeted allowlist for labeled SHA-256 content digests (verification-receipt false-positive class)."
 
   - path: "tests/test_gitleaks_config.py"
-    owner: "zai"
+    owner: muse_ai
     prs: []
     branches: ["main (single-branch flow, post-D-016)"]
     status: "ACTIVE_CLAIM"
     task: "TASK-CI-SECRETSCAN-002: regression tests pinning the gitleaks config contract (defaults loaded, line targeting, labeled-digest coverage, real secrets never suppressed, optional live-binary integration)."
 
   - path: scripts/audit_fleet_runtime.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: [55]
     branches:
     - arena/TASK-VAL-003-runtime-audit
@@ -2273,7 +2273,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
   - path: tests/test_audit_fleet_runtime.py
-    owner: arena_engineering_01
+    owner: muse_ai
     prs: [55]
     branches:
     - arena/TASK-VAL-003-runtime-audit
@@ -2319,7 +2319,7 @@ conflicts_to_resolve:
       - "FRIDAY/src/friday/persona/tone.py"
       - "FRIDAY/src/friday/evaluation/reasoning_benchmark.py"
       - "FRIDAY/tests/test_batch4_memory_brain.py"
-    owner: "zai"
+    owner: muse_ai
     status: "COMPLETED_CLAIM"
     task: "Batch 4 (B8/B11/B12/A6/A7/A9/A11/A12/A14) — memory importance + aging, voice-path memory, memory browser, tone matching, goals, follow-up, boss gate, reasoning benchmark."
     note: "Shared-files touched under batch 4 (chat ladder sections + morning brief + nightly consolidation + gemini live session) are claim-free by design: the ladder is append-only with per-gate tests; cross-lane edits still require a WORK_BOARD claim."

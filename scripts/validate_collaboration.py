@@ -36,11 +36,7 @@ REQUIRED_FILES = (
 )
 REQUIRED_COLLABORATORS = {
     "human_surendra",
-    "claude",
-    "chatgpt",
-    "grok",
-    "zai",
-    "vercel_v0",
+    "muse_ai",
 }
 CANONICAL_AGENTS = (
     "FRIDAY",
@@ -116,8 +112,10 @@ def validate_registry() -> list[str]:
     owner_id = authority.get("project_owner_id")
     require(owner_id in collaborator_ids,
             "TEAM_ROSTER.yaml: project_owner_id must exist in collaborators")
-    require(authority.get("no_permanent_ai_hierarchy") is True,
-            "TEAM_ROSTER.yaml: no_permanent_ai_hierarchy must be true")
+    require(authority.get("model") == "claude_lead_coordination",
+            "TEAM_ROSTER.yaml: authority model must be claude_lead_coordination")
+    require(authority.get("lead_coordinator_id") == "muse_ai",
+            "TEAM_ROSTER.yaml: lead_coordinator_id must be muse_ai")
 
     board_tasks = board.get("tasks")
     require(isinstance(board_tasks, list), "WORK_BOARD.yaml: tasks must be a list")
