@@ -12446,7 +12446,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-REL-060
     title: "Follow-up cleanup (owner order 2026-11-20; inventory UNSURE items U2/U3/U6/U7 from TASK-REL-058): delete MUSE_AI_ONBOARDING.md and the ZAI turn-completion Telegram apparatus (repo AGENTS.md protocol block + scripts/agents_completion_notifier.py); align the roster authority model and the validator to the Muse lead-coordinator model; reassign FILE_OWNERSHIP claims of removed collaborator ids to muse_ai; rewrite the collaboration README team model."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_ai
     branch: claude/task-rel-060-followup-cleanup
     priority: P2
@@ -12457,6 +12457,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Reference proofs (coordinator, on the base tree): agents_completion_notifier is referenced only by the AGENTS.md protocol block, its own file, and historical ACTIVITY_LOG/board records - no tests, CI or product code. scripts/notify_turn_complete.py is NOT touched (Stratex tests import it). MUSE_AI_ONBOARDING.md is referenced only by the roster (updated in this PR) and historical records, and is not in the validator REQUIRED_FILES."
       - "Validator change is deliberately narrow: the no_permanent_ai_hierarchy requirement is replaced by the claude_lead_coordination model + lead_coordinator_id checks, and REQUIRED_COLLABORATORS becomes {human_surendra, muse_ai}. Retired collaborator ids stay registered as slim records, so historical board and ownership references still validate. Every other validator rule is untouched."
     next_action: "Supervisor review -> coordinator merge. Acceptance: validator prints VALID on the merged tree; no live references to the deleted files outside historical records."
+      - "MERGED 2026-11-20: supervisor APPROVE (all 8 claims verified from git objects: exactly 8 files; AGENTS.md single-hunk protocol removal; validator diff = the two intended changes only and VALID on the PR tree at 565 records; 274 FILE_OWNERSHIP owner reassignments, 0 violations; board purely additive) + CI on head 9d933db6 green (9 runs: 7 success, 2 skipped, 0 failures). Coordinator merged via this union (board status flip only)."
     files:
       - AGENTS.md
       - docs/collaboration/MUSE_AI_ONBOARDING.md
