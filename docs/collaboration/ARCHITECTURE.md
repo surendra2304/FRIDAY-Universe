@@ -150,6 +150,9 @@ document governs.
    credentials record), registers in `TEAM_ROSTER.yaml` via PR, creates its
    weekly task and board-check runs per §6, and reads `docs/MASTER_PLAN.md`,
    the full board and the roster so it starts from the project's real state.
+   It also sets its displayed assistant name in its own account to its
+   roster name (e.g. "Muse 1"), so the app display matches the name it
+   signs its work with.
 4. The worker posts a ready report on issue #35 (access confirmed, roster PR
    link, its reset time, its schedule).
 5. The worker waits for Muse's first assignment on the board.
