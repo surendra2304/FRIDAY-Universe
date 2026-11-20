@@ -12018,22 +12018,28 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-FRD-028
     title: "Route daily_self_report through the FRIDAY owner-notify severity gate, or record a permanent exemption in the gate docstring"
-    status: AVAILABLE
+    status: IN_PROGRESS
     owner: muse_1
-    branch: null
+    branch: muse1/task-frd-028-daily-self-report-owner-notify-gate
     pr: null
     priority: P2
     created_at: "2026-11-19"
-    updated_at: "2026-11-19"
+    updated_at: "2026-11-21"
     evidence:
       - "Filed by the wave merge lane in the PR #1071 (TASK-FRD-025) union, per the brief: the supervisor review of PR #1071 (comment 7005080079) returned APPROVE-WITH-CONDITIONS; condition 1, verbatim: \"`daily_self_report` remains an ungated direct Telegram path — disclosed in the PR; file a follow-up to route it through the gate or record a permanent exemption in the gate docstring.\""
       - "Review bypass audit (same comment): grep of FRIDAY/src for send_owner_message found the remaining direct Telegram sends are (a) the gate itself, (b) daily_self_report G7/G8 daily/weekly reports — deliberately NOT wired and disclosed as such in the PR's board entry, (c) the gateway transport / conversational bot path (not proactive owner notification)."
       - "Coordinator decision (Muse, 2026-11-21): WIRE the G7/G8 sends through notify_owner at report-class severity; permanent exemption only if wiring proves structurally impossible, with reasons recorded in the gate docstring."
       - "Assignment: issue #35 comment 7049687666 by Muse (Head Manager) 2026-11-21 - queued to Muse 1 after TASK-STR-FWD-027. Coordinator decision recorded in this record: wire the G7/G8 sends through notify_owner at report-class severity; exemption only if structurally impossible, reasons in the gate docstring."
+      - "Claim: issue #35 comment 7052260324 by Muse 1 before any editing. Base: main b7bdd6e."
+      - "Wiring proved possible (no exemption): new Severity.REPORT, a sendable report class in owner_notify (explicit SENDABLE_SEVERITIES set, not a numeric bar); the G7/G8 sends in daily_self_report.py offer at REPORT with per-day event keys self_report:daily:<date> / self_report:weekly:<date>. The board's original files list named server.py, but the sends live in daily_self_report.py (server.py only runs the 10-minute _daily_report_loop tick); server.py is unchanged. A held gate verdict latches the report for the day (FRD-025 latch rule); only FAILED / NOT_CONFIGURED retries next cycle."
     next_action: "Coordinator decides: wire daily_self_report's G7/G8 sends through notify_owner with an explicit severity (report-class, expected ROUTINE/below-bar except failure flags), or record a permanent exemption with reasons in the owner_notify gate docstring. Either way the bypass audit must end with zero undisclosed ungated proactive paths."
     files:
-      - FRIDAY/src/friday/api/server.py
+      - FRIDAY/src/friday/proactive/daily_self_report.py
       - FRIDAY/src/friday/proactive/owner_notify.py
+      - FRIDAY/tests/test_frd028_self_report_gate.py
+      - FRIDAY/tests/test_owner_notify.py
+      - FRIDAY/tests/test_batch5_autonomy.py
+      - .github/workflows/owner-workflows.yml
       - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-INF-018
     title: "Unified/agent-role Groq size-guard steering: an oversized auto-routed prompt skips Groq BEFORE dispatch (TASK-INF-004 recommendation 2) instead of being diverted by the gateway guard into the catalogue-blind dynamic ladder"

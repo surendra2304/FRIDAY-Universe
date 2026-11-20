@@ -73,6 +73,36 @@ def test_alert_sends_and_routine_stays_below_the_bar(tmp_path):
     assert sender.sent == ["Stratex is down"]  # unchanged: routine never sends
 
 
+def test_report_severity_sends_through_the_gate(tmp_path, monkeypatch):
+    # TASK-FRD-028: the scheduled-report class sends (the G7/G8 daily/
+    # weekly self-report), under the same gate as an alert — kill
+    # switch, cap, floor, dedupe and per-key cooldown all still apply.
+    clock = FakeClock()
+    sender = RecordingSender()
+    notifier = make_notifier(tmp_path, sender=sender, clock=clock)
+
+    assert (
+        notifier.notify("End of day report", severity=Severity.REPORT, event_key="self_report:daily:2026-11-21")
+        is NotifyResult.SENT
+    )
+    assert sender.sent == ["End of day report"]
+
+    # Same per-day key inside the cooldown: held, not re-sent.
+    assert (
+        notifier.notify("End of day report, again", severity=Severity.REPORT, event_key="self_report:daily:2026-11-21")
+        is NotifyResult.COOLDOWN
+    )
+    assert len(sender.sent) == 1
+
+    # The kill switch silences reports exactly like alerts.
+    monkeypatch.setenv("FRIDAY_OWNER_NOTIFY", "off")
+    assert (
+        notifier.notify("Weekly roll-up", severity=Severity.REPORT, event_key="self_report:weekly:2026-11-21")
+        is NotifyResult.DISABLED
+    )
+    assert len(sender.sent) == 1
+
+
 def test_same_event_key_cannot_realert_inside_cooldown(tmp_path):
     clock = FakeClock()
     sender = RecordingSender()

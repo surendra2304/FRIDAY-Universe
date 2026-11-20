@@ -21,6 +21,15 @@ Honesty rules:
 - the report is sent at most once per evening (21:00–23:59 IST window),
   once per Sunday for the weekly one; a Telegram send failure is logged
   and retried next cycle, never fatal.
+
+TASK-FRD-028: the two sends go through the owner-notify severity gate
+(``friday.proactive.owner_notify``) at ``Severity.REPORT`` — the kill
+switch, daily cap, global floor, text dedupe and per-key cooldown all
+apply to the reports, exactly as they do to alerts, so the bypass
+audit has no ungated proactive Telegram path left in this module. A
+gate verdict of SENT — or a deliberate hold (below bar, duplicate,
+cooldown, daily cap, disabled) — latches the report for the day; only
+a failed or unconfigured send retries next cycle.
 """
 
 from __future__ import annotations
@@ -31,6 +40,12 @@ from datetime import datetime
 from typing import Any
 
 from friday.core.owner_time import OWNER_TZ, now_owner_tz, owner_today
+from friday.proactive.owner_notify import (
+    NotifyResult,
+    Severity,
+    is_held_result,
+    notify_owner,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -261,19 +276,53 @@ def compose_weekly_report() -> str:
 # delivery (idempotent per day; the loop calls this)
 # ---------------------------------------------------------------------------
 
+#: Event-key stems for the G7/G8 sends through the owner-notify gate
+#: (TASK-FRD-028): one key per report per owner day, so the gate's
+#: per-key cooldown can recognise a repeat of the same report.
+DAILY_EVENT_KEY = "self_report:daily"
+WEEKLY_EVENT_KEY = "self_report:weekly"
+
+
+def _offer_via_gate(text: str, *, event_key: str) -> tuple[bool, NotifyResult]:
+    """Offer one report to the owner-notify gate at REPORT severity.
+
+    Returns (sent_to_owner_telegram, gate_result). The gate never
+    raises; this wrapper keeps that contract even if the gate call
+    itself somehow fails, reporting FAILED so the caller retries
+    instead of believing a held/sent outcome.
+    """
+    try:
+        result = notify_owner(text, severity=Severity.REPORT, event_key=event_key)
+    except Exception as exc:  # pragma: no cover - the gate never raises
+        logger.warning("[SELF-REPORT] owner-notify gate failed: %s", exc)
+        return False, NotifyResult.FAILED
+    return result is NotifyResult.SENT, result
+
+
+def _outcome_for(sent: bool, result: NotifyResult) -> str:
+    """Outcome string for one report offer (kept stable for callers)."""
+    if sent:
+        return "sent"
+    if is_held_result(result):
+        return f"held:{result.value}"
+    if result is NotifyResult.NOT_CONFIGURED:
+        return "not_configured"
+    return "send_failed"
+
+
 def maybe_deliver_reports(now: datetime | None = None) -> dict[str, Any]:
     """Send the daily (and Sunday weekly) report when inside the window.
+
+    The sends go through the owner-notify severity gate at
+    ``Severity.REPORT`` (TASK-FRD-028). A gate verdict of SENT — or a
+    deliberate hold (``is_held_result``: below bar, duplicate,
+    cooldown, daily cap, disabled) — latches the report for the day;
+    only a failed or unconfigured send retries next cycle.
 
     Returns a dict describing what was attempted; never raises.
     """
     global _last_report_date, _last_weekly_date
     outcome: dict[str, Any] = {"daily": None, "weekly": None}
-    try:
-        from friday.proactive.telegram_gateway import send_owner_message
-    except Exception as exc:
-        logger.debug("[SELF-REPORT] gateway unavailable: %s", exc)
-        return outcome
-
     moment = (now or now_owner_tz()).astimezone(OWNER_TZ)
     today = _today()
 
@@ -284,20 +333,26 @@ def maybe_deliver_reports(now: datetime | None = None) -> dict[str, Any]:
             and _last_weekly_date != today
         ):
             try:
-                sent = send_owner_message(compose_weekly_report())
-                if sent:
+                sent, result = _offer_via_gate(
+                    compose_weekly_report(),
+                    event_key=f"{WEEKLY_EVENT_KEY}:{today}",
+                )
+                if sent or is_held_result(result):
                     _last_weekly_date = today
-                outcome["weekly"] = "sent" if sent else "send_failed"
+                outcome["weekly"] = _outcome_for(sent, result)
             except Exception as exc:
                 logger.warning("[SELF-REPORT] weekly send failed: %s", exc)
                 outcome["weekly"] = f"error:{type(exc).__name__}"
 
         if _in_evening_window(moment) and _last_report_date != today:
             try:
-                sent = send_owner_message(compose_daily_report())
-                if sent:
+                sent, result = _offer_via_gate(
+                    compose_daily_report(),
+                    event_key=f"{DAILY_EVENT_KEY}:{today}",
+                )
+                if sent or is_held_result(result):
                     _last_report_date = today
-                outcome["daily"] = "sent" if sent else "send_failed"
+                outcome["daily"] = _outcome_for(sent, result)
             except Exception as exc:
                 logger.warning("[SELF-REPORT] daily send failed: %s", exc)
                 outcome["daily"] = f"error:{type(exc).__name__}"

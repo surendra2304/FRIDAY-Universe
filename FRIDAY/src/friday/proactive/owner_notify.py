@@ -5,8 +5,13 @@ messages the owner on Telegram the moment it happens — not in the next
 morning briefing. This module is that path, and just as importantly the
 gate that keeps it from becoming a chatty channel:
 
-- Only ``Severity.ALERT`` sends. ``Severity.ROUTINE`` is briefing
-  material: ``notify_owner`` returns ``BELOW_BAR`` and nothing is sent.
+- ``Severity.ALERT`` and ``Severity.REPORT`` send. ``Severity.ROUTINE``
+  is briefing material: ``notify_owner`` returns ``BELOW_BAR`` and
+  nothing is sent. REPORT is the scheduled-report class (TASK-FRD-028):
+  the G7/G8 daily/weekly self-report is a report the owner explicitly
+  asked for every evening, so it sends — but only through this gate,
+  under the same kill switch, cap, floor, dedupe and cooldown as an
+  alert, so a report can never become a chatty channel either.
 - Anti-spam, all persisted so a restart cannot reset the limits:
   a per-event-key cooldown (the same event cannot re-alert for 6h),
   identical-text dedupe (the same words cannot re-alert for 1h, under
@@ -28,9 +33,12 @@ Callers: anything that learns something the owner would want to know
 now — a fleet agent going down, the autonomous daemon's task source
 reporting a real finding, a governed trade event. Callers pass a
 stable ``event_key`` per distinct event (e.g. ``fleet_down:stratex``)
-so the cooldown can recognise repeats. A failed send never latches
-state: the caller may retry and the gate will let a genuine retry
-through, exactly like the G7/G8 report latching rule.
+so the cooldown can recognise repeats. The G7/G8 daily/weekly
+self-report offers at REPORT with a per-day event key
+(``self_report:daily:<date>``) — TASK-FRD-028; a gate hold latches
+it for the day, a failed send retries next cycle. A failed send never
+latches state: the caller may retry and the gate will let a genuine
+retry through, exactly like the G7/G8 report latching rule.
 
 Never raises into a caller: every outcome is a ``NotifyResult``.
 """
@@ -64,14 +72,21 @@ DEFAULT_DAILY_CAP = 20
 
 
 class Severity(IntEnum):
-    """How much a candidate message matters. The bar is ALERT."""
+    """How much a candidate message matters. ALERT and REPORT send."""
 
     ROUTINE = 0  # briefing material — never sent from here
     ALERT = 1  # the owner would want to know now
+    REPORT = 2  # scheduled owner-requested report (G7/G8) — sends, through this gate
 
 
-#: Only severities at or above this are ever sent.
-MIN_SEND_SEVERITY = Severity.ALERT
+#: Severities that are ever sent. ROUTINE is briefing material and is
+#: held; ALERT is an immediate matter; REPORT is a scheduled report the
+#: owner explicitly asked for (the G7/G8 daily/weekly self-report) — it
+#: sends, but only through this gate, so the kill switch, daily cap,
+#: global floor, text dedupe and per-key cooldown all still apply.
+#: The set is explicit (not a numeric bar) so a future severity can
+#: never start sending by accident of its value.
+SENDABLE_SEVERITIES = frozenset({Severity.ALERT, Severity.REPORT})
 
 
 class NotifyResult(str, Enum):
@@ -241,7 +256,7 @@ class OwnerNotifier:
         try:
             if _kill_switch_active():
                 return NotifyResult.DISABLED
-            if Severity(severity) < MIN_SEND_SEVERITY:
+            if Severity(severity) not in SENDABLE_SEVERITIES:
                 return NotifyResult.BELOW_BAR
             body = (text or "").strip()
             if not body:
@@ -342,6 +357,8 @@ def notify_owner(
     repeats of the same key inside the cooldown are suppressed, so a
     flapping source cannot spam the owner. Routine matters pass
     ``severity=Severity.ROUTINE`` and are answered ``BELOW_BAR`` —
-    they belong to the morning briefing, not to this path.
+    they belong to the morning briefing, not to this path. Scheduled
+    owner-requested reports (the G7/G8 self-report) pass
+    ``severity=Severity.REPORT`` and send, under the same gate.
     """
     return _get_default_notifier().notify(text, severity=severity, event_key=event_key)
