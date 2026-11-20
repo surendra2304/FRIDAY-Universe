@@ -1445,3 +1445,192 @@ def test_estimate_vision_tokens_is_deterministic():
     }
     # 300 chars / 3 = 100 text + 3 x 1000 images + 1100 max_tokens.
     assert _sa026.estimate_vision_tokens(body) == 4200
+
+
+# === BEGIN VYR-028 SHIPPED BLOCK ===
+
+# --- TASK-VYR-028: Gemini vision fail-over (fix 4) -------------------- #
+# Cycle 8 stopped vision_rate_limited: Groq's 200k/day TPD was ~99%
+# used before the cycle's last candidates, and the OTPM sizing fault
+# (max_tokens 1100 vs the 1000 limit) 429s deterministically. The
+# fail-over below covers the client half: after the VYR-026 retries
+# are spent on HTTP 429 — and only on 429 — _vision_request makes
+# exactly one attempt against the VISION_FAILOVER_* endpoint (Gemini's
+# OpenAI-compatible endpoint + a flash-lite-class model, both from
+# env) with the same body except the model, and the reply is parsed
+# and validated exactly like a Groq one. All clocks/sleeps are faked:
+# no test here sleeps. Placeholder keys only — never a real key.
+_GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
+
+
+def _failover_post_script(monkeypatch, responses):
+    """Fake httpx.post serving responses in order; records (url, body, headers)."""
+    calls = []
+
+    def fake_post(url, **kwargs):
+        calls.append((url, kwargs.get("json") or {}, kwargs.get("headers") or {}))
+        index = min(len(calls) - 1, len(responses) - 1)
+        return responses[index]
+
+    monkeypatch.setattr(_sa026.httpx, "post", fake_post)
+    return calls
+
+
+def _enable_failover(vision_env, model=None):
+    vision_env.settings.vision_failover_base_url = _GEMINI_BASE_URL
+    vision_env.settings.vision_failover_api_key = "failover-fake-key"
+    if model is not None:
+        vision_env.settings.vision_failover_model = model
+
+
+def test_vision_failover_after_groq_429_exhaustion(vision_env, monkeypatch):
+    _enable_failover(vision_env)
+    calls = _failover_post_script(monkeypatch, [
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(200, payload=_ok_payload()),
+    ])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is not None
+    assert len(calls) == 5  # 1 + 3 Groq retries, then exactly one Gemini attempt
+    groq_calls = [c for c in calls if c[0].startswith("https://api.groq.com")]
+    gemini_calls = [c for c in calls if c[0].startswith(_GEMINI_BASE_URL)]
+    assert len(groq_calls) == 4
+    assert len(gemini_calls) == 1
+    assert gemini_calls[0][1]["model"] == "gemini-3.5-flash-lite"  # model default
+    assert gemini_calls[0][1]["max_tokens"] == 1100  # same body as Groq
+    assert gemini_calls[0][2]["Authorization"] == "Bearer " + vision_env.settings.vision_failover_api_key
+    assert groq_calls[0][2]["Authorization"] == "Bearer " + vision_env.settings.vision_api_key
+    assert gemini_calls[0][2]["Authorization"] != groq_calls[0][2]["Authorization"]  # per-endpoint keys
+    assert vision_env.clock.sleeps == [30.0, 60.0, 120.0]  # VYR-026 ladder kept
+    outcome = _sa026.last_vision_outcome()
+    assert outcome["status"] == 200
+    assert outcome["attempts"] == 5  # 4 primary + 1 fail-over
+    assert outcome["rate_limit_exhausted"] is False
+    # A Gemini success produces a record identical in shape to a Groq
+    # success (same coercion, same gates downstream).
+    calls2 = _failover_post_script(monkeypatch, [
+        _VisionResponse(200, payload=_ok_payload()),
+    ])
+    record_groq = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record == record_groq
+    assert len(calls2) == 1
+
+
+def test_vision_failover_gemini_failure_returns_none(vision_env, monkeypatch):
+    _enable_failover(vision_env)
+    calls = _failover_post_script(monkeypatch, [
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(429, text='{"error":{"message":"quota exceeded"}}'),
+    ])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is None  # vision_unavailable, exactly as without fail-over
+    assert len(calls) == 5
+    gemini_calls = [c for c in calls if c[0].startswith(_GEMINI_BASE_URL)]
+    assert len(gemini_calls) == 1  # tried once, never retried
+    outcome = _sa026.last_vision_outcome()
+    assert outcome["status"] == 429
+    assert outcome["attempts"] == 5
+    assert outcome["rate_limit_exhausted"] is True
+
+
+def test_vision_no_failover_when_groq_succeeds(vision_env, monkeypatch):
+    _enable_failover(vision_env)
+    calls = _failover_post_script(monkeypatch, [
+        _VisionResponse(200, payload=_ok_payload()),
+    ])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is not None
+    assert len(calls) == 1
+    assert calls[0][0].startswith("https://api.groq.com")
+    assert calls[0][1]["model"] == "qwen/qwen3.8-27b"
+
+
+def test_vision_failover_non_429_does_not_failover(vision_env, monkeypatch):
+    _enable_failover(vision_env)
+    calls = _failover_post_script(monkeypatch, [
+        _VisionResponse(500, text="server error"),
+    ])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is None
+    assert len(calls) == 1  # 429-only: a 500 never reaches the fail-over
+    assert vision_env.clock.sleeps == []
+
+
+def test_vision_failover_disabled_when_unconfigured(vision_env, monkeypatch):
+    # The plain fixture carries no fail-over attributes at all: the
+    # VYR-026 behaviour (and its tests) must be untouched by default.
+    calls = _failover_post_script(monkeypatch, [_VisionResponse(429)])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is None
+    assert len(calls) == 4  # 1 + 3 retries, then it stops — no Gemini call
+    assert all(not url.startswith(_GEMINI_BASE_URL) for url, _, _ in calls)
+    assert _sa026.last_vision_outcome()["rate_limit_exhausted"] is True
+
+
+def test_vision_failover_needs_both_url_and_key(vision_env, monkeypatch):
+    vision_env.settings.vision_failover_base_url = _GEMINI_BASE_URL
+    vision_env.settings.vision_failover_api_key = ""  # URL without a key
+    calls = _failover_post_script(monkeypatch, [_VisionResponse(429)])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is None
+    assert len(calls) == 4
+    assert all(not url.startswith(_GEMINI_BASE_URL) for url, _, _ in calls)
+
+
+def test_vision_failover_after_wait_cap_give_up(vision_env, monkeypatch):
+    # Retry-After 300s exceeds the 240s cap: the primary gives up
+    # without sleeping — and the fail-over is still attempted.
+    _enable_failover(vision_env, model="gemini-3.5-flash-lite")
+    calls = _failover_post_script(monkeypatch, [
+        _VisionResponse(429, headers={"retry-after": "300"}),
+        _VisionResponse(200, payload=_ok_payload()),
+    ])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is not None
+    assert record["beats"][0]["summary"].startswith("A rider sits")
+    assert len(calls) == 2
+    assert calls[1][0].startswith(_GEMINI_BASE_URL)
+    assert calls[1][1]["model"] == "gemini-3.5-flash-lite"  # env model honoured
+    assert vision_env.clock.sleeps == []
+
+
+def test_vision_failover_does_not_log_keys(vision_env, monkeypatch, caplog):
+    _enable_failover(vision_env)
+    vision_env.settings.vision_max_retries = 0  # 1 Groq 429, then Gemini 429
+    calls = _failover_post_script(monkeypatch, [
+        _VisionResponse(429, text='{"error":{"message":"Rate limit reached"}}'),
+        _VisionResponse(429, text='{"error":{"message":"quota exceeded"}}'),
+    ])
+    with caplog.at_level("INFO", logger="vyralx.scene_analysis"):
+        record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is None
+    assert len(calls) == 2
+    assert "fail-over" in caplog.text  # the attempt itself is logged
+    assert _GEMINI_BASE_URL in caplog.text  # the endpoint is named
+    assert vision_env.settings.vision_api_key not in caplog.text
+    assert "failover-fake-key" not in caplog.text
+
+
+def test_describe_scene_also_fails_over(vision_env, monkeypatch):
+    _enable_failover(vision_env)
+    payload = {"choices": [{"message": {
+        "content": "1) a rider waits\n2) an officer arrives\n3) they talk",
+    }}]}
+    calls = _failover_post_script(monkeypatch, [
+        _VisionResponse(429, headers={"retry-after": "10"}),
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(200, payload=payload),
+    ])
+    text = _sa026.describe_scene(vision_env.source, 30.0)
+    assert "a rider waits" in text
+    assert len(calls) == 5  # 4 Groq attempts, then exactly one Gemini attempt
+    assert calls[4][0].startswith(_GEMINI_BASE_URL)
+    assert vision_env.clock.sleeps == [10.0, 60.0, 120.0]

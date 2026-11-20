@@ -104,6 +104,15 @@ def _data_url(path: Path) -> str:
 # * each logical call records an outcome (see last_vision_outcome)
 #   so the viral loop can pace calls, budget the day's estimated
 #   token spend, and stop cleanly when the day is drained.
+#
+# TASK-VYR-028 (fix 4): when the primary call exhausts its retries on
+# HTTP 429, _vision_request makes exactly one attempt against the
+# fail-over endpoint configured by the VISION_FAILOVER_* env seams
+# (see _attempt_vision_failover) instead of returning the 429 — the
+# cycle-8 TPD wall (Used ~198k of 200k) and the OTPM sizing fault
+# (max_tokens 1100 vs the 1000 limit) are both primary-only limits,
+# and the fail-over keeps the same request shape, the same record
+# validation, and the same outcome accounting.
 # --------------------------------------------------------------------------- #
 
 # Fallback waits before retries 1/2/3 when the provider sends no
@@ -282,6 +291,14 @@ def _vision_request(body: dict[str, Any], *, context: str) -> httpx.Response:
     waiting Retry-After when present (the fallback ladder
     otherwise), with the total wait capped at
     ``vision_retry_wait_cap_seconds`` per logical call.
+
+    TASK-VYR-028: once the retries are spent on HTTP 429 (either the
+    retry count or the wait cap gives up), exactly one attempt is
+    made against the configured fail-over endpoint
+    (see _attempt_vision_failover) and ITS response is returned
+    instead — the callers' raise_for_status / parse flow then applies
+    to the fail-over reply unchanged. No fail-over is attempted when
+    the primary succeeds, fails non-429, or is unconfigured.
     """
     global _LAST_VISION_REQUEST_MONO
     settings = get_settings()
@@ -321,6 +338,13 @@ def _vision_request(body: dict[str, Any], *, context: str) -> httpx.Response:
         _log_vision_failure(context, response)
         exhausted = response.status_code == 429 and attempts > max_retries
         if response.status_code != 429 or exhausted:
+            # Fail-over is 429-only: a non-429 failure returns as-is.
+            if response.status_code == 429:
+                failover_response = _attempt_vision_failover(
+                    body, context=context, attempts=attempts, estimated=estimated,
+                )
+                if failover_response is not None:
+                    return failover_response
             _record_vision_outcome(
                 status=response.status_code, attempts=attempts,
                 estimated_tokens=estimated * attempts,
@@ -337,6 +361,11 @@ def _vision_request(body: dict[str, Any], *, context: str) -> httpx.Response:
                 "per-call cap (already waited %.0fs); giving up",
                 context, wait, wait_cap, waited,
             )
+            failover_response = _attempt_vision_failover(
+                body, context=context, attempts=attempts, estimated=estimated,
+            )
+            if failover_response is not None:
+                return failover_response
             _record_vision_outcome(
                 status=429, attempts=attempts,
                 estimated_tokens=estimated * attempts,
@@ -349,6 +378,86 @@ def _vision_request(body: dict[str, Any], *, context: str) -> httpx.Response:
         )
         time.sleep(wait)
         waited += wait
+
+
+def _vision_failover_settings(settings: Any) -> dict[str, str] | None:
+    """Fail-over endpoint config (TASK-VYR-028), or None when disabled.
+
+    Disabled unless BOTH a base URL and a key are configured; the
+    model defaults to gemini-3.5-flash-lite. All three come from the
+    VISION_FAILOVER_* env seams (VyralX/app/config.py); the key is
+    deployment env only and is never logged. ``getattr`` defaults
+    keep older settings objects (and the VYR-026 test fixture, which
+    has no fail-over attributes) working with fail-over disabled.
+    """
+    base_url = str(getattr(settings, "vision_failover_base_url", "") or "").strip()
+    key = str(getattr(settings, "vision_failover_api_key", "") or "").strip()
+    if not base_url or not key:
+        return None
+    model = str(getattr(settings, "vision_failover_model", "") or "").strip()
+    return {
+        "base_url": base_url.rstrip("/"),
+        "key": key,
+        "model": model or "gemini-3.5-flash-lite",
+    }
+
+
+def _attempt_vision_failover(
+    body: dict[str, Any], *, context: str, attempts: int, estimated: int,
+) -> httpx.Response | None:
+    """Exactly one fail-over attempt after primary 429 exhaustion.
+
+    Returns the fail-over response (any status — the caller's
+    existing raise_for_status / parse flow applies to it unchanged),
+    or None when no fail-over is configured. Only ever called after
+    the primary's VYR-026 retries are spent, on HTTP 429, and only
+    once per logical call: the fail-over is never itself retried.
+    The request is the primary's body with only the model swapped,
+    so a Gemini reply is parsed and validated exactly like a Groq
+    one; the outcome recorded here is what the viral loop budgets
+    and counts — a 200 resets the loop's consecutive-exhaustion
+    streak exactly like a primary 200, a 429 keeps it exhausted.
+    No key material is logged: only the endpoint base URL (which
+    carries no secret) names where the attempt went.
+    """
+    global _LAST_VISION_REQUEST_MONO
+    settings = get_settings()
+    failover = _vision_failover_settings(settings)
+    if failover is None:
+        return None
+    failover_body = dict(body)
+    failover_body["model"] = failover["model"]
+    url = failover["base_url"] + "/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {failover['key']}",
+        "Content-Type": "application/json",
+        "User-Agent": "VyralX/1.0",
+    }
+    timeout = float(getattr(settings, "vision_timeout_seconds", 90))
+    log.info(
+        "Vision %s: primary exhausted (429); trying fail-over endpoint %s",
+        context, failover["base_url"],
+    )
+    _LAST_VISION_REQUEST_MONO = time.monotonic()
+    called_at = time.time()
+    try:
+        response = httpx.post(url, headers=headers, json=failover_body, timeout=timeout)
+    except Exception:
+        _record_vision_outcome(
+            status=None, attempts=attempts + 1,
+            estimated_tokens=estimated * (attempts + 1),
+            called_at=called_at, rate_limit_exhausted=False,
+        )
+        raise
+    if response.status_code != 200:
+        _log_vision_failure(context + " (fail-over)", response)
+    _record_vision_outcome(
+        status=response.status_code, attempts=attempts + 1,
+        estimated_tokens=estimated * (attempts + 1),
+        called_at=called_at,
+        rate_limit_exhausted=response.status_code == 429,
+    )
+    return response
 
 
 def describe_scene(source_path: Path | str, duration: float) -> str:
