@@ -11823,14 +11823,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
   - id: TASK-STR-FWD-027
     title: "adoption anchor close-awareness: earliest_position_tag must skip fingerprint-matching tags the fill ledger has already closed (PR #1058 review condition C1)"
     status: AVAILABLE
-    owner: muse_2
+    owner: muse_ai
     branch: null
     created_at: "2026-11-19"
     updated_at: "2026-11-19"
     evidence:
       - "Filed by the merge-lane-5 board union under PR #1058 (TASK-STR-FWD-026) supervisor-review condition C1 (PR #1058 review comment 7000482547): a position reopened inside the fingerprint tolerances after a booked close inherits the ORIGINAL open timestamp from earliest_position_tag(), so an adopting daemon restart computes the new position's time exit from the first entry and would market-close it on its first management pass. Probe-confirmed at review time."
       - "Non-gating for #1058 and bounded: it could not touch the book that existed at review (that book was extinguished by the owner's 2026-11-19 Binance demo-account reset and the verified close-all that followed). Land before governed-lane re-entries are common."
-      - "Assignment: issue #35 comment 7049145370 by Muse (Head Manager) 2026-11-21 - queued to Muse 2 after TASK-REL-057 (owner order: Muse 2 is the active worker; keep it fed)."
     next_action: "Make the adoption anchor close-aware: when selecting the earliest fingerprint-matching tag, skip tags whose position the fill ledger has already booked as closed; add a regression test reproducing the reopen-inside-tolerance scenario (tag stream plus a booked close -> the anchor must be the reopen tag, not the original entry)."
     files:
       - Stratex/measurement/fill_ledger.py
@@ -12013,7 +12012,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
   - id: TASK-FRD-028
     title: "Route daily_self_report through the FRIDAY owner-notify severity gate, or record a permanent exemption in the gate docstring"
     status: AVAILABLE
-    owner: muse_2
+    owner: muse_ai
     branch: null
     pr: null
     priority: P2
@@ -12022,7 +12021,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Filed by the wave merge lane in the PR #1071 (TASK-FRD-025) union, per the brief: the supervisor review of PR #1071 (comment 7005080079) returned APPROVE-WITH-CONDITIONS; condition 1, verbatim: \"`daily_self_report` remains an ungated direct Telegram path — disclosed in the PR; file a follow-up to route it through the gate or record a permanent exemption in the gate docstring.\""
       - "Review bypass audit (same comment): grep of FRIDAY/src for send_owner_message found the remaining direct Telegram sends are (a) the gate itself, (b) daily_self_report G7/G8 daily/weekly reports — deliberately NOT wired and disclosed as such in the PR's board entry, (c) the gateway transport / conversational bot path (not proactive owner notification)."
-      - "Assignment: issue #35 comment 7049145370 by Muse (Head Manager) 2026-11-21 - queued to Muse 2 after TASK-STR-FWD-027. Coordinator decision recorded there: WIRE the G7/G8 sends through notify_owner at report-class severity; permanent exemption only if wiring proves structurally impossible, with reasons recorded in the gate docstring."
+      - "Coordinator decision (Muse, 2026-11-21): WIRE the G7/G8 sends through notify_owner at report-class severity; permanent exemption only if wiring proves structurally impossible, with reasons recorded in the gate docstring."
     next_action: "Coordinator decides: wire daily_self_report's G7/G8 sends through notify_owner with an explicit severity (report-class, expected ROUTINE/below-bar except failure flags), or record a permanent exemption with reasons in the owner_notify gate docstring. Either way the bypass audit must end with zero undisclosed ungated proactive paths."
     files:
       - FRIDAY/src/friday/api/server.py
@@ -12354,13 +12353,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
   - id: TASK-REL-057
     title: "Inference trigger-path coverage for the five remaining Inference-step suites (rel026, cache_scope, code_review, output_is_verified, source_repair_context): enumerate them in owner-workflows.yml trigger path lists like their siblings, or switch Inference test triggers to Inference/tests/** (the FRIDAY/tests/** and VyralX/tests/** pattern). Filed as the supervisor condition on PR #1113 (comment 7031518393)."
     status: AVAILABLE
-    owner: muse_2
+    owner: muse_ai
     priority: P2
     created_at: "2026-11-20"
     updated_at: "2026-11-21"
     evidence:
       - "Filed as the supervisor condition on PR #1113 (comment 7031518393), discharged by filing in the union merge of TASK-REL-056. TASK-REL-056 wired Inference/tests/test_inf015_flash_lite_catalogue.py into both owner-workflows.yml trigger path lists, but the five other Inference-step suites appear only in the step's pytest list and in neither trigger path list: Inference/tests/test_test_generation_reliability_rel026.py, Inference/tests/test_unified_manager_cache_scope.py, Inference/tests/test_forge_code_review_is_evidence_based.py, Inference/tests/test_forge_output_is_verified.py, Inference/tests/test_source_repair_context.py (each verified to occur exactly once in owner-workflows.yml at main ae2e7d43, in the step only). A change to one of those suites alone therefore does not fire the workflow that runs it. Pre-existing gap, same defect class as REL-056, explicitly flagged as out of REL-056's scope by its supervisor review."
-      - "Assignment: GitHub issue #35 comment 7048656160 by Muse (Head Manager) 2026-11-21 - TASK-REL-057 assigned to Muse 2 (roster id muse_2) as its pilot task."
+      - "Assignment history cleared 2026-11-21 on owner order: the worker instances were reset and their work traces removed; this task is unassigned (owner muse_ai) until the owner re-onboards the team."
     next_action: "Claim on issue #35 before editing. Either enumerate the five suites in both owner-workflows.yml trigger path lists alongside their siblings, or switch the Inference test triggers to Inference/tests/** (the pattern FRIDAY/tests/** and VyralX/tests/** already use in the same lists). Acceptance: a contracts run whose trigger evaluation shows a touch to any one of the five suites fires owner-workflows, and the Inference step still passes."
     files:
       - .github/workflows/owner-workflows.yml
