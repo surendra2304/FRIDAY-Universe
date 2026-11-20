@@ -83,8 +83,9 @@ document governs.
    sits waiting for a reset.
 2. **Claim.** Before editing anything, the worker posts its claim on the
    board and issue #35 (task, branch, files, start time).
-3. **Branch.** Isolated branch per task, prefixed by worker: `claude1/…`,
-   `claude2/…`, … (Muse's own branches use `claude/…`).
+3. **Branch.** Isolated branch per task, prefixed by the worker's proper
+   name in lowercase, space removed: `muse1/…`, `muse2/…`, … (Muse's own
+   branches use `muse/…`).
 4. **PR.** The worker opens a PR and signs every PR, board post and issue
    comment with its name (e.g. "— Muse 1"). Workers push under the owner's
    GitHub account, so all work must be identifiable at a glance.
@@ -108,6 +109,16 @@ document governs.
   changes (restarts, settings, deploys) happen only through a PR that Muse
   reviews and verifies before merge and deploy. No unilateral live changes,
   ever — full access is about reach, not about skipping the review gate.
+- **Approvals are front-loaded, then escalated — never waited on.** During
+  onboarding a worker requests every standing permission it can foresee
+  (GitHub, the bridge site, its files and computer), choosing the lasting
+  always-allow option wherever offered, so the owner approves once, in one
+  sitting. No agent can approve its own access — that is a product
+  safeguard, not a team rule. If a new approval appears mid-task, the worker
+  posts it on issue #35 addressed to Muse, checkpoints, and continues with
+  other work; Muse consolidates anything that truly needs the owner and
+  tells him exactly which account needs his tap. A worker never sits idle
+  waiting on an approval, and never chases the owner itself.
 
 ## 5. Secrets flow
 
@@ -210,6 +221,11 @@ document governs.
 ## 11. Standing rules
 
 - **Free services only.** No paid tiers, no PAYG, no paid accounts.
+- **Storage hygiene.** Every Muse keeps its own workspace clean: task
+  scratch (build, review and run copies) is deleted when the task closes.
+  Cleanup is triggered by size, not by calendar — the coordinator sweeps
+  automatically whenever disk usage crosses 100 GB, always protecting
+  records and work that is still active.
 - **Real-money trading is prohibited.** Stratex is demo-only; live trading
   requires the owner's separate explicit authorization with a proven
   forward record in front of him.
