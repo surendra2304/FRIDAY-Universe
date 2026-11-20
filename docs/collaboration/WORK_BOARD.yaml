@@ -12487,6 +12487,21 @@ task_id_warnings:
     files:
       - docs/collaboration/ARCHITECTURE.md
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-REL-062
+    title: "Record the completed 6/4 fleet migration in the repo: deploy-monorepo.yml path filters, per-server agent lists and health-gate ports move to the confirmed layout (Server 1: FRIDAY, Inference, Memora, Stratex, Forge, Sentinel running + Stratex sleeper works on AWS U1; Server 2: IntelX, Futuris, Cortex running + VyralX sleeper works on AWS U2). Migration executed live 2026-11-20/21: Sentinel S2 to S1, IntelX S1 to S2, Futuris S1 to S2 with the Python 3.12 flip (statsforecast 2.1.1), all peer URLs and Caddy routes flipped and verified through the public domain, old units masked as sleepers."
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: muse/fleet-layout-rel062
+    priority: P2
+    created_at: "2026-11-21"
+    updated_at: "2026-11-21"
+    evidence:
+      - "Claim: GitHub issue #35 comment 7048500444 by Muse before any editing (TASK-REL-062; next free REL id - board max was TASK-REL-061). Base: main fb1215ec6a3301c95cbf65cee900183bf12bc301 (deploy-monorepo.yml blob 4f52f9cd and WORK_BOARD.yaml blob def27a9c, both verified against the git trees API / hash-object before editing)."
+      - "Live verification 2026-11-21: Sentinel health 200 on S1 (S2 unit masked); IntelX health 200 on S2 (S1 unit masked; exactly 2 missing deps installed at S1 pins: beautifulsoup4 4.15.0, prometheus_client 0.26.0); Futuris health 200 on S2 under venv312 with statsforecast 2.1.1 + APScheduler 3.11.3 installed, a real POST /forecast computed with backend statsforecast / backend_available true and persisted, zero statsforecast_unavailable journal lines, S1 unit masked; Caddy routes flipped (futuris and intelx to 10.0.0.120, sentinel to 127.0.0.1) and all three verified 200 through https://friday-universe.duckdns.org; all consumers restarted onto the new peer URLs (Inference, Memora, Forge, Stratex API + daemon with positions intact, FRIDAY, Cortex)."
+    next_action: "Coordinator review -> merge -> flip this record to MERGED in a follow-up board PR. Post-merge: watch the next deploy-monorepo runs on both servers go green under the new lists."
+    files:
+      - .github/workflows/deploy-monorepo.yml
+      - docs/collaboration/WORK_BOARD.yaml
   - id: "WARN-TASK-ID-001"
     severity: "high"
     description: "PR #23 is labelled TASK-CI-003 but does not match TASK-CI-003's current Master Plan acceptance criteria (workspace test runner)."
