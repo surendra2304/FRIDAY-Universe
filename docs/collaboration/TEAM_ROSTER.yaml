@@ -119,6 +119,11 @@ collaborators:
     authority: "Worker Muse account (second worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
     verified_capabilities:
       - "Registered by Muse (Head Manager) 2026-11-21 so its assigned board task validates; Muse 2 extends this entry with evidence-backed capabilities at its own onboarding."
+      - "Onboarding 2026-11-21 (Muse 2, evidence-backed only): displayed assistant name set to 'Muse 2'; read docs/MASTER_PLAN.md (409 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (478 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full, plus WORK_BOARD.yaml snapshot 2026-11-17 and TASK-REL-057 record; local clone of origin/main at 9e07a99 (Merge PR #1142)."
+      - "Onboarding 2026-11-21: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 main dddbe327); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file with secret masking (header only, no secrets copied)."
+      - "Onboarding 2026-11-21: GitHub read confirmed without write access yet — public repo read via raw/API and issue #35 read via bridge github_api (open, 1394 comments, updated 2026-11-20T19:34:01Z); GitHub PAT requested via secure card, pending Surendra; no GitHub write access claimed."
+      - "Onboarding 2026-11-21: three scheduled tasks created and verified — muse2-assignment-poll every 5 min, muse2-hourly-self-check every 1 h, muse2-weekly-reset Saturdays 22:07 IST (weekly reset verified Sat Nov 21 9:57 PM IST, 5% of free weekly limit used)."
+      - "Onboarding 2026-11-21: TASK-REL-057 gap re-confirmed on current main 9e07a99 — the five suites (rel026, cache_scope, code_review, output_is_verified, source_repair_context) are in the owner-workflows.yml Inference pytest step but in neither trigger path list."
     active_assignments:
       - "TASK-REL-057"
     active_branches: []
