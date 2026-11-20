@@ -11823,13 +11823,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
   - id: TASK-STR-FWD-027
     title: "adoption anchor close-awareness: earliest_position_tag must skip fingerprint-matching tags the fill ledger has already closed (PR #1058 review condition C1)"
     status: AVAILABLE
-    owner: muse_ai
+    owner: muse_2
     branch: null
     created_at: "2026-11-19"
     updated_at: "2026-11-19"
     evidence:
       - "Filed by the merge-lane-5 board union under PR #1058 (TASK-STR-FWD-026) supervisor-review condition C1 (PR #1058 review comment 7000482547): a position reopened inside the fingerprint tolerances after a booked close inherits the ORIGINAL open timestamp from earliest_position_tag(), so an adopting daemon restart computes the new position's time exit from the first entry and would market-close it on its first management pass. Probe-confirmed at review time."
       - "Non-gating for #1058 and bounded: it could not touch the book that existed at review (that book was extinguished by the owner's 2026-11-19 Binance demo-account reset and the verified close-all that followed). Land before governed-lane re-entries are common."
+      - "Assignment: issue #35 comment 7049145370 by Muse (Head Manager) 2026-11-21 - queued to Muse 2 after TASK-REL-057 (owner order: Muse 2 is the active worker; keep it fed)."
     next_action: "Make the adoption anchor close-aware: when selecting the earliest fingerprint-matching tag, skip tags whose position the fill ledger has already booked as closed; add a regression test reproducing the reopen-inside-tolerance scenario (tag stream plus a booked close -> the anchor must be the reopen tag, not the original entry)."
     files:
       - Stratex/measurement/fill_ledger.py
@@ -12012,7 +12013,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
   - id: TASK-FRD-028
     title: "Route daily_self_report through the FRIDAY owner-notify severity gate, or record a permanent exemption in the gate docstring"
     status: AVAILABLE
-    owner: muse_ai
+    owner: muse_2
     branch: null
     pr: null
     priority: P2
@@ -12021,6 +12022,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Filed by the wave merge lane in the PR #1071 (TASK-FRD-025) union, per the brief: the supervisor review of PR #1071 (comment 7005080079) returned APPROVE-WITH-CONDITIONS; condition 1, verbatim: \"`daily_self_report` remains an ungated direct Telegram path — disclosed in the PR; file a follow-up to route it through the gate or record a permanent exemption in the gate docstring.\""
       - "Review bypass audit (same comment): grep of FRIDAY/src for send_owner_message found the remaining direct Telegram sends are (a) the gate itself, (b) daily_self_report G7/G8 daily/weekly reports — deliberately NOT wired and disclosed as such in the PR's board entry, (c) the gateway transport / conversational bot path (not proactive owner notification)."
+      - "Assignment: issue #35 comment 7049145370 by Muse (Head Manager) 2026-11-21 - queued to Muse 2 after TASK-STR-FWD-027. Coordinator decision recorded there: WIRE the G7/G8 sends through notify_owner at report-class severity; permanent exemption only if wiring proves structurally impossible, with reasons recorded in the gate docstring."
     next_action: "Coordinator decides: wire daily_self_report's G7/G8 sends through notify_owner with an explicit severity (report-class, expected ROUTINE/below-bar except failure flags), or record a permanent exemption with reasons in the owner_notify gate docstring. Either way the bypass audit must end with zero undisclosed ungated proactive paths."
     files:
       - FRIDAY/src/friday/api/server.py
