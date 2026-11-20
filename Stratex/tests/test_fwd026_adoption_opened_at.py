@@ -18,6 +18,10 @@ Pins the adoption time-exit clock contract:
    position is left alone.
 4. A position with NO tag/timestamp in the stream falls back to the
    adoption instant — and logs that fallback at WARNING, never silently.
+5. TASK-STR-FWD-027: a position reopened inside the fingerprint
+   tolerances after a booked close anchors to the REOPEN tag, not the
+   original entry tag (PR #1058 review condition C1) — the ledger's
+   close for the first incarnation must not re-anchor the new one.
 """
 
 import logging
@@ -119,6 +123,83 @@ def test_earliest_tag_anchors_not_later_corrections(ledger):
     eng = _engine([_pos()])
     eng.adopt_existing_positions()
     assert eng.position_opened_at[BTC_KEY] == int(ENTRY_TS * 1000)
+
+
+# --- TASK-STR-FWD-027: adoption anchor close-awareness ---------------
+
+# Reopen-inside-tolerance scenario (PR #1058 review condition C1):
+# original entry T0, booked close T1, reopen T2 — same fingerprint
+# within tolerances (reopen qty/entry differ slightly from the broker
+# position, inside the 1% / 0.1% fingerprint tolerances).
+REOPEN_TS = ENTRY_TS + 2 * 86400
+CLOSE_TS = ENTRY_TS + 86400
+
+
+def _booked_close(symbol="BTCUSDT", qty=0.0014, entry=64812.8,
+                  entry_ts=ENTRY_TS, exit_ts=CLOSE_TS):
+    return fl.append_fill({
+        "strategy": "strategy_dow_effect", "engine": "daemon",
+        "venue": VENUE, "symbol": symbol, "side": "LONG", "qty": qty,
+        "entry_price": entry, "exit_price": 65000.0,
+        "entry_time": entry_ts, "exit_time": exit_ts,
+        "gross_pnl": 10.0, "fees": 0.5, "net_pnl": 9.5,
+        "exit_reason": "ENGINE_CLOSE",
+    })
+
+
+def test_reopened_position_anchors_to_reopen_tag(ledger):
+    # Original entry tag + booked close, then a reopen inside the
+    # fingerprint tolerances. Pre-fix the clock anchored to the
+    # ORIGINAL entry (T0) and the new position's time exit was judged
+    # from the first entry — a market-close on the first pass.
+    _dow_tag()
+    assert _booked_close() is not None
+    _dow_tag(ts=REOPEN_TS, qty=0.00141, entry=64850.0,
+             note="reopened_after_close")
+    eng = _engine([_pos()])
+    assert eng.adopt_existing_positions() == 1
+    assert eng.position_opened_at[BTC_KEY] == int(REOPEN_TS * 1000)
+    # Attribution still restores from the reopen (newest daemon) tag.
+    assert eng.position_strategy[BTC_KEY] == "strategy_dow_effect"
+
+
+def test_earliest_tag_skips_closed_tags_directly(ledger):
+    _dow_tag()
+    assert _booked_close() is not None
+    _dow_tag(ts=REOPEN_TS, qty=0.00141, entry=64850.0,
+             note="reopened_after_close")
+    tag = fl.earliest_position_tag(
+        VENUE, "BTCUSDT", side="LONG", qty=0.0014, entry_price=64812.8)
+    assert tag is not None
+    assert tag["ts"] == REOPEN_TS
+    # Same tag pattern with NO booked close anchors to the original.
+    _dow_tag(symbol="ETHUSDT", qty=0.036, entry=1816.86)
+    _dow_tag(symbol="ETHUSDT", qty=0.036, entry=1816.86,
+             ts=REOPEN_TS, note="adopted_at_startup_attribution_restored")
+    eth_tag = fl.earliest_position_tag(
+        VENUE, "ETHUSDT", side="LONG", qty=0.036, entry_price=1816.86)
+    assert eth_tag is not None
+    assert eth_tag["ts"] == ENTRY_TS
+
+
+def test_fully_closed_position_falls_back_to_now_and_warns(ledger, caplog):
+    # Every matching tag closed and never reopened: no usable anchor,
+    # so adoption falls back to the adoption instant (with WARNING),
+    # exactly like the no-tag case — never to the closed entry.
+    _dow_tag()
+    assert _booked_close() is not None
+    eng = _engine([_pos()])
+    before_ms = int(time.time() * 1000)
+    with caplog.at_level(logging.WARNING, logger="multi_venue_engine"):
+        assert eng.adopt_existing_positions() == 1
+    after_ms = int(time.time() * 1000)
+    opened = eng.position_opened_at[BTC_KEY]
+    assert before_ms <= opened <= after_ms
+    warnings = [
+        r for r in caplog.records
+        if r.levelno == logging.WARNING and "no tag timestamp" in r.getMessage()
+    ]
+    assert warnings, "fallback to adoption time must be logged at WARNING"
 
 
 def test_restored_age_fires_dow_time_exit_via_daemon(ledger):

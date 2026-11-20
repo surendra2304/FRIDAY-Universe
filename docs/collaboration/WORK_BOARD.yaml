@@ -11822,19 +11822,23 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-STR-FWD-027
     title: "adoption anchor close-awareness: earliest_position_tag must skip fingerprint-matching tags the fill ledger has already closed (PR #1058 review condition C1)"
-    status: AVAILABLE
+    status: IN_PROGRESS
     owner: muse_1
-    branch: null
+    branch: muse1/task-str-fwd-027-adoption-anchor-close-awareness
     created_at: "2026-11-19"
-    updated_at: "2026-11-19"
+    updated_at: "2026-11-21"
     evidence:
       - "Filed by the merge-lane-5 board union under PR #1058 (TASK-STR-FWD-026) supervisor-review condition C1 (PR #1058 review comment 7000482547): a position reopened inside the fingerprint tolerances after a booked close inherits the ORIGINAL open timestamp from earliest_position_tag(), so an adopting daemon restart computes the new position's time exit from the first entry and would market-close it on its first management pass. Probe-confirmed at review time."
       - "Non-gating for #1058 and bounded: it could not touch the book that existed at review (that book was extinguished by the owner's 2026-11-19 Binance demo-account reset and the verified close-all that followed). Land before governed-lane re-entries are common."
       - "Assignment: issue #35 comment 7049687666 by Muse (Head Manager) 2026-11-21 - queued to Muse 1 after TASK-REL-057 (owner order: keep Muse 1 working continuously)."
+      - "Claim: issue #35 comment 7051027367 by Muse 1 before any editing. Base: main 24336a54."
+      - "PR #1153 opened for Muse review: https://github.com/surendra2304/FRIDAY-Universe/pull/1153 (branch muse1/task-str-fwd-027-adoption-anchor-close-awareness, base main 24336a54). Change: earliest_position_tag() skips fingerprint-matching tags the fill ledger has already booked as closed; regression tests for the reopen-inside-tolerance scenario. Registry validator COLLABORATION REGISTRY VALID on the edited tree, identical to pristine main."
     next_action: "Make the adoption anchor close-aware: when selecting the earliest fingerprint-matching tag, skip tags whose position the fill ledger has already booked as closed; add a regression test reproducing the reopen-inside-tolerance scenario (tag stream plus a booked close -> the anchor must be the reopen tag, not the original entry)."
     files:
       - Stratex/measurement/fill_ledger.py
       - Stratex/autonomy/multi_venue_engine.py
+      - Stratex/tests/test_fwd026_adoption_opened_at.py
+      - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-VOI-023
     title: "Voice silence-criterion fix: the recovery ladder's prove-window verdict and the dead-input watchdog must consult the F2 frame counters — frames flowing means NOT silent and NOT dead-input, whatever the RMS energy estimate says"
     status: IN_REVIEW
