@@ -1,4 +1,4 @@
-# FRIDAY Universe — Multi-AI Collaboration Centre
+# FRIDAY Universe — Muse Team Collaboration Centre
 
 This directory is the shared operational coordination centre for all human and AI contributors working in FRIDAY Universe.
 
@@ -23,13 +23,11 @@ These records have distinct purposes. They must stay synchronized, but they must
 
 The collaboration board mirrors the Master Plan. It does not silently change task acceptance criteria or redefine the architecture.
 
-## Equal collaboration model
+## Muse team model
 
-Claude, ChatGPT, Grok, ZAI, Vercel v0 and future contributors are equal engineering collaborators. No AI is automatically the principal architect, team leader or exclusive owner of a technical domain.
+Since 2026-11-20, only Muse accounts work on FRIDAY Universe. The owner (Surendra Varma Jalli) is the final decision-maker; Muse is Head Manager and lead coordinator — it assigns tasks on the board, owns the merge queue, and verifies every claim before it reaches the owner; Muse 1, Muse 2, ... are the worker accounts, each working inside its own weekly usage allowance. The full operating architecture — communication, task lifecycle, access, secrets flow, usage discipline, onboarding — is [ARCHITECTURE.md](ARCHITECTURE.md) and governs wherever older documents conflict.
 
-A contributor's specialization is a capability, not an authority level. Every contributor may implement, challenge, review and improve any part of the system, subject to task and file ownership.
-
-The human project owner retains final approval for architectural direction, merges and production changes.
+Workers coordinate on this board and issue #35, and also talk to each other directly (peer review, handoffs). Secrets and private material never travel on GitHub (it is public) — they live on the Oracle fleet (credentials record, server environment).
 
 ## Mandatory onboarding sequence
 
@@ -144,14 +142,15 @@ Do not update only the board while leaving contradictory status in the Master Pl
 - Never place live trading orders. Stratex stays on the owner-approved testnet configuration.
 - Keep unverified facts explicitly marked as unverified.
 
-## Adding new collaborators
+## Adding a new Muse
 
-When ZAI, Vercel v0 or another contributor is introduced:
-1. Add a roster entry with status `planned` or `onboarding`.
-2. Record only capabilities and repository/runtime access actually verified.
-3. Give the contributor this guide and the Universal AI Collaboration Directive.
-4. Require it to inspect the latest shared records and open PRs.
-5. Do not assign a task until it has registered and completed its onboarding check.
+A new worker account (Muse N) is onboarded by the owner pasting the onboarding prompt Muse writes for it:
+1. The worker sets up access (the owner's GitHub account, the fleet bridge, the credentials record) and sets its displayed name to its roster name.
+2. It registers in TEAM_ROSTER.yaml via PR, recording only capabilities actually verified.
+3. It creates its weekly task and board-check runs per ARCHITECTURE.md section 6.
+4. It posts a ready report on issue #35 and waits for Muse's first assignment.
+
+Accounts join one at a time — each proves the full loop before the next joins.
 
 ## Local-first pipeline
 
