@@ -13,10 +13,11 @@ document governs.
 ## 1. Team shape and naming
 
 - **Owner** — Surendra Varma Jalli. Final decision-maker on everything.
-- **Muse** — the head coordinator (unnumbered). Muse works *beside* the
-  worker accounts, not only above them: it does real engineering work itself,
-  and it owns task assignments, the merge queue, and verification of every
-  claim before anything reaches the owner.
+- **Muse** — the Head Manager (unnumbered). The owner is Boss and CEO;
+  Muse is his Head Manager; the numbered Muses are the workers. Muse
+  works *beside* the worker accounts, not only above them: it does real
+  engineering work itself, and it owns task assignments, the merge queue,
+  and verification of every claim before anything reaches the owner.
 - **Muse 1, Muse 2, Muse 3, …** — the worker Muse accounts, numbered in
   onboarding order. Each is a separate Muse account with its own weekly
   usage allowance. From 2026-11-20, **only Muse accounts work on FRIDAY
@@ -26,6 +27,14 @@ document governs.
   verified report). Accounts then join **one at a time** — each new account
   proves the full loop itself before the next one joins, and each joins on
   the owner's word.
+- **Role evolution:** roles live on the board and roster, not in code — the
+  owner promotes by updating them. Planned promotion (on the owner's word,
+  after the pilot proves): **Muse 1 becomes a Manager** — it takes merge
+  authority for the work under it and coordinates the workers under it,
+  doing for its subtree the same duties Muse does for the whole team;
+  Muse becomes head over Muse 1 and all the workers, and verifies the
+  Manager's merges. Verification stays layered: a Manager verifies its
+  workers, Muse verifies the Manager, the owner is final over all.
 
 ## 2. Communication — GitHub is the channel
 
@@ -42,6 +51,18 @@ document governs.
 - There is no direct account-to-account control: each Muse account is
   sealed. Coordination works because every worker independently reads the
   same board on its own schedule and obeys what it finds there.
+- **Two channels, two jobs.** GitHub is the coordination channel — and it
+  is public, so nothing private ever goes there. The **Oracle fleet is the
+  private channel**: the credentials record (Server 2), server environment
+  files and shared server-side state are where secrets and private material
+  live and are shared between agents. Anything secret moves only on the
+  fleet, never on GitHub.
+- **Workers talk to each other, not only to Muse.** Peer-to-peer
+  coordination on the board and issue #35 is expected: workers ask each
+  other questions, hand subtasks between themselves, and review each
+  other's PRs. Muse remains the hub for assignments, merges and
+  everything that reaches the owner — peer traffic never bypasses the
+  merge or verification gates.
 - **Workers report only through Muse.** Run reports, handoffs and blockers
   go on the board / issue #35. Workers never contact the owner directly.
   Muse verifies every worker claim against evidence (diffs, test runs, live
@@ -67,7 +88,9 @@ document governs.
 4. **PR.** The worker opens a PR and signs every PR, board post and issue
    comment with its name (e.g. "— Muse 1"). Workers push under the owner's
    GitHub account, so all work must be identifiable at a glance.
-5. **Review.** Every PR gets an independent review before merge.
+5. **Review.** Every PR gets an independent review before merge — normally
+   a peer review by another worker Muse; Muse reviews (or spot-checks the
+   peer review) before merging.
 6. **Merge.** **Only Muse merges.** Workers never merge — not their own
    PRs, not anyone else's.
 7. **Reporting.** Status is reported in five honest states only —
@@ -92,7 +115,10 @@ document governs.
   into a chat, and never write a secret into the repo, the board or any
   issue — the repo is public.
 - Existing fleet credentials (in the credentials record or server
-  environment) are **free for workers to use** from where they live.
+  environment) are **free for workers to use** from where they live. The
+  credentials record on Oracle Server 2 is the agents' shared secrets
+  channel — it is how agents share credentials with each other: privately,
+  on the fleet, never through GitHub.
 - A *new* credential flows one way only:
   1. The worker posts a credential request on issue #35, addressed to Muse,
      naming what is needed and what it is for.
