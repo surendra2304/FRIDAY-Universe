@@ -439,3 +439,165 @@ def test_cycle_pacing_only_for_candidates_that_produce(tmp_path, db, monkeypatch
     # The no-transcript candidate never reaches production, so it
     # never touches the pacing clock; the two producers do.
     assert vision.pacing_waits == [65.0, 65.0]
+
+# --- TASK-VYR-029: provider-aware vision token budgets ----------------- #
+# Cycle 9 proved the VYR-028 fail-over works but produced 0 renders:
+# the VYR-026 budget counted estimated tokens per attempt regardless
+# of provider and tripped at 195,560 after 10 attempts, 7 of them
+# fail-over. The Groq budget now gates Groq tokens only; Gemini
+# fail-over tokens gate against their own budget (default 2,500,000
+# ≈ 500 requests at the measured 4,889-token analyze_scene
+# estimate) with the distinct stop reason vision_daily_budget_gemini.
+# The scripted outcomes below carry the per-provider keys the real
+# scene_analysis outcome now records; _failed_other/_ok (no keys)
+# still exercise the legacy path, which charges the whole total to
+# Groq.
+def _failover_ok(groq_tokens=5000, gemini_tokens=5000):
+    """A fail-over success: 4 Groq attempts + 1 Gemini attempt."""
+    return {
+        "status": 200, "rate_limit_exhausted": False,
+        "estimated_tokens": groq_tokens + gemini_tokens,
+        "estimated_tokens_groq": groq_tokens,
+        "estimated_tokens_gemini": gemini_tokens,
+    }
+
+
+def _failover_failed_other(groq_tokens=5000, gemini_tokens=5000):
+    """A fail-over that returned a non-429 failure (streak stays 0)."""
+    return {
+        "status": 500, "rate_limit_exhausted": False,
+        "estimated_tokens": groq_tokens + gemini_tokens,
+        "estimated_tokens_groq": groq_tokens,
+        "estimated_tokens_gemini": gemini_tokens,
+    }
+
+
+def _seed_vision_state(tmp_path, *, total, groq=None, gemini=None):
+    """Pre-write today's persisted vision budget (migration cases)."""
+    from datetime import datetime, timezone
+
+    today = datetime.now(timezone.utc).date().isoformat()
+    budget = {"date": today, "estimated_tokens": total, "last_call_at": None}
+    if groq is not None:
+        budget["estimated_tokens_groq"] = groq
+    if gemini is not None:
+        budget["estimated_tokens_gemini"] = gemini
+    data_dir = tmp_path / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    (data_dir / "viral_loop_state.json").write_text(
+        json.dumps({"cycles_completed": 0, "vision_budget": budget}),
+        encoding="utf-8",
+    )
+
+
+def test_cycle_vision_gemini_budget_stop(tmp_path, db, monkeypatch):
+    settings = _settings(
+        tmp_path, viral_loop_vision_failover_daily_token_budget=10000,
+    )
+    pool = [_candidate(f"v{i}") for i in range(5)]
+    # Fail-over outcomes: 5000 Groq + 5000 Gemini each. Groq stays
+    # far below its 180,000 default; only the Gemini budget can stop
+    # this cycle.
+    vision = _FakeVision([_failover_failed_other()] * 5)
+    produce_calls: list[str] = []
+
+    def produce(candidate):
+        produce_calls.append(candidate.video_id)
+        return {"status": "SKIPPED", "reason": "vision_unavailable"}
+
+    _wire_vision_cycle(
+        monkeypatch, settings, pool=pool, vision=vision, produce=produce,
+    )
+    summary = viral_loop.run_viral_loop_cycle(db)
+    # 5000 Gemini after attempt 1 (< 10000, continue), 10000 after
+    # attempt 2; the third candidate trips the Gemini pre-production
+    # check and production is never invoked for it.
+    assert summary["stopped"] == "vision_daily_budget_gemini"
+    assert produce_calls == ["v0", "v1"]
+    assert summary["skips"] == {"vision_unavailable": 2}
+    assert summary["vision"]["estimated_tokens_gemini_today"] == 10000
+    assert summary["vision"]["estimated_tokens_groq_today"] == 10000
+    assert summary["vision"]["estimated_tokens_today"] == 20000
+    assert summary["vision"]["failover_daily_budget"] == 10000
+    state = json.loads((tmp_path / "data" / "viral_loop_state.json").read_text())
+    assert state["vision_budget"]["estimated_tokens_gemini"] == 10000
+    assert state["vision_budget"]["estimated_tokens_groq"] == 10000
+
+
+def test_cycle_vision_groq_budget_ignores_gemini_tokens(tmp_path, db, monkeypatch):
+    settings = _settings(tmp_path)
+    # Cycle-9-shaped day, pre-seeded: Groq 100,000 + Gemini 90,000
+    # already spent (total 190,000 — over the old single budget of
+    # 180,000). Three more fail-over attempts spend 5,000 Groq +
+    # 15,000 Gemini each.
+    _seed_vision_state(tmp_path, total=190000, groq=100000, gemini=90000)
+    pool = [_candidate(f"v{i}") for i in range(3)]
+    vision = _FakeVision([_failover_failed_other(5000, 15000)] * 3)
+    produce_calls: list[str] = []
+
+    def produce(candidate):
+        produce_calls.append(candidate.video_id)
+        return {"status": "SKIPPED", "reason": "vision_unavailable"}
+
+    _wire_vision_cycle(
+        monkeypatch, settings, pool=pool, vision=vision, produce=produce,
+    )
+    summary = viral_loop.run_viral_loop_cycle(db)
+    # Groq ends at 115,000 (< 180,000) and Gemini at 135,000
+    # (< 2,500,000): no budget stops this cycle — the old code
+    # would have stopped it on the 190,000+ total before any attempt.
+    assert "stopped" not in summary
+    assert summary["attempts"] == 3
+    assert produce_calls == ["v0", "v1", "v2"]
+    assert summary["vision"]["estimated_tokens_groq_today"] == 115000
+    assert summary["vision"]["estimated_tokens_gemini_today"] == 135000
+    assert summary["vision"]["estimated_tokens_today"] == 250000
+
+
+def test_cycle_vision_legacy_outcome_charges_groq(tmp_path, db, monkeypatch):
+    settings = _settings(tmp_path, viral_loop_vision_daily_token_budget=9000)
+    pool = [_candidate(f"v{i}") for i in range(5)]
+    # Legacy outcomes carry no per-provider keys: the whole total
+    # attributes to Groq, so the Groq budget still stops the cycle.
+    vision = _FakeVision([_failed_other()] * 5)
+    produce_calls: list[str] = []
+
+    def produce(candidate):
+        produce_calls.append(candidate.video_id)
+        return {"status": "SKIPPED", "reason": "vision_unavailable"}
+
+    _wire_vision_cycle(
+        monkeypatch, settings, pool=pool, vision=vision, produce=produce,
+    )
+    summary = viral_loop.run_viral_loop_cycle(db)
+    assert summary["stopped"] == "vision_daily_budget"
+    assert produce_calls == ["v0", "v1"]
+    assert summary["vision"]["estimated_tokens_groq_today"] == 10000
+    assert summary["vision"]["estimated_tokens_gemini_today"] == 0
+    assert summary["vision"]["estimated_tokens_today"] == 10000
+
+
+def test_cycle_vision_budget_state_migrates_legacy_total(tmp_path, db, monkeypatch):
+    settings = _settings(tmp_path, viral_loop_vision_daily_token_budget=180000)
+    # Same-day state written before the provider split: a bare total
+    # of 175,000 with no per-provider keys. It must attribute to
+    # Groq, so one more 5,000-token Groq-only call reaches the
+    # 180,000 cap and the next candidate stops.
+    _seed_vision_state(tmp_path, total=175000)
+    pool = [_candidate(f"v{i}") for i in range(3)]
+    vision = _FakeVision([_failed_other()] * 3)
+    produce_calls: list[str] = []
+
+    def produce(candidate):
+        produce_calls.append(candidate.video_id)
+        return {"status": "SKIPPED", "reason": "vision_unavailable"}
+
+    _wire_vision_cycle(
+        monkeypatch, settings, pool=pool, vision=vision, produce=produce,
+    )
+    summary = viral_loop.run_viral_loop_cycle(db)
+    assert summary["stopped"] == "vision_daily_budget"
+    assert produce_calls == ["v0"]
+    assert summary["vision"]["estimated_tokens_groq_today"] == 180000
+    assert summary["vision"]["estimated_tokens_gemini_today"] == 0
+    assert summary["vision"]["estimated_tokens_today"] == 180000

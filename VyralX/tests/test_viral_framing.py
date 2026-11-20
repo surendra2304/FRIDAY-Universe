@@ -1634,3 +1634,127 @@ def test_describe_scene_also_fails_over(vision_env, monkeypatch):
     assert len(calls) == 5  # 4 Groq attempts, then exactly one Gemini attempt
     assert calls[4][0].startswith(_GEMINI_BASE_URL)
     assert vision_env.clock.sleeps == [10.0, 60.0, 120.0]
+
+# --- TASK-VYR-029: provider-aware vision token accounting -------------- #
+# Cycle 9 (2026-11-20, U2) proved the VYR-028 fail-over works (7/7
+# live fail-overs returned valid scene records) but produced 0
+# renders: the VYR-026 daily budget counted estimated tokens per
+# attempt regardless of provider and tripped at 195,560 after 10
+# attempts, even though 7 of them spent their tokens on Gemini,
+# which never touches Groq's TPD. The outcome now charges tokens
+# per provider — primary attempts to Groq, the one fail-over
+# attempt to Gemini — so the loop can gate each provider against
+# its own daily budget. The per-request estimate is computed from
+# the actual request body in each test (not a hardcoded number);
+# its measured value for analyze_scene is 4,889 tokens, which is
+# what the 2,500,000 Gemini budget in config.py is sized from.
+def _per_request_estimate(calls):
+    """estimate_vision_tokens() on the first call's real body."""
+    return _sa026.estimate_vision_tokens(calls[0][1])
+
+
+def test_vision_outcome_splits_groq_and_gemini_tokens_on_failover(
+    vision_env, monkeypatch
+):
+    _enable_failover(vision_env)
+    calls = _failover_post_script(monkeypatch, [
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(200, payload=_ok_payload()),
+    ])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is not None
+    assert len(calls) == 5  # 4 Groq attempts, then exactly one Gemini attempt
+    per_call = _per_request_estimate(calls)
+    assert per_call == 4889  # measured analyze_scene estimate; budget sized from it
+    outcome = _sa026.last_vision_outcome()
+    assert outcome["status"] == 200
+    assert outcome["attempts"] == 5
+    assert outcome["estimated_tokens_groq"] == 4 * per_call
+    assert outcome["estimated_tokens_gemini"] == per_call
+    assert outcome["estimated_tokens"] == 5 * per_call
+    assert outcome["rate_limit_exhausted"] is False
+
+
+def test_vision_outcome_groq_only_on_primary_success(vision_env, monkeypatch):
+    calls = _failover_post_script(monkeypatch, [
+        _VisionResponse(200, payload=_ok_payload()),
+    ])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is not None
+    assert len(calls) == 1
+    per_call = _per_request_estimate(calls)
+    outcome = _sa026.last_vision_outcome()
+    assert outcome["status"] == 200
+    assert outcome["attempts"] == 1
+    assert outcome["estimated_tokens_groq"] == per_call
+    assert outcome["estimated_tokens_gemini"] == 0
+    assert outcome["estimated_tokens"] == per_call
+
+
+def test_vision_outcome_groq_only_on_primary_429_without_failover(
+    vision_env, monkeypatch
+):
+    calls = _failover_post_script(monkeypatch, [
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(429),
+    ])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is None
+    assert len(calls) == 4  # fail-over not configured: no Gemini attempt
+    per_call = _per_request_estimate(calls)
+    outcome = _sa026.last_vision_outcome()
+    assert outcome["status"] == 429
+    assert outcome["attempts"] == 4
+    assert outcome["estimated_tokens_groq"] == 4 * per_call
+    assert outcome["estimated_tokens_gemini"] == 0
+    assert outcome["estimated_tokens"] == 4 * per_call
+    assert outcome["rate_limit_exhausted"] is True
+
+
+def test_vision_outcome_gemini_failure_still_charges_gemini(
+    vision_env, monkeypatch
+):
+    _enable_failover(vision_env)
+    calls = _failover_post_script(monkeypatch, [
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(429),
+        _VisionResponse(429),
+    ])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is None
+    assert len(calls) == 5
+    per_call = _per_request_estimate(calls)
+    outcome = _sa026.last_vision_outcome()
+    assert outcome["status"] == 429
+    assert outcome["attempts"] == 5
+    assert outcome["estimated_tokens_groq"] == 4 * per_call
+    assert outcome["estimated_tokens_gemini"] == per_call
+    assert outcome["estimated_tokens"] == 5 * per_call
+    assert outcome["rate_limit_exhausted"] is True
+
+
+def test_vision_outcome_wait_cap_failover_split(vision_env, monkeypatch):
+    _enable_failover(vision_env)
+    vision_env.settings.vision_retry_wait_cap_seconds = 35
+    calls = _failover_post_script(monkeypatch, [
+        _VisionResponse(429, headers={"retry-after": "300"}),
+        _VisionResponse(200, payload=_ok_payload()),
+    ])
+    record = _sa026.analyze_scene(vision_env.source, 30.0)
+    assert record is not None
+    assert len(calls) == 2  # 1 Groq attempt, wait-cap give-up, 1 Gemini attempt
+    per_call = _per_request_estimate(calls)
+    outcome = _sa026.last_vision_outcome()
+    assert outcome["status"] == 200
+    assert outcome["attempts"] == 2
+    assert outcome["estimated_tokens_groq"] == per_call
+    assert outcome["estimated_tokens_gemini"] == per_call
+    assert outcome["estimated_tokens"] == 2 * per_call
+    assert outcome["rate_limit_exhausted"] is False
