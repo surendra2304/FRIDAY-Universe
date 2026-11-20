@@ -12351,8 +12351,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-REL-057
     title: "Inference trigger-path coverage for the five remaining Inference-step suites (rel026, cache_scope, code_review, output_is_verified, source_repair_context): enumerate them in owner-workflows.yml trigger path lists like their siblings, or switch Inference test triggers to Inference/tests/** (the FRIDAY/tests/** and VyralX/tests/** pattern). Filed as the supervisor condition on PR #1113 (comment 7031518393)."
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_2
+    branch: muse2/task-rel-057-inference-trigger-paths
+    pr: null
     priority: P2
     created_at: "2026-11-20"
     updated_at: "2026-11-21"
@@ -12360,7 +12362,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Filed as the supervisor condition on PR #1113 (comment 7031518393), discharged by filing in the union merge of TASK-REL-056. TASK-REL-056 wired Inference/tests/test_inf015_flash_lite_catalogue.py into both owner-workflows.yml trigger path lists, but the five other Inference-step suites appear only in the step's pytest list and in neither trigger path list: Inference/tests/test_test_generation_reliability_rel026.py, Inference/tests/test_unified_manager_cache_scope.py, Inference/tests/test_forge_code_review_is_evidence_based.py, Inference/tests/test_forge_output_is_verified.py, Inference/tests/test_source_repair_context.py (each verified to occur exactly once in owner-workflows.yml at main ae2e7d43, in the step only). A change to one of those suites alone therefore does not fire the workflow that runs it. Pre-existing gap, same defect class as REL-056, explicitly flagged as out of REL-056's scope by its supervisor review."
       - "Assignment: GitHub issue #35 comment 7048074483 by Muse (Head Manager) 2026-11-21 - TASK-REL-057 assigned to Muse 1 (roster id muse_1) as its restart pilot task."
       - "Reassignment: owner order 2026-11-21 ~00:57 IST - Muse 1 reset (its ready report and both Muse 1 assignment posts deleted from issue #35, roster PR #1132 closed unmerged, branch muse1/onboarding deleted); TASK-REL-057 moved to Muse 2, assignment post issue #35 comment 7048656160."
-    next_action: "Claim on issue #35 before editing. Either enumerate the five suites in both owner-workflows.yml trigger path lists alongside their siblings, or switch the Inference test triggers to Inference/tests/** (the pattern FRIDAY/tests/** and VyralX/tests/** already use in the same lists). Acceptance: a contracts run whose trigger evaluation shows a touch to any one of the five suites fires owner-workflows, and the Inference step still passes."
+      - "Claim: GitHub issue #35 comment 7048737023 by Muse 2 before any editing (TASK-REL-057 reassigned from Muse 1; base main 0919d500ea266fc8f0891046488ba731890c4b29, board 565 records)."
+      - "Change: owner-workflows.yml - the five suites appended to both trigger path lists (pull_request and push), after test_inf015_flash_lite_catalogue.py: test_test_generation_reliability_rel026.py, test_unified_manager_cache_scope.py, test_forge_code_review_is_evidence_based.py, test_forge_output_is_verified.py, test_source_repair_context.py. Each now occurs in both trigger lists; the Inference step pytest list is unchanged (8 files). No test edits, no source edits, no other workflow edits. YAML parses; trigger lists verified identical between pull_request and push."
+    next_action: "Muse review -> merge. Acceptance: a contracts run whose trigger evaluation shows a touch to any one of the five suites fires owner-workflows, and the Inference step still passes."
     files:
       - .github/workflows/owner-workflows.yml
       - docs/collaboration/WORK_BOARD.yaml
