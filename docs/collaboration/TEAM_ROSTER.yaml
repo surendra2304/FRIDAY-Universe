@@ -1,5 +1,5 @@
 schema_version: 1
-updated_at: "2026-11-14T06:45:00Z"
+updated_at: "2026-11-20T14:41:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 collaboration_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
 authority:
@@ -24,163 +24,73 @@ collaborators:
   - id: "claude"
     display_name: "Claude"
     contributor_type: "ai"
-    status: "active_contributor"
-    authority: "Equal engineering collaborator"
-    verified_capabilities:
-      - "Authored active repository PRs #23, #27, #28, #29 and #34"
-      - "Changes available through shared GitHub branches and pull requests"
-      - "Shared Server 2 engineering workspace was observed on claude/TASK-CI-004"
-    active_assignments:
-      - "PR #23 — CI dependencies/test environment and deploy-policy regression (TASK-ID requires reconciliation)"
-      - "PR #27 — manual-only/no-force mirror workflow"
-      - "PR #28 — FRIDAY dispatch bus integration"
-      - "PR #29 — Sentinel task endpoint"
-      - "PR #34 — root-cause CI fixes"
-      - "TASK-OPS-002 — Oracle capacity sniper verification"
-    active_branches:
-      - "claude/TASK-CI-003"
-      - "claude/TASK-MIRROR-001"
-      - "claude/TASK-DISPATCH-001"
-      - "claude/TASK-API-001"
-      - "claude/TASK-CI-004"
-    last_verified_at: "2026-11-09T04:08:17Z"
-    access_limits:
-      - "An untracked Forge contract test was observed in the shared workspace; its final owner/disposition has not been confirmed."
-      - "Production changes remain subject to owner approval."
+    status: "removed"
+    authority: "None — removed from the project by owner order 2026-11-20: only Muse accounts work on FRIDAY Universe now."
+    active_assignments: []
+    active_branches: []
+    removed_at: "2026-11-20"
+    record_note: "Slim record retained because scripts/validate_collaboration.py requires this id to stay registered (REQUIRED_COLLABORATORS and/or historical WORK_BOARD task owners). Full pre-prune entry text remains in git history. Literal record deletion is UNSURE item U1 in the TASK-REL-058 inventory (~/workspace/repo-cleanup/INVENTORY.md)."
 
   - id: "chatgpt"
     display_name: "ChatGPT"
     contributor_type: "ai"
-    status: "active_contributor"
-    authority: "Equal engineering collaborator"
-    verified_capabilities:
-      - "GitHub repository read/write through connected GitHub integration"
-      - "Created and updated branches and pull requests #24, #26, #30, #31, #32, #33, #37 and #38"
-      - "Read-only diagnostics through the FRIDAY x Claude x ChatGPT bridge"
-      - "Posted independent review findings on PRs #23, #26 and #28"
-    active_assignments:
-      - "PR #24 — bridge authentication"
-      - "PR #26 — Cortex route authorization"
-      - "PR #30 — central documentation and collaboration registry"
-      - "PR #31 — Gitleaks change-range scan"
-      - "PR #32 — IntelX Oracle JSON compatibility"
-      - "PR #33 — Futuris/Stratex portfolio data integrity"
-      - "PR #37 — Memora Oracle vector tenant and transaction integrity"
-      - "PR #38 — Memora maintenance API tenant binding (stacked on PR #37); broader TASK-DATA-002 audit remains active"
-    active_branches:
-      - "chatgpt/TASK-SEC-003"
-      - "chatgpt/TASK-CORE-001-cortex-route-auth"
-      - "chatgpt/TASK-DOC-SYNC-001"
-      - "chatgpt/TASK-SEC-004"
-      - "chatgpt/TASK-INT-001-intelx-json"
-      - "chatgpt/TASK-FUT-001-stratex-telemetry"
-      - "chatgpt/TASK-MEM-001-memora-oracle-vector-audit"
-      - "chatgpt/TASK-DATA-002-memory-tenant-isolation"
-    last_verified_at: "2026-11-09T10:10:00Z"
-    access_limits:
-      - "Oracle checks performed in this snapshot were read-only."
-      - "No production restart, deployment, merge or secret provisioning was performed."
+    status: "removed"
+    authority: "None — removed from the project by owner order 2026-11-20: only Muse accounts work on FRIDAY Universe now."
+    active_assignments: []
+    active_branches: []
+    removed_at: "2026-11-20"
+    record_note: "Slim record retained because scripts/validate_collaboration.py requires this id to stay registered (REQUIRED_COLLABORATORS and/or historical WORK_BOARD task owners). Full pre-prune entry text remains in git history. Literal record deletion is UNSURE item U1 in the TASK-REL-058 inventory (~/workspace/repo-cleanup/INVENTORY.md)."
 
   - id: "grok"
     display_name: "Grok"
     contributor_type: "ai"
-    status: "previous_contributor_availability_unknown"
-    authority: "Equal engineering collaborator"
-    verified_capabilities:
-      - "Previous implementation merged through PR #25 for TASK-CORE-002"
+    status: "removed"
+    authority: "None — removed from the project by owner order 2026-11-20: only Muse accounts work on FRIDAY Universe now."
     active_assignments: []
-    last_verified_at: "2026-11-08"
-    access_limits:
-      - "No current open PR or active branch was observed in the latest open-PR snapshot."
-      - "Current tool access and availability have not been verified."
+    active_branches: []
+    removed_at: "2026-11-20"
+    record_note: "Slim record retained because scripts/validate_collaboration.py requires this id to stay registered (REQUIRED_COLLABORATORS and/or historical WORK_BOARD task owners). Full pre-prune entry text remains in git history. Literal record deletion is UNSURE item U1 in the TASK-REL-058 inventory (~/workspace/repo-cleanup/INVENTORY.md)."
 
   - id: "zai"
     display_name: "ZAI Agent 1 (ZAI/GLM primary chat)"
     contributor_type: "ai"
-    status: "active_contributor"
-    authority: "Equal engineering collaborator; Lane A owner (Stratex, orchestration C, memory/brain A/B, tech debt I)"
-    verified_capabilities:
-      - "GitHub read access: repository clone plus branch/PR/workflow inspection (exercised while preparing TASK-STR-001)."
-      - "GitHub write access through the owner-provided bridge token: created branch zai/TASK-STR-001-live-trading-guard and PR #39 (merged)."
-      - "Read-only Oracle Cloud diagnostics through the FRIDAY bridge MCP: fleet health, systemd status, journalctl, non-secret environment mode flags."
-      - "Local CI-equivalent verification: pinned pytest environment; ran Stratex regression suites (41 passed for TASK-STR-001 scope; 2 pre-existing main failures isolated and verified to reproduce on pristine main)."
-      - "2026-11-10 owner-directed full-project re-verification: fresh clone of main @ 680c04e, GitHub API PR/CI snapshot, read-only bridge diagnostics, and a code-level re-audit of all ten agents (recorded in ACTIVITY_LOG.md, 2026-11-10T04:29:42Z)."
-      - "2026-11-11 batch protocol owner directive: 10 tasks per run, Telegram completion ping per batch; Batch 1 (Stratex rescue) delivered same day — 71 tests green. Batches 2, 3, 4, 9, 9b delivered (Lane A) — see ACTIVITY_LOG 2026-11-11/12 entries."
-      - "SESSION CONTINUITY 2026-11-13 03:00 IST: the owner re-seated ZAI Agent 1 in a fresh chat after the previous session degraded. Access re-verified live before this roster refresh: clone at main 993a6d6, GitHub API read/write (claim comment 6836443339), MCP bridge handshake v1.30.0 (31 tools), both Oracle servers ONLINE (bridge fleet health). Local pytest verification re-exercised this session (persona suites 58/58)."
-      - "SESSION 2 2026-11-13 IST: TASK-CI-F821-MAIN + TASK-REGISTRY-001 verified COMPLETE (all six workflows green on fa9257d; issue #35 comment 6836681677). Resynced past Arena Agent 1's WF-014 wave (8 commits, aaf4c34 merged + deployed; 72118c7 voice fix deployed S1; 9544300 docs). Claimed and fixed TASK-CI-SECRETSCAN-002 (main's red secret scan): root-caused a gitleaks 8.30.1 generic-api-key false positive on a labeled SHA256 digest, reproduced locally with the exact CI-pinned binary, added .gitleaks.toml ([extend] useDefault + line-targeted labeled-digest allowlist; A/B-proven coverage-preserving) + 10 regression tests including a live-binary integration test."
-    active_assignments:
-      - "TASK-CI-SECRETSCAN-002 — repair main's red Secret Scanning check (gitleaks 8.30.1 generic-api-key false positive on a labeled SHA256 content digest in docs/verification/WF014_SOURCE_BOUND_RECEIPTS.md:30, head 9544300). Fix: repo-root .gitleaks.toml ([extend] useDefault = true + line-targeted labeled-digest allowlist) + tests/test_gitleaks_config.py. Claim issue #35 comment 6837148298."
-      - "TASK-JARVIS-M1 / TASK-VOI-001 remain IN_PROGRESS on the board — both require the owner's live participation (the M1 dream demo; the FRIDAY-Voice live speak/answer test), not completable solo."
-      - "Historical Lane A batch work (2/3/4/9/9b) COMPLETE; TASK-STR-001 (PR #39), TASK-DATA-001 (PR #41), TASK-COLLAB-002 (stacked on PR #30), TASK-CI-F821-MAIN (fa9257d) and TASK-REGISTRY-001 (fa9257d) all MERGED — roster entries retired from active list."
+    status: "removed"
+    authority: "None — removed from the project by owner order 2026-11-20: only Muse accounts work on FRIDAY Universe now."
+    active_assignments: []
     active_branches: []
-    last_verified_at: "2026-11-13T03:41:09+05:30"
-    access_limits:
-      - "No direct SSH access; Oracle operations go through the bridge (read diagnostics default; restarts/destructive ops only with owner authorization per fleet rule)."
-      - "No merges of other collaborators' PRs, deployments or service restarts beyond the standard automated Fleet CD flow without owner authorization."
-      - "No secret values read, printed or committed; production environment inspection limited to non-secret mode flags."
+    removed_at: "2026-11-20"
+    record_note: "Slim record retained because scripts/validate_collaboration.py requires this id to stay registered (REQUIRED_COLLABORATORS and/or historical WORK_BOARD task owners). Full pre-prune entry text remains in git history. Literal record deletion is UNSURE item U1 in the TASK-REL-058 inventory (~/workspace/repo-cleanup/INVENTORY.md)."
 
   - id: "zai_agent_2"
     display_name: "ZAI Agent 2 (second ZAI chat, owner-added 2026-11-11)"
     contributor_type: "ai"
-    status: "active_contributor"
-    authority: "Equal engineering collaborator — Lane B (batches 6, 7, 5, 8) per docs/collaboration/ZAI_AGENT_2_ONBOARDING.md"
-    verified_capabilities:
-      - "GitHub read/write through the owner-provided PAT + bridge token (clone, API comments, direct main commits to main)."
-      - "Read-only + write MCP bridge tools (fleet health, journalctl, run_shell on both servers) — owner granted full access 2026-11-11."
-      - "Local CI-equivalent verification: pinned pytest environment; batch suite green with zero new failures vs clean main (A/B with git stash)."
-      - "Read-only production diagnostics: Telegram bot states (getWebhookInfo/getUpdates/getMe by id, never printing tokens), journald caps, systemd units, TLS cert expiry (live probe: 61 days)."
-      - "Batch 5 delivered (TASK-BATCH5-AGENT2, MERGED): G5/G6/G7/G8/G11/G12 + H8/H9 — 42 new tests, zero regressions."
-    active_assignments:
-      - "TASK-STRATEX-PROFIT-GOVERNOR — Stratex profitability governor DEPLOYED on main (427b620 + 5493ee3); observation window continuing; backtest sweep stage 1h running on Server 1."
-      - "TASK-STRATEX-TG409 — Stratex Telegram 409-conflict episode handling IN_REVIEW on branch zai/TASK-STRATEX-TG409 (commit d7dbc60; 22/22 + 31/31 tests, A/B clean)."
-      - "Lane B batches 5-8 previously delivered (checklist 122/125 with Agent 1)."
-    active_branches:
-      - "zai/TASK-STRATEX-TG409"
-    last_verified_at: "2026-11-13T01:20:00+05:30"
-    access_limits:
-      - "Coordinates with ZAI Agent 1 through GitHub issue #35 and the lane rules in ZAI_AGENT_2_ONBOARDING.md."
-      - "No secret values read, printed or committed; Telegram tokens handled by id/masked-name/hash-identity only."
-      - "Stratex production restarts require owner authorization; TG409 fix is code+tests only until the standard exact-head deploy."
+    status: "removed"
+    authority: "None — removed from the project by owner order 2026-11-20: only Muse accounts work on FRIDAY Universe now."
+    active_assignments: []
+    active_branches: []
+    removed_at: "2026-11-20"
+    record_note: "Slim record retained because scripts/validate_collaboration.py requires this id to stay registered (REQUIRED_COLLABORATORS and/or historical WORK_BOARD task owners). Full pre-prune entry text remains in git history. Literal record deletion is UNSURE item U1 in the TASK-REL-058 inventory (~/workspace/repo-cleanup/INVENTORY.md)."
 
   - id: "vercel_v0"
     display_name: "Vercel v0"
     contributor_type: "ai"
-    status: "active_contributor_overlap_to_reconcile"
-    authority: "Equal engineering collaborator"
-    verified_capabilities:
-      - "Created visible branch v0/coordination-bootstrap and PR #36."
-      - "PR #36 changes the seven core docs/collaboration registry files."
-    reported_capabilities:
-      - "PR #36 reports local repository shell/file inspection and Vercel workspace Git synchronization; those specific capabilities have not been independently exercised in this session."
-    active_assignments:
-      - "PR #36 — independent collaboration-centre bootstrap; overlaps TASK-COLLAB-001 and PR #30."
-    active_branches:
-      - "v0/coordination-bootstrap"
-    last_verified_at: "2026-11-09T04:44:27Z"
-    access_limits:
-      - "PR #36 must be reconciled with PR #30 before either branch is merged."
-      - "Production and Oracle access have not been verified."
+    status: "removed"
+    authority: "None — removed from the project by owner order 2026-11-20: only Muse accounts work on FRIDAY Universe now."
+    active_assignments: []
+    active_branches: []
+    removed_at: "2026-11-20"
+    record_note: "Slim record retained because scripts/validate_collaboration.py requires this id to stay registered (REQUIRED_COLLABORATORS and/or historical WORK_BOARD task owners). Full pre-prune entry text remains in git history. Literal record deletion is UNSURE item U1 in the TASK-REL-058 inventory (~/workspace/repo-cleanup/INVENTORY.md)."
 
 
   - id: arena_engineering_01
-    display_name: Arena Agent 1
-    contributor_type: ai
-    status: active_contributor
-    authority: Equal collaborator; owner retains final authority
-    verified_capabilities:
-    - GitHub reads/writes through existing MCP bridge credentials; local Python engineering
-      and runtime SDK tests.
-    active_assignments:
-    - TASK-WF-015
-    - TASK-VAL-003
-    active_branches:
-    - arena/TASK-WF-015-acceptance-record
-    - arena/TASK-VAL-003-runtime-audit
-    active_pr: null
-    last_verified_at: '2026-11-13T04:23:15.823531+00:00'
-    access_limits:
-    - Owner authorized controlled GitHub merge and Oracle deployment; no unbounded real-money exposure or automatic publication. Exposed chat PAT never used or saved.
-    - Session-bounded; contact before claim takeover.
+    display_name: "Arena Agent 1"
+    contributor_type: "ai"
+    status: "removed"
+    authority: "None — removed from the project by owner order 2026-11-20: only Muse accounts work on FRIDAY Universe now."
+    active_assignments: []
+    active_branches: []
+    removed_at: "2026-11-20"
+    record_note: "Slim record retained because scripts/validate_collaboration.py requires this id to stay registered (REQUIRED_COLLABORATORS and/or historical WORK_BOARD task owners). Full pre-prune entry text remains in git history. Literal record deletion is UNSURE item U1 in the TASK-REL-058 inventory (~/workspace/repo-cleanup/INVENTORY.md)."
 
   - id: muse_ai
     display_name: "Muse AI (owner-added 2026-11-14)"
@@ -208,8 +118,6 @@ onboarding_policy:
     - "Verify repository permissions, available tools and current worktree state."
     - "Register a unique collaborator ID and evidence-backed capabilities."
     - "Post a claim to the shared GitHub issue before editing assigned files."
-  zai_agent_2_additional:
-    - "Read docs/collaboration/ZAI_AGENT_2_ONBOARDING.md in full (lane rules + Telegram protocol)."
   muse_ai_additional:
     - "Read docs/collaboration/MUSE_AI_ONBOARDING.md in full (united-work protocol + current open lanes)."
   capability_rule: "Never infer integrations or permissions from the contributor or product name."
