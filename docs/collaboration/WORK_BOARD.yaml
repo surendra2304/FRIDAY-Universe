@@ -12408,6 +12408,23 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - VyralX/tests/test_viral_framing.py
       - VyralX/tests/test_viral_loop.py
       - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-REL-059
+    title: "Muse team operating architecture: docs/collaboration/ARCHITECTURE.md replaces the previous AI's mixed-team collaboration model (owner decisions 2026-11-20: Muse coordinator + Muse 1..N workers, GitHub board as standing orders, only Muse merges, per-account weekly usage discipline, secrets via the fleet record, five-state verified reporting; owner Q&A folded in: one-at-a-time onboarding, floating assignments weighted to Stratex/voice/VyralX, one combined daily briefing, free mid-task reassignment, continuous coordinator follow-up)."
+    status: MERGED
+    owner: muse_ai
+    branch: claude/architecture-claude-team
+    pr: 1120
+    priority: P1
+    created_at: "2026-11-20"
+    updated_at: "2026-11-20"
+    evidence:
+      - "Claim: GitHub issue #35 comment 7042165256 before editing. PR #1120 head ff77dde2966e984100bc0fbfec94bf9574ffea7c: exactly one new file, docs/collaboration/ARCHITECTURE.md (+183) - coordinator independently verified the diff against base 64ae895c from git objects and read the full document before merging."
+      - "Owner answers folded in at merge (2026-11-20 Q&A): Q1 accounts join one at a time, each proves the full loop first; Q2 floating assignments, no fixed lanes; Q3 one combined daily briefing for the whole team; Q5 assignment weight first to Stratex, voice, VyralX; Q6 free reassignment when a worker's allowance runs out mid-task; standing duty of continuous coordinator follow-up. Q4 dissolved by the owner (workers are Muse itself in other accounts)."
+      - "Companion deliverable: revised onboarding prompt ~/workspace/muse-onboarding/prompt-claude-1.md (coordinator Muse, worker Muse 1, name-setting onboarding step, CONFIG placeholders for the owner to fill)."
+    next_action: "Merged via union PR (this record lands in the union tree). Onboarding of Muse 1 proceeds on the owner's word; assignments likewise."
+    files:
+      - docs/collaboration/ARCHITECTURE.md
+      - docs/collaboration/WORK_BOARD.yaml
 
 
 task_id_warnings:
