@@ -12358,8 +12358,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     updated_at: "2026-11-21"
     evidence:
       - "Filed as the supervisor condition on PR #1113 (comment 7031518393), discharged by filing in the union merge of TASK-REL-056. TASK-REL-056 wired Inference/tests/test_inf015_flash_lite_catalogue.py into both owner-workflows.yml trigger path lists, but the five other Inference-step suites appear only in the step's pytest list and in neither trigger path list: Inference/tests/test_test_generation_reliability_rel026.py, Inference/tests/test_unified_manager_cache_scope.py, Inference/tests/test_forge_code_review_is_evidence_based.py, Inference/tests/test_forge_output_is_verified.py, Inference/tests/test_source_repair_context.py (each verified to occur exactly once in owner-workflows.yml at main ae2e7d43, in the step only). A change to one of those suites alone therefore does not fire the workflow that runs it. Pre-existing gap, same defect class as REL-056, explicitly flagged as out of REL-056's scope by its supervisor review."
-      - "Assignment: GitHub issue #35 comment 7048074483 by Muse (Head Manager) 2026-11-21 - TASK-REL-057 assigned to Muse 1 (roster id muse_1) as its restart pilot task."
-      - "Reassignment: owner order 2026-11-21 ~00:57 IST - Muse 1 reset (its ready report and both Muse 1 assignment posts deleted from issue #35, roster PR #1132 closed unmerged, branch muse1/onboarding deleted); TASK-REL-057 moved to Muse 2, assignment post issue #35 comment 7048656160."
+      - "Assignment: GitHub issue #35 comment 7048656160 by Muse (Head Manager) 2026-11-21 - TASK-REL-057 assigned to Muse 2 (roster id muse_2) as its pilot task."
     next_action: "Claim on issue #35 before editing. Either enumerate the five suites in both owner-workflows.yml trigger path lists alongside their siblings, or switch the Inference test triggers to Inference/tests/** (the pattern FRIDAY/tests/** and VyralX/tests/** already use in the same lists). Acceptance: a contracts run whose trigger evaluation shows a touch to any one of the five suites fires owner-workflows, and the Inference step still passes."
     files:
       - .github/workflows/owner-workflows.yml
@@ -12430,7 +12429,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - docs/collaboration/ZAI_AGENT_2_ONBOARDING.md
       - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-REL-059
-    title: "Muse team operating architecture: docs/collaboration/ARCHITECTURE.md replaces the previous AI's mixed-team collaboration model (owner decisions 2026-11-20: Muse coordinator + Muse 1..N workers, GitHub board as standing orders, only Muse merges, per-account weekly usage discipline, secrets via the fleet record, five-state verified reporting; owner Q&A folded in: one-at-a-time onboarding, floating assignments weighted to Stratex/voice/VyralX, one combined daily briefing, free mid-task reassignment, continuous coordinator follow-up)."
+    title: "Muse team operating architecture: docs/collaboration/ARCHITECTURE.md replaces the previous AI's mixed-team collaboration model (owner decisions 2026-11-20: Muse coordinator + numbered Muse workers, GitHub board as standing orders, only Muse merges, per-account weekly usage discipline, secrets via the fleet record, five-state verified reporting; owner Q&A folded in: one-at-a-time onboarding, floating assignments weighted to Stratex/voice/VyralX, one combined daily briefing, free mid-task reassignment, continuous coordinator follow-up)."
     status: MERGED
     owner: muse_ai
     branch: claude/architecture-claude-team
@@ -12441,8 +12440,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Claim: GitHub issue #35 comment 7042165256 before editing. PR #1120 head ff77dde2966e984100bc0fbfec94bf9574ffea7c: exactly one new file, docs/collaboration/ARCHITECTURE.md (+183) - coordinator independently verified the diff against base 64ae895c from git objects and read the full document before merging."
       - "Owner answers folded in at merge (2026-11-20 Q&A): Q1 accounts join one at a time, each proves the full loop first; Q2 floating assignments, no fixed lanes; Q3 one combined daily briefing for the whole team; Q5 assignment weight first to Stratex, voice, VyralX; Q6 free reassignment when a worker's allowance runs out mid-task; standing duty of continuous coordinator follow-up. Q4 dissolved by the owner (workers are Muse itself in other accounts)."
-      - "Companion deliverable: revised onboarding prompt ~/workspace/muse-onboarding/prompt-claude-1.md (coordinator Muse, worker Muse 1, name-setting onboarding step, CONFIG placeholders for the owner to fill)."
-    next_action: "Merged via union PR (this record lands in the union tree). Onboarding of Muse 1 proceeds on the owner's word; assignments likewise."
+      - "Companion deliverable: revised onboarding prompt ~/workspace/muse-onboarding/PROMPT.md (coordinator Muse, numbered workers, name-setting onboarding step, CONFIG placeholders for the owner to fill)."
+    next_action: "Merged via union PR (this record lands in the union tree). Worker onboarding proceeds on the owner's word; assignments likewise."
     files:
       - docs/collaboration/ARCHITECTURE.md
       - docs/collaboration/WORK_BOARD.yaml
