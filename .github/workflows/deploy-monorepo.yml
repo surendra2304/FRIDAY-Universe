@@ -30,9 +30,8 @@ jobs:
               - 'Inference/**'
               - 'Memora/**'
               - 'Stratex/**'
-              - 'IntelX/**'
-              - 'Futuris/**'
               - 'Forge/**'
+              - 'Sentinel/**'
               - 'mesh/**'
               - 'deploy/**'
               - 'scripts/**'
@@ -40,8 +39,9 @@ jobs:
               - '.github/workflows/**'
             server2:
               - 'VyralX/**'
-              - 'Sentinel/**'
               - 'Cortex/**'
+              - 'IntelX/**'
+              - 'Futuris/**'
               - 'mesh/**'
               - 'deploy/**'
               - 'scripts/**'
@@ -128,7 +128,7 @@ jobs:
               fi
             fi
 
-            SERVER1_AGENTS=("FRIDAY" "Inference" "Memora" "Stratex" "IntelX" "Futuris" "Forge")
+            SERVER1_AGENTS=("FRIDAY" "Inference" "Memora" "Stratex" "Forge" "Sentinel")
             RESTARTED_AGENTS=""
             for AGENT in "${SERVER1_AGENTS[@]}"; do
               if echo "$CHANGED_AGENTS" | grep -qw "$AGENT" || echo "$CHANGED_AGENTS" | grep -Eqw "mesh|deploy|scripts" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -209,7 +209,7 @@ jobs:
               case "$AGENT" in
                 FRIDAY) PORT=10000; PROBES=36;;   # FRIDAY boots the full FastAPI graph on 2 cores — measured slower than the old 60s window
                 Inference) PORT=8001;; Memora) PORT=8002;;
-                Stratex) PORT=8003;; Futuris) PORT=8004;; IntelX) PORT=8005;; Forge) PORT=8006;;
+                Stratex) PORT=8003;; Forge) PORT=8006;; Sentinel) PORT=8008;;
               esac
               [ -n "$PORT" ] || continue
               # BEGIN MASKED/ABSENT UNIT SKIP (TASK-OBS-006) — the restart
@@ -259,7 +259,7 @@ jobs:
                 PORT=""
                 case "$AGENT" in
                   FRIDAY) PORT=10000;; Inference) PORT=8001;; Memora) PORT=8002;;
-                  Stratex) PORT=8003;; Futuris) PORT=8004;; IntelX) PORT=8005;; Forge) PORT=8006;;
+                  Stratex) PORT=8003;; Forge) PORT=8006;; Sentinel) PORT=8008;;
                 esac
                 [ -n "$PORT" ] || continue
                 OK=""
@@ -360,7 +360,7 @@ jobs:
             CHANGED_AGENTS=$(git diff --name-only $OLD_REV HEAD 2>/dev/null | awk -F/ '{print $1}' | sort -u)
             echo "Changed folders detected: $CHANGED_AGENTS"
             
-            SERVER2_AGENTS=("VyralX" "Sentinel" "Cortex")
+            SERVER2_AGENTS=("VyralX" "Cortex" "IntelX" "Futuris")
             for AGENT in "${SERVER2_AGENTS[@]}"; do
               if echo "$CHANGED_AGENTS" | grep -qw "$AGENT" || echo "$CHANGED_AGENTS" | grep -Eqw "mesh|deploy|scripts" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
                 if [ "$(systemctl show "${AGENT}.service" --property=LoadState --value)" = loaded ]; then
@@ -386,7 +386,7 @@ jobs:
             for AGENT in "${SERVER2_AGENTS[@]}"; do
               PORT=""
               case "$AGENT" in
-                Sentinel) PORT=8008;; Cortex) PORT=8009;; VyralX) PORT=8010;;
+                Futuris) PORT=8004;; IntelX) PORT=8005;; Cortex) PORT=8009;; VyralX) PORT=8010;;
               esac
               [ -n "$PORT" ] || continue
               # BEGIN MASKED/ABSENT UNIT SKIP (TASK-OBS-006) — the restart
@@ -427,7 +427,7 @@ jobs:
               for AGENT in $FAILED_HEALTH; do
                 PORT=""
                 case "$AGENT" in
-                  Sentinel) PORT=8008;; Cortex) PORT=8009;; VyralX) PORT=8010;;
+                  Futuris) PORT=8004;; IntelX) PORT=8005;; Cortex) PORT=8009;; VyralX) PORT=8010;;
                 esac
                 [ -n "$PORT" ] || continue
                 OK=""
