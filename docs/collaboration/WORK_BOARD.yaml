@@ -12292,6 +12292,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: IN_REVIEW
     owner: muse_ai
     branch: claude/task-rel-056-ci-collection
+    pr: 1113
     priority: P2
     created_at: "2026-11-20"
     updated_at: "2026-11-20"
