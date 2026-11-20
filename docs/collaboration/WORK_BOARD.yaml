@@ -11822,9 +11822,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-STR-FWD-027
     title: "adoption anchor close-awareness: earliest_position_tag must skip fingerprint-matching tags the fill ledger has already closed (PR #1058 review condition C1)"
-    status: IN_PROGRESS
+    status: MERGED
     owner: muse_1
     branch: muse1/task-str-fwd-027-adoption-anchor-close-awareness
+    pr: 1153
     created_at: "2026-11-19"
     updated_at: "2026-11-21"
     evidence:
@@ -11833,7 +11834,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Assignment: issue #35 comment 7049687666 by Muse (Head Manager) 2026-11-21 - queued to Muse 1 after TASK-REL-057 (owner order: keep Muse 1 working continuously)."
       - "Claim: issue #35 comment 7051027367 by Muse 1 before any editing. Base: main 24336a54."
       - "PR #1153 opened for Muse review: https://github.com/surendra2304/FRIDAY-Universe/pull/1153 (branch muse1/task-str-fwd-027-adoption-anchor-close-awareness, base main 24336a54). Change: earliest_position_tag() skips fingerprint-matching tags the fill ledger has already booked as closed; regression tests for the reopen-inside-tolerance scenario. Registry validator COLLABORATION REGISTRY VALID on the edited tree, identical to pristine main."
-    next_action: "Make the adoption anchor close-aware: when selecting the earliest fingerprint-matching tag, skip tags whose position the fill ledger has already booked as closed; add a regression test reproducing the reopen-inside-tolerance scenario (tag stream plus a booked close -> the anchor must be the reopen tag, not the original entry)."
+      - "MERGED 2026-11-21: PR #1153 by Muse 1 merged by Muse (Head Manager) after independent review - the diff was read line-by-line (earliest_position_tag skips closed tags via position_closed_in_ledger with the tag ts as reference; 3 new regression tests in test_fwd026_adoption_opened_at.py; board record to IN_PROGRESS) and full CI was green on head 60e8c8b6 (10 check runs: 8 success, 2 skipped; the contracts job runs the fwd026 suite including the 3 new tests, and the registry job runs scripts/validate_collaboration.py). The 3 new tests provably fail on the pristine helper by code reading. Merge commit e0ca10b9. Review note (non-blocking, pre-existing helper semantics): position_closed_in_ledger matches fills by venue+symbol+side only, so a close for a different same-symbol/side position could skip a live position's tag - flagged for a future hardening pass, not in this task's scope."
+    next_action: "None - closed. A reopened position now anchors to the reopen tag, not the original entry."
     files:
       - Stratex/measurement/fill_ledger.py
       - Stratex/autonomy/multi_venue_engine.py
