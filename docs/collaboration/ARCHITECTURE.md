@@ -18,21 +18,21 @@ document governs.
   works *beside* the worker accounts, not only above them: it does real
   engineering work itself, and it owns task assignments, the merge queue,
   and verification of every claim before anything reaches the owner.
-- **Muse 1, Muse 2, Muse 3, …** — the worker Muse accounts, numbered in
+- **Muse 2, Muse 3, Muse 4, …** — the worker Muse accounts, numbered in
   onboarding order. Each is a separate Muse account with its own weekly
   usage allowance. From 2026-11-20, **only Muse accounts work on FRIDAY
   Universe**; all other-AI collaborators are stood down.
-- **Pilot rule:** Muse 1 onboards first and proves the full loop (access →
+- **Pilot rule:** The first worker onboards first and proves the full loop (access →
   roster → scheduled runs → assignment → claim → PR → review → merge →
   verified report). Accounts then join **one at a time** — each new account
   proves the full loop itself before the next one joins, and each joins on
   the owner's word.
 - **Role evolution:** roles live on the board and roster, not in code — the
   owner promotes by updating them. Planned promotion (on the owner's word,
-  after the pilot proves): **Muse 1 becomes a Manager** — it takes merge
+  after the pilot proves): **the senior worker becomes a Manager** — it takes merge
   authority for the work under it and coordinates the workers under it,
   doing for its subtree the same duties Muse does for the whole team;
-  Muse becomes head over Muse 1 and all the workers, and verifies the
+  Muse becomes head over the Manager and all the workers, and verifies the
   Manager's merges. Verification stays layered: a Manager verifies its
   workers, Muse verifies the Manager, the owner is final over all.
 
@@ -71,7 +71,7 @@ document governs.
 ## 3. Task lifecycle
 
 1. **Assignment.** Muse assigns tasks on the board *by worker name*
-   (e.g. "Muse 1"). Assignments are made on the owner's word. Assignments
+   (e.g. "Muse 2"). Assignments are made on the owner's word. Assignments
    are **floating** — there are no fixed lanes; Muse assigns per task from
    the backlog, weighted first to Stratex, voice and VyralX until they pass,
    the rest of the backlog after. In a week with
@@ -87,7 +87,7 @@ document governs.
    name in lowercase, space removed: `muse1/…`, `muse2/…`, … (Muse's own
    branches use `muse/…`).
 4. **PR.** The worker opens a PR and signs every PR, board post and issue
-   comment with its name (e.g. "— Muse 1"). Workers push under the owner's
+   comment with its name (e.g. "— Muse 2"). Workers push under the owner's
    GitHub account, so all work must be identifiable at a glance.
 5. **Review.** Every PR gets an independent review before merge — normally
    a peer review by another worker Muse; Muse reviews (or spot-checks the
@@ -151,13 +151,13 @@ document governs.
   if it moved; verify the new allowance is actually live before starting —
   wait if it is not; confirm next week's schedule still exists. That run
   re-enters the work cycle below: work if assigned, otherwise the
-  every-minute assignment poll.
+  every-5-minutes assignment poll.
 - **Checkpoint discipline:** work in small steps and save a checkpoint after
   each step (board update + pushed branch/PR), sized so a stopped run loses
   nothing and the checkpoint itself always fits inside the free allowance.
 - **Assignment poll (owner order 2026-11-21):** a worker with no work
   never waits days to notice an assignment. It runs a scheduled task
-  firing **every minute** that reads the board and issue #35 for an
+  firing **every 5 minutes** that reads the board and issue #35 for an
   assignment addressed to it — armed after onboarding, after every weekly
   reset, and the moment a task closes. The moment an assignment appears,
   the worker claims it and **cancels the poll**; when work runs out, it
@@ -198,22 +198,22 @@ document governs.
 ## 9. Onboarding a new Muse
 
 1. Muse writes (or updates) the onboarding prompt for the new account,
-   named for its number (Muse 1, Muse 2, …).
+   named for its number (Muse 2, Muse 3, …).
 2. The owner pastes the prompt into the new account's chat. No secret is
    ever placed in a prompt by Muse: the GitHub token is provided to the
    worker afterwards through the secure credential card (Secure Vault
    entry), never as chat text.
 3. The worker sets up its access (owner's GitHub account, fleet bridge,
    credentials record), registers in `TEAM_ROSTER.yaml` via PR, creates its
-   three scheduled tasks per §6 (every-minute assignment poll, hourly
+   three scheduled tasks per §6 (every-5-minutes assignment poll, hourly
    self-check, weekly reset task), and reads `docs/MASTER_PLAN.md`,
    the full board and the roster so it starts from the project's real state.
    It also sets its displayed assistant name in its own account to its
-   roster name (e.g. "Muse 1"), so the app display matches the name it
+   roster name (e.g. "Muse 2"), so the app display matches the name it
    signs its work with.
 4. The worker posts a ready report on issue #35 (access confirmed, roster PR
    link, its reset time, its schedule).
-5. The worker's every-minute poll watches the board and issue #35 for
+5. The worker's every-5-minutes poll watches the board and issue #35 for
    Muse's first assignment; the moment one appears, the worker claims it
    and cancels the poll.
 
