@@ -5,16 +5,28 @@ judgement, and the post-increment value is the Bonferroni denominator
 for that trial — the same global accounting the research programme
 keeps by hand (RD-001..RD-020), now owned by Stratex itself.
 
-Seed: 3,899 — the programme counter at RD-020. Sources:
-~/workspace/rd020-record/STATE.md ("Programme trial counter now
-3,899"; the RD-020 run was invoked with N_global 3899) and
-~/workspace/str-nearmiss/REPORT.md headline ("programme counter at
-RD-020, N_global 3,899"). The seed and its source are recorded in the
-counter file itself. Concurrent crew rounds (RD-021, RD-025) advance
-the programme counter outside the loop; at activation the coordinator
-reconciles this counter upward to the recorded programme value if it
-has moved — the loop never silently resets: a counter file below the
-seed is treated as tampering and raises.
+Seed: 3,979 — the programme counter after RD-025, reconciled upward
+at activation (TASK-STR-EXP-004) from the original EXP-001 seed of
+3,899 (the programme counter at RD-020; sources:
+~/workspace/rd020-record/STATE.md, "Programme trial counter now
+3,899", and ~/workspace/str-nearmiss/REPORT.md headline). The
+reconciliation chain (~/workspace/986-activation/RECONCILIATION.md,
+verified 2026-11-20): 3,899 at RD-020, +4 = 3,903 (RD-021's floor
+reservation), +76 = 3,979 (RD-025 executed trials 3,904-3,979 — the
+range is independently proven by the MySQL store's RD-025 rows).
+
+RESERVATION, recorded so no future reader mistakes the counter for a
+strictly-executed total: trials 3,900-3,903 are RD-021's floor
+reservation — allocated in the programme counter but UNEXECUTED
+(RD-021's run never ran). The strictly-executed total is therefore
+3,975, not 3,979. The counter stays at 3,979: it is the conservative
+direction for Bonferroni (larger N, tighter alpha), it preserves
+RD-025's judged trial numbering, and if RD-021 ever runs it consumes
+3,900-3,903 as already allocated.
+
+The seed and its source are recorded in the counter file itself. The
+loop never silently resets: a counter file below the seed is treated
+as tampering and raises.
 """
 
 from __future__ import annotations
@@ -26,11 +38,23 @@ from pathlib import Path
 
 UTC = timezone.utc
 
-SEED_VALUE = 3899
+# The programme trial counter after RD-025 (TASK-STR-EXP-004
+# reconciliation, 2026-11-20). Includes RD-021's floor reservation:
+# trials 3,900-3,903 are allocated but UNEXECUTED — the strictly
+# executed total is 3,975. Never lower this seed: a counter file
+# below it is refused as a reset (see TrialCounter).
+SEED_VALUE = 3979
 SEED_SOURCE = (
-    "rd020-record/STATE.md: 'Programme trial counter now 3,899' "
-    "(RD-020 invoked with N_global 3899); str-nearmiss/REPORT.md "
-    "headline: 'programme counter at RD-020, N_global 3,899'"
+    "Reconciled 2026-11-20 (TASK-STR-EXP-004; "
+    "~/workspace/986-activation/RECONCILIATION.md): EXP-001 seed "
+    "3,899 = programme counter at RD-020 (rd020-record/STATE.md: "
+    "'Programme trial counter now 3,899'; str-nearmiss/REPORT.md "
+    "headline); +4 = 3,903 RD-021 floor reservation — trials "
+    "3,900-3,903 allocated but UNEXECUTED (strictly executed total "
+    "is 3,975, not 3,979); +76 = 3,979 RD-025 executed trials "
+    "3,904-3,979 (verified against the MySQL store's RD-025 rows). "
+    "RD-025's judging N of 3,987 (counter + 8 reserved E2 headroom, "
+    "never consumed) is a spent judging parameter, not the counter."
 )
 
 
