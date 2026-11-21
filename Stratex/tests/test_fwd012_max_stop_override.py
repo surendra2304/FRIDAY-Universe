@@ -160,7 +160,7 @@ def test_override_lets_sleeve_shock_wide_stop_execute(_no_pause):
     daemon = _daemon(engine)
     # 22% stop > 15% global cap: only the registry override lets this run.
     assert daemon._execute_signal(
-        "binance_futures", "BTCUSDT", dict(_SHOCK_SIGNAL), "1wk"
+        "binance_futures", "BTCUSDT", dict(_SHOCK_SIGNAL), "1w"
     ) is True
     assert len(engine.orders) == 1
 
@@ -210,7 +210,7 @@ def test_override_does_not_change_sizing_math(_no_pause):
     engine = _Engine()
     daemon = _daemon(engine)
     assert daemon._execute_signal(
-        "binance_futures", "BTCUSDT", dict(_SHOCK_SIGNAL), "1wk"
+        "binance_futures", "BTCUSDT", dict(_SHOCK_SIGNAL), "1w"
     ) is True
     qty = engine.orders[0]["quantity"]
     # FWD-006: risk_amount = venue equity x risk_per_trade = 10,000 x
@@ -226,7 +226,7 @@ def test_narrow_stop_sizes_by_same_formula(_no_pause):
     daemon = _daemon(engine)
     sig = dict(_SHOCK_SIGNAL, sl_dist=10.0, tp_dist=20.0)
     assert daemon._execute_signal(
-        "binance_futures", "BTCUSDT", sig, "1wk"
+        "binance_futures", "BTCUSDT", sig, "1w"
     ) is True
     assert engine.orders[0]["quantity"] == pytest.approx(10.0 / 10.0)
 

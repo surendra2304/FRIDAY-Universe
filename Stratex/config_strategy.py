@@ -2056,7 +2056,7 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
     "sleeve_shock_breakout": {
         "status": "VALIDATED",
         "version": "v1.0.0 (TASK-STR-FWD-002 sleeve)",
-        "timeframe": "1wk",
+        "timeframe": "1w",
         "execution_model": "RULE_BASED",
         "entry_conditions": "Weekly bar close moves more than 1.0 x ATR(14) versus the prior weekly close: up-move -> LONG, down-move -> SHORT (rigorous_backtest/rd2/families3.py sig_shock k=1.0). Weekly bars are the JUDGED construction: 7-day buckets anchored per symbol at WEEKLY_BUCKET_ANCHORS (the RD-002 series starts), rebuilt by the daemon from daily bars — NOT Binance Monday-anchored native weekly klines. Warmup 104 bars.",
         "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
