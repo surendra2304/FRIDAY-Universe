@@ -12601,6 +12601,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator standing backlog (follow-up watch refill, 2026-11-21): batch 3 fourth task, assigned with board PR by the coordinator. Renders 823, 841, 861 all failed the coordinator's end-to-end browser watch with the same defect class: captions DOUBLED/STACKED (three layers in the intro - top hook + word-highlight track + full-phrase track; the two speech tracks ~1s out of sync). Render 861 also had no audible BGM though BGM is mandatory. 861 stays HELD forever, never uploadable. This is a PIPELINE caption-duplication bug, not a one-off."
     next_action: "Muse 1: claim, find why the renderer emits two caption tracks, make it emit exactly one, ensure the BGM track is actually mixed in, add regression coverage, ship via PR."
+  - id: TASK-STR-FWD-032
+    title: "Stratex: classic-testnet excision - remove the retired Binance classic-testnet remnants from the live Binance modules (adapter env resolver, config hosts, unified_portfolio_hub probes, async_pipeline default) so no live path can resolve to the retired venue."
+    status: AVAILABLE
+    owner: muse_2
+    priority: P2
+    created_at: "2026-11-21"
+    updated_at: "2026-11-21"
+    evidence:
+      - "Coordinator standing backlog (follow-up watch, 2026-11-21): next backlog item after batch 3, assigned to Muse 2 on its ready report (issue #35 comment 7057653174) - Muse 2 has no open assignment. Prior hunt assessed the remnants as branches inside LIVE modules needing their own task; excision is surgery on the live Binance path."
+    next_action: "Muse 2: claim, excise the classic-testnet remnants from the live Binance modules, verify no live path resolves to the retired venue, add regression coverage, ship via PR."
 
 
 
