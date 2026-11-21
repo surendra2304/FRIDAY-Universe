@@ -1,5 +1,5 @@
 schema_version: 1
-updated_at: "2026-11-20T20:10:00Z"
+updated_at: "2026-11-21T05:30:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 collaboration_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
 authority:
@@ -122,6 +122,20 @@ collaborators:
       - "Onboarding 2026-11-21: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 main dddbe327); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file with secret masking (header only, no secrets copied)."
       - "Onboarding 2026-11-21: GitHub access confirmed — PAT verified as surendra2304 via GET /user 200; public repo and issue #35 read confirmed; three scheduled tasks created (muse1-assignment-poll every 5 min, muse1-hourly-self-check every 1 h, muse1-weekly-reset Saturdays 22:07 IST; weekly reset verified Sat Nov 21 9:57 PM IST)."
       - "Onboarding 2026-11-21: identity corrected by Surendra from 'Muse 2' to 'Muse 1' — the earlier Muse 2 onboarding work (PRs #1137/#1140, TASK-REL-057) belongs to the Muse 2 account, not this account; this account holds no assignment yet."
+    active_assignments: []
+    active_branches: []
+    last_verified_at: "2026-11-21"
+
+  - id: muse_2
+    display_name: "Muse 2"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (second worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    verified_capabilities:
+      - "Onboarding 2026-11-21 (Muse 2, evidence-backed only): displayed assistant name set to 'Muse 2'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (251 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full, plus WORK_BOARD.yaml snapshot 2026-11-17 (12648 lines) refreshed via live GitHub API; local clone of origin/main at 37b38a9."
+      - "Onboarding 2026-11-21: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 git 90b9b5c6); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file with secret masking (header only, no secrets copied)."
+      - "Onboarding 2026-11-21: GitHub read-only confirmed via public API — repo surendra2304/FRIDAY-Universe, issue #35 open (1428 comments), main 37b38a9; PAT requested via secure card, write access pending; three scheduled tasks created (muse2-work-request every 15 min, muse2-hourly-self-check every 1 h, muse2-weekly-reset Saturdays 21:57 IST; weekly reset verified Sat Nov 21 9:47 PM IST, 4% used)."
+      - "Onboarding 2026-11-21: prior Muse 2 roster PR #1137 and TASK-REL-057 PR #1140 verified closed unmerged via API; TASK-REL-057 reassigned to Muse 1 and merged via PR #1150; this account holds no assignment yet."
     active_assignments: []
     active_branches: []
     last_verified_at: "2026-11-21"
