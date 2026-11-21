@@ -25,7 +25,12 @@ the daemon's overlay manager (autonomy/run_daemon.py
 _manage_overlay_positions), NOT by the get_signal/_execute_signal
 path — that path requires an SL/TP bracket and this judged object
 has none. There is deliberately no strategy_*.py module for these
-entries and no bracket is invented for them.
+entries. TASK-STR-FWD-031: live entries DO carry a venue bracket — a
+catastrophic backstop derived from this module's own judged sigma
+(bracket_levels), placed with the entry and held for the position's
+life. The bracket is execution safety, not judged exit logic: the
+judged exits remain the target weight and the drawdown brake, and no
+judged SL/TP is invented.
 
 The functions below are a line-faithful port of family14.py; the
 equivalence is pinned by tests/test_fwd021_overlay_service.py, which
@@ -49,6 +54,7 @@ the candle history the venue returns (the manager logs the depth).
 
 from __future__ import annotations
 
+import math
 from typing import Any, Dict
 
 import numpy as np
@@ -201,3 +207,62 @@ def target_weight(close: pd.Series, signal: str, vol_target: float,
         "brake_m": float(m[-1]),
         "bars": int(len(close)),
     }
+
+
+# ---------------------------------------------------------------------------
+# Venue bracket (TASK-STR-FWD-031)
+# ---------------------------------------------------------------------------
+#
+# The judged object has no SL/TP, so the live bracket cannot come from
+# the judgement — it comes from the judgement's own risk unit instead.
+# The bracket is a catastrophic backstop, NOT a trading exit: it sits
+# BRACKET_SIGMA_MULTIPLE one-bar sigmas from the entry price, where a
+# one-bar sigma is the trailing-42-bar annualised vol (sigma_t, the
+# same sigma that sizes the position) converted to a per-bar fraction.
+# A move of that size is outside the judged distribution's ordinary
+# range, so the bracket essentially never binds in normal operation —
+# the judged exits (target weight, drawdown brake) govern every
+# ordinary bar — and it only fires on a gap move the bar-cadenced
+# judged management cannot catch intrabar. It is symmetric (SL + TP)
+# because the venue bracket, as the venue adapters define it, is the
+# SL/TP pair (the MT5 adapter requires both on every entry), and
+# symmetry keeps the backstop neutral to the judged signal. The stop
+# is deliberately WIDER than the daemon's signal-path stop band
+# (min/max_stop_pct): that band prices trading stops, and clamping
+# this backstop into it would turn it into a trading stop that binds
+# on ordinary bars and distorts the judged forward record.
+
+BRACKET_SIGMA_MULTIPLE = 4.0
+
+
+def bracket_levels(sigma: float, tf: str, price: float,
+                   is_long: bool) -> tuple[float | None, float | None]:
+    """(stop_loss, take_profit) for an overlay entry, or (None, None).
+
+    Long: (price - d, price + d); short: (price + d, price - d), where
+    d = BRACKET_SIGMA_MULTIPLE * sigma / sqrt(bars_per_year[tf]) * price.
+    Returns (None, None) when no bracket is computable (non-finite or
+    non-positive sigma, unknown timeframe, non-positive price, or a
+    level that would not be positive) — the caller must then NOT place
+    the entry unprotected (fail-closed).
+    """
+    try:
+        sigma_f = float(sigma)
+        price_f = float(price)
+    except (TypeError, ValueError):
+        return None, None
+    bars = BARS_PER_YEAR.get(tf)
+    if bars is None or not math.isfinite(sigma_f) or sigma_f <= 0:
+        return None, None
+    if not math.isfinite(price_f) or price_f <= 0:
+        return None, None
+    dist = BRACKET_SIGMA_MULTIPLE * sigma_f / math.sqrt(bars) * price_f
+    if not math.isfinite(dist) or dist <= 0:
+        return None, None
+    if is_long:
+        stop, take = price_f - dist, price_f + dist
+    else:
+        stop, take = price_f + dist, price_f - dist
+    if stop <= 0 or take <= 0:
+        return None, None
+    return stop, take

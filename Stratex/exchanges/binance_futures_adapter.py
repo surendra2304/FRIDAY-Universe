@@ -750,6 +750,21 @@ class BinanceFuturesAdapter(BaseExchange):
         if take_profit:
             submit("TAKE_PROFIT_MARKET", take_profit)
 
+    def place_protective_orders(
+        self, symbol: str, side: str, quantity: float,
+        stop_loss: float | None, take_profit: float | None,
+    ) -> None:
+        """Attach an SL/TP bracket to an already-open position.
+
+        TASK-STR-FWD-031: the overlay manager uses this to arm the
+        venue bracket on a held position that has none (opened before
+        brackets existed). Thin wrapper over _place_sl_tp, which
+        places closePosition conditional algo orders — one pair covers
+        the whole position, so quantity is informational only. A
+        rejected leg is logged by _place_sl_tp as UNPROTECTED.
+        """
+        self._place_sl_tp(symbol, side, quantity, stop_loss, take_profit)
+
     def get_open_algo_orders(self, symbol: str) -> List[Dict]:
         """List open conditional (algo) orders for a symbol."""
         data = self._get(
