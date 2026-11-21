@@ -124,6 +124,15 @@ class Settings(BaseSettings):
     # produced — the budget bounds cost, not output.
     viral_loop_max_attempts_per_cycle: int = Field(default=24, ge=1, le=200)
     viral_loop_cycle_budget_seconds: int = Field(default=5400, ge=60, le=21600)
+    # TASK-VYR-001: total wall-clock budget for one
+    # scripts/run_viral_autopilot.py cycle (discovery + auditions +
+    # publish drain). The loop's viral_loop_cycle_budget_seconds
+    # bounds only the viral_loop driver; the autopilot had no bound
+    # at all, so a cycle could run past the 6h daemon interval (each
+    # audition is a download + Whisper + render) and the next fire
+    # would queue behind the single-instance lock. Default 5400s
+    # matches the loop's bound.
+    viral_autopilot_cycle_budget_seconds: int = Field(default=5400, ge=60, le=21600)
     # Trending fetch size per YouTube category, and the widest source
     # the loop will consider at all (longer sources are excerpted by
     # the framed path or compiled by the long-form lane, never used
