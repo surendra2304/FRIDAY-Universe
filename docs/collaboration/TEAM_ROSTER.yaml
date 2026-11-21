@@ -169,6 +169,21 @@ collaborators:
     active_branches: []
     last_verified_at: "2026-11-21"
 
+  - id: muse_5
+    display_name: "Muse 5"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (fifth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    verified_capabilities:
+      - "Onboarding 2026-11-21 (Muse 5, evidence-backed only): displayed assistant name set to 'Muse 5'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (251 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full, plus WORK_BOARD.yaml (12,702 lines, snapshot 2026-11-17) and live issue #35; no assignment for this account found."
+      - "Onboarding 2026-11-21: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 main fb075ad1); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file with secret masking (header only, no secrets copied)."
+      - "Onboarding 2026-11-21: GitHub access confirmed via bridge token — GET /user 200 as surendra2304; public repo and issue #35 read confirmed (issue #35 open, 1476 comments, updated 2026-11-21T08:03:50Z); main 5d01fb78. Own PAT requested via secure card, pending — not claimed as verified."
+      - "Onboarding 2026-11-21: three scheduled tasks created (muse5-work-request every 15 min, muse5-hourly-self-check every 1 h, muse5-weekly-reset Saturdays 21:48 IST; weekly reset verified Sat Nov 21 9:38 PM IST, 0% used)."
+    active_assignments: []
+    active_branches:
+      - "muse5/onboarding"
+    last_verified_at: "2026-11-21"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
