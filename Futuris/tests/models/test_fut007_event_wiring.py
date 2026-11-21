@@ -64,29 +64,37 @@ class _XAwareARIMAFake:
     fit(y, X) remembers that it was fitted with regressors; predict(h, X)
     then REQUIRES the future X and applies a fixed holiday effect, so a
     test can see the forecast path move at exactly the holiday steps.
+
+    TASK-FUT-014: the real statsforecast 2.1.1 contract is ``X`` as a
+    float numpy array in the order of ``CALENDAR_FEATURE_COLUMNS``
+    (the backend reads ``xreg.dtype`` and a DataFrame has none), so
+    this fake takes an ndarray and reads the holiday column by index
+    (``CALENDAR_FEATURE_COLUMNS.index("is_holiday")``) instead of by
+    column name.
     """
 
     instances: list["_XAwareARIMAFake"] = []
 
     def __init__(self, *_args: Any, **_kwargs: Any) -> None:
         self._y: np.ndarray | None = None
-        self.fit_X: pd.DataFrame | None = None
-        self.predict_X: pd.DataFrame | None = None
+        self.fit_X: np.ndarray | None = None
+        self.predict_X: np.ndarray | None = None
         _XAwareARIMAFake.instances.append(self)
 
     def fit(self, y: Any = None, X: Any = None, *_args: Any, **_kwargs: Any) -> "_XAwareARIMAFake":  # noqa: N803 — X mirrors the statsforecast API
         self._y = np.asarray(y, dtype=float)
-        self.fit_X = X
+        self.fit_X = None if X is None else np.asarray(X, dtype=float)
         return self
 
     def predict(self, h: int = 1, X: Any = None, *_args: Any, **_kwargs: Any) -> pd.DataFrame:  # noqa: N803 — X mirrors the statsforecast API
         assert self._y is not None
         if self.fit_X is not None and X is None:
             raise ValueError("fitted with X: future X is required at predict")
-        self.predict_X = X
+        self.predict_X = None if X is None else np.asarray(X, dtype=float)
         mean = np.repeat(self._y[-1], h)
         if X is not None:
-            mean = mean + HOLIDAY_EFFECT * np.asarray(X["is_holiday"], dtype=float)
+            holiday_col = CALENDAR_FEATURE_COLUMNS.index("is_holiday")
+            mean = mean + HOLIDAY_EFFECT * np.asarray(X, dtype=float)[:, holiday_col]
         return pd.DataFrame({"mean": mean})
 
 
@@ -191,7 +199,11 @@ def test_known_event_changes_auto_arima_forecast_path(x_aware_backend: None) -> 
 
     fake = _XAwareARIMAFake.instances[-1]
     assert fake.fit_X is not None, "fit never received the calendar features"
-    assert list(fake.fit_X.columns) == list(CALENDAR_FEATURE_COLUMNS)
+    # The backend contract is a float array in CALENDAR_FEATURE_COLUMNS
+    # order (TASK-FUT-014); the column names live on the adapter.
+    assert adapter.exog_columns == list(CALENDAR_FEATURE_COLUMNS)
+    assert fake.fit_X.shape == (len(x), len(CALENDAR_FEATURE_COLUMNS))
+    assert fake.fit_X.dtype == float
     assert adapter.exog_used is True
 
     horizon = 288  # 2026-12-24 12:05 .. 2026-12-25 12:00 — Christmas morning inside
@@ -299,3 +311,34 @@ def test_router_offers_auto_arima_where_history_supports_it() -> None:
     assert "auto_arima" in moderate
     assert "auto_arima" in rich
     assert "auto_arima" not in short
+
+
+# ---------------------------------------------------------------------------
+# TASK-FUT-014: the real statsforecast 2.1.1 backend needs numpy arrays
+# ---------------------------------------------------------------------------
+
+
+def test_auto_arima_exog_fits_real_statsforecast_backend() -> None:
+    """statsforecast 2.1.1's ``arima``/``auto_arima_f`` read
+    ``xreg.dtype`` — an attribute only numpy arrays have. The adapter
+    used to pass the calendar frame as a pandas DataFrame, so the fit
+    raised ``'DataFrame' object has no attribute 'dtype'`` and the
+    candidate never fitted (nor could predict, which reads the same
+    attribute). Skipped where the library is absent, exactly like the
+    other real-backend tests in this repo."""
+    pytest.importorskip("statsforecast")
+    end = datetime(2026, 11, 24, 12, 0, tzinfo=UTC)
+    # Seven days of grid: the calendar regressors are only full-rank
+    # once all seven weekdays appear — with fewer days, day_of_week /
+    # is_weekend / dow_sin / dow_cos are linearly dependent and
+    # auto_arima refuses the fit as rank-deficient, unrelated to this
+    # fix. Production refresh cycles use a 14-day lookback, so this
+    # matches the real path.
+    x, y = _history(end, days=7)
+    adapter = AutoARIMAAdapter()
+    adapter.fit(x, y, as_of=end)
+    assert adapter.exog_used is True
+    prediction = adapter.predict(horizon=12)
+    assert len(prediction.point_forecast) == 12
+    assert np.all(np.isfinite(prediction.point_forecast))
+    assert prediction.metadata["exogenous_features"] == list(CALENDAR_FEATURE_COLUMNS)

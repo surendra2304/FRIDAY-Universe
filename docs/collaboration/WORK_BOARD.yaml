@@ -12438,14 +12438,19 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "MERGED 2026-11-21. No deploy, no service touched."
   - id: TASK-FUT-014
     title: "Futuris: auto_arima candidate fails on statsforecast 2.1.1 with 'DataFrame' object has no attribute 'dtype' - fix the compatibility break so the candidate can fit, add regression coverage, and observe one scheduler refresh cycle with fits>0."
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_1
+    branch: muse1/task-fut-014-auto-arima-statsforecast-compat
+    pr: 1162
     priority: P2
     created_at: "2026-11-21"
     updated_at: "2026-11-21"
     evidence:
       - "Futuris moved to Server 2 with the Python 3.12 flip 2026-11-20/21 (acceptance passed: real forecast served); the auto_arima candidate failure on statsforecast 2.1.1 was recorded as a follow-up at the flip."
-    next_action: "Muse 1: claim, reproduce the failure, fix compatibly with the pinned statsforecast, add a regression test, ship via PR."
+      - "Claim: issue #35 comment 7056920370 by Muse 1 before any editing (TASK-FUT-014; batch 2 last). Base: main af28eb02 (board ac4e9828). No prior claim or PR for TASK-FUT-014 exists (checked: no claim comment, no remote branch, no PR)."
+      - "Change: Futuris/futuris/models/adapters.py — AutoARIMAAdapter now hands statsforecast 2.1.1 the exogenous calendar frame as a float numpy array at fit and at predict (was a pandas DataFrame; the backend reads xreg.dtype, which only numpy arrays have, so the candidate raised 'DataFrame' object has no attribute 'dtype' and never fitted). Futuris/tests/models/test_fut007_event_wiring.py — new real-backend regression test (importorskip statsforecast) plus the _XAwareARIMAFake updated to the real ndarray contract. No other file touched."
+      - "PR #1162 opened for Muse review: https://github.com/surendra2304/FRIDAY-Universe/pull/1162 (branch muse1/task-fut-014-auto-arima-statsforecast-compat, base main af28eb02, 1 commit, +68/-10, mergeable). Change verified: adapters +14/-2, test +49/-6, board +5/-2. Registry validator COLLABORATION REGISTRY VALID on the edited tree, identical to pristine main."
+    next_action: "Supervisor review -> merge. Acceptance: a scheduler refresh cycle (14-day lookback) with the auto_arima candidate fitted (fits>0) and the regression test green. Code+tests change only — no deploy, no service touched."
 
   - id: TASK-VYR-028
     title: "Gemini vision fail-over for VyralX: after VYR-026 retries are spent on Groq 429, exactly one Gemini attempt via VISION_FAILOVER_* env seams"

@@ -400,7 +400,15 @@ class AutoARIMAAdapter(BaseStatsForecastAdapter):
         self.exog_used = False
         if self.exog_columns:
             try:
-                self.fitted_model = model.fit(y=self.y_history, X=x[self.exog_columns])
+                # TASK-FUT-014: statsforecast 2.1.1's arima/auto_arima_f
+                # read ``xreg.dtype`` — an attribute only numpy arrays have.
+                # Passing the calendar frame as a DataFrame raised
+                # "'DataFrame' object has no attribute 'dtype'" and the
+                # candidate never fitted. The backend's documented contract
+                # is ``X: numpy array``, so hand it a float array.
+                self.fitted_model = model.fit(
+                    y=self.y_history, X=x[self.exog_columns].to_numpy(dtype=float)
+                )
                 self.exog_used = True
             except TypeError:
                 # A backend build without regressor support: fall back to
@@ -431,7 +439,11 @@ class AutoARIMAAdapter(BaseStatsForecastAdapter):
                 msg = f"future calendar frame is missing fitted exogenous columns: {missing}"
                 raise ValueError(msg)
             preds = self.fitted_model.predict(
-                h=horizon, X=future_frame[self.exog_columns]
+                # TASK-FUT-014: same numpy-array contract as at fit time —
+                # forecast_arima reads ``xreg.dtype`` and a DataFrame fails
+                # the same way (see fit above).
+                h=horizon,
+                X=future_frame[self.exog_columns].to_numpy(dtype=float),
             )["mean"]
             return self._build_prediction(
                 preds,
