@@ -350,7 +350,10 @@ class StratexTradingEngine:
         # __init__, which the test suites construct).
         self._last_trailing_manage = 0.0
         self._trailing_positions: dict | None = None  # None = not yet loaded
-        self._last_summary_date = ""
+        # TASK-STR-DAEMON-002: the daily-summary throttle survives
+        # restarts — loaded from state/ so a restart inside the same
+        # UTC day does not re-send the summary (DAEMON-001 triple-send).
+        self._last_summary_date = self._load_last_summary_date()
         # TASK-STR-PHASE2-001 measurement hooks (best-effort, never fatal):
         # shadow-trade tracker for OBSERVE_ONLY strategies, the hourly
         # equity-snapshot throttle, and the untracked-position sweep cadence.
@@ -1122,15 +1125,69 @@ class StratexTradingEngine:
         self.scan_count += 1
         return results
 
+    def _daily_summary_state_path(self) -> str:
+        """Path of the persisted daily-summary throttle (TASK-STR-DAEMON-002).
+
+        Same state-dir convention as the daemon heartbeat:
+        STRATEX_STATE_DIR overrides, otherwise
+        Stratex/state/daily_summary_state.json. The file holds
+        {"last_summary_date": "YYYY-MM-DD"} — the UTC day the summary
+        was last sent. state/ is gitignored; the file is runtime state
+        only, regenerated on first send.
+        """
+        override = os.getenv("STRATEX_STATE_DIR")
+        base = override if override else os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "state"
+        )
+        return os.path.join(base, "daily_summary_state.json")
+
+    def _load_last_summary_date(self) -> str:
+        """Last UTC day a daily summary was sent, "" when unknown.
+
+        Never raises: a missing or corrupt file degrades to "" (send
+        once, then persist) — the pre-DAEMON-002 behaviour.
+        """
+        try:
+            with open(self._daily_summary_state_path(), "r", encoding="utf-8") as fh:
+                raw = json.load(fh)
+            if isinstance(raw, dict):
+                date = raw.get("last_summary_date", "")
+                if isinstance(date, str):
+                    return date
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            logger.warning(f"[STRATEX] Could not load daily-summary state: {e}")
+        return ""
+
+    def _persist_last_summary_date(self, date: str) -> None:
+        """Persist the UTC day a daily summary was sent. Never raises."""
+        try:
+            path = self._daily_summary_state_path()
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump({"last_summary_date": date}, fh, indent=2)
+        except Exception as e:
+            logger.debug(f"Daily-summary state persist failed: {e}")
+
     def _maybe_send_daily_summary(self, results: dict) -> None:
         """Send a Telegram daily summary once per UTC day (throttled)."""
         try:
             import datetime
 
             today = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
-            if self._last_summary_date == today:
+            # TASK-STR-DAEMON-002: the throttle survives restarts — the
+            # date is loaded from state/ when the engine is built
+            # (including engines constructed without __init__, which the
+            # test suites build via __new__).
+            last = getattr(self, "_last_summary_date", None)
+            if last is None:
+                last = self._load_last_summary_date()
+                self._last_summary_date = last
+            if last == today:
                 return
             self._last_summary_date = today
+            self._persist_last_summary_date(today)
 
             bot = getattr(self.engine, "telegram_bot", None)
             if bot is None:
