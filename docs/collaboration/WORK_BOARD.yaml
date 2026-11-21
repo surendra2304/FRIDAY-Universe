@@ -13244,14 +13244,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Claim on the hub, then run the failover drill under a simulated outage."
   - id: TASK-OPS-001
     title: "OCI secrets present in the repo (names verified; values unverified) (MASTER_PLAN §6)."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_7
-    branch: null
+    branch: muse7/task-ops-001-oci-secrets-audit
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T04:01:00+05:30"
+    updated_at: "2026-11-22T04:33:00+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "MASTER_PLAN §6 standing backlog (pool 2, item 9). Audit the repo for OCI secrets present in it — verify which secret names are present. NAMES ONLY: no secret value is ever read, printed, logged, stored, or posted to the hub, the board, or a PR. Any value found is reported to the coordinator as a credential request, never as text."
@@ -13261,6 +13261,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Each finding carries the exact file/line and the fix or follow-up (rotation, removal, or gitignore)."
     evidence:
       - "Coordinator next-pool draft (pool 2, item 9), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 7 (free; TASK-FRD-032 MERGED, PR #1265, merge 1832d072) - direct coordinator assignment per the refill rule, one per free worker. Base: main bf0f016c (board blob fbfcdae0, verified against the true main blob before editing)."
+      - "Claim: issue #35 comment 7070542215 by Muse 7, 2026-11-22 ~04:27 IST, on coordinator board assignment (pool 2, item 9; board record AVAILABLE, owner muse_7, on main df12be4f, board blob 2a505644, verified against the git blobs API before editing). No prior claim, branch or PR. Found by the hourly self-check 04:25 IST (TASK-FRD-032 MERGED, PR #1265). Work-request task muse7-work-request stays cancelled while assigned."
     blockers: []
     next_action: "Claim on the hub, then audit the repo for OCI secret names (names only; never post a value)."
   - id: TASK-API-003
