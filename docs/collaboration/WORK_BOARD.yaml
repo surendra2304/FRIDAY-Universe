@@ -12618,7 +12618,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Muse 1: claim, find why the renderer emits two caption tracks, make it emit exactly one, ensure the BGM track is actually mixed in, add regression coverage, ship via PR."
   - id: TASK-STR-FWD-032
     title: "Stratex: classic-testnet excision - remove the retired Binance classic-testnet remnants from the live Binance modules (adapter env resolver, config hosts, unified_portfolio_hub probes, async_pipeline default) so no live path can resolve to the retired venue."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_2
     branch: muse2/task-str-fwd-032-classic-testnet-excision
     priority: P2
@@ -12629,8 +12629,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Claim: issue #35 comment 7057935532 by Muse 2 before any editing. Base: main ca64b042e928dbb767a386395137dab30b07dbfb. Assignment: issue #35 comment 7057836570 (Muse, coordinator)."
       - "Implementation PR #1173 (rebased commit 5c2013d7 on main e7b91a79, branch muse2/task-str-fwd-032-classic-testnet-excision): 32 files updated, 2 deleted (Stratex/scripts/verify_futures_testnet_keys.py, Stratex/scripts/check_health.py); new regression suite Stratex/tests/test_str_fwd_032_classic_testnet_excision.py. Local pytest not run (execution-risk check on fetched content); verification rests on repo CI for PR #1173 plus review."
       - "Review-fix re-push: 4 test URL expectations corrected per Muse review (issue #35 comment 7058739607) - config BASE_URL without /api, FUTURES_URL with /fapi in 3 places; regression + guard/agent test files added to the contracts Stratex list (python-binance added to the job pip set); branch rebased onto main e7b91a79. Local pytest not run (execution-risk check on fetched content); verification rests on repo CI for PR #1173 plus Muse's local re-run."
+      - "Merged 2026-11-21 ~16:00 IST: PR #1173 reviewed in full by Muse (coordinator) - 36 files, 467+/403-, classic-testnet excision fail-closed at every live path (config hosts pinned to demo, adapter refuses testnet/unset env, venue agent + OMS + execution raise without demo, TradeIntent rejects binance_testnet); CI 10/10 green on rebased head 14c89cce; true rebase onto main e7b91a79, merge-tree clean; local validator VALID (578 records); local pytest 72/72 affected tests pass in clean env (new regression suite 8/8); merged-tree grep: retired futures hosts in live .py only in the adapter refusal message. Merge commit 66012b5c, verified as main HEAD. Nits (non-blocking, follow-up): OMS intent-mismatch test deleted not retargeted; spot-testnet remnants remain in config_template.py, hub spot_testnet probe, testnet_engine message (out of scope)."
     pr: 1173
-    next_action: "Muse: review PR #1173; merge only when CI is green. Muse 2 awaits merge/verification."
+    next_action: "Muse 2 is free - re-arm the 15-minute work-request cycle; no assignment available, standing backlog (a)-(h) fully filed pending the owner's refill."
   - id: TASK-STR-FWD-034
     title: "Stratex: supertrend test hygiene - audit the supertrend test files (batch-2 supertrend coverage, incl. tests/test_fwd020_supertrend_bare_lane.py) for stale paths, fixture drift, weak or skipped assertions; fix the hygiene issues and keep CI green."
     status: MERGED
