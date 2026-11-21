@@ -153,7 +153,7 @@ def test_sleeve_registry_entries():
     shock_e = PRODUCTION_STRATEGY_REGISTRY["sleeve_shock_breakout"]
     assert shock_e["status"] == "VALIDATED"
     assert shock_e["sleeve"] == SLEEVE_NAME == "best_per_class"
-    assert shock_e["timeframe"] == "1wk"
+    assert shock_e["timeframe"] == "1w"
     assert len(shock_e["validated_assets"]) == 30
     tsmom_e = PRODUCTION_STRATEGY_REGISTRY["sleeve_tsmom2_dual"]
     assert tsmom_e["status"] == "VALIDATED"
@@ -170,9 +170,9 @@ def test_sleeve_executability_matrix():
     from strategies.strategy_registry import UnifiedStrategyRegistry
 
     reg = UnifiedStrategyRegistry()
-    assert reg.executable(SHOCK_TAG, "1wk", "BTCUSDT")[0]
+    assert reg.executable(SHOCK_TAG, "1w", "BTCUSDT")[0]
     assert not reg.executable(SHOCK_TAG, "4h", "BTCUSDT")[0]
-    assert not reg.executable(SHOCK_TAG, "1wk", "EURUSD")[0]
+    assert not reg.executable(SHOCK_TAG, "1w", "EURUSD")[0]
     # The tsmom leg has NO daemon module by design (the OANDA sleeve
     # runner executes it); the daemon must never claim it.
     assert TSMOM_TAG not in reg.get_all_strategy_names()
@@ -245,3 +245,53 @@ def test_daemon_sleeve_guard_hook_pauses_everything(monkeypatch, tmp_path):
     finally:
         if not preexisting and os.path.exists(pause_file):
             os.remove(pause_file)
+
+
+# ---------------------------------------------------------------------------
+# TASK-STR-FWD-035: daemon env timeframe labels use the venue label "1w"
+#
+# The daemon env list (STRATEX_TIMEFRAMES) historically carried "1wk"
+# while the venue/panel label is "1w" (api/validation.py TIMEFRAMES, the
+# Binance weekly interval, the FWD-030 module registry entry, book 3978).
+# The mismatch silently gated the FWD-030 module out of the daemon
+# (executable() requires the entry timeframe) and left the sleeve leg one
+# rename away from the same fate. These tests pin the aligned labels: they
+# fail on the old "1wk" daemon and pass after the fix.
+# ---------------------------------------------------------------------------
+
+
+def test_daemon_weekly_label_is_venue_label():
+    from autonomy import run_daemon as rd
+
+    assert rd.SLEEVE_TIMEFRAME == "1w"
+    assert rd.StratexTradingEngine._BAR_SECONDS["1w"] == 604800
+    assert "1wk" not in rd.StratexTradingEngine._BAR_SECONDS
+
+
+def test_daemon_env_timeframes_normalize_legacy_1wk():
+    from autonomy import run_daemon as rd
+
+    assert rd._normalize_timeframe_label("1wk") == "1w"
+    assert rd._normalize_timeframe_label("1w") == "1w"
+    assert rd._normalize_timeframe_label("1d") == "1d"
+    # The exact intake __init__ runs on STRATEX_TIMEFRAMES: a stale env
+    # still saying "1wk" parses to the venue label, never to "1wk".
+    assert rd._parse_timeframes("1d,4h,1wk") == ["1d", "4h", "1w"]
+    assert rd._parse_timeframes("1wk") == ["1w"]
+    assert rd._parse_timeframes("") == ["1d"]
+
+
+def test_daemon_weekly_label_passes_registry_gate():
+    from strategies.strategy_registry import UnifiedStrategyRegistry
+
+    reg = UnifiedStrategyRegistry()
+    # Sleeve leg: executable at the venue label. On old code the entry
+    # said "1wk", so "1w" failed TIMEFRAME_NOT_VALIDATED and the leg could
+    # never fire once the daemon scanned at the venue label.
+    assert reg.executable(SHOCK_TAG, "1w", "BTCUSDT")[0]
+    assert not reg.executable(SHOCK_TAG, "1w", "EURUSD")[0]
+    # FWD-030 module (book 3978 SHW member): its entry already says "1w";
+    # pin it so nobody "fixes" it back to "1wk" to match the old daemon.
+    from config_strategy import PRODUCTION_STRATEGY_REGISTRY
+
+    assert PRODUCTION_STRATEGY_REGISTRY["shock_breakout_1wk"]["timeframe"] == "1w"

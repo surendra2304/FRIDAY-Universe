@@ -7,7 +7,7 @@ BTCUSDT/BNBUSDT; the sleeve leg at 0 lifetime executions; dow's BTC/BNB
 longs opened anyway in the 2026-11-17 05:32 IST cycle.
 
 Covered behaviour:
-  (a) sleeve (1wk) vs a lower-timeframe opposing side -> the sleeve side
+  (a) sleeve (1w) vs a lower-timeframe opposing side -> the sleeve side
       survives, the opposing side is dropped for that symbol-cycle, and
       the resolution is journalled per symbol with both strategies,
       both sides, both timeframes (plus the kept aggregate line).
@@ -186,7 +186,7 @@ def _defer(d, engine, side="SELL"):
     """Seed a deferred sleeve entry the way the execution loop would."""
     engine.open_positions.add((V, SYM))
     d._sleeve_deferral_state()[1][(V, SYM)] = BUCKET
-    sigs = [_sig(SLEEVE, side, "1wk", sl_dist=22.0, tp_dist=44.0)]
+    sigs = [_sig(SLEEVE, side, "1w", sl_dist=22.0, tp_dist=44.0)]
     assert d._maybe_defer_sleeve_candidate(V, SYM, sigs) is True
     deferred, _ = d._sleeve_deferral_state()
     assert (V, SYM) in deferred
@@ -200,7 +200,7 @@ def _defer(d, engine, side="SELL"):
 
 def test_precedence_sleeve_sell_survives_dow_buy_dropped_and_journalled(logs):
     d = _daemon(_Engine())
-    sleeve = _entry(V, SYM, "SELL", _sig(SLEEVE, "SELL", "1wk"))
+    sleeve = _entry(V, SYM, "SELL", _sig(SLEEVE, "SELL", "1w"))
     dow = _entry(V, SYM, "BUY", _sig(DOW, "BUY", "1d"))
     out = d._resolve_contradictions([sleeve, dow])
     assert out == [sleeve]
@@ -209,7 +209,7 @@ def test_precedence_sleeve_sell_survives_dow_buy_dropped_and_journalled(logs):
     line = per_symbol[0]
     assert SLEEVE in line and DOW in line
     assert "SELL" in line and "BUY" in line
-    assert "1wk" in line and "1d" in line
+    assert "1w" in line and "1d" in line
     assert f"precedence-dropped-{DOW}" in line
     # Aggregate line kept, prefix unchanged from the pre-FWD-016 guard.
     assert any(
@@ -220,7 +220,7 @@ def test_precedence_sleeve_sell_survives_dow_buy_dropped_and_journalled(logs):
 
 def test_precedence_sleeve_buy_survives_dow_sell_dropped(logs):
     d = _daemon(_Engine())
-    sleeve = _entry(V, SYM, "BUY", _sig(SLEEVE, "BUY", "1wk"))
+    sleeve = _entry(V, SYM, "BUY", _sig(SLEEVE, "BUY", "1w"))
     dow = _entry(V, SYM, "SELL", _sig(DOW, "SELL", "1d"))
     out = d._resolve_contradictions([dow, sleeve])
     assert out == [sleeve]
@@ -246,8 +246,8 @@ def test_sleeve_vs_weekly_opponent_still_deletes_both(logs):
     # The exemption is timeframe precedence: an opposing WEEKLY signal
     # is not lower-timeframe, so the conflict keeps delete-both.
     d = _daemon(_Engine())
-    sleeve = _entry(V, SYM, "SELL", _sig(SLEEVE, "SELL", "1wk"))
-    weekly = _entry(V, SYM, "BUY", _sig(ICHI, "BUY", "1wk"))
+    sleeve = _entry(V, SYM, "SELL", _sig(SLEEVE, "SELL", "1w"))
+    weekly = _entry(V, SYM, "BUY", _sig(ICHI, "BUY", "1w"))
     assert d._resolve_contradictions([sleeve, weekly]) == []
     assert any("both dropped" in ln for ln in logs)
 
@@ -266,9 +266,9 @@ def test_sleeve_vs_mixed_timeframe_opposition_deletes_both(logs):
     # Opposing side carrying ANY weekly signal is not "exclusively
     # lower-timeframe" — no precedence.
     d = _daemon(_Engine())
-    sleeve = _entry(V, SYM, "SELL", _sig(SLEEVE, "SELL", "1wk"))
+    sleeve = _entry(V, SYM, "SELL", _sig(SLEEVE, "SELL", "1w"))
     mixed = _entry(
-        V, SYM, "BUY", _sig(DOW, "BUY", "1d"), _sig(ICHI, "BUY", "1wk")
+        V, SYM, "BUY", _sig(DOW, "BUY", "1d"), _sig(ICHI, "BUY", "1w")
     )
     assert d._resolve_contradictions([sleeve, mixed]) == []
     assert any("both dropped" in ln for ln in logs)
@@ -283,7 +283,7 @@ def test_same_direction_confluence_untouched(logs):
     d = _daemon(_Engine())
     dow = _entry(V, SYM, "BUY", _sig(DOW, "BUY", "1d"))
     ichi = _entry(V, SYM, "BUY", _sig(ICHI, "BUY", "4h"))
-    sleeve_other = _entry(V, "ETHUSDT", "SELL", _sig(SLEEVE, "SELL", "1wk"))
+    sleeve_other = _entry(V, "ETHUSDT", "SELL", _sig(SLEEVE, "SELL", "1w"))
     out = d._resolve_contradictions([dow, ichi, sleeve_other])
     assert out == [dow, ichi, sleeve_other]
     assert not any("Conflict" in ln for ln in logs)
@@ -292,7 +292,7 @@ def test_same_direction_confluence_untouched(logs):
 def test_no_conflict_passthrough(logs):
     d = _daemon(_Engine())
     assert d._resolve_contradictions([]) == []
-    single = _entry(V, SYM, "SELL", _sig(SLEEVE, "SELL", "1wk"))
+    single = _entry(V, SYM, "SELL", _sig(SLEEVE, "SELL", "1w"))
     assert d._resolve_contradictions([single]) == [single]
     assert logs == []
 
@@ -305,7 +305,7 @@ def test_no_conflict_passthrough(logs):
 def test_deferral_created_only_when_position_blocks(logs):
     engine = _Engine()
     d = _daemon(engine)
-    sigs = [_sig(SLEEVE, "SELL", "1wk", sl_dist=22.0, tp_dist=44.0)]
+    sigs = [_sig(SLEEVE, "SELL", "1w", sl_dist=22.0, tp_dist=44.0)]
     # No open position -> the block was another gate; nothing deferred.
     assert d._maybe_defer_sleeve_candidate(V, SYM, sigs) is False
     # Position open but the symbol's bucket was never observed.
@@ -412,8 +412,8 @@ def test_open_position_still_blocks_execution_for_all(logs, _no_pause):
     # is blocked identically here — the deferral is what rescues it.
     assert (
         d._execute_signal(
-            V, SYM, _payload(SLEEVE, "SELL", "1wk", sl_dist=22.0, tp_dist=44.0),
-            "1wk",
+            V, SYM, _payload(SLEEVE, "SELL", "1w", sl_dist=22.0, tp_dist=44.0),
+            "1w",
         )
         is False
     )

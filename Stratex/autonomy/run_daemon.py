@@ -31,7 +31,42 @@ logger = get_logger("stratex_daemon")
 # this timeframe (see _resolve_contradictions and
 # _maybe_defer_sleeve_candidate).
 SLEEVE_SHOCK_STRATEGY = "strategy_sleeve_shock_breakout"
-SLEEVE_TIMEFRAME = "1wk"
+# TASK-STR-FWD-035: the venue label for the weekly timeframe is "1w"
+# (Stratex/api/validation.py TIMEFRAMES; the Binance weekly interval),
+# not "1wk". The daemon env list historically carried "1wk", which
+# silently mismatched every venue-labelled consumer: the registry gate
+# for the FWD-030 module (its entry says "1w"), the book 3978 SHW
+# member, and the API validation set.
+SLEEVE_TIMEFRAME = "1w"
+
+
+# TASK-STR-FWD-035: legacy weekly label. The daemon never emits "1wk"
+# anymore; this map exists only so a stale STRATEX_TIMEFRAMES value and
+# position records opened before this fix still resolve to the venue
+# label instead of silently falling through to a wrong timeframe.
+_LEGACY_TIMEFRAME_LABELS = {"1wk": "1w"}
+
+
+def _normalize_timeframe_label(tf: str) -> str:
+    """Map a timeframe label to the venue label ("1wk" -> "1w")."""
+    return _LEGACY_TIMEFRAME_LABELS.get(tf.strip(), tf.strip())
+
+
+def _parse_timeframes(tf_env: str) -> list:
+    """Parse STRATEX_TIMEFRAMES into venue labels.
+
+    TASK-STR-FWD-035: a stale env still saying "1wk" is normalized to
+    "1w" (venue label) and warned about — never silently reintroduced.
+    """
+    raw = [t.strip() for t in tf_env.split(",") if t.strip()]
+    legacy = sorted({t for t in raw if t in _LEGACY_TIMEFRAME_LABELS})
+    if legacy:
+        logger.warning(
+            "[STRATEX] TASK-STR-FWD-035: legacy timeframe label(s) "
+            f"{legacy} in STRATEX_TIMEFRAMES normalized to 1w "
+            "(venue label); update the env to the venue labels."
+        )
+    return [_normalize_timeframe_label(t) for t in raw] or ["1d"]
 
 
 def heat_capped_risk_amount(
@@ -279,7 +314,7 @@ class StratexTradingEngine:
         }
 
         tf_env = os.getenv("STRATEX_TIMEFRAMES", "1d,4h")
-        self.timeframes = [t.strip() for t in tf_env.split(",") if t.strip()] or ["1d"]
+        self.timeframes = _parse_timeframes(tf_env)
         self.running = True
         self.last_scan = 0
         self.scan_count = 0
@@ -713,18 +748,18 @@ class StratexTradingEngine:
                         # at least 262 closed bars (300 daily bars fetched;
                         # 600 4h bars fetched so the warmup holds with
                         # headroom for the still-forming bar).
-                        # Sleeve extension: the 1wk timeframe is a DERIVED
+                        # Sleeve extension: the 1w timeframe is a DERIVED
                         # timeframe — 1,120 daily bars are fetched and
                         # aggregated into the judged weekly buckets by
                         # strategy_sleeve_shock_breakout.weekly_candles
                         # (Binance native weekly klines are Monday-
                         # anchored and are NOT the judged bars).
-                        candle_limit = 300 if tf == "1d" else 600 if tf == "4h" else 160 if tf == "1wk" else 100
-                        min_bars = 262 if tf in ("1d", "4h") else 106 if tf == "1wk" else 50
-                        fetch_tf = "1d" if tf == "1wk" else tf
-                        fetch_limit = 1120 if tf == "1wk" else candle_limit
+                        candle_limit = 300 if tf == "1d" else 600 if tf == "4h" else 160 if tf == SLEEVE_TIMEFRAME else 100
+                        min_bars = 262 if tf in ("1d", "4h") else 106 if tf == SLEEVE_TIMEFRAME else 50
+                        fetch_tf = "1d" if tf == SLEEVE_TIMEFRAME else tf
+                        fetch_limit = 1120 if tf == SLEEVE_TIMEFRAME else candle_limit
                         candles = self.engine.get_candles(venue, symbol, fetch_tf, fetch_limit)
-                        if tf == "1wk" and candles:
+                        if tf == SLEEVE_TIMEFRAME and candles:
                             candles = self._weekly_aggregate(symbol, candles)
                         if not candles or len(candles) < min_bars:
                             continue
@@ -1588,7 +1623,7 @@ class StratexTradingEngine:
 
     _BAR_SECONDS = {
         "1m": 60, "5m": 300, "15m": 900, "30m": 1800, "1h": 3600,
-        "4h": 14400, "1d": 86400, "1wk": 604800,
+        "4h": 14400, "1d": 86400, "1w": 604800,
     }
 
     def _weekly_aggregate(self, symbol: str, daily_candles: list) -> list:
@@ -2415,7 +2450,9 @@ class StratexTradingEngine:
                 tf = self.engine.position_timeframe.get(key, "") or str(
                     gov.get("timeframe", "1d")
                 )
-                bar_seconds = self._BAR_SECONDS.get(tf, 86400)
+                # TASK-STR-FWD-035: normalize — a position opened
+                # before the fix may still carry the legacy "1wk".
+                bar_seconds = self._BAR_SECONDS.get(_normalize_timeframe_label(tf), 86400)
                 opened_ms = float(self.engine.position_opened_at.get(key, 0) or 0)
                 if opened_ms <= 0:
                     continue
@@ -2613,7 +2650,9 @@ class StratexTradingEngine:
                 tf = self.engine.position_timeframe.get(key, "") or str(
                     record.get("timeframe") or ""
                 )
-                bar_seconds = self._BAR_SECONDS.get(tf, 86400)
+                # TASK-STR-FWD-035: normalize — a position opened
+                # before the fix may still carry the legacy "1wk".
+                bar_seconds = self._BAR_SECONDS.get(_normalize_timeframe_label(tf), 86400)
                 age_bars = int((now - opened_ms / 1000.0) // bar_seconds) + 3
                 limit = max(60, min(1000, age_bars))
                 candles = self.engine.get_candles(venue, symbol, tf, limit)
@@ -2920,10 +2959,10 @@ class StratexTradingEngine:
             for venue, symbols in self.symbols.items():
                 for symbol in symbols:
                     for tf in self.timeframes:
-                        # 1wk is derived at scan time from daily bars;
-                        # adapters have no native 1wk feed (they would
-                        # silently substitute another timeframe).
-                        if tf == "1wk":
+                        # 1w is derived at scan time from daily bars;
+                        # never fetched — native venue weekly klines are
+                        # Monday-anchored, not the judged buckets.
+                        if tf == SLEEVE_TIMEFRAME:
                             continue
                         pairs.append((venue, symbol, tf))
 
