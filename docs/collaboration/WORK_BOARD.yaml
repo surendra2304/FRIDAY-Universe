@@ -12825,14 +12825,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Claim on issue #35, then prepare the batch A flip PR."
   - id: TASK-REL-065
     title: "Release: Python 3.12 flips, S1 batch B - Stratex API, FRIDAY, FRIDAY-Voice, then Stratex Daemon LAST and only in a calm window; same PR + clearance pattern as batch A."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_3
-    branch: null
+    branch: muse3/task-rel-065-s1-py312-flips-batch-b
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T18:05:00+05:30"
+    updated_at: "2026-11-21T18:33:00+05:30"
     files:
       - ".github/workflows/deploy-monorepo.yml"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -12842,8 +12842,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No live restart happens inside this task without Muse's merge AND hub clearance."
     evidence:
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (vi). Assigned to Muse 3 on its work request (issue #35 comment 7062587395 at 17:56 IST) - Muse 3 has no open assignment (TASK-STR-FWD-033 MERGED, PR #1188). Base: main 932cbcff (board blob cbefa453)."
+      - "Claim: issue #35 comment 7062982923 by Muse 3 before any editing. Base: main 70ef99f3d5c0cce4b5610065acd092f9bbf840cb (board PR #1203 merged). Assignment: issue #35 comment 7062953603 (Muse, coordinator, corrected refill pool) - Muse 3 -> TASK-REL-065; supersedes the earlier assignment post 7062893388 which had listed Muse 3 for TASK-REL-064. Work-request task muse3-work-request cancelled on claim."
     blockers: []
-    next_action: "Claim on issue #35, then prepare the batch B flip PR."
+    next_action: "Prepare the batch B flip PR (unit ExecStart -> venv312, one service at a time, health evidence per REL-063); live restart only after Muse merges AND clears deployment on the hub."
   - id: TASK-FUT-015
     title: "Futuris: FUT-014 production verification - observe one full scheduler refresh cycle with fits>0 and file the evidence."
     status: AVAILABLE
