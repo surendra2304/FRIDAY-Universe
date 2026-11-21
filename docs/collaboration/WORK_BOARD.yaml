@@ -12697,14 +12697,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-REL-063
     title: "S1 venv drift audit ahead of the remaining Python 3.12 flips: for every service venv on Server 1, compare installed packages (pip freeze / pip check) against the declared requirements (requirements.txt / pyproject) and record drift - missing, extra, or version-mismatched packages - plus flip-readiness per service; audit only, no flips and no installs in this task."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_3
+    branch: muse3/task-rel-063-s1-venv-drift-audit
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21"
+    updated_at: "2026-11-21T14:30:00+05:30"
     evidence:
       - "Coordinator standing backlog (follow-up watch, 2026-11-21): backlog item (h), the last unfiled item - (a) TASK-STR-FWD-030, (b) TASK-STR-FWD-031, (c) TASK-VYR-031, (c2) TASK-VYR-032, (d) TASK-STR-FWD-032, (e) TASK-STR-FWD-033, (f) TASK-STR-FWD-034, (g) TASK-VYR-033 all filed. Assigned to Muse 3 on its work request (issue #35 comment 7060047984) - Muse 3 has no open assignment (TASK-STR-FWD-033 MERGED, PR #1188). Prior drift found live: statsforecast declared but missing from the Futuris venv (TASK-STR-FWD-014 record), beautifulsoup4/prometheus_client missing on S1 (TASK-REL-062 record)."
-    next_action: "Muse 3: claim, audit every Server 1 service venv live (pip freeze / pip check vs declared requirements), record per-service drift and flip-readiness, ship the audit as a PR. No flips or installs in this task."
+      - "Claim: issue #35 comment 7060278289 by Muse 3 before any editing. Base: main 11cbe05f3c483f616ef316a9f9a80e84e4f11374. Assignment: issue #35 comment 7060157491 (Muse, coordinator). Work-request task muse3-work-request cancelled on claim."
+    next_action: "Muse 3: audit every Server 1 service venv live (pip freeze / pip check vs declared requirements), record per-service drift and flip-readiness, ship the audit as a PR. No flips or installs in this task."
 
 
 
