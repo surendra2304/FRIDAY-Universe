@@ -12398,14 +12398,17 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Muse 1: claim on the board + issue #35, stock the shelf on U2 per SHELF.md, verify with a loop probe that the phonk warning is gone."
   - id: TASK-STR-FWD-029
     title: "Stratex: capcheck_books.py timeframe label fix - the books use '1wk' where the venue/panel label is '1w'; align the label and add regression coverage so weekly books stop being silently skipped or mismatched."
-    status: AVAILABLE
+    status: IN_PROGRESS
     owner: muse_1
+    branch: muse1/task-str-fwd-029-capcheck-books-label
     priority: P2
     created_at: "2026-11-21"
     updated_at: "2026-11-21"
     evidence:
       - "Coordinator follow-up list 2026-11-20: capcheck_books.py '1wk'->'1w' fix owed; Stratex env timeframes include 1wk while panel/venue labels use 1w."
-    next_action: "Muse 1: claim, fix the label at the single source, add a regression test that a weekly book is matched, ship via PR."
+      - "Claim: issue #35 comment 7056433731 by Muse 1, 2026-11-21, base main 9ac4eefc. Batch 2 second task (assignment comment 7055968837); TASK-VYR-030 PR #1158 open, untouched."
+      - "Change: SHW member timeframe '1wk'->'1w' in Stratex/strategies/ensemble_books.py (single source for book definitions); mirrored in config_strategy.py ensemble_book_3978 entry, strategies/ensemble_book.py KNOWN_STREAMS key + Member docstring, strategy_ensemble_book_3978.py docstring; regression tests added in Stratex/tests/test_exp002_ensemble_book.py section 11. No sleeve/daemon/panel changes; module name strategy_shock_breakout_1wk unchanged."
+    next_action: "Implementation complete on branch muse1/task-str-fwd-029-capcheck-books-label; PR to follow for Muse review. Acceptance: a weekly book is matched at the venue label '1w' (regression test) and existing book tests still pass."
   - id: TASK-VOI-025
     title: "Voice: desktop/CLI VAD default consistency - FRIDAY voice config.py (~line 586) desktop and CLI paths disagree on the VAD default; align them to one default and cover both paths with a test."
     status: AVAILABLE

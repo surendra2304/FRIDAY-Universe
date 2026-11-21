@@ -2,9 +2,9 @@
 
 Thin daemon-facing module for the RD-025 PROVEN book 3978 (size 5):
 equal-weight combination of tsmom2_dual roc90_ema200 @ crypto30 1d,
-shock_breakout k1.0 @ crypto30 1wk, zscore_reversion w50_t2.5_filt @
+shock_breakout k1.0 @ crypto30 1w, zscore_reversion w50_t2.5_filt @
 forex28 1d, ha_trend two_candle @ crypto30 1d, and xs_lowvol lv20_r10
-@ crypto30 1d. Mixed panels AND mixed timeframes (1d + 1wk): the book
+@ crypto30 1d. Mixed panels AND mixed timeframes (1d + 1w): the book
 needs evaluation context (symbol/timeframe/venue) and the engine keeps
 a per-member signal cache across scans — without context it refuses.
 The execution engine lives in strategies/ensemble_book.py; the

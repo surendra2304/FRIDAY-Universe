@@ -33,6 +33,9 @@ Covers, in order:
      execute_strategy.
  10. Daemon wiring: the 8 books are forward-protocol entries and map to
      the FORWARD_TEST lane.
+11. Weekly label (TASK-STR-FWD-029): the weekly book member carries the
+     venue/panel label '1w' (not the env '1wk'), so a weekly frame at
+     '1w' matches it instead of silently skipping it.
 
 No test touches the network, the bridge, or a live venue. Everything
 runs on synthetic frames, fake member modules, or shipped fixtures.
@@ -567,7 +570,7 @@ MEASURED_MAX_STOP = {
     ("stoch_reversion", "k14_raw", "crypto30", "1d"): 0.3347,
     ("shock_breakout", "k1.5", "crypto30", "1d"): 0.3624,
     ("shock_breakout", "k1.0", "crypto30", "1d"): 0.3624,
-    ("shock_breakout", "k1.0", "crypto30", "1wk"): 0.8716,
+    ("shock_breakout", "k1.0", "crypto30", "1w"): 0.8716,
     ("tsmom2_dual", "roc90_ema200", "crypto30", "1d"): 0.4246,
     ("ha_trend", "two_candle", "crypto30", "1d"): 0.3938,
     ("bollinger_trend", "p20_sd2.0", "crypto30", "1d"): 0.3624,
@@ -664,7 +667,7 @@ def test_book_3978_uses_timeframes_list():
     from config_strategy import PRODUCTION_STRATEGY_REGISTRY
 
     entry = PRODUCTION_STRATEGY_REGISTRY["ensemble_book_3978"]
-    assert entry["timeframes"] == ["1d", "1wk"]
+    assert entry["timeframes"] == ["1d", "1w"]
     assert "timeframe" not in entry
 
 
@@ -909,7 +912,7 @@ def test_registry_book_specs_carry_lane_universe(registry):
         assert tuple(spec.symbols) == tuple(
             CRYPTO30_SYMBOLS + FOREX28_SYMBOLS), key
     spec = registry.get("strategy_ensemble_book_3978")
-    assert set(spec.timeframes) == {"1d", "1wk"}
+    assert set(spec.timeframes) == {"1d", "1w"}
 
 
 def test_execute_strategy_refusal_raises_once_then_quiet(registry):
@@ -977,3 +980,58 @@ def test_daemon_lane_tag_mapping_for_books():
     for key in BOOK_KEYS:
         assert daemon._lane_for_strategy("strategy_" + key) == "FORWARD_TEST", key
     assert daemon._lane_for_strategy("strategy_ichimoku_trend") is None
+
+
+# ---------------------------------------------------------------------------
+# 11. Weekly label (TASK-STR-FWD-029)
+# ---------------------------------------------------------------------------
+
+def test_weekly_book_member_uses_venue_label():
+    """The weekly member of book 3978 carries the venue/panel label '1w'.
+
+    Before this fix it carried '1wk' (the env/derived-frame label) while
+    the venue label — the API's canonical TIMEFRAMES set and the Binance
+    weekly interval — is '1w', so a weekly frame at '1w' matched no
+    member and the weekly book was silently skipped.
+    """
+    from api.validation import TIMEFRAMES
+
+    book = BOOKS["ensemble_book_3978"]
+    weekly = [m for m in book.members if m.key == "shock_breakout"
+              and m.cell == "k1.0" and m.panel == "crypto30"
+              and m.timeframe != "1d"]
+    assert len(weekly) == 1, "exactly one weekly shock member in 3978"
+    shw = weekly[0]
+    assert shw.timeframe == "1w", shw
+    assert shw.stream_id == "shock_breakout__k1.0__at__crypto30__1w", shw
+    # No member of any book still carries the old label.
+    for key in BOOK_KEYS:
+        assert all(m.timeframe != "1wk" for m in BOOKS[key].members), key
+    # Every member timeframe is a venue-valid label.
+    assert "1w" in TIMEFRAMES
+    for key in BOOK_KEYS:
+        assert all(m.timeframe in TIMEFRAMES
+                   for m in BOOKS[key].members), key
+
+
+def test_weekly_member_matches_venue_timeframe(monkeypatch):
+    """A weekly member is applied on a frame at the venue label '1w'."""
+    _install_fake(monkeypatch, "strategy_fake_w", BUY_10_30)
+    book = _book("test_book", [
+        _member("strategy_fake_w", "w", timeframe="1w"),
+    ])
+    out = evaluate_book(book, _frame(), symbol="BTCUSDT", timeframe="1w",
+                        venue="binance_futures", state=BookState())
+    assert out is not None and out["side"] == "BUY" and out["net"] == 1
+
+
+def test_weekly_member_not_applied_at_old_label(monkeypatch):
+    """Pinned failure mode: at the old '1wk' frame label the '1w' member
+    is not applied (no cached signal yet) — the weekly book is skipped,
+    not mismatched into a wrong signal."""
+    _install_fake(monkeypatch, "strategy_fake_w", BUY_10_30)
+    book = _book("test_book", [
+        _member("strategy_fake_w", "w", timeframe="1w"),
+    ])
+    assert evaluate_book(book, _frame(), symbol="BTCUSDT", timeframe="1wk",
+                         venue="binance_futures", state=BookState()) is None
