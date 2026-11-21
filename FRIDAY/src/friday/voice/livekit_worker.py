@@ -2617,6 +2617,80 @@ async def _await_session_listening(event, timeout_s: float) -> bool:
     return True
 
 
+# ---- TASK-VOI-026: greeting-onset decomposition ----
+# The greeting misses the 8 s bar even on a calm box (11.3 s / 17.0 s
+# in the VOI-024 A/B arms, both arms) and the existing journal lines
+# cannot say which leg owns the time: connect-to-key and
+# key-to-session-started are logged, but the greeting gate's ACTUAL
+# wait, the participant wait, the build-vs-start split inside
+# key-to-session-started, and the job-start-to-connect leg are not.
+# Prime suspect (mechanism proven locally, production proof pending):
+# the listening gate's 5 s cap is loop-time, not wall-clock — an
+# asyncio.wait_for timeout fires only when the job loop iterates, so
+# on the ~87%-swapped voice host the cap stretches with sess.start()
+# and the line fires when the session starts, not at the cap. The
+# helpers below are pure so the decomposition line is unit-testable;
+# the entrypoint stamps the stages into one dict and the greeting task
+# journals the line when the line fires.
+
+
+def _new_greeting_onset() -> dict:
+    """Per-job greeting-onset stage timestamps (TASK-VOI-026).
+
+    Timestamp stages hold time.time() values (None until the stage
+    runs); ``gate_heard`` is the listening-gate outcome (True =
+    LISTENING, False = gate cap, None = undecided) and ``gate_wait_s``
+    the wall time the greeting task spent inside the gate."""
+    return {
+        "job_start": None,
+        "connected": None,
+        "key_ready": None,
+        "participant_seen": None,
+        "gate_decided": None,
+        "gate_heard": None,
+        "gate_wait_s": None,
+        "first_audio": None,
+        "build_start": None,
+        "build_done": None,
+        "start_done": None,
+    }
+
+
+def _stage_diff(timings: dict, later: str, earlier: str) -> str:
+    """Seconds between two onset stages ('-' when either never ran)."""
+    a = timings.get(later)
+    b = timings.get(earlier)
+    if a is None or b is None:
+        return "-"
+    return f"{float(a) - float(b):.2f}s"
+
+
+def _format_greeting_onset(timings: dict) -> str:
+    """One-line decomposition of the greeting onset (TASK-VOI-026).
+
+    ``timings`` is the entrypoint's stage dict; legs are seconds
+    between the named stages, '-' when a stage never ran (the line
+    fired before the session started, a stage was skipped)."""
+    if timings.get("connected") is None:
+        return (
+            "VOICE greeting onset decomposition (TASK-VOI-026): "
+            "no connect stamp"
+        )
+    heard = timings.get("gate_heard")
+    gate = "LISTENING" if heard is True else ("cap" if heard is False else "-")
+    gate_wait = timings.get("gate_wait_s")
+    gate_wait_s = f"{float(gate_wait):.2f}s" if gate_wait is not None else "-"
+    return (
+        "VOICE greeting onset decomposition (TASK-VOI-026): "
+        f"job-to-connect {_stage_diff(timings, 'connected', 'job_start')}, "
+        f"connect-to-key {_stage_diff(timings, 'key_ready', 'connected')}, "
+        f"key-to-participant {_stage_diff(timings, 'participant_seen', 'key_ready')}, "
+        f"participant-to-gate {_stage_diff(timings, 'gate_decided', 'participant_seen')}, "
+        f"gate {gate} after {gate_wait_s}, "
+        f"connect-to-first-audio {_stage_diff(timings, 'first_audio', 'connected')}"
+    )
+
+
 async def _monitor_input_energy(track, watch: dict) -> None:
     """TASK-VOI-016: consume the owner's microphone track on a
     side stream and stamp ``watch['last_energy_ts']`` whenever a
@@ -3287,6 +3361,9 @@ async def entrypoint(ctx: JobContext):
     # is live (see _start_executor_warm). The shutdown callback
     # releases the count however the job ends.
     _JOBS_ACTIVE[0] += 1
+    # TASK-VOI-026: greeting-onset stage timestamps for this job.
+    greet_timing = _new_greeting_onset()
+    greet_timing["job_start"] = time.time()
 
     async def _voi014_job_finished() -> None:
         _JOBS_ACTIVE[0] = max(0, _JOBS_ACTIVE[0] - 1)
@@ -3530,6 +3607,7 @@ async def entrypoint(ctx: JobContext):
             _pending_task.cancel()
         raise
     _t_connected = time.time()  # TASK-VOI-010: greeting-timing evidence base
+    greet_timing["connected"] = _t_connected  # TASK-VOI-026
     # Heartbeat truth: a job that hangs anywhere below this line must never
     # read as 'waiting for the first job' again (live lesson 2026-11-13).
     # TASK-VOI-003: status lines carry room + job id so concurrent jobs in
@@ -3607,6 +3685,7 @@ async def entrypoint(ctx: JobContext):
         try:
             if not await _wait_for_remote_participant(ctx.room):
                 return
+            greet_timing["participant_seen"] = time.time()  # TASK-VOI-026
             # Fast-greeting fix (2026-11-13, ZAI Agent 1): the job is
             # dispatched BY the owner joining, so remote_participants
             # is virtually always non-empty already; 0.3s is enough
@@ -3621,19 +3700,25 @@ async def entrypoint(ctx: JobContext):
             # anyway: a slow build must not silence the greeting,
             # and the session start is never gated on this wait —
             # it proceeds independently on the ready path.
+            _gate_wait_started = time.time()
             _gate_heard = await _await_session_listening(
                 session_listening, _GREETING_LISTENING_GATE_S
             )
+            greet_timing["gate_heard"] = bool(_gate_heard)  # TASK-VOI-026
+            greet_timing["gate_wait_s"] = time.time() - _gate_wait_started
+            greet_timing["gate_decided"] = time.time()
             logger.info(
                 "VOICE greeting gate: line firing with the session %s "
                 "(TASK-VOI-016)",
                 "LISTENING" if _gate_heard else "not yet listening (gate cap)",
             )
             greeting_state["attempted"] = True
+            greet_timing["first_audio"] = time.time()  # TASK-VOI-026
             logger.info(
                 "VOICE job timing: first fixed-line audio starting %.2fs after connect",
                 time.time() - _t_connected,
             )
+            logger.info("%s", _format_greeting_onset(greet_timing))
             if await _play_fixed_line(ctx.room, "greeting"):
                 greeting_state["played"] = True
                 logger.info("VOICE fixed-line greeting played (recorded line)")
@@ -3687,6 +3772,7 @@ async def entrypoint(ctx: JobContext):
     # silent rescue by any other provider, ever.)
     _verified_key = await _key_task
     _key_ready_at["ts"] = time.time()
+    greet_timing["key_ready"] = _key_ready_at["ts"]  # TASK-VOI-026
     _memory_block, _memory_pending = _memory_block_now(_memory_task)
     instructions = _instructions(memory_block=_memory_block)
     pinned["instructions"] = instructions
@@ -3698,7 +3784,9 @@ async def entrypoint(ctx: JobContext):
     agent = None
     if _proof_model is not None:
         pinned.update(kind="gemini", key=_used_key, instructions=instructions)
+        greet_timing["build_start"] = time.time()  # TASK-VOI-026
         session, agent = await _make_session(instructions)
+        greet_timing["build_done"] = time.time()  # TASK-VOI-026
         _build_stage = "ready" if session is not None else "session"
     # The session-build window opens when BOTH the key and the
     # connection are in hand; on a warm worker the key now usually
@@ -4052,10 +4140,12 @@ async def entrypoint(ctx: JobContext):
         # Playback paces in real time, so when it returns the line
         # has played.
         greeting_state["attempted"] = True
+        greet_timing["first_audio"] = time.time()  # TASK-VOI-026
         logger.info(
             "VOICE job timing: first fixed-line audio starting %.2fs after connect",
             time.time() - _t_connected,
         )
+        logger.info("%s", _format_greeting_onset(greet_timing))
         if await _play_fixed_line(ctx.room, "greeting"):
             greeting_state["played"] = True
             logger.info("VOICE fixed-line greeting played (recorded line)")
@@ -4120,11 +4210,14 @@ async def entrypoint(ctx: JobContext):
     )
 
     await _start(session, agent)
+    greet_timing["start_done"] = time.time()  # TASK-VOI-026
     logger.info(
-        "VOICE job timing: connect-to-key %.2fs, key-to-session-started %.2fs, "
-        "recall %s at session start (TASK-VOI-010)",
+        "VOICE job timing: connect-to-key %.2fs, key-to-session-started %.2fs "
+        "(build %s + start %s), recall %s at session start (TASK-VOI-010)",
         _t_key_ready - _t_connected,
         time.time() - _t_key_ready,
+        _stage_diff(greet_timing, "build_done", "build_start"),
+        _stage_diff(greet_timing, "start_done", "build_done"),
         "pending - async delivery armed" if _memory_pending else "landed",
     )
 
