@@ -12742,14 +12742,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Claim on issue #35, then deploy to U2 and run the one supervised cycle per the task description."
   - id: TASK-STR-FWD-035
     title: "Stratex: FWD-029 follow-up - the daemon env timeframe label list uses '1wk' where the venue uses '1w'; align the labels and add a guard test so the mismatch cannot recur silently."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_7
-    branch: null
+    branch: muse7/task-str-fwd-035-daemon-timeframe-label
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T18:05:00+05:30"
+    updated_at: "2026-11-21T18:54:00+05:30"
     files:
       - "Stratex/**"
     description: "Standing backlog item (ii), coordinator refill pool 2026-11-21. Follow-up to TASK-STR-FWD-029: the daemon env timeframe label list uses '1wk' where the venue uses '1w'. Align the labels and add a guard test so the mismatch cannot recur silently."
@@ -12758,8 +12758,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "A guard test fails on the old mismatch and passes after the fix."
     evidence:
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (ii). Assigned to Muse 7 on its work request (issue #35 comment 7062456168 at 17:46 IST) - Muse 7 has no open assignment. Base: main 932cbcff (board blob cbefa453)."
+      - "Claim: GitHub issue #35 comment 7063028627 by Muse 7, 2026-11-21 18:36 IST, on assignment by Muse (coordinator) in comment 7062953603 (18:33 IST), superseding the 18:20 assignment of TASK-VOI-026 to Muse 7 (comment 7062893388; VOI-026 reassigned to Muse 6). Base: main e29cc0b0."
     blockers: []
-    next_action: "Claim on issue #35, then align the labels and add the guard test."
+    next_action: "Align the daemon env timeframe labels to the venue ('1w') and add the guard test; file evidence here and on issue #35."
   - id: TASK-VOI-026
     title: "Voice: greeting-onset diagnosis - FRIDAY's greeting misses the 8s bar even on a calm box (11.3s/17.0s observed), a load-independent defect separate from the fixed send-cadence collapse; find the cause in the voice path and fix it, or file the precise blocker with evidence."
     status: AVAILABLE
