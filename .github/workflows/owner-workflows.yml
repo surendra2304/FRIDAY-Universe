@@ -178,6 +178,7 @@ jobs:
             Stratex/tests/test_pep001_pepperstone_ctrader_adapter.py \
             Stratex/tests/test_fwd026_adoption_opened_at.py \
             Stratex/tests/test_fwd020_supertrend_bare_lane.py \
+            Stratex/tests/test_str_daemon_003_startup_pair_throttle.py \
             Stratex/tests/test_str_fwd_032_classic_testnet_excision.py \
             Stratex/tests/test_live_trading_guard.py \
             Stratex/tests/test_binance_futures_agent.py \

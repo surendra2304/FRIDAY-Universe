@@ -3991,6 +3991,125 @@ class StratexTradingEngine:
         self._stop_self_experiments()
 
 
+# TASK-STR-DAEMON-003: the startup Telegram pair (the "Online" message +
+# the "Started" heartbeat) was sent unconditionally on every restart —
+# two of the three legs of the per-restart triple-send root-caused in
+# DAEMON-001 (the third leg, the daily summary, was gated in DAEMON-002).
+# The pair now sends once per UTC day, persisted in state/ so the gate
+# survives restarts, following the DAEMON-002 daily-summary pattern.
+
+_STARTUP_PAIR_STATE_FILENAME = "startup_pair_state.json"
+
+
+def _startup_pair_state_path() -> str:
+    """Path of the persisted startup-pair state file.
+
+    Same state-dir convention as the daemon heartbeat and the daily
+    summary: STRATEX_STATE_DIR overrides, otherwise
+    Stratex/state/startup_pair_state.json. The file holds
+    {"last_startup_pair_date": "YYYY-MM-DD"} — the UTC day the startup
+    pair was last sent. state/ is gitignored; the file is runtime state
+    only, regenerated on first send.
+    """
+    override = os.getenv("STRATEX_STATE_DIR")
+    base = override if override else os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "state"
+    )
+    return os.path.join(base, _STARTUP_PAIR_STATE_FILENAME)
+
+
+def _load_last_startup_pair_date() -> str:
+    """Last UTC day the startup pair was sent, "" when unknown.
+
+    Never raises: a missing or corrupt file degrades to "" (send once,
+    then persist) — the pre-DAEMON-003 behaviour.
+    """
+    try:
+        with open(_startup_pair_state_path(), "r", encoding="utf-8") as fh:
+            raw = json.load(fh)
+            if isinstance(raw, dict):
+                date = raw.get("last_startup_pair_date", "")
+                if isinstance(date, str):
+                    return date
+    except FileNotFoundError:
+        pass
+    except Exception as e:
+        logger.warning(f"[STRATEX] Could not load startup-pair state: {e}")
+    return ""
+
+
+def _persist_last_startup_pair_date(date: str) -> None:
+    """Persist the UTC day the startup pair was sent. Never raises."""
+    try:
+        path = _startup_pair_state_path()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump({"last_startup_pair_date": date}, fh, indent=2)
+    except Exception as e:
+        logger.debug(f"Startup-pair state persist failed: {e}")
+
+
+def _startup_pair_messages(risk) -> tuple:
+    """The two startup messages: Online + Started heartbeat.
+
+    risk is the dict from engine.get_risk_summary(), or None when that
+    read failed — then the Started leg is omitted (its fields come from
+    risk) and only the Online message is returned.
+    """
+    online = (
+        "🚀 <b>Stratex Online — Multi-Venue</b>\n\n"
+        "• Venues: Binance Futures (Crypto) + OANDA (Forex/Indices/Commodities)\n"
+        "• Balance: Real-time from venues\n"
+        "• SL/TP: Native on orders\n"
+        "• Strategies: 6 active (Trend, Mean Reversion, VWAP, Scalping, Pairs, ADX)\n"
+        "• Risk: 0.1% of venue equity per trade, 2% heat cap per strategy, 3% daily loss limit\n\n"
+        "<i>Send /status, /positions, /balance, /scan for details.</i>"
+    )
+    if risk is None:
+        return online, ""
+    started = (
+        f"📡 <b>Stratex Started</b>\n"
+        f"💰 Balance: <code>${risk.get('total_balance', 0):,.2f}</code>\n"
+        f"📈 Max Positions: <code>{risk.get('max_positions', 0)}</code>\n"
+        f"⚠️ Daily Loss Limit: <code>{risk.get('daily_loss_limit_hit', False)}</code>"
+    )
+    return online, started
+
+
+def _maybe_send_startup_pair(telegram, risk) -> bool:
+    """Send the startup Telegram pair once per UTC day (throttled).
+
+    Returns True when the pair was sent (both legs, or only the Online
+    leg when the risk read failed), False when suppressed (already sent
+    today, or the bot is not configured). Never raises: a Telegram
+    failure degrades to a debug log and no persist, so the next restart
+    retries — the pair is never silently marked sent without sending.
+    Per-trade alerts are untouched: this function only ever sends the
+    two startup messages.
+    """
+    try:
+        import datetime
+
+        if not getattr(telegram, "is_configured", False):
+            return False
+        today = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+        if _load_last_startup_pair_date() == today:
+            logger.info(
+                "[STRATEX] Startup pair already sent today (%s); suppressing.",
+                today,
+            )
+            return False
+        online, started = _startup_pair_messages(risk)
+        telegram.send_message(online)
+        if started:
+            telegram.send_message(started)
+        _persist_last_startup_pair_date(today)
+        return True
+    except Exception as e:
+        logger.debug(f"[STRATEX] Startup pair send failed: {e}")
+        return False
+
+
 def main() -> None:
     logger.info("=== STARTING STRATEX 24/7 AUTONOMOUS AI TRADING ENGINE ===")
     
@@ -4028,15 +4147,9 @@ def main() -> None:
         # locks out external getUpdates pollers — TASK-STRATEX-TGWEBHOOK),
         # and falls back to the classic polling thread otherwise.
         telegram.start_listening()
-        telegram.send_message(
-            "🚀 <b>Stratex Online — Multi-Venue</b>\n\n"
-            "• Venues: Binance Futures (Crypto) + OANDA (Forex/Indices/Commodities)\n"
-            "• Balance: Real-time from venues\n"
-            "• SL/TP: Native on orders\n"
-            "• Strategies: 6 active (Trend, Mean Reversion, VWAP, Scalping, Pairs, ADX)\n"
-            "• Risk: 0.1% of venue equity per trade, 2% heat cap per strategy, 3% daily loss limit\n\n"
-            "<i>Send /status, /positions, /balance, /scan for details.</i>"
-        )
+        # TASK-STR-DAEMON-003: the "Online" leg of the startup pair is
+        # sent by _maybe_send_startup_pair below, once per UTC day —
+        # not unconditionally here on every restart.
 
     # Handle shutdown gracefully
     def signal_handler(signum, frame):
@@ -4047,17 +4160,15 @@ def main() -> None:
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    # Send startup heartbeat
+    # Send the startup Telegram pair once per UTC day (DAEMON-003 gate).
+    # The pair used to go out on every restart; a restart inside the
+    # same UTC day now sends nothing, and the first start of a new UTC
+    # day sends it exactly once. Per-trade alerts are untouched.
     try:
         risk = engine.get_risk_summary()
-        telegram.send_message(
-            f"📡 <b>Stratex Started</b>\n"
-            f"💰 Balance: <code>${risk['total_balance']:,.2f}</code>\n"
-            f"📈 Max Positions: <code>{risk['max_positions']}</code>\n"
-            f"⚠️ Daily Loss Limit: <code>{risk.get('daily_loss_limit_hit', False)}</code>"
-        )
     except Exception:
-        pass
+        risk = None
+    _maybe_send_startup_pair(telegram, risk)
 
     # Run main trading loop
     trading_engine.run()
