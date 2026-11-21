@@ -160,6 +160,36 @@ def content_words(text: str) -> set[str]:
     return {w for w in re.findall(r"[a-z]{4,}", str(text or "").lower())} - _STOPWORDS
 
 
+def _stem(word: str) -> str:
+    """Light stem for comparing verb forms across the script and the record.
+
+    Only used to ask "is this the same action word" — "reaches" in the
+    script and "reaching" in the record's action phrase must compare
+    equal, as must "presses"/"pressing" and "runs"/"running". It is not
+    a general stemmer: it strips one verb suffix and collapses a doubled
+    consonant left behind ("running" -> "run", "grinning" -> "grin");
+    a natural "ss" ending is never collapsed ("press" stays "press").
+    """
+    word = str(word or "").lower()
+    if word.endswith("ies") and len(word) > 3:
+        word = word[:-3] + "y"
+    elif word.endswith("ing") and len(word) > 4:
+        word = word[:-3]
+    elif word.endswith("ed") and len(word) > 4:
+        word = word[:-2]
+    elif word.endswith("es") and len(word) > 4:
+        word = word[:-2]
+    elif word.endswith("s") and not word.endswith("ss") and len(word) > 3:
+        word = word[:-1]
+    if (
+        len(word) >= 3
+        and word[-1] == word[-2]
+        and word[-1] not in "aeious"
+    ):
+        word = word[:-1]
+    return word
+
+
 def split_sentences(text: str) -> list[str]:
     cleaned = " ".join(str(text or "").split())
     if not cleaned:
@@ -197,6 +227,12 @@ class RecordVocabulary:
     nouns: dict[str, int] = field(default_factory=dict)
     beat_nouns: list[set[str]] = field(default_factory=list)
     object_nouns: set[str] = field(default_factory=set)
+    # Stemmed leading verbs of the subjects' recorded actions ("reaching",
+    # "pressing", "lying", ...). The record's action phrases start with
+    # the action verb, so the first token is the verb — used by the
+    # repetition gate to tell "the same action twice" from two beats
+    # that merely share the clip's central objects (TASK-VYR-031).
+    action_verbs: set[str] = field(default_factory=set)
 
 
 def _record_strings(record: dict[str, Any]) -> list[str]:
@@ -241,6 +277,11 @@ def record_vocabulary(record: dict[str, Any]) -> RecordVocabulary:
             eyes = str(subject.get("eyes") or "unknown").strip().lower()
             if eyes in {"open", "closed"}:
                 vocab.eyes.add(eyes)
+            # The action phrase's leading verb, stemmed ("reaching" ->
+            # "reach"): the repetition gate's test for "same action twice".
+            action_tokens = _tokens(action)
+            if action_tokens and action_tokens[0] not in {"unknown", "none"}:
+                vocab.action_verbs.add(_stem(action_tokens[0]))
             for token in _tokens(hair):
                 canon = _canon_colour(token)
                 if canon in COLOURS:
@@ -599,11 +640,22 @@ def check_structure(*, commentary: str, record: dict[str, Any]) -> list[Violatio
             # Job 721's repetition is paraphrased ("reaches up to press the
             # wall switch" / "holds his arm toward the switch"), so plain
             # overlap misses it; two ADJACENT sentences circling the same
-            # recorded object with shared wording are the same tell.
+            # recorded object with shared wording are the same tell — but
+            # only when they share the ACTION as well (TASK-VYR-031): the
+            # prompt writes one sentence per beat and every sentence names
+            # something concrete, so adjacent beats legitimately share the
+            # clip's central objects ("the handprint stays on the wall"
+            # after "her hand presses flat beside the handprint" is
+            # progression, not repetition). The shared wording must
+            # therefore include a stemmed action verb from the record
+            # ("reaches" / "reaching" -> "reach"); shared backdrop nouns
+            # alone do not count.
+            shared_action = {_stem(word) for word in shared} & vocab.action_verbs
             paraphrased_repeat = (
                 second == first + 1
                 and len(shared & vocab.object_nouns) >= 1
                 and len(shared) >= 2
+                and bool(shared_action)
             )
             if jaccard >= 0.55 or paraphrased_repeat:
                 violations.append(Violation(
