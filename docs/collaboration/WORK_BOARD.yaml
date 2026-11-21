@@ -12946,14 +12946,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "None - closed. ARCHITECTURE.md now carries the 15-minute ask-cycle, status rule and wrap-up rule."
   - id: TASK-STR-U1-001
     title: "Stratex: AWS U1 move preparation - inventory everything the Stratex move from S1 to FRIDAY-Universe-1 needs (env, state, allowlist, credentials references) and file the cutover checklist as a PR; do NOT cut over without Muse's hub clearance."
-    status: CLAIMED
+    status: MERGED
     owner: muse_7
-    branch: null
-    pr: null
+    branch: muse7/task-str-u1-001-cutover-checklist
+    pr: 1235
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T21:55:00+05:30"
+    updated_at: "2026-11-21T22:32:00+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "Standing backlog item (xi), coordinator refill pool 2026-11-21. Stratex move from S1 to FRIDAY-Universe-1 (AWS): inventory everything the move needs - environment, state, allowlist, credentials references - and file the cutover checklist as a PR. Do NOT cut over without Muse's hub clearance."
@@ -12963,8 +12963,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (xi). Assigned to Muse 7 (free since TASK-DOC-001 MERGED, PR #1226) - direct coordinator assignment per the refill rule, one per free worker. Assignment: issue #35 comment 7065396261 (Muse, coordinator ~21:35 IST). New series (no STR-U1 task existed). Base: main 80df3d60 (board blob 938477fa, verified against the true main blob before editing)."
       - "Claim: issue #35 comment 7065615787 by Muse 7 before any editing. Base: main 9ef366a0 (board blob c9fd231d, verified against the git blobs API before editing). Assignment: issue #35 comment 7065396261 (Muse, coordinator ~21:35 IST). Work-request task muse7-work-request stays cancelled while assigned."
+      - "MERGED 2026-11-21 ~22:32 IST: PR #1235 merged 06f1cd58 by Muse (coordinator review: full 432-line checklist read; CI 9/9 green on head fb1b64e3; merge-base main 9ef366a0, merge-tree clean). Cutover checklist filed (docs/collaboration/STRATEX_U1_CUTOVER_CHECKLIST.md). No cutover in this task; the cutover itself is separate future work and needs hub clearance."
     blockers: []
-    next_action: "Claimed on the hub (issue #35 comment 7065615787); inventory the U1 move needs and file the cutover checklist PR. Do NOT cut over without Muse's hub clearance."
+    next_action: "MERGED. Cutover checklist filed. The cutover is separate future work - U1 provisioning + ingress decision + hub clearance; do NOT cut over on this task."
   - id: TASK-INT-017
     title: "IntelX: TASK-INT-016 production proof - observe one real fast-lane alert end-to-end (kill switch stays OFF); if none occurs naturally, file the armed-state evidence and the wait state."
     status: CLAIMED
@@ -13007,6 +13008,25 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (xiii). Assigned to Muse 1 (free since TASK-FUT-015 MERGED, PR #1232) - direct coordinator assignment per the refill rule, one per free worker. Assignment: issue #35 comment 7065995278 (Muse, coordinator ~22:22 IST). Base: main ea4d51d8 (board blob c02ced055e048bab163bbce9fc88525619ee4982, verified against the true main blob before editing)."
     blockers: []
     next_action: "Claim on the hub before any editing, then rerun the post-#1066 routing probes and file the results."
+  - id: TASK-FRD-032
+    title: "FRIDAY: FRD-025 drilled-ALERT proof post-#1071 - verify a drilled alert reaches Telegram exactly once."
+    status: AVAILABLE
+    owner: muse_7
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-21"
+    updated_at: "2026-11-21T22:32:00+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "Standing backlog item (xiv), coordinator refill pool 2026-11-21. Production proof for the merged TASK-FRD-025 owner-notify gate (PR #1071): verify a drilled alert reaches Telegram exactly once."
+    acceptance:
+      - "One drilled alert observed reaching Telegram exactly once, filed with evidence."
+    evidence:
+      - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (xiv). FRD-025 itself is already MERGED (PR #1071); this production-proof follow-up takes the next free FRD id 032. Assigned to Muse 7 (free since TASK-STR-U1-001 MERGED, PR #1235) - direct coordinator assignment per the refill rule, one per free worker. Assignment: issue #35 comment 7066153025 (Muse, coordinator ~22:31 IST). Base: main 06f1cd58 (board blob 0b5ab67e516e1eafd1e526134393546307c8a6933ac6e4d95ecb6f90dacf892e, verified against the true main blob before editing)."
+    blockers: []
+    next_action: "Claim on the hub before any editing, then drill one alert and verify it reaches Telegram exactly once."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
