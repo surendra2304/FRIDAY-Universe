@@ -12769,14 +12769,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "MERGED. No deploy in this task; the label fix ships with the next Stratex deploy."
   - id: TASK-VOI-026
     title: "Voice: greeting-onset diagnosis - FRIDAY's greeting misses the 8s bar even on a calm box (11.3s/17.0s observed), a load-independent defect separate from the fixed send-cadence collapse; find the cause in the voice path and fix it, or file the precise blocker with evidence."
-    status: IN_PROGRESS
+    status: MERGED
     owner: muse_6
     branch: muse6/task-voi-026
     pr: 1208
     contributors: []
     priority: P1
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T19:02:00+05:30"
+    updated_at: "2026-11-21T22:16:00+05:30"
     files:
       - "FRIDAY/src/friday/voice/**"
       - "FRIDAY/tests/test_voice_*.py"
@@ -12792,8 +12792,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Tests (local venv, production pins): new suite 10/10 pass; non-vacuity 8/10 fail on pristine base (the 2 gate-contract tests pin pre-existing behaviour). Voice ring (12 suites) on the fix: 209 passed, 3 failed — the 3 failures are keeper-refresh tests in test_voice_greeting_recall.py, byte-identical on pristine base (pre-existing, timing-sensitive: _key_keeper_step returns 'fresh' not 'refreshed'). Ruff check clean on both touched files (ruff format is not the repo standard — the pristine worker fails it too). py_compile clean."
       - "Rebase 2026-11-21 ~21:57 IST: rebased onto main 9ef366a (coordinator hold, issue #35 comment 7065396261 - stale base; first rebase onto 1326b72 superseded when main moved to 9ef366a with DOC-001 MERGED + STR-U1-001/INT-017 assignments); diff vs current main re-verified: only the VOI-026 record + the 2 implementation files (byte-identical to head 82f8a85a); new suite re-run 10/10 on the rebased head (production pins); collaboration validator VALID."
       - "NOT yet proven in production: this run has no bridge/SSH/LiveKit access from this VM (no bridge connector in this run's toolset; the bridge MCP used at onboarding is not available here), so no production journal was read and no live call was run. The decomposition line is the instrument that proves or kills the prime suspect on the next calm-window acceptance run after deploy."
+      - "MERGED 2026-11-21 ~22:16 IST: PR #1208 merged b4837aac by Muse (coordinator review: full diff, CI 10/10 green on rebased head c661ad2c, local pytest new suite 10/10, merge-base exactly main 9ef366a0, merge-tree clean, collaboration validator VALID). Diagnosis + instrumentation live in main. Production proof still owed: deploy to FRIDAY-Voice with a watched restart on coordinator clearance, then read the decomposition line on the next calm-window acceptance run."
     blockers: []
-    next_action: "Muse review -> merge -> deploy with a watched FRIDAY-Voice restart -> next calm-window acceptance run: read the decomposition line and name the owning leg (key / participant / gate / build / start), then fix that leg or file the precise blocker with the production numbers."
+    next_action: "MERGED. Diagnosis + instrumentation live in main (PR #1208, merge b4837aac). Deploy to FRIDAY-Voice with a watched restart on coordinator clearance; next calm-window acceptance run reads the decomposition line and names the owning leg, then fixes that leg or files the precise blocker with the production numbers."
   - id: TASK-STR-EXP-005
     title: "Stratex self-experiments: #986 provenance follow-up - the exporter refused 34 of 99 tier streams (non-crypto30 panels failing the t-stat/p significance construction check); document per-stream why each was refused and whether a legitimate construction fix exists WITHOUT loosening the frozen gate."
     status: MERGED
