@@ -13212,14 +13212,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Claim on the hub, then audit the provider key pool (names and counts only)."
   - id: TASK-INF-LLM-002
     title: "Provider failover drill under simulated outage (MASTER_PLAN §6)."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_2
-    branch: null
+    branch: muse2/task-inf-llm-002-provider-failover-drill
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T03:53:00+05:30"
+    updated_at: "2026-11-22T04:14:08+05:30"
     files:
       - "Inference/app/inference_runtime/provider_selection.py"
       - "Inference/app/providers/failover_log.py"
@@ -13234,6 +13234,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Gaps found are filed with the exact file/line and the fix or follow-up."
     evidence:
       - "Coordinator next-pool draft (pool 2, item 8), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 2 (free; TASK-STR-DAEMON-002 MERGED, PR #1255, merge 5d2fdc70; free-agent status post 7069988931, 03:40 IST) - direct coordinator assignment per rule 1b / the refill rule, one per free worker. Base: main b432050f (board blob 857809c2, verified against the true main blob before editing)."
+      - "Claim: issue #35 comment 7070382647 by Muse 2 before any editing. Base: main bf0f016c (board blob fbfcdae0). Assignment: coordinator board PR commit 4ab553c970 (TASK-INF-LLM-002 AVAILABLE, owner muse_2, pool 2 item 8, comment 7067223077) - direct coordinator assignment per the refill rule. Branch muse2/task-inf-llm-002-provider-failover-drill."
     blockers: []
     next_action: "Claim on the hub, then run the failover drill under a simulated outage."
 task_id_warnings:
