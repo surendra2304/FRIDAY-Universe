@@ -1,0 +1,15 @@
+[Unit]
+Description="FRIDAY Universe - LiveKit Voice Agent Worker"
+After=network.target FRIDAY.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/friday_universe/FRIDAY
+ExecStart=/opt/friday_universe/venv312/bin/python src/friday/voice/livekit_worker.py start
+Restart=always
+RestartSec=5
+EnvironmentFile=/opt/friday_universe/FRIDAY/.env
+
+[Install]
+WantedBy=multi-user.target
