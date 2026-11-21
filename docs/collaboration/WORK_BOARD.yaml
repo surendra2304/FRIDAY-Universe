@@ -12406,7 +12406,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "MERGED 2026-11-21. No deploy (docs + U2 library files only). Next VyralX cycle confirms the phonk warning stays gone; credit 'Music: NO LIMITS PHONK — https://www.youtube.com/@nolimits_phonk' must go in the description of any published video using these tracks."
   - id: TASK-STR-FWD-029
     title: "Stratex: capcheck_books.py timeframe label fix - the books use '1wk' where the venue/panel label is '1w'; align the label and add regression coverage so weekly books stop being silently skipped or mismatched."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-str-fwd-029-capcheck-books-label
     pr: 1159
@@ -12418,10 +12418,11 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Claim: issue #35 comment 7056433731 by Muse 1, 2026-11-21, base main 9ac4eefc. Batch 2 second task (assignment comment 7055968837); TASK-VYR-030 PR #1158 open, untouched."
       - "Change: SHW member timeframe '1wk'->'1w' in Stratex/strategies/ensemble_books.py (single source for book definitions); mirrored in config_strategy.py ensemble_book_3978 entry, strategies/ensemble_book.py KNOWN_STREAMS key + Member docstring, strategy_ensemble_book_3978.py docstring; regression tests added in Stratex/tests/test_exp002_ensemble_book.py section 11. No sleeve/daemon/panel changes; module name strategy_shock_breakout_1wk unchanged."
       - "PR #1159 opened for Muse review: https://github.com/surendra2304/FRIDAY-Universe/pull/1159 (branch muse1/task-str-fwd-029-capcheck-books-label, base main 9ac4eefc, 1 commit, +76/-15). Verified: 70/70 pass in test_exp002_ensemble_book.py (3 new), 119/119 across five touched suites; new label test fails on old code; registry validator COLLABORATION REGISTRY VALID."
-    next_action: "Supervisor review -> merge. Acceptance: a weekly book is matched at the venue label '1w' (regression test) and existing book tests still pass. Open follow-up for Muse: daemon env timeframe list still says '1wk'."
+      - "MERGED 2026-11-21: PR #1159 merge commit af9e1b42 (head 83b0ee22, 2 commits — second commit adds flask to the Stratex contracts pip install, fixing the contracts failure on the new test's api.validation import). Coordinator review: full diff correct; CI 10/10 green on head; main verified at af9e1b42 via ls-remote."
+    next_action: "MERGED 2026-11-21. Open follow-up for Muse: daemon env timeframe list still says '1wk'."
   - id: TASK-VOI-025
     title: "Voice: desktop/CLI VAD default consistency - FRIDAY voice config.py (~line 586) desktop and CLI paths disagree on the VAD default; align them to one default and cover both paths with a test."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-voi-025-vad-default-consistency
     pr: 1161
@@ -12432,8 +12433,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator follow-up list 2026-11-20: desktop/CLI VAD default consistency (config.py:586) owed from the voice fix waves."
       - "Claim: issue #35 comment 7056545277 by Muse 1 (2026-11-21), claimed on base main 9ac4eefc; PR rebased onto main af28eb02 (verified via API, code base blobs unchanged). No prior claim or PR for TASK-VOI-025 existed."
       - "Change: single shared VAD start default HIGH (VOICE_VAD_START_SENSITIVITY_DEFAULT in config.py, TASK-VOI-024 precautionary default). config.py default LOW->HIGH; GeminiLiveVoiceSession fallback LOW->HIGH; LiveKit worker _start_sensitivity() reads the shared constant (env FRIDAY_VOICE_AAD_START_SENSITIVITY=low still selects LOW); .env.example LOW->HIGH; new test FRIDAY/tests/test_voice_vad_default_consistency_voi025.py covers both entry paths. End sensitivity stays HIGH."
-      - "PR #1161 opened for Muse review: https://github.com/surendra2304/FRIDAY-Universe/pull/1161 (branch muse1/task-voi-025-vad-default-consistency, base main af28eb02, 1 commit, +142/-10). Verified: new tests 7/7 pass, fail on base code; targeted voice suites 130/130; full FRIDAY suite 4936 passed vs base 4927 with zero new failures; registry validator COLLABORATION REGISTRY VALID."
-    next_action: "Supervisor review -> merge. Acceptance: desktop (LiveKit worker) and CLI (session) VAD start defaults agree on HIGH with no env override, LOW override still available per path, and the voice tests pass. No deploy, no service touched."
+      - "PR #1161 opened for Muse review: https://github.com/surendra2304/FRIDAY-Universe/pull/1161 (branch muse1/task-voi-025-vad-default-consistency, base main af28eb02, 2 commits, +144/-10). Verified: new tests 7/7 pass, fail on base code; targeted voice suites 130/130; full FRIDAY suite 4936 passed vs base 4927 with zero new failures; registry validator COLLABORATION REGISTRY VALID."
+      - "MERGED 2026-11-21: PR #1161 merge commit 1b8d7b23 (head 92afce36). Coordinator review: full diff correct (shared HIGH default read by both paths, LOW override still available per path, 7 new regression tests); CI 10/10 green on head; main verified at 1b8d7b23 via ls-remote."
+    next_action: "MERGED 2026-11-21. No deploy, no service touched."
   - id: TASK-FUT-014
     title: "Futuris: auto_arima candidate fails on statsforecast 2.1.1 with 'DataFrame' object has no attribute 'dtype' - fix the compatibility break so the candidate can fit, add regression coverage, and observe one scheduler refresh cycle with fits>0."
     status: AVAILABLE
