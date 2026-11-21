@@ -1697,6 +1697,20 @@ class StratexTradingEngine:
     # following the _manage_trend_positions precedent. A sign flip is
     # a close in this pass and a fresh open once the reconciler shows
     # the symbol flat — never a single double-sided order.
+    # Venue bracket (TASK-STR-FWD-031): overlay entries are placed AND
+    # held at the venue bracket. Opens carry the SL/TP pair from
+    # overlay_service.bracket_levels (a catastrophic backstop at
+    # BRACKET_SIGMA_MULTIPLE one-bar sigmas from the entry price,
+    # derived from the overlay's own judged sigma — NOT a judged exit;
+    # the judged exits remain the target weight and the brake). An
+    # open with no computable bracket is refused, never placed
+    # unprotected. The entry bracket (closePosition) covers the whole
+    # position, so increases place no new protection; a held position
+    # that has none (opened before brackets existed) gets one attached
+    # by _overlay_ensure_bracket on the next manage pass, unless a
+    # protective algo order is already open on the symbol (never stack
+    # a second bracket). Closes cancel the protective orders, as
+    # before.
     # ------------------------------------------------------------------
 
     _OVERLAY_MIN_ORDER_NOTIONAL = 10.0    # below this, an open/increase is not worth its fees
@@ -1944,6 +1958,21 @@ class StratexTradingEngine:
                 adapter.cancel_protective_orders(symbol)
             _log("close", abs(cur_qty))
             return "acted"
+        if pos is not None:
+            # TASK-STR-FWD-031: a held overlay position must carry the
+            # venue bracket. Opens place it with the entry; a position
+            # that has none (opened before brackets existed) gets it
+            # attached here, before any reduce/increase — the entry
+            # bracket then stays armed for the position's whole life.
+            is_long = str(pos.side).upper() in ("LONG", "BUY")
+            bsl, btp = overlay_service.bracket_levels(
+                target["sigma"], tf, price, is_long
+            )
+            self._overlay_ensure_bracket(
+                adapter=adapter, venue=venue, symbol=symbol, key=key,
+                stop_loss=bsl, take_profit=btp,
+                quantity=float(pos.quantity or 0),
+            )
         if abs(delta_notional) < self._OVERLAY_REBALANCE_TOLERANCE:
             return "held"
         if delta_notional * (1 if target_notional >= 0 else -1) < 0:
@@ -1988,8 +2017,22 @@ class StratexTradingEngine:
                 f"[STRATEX] Overlay open blocked for {key} {venue}:{symbol}: {reason}"
             )
             return "held"
+        # TASK-STR-FWD-031: the open carries the venue bracket. No
+        # computable bracket means no entry — an unprotected overlay
+        # open is never placed.
+        stop_loss, take_profit = overlay_service.bracket_levels(
+            target["sigma"], tf, price, side == "BUY"
+        )
+        if stop_loss is None or take_profit is None:
+            logger.warning(
+                f"[STRATEX] Overlay open refused for {key} {venue}:{symbol}: "
+                "no venue bracket computable from sigma "
+                f"{target['sigma']:.6g} tf={tf} price={price:.6g}"
+            )
+            return "held"
         result = self.engine.place_order(
             venue, symbol, side, "MARKET", qty,
+            stop_loss=stop_loss, take_profit=take_profit,
             strategy_name=strat_name, timeframe=tf,
         )
         if result is None:
@@ -1997,8 +2040,96 @@ class StratexTradingEngine:
                 f"[STRATEX] Overlay open rejected for {key} {venue}:{symbol}"
             )
             return "held"
+        if self._overlay_bracket_armed(adapter, symbol) is False:
+            logger.warning(
+                f"[STRATEX] Overlay open for {key} {venue}:{symbol} filled "
+                "but no venue bracket is armed — position is UNPROTECTED"
+            )
         _log("open", qty)
         return "acted"
+
+    def _overlay_bracket_armed(self, adapter, symbol) -> bool | None:
+        """True if a protective algo order is open on the symbol, False
+        if the venue reports none, None if the adapter cannot answer.
+
+        TASK-STR-FWD-031: the venue-bracket check for overlay
+        positions. Adapters without a get_open_algo_orders seam return
+        None — the bracket state is then unverifiable from here.
+        """
+        get_algos = getattr(adapter, "get_open_algo_orders", None)
+        if not callable(get_algos):
+            return None
+        try:
+            return bool(get_algos(symbol))
+        except Exception as e:
+            logger.warning(
+                f"[STRATEX] Overlay bracket check failed for {symbol}: {e}"
+            )
+            return None
+
+    def _overlay_ensure_bracket(self, *, adapter, venue, symbol, key,
+                                stop_loss, take_profit, quantity) -> None:
+        """Attach the venue bracket to a held overlay position that has none.
+
+        TASK-STR-FWD-031: every overlay position the daemon holds must
+        carry a live venue bracket. A position opened before brackets
+        existed (tracked stop_loss/take_profit both zero) gets one
+        attached on the next manage pass. Skips when the tracked
+        position already records a bracket, or when a protective algo
+        order is already open on the symbol (never stack a second
+        bracket — the closePosition pair covers the whole position).
+        On success the tracked record is updated so the next pass
+        skips. Adapters without a place_protective_orders seam are
+        logged loudly and the position stays under the judged brake.
+        """
+        pos = self.engine.positions.get(f"{venue}:{symbol}")
+        if pos is None:
+            return
+        if float(getattr(pos, "stop_loss", 0) or 0) > 0 and float(
+                getattr(pos, "take_profit", 0) or 0) > 0:
+            return
+        if stop_loss is None or take_profit is None:
+            logger.warning(
+                f"[STRATEX] Overlay {key} {venue}:{symbol} has no venue "
+                "bracket and none is computable; held unprotected "
+                "under the judged brake"
+            )
+            return
+        place_protective = getattr(adapter, "place_protective_orders", None)
+        if not callable(place_protective):
+            logger.warning(
+                f"[STRATEX] Overlay {key} {venue}:{symbol} has no venue "
+                "bracket and this venue adapter cannot attach one; "
+                "held unprotected under the judged brake"
+            )
+            return
+        if self._overlay_bracket_armed(adapter, symbol):
+            return
+        try:
+            place_protective(
+                symbol=symbol,
+                side="BUY" if str(pos.side).upper() in ("LONG", "BUY") else "SELL",
+                quantity=quantity,
+                stop_loss=stop_loss,
+                take_profit=take_profit,
+            )
+        except Exception as e:
+            logger.warning(
+                f"[STRATEX] Overlay bracket attach failed for {key} "
+                f"{venue}:{symbol}: {e}"
+            )
+            return
+        if self._overlay_bracket_armed(adapter, symbol) is False:
+            logger.warning(
+                f"[STRATEX] Overlay bracket attach for {key} {venue}:{symbol} "
+                "did not arm — position is UNPROTECTED"
+            )
+            return
+        try:
+            pos.stop_loss = float(stop_loss)
+            pos.take_profit = float(take_profit)
+        except Exception:
+            pass
 
     def _maybe_run_wf_selection(self) -> None:
         """TASK-STR-FWD-022: run due walk-forward selections.
