@@ -12743,14 +12743,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Deploy the VYR-032 fix to AWS U2, verify live, run one supervised cycle (loop OFF, uploader paused, all renders unlisted), post publish_job_id <-> render-file mapping on issue #35."
   - id: TASK-STR-FWD-035
     title: "Stratex: FWD-029 follow-up - the daemon env timeframe label list uses '1wk' where the venue uses '1w'; align the labels and add a guard test so the mismatch cannot recur silently."
-    status: CLAIMED
+    status: MERGED
     owner: muse_7
     branch: muse7/task-str-fwd-035-daemon-timeframe-label
-    pr: null
+    pr: 1218
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T19:22:00+05:30"
+    updated_at: "2026-11-21T19:40:00+05:30"
     files:
       - "Stratex/**"
     description: "Standing backlog item (ii), coordinator refill pool 2026-11-21. Follow-up to TASK-STR-FWD-029: the daemon env timeframe label list uses '1wk' where the venue uses '1w'. Align the labels and add a guard test so the mismatch cannot recur silently."
@@ -12761,8 +12761,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (ii). Assigned to Muse 7 on its work request (issue #35 comment 7062456168 at 17:46 IST) - Muse 7 has no open assignment. Base: main 932cbcff (board blob cbefa453)."
       - "Claim: GitHub issue #35 comment 7063028627 by Muse 7, 2026-11-21 18:36 IST, on assignment by Muse (coordinator) in comment 7062953603 (18:33 IST), superseding the 18:20 assignment of TASK-VOI-026 to Muse 7 (comment 7062893388; VOI-026 reassigned to Muse 6). Base: main e29cc0b0."
       - "Progress 2026-11-21 ~19:22 IST: fix implemented and verified on Server 2 (venv312). Daemon SLEEVE_TIMEFRAME 1wk->1w; env intake normalizes legacy 1wk to 1w with a warning; scan loop, prefetch and _BAR_SECONDS use the venue label; legacy position records normalized at read. Sleeve registry entry timeframe 1wk->1w (required — otherwise the sleeve leg fails the registry gate at 1w, as the FWD-030 module already proved by being gated out at 1wk). Guard tests added in test_fwd002_sleeve.py (3 new; all 5 guard/updated tests fail on old code). Verified: test_fwd002_sleeve 14/14, fwd016+fwd012+fwd030+exp002 115/115, ruff F821 clean, collaboration registry VALID. Pre-existing, unrelated: 3 test_daemon_governance failures on clean main (bb_reversion status), proven via stash. No deploy, no service touched."
+      - "MERGED 2026-11-21 ~19:35 IST: implementation PR #1218 merged d1401014 (coordinator review: full diff, 6 files +125/-36; CI 10/10 green on head c6c129ea; branch merged main 8fd9a4f4 in before the board commit; merge parents verified [f696170b, c6c129ea]). No deploy in this task; the daemon label fix ships with the next Stratex deploy."
     blockers: []
-    next_action: "Work PR opened for Muse review (code + guard tests + board evidence)."
+    next_action: "MERGED. No deploy in this task; the label fix ships with the next Stratex deploy."
   - id: TASK-VOI-026
     title: "Voice: greeting-onset diagnosis - FRIDAY's greeting misses the 8s bar even on a calm box (11.3s/17.0s observed), a load-independent defect separate from the fixed send-cadence collapse; find the cause in the voice path and fix it, or file the precise blocker with evidence."
     status: AVAILABLE
@@ -12895,6 +12896,27 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Claim: issue #35 comment 7063498643 by Muse 4 before any editing."
     blockers: []
     next_action: "Muse 4: verify the first post-fix daemon catalogue entry renders a real time in the Activity Log; if none exists yet, state exactly what triggers one. Ship via PR."
+
+  - id: TASK-DOC-001
+    title: "Docs: sync repo docs/collaboration/ARCHITECTURE.md to the current design (15-minute ask-cycle + status rule + wrap-up rule, not the retired polling design)."
+    status: AVAILABLE
+    owner: muse_7
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-21"
+    updated_at: "2026-11-21T19:40:00+05:30"
+    files:
+      - "docs/collaboration/ARCHITECTURE.md"
+    description: "Standing backlog item (x), coordinator refill pool 2026-11-21. Sync repo docs/collaboration/ARCHITECTURE.md to the current design: the 15-minute ask-cycle (a free worker asks for work every 15 minutes), the status rule (every Muse chat posts its state on issue #35 at every change and at least hourly while working), and the wrap-up rule (exhausted weekly usage wraps up to the board + hub and the task is reassigned) - not the retired polling design. The AUTH-PREP.md half of pool item (x) is coordinator-side (Pepperstone app retargeted to the new 'Stratex Demo', ID 49885, by the coordinator in this run); this task is the ARCHITECTURE.md sync only."
+    acceptance:
+      - "ARCHITECTURE.md describes the 15-minute ask-cycle, the status rule, and the wrap-up rule, matching PROMPT.md and the owner orders of 2026-11-21."
+      - "No trace of the retired polling design remains in ARCHITECTURE.md."
+    evidence:
+      - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (x). Assigned to Muse 7 (free since TASK-STR-FWD-035 MERGED, PR #1218) - direct coordinator assignment per the refill rule, one per free worker. Base: main d1401014 (board blob 33139c12)."
+    blockers: []
+    next_action: "Claim on issue #35, then sync ARCHITECTURE.md to the current design and ship via PR."
 
 
 task_id_warnings:
