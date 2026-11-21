@@ -115,8 +115,8 @@ class GeminiLiveVoiceSession:
         self.enable_session_resumption = enable_session_resumption
         self.enable_context_compression = enable_context_compression
 
-        # VAD & Barge-in settings (Respect config.py defaults: start=LOW, end=HIGH, prefix=300ms, silence=800ms)
-        self.vad_start_sensitivity = vad_start_sensitivity or getattr(settings, "voice_vad_start_sensitivity", "LOW")
+        # VAD & Barge-in settings (Respect config.py defaults: start=HIGH, end=HIGH, prefix=300ms, silence=800ms)
+        self.vad_start_sensitivity = vad_start_sensitivity or getattr(settings, "voice_vad_start_sensitivity", "HIGH")
         self.vad_end_sensitivity = vad_end_sensitivity or getattr(settings, "voice_vad_end_sensitivity", "HIGH")
         self.vad_prefix_padding_ms = vad_prefix_padding_ms if vad_prefix_padding_ms is not None else getattr(settings, "voice_vad_prefix_padding_ms", 300)
         self.vad_silence_duration_ms = vad_silence_duration_ms if vad_silence_duration_ms is not None else getattr(settings, "voice_vad_silence_duration_ms", 800)
