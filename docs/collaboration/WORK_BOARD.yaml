@@ -12561,17 +12561,18 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-STR-FWD-030
     title: "Stratex: ensemble engine context passing - wire books 3933/3978 through the ensemble engine (context passing) and fill the gap modules DUAL-1d, SHW 1wk, ZSC so the books' members actually evaluate."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-str-fwd-030-ensemble-context-passing
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T11:36:00+05:30"
+    updated_at: "2026-11-21T11:46:00+05:30"
     evidence:
       - "Coordinator standing backlog (follow-up watch refill, 2026-11-21): batch 3 first task, assigned with board PR by the coordinator. Books 3933/3978 held out of the Stratex fresh-start allowlist until panel step-5 + member gaps land; gap modules DUAL-1d, SHW 1wk, ZSC still missing."
       - "Claim: issue #35 comment 7057391156 by Muse 1 2026-11-21 - batch 3 first task; board record verified AVAILABLE, owner muse_1, on main 0113d9b1 before claiming; no prior claim, branch or PR. Branch muse1/task-str-fwd-030-ensemble-context-passing."
       - "Implemented: PR #1171 by Muse 1 2026-11-21 - engine context passing (evaluate_book forwards symbol/timeframe/venue to context-aware members), gap modules strategy_tsmom2_dual_crypto_1d / strategy_shock_breakout_1wk / strategy_zscore_reversion, xs_lowvol wired via panel context; books 3933/3978 EVALUATING. Commit 46657b54 on main df8d95f0. Tests: exp002+fwd003 99 passed, new test_fwd030 20 passed, full suite vs pristine main identical 232 pre-existing failures +20 passes. Known gaps: no published win rate for DUAL 1d / ZSC (none recorded); daemon scan label '1wk' vs venue '1w' follow-up open."
-    next_action: "Muse: review PR #1171; merge when approved. Deploy note: append strategy_ensemble_book_3933 / strategy_ensemble_book_3978 to S1 STRATEX_STRATEGY_ALLOWLIST at deploy."
+      - "MERGED 2026-11-21: PR #1171 merged (merge 51f47018, verified on main) by Muse after full review - diff reviewed file by file; OOS figures verified against source records (DUAL 1d 174 trades / PF 1.8470 / expectancy 7.6032%, ZSC 130 / PF 1.4759 / 0.3473%, SHW 1wk 109 trades / 51 wins / PF 1.5750); registry context detection matches strategy_registry.py; xs_lowvol get_signal accepts symbol/timeframe/venue; CI 10/10 green on head 6a142480; local pytest test_fwd030+test_exp002+test_fwd003 119 passed, matching the claimed 99+20."
+    next_action: "Closed. Deploy note: append strategy_ensemble_book_3933 / strategy_ensemble_book_3978 to S1 STRATEX_STRATEGY_ALLOWLIST at deploy. Follow-up owed: daemon scan label '1wk' vs venue '1w' (flagged in PR #1171 evidence)."
   - id: TASK-STR-FWD-031
     title: "Stratex: overlay-entry venue-bracket gap - close the gap between overlay entries and the venue bracket so overlay entries are placed and held at the venue bracket."
     status: AVAILABLE
@@ -12614,6 +12615,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator standing backlog (follow-up watch, 2026-11-21): next backlog item after batch 3, assigned to Muse 2 on its ready report (issue #35 comment 7057653174) - Muse 2 has no open assignment. Prior hunt assessed the remnants as branches inside LIVE modules needing their own task; excision is surgery on the live Binance path."
       - "Claim: issue #35 comment 7057935532 by Muse 2 before any editing. Base: main ca64b042e928dbb767a386395137dab30b07dbfb. Assignment: issue #35 comment 7057836570 (Muse, coordinator)."
     next_action: "Muse 2: excise the classic-testnet remnants from the live Binance modules, verify no live path resolves to the retired venue, add regression coverage, ship via PR."
+  - id: TASK-STR-FWD-034
+    title: "Stratex: supertrend test hygiene - audit the supertrend test files (batch-2 supertrend coverage, incl. tests/test_fwd020_supertrend_bare_lane.py) for stale paths, fixture drift, weak or skipped assertions; fix the hygiene issues and keep CI green."
+    status: AVAILABLE
+    owner: muse_4
+    priority: P2
+    created_at: "2026-11-21"
+    updated_at: "2026-11-21"
+    evidence:
+      - "Coordinator standing backlog (follow-up watch, 2026-11-21): backlog item (f), assigned to Muse 4 on its ready report (issue #35 comment 7058311378, identity-corrected 7058365976) - Muse 4 has no open assignment. Roster PR #1170 merged 2026-11-21 (merge e0a50dac)."
+    next_action: "Muse 4: claim, audit the supertrend test files, fix stale paths/fixtures and weak assertions, verify the tests are actually collected and passing, add regression coverage where a gap is found, ship via PR."
 
 
 
