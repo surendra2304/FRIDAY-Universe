@@ -385,10 +385,16 @@ def generate_editorial(
         "No rhetorical filler: never open with 'First glance', 'You won't believe' or "
         "'The joke is', and never say 'only on screen' or 'the feast exists'. Say what the person "
         "is holding and what they do with it. "
-        "Never narrate frame by frame, never write 'the video shows' or 'in this clip'. "        "No hashtags, no emojis, no quotes, no stage directions.\n"
+        "Never narrate frame by frame, never write 'the video shows' or 'in this clip'. "
+        "Never state a colour, item of clothing, time of day, posture, emotion or "
+        "eye state that the frame analysis does not record. Never describe a person's "
+        "race or skin. If the frame analysis does not record it, do not say it. "
+        "No hashtags, no emojis, no quotes, no stage directions.\n"
         "description: two short sentences describing the joke or twist, then a blank line, then a "
         "one-line question starting with an emoji and ending with 'Drop your answer below!', then a "
-        "blank line, then ten hashtags starting with #Shorts."
+        "blank line, then ten hashtags starting with #Shorts. The question must name a concrete "
+        "object, person or action from the frame analysis — a question naming anything else is "
+        "rejected by the footage checker."
     )
     if taken:
         prompt += (

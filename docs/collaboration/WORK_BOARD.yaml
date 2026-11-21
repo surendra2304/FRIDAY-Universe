@@ -12590,7 +12590,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Done. Muse 1: next batch-3 task TASK-VYR-031 (VyralX script-stage yield fix)."
   - id: TASK-VYR-031
     title: "VyralX: script-stage yield fix - the script stage yields too few usable scripts, so cycles produce too few renders that pass the quality gates; find why the yield is low and fix it."
-    status: IN_PROGRESS
+    status: IN_REVIEW
     owner: muse_1
     branch: muse1/task-vyr-031-script-stage-yield
     priority: P2
@@ -12599,6 +12599,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator standing backlog (follow-up watch refill, 2026-11-21): batch 3 third task, assigned with board PR by the coordinator. Recent cycles produced zero renders (cycles 8, 9, 10 on 2026-11-20) and render #2 produced no video from a stale 12-candidate pool."
       - "Claim: issue #35 comment 7058856338 by Muse 1 2026-11-21 - batch 3 third task; board record verified AVAILABLE, owner muse_1, on main cf591f7 before claiming; no prior claim, branch or PR. Branch muse1/task-vyr-031-script-stage-yield."
+      - "IMPLEMENTED in PR #1183 (commit a4837de3, base main cf591f7; board IN_REVIEW); STATUS posted on issue #35."
     next_action: "Muse 1: claim, diagnose the script-stage yield (candidate pool, voice-check rejections, gate pass rate), fix it so cycles yield scripts that pass the quality gates, add regression coverage, ship via PR."
   - id: TASK-VYR-032
     title: "VyralX: DOUBLED-CAPTION pipeline defect - renders 823, 841 and 861 all failed the coordinator's watch with two speech-caption tracks burned in ~1s out of sync (plus a top hook layer), and 861 also had no audible BGM though BGM is mandatory; find why the renderer emits two caption tracks, make it emit exactly one, ensure the BGM track is actually mixed in, and add regression coverage."
