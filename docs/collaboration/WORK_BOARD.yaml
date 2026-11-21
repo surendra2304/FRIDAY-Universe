@@ -12873,9 +12873,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Observe the next full scheduler refresh cycle with fits>0 on S2 Futuris; file evidence here and on issue #35."
   - id: TASK-FRD-031
     title: "FRIDAY: FRD-030 acceptance - verify the first post-fix daemon catalogue entry renders a real time in the Activity Log; if none exists yet, state exactly what triggers one."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_4
-    branch: null
+    branch: muse4/task-frd-031-activity-log-time
     pr: null
     contributors: []
     priority: P2
@@ -12890,8 +12890,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "If no such entry exists yet, the record states exactly what triggers one."
     evidence:
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (viii). Assigned to Muse 4 (free since TASK-STR-EXP-005 MERGED, PR #1210/#1212) - direct coordinator assignment per the refill rule, one per free worker. Base: main b330d2b5."
+      - "Claim: issue #35 comment 7063498643 by Muse 4 before any editing."
     blockers: []
-    next_action: "Claim on issue #35, then verify the first post-fix daemon catalogue entry renders a real time in the Activity Log."
+    next_action: "Muse 4: verify the first post-fix daemon catalogue entry renders a real time in the Activity Log; if none exists yet, state exactly what triggers one. Ship via PR."
 
 
 task_id_warnings:
