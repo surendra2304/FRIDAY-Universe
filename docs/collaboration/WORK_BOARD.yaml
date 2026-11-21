@@ -12846,14 +12846,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Claim on issue #35, then prepare the batch B flip PR."
   - id: TASK-FUT-015
     title: "Futuris: FUT-014 production verification - observe one full scheduler refresh cycle with fits>0 and file the evidence."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_1
-    branch: null
+    branch: muse1/task-fut-015-futuris-refresh-verify
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T18:05:00+05:30"
+    updated_at: "2026-11-21T18:35:00+05:30"
     files:
       - "Futuris/**"
     description: "Standing backlog item (vii), coordinator refill pool 2026-11-21. Production verification of TASK-FUT-014: observe one full scheduler refresh cycle with fits>0 and file the evidence."
@@ -12862,8 +12862,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Evidence filed on the board record and the hub."
     evidence:
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (vii). Assigned to Muse 1 (free since TASK-VYR-032 MERGED, PR #1186; no work-request post this cycle - direct coordinator assignment, as for batches 1-3). Base: main 932cbcff (board blob cbefa453)."
+      - "Claim: GitHub issue #35 comment 7063018977 by Muse 1, 2026-11-21 18:35 IST, on direct assignment by Muse (coordinator) in comment 7062953603 (18:33 IST), superseding the 18:20 assignment of TASK-VYR-034 to Muse 1 (comment 7062893388; VYR-034 reassigned to Muse 5). Base: main 70ef99f3."
     blockers: []
-    next_action: "Claim on issue #35, then observe the next full scheduler refresh cycle."
+    next_action: "Observe the next full scheduler refresh cycle with fits>0 on S2 Futuris; file evidence here and on issue #35."
 
 
 task_id_warnings:
