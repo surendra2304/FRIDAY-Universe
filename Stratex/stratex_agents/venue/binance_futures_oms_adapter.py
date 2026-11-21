@@ -40,7 +40,7 @@ def _algo_client_id(client_order_id: str, suffix: str) -> str:
 
 
 class BinanceFuturesOMSAdapter:
-    """Submit normalized Stratex intents through the selected demo/testnet Futures API."""
+    """Submit normalized Stratex intents through the Demo Trading Futures API."""
 
     def __init__(self, client: Any | None = None, venue_agent: BinanceFuturesAgent | None = None):
         if _truthy(os.getenv("LIVE_TRADING_ENABLED")):
@@ -48,10 +48,8 @@ class BinanceFuturesOMSAdapter:
         self.venue_agent = venue_agent or BinanceFuturesAgent()
         self.client = client or self.venue_agent.create_client(
             mode="FUTURES",
-            legacy_api_key=os.getenv("API_KEY", ""),
-            legacy_secret_key=os.getenv("SECRET_KEY", ""),
         )
-        expected = "demo_trading" if self.venue_agent.demo_trading else "legacy_futures_testnet"
+        expected = "demo_trading"
         actual = getattr(self.client, "stratex_environment", None)
         if actual != expected:
             raise BinanceVenueError(
@@ -261,7 +259,7 @@ class BinanceFuturesOMSAdapter:
     def submit_intent(self, intent: TradeIntent) -> dict[str, Any]:
         if intent.venue != "binance":
             raise BinanceVenueError("Binance adapter received an intent for a different venue.")
-        expected_environment = "binance_demo" if self.venue_agent.demo_trading else "binance_testnet"
+        expected_environment = "binance_demo"
         if intent.environment != expected_environment:
             raise BinanceVenueError(
                 f"Intent environment {intent.environment!r} does not match Binance environment {expected_environment!r}."
@@ -465,7 +463,7 @@ class BinanceFuturesOMSAdapter:
         payload = stored.get("payload") if isinstance(stored, dict) else None
         if not isinstance(payload, dict) or payload.get("venue") != "binance":
             return {"confirmed": False, "status": "UNKNOWN", "evidence": "invalid_stored_intent"}
-        environment = "binance_demo" if self.venue_agent.demo_trading else "binance_testnet"
+        environment = "binance_demo"
         if payload.get("environment") != environment:
             return {"confirmed": False, "status": "UNKNOWN", "evidence": "environment_mismatch"}
 

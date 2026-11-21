@@ -3,7 +3,7 @@
 verify_binance_key.py — Validate a Binance Futures API key end-to-end.
 
 Usage:
-    python verify_binance_key.py <API_KEY> <API_SECRET> [demo|testnet|live]
+    python verify_binance_key.py <API_KEY> <API_SECRET> [demo|live]
 
 Checks, in order:
   1. Server time + clock offset
@@ -22,12 +22,17 @@ sys.path.insert(0, "/opt/friday_universe/Stratex")
 
 def main() -> int:
     if len(sys.argv) < 3:
-        print("usage: verify_binance_key.py <API_KEY> <API_SECRET> [demo|testnet|live]")
+        print("usage: verify_binance_key.py <API_KEY> <API_SECRET> [demo|live]")
         return 2
 
     api_key = sys.argv[1].strip()
     api_secret = sys.argv[2].strip()
     env = (sys.argv[3] if len(sys.argv) > 3 else "demo").strip().lower()
+    if env not in {"demo", "live"}:
+        # The classic-testnet venue was retired by owner decision 2026-11-15
+        # (TASK-STR-RETIRE-001) and excised here (TASK-STR-FWD-032).
+        print("error: unsupported environment %r; use demo or live (testnet is retired)" % env)
+        return 2
 
     os.environ["BINANCE_API_KEY"] = api_key
     os.environ["BINANCE_API_SECRET"] = api_secret
@@ -39,7 +44,6 @@ def main() -> int:
     adapter = BinanceFuturesAdapter(
         api_key=api_key,
         secret_key=api_secret,
-        testnet=(env != "live"),
     )
     print(f"base_url       : {adapter.base_url}")
     print(f"time offset    : {adapter._time_offset} ms")

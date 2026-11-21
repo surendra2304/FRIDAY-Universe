@@ -3905,7 +3905,6 @@ def main() -> None:
     engine = create_multi_venue_engine(
         binance_api_key=os.getenv("BINANCE_API_KEY", ""),
         binance_secret=os.getenv("BINANCE_API_SECRET", ""),
-        binance_testnet=os.getenv("BINANCE_TESTNET", "true").lower() in ("1", "true", "yes"),
         starting_balance=float(os.getenv("STRATEX_INITIAL_BALANCE", "1000.0")),
         max_positions_per_venue=int(os.getenv("STRATEX_MAX_POSITIONS_PER_VENUE", "5")),
         max_total_positions=int(os.getenv("STRATEX_MAX_TOTAL_POSITIONS", "10")),

@@ -78,12 +78,11 @@ def get_agent_catalog() -> list[dict[str, Any]]:
             "kind": "venue",
             "status": (
                 "configured_demo" if demo_binance and has_demo_credentials else
-                "demo_credentials_required" if demo_binance else
-                "legacy_testnet_mode" if trading_mode in {"TESTNET", "FUTURES"} else "disabled"
+                "demo_credentials_required"
             ),
-            "environment": "binance_demo_trading" if demo_binance else "legacy_testnet",
+            "environment": "binance_demo_trading",
             "execution_authority": False,
-            "responsibility": "Owns Binance client, demo/testnet endpoint selection, venue metadata and order API lifecycle.",
+            "responsibility": "Owns Binance client, Demo Trading endpoint selection, venue metadata and order API lifecycle.",
         },
         {
             "id": "mt5",

@@ -143,7 +143,7 @@ class MarketDataAgent:
 
     @staticmethod
     def _normalize_instrument(raw: dict[str, Any], venue: str) -> NormalizedInstrument:
-        environment = str(raw.get("environment") or ("mt5_demo" if venue == "mt5" else "binance_testnet"))
+        environment = str(raw.get("environment") or ("mt5_demo" if venue == "mt5" else "binance_demo"))
         symbol = str(raw.get("symbol", "")).strip()
         if not symbol:
             raise ValueError("broker instrument metadata is missing its native symbol")
@@ -255,7 +255,7 @@ class MarketDataAgent:
             raise MarketDataUnavailable(f"Venue returned an invalid quote for {venue_name}:{symbol}.")
         return NormalizedQuote(
             venue=venue_name,
-            environment=str(raw.get("environment") or ("mt5_demo" if venue_name == "mt5" else "binance_testnet")),
+            environment=str(raw.get("environment") or ("mt5_demo" if venue_name == "mt5" else "binance_demo")),
             symbol=str(raw.get("symbol") or symbol),
             bid=bid, ask=ask, last=last,
             spread=_finite_number(raw.get("spread"), ask - bid),
@@ -275,7 +275,7 @@ class MarketDataAgent:
             environment = "mt5_demo"
         else:
             raw_rows = provider.get_candles(symbol, timeframe=timeframe, limit=limit)
-            environment = str(getattr(provider, "environment", "binance_testnet"))
+            environment = str(getattr(provider, "environment", "binance_demo"))
         normalized: list[NormalizedCandle] = []
         for row in raw_rows:
             timestamp = row.get("timestamp_ms")

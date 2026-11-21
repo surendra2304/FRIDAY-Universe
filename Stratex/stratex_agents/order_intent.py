@@ -43,10 +43,10 @@ class TradeIntent:
             raise ValueError("side must be BUY/SELL/LONG/SHORT")
         if order_type not in {"MARKET", "LIMIT", "STOP", "STOP_LIMIT"}:
             raise ValueError(f"Unsupported order type: {self.order_type!r}")
-        if environment not in {"binance_demo", "binance_testnet", "mt5_demo", "ctrader_demo"}:
-            raise ValueError("Only Binance Demo/Testnet, MT5 Demo and cTrader Demo environments are allowed")
-        if venue == "binance" and environment not in {"binance_demo", "binance_testnet"}:
-            raise ValueError("Binance venue requires a Binance Demo or Testnet environment")
+        if environment not in {"binance_demo", "mt5_demo", "ctrader_demo"}:
+            raise ValueError("Only Binance Demo, MT5 Demo and cTrader Demo environments are allowed")
+        if venue == "binance" and environment != "binance_demo":
+            raise ValueError("Binance venue requires a Binance Demo environment")
         if venue == "mt5" and environment != "mt5_demo":
             raise ValueError("MT5 venue is restricted to the demo environment")
         if venue == "ctrader" and environment != "ctrader_demo":

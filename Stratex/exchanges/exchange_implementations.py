@@ -109,24 +109,25 @@ class BinanceExchangeAdapter(BaseExchange):
     def _get_client(self):
         """Builds the python-binance client, fail-closed on live endpoints.
 
-        BINANCE_TESTNET (default true) routes futures endpoints to the testnet.
+        Demo Trading (demo-fapi) is the only non-production venue. The
+        classic-testnet venue was retired by owner decision 2026-11-15
+        (TASK-STR-RETIRE-001) and excised here (TASK-STR-FWD-032): the
+        retired BINANCE_TESTNET flag no longer selects any endpoint.
         A live-endpoint client is only built when live trading is authorized
         by BOTH the env opt-in and the code-level config.py invariant
-        (_live_trading_authorized); otherwise this adapter returns None so
-        read paths report empty data and order paths refuse to fabricate fills.
+        (_live_trading_authorized); otherwise this adapter builds a Demo
+        Trading client pinned to the demo hosts, so read paths report demo
+        data and order paths refuse to fabricate fills.
         """
         if self._client is None and self.api_key and self.secret_key:
             try:
                 from binance.client import Client
-                testnet = _env_flag("BINANCE_TESTNET", "true")
-                if not testnet and not _live_trading_authorized():
-                    logger.warning(
-                        "[BINANCE_ADAPTER] BINANCE_TESTNET disabled without live authorization "
-                        "(ALLOW_LIVE_TRADING=true AND the config.py LIVE_TRADING_ENABLED "
-                        "invariant); refusing to build a live-endpoint client."
-                    )
-                    return None
-                self._client = Client(self.api_key, self.secret_key, testnet=testnet)
+                if _live_trading_authorized():
+                    self._client = Client(self.api_key, self.secret_key, testnet=False)
+                else:
+                    self._client = Client(self.api_key, self.secret_key, testnet=False)
+                    self._client.API_URL = "https://demo-api.binance.com/api"
+                    self._client.FUTURES_URL = "https://demo-fapi.binance.com/fapi"
             except Exception as e:
                 logger.warning(f"[BINANCE_ADAPTER] python-binance client init skipped: {e}")
         return self._client

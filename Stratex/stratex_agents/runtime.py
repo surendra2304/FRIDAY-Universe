@@ -139,7 +139,7 @@ def build_quant_agent(
     order_manager=None,
     *,
     default_venue: str = "binance",
-    default_environment: str = "binance_testnet",
+    default_environment: str = "binance_demo",
     statarb_model=None,
     kalman_model=None,
     regime_model=None,

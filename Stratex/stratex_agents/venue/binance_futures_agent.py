@@ -2,8 +2,10 @@
 
 The legacy Stratex trading lifecycle still uses python-binance's Futures methods.
 This agent isolates exchange credentials/endpoints from the strategy and risk core.
-It supports the current Binance Demo Trading API when explicitly enabled and keeps
-the legacy Futures Testnet as a separate, explicit compatibility mode.
+It supports the current Binance Demo Trading API only. The legacy Futures
+Testnet compatibility mode was removed with the retirement of the
+classic-testnet venue (owner decision 2026-11-15, TASK-STR-RETIRE-001;
+TASK-STR-FWD-032): there is no non-demo fallback any more.
 
 Never falls back from Demo credentials to legacy keys: those credentials are not
 interchangeable. Live endpoints are never selected by this factory.
@@ -18,10 +20,7 @@ from binance.client import Client
 
 BINANCE_DEMO_SPOT_API_URL = "https://demo-api.binance.com/api"
 BINANCE_DEMO_FUTURES_API_URL = "https://demo-fapi.binance.com/fapi"
-BINANCE_LEGACY_SPOT_TESTNET_URL = "https://testnet.binance.vision/api"
-BINANCE_LEGACY_FUTURES_TESTNET_URL = "https://testnet.binancefuture.com/fapi"
 _PLACEHOLDERS = {"", "YOUR_BINANCE_API_KEY", "YOUR_BINANCE_API_SECRET",
-                 "YOUR_BINANCE_TESTNET_API_KEY", "YOUR_BINANCE_TESTNET_API_SECRET",
                  "YOUR_API_KEY", "YOUR_API_SECRET"}
 
 
@@ -34,7 +33,7 @@ def _real_secret(value: str | None) -> bool:
 
 
 class BinanceFuturesAgent:
-    """Isolated Binance client lifecycle for Stratex's test/demo runtime."""
+    """Isolated Binance client lifecycle for Stratex's demo runtime."""
 
     agent_id = "binance_futures"
 
@@ -54,56 +53,50 @@ class BinanceFuturesAgent:
         self,
         mode: str,
         *,
-        legacy_api_key: str = "",
-        legacy_secret_key: str = "",
         client_cls: Any = None,
     ) -> Any:
-        """Create a signed client pinned to demo/testnet URLs only."""
+        """Create a signed client pinned to Demo Trading URLs only."""
         self._assert_safe_mode(mode)
         client_type = client_cls or Client
-        if self.demo_trading:
-            # Deliberately do not fallback to API_KEY/SECRET_KEY: those may belong
-            # to a different, legacy testnet or account.
-            api_key = os.getenv("BINANCE_API_KEY", "").strip().strip("'\"")
-            api_secret = os.getenv("BINANCE_API_SECRET", "").strip().strip("'\"")
-            if not _real_secret(api_key) or not _real_secret(api_secret):
-                raise RuntimeError(
-                    "BINANCE_DEMO_TRADING=true requires fresh Demo Trading credentials in "
-                    "BINANCE_API_KEY and BINANCE_API_SECRET. Legacy API_KEY/SECRET_KEY are not used."
-                )
-            client = client_type(api_key, api_secret, testnet=False, ping=False)
-            client.API_URL = BINANCE_DEMO_SPOT_API_URL
-            client.FUTURES_URL = BINANCE_DEMO_FUTURES_API_URL
-            # Explicit audit markers; not used to choose endpoint URLs downstream.
-            client.stratex_venue = "binance"
-            client.stratex_environment = "demo_trading"
-        else:
-            # Preserve the legacy public/testnet startup path even before credentials
-            # are entered. An anonymous Testnet client cannot authenticate order
-            # submissions, and it is pinned to Testnet URLs below. The current
-            # Demo Trading path above remains strict and requires its own fresh keys.
-            api_key = (legacy_api_key or os.getenv("API_KEY", "")).strip()
-            api_secret = (legacy_secret_key or os.getenv("SECRET_KEY", "")).strip()
-            client = client_type(api_key, api_secret, testnet=True, ping=False)
-            client.API_URL = BINANCE_LEGACY_SPOT_TESTNET_URL
-            client.FUTURES_URL = BINANCE_LEGACY_FUTURES_TESTNET_URL
-            client.stratex_venue = "binance"
-            client.stratex_environment = "legacy_futures_testnet"
+        if not self.demo_trading:
+            # The classic-testnet venue was retired by owner decision 2026-11-15
+            # (TASK-STR-RETIRE-001) and excised here (TASK-STR-FWD-032): there
+            # is no non-demo fallback any more. Demo Trading is the only venue.
+            raise RuntimeError(
+                "BINANCE_DEMO_TRADING is not enabled; the retired Binance classic-testnet "
+                "venue is no longer available. Set BINANCE_DEMO_TRADING=true with fresh "
+                "Demo Trading credentials in BINANCE_API_KEY and BINANCE_API_SECRET."
+            )
+        # Deliberately do not fallback to API_KEY/SECRET_KEY: those may belong
+        # to a different, retired venue or account.
+        api_key = os.getenv("BINANCE_API_KEY", "").strip().strip("'\"")
+        api_secret = os.getenv("BINANCE_API_SECRET", "").strip().strip("'\"")
+        if not _real_secret(api_key) or not _real_secret(api_secret):
+            raise RuntimeError(
+                "BINANCE_DEMO_TRADING=true requires fresh Demo Trading credentials in "
+                "BINANCE_API_KEY and BINANCE_API_SECRET. Legacy API_KEY/SECRET_KEY are not used."
+            )
+        client = client_type(api_key, api_secret, testnet=False, ping=False)
+        client.API_URL = BINANCE_DEMO_SPOT_API_URL
+        client.FUTURES_URL = BINANCE_DEMO_FUTURES_API_URL
+        # Explicit audit markers; not used to choose endpoint URLs downstream.
+        client.stratex_venue = "binance"
+        client.stratex_environment = "demo_trading"
         self._assert_no_production_endpoints(client)
         return client
 
     def create_public_client(self, *, futures: bool = True, client_cls: Any = None) -> Any:
-        """Create an unauthenticated market-data client pinned to demo/testnet."""
+        """Create an unauthenticated market-data client pinned to Demo Trading.
+
+        Public market data carries no credentials, so it is pinned to the Demo
+        Trading hosts unconditionally: the retired classic-testnet venue is
+        never selected, whatever the demo flag says.
+        """
         client_type = client_cls or Client
-        client = client_type("", "", testnet=not self.demo_trading, ping=False)
-        if self.demo_trading:
-            client.API_URL = BINANCE_DEMO_SPOT_API_URL
-            client.FUTURES_URL = BINANCE_DEMO_FUTURES_API_URL
-            client.stratex_environment = "demo_trading_public"
-        else:
-            client.API_URL = BINANCE_LEGACY_SPOT_TESTNET_URL
-            client.FUTURES_URL = BINANCE_LEGACY_FUTURES_TESTNET_URL
-            client.stratex_environment = "legacy_testnet_public"
+        client = client_type("", "", testnet=False, ping=False)
+        client.API_URL = BINANCE_DEMO_SPOT_API_URL
+        client.FUTURES_URL = BINANCE_DEMO_FUTURES_API_URL
+        client.stratex_environment = "demo_trading_public"
         client.stratex_venue = "binance"
         self._assert_no_production_endpoints(client)
         return client
@@ -113,7 +106,7 @@ class BinanceFuturesAgent:
         """Fail closed if a client endpoint accidentally points at production."""
         api_url = str(getattr(client, "API_URL", ""))
         futures_url = str(getattr(client, "FUTURES_URL", ""))
-        allowed_api = {BINANCE_DEMO_SPOT_API_URL, BINANCE_LEGACY_SPOT_TESTNET_URL}
-        allowed_futures = {BINANCE_DEMO_FUTURES_API_URL, BINANCE_LEGACY_FUTURES_TESTNET_URL}
+        allowed_api = {BINANCE_DEMO_SPOT_API_URL}
+        allowed_futures = {BINANCE_DEMO_FUTURES_API_URL}
         if api_url not in allowed_api or futures_url not in allowed_futures:
             raise RuntimeError("Binance agent rejected unrecognized/non-demo endpoint configuration.")

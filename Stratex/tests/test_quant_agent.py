@@ -25,7 +25,7 @@ class TestQuantitativeStrategyAgent:
         return QuantitativeStrategyAgent(
             order_manager=None,
             default_venue="binance",
-            default_environment="binance_testnet",
+            default_environment="binance_demo",
         )
 
     def test_health_check(self, agent):
@@ -34,7 +34,7 @@ class TestQuantitativeStrategyAgent:
         assert health["agent"] == "quant_agent"
         assert health["has_oms"] is False
         assert health["default_venue"] == "binance"
-        assert health["default_environment"] == "binance_testnet"
+        assert health["default_environment"] == "binance_demo"
         assert "statarb" in health["models_loaded"]
         assert "kalman_filter" in health["models_loaded"]
         assert "regime_breakout" in health["models_loaded"]
@@ -210,7 +210,7 @@ class TestQuantitativeStrategyAgent:
             side="BUY",
             order_type="MARKET",
             quantity=0.01,
-            environment="binance_testnet",
+            environment="binance_demo",
             stop_loss=90.0,
             take_profit=110.0,
             strategy="test_strategy",
@@ -236,7 +236,7 @@ class TestQuantitativeStrategyAgent:
             side="BUY",
             order_type="MARKET",
             quantity=0.01,
-            environment="binance_testnet",
+            environment="binance_demo",
             stop_loss=90.0,
             take_profit=110.0,
             strategy="test_strategy",
@@ -265,7 +265,7 @@ class TestQuantitativeStrategyAgent:
                 side="BUY",
                 order_type="MARKET",
                 quantity=0.01,
-                environment="binance_testnet",
+                environment="binance_demo",
                 stop_loss=90.0,
                 take_profit=110.0,
                 strategy="test_strategy",

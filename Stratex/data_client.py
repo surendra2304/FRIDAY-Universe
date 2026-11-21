@@ -2,7 +2,7 @@
 # DATA_CLIENT.PY - Read-Only Market Data Client
 # ==============================================================================
 # CRITICAL SECURITY NOTE:
-#   This client connects to Binance PUBLIC/TESTNET endpoints for MARKET DATA ONLY.
+#   This client connects to Binance PUBLIC/Demo Trading endpoints for MARKET DATA ONLY.
 #   It does NOT use trading credentials (API_KEY / SECRET_KEY) for data requests.
 #   Binance public kline/ticker endpoints do NOT require authentication.
 #   Do NOT pass API_KEY or SECRET_KEY to this client.
@@ -80,17 +80,20 @@ class MarketDataClient:
       - Only proxies an explicit whitelist of read-only methods.
       - Raises AttributeError for all other Binance Client methods.
       - PAPER mode returns is_available()=False (DATA_UNAVAILABLE).
-      - Non-PAPER modes use Testnet public endpoints (no authentication required).
+      - Non-PAPER modes use Demo Trading public endpoints (no authentication required).
 
     Data source labels:
-      BINANCE_TESTNET_READ_ONLY  — Testnet public endpoint
+      BINANCE_DEMO_TRADING_READ_ONLY — Demo Trading public endpoint
       DATA_UNAVAILABLE           — PAPER mode or connection disabled
     """
 
     def __init__(self):
-        # This client is always anonymous and read-only. Keep its public USD-M
-        # feed independent of TRADING_MODE: the cloud paper shadow runner uses
-        # production market candles even while the order engine stays on testnet.
+        # This client is always anonymous and read-only. Its public USD-M feed
+        # is pinned to Demo Trading: the classic-testnet venue was retired by
+        # owner decision 2026-11-15 (TASK-STR-RETIRE-001) and excised here
+        # (TASK-STR-FWD-032), so the retired venue is never selected. Production
+        # market candles are only available through the explicit
+        # get_public_futures_klines path, never as a silent fallback.
         try:
             self.__public_client = Client("", "", testnet=False, ping=False)
             self.public_data_source = "BINANCE_PUBLIC"
@@ -105,27 +108,16 @@ class MarketDataClient:
         else:
             from stratex_agents.venue.binance_futures_agent import BinanceFuturesAgent
             venue_agent = BinanceFuturesAgent()
-            if venue_agent.demo_trading:
-                try:
-                    self.__client = venue_agent.create_public_client(
-                        futures=TRADING_MODE == "FUTURES", client_cls=Client
-                    )
-                except Exception as exc:
-                    logger.error(f"[DATA_CLIENT] Demo market-data client initialization failed: {exc}")
-                    self.__client = None
-                # Never silently fall back to production data in the selected Demo environment.
-                self.__prod_client = None
-                self.data_source = "BINANCE_DEMO_TRADING_READ_ONLY"
-            else:
-                try:
-                    self.__client = Client("", "", testnet=True, ping=False)
-                except Exception:
-                    self.__client = None
-                try:
-                    self.__prod_client = Client("", "", testnet=False, ping=False)
-                except Exception:
-                    self.__prod_client = None
-                self.data_source = "BINANCE_TESTNET_READ_ONLY"
+            try:
+                self.__client = venue_agent.create_public_client(
+                    futures=TRADING_MODE == "FUTURES", client_cls=Client
+                )
+            except Exception as exc:
+                logger.error(f"[DATA_CLIENT] Demo market-data client initialization failed: {exc}")
+                self.__client = None
+            # Never silently fall back to production data.
+            self.__prod_client = None
+            self.data_source = "BINANCE_DEMO_TRADING_READ_ONLY"
 
     def is_available(self) -> bool:
         return self.__client is not None or getattr(self, "_MarketDataClient__prod_client", None) is not None

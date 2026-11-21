@@ -88,7 +88,7 @@ class AIUniverseClient:
         if "exchange_status" not in payload:
             payload["exchange_status"] = {
                 "connectivity": "CONNECTED",
-                "exchange": "binance_testnet",
+                "exchange": "binance_demo",
                 "latency_ms": 15.0
             }
 

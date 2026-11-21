@@ -141,7 +141,7 @@ class AsyncMarketDataEngine:
 
     def __init__(
         self,
-        base_url: str = "https://testnet.binancefuture.com",
+        base_url: str = "https://demo-fapi.binance.com",
         max_connections: int = 50,
         max_keepalive: int = 20,
         concurrency_limit: int = 10,

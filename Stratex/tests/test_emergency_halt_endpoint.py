@@ -48,6 +48,7 @@ def test_emergency_halt_locks_oms_and_cancels_orders(emergency_client, control_a
 def test_emergency_halt_blocks_subsequent_oms_orders(emergency_client, control_auth, tmp_path, monkeypatch):
     monkeypatch.setenv("STRATEX_EXECUTION_MODE", "DEMO")
     monkeypatch.setenv("TRADING_MODE", "FUTURES")
+    monkeypatch.setenv("BINANCE_DEMO_TRADING", "true")
     monkeypatch.setenv("TESTNET_ENABLED", "true")
     monkeypatch.setenv("STRATEX_ALLOWED_EXECUTION_VENUES", "binance")
 
@@ -72,7 +73,7 @@ def test_emergency_halt_blocks_subsequent_oms_orders(emergency_client, control_a
         side="BUY",
         order_type="MARKET",
         quantity=0.01,
-        environment="binance_testnet",
+        environment="binance_demo",
         stop_loss=98.0,
         take_profit=105.0,
         strategy="test-strat",

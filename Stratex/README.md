@@ -11,7 +11,7 @@
 
 ## 🏛️ Executive Summary & Architecture
 
-**Stratex** is the dedicated 24/7 algorithmic trading, quantitative execution, and live telemetry platform of the **FRIDAY Universe**. It operates autonomously in continuous execution mode to discover trade opportunities, evaluate multi-timeframe quantitative strategies, manage microstructural friction, enforce portfolio risk limits, and execute orders against Binance Testnet while providing real-time telemetry streaming to the ecosystem.
+**Stratex** is the dedicated 24/7 algorithmic trading, quantitative execution, and live telemetry platform of the **FRIDAY Universe**. It operates autonomously in continuous execution mode to discover trade opportunities, evaluate multi-timeframe quantitative strategies, manage microstructural friction, enforce portfolio risk limits, and execute orders against Binance Demo Trading while providing real-time telemetry streaming to the ecosystem.
 
 ```mermaid
 flowchart TD
@@ -189,7 +189,7 @@ Emergency risk control endpoints to immediately halt scanning, disallow new entr
 
 Stratex reads environment variables from `.env`. A complete configuration template is provided in `.env.example`.
 
-The credential sets for legacy Binance Testnet and the current Demo Trading environment are not interchangeable. When `BINANCE_DEMO_TRADING=true`, the Binance venue agent requires the fresh `BINANCE_API_KEY` and `BINANCE_API_SECRET` values and pins execution to Demo endpoints. It does not fall back to legacy keys. Use `GET /api/agents` to inspect the safe agent catalog and configuration state.
+Binance Demo Trading is the only supported Binance venue. The classic-testnet venue was retired by owner decision 2026-11-15 (TASK-STR-RETIRE-001) and excised in TASK-STR-FWD-032: there is no non-demo fallback. When `BINANCE_DEMO_TRADING=true`, the Binance venue agent requires the fresh `BINANCE_API_KEY` and `BINANCE_API_SECRET` values and pins execution to Demo endpoints. It does not fall back to legacy keys. Use `GET /api/agents` to inspect the safe agent catalog and configuration state.
 
 
 | Variable | Description | Default | Allowed Values |
@@ -201,7 +201,7 @@ The credential sets for legacy Binance Testnet and the current Demo Trading envi
 | `BINANCE_DEMO_TRADING` | Select current Binance Demo Trading endpoints | `false` | `true`, `false` |
 | `BINANCE_API_KEY` | Current Binance Demo Trading API key (when Demo Trading is selected) | Empty | Demo Trading key only |
 | `BINANCE_API_SECRET` | Current Binance Demo Trading API secret | Empty | Demo Trading secret only |
-| `API_KEY` / `SECRET_KEY` | Legacy Binance Testnet credentials (used only when Demo Trading is false) | Placeholder in sample | Legacy Testnet keys only |
+| `API_KEY` / `SECRET_KEY` | Legacy credentials (retired classic-testnet venue; no longer read for Binance endpoints) | Placeholder in sample | Not used for Binance endpoints |
 | `MT5_BRIDGE_ENABLED` | Enable the remote MT5 bridge adapter | `false` | `true`, `false` |
 | `MT5_BRIDGE_URL` | Private/VPN address for the Windows MT5 bridge | Empty | Private network URL only |
 | `MT5_BRIDGE_TOKEN` | Bearer token for the MT5 bridge | Empty | High-entropy secret |
