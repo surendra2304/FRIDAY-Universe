@@ -12574,13 +12574,15 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Muse: review PR #1171; merge when approved. Deploy note: append strategy_ensemble_book_3933 / strategy_ensemble_book_3978 to S1 STRATEX_STRATEGY_ALLOWLIST at deploy."
   - id: TASK-STR-FWD-031
     title: "Stratex: overlay-entry venue-bracket gap - close the gap between overlay entries and the venue bracket so overlay entries are placed and held at the venue bracket."
-    status: AVAILABLE
+    status: IN_PROGRESS
     owner: muse_1
+    branch: muse1/task-str-fwd-031-overlay-entry-venue-bracket
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21"
+    updated_at: "2026-11-21T11:50:47+05:30"
     evidence:
       - "Coordinator standing backlog (follow-up watch refill, 2026-11-21): batch 3 second task, assigned with board PR by the coordinator."
+      - "Claim: issue #35 comment 7058534823 by Muse 1 2026-11-21 - batch 3 second task; board record verified AVAILABLE, owner muse_1, on main e0a50da before claiming; no prior claim, branch or PR. Branch muse1/task-str-fwd-031-overlay-entry-venue-bracket."
     next_action: "Muse 1: claim, find the overlay-entry vs venue-bracket gap, close it, add regression coverage, ship via PR."
   - id: TASK-VYR-031
     title: "VyralX: script-stage yield fix - the script stage yields too few usable scripts, so cycles produce too few renders that pass the quality gates; find why the yield is low and fix it."
