@@ -1,6 +1,6 @@
 # FRIDAY Universe — Muse Team Operating Architecture
 
-**Status:** ACTIVE — effective 2026-11-20, by owner decision.
+**Status:** ACTIVE — effective 2026-11-20, by owner decision; §6 and §9 synced to the current design 2026-11-21 (TASK-DOC-001).
 **Authority:** This document is the operating architecture for the AI team that
 builds FRIDAY Universe. It replaces the previous mixed-team collaboration
 model (the "equal AI collaborators" design written for ZAI, Arena, ChatGPT and
@@ -151,23 +151,32 @@ document governs.
   if it moved; verify the new allowance is actually live before starting —
   wait if it is not; confirm next week's schedule still exists. That run
   re-enters the work cycle below: work if assigned, otherwise the
-  every-5-minutes assignment poll.
+  15-minute ask-cycle.
 - **Checkpoint discipline:** work in small steps and save a checkpoint after
   each step (board update + pushed branch/PR), sized so a stopped run loses
   nothing and the checkpoint itself always fits inside the free allowance.
-- **Assignment poll (owner order 2026-11-21):** a worker with no work
+- **15-minute ask-cycle (owner order 2026-11-21):** a worker with no work
   never waits days to notice an assignment. It runs a scheduled task
-  firing **every 5 minutes** that reads the board and issue #35 for an
-  assignment addressed to it — armed after onboarding, after every weekly
-  reset, and the moment a task closes. The moment an assignment appears,
-  the worker claims it and **cancels the poll**; when work runs out, it
-  re-arms the poll. This repeats until the weekly free usage is exhausted.
+  firing **every 15 minutes** that reads the board and issue #35 for an
+  assignment addressed to it and posts a work request on issue #35 asking
+  Muse for work — armed after onboarding, after every weekly reset, and
+  the moment a task closes. The moment an assignment appears, the worker
+  claims it and **cancels the ask-cycle**; when work runs out, it
+  re-arms the ask-cycle. This repeats until the weekly free usage is
+  exhausted.
+- **Status rule:** every Muse chat posts its state on issue #35 at every
+  change and at least hourly while working — assignment, claim, PR opened,
+  review, merge, blocker or stall — so Muse always knows who is doing what
+  without asking.
 - **Hourly self-check:** while free usage remains, each worker also runs
   an hourly scheduled task verifying it is working properly (progress
-  real, or the poll armed if idle), until exhaustion.
-- **When free usage is exhausted:** the poll and the hourly check are
-  cancelled and only the weekly reset task stays armed, so the cycle
-  restarts by itself at the next reset.
+  real, or the ask-cycle armed if idle), until exhaustion.
+- **Wrap-up rule — when free usage is exhausted:** the ask-cycle and the
+  hourly check are cancelled and only the weekly reset task stays armed.
+  Before stopping, the worker posts a wrap-up report on issue #35
+  addressed to Muse (name, task, state, what is left) and records the
+  state on the board, and Muse reassigns the unfinished task to a Muse
+  with allowance left — so the cycle restarts by itself at the next reset.
 - Subagents spawned inside an account draw on that same account's allowance.
   They multiply speed, not budget — use them sparingly and sized to the
   allowance.
@@ -205,7 +214,7 @@ document governs.
    entry), never as chat text.
 3. The worker sets up its access (owner's GitHub account, fleet bridge,
    credentials record), registers in `TEAM_ROSTER.yaml` via PR, creates its
-   three scheduled tasks per §6 (every-5-minutes assignment poll, hourly
+   three scheduled tasks per §6 (15-minute ask-cycle, hourly
    self-check, weekly reset task), and reads `docs/MASTER_PLAN.md`,
    the full board and the roster so it starts from the project's real state.
    It also sets its displayed assistant name in its own account to its
@@ -213,9 +222,9 @@ document governs.
    signs its work with.
 4. The worker posts a ready report on issue #35 (access confirmed, roster PR
    link, its reset time, its schedule).
-5. The worker's every-5-minutes poll watches the board and issue #35 for
+5. The worker's 15-minute ask-cycle watches the board and issue #35 for
    Muse's first assignment; the moment one appears, the worker claims it
-   and cancels the poll.
+   and cancels the ask-cycle.
 
 ## 10. Failure, escalation and stops
 
