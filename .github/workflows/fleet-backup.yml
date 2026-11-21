@@ -113,7 +113,7 @@ jobs:
 
       - name: Upload offsite copy as a workflow artifact
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: fleet-backup-offsite
           path: friday-backup-offsite.tar.gz.enc
