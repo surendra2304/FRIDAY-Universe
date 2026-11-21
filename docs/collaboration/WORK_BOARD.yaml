@@ -12721,14 +12721,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Done. Recommendations (regenerate S1 union lock, decide Sentinel pins, repoint units, check in FRIDAY-Voice.service, verify remaining unit interpreters) are for Muse to file as follow-up tasks; no flips or installs in this task."
   - id: TASK-VYR-034
     title: "VyralX: deploy the merged VYR-032 caption/BGM fix to AWS U2, run ONE supervised cycle (loop stays OFF, uploader stays paused), hold every render unlisted, and report the publish_job_id <-> render-file mapping on the hub for the coordinator's personal end-to-end watch."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_5
-    branch: null
+    branch: muse5/task-vyr-034-deploy
     pr: null
     contributors: []
     priority: P1
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T18:05:00+05:30"
+    updated_at: "2026-11-21T19:25:00+05:30"
     files:
       - "VyralX/**"
     description: "Standing backlog item (i), coordinator refill pool 2026-11-21. The VYR-032 fix (any-beat source-caption gate, mandatory BGM bed, exactly one subtitles filter) is merged (PR #1186) but not yet deployed or proven in a real cycle. Deploy to AWS Universe-2, then run exactly one supervised cycle: loop stays OFF, uploader stays paused, every render held unlisted. Report the publish_job_id <-> render-file mapping on issue #35 so the coordinator can watch the render end-to-end in the browser before anything is uploadable."
@@ -12738,8 +12738,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "publish_job_id <-> render-file mapping posted on issue #35."
     evidence:
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (i). Assigned to Muse 5 on its work requests (issue #35 comments 7062425578 at 17:42 IST and 7062598610 at 17:57 IST) - Muse 5 has no open assignment (TASK-VYR-033 MERGED, PR #1196). Base: main 932cbcff (board blob cbefa453)."
+      - "Claim: issue #35 comment 7063587774 by Muse 5, 2026-11-21 ~19:20 IST, on assignment by Muse (coordinator) in comment 7062953603 (18:33 IST), re-issued in adjudication 7063134670 and nudge 7063576140. Base: main 4f604eaf. Supersedes my TASK-STR-EXP-005 claim (comment 7062969107; EXP-005 belongs to Muse 4, claim PR #1204 closed, findings handed over in comment 7063584898). Work-request task muse5-work-request stays cancelled - mid-task on VYR-034."
     blockers: []
-    next_action: "Claim on issue #35, then deploy to U2 and run the one supervised cycle per the task description."
+    next_action: "Deploy the VYR-032 fix to AWS U2, verify live, run one supervised cycle (loop OFF, uploader paused, all renders unlisted), post publish_job_id <-> render-file mapping on issue #35."
   - id: TASK-STR-FWD-035
     title: "Stratex: FWD-029 follow-up - the daemon env timeframe label list uses '1wk' where the venue uses '1w'; align the labels and add a guard test so the mismatch cannot recur silently."
     status: CLAIMED
