@@ -12388,7 +12388,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-VYR-030
     title: "VyralX: stock the phonk shelf - the growth BGM library has 0 phonk tracks and cycle 11 (2026-11-21) again warned phonk_shelf_empty; the owner named phonk as a required BGM category. Source free-to-use phonk tracks per the SHELF.md rules, register them in the growth library on U2, and verify the warning clears."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-vyr-030-phonk-shelf-stock
     pr: 1158
@@ -12402,7 +12402,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Probe (U2, loop's own code — viral_bgm.library_status() + viral_loop.py warning conditions, before/after): before 20 tracks, 0 phonk, warnings ['phonk_shelf_empty'] (cycle 11 state agrees); after 25 tracks, 5 phonk [FASTLANE, FOCUS, REACTOR, RUSH, VANTAGE], warnings []. Real bed: prepare_music_bed(category=GAMING) rendered 5 s from phonk_no-limits-phonk_reactor.mp3, label growth:REACTOR:phonk. Cycle-11 warning remains in viral_loop_state.json as history; refreshes on the next scheduled cycle (no full cycle forced — would spend vision budget and create renders)."
       - "Gap, stated plainly: no SHELF.md exists in the repo, on Oracle Server 2, or on U2 (searched all three 2026-11-21). Rules applied are the verifiable ones: viral_bgm.py growth policy + catalog format, existing <category>_<artist>_<title>.mp3 naming, and the source page's written permission. Repo record added: VyralX/docs/BGM_SHELF.md (shelf contents, sources, licence, credit obligation, probe evidence). Credit must go in the video description / visible credit field of any published video using these tracks."
       - "PR #1158 opened for Muse review: https://github.com/surendra2304/FRIDAY-Universe/pull/1158 (branch muse1/task-vyr-030-phonk-shelf-stock, base main 9ac4eefc, 2 commits: board claim + shelf record BGM_SHELF.md (+83) with board completion evidence)."
-    next_action: "Supervisor review -> merge. Acceptance: loop probe shows the phonk warning gone (verified live: 25 tracks, 5 phonk, warnings []). No deploy, no service restarted, no code change — U2 library files + repo shelf record only."
+      - "MERGED 2026-11-21 via PR #1158 (merge commit b15e7c777021af2582519ae767173cb717ed4b62; 3 commits, +92/-2). Muse review: full diff read (BGM_SHELF.md +83, board record only, no code); CI 9/9 complete on head f1a9150b — 7 success, 2 skipped (docker, voice-regressions — inapplicable); collaboration-validator check-run 'Validate roster, task IDs and file ownership' success; mergeable clean. Source page and loader logic independently verified: nolimitsphonk.com lists all 5 tracks with permission effective 2026-10-06 and the exact credit line; viral_bgm.py at main confirms the phonk filename rule, catalog format and growth:<title>:phonk label. (PR body said 2 commits at creation; a 3rd commit added the board completion evidence after the PR opened.)"
+    next_action: "MERGED 2026-11-21. No deploy (docs + U2 library files only). Next VyralX cycle confirms the phonk warning stays gone; credit 'Music: NO LIMITS PHONK — https://www.youtube.com/@nolimits_phonk' must go in the description of any published video using these tracks."
   - id: TASK-STR-FWD-029
     title: "Stratex: capcheck_books.py timeframe label fix - the books use '1wk' where the venue/panel label is '1w'; align the label and add regression coverage so weekly books stop being silently skipped or mismatched."
     status: AVAILABLE
