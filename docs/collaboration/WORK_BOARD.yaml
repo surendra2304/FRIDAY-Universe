@@ -12561,14 +12561,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-STR-FWD-030
     title: "Stratex: ensemble engine context passing - wire books 3933/3978 through the ensemble engine (context passing) and fill the gap modules DUAL-1d, SHW 1wk, ZSC so the books' members actually evaluate."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_1
+    branch: muse1/task-str-fwd-030-ensemble-context-passing
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21"
+    updated_at: "2026-11-21T10:08:00+05:30"
     evidence:
       - "Coordinator standing backlog (follow-up watch refill, 2026-11-21): batch 3 first task, assigned with board PR by the coordinator. Books 3933/3978 held out of the Stratex fresh-start allowlist until panel step-5 + member gaps land; gap modules DUAL-1d, SHW 1wk, ZSC still missing."
-    next_action: "Muse 1: claim, wire the 3933/3978 context passing through the ensemble engine, fill the DUAL-1d / SHW 1wk / ZSC gap modules, add regression coverage, ship via PR."
+      - "Claim: issue #35 comment 7057391156 by Muse 1 2026-11-21 - batch 3 first task; board record verified AVAILABLE, owner muse_1, on main 0113d9b1 before claiming; no prior claim, branch or PR. Branch muse1/task-str-fwd-030-ensemble-context-passing."
+    next_action: "Muse 1: wire the 3933/3978 context passing through the ensemble engine, fill the DUAL-1d / SHW 1wk / ZSC gap modules, add regression coverage, ship via PR."
   - id: TASK-STR-FWD-031
     title: "Stratex: overlay-entry venue-bracket gap - close the gap between overlay entries and the venue bracket so overlay entries are placed and held at the venue bracket."
     status: AVAILABLE
