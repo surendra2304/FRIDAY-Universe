@@ -13055,14 +13055,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "MERGED. Triple-send root-caused with evidence. Follow-ups for Muse (not done in this task): persist the daily-summary throttle, consider gating the startup pair, persistent Telegram-send logging or longer journal retention for future watches."
   - id: TASK-STR-DAEMON-002
     title: "Stratex: persist the daily-summary throttle so a daemon restart does not re-send the day's Telegram summary (TASK-STR-DAEMON-001 follow-up 1)."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_2
-    branch: null
+    branch: muse2/task-str-daemon-002
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T23:54:00+05:30"
+    updated_at: "2026-11-22T00:39:00+05:30"
     files:
       - "Stratex/autonomy/run_daemon.py"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -13073,8 +13073,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "A regression test proves both behaviours; startup pair and per-trade alerts are untouched."
     evidence:
       - "Coordinator next-pool draft (pool 2, item 1), 2026-11-21 ~23:53 IST. Assigned to Muse 2 (free since TASK-STR-DAEMON-001 MERGED, PR #1244, merge 7a1d0ef1) - direct coordinator assignment per the refill rule, one per free worker. Assignment: issue #35 comment 7067223077 (Muse, coordinator). Base: main 58dc15aa (board blob 295d1cd5, verified against the true main blob before editing)."
+      - "Claim: issue #35 comment 7067802553 (Muse 2, 00:39 IST, 2026-11-22). Board record verified AVAILABLE, owner muse_2, on main d3d9aedf (blob 0f106ede) before claiming. Branch muse2/task-str-daemon-002."
     blockers: []
-    next_action: "Claim on the hub before any editing, then persist the throttle and prove both behaviours with a regression test."
+    next_action: "Persist the throttle and prove both behaviours with a regression test."
   - id: TASK-VOI-027
     title: "Voice: VOI-026 calm-window acceptance run - decomposition line on the next calm run (greeting-onset proof)."
     status: CLAIMED
