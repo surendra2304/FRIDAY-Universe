@@ -472,6 +472,28 @@ SHOCK_BREAKOUT_STRATEGY = {
     "OOS_EXPECTANCY_PCT": 2.696,
 }
 
+SHOCK_BREAKOUT_1WK_STRATEGY = {
+    "NAME": "Shock Breakout (one-bar close move > 1.0 x ATR(14)) @ CRYPTO30 1w",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-030)",
+    "TIMEFRAME": "1w",
+    "SHOCK_K": 1.0,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 104,     # judged warmup_for("1wk")
+    # TASK-STR-RD-002 pooled OOS evidence (results_rd11/streams/
+    # shock_breakout__k1.0__crypto30__1wk.json report.pooled_oos:
+    # 109 trades, 51 wins, 4/5 positive folds). Weekly member (SHW)
+    # of the RD-025 PROVEN ensemble book 3978. Same judged cell as
+    # the FWD-002 sleeve's weekly leg — the sleeve config's 0.4267
+    # win rate is the FULL-cache simulation figure (150 trades), a
+    # different window; this dict records the pooled OOS figure.
+    "OOS_TRADES": 109,
+    "OOS_WIN_RATE": 0.4679,
+    "OOS_PROFIT_FACTOR": 1.5750,
+    "OOS_EXPECTANCY_PCT": 9.0431,
+}
+
 SHOCK_BREAKOUT_K15_STRATEGY = {
     "NAME": "Shock Breakout k1.5 (one-bar close move > 1.5 x ATR(14)) — FORWARD_TEST wave 1",
     "VERSION": "v1.0.0 (TASK-STR-FWD-018)",
@@ -1475,6 +1497,28 @@ TSMOM2_DUAL_CRYPTO_STRATEGY = {
     "OOS_EXPECTANCY_PCT": 0.402,
 }
 
+TSMOM2_DUAL_CRYPTO_1D_STRATEGY = {
+    "NAME": "Dual Momentum (ROC(90) zero-cross + EMA(200) gate) @ CRYPTO30 1d",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-030)",
+    "TIMEFRAME": "1d",
+    "ROC_LOOKBACK": 90,
+    "EMA_PERIOD": 200,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.5,          # judged bracket (families2 build_configs; verified in this cell's row record)
+    "TP_ATR": 5.0,          # judged bracket (families2 build_configs; verified in this cell's row record)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (results_rd2/synthesis.json
+    # grid row: 174 trades, PF 1.8470, 4/5 positive folds). Member of
+    # the RD-025 PROVEN ensemble book 3978 — NOT the 4h cell above and
+    # NOT the sleeve's forex28 leg; same signal function, different
+    # panel cell and records, never blended.
+    # No win rate was published for this cell — none is recorded (the
+    # pooled OOS row carries trades / expectancy / PF / folds only).
+    "OOS_TRADES": 174,
+    "OOS_PROFIT_FACTOR": 1.8470,
+    "OOS_EXPECTANCY_PCT": 7.6032,
+}
+
 TS_MOMENTUM_ROC168_RD001_STRATEGY = {
     "NAME": "Time-Series Momentum (ROC(168) zero-cross) @ 1h — RD-001 row",
     "VERSION": "v1.0.0 (TASK-STR-FWD-019)",
@@ -1689,6 +1733,29 @@ STOCH_REVERSION_STRATEGY = {
     "OOS_WIN_RATE": 0.3863,
     "OOS_PROFIT_FACTOR": 1.2623,
     "OOS_EXPECTANCY_PCT": 0.286,
+}
+
+ZSCORE_REVERSION_STRATEGY = {
+    "NAME": "Z-Score Reversion (close crosses +/-2.5 stdev of 50-bar mean, ADX(14) < 25) — FOREX28 / OANDA",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-030)",
+    "TIMEFRAME": "1d",
+    "ZSCORE_WINDOW": 50,
+    "ZSCORE_THETA": 2.5,
+    "USE_ADX_FILTER": True,
+    "ADX_PERIOD": 14,
+    "ADX_MAX": 25.0,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket (families2 build_configs zscore_reversion spec)
+    "TP_ATR": 2.0,          # judged bracket (families2 build_configs zscore_reversion spec)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (results_rd2/synthesis.json
+    # grid row: 130 trades, PF 1.4759, 4/5 positive folds). Forex
+    # member (ZSC) of the RD-025 PROVEN ensemble book 3978.
+    # No win rate was published for this cell — none is recorded (the
+    # pooled OOS row carries trades / expectancy / PF / folds only).
+    "OOS_TRADES": 130,
+    "OOS_PROFIT_FACTOR": 1.4759,
+    "OOS_EXPECTANCY_PCT": 0.3473,
 }
 
 BAR_PATTERNS_INSIDE_BAR_4H_STRATEGY = {
@@ -2134,6 +2201,28 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "max_stop_pct": 0.50,
         "forward_lane": "FORWARD_TEST",
         "reason": "TASK-STR-RD-002 WATCHLIST: shock_breakout/k1.0 @ CRYPTO30 1d passed the mechanical bar (expectancy +2.6957%/trade, PF 1.3179, 732 OOS trades, 4/5 positive folds, holdout) but FAILED Bonferroni significance at N=1,557 — not a promotion. Owner directed 2026-11-15 (TASK-STR-FWD-003) that near-bar configurations be decided by real demo forward evidence. FORWARD_TEST lane terms as for bollinger_trend. (Distinct from sleeve_shock_breakout, the sleeve's own component module/configuration — different judged object, different records.)",
+    },
+    "shock_breakout_1wk": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-030)",
+        "timeframe": "1w",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: one-bar close rise (close - close[-1]) > 1.0 x ATR(14) at the signal bar. SHORT: one-bar close fall > 1.0 x ATR(14). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_shock(df, 1.0, warmup) on the judged 7-day weekly buckets (panels._to_weekly), warmup 104 bars. Weekly bars are the judged buckets, NOT Binance Monday-anchored klines.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.4679,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 904.3,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "max_stop_pct": 0.90,
+        "forward_lane": "FORWARD_TEST",
+        "reason": "TASK-STR-FWD-030 ensemble-book gap module (weekly member SHW of the RD-025 PROVEN book 3978): shock_breakout/k1.0 @ CRYPTO30 1w meets the second tier (OOS expectancy +9.0431%/trade, PF 1.5750, 109 OOS trades, 51 wins, 4/5 positive folds; pooled_oos in results_rd11/streams/shock_breakout__k1.0__crypto30__1wk.json) but did NOT pass the full frozen bar (Bonferroni at programme N=3,979) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. Same judged cell as the FWD-002 sleeve's weekly leg (sleeve_shock_breakout) — the sleeve config's 0.4267 win rate is the FULL-cache simulation figure (150 trades), a different window from this entry's pooled OOS 0.4679; records never blended. FWD-012 stop-cap: judged stops reach 87.16% of price at signal bars (capcheck_books.json) — override 0.90, the sleeve precedent for weekly geometry (FWD-006 sizes by risk / stop distance). Venue label for the weekly timeframe is '1w' (TASK-STR-FWD-029); the daemon's own scan list still says '1wk' — flagged follow-up for Muse, not changed here.",
     },
     "shock_breakout_k15": {
         "status": "FORWARD_TEST",
@@ -2894,10 +2983,10 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "members": [
             {"module": "strategy_vol_adaptive_trend", "key": "vol_adaptive_trend", "cell": "ema12_26_nogate", "panel": "crypto30", "timeframe": "1d", "venue": "binance_futures", "sl_atr": 2.5, "tp_atr": 5.0},
             {"module": "strategy_shock_breakout_k15", "key": "shock_breakout", "cell": "k1.5", "panel": "crypto30", "timeframe": "1d", "venue": "binance_futures", "sl_atr": 2.0, "tp_atr": 4.0},
-            {"module": None, "key": "xs_lowvol", "cell": "lv20_r10", "panel": "crypto30", "timeframe": "1d", "venue": "binance_futures", "sl_atr": 2.0, "tp_atr": 4.0, "unavailable_reason": "xs_lowvol is a cross-sectional rotation (rank 30 symbols by 20d vol, hold 3 lowest, rebalance every 10 bars), not a per-symbol signal strategy; it cannot be a member of a per-symbol ensemble book without xs rotation machinery"},
+            {"module": "strategy_xs_lowvol", "key": "xs_lowvol", "cell": "lv20_r10", "panel": "crypto30", "timeframe": "1d", "venue": "binance_futures", "sl_atr": 2.0, "tp_atr": 4.0},
         ],
-        "execution": "PENDING_XS_ROTATION_MACHINERY: xs_lowvol (cross-sectional; not a per-symbol member) + PENDING_WAVE_PR_MERGE: #983 (vol_adaptive), #996 (shock k1.5)",
-        "reason": "TASK-STR-RD-025 PROVEN ensemble, RD-025 trial 3933, VA+SHK+XSL: pooled expectancy +0.9253%/trade, PF 1.4072, 1295 OOS trades, 4/5 positive folds, Bonferroni pass at round N=3,979, holdout pass. Members judged on the RD-002 records (vol_adaptive: 299 trades, PF 1.6956; shock k1.5: 486 trades, PF 1.3325; xs_lowvol lv20_r10: 510 trades, 275 wins — a CROSS-SECTIONAL rotation, rank 30 symbols by 20d vol, hold 3 lowest, rebalance every 10 bars; its trades ARE in the pooled figures). BLOCKED: xs_lowvol cannot be a member of a per-symbol ensemble book without xs rotation machinery — the book refuses whole (fail-closed, never a subset) until that machinery exists. FORWARD_TEST lane terms (0.1% per-trade risk on venue equity, 2% heat cap, 3% daily breaker; kill at expectancy < 0 or PF < 1.0 after >= 50 closed trades). LIVE-EXECUTION NOTE: the judged figures are the UNION of member trades; the live book holds one net position per symbol — offline measurement (verify_books.py, per-symbol members only) puts the netting gap at 12.0% of judged member position-days cancelled (8.3% of active days fully conflicted). Stop-cap (FWD-012, measured 2026-11-18): vol_adaptive 50.1% of signals above the 0.15 env cap (median stop 15.03%, max 49.22%) — override 0.60; shock 33.7% (max 36.2%).",
+        "execution": "EVALUATING (TASK-STR-FWD-030): every member module on main; xs_lowvol resolves via the panel context the engine passes. Book module allowlist at deploy.",
+        "reason": "TASK-STR-RD-025 PROVEN ensemble, RD-025 trial 3933, VA+SHK+XSL: pooled expectancy +0.9253%/trade, PF 1.4072, 1295 OOS trades, 4/5 positive folds, Bonferroni pass at round N=3,979, holdout pass. Members judged on the RD-002 records (vol_adaptive: 299 trades, PF 1.6956; shock k1.5: 486 trades, PF 1.3325; xs_lowvol lv20_r10: 510 trades, 275 wins — a CROSS-SECTIONAL rotation, rank 30 symbols by 20d vol, hold 3 lowest, rebalance every 10 bars; its trades ARE in the pooled figures). TASK-STR-FWD-030: the xs member resolves via the panel context the engine passes (strategy_xs_lowvol looks its symbol up in the persisted panel membership) — the book evaluates; with no persisted membership the xs leg abstains and the book nets the members that did signal. FORWARD_TEST lane terms (0.1% per-trade risk on venue equity, 2% heat cap, 3% daily breaker; kill at expectancy < 0 or PF < 1.0 after >= 50 closed trades). LIVE-EXECUTION NOTE: the judged figures are the UNION of member trades; the live book holds one net position per symbol — offline measurement (verify_books.py, per-symbol members only) puts the netting gap at 12.0% of judged member position-days cancelled (8.3% of active days fully conflicted). Stop-cap (FWD-012, measured 2026-11-18): vol_adaptive 50.1% of signals above the 0.15 env cap (median stop 15.03%, max 49.22%) — override 0.60; shock 33.7% (max 36.2%).",
     },
     "ensemble_book_3978": {
         "status": "FORWARD_TEST",
@@ -2927,10 +3016,10 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
             {"module": "strategy_shock_breakout_1wk", "key": "shock_breakout", "cell": "k1.0", "panel": "crypto30", "timeframe": "1w", "venue": "binance_futures", "sl_atr": 2.0, "tp_atr": 4.0},
             {"module": "strategy_zscore_reversion", "key": "zscore_reversion", "cell": "w50_t2.5_filt", "panel": "forex28", "timeframe": "1d", "venue": "oanda", "sl_atr": 2.0, "tp_atr": 2.0},
             {"module": "strategy_ha_trend", "key": "ha_trend", "cell": "two_candle", "panel": "crypto30", "timeframe": "1d", "venue": "binance_futures", "sl_atr": 2.0, "tp_atr": 4.0},
-            {"module": None, "key": "xs_lowvol", "cell": "lv20_r10", "panel": "crypto30", "timeframe": "1d", "venue": "binance_futures", "sl_atr": 2.0, "tp_atr": 4.0, "unavailable_reason": "xs_lowvol is a cross-sectional rotation (rank 30 symbols by 20d vol, hold 3 lowest, rebalance every 10 bars), not a per-symbol signal strategy; it cannot be a member of a per-symbol ensemble book without xs rotation machinery"},
+            {"module": "strategy_xs_lowvol", "key": "xs_lowvol", "cell": "lv20_r10", "panel": "crypto30", "timeframe": "1d", "venue": "binance_futures", "sl_atr": 2.0, "tp_atr": 4.0},
         ],
-        "execution": "PENDING_MEMBER_MODULES: strategy_tsmom2_dual_crypto_1d (DUAL 1d cell; PR #991 built the 4h cell only), strategy_shock_breakout_1wk (SHW), strategy_zscore_reversion (ZSC) + PENDING_XS_ROTATION_MACHINERY: xs_lowvol + PENDING_WAVE_PR_MERGE: #993 (ha_trend)",
-        "reason": "TASK-STR-RD-025 PROVEN ensemble, RD-025 trial 3978, DUAL+SHW+ZSC+HA1d+XSL (size 5, Section E1 cluster-champion): pooled expectancy +0.4728%/trade, PF 1.3262, 1698 OOS trades, 4/5 positive folds, Bonferroni pass at round N=3,979, holdout pass; book drawdown -0.168, the shallowest of any proven book. Members judged on the RD-002 records (tsmom2_dual roc90_ema200 @ crypto30 1d: 174 trades, PF 1.8470 — NOT the 4h cell PR #991 built, and NOT the sleeve's forex28 leg; shock k1.0 @ 1w: 109 trades, PF 1.5750; zscore w50_t2.5_filt @ forex28: 130 trades, PF 1.4759; ha_trend two_candle @ 1d: 775 trades, PF 1.1878; xs_lowvol lv20_r10: 510 trades, 275 wins — cross-sectional rotation, its trades ARE in the pooled figures). BLOCKED on four members (DUAL 1d / SHW / ZSC have no production module; xs_lowvol needs rotation machinery) — the book refuses whole (fail-closed, never a subset) until all exist. FORWARD_TEST lane terms (0.1% per-trade risk on venue equity, 2% heat cap, 3% daily breaker; kill at expectancy < 0 or PF < 1.0 after >= 50 closed trades). LIVE-EXECUTION NOTE: the judged figures are the UNION of member trades; the live book holds one net position per symbol — offline measurement (verify_books.py, per-symbol members only) puts the netting gap at 17.4% of judged member position-days cancelled (10.2% of active days fully conflicted, 1866 partial days). Stop-cap (FWD-012, measured 2026-11-18): the weekly member's judged stops reach 87.16% (94.97% of its 199 signals above the 0.15 env cap, median 28.18%) — override 0.90 (sleeve precedent for weekly geometry); tsmom2_dual 60.4% / ha_trend 36.5% of signals above cap (max 42.5% / 39.4%); zscore 0.00% (max 6.94%, no override needed on its own).",
+        "execution": "EVALUATING (TASK-STR-FWD-030): DUAL 1d, SHW 1wk and ZSC modules landed; xs_lowvol resolves via the panel context the engine passes. Book module allowlist at deploy.",
+        "reason": "TASK-STR-RD-025 PROVEN ensemble, RD-025 trial 3978, DUAL+SHW+ZSC+HA1d+XSL (size 5, Section E1 cluster-champion): pooled expectancy +0.4728%/trade, PF 1.3262, 1698 OOS trades, 4/5 positive folds, Bonferroni pass at round N=3,979, holdout pass; book drawdown -0.168, the shallowest of any proven book. Members judged on the RD-002 records (tsmom2_dual roc90_ema200 @ crypto30 1d: 174 trades, PF 1.8470 — NOT the 4h cell PR #991 built, and NOT the sleeve's forex28 leg; shock k1.0 @ 1w: 109 trades, PF 1.5750; zscore w50_t2.5_filt @ forex28: 130 trades, PF 1.4759; ha_trend two_candle @ 1d: 775 trades, PF 1.1878; xs_lowvol lv20_r10: 510 trades, 275 wins — cross-sectional rotation, its trades ARE in the pooled figures). TASK-STR-FWD-030: the DUAL 1d, SHW 1wk and ZSC production modules landed and the xs member resolves via the panel context the engine passes — the book evaluates; with no persisted panel membership the xs leg abstains and the book nets the members that did signal. FORWARD_TEST lane terms (0.1% per-trade risk on venue equity, 2% heat cap, 3% daily breaker; kill at expectancy < 0 or PF < 1.0 after >= 50 closed trades). LIVE-EXECUTION NOTE: the judged figures are the UNION of member trades; the live book holds one net position per symbol — offline measurement (verify_books.py, per-symbol members only) puts the netting gap at 17.4% of judged member position-days cancelled (10.2% of active days fully conflicted, 1866 partial days). Stop-cap (FWD-012, measured 2026-11-18): the weekly member's judged stops reach 87.16% (94.97% of its 199 signals above the 0.15 env cap, median 28.18%) — override 0.90 (sleeve precedent for weekly geometry); tsmom2_dual 60.4% / ha_trend 36.5% of signals above cap (max 42.5% / 39.4%); zscore 0.00% (max 6.94%, no override needed on its own).",
     },
     "ensemble_book_3900": {
         "status": "FORWARD_TEST",
@@ -4229,6 +4318,27 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "max_stop_pct": 0.25,
         "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): tsmom2_dual/roc90_ema200 @ CRYPTO30 4h meets the second tier (OOS expectancy +0.402%/trade, PF 1.0965, 1,580 OOS trades, 3/5 positive folds) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. FWD-012 stop-cap: judged stop 2.5 x ATR(14) measured up to 16.3% of price over all post-warmup bars on the fwd002 SOLUSDT 4h fixture slice (10.4% at entry bars) — above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.25 (sanity bound only; FWD-006 sizes by risk / stop distance). Registry key is tsmom2_dual_crypto because the plain tsmom2_dual key is taken by the EXCLUDED comm7 documentary registration (roc30_ema200 @ comm7 4h) — a different judged object; records never blended.",
     },
+    "tsmom2_dual_crypto_1d": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-030)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: ROC(90) crosses up through 0 AND close > EMA(200). SHORT: ROC(90) crosses down through 0 AND close < EMA(200). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_dual_momentum(df, 90, warmup), warmup 260 bars.",
+        "sl_method": "2.5 * ATR(14) at signal bar (judged bracket, families2 tsmom2_dual spec)",
+        "tp_method": "5.0 * ATR(14) at signal bar (judged bracket, families2 tsmom2_dual spec)",
+        "rr_ratio": 2.0,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 760.3,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "max_stop_pct": 0.60,
+        "forward_lane": "FORWARD_TEST",
+        "reason": "TASK-STR-FWD-030 ensemble-book gap module (DUAL member of the RD-025 PROVEN book 3978): tsmom2_dual/roc90_ema200 @ CRYPTO30 1d meets the second tier (OOS expectancy +7.6032%/trade, PF 1.8470, 174 OOS trades, 4/5 positive folds; results_rd2/synthesis.json grid row) but did NOT pass the full frozen bar (Bonferroni at programme N=3,979) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. NOT the 4h cell tsmom2_dual_crypto (1,580 trades, PF 1.0965) and NOT the sleeve's forex28 leg (127 trades, PF 1.5051) — same signal function, different panel cell and records; never blended. No win rate was published for this cell — none is recorded (the pooled OOS row carries trades / expectancy / PF / folds only; the RD-002 trade lists are not in this repo). The daemon's expectancy gate therefore fails closed on a standalone scan of this module; the book path is unaffected (the book's signal carries the book's judged win rate). FWD-012 stop-cap: judged stop 2.5 x ATR(14) measured max 42.46% of price at signal bars (capcheck_books.json; 18.48% at entry bars on the fwd002 BTC/SOL 1d fixtures) — above the 0.15 engine-global cap — so this entry carries max_stop_pct 0.60 (sanity bound only; FWD-006 sizes by risk / stop distance).",
+    },
     "ha_trend": {
         "status": "FORWARD_TEST",
         "version": "v1.0.0 (TASK-STR-FWD-019)",
@@ -4338,6 +4448,27 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "forward_lane": "FORWARD_TEST",
         "forward_venues": ["oanda_practice"],
         "reason": "TASK-STR-FWD-019 WAVE-2 near-miss admission (owner implement-all directive 2026-11-18; audit ~/workspace/str-nearmiss/REPORT.md): stoch_reversion/k14_raw @ FOREX28 1d meets the second tier (OOS expectancy +0.286%/trade, PF 1.2623, 365 OOS trades, 4/5 positive folds, PF @2x costs 1.1796) but did NOT pass the full frozen bar (Bonferroni at programme N=3,899) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. This is the BEST forex row in the audit and a measured member of the low-correlation forex28 3-stream combo (mean correlation 0.083, audit §4). Judged cost basis is the RD-002 forex model (rigorous_backtest/rd2/costs2.py: 6 bps round trip majors, 10 bps minors/crosses); total_friction_bps carries the 10.0 panel maximum. Stop check (TASK-STR-FWD-012): judged stops measured max 2.06% (EURUSD), 2.64% (GBPJPY), 1.74% (USDJPY) at entry bars on the fwd002 FX fixtures — far below the 0.15 engine-global cap, so no max_stop_pct override. OANDA entry: execution rides the governed OANDA runner (separate PR); this entry carries forward_venues [oanda_practice] so that runner can discover it.",
+    },
+    "zscore_reversion": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-030)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: z = (close - 50-bar mean) / 50-bar stdev crosses down through -2.5 AND ADX(14) < 25. SHORT: z crosses up through +2.5 AND ADX(14) < 25. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_zscore(df, 50, 2.5, True, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket, families2 zscore_reversion spec)",
+        "tp_method": "2.0 * ATR(14) at signal bar (judged bracket, families2 zscore_reversion spec)",
+        "rr_ratio": 1.0,
+        "total_friction_bps": 10.0,
+        "expected_net_edge_bps": 34.7,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": FOREX28_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "forward_lane": "FORWARD_TEST",
+        "forward_venues": ["oanda_practice"],
+        "reason": "TASK-STR-FWD-030 ensemble-book gap module (forex member ZSC of the RD-025 PROVEN book 3978): zscore_reversion/w50_t2.5_filt @ FOREX28 1d meets the second tier (OOS expectancy +0.3473%/trade, PF 1.4759, 130 OOS trades, 4/5 positive folds; results_rd2/synthesis.json grid row) but did NOT pass the full frozen bar (Bonferroni at programme N=3,979) — not a promotion, not VALIDATED. FORWARD_TEST lane terms as for bollinger_trend (0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill at expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with VALIDATED scorecards. No win rate was published for this cell — none is recorded (the pooled OOS row carries trades / expectancy / PF / folds only; the RD-002 trade lists are not in this repo). The daemon's expectancy gate therefore fails closed on a standalone scan of this module; the book path is unaffected (the book's signal carries the book's judged win rate). Judged cost basis is the RD-002 forex model (rigorous_backtest/rd2/costs2.py: 6 bps round trip majors, 10 bps minors/crosses); total_friction_bps carries the 10.0 panel maximum, following the stoch_reversion precedent for this panel. Stop check (TASK-STR-FWD-012): judged stops measured max 6.94% of price at signal bars (capcheck_books.json; 2.94% at entry bars on the fwd002 FX fixtures) — far below the 0.15 engine-global cap, so no max_stop_pct override. OANDA entry: execution rides the governed OANDA runner (separate PR); this entry carries forward_venues [oanda_practice] so that runner can discover it.",
     },
     "stoch_reversion_k14_filt": {
         "status": "FORWARD_TEST",

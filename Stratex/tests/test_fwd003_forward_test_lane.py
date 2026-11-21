@@ -815,9 +815,12 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
     # (the eight bracket keys below), TASK-STR-FWD-021's 21 RD-014
     # overlay entries (execution_mode "overlay", executed by the
     # daemon's overlay manager — see
-    # test_fwd021_overlay_service.py) and TASK-STR-FWD-022's
+    # test_fwd021_overlay_service.py), TASK-STR-FWD-022's
     # wf_select_tsmom procedure entrant (execution_mode
-    # "wf_select" — see test_fwd022_wf_select_service.py).
+    # "wf_select" — see test_fwd022_wf_select_service.py) and
+    # TASK-STR-FWD-030's three ensemble-book gap modules
+    # (tsmom2_dual_crypto_1d, shock_breakout_1wk, zscore_reversion —
+    # see tests/test_fwd030_ensemble_context_passing.py).
     overlay = {
         key
         for key, entry in cs.PRODUCTION_STRATEGY_REGISTRY.items()
@@ -926,6 +929,11 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         # execution_mode "panel_xs"):
         "xs_momentum",
         "xs_lowvol",
+        # TASK-STR-FWD-030 (ensemble-book gap modules — the DUAL 1d,
+        # SHW 1wk and ZSC members of book 3978):
+        "tsmom2_dual_crypto_1d",
+        "shock_breakout_1wk",
+        "zscore_reversion",
     } | overlay
 
 
@@ -1062,6 +1070,11 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         # execution_mode "panel_xs"):
         "xs_momentum",
         "xs_lowvol",
+        # TASK-STR-FWD-030 (ensemble-book gap modules — the DUAL 1d,
+        # SHW 1wk and ZSC members of book 3978):
+        "tsmom2_dual_crypto_1d",
+        "shock_breakout_1wk",
+        "zscore_reversion",
     } | overlay
     for key in non_tradable:
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
@@ -1152,6 +1165,13 @@ def test_non_tradable_lane_registrations_are_nulled_not_counted():
         "supertrend_bare",
         "xs_momentum",
         "xs_lowvol",
+        # TASK-STR-FWD-030: shock_breakout_1wk carries a published
+        # pooled OOS win rate (0.4679). The other two gap modules
+        # (tsmom2_dual_crypto_1d, zscore_reversion) are lane-executable
+        # without one — no win rate was published for those cells, none
+        # is recorded — so they are NOT in this list; their edges are
+        # pinned in tests/test_fwd030_ensemble_context_passing.py.
+        "shock_breakout_1wk",
     ):
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["runtime_priors_nulled"] is False, key

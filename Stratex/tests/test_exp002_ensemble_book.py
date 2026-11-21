@@ -8,8 +8,10 @@ Covers, in order:
   2. Equal-weight combination arithmetic (synthetic member modules).
   3. Fail-closed on missing / disabled / module-less members, and on
      missing context for mixed books (incl. the test-pinned XSL
-     exclusion: books 3933 and 3978 refuse until xs rotation machinery
-     exists).
+     resolution: books 3933 and 3978 evaluate now that the xs member
+     resolves via the panel context the engine passes —
+     TASK-STR-FWD-030; a synthetic module-less member still refuses
+     the whole book).
   4. Venue mapping per member (wrong venue / unknown panel refuse;
      a member not applicable to the frame's panel abstains, not fails).
   5. Stop-cap assertions (measured maxima pinned from
@@ -364,13 +366,19 @@ def test_member_without_bracket_raises(monkeypatch):
                       venue="binance_futures", state=BookState())
 
 
-def test_xs_lowvol_member_has_no_module():
+def test_xs_lowvol_member_resolves_via_panel_context():
+    # TASK-STR-FWD-030: the xs member is a real module now —
+    # strategy_xs_lowvol (TASK-STR-FWD-024) looks its symbol up in the
+    # persisted panel membership, so it needs the evaluation context
+    # the engine passes. The books no longer carry a module-less
+    # member; the execution stamps say EVALUATING.
     for key in ("ensemble_book_3933", "ensemble_book_3978"):
         xsl = [m for m in BOOKS[key].members if m.key == "xs_lowvol"]
         assert len(xsl) == 1, key
-        assert xsl[0].module is None, key
-        assert "cross-sectional" in xsl[0].unavailable_reason, key
-        assert "PENDING_XS_ROTATION_MACHINERY" in BOOKS[key].execution, key
+        assert xsl[0].module == "strategy_xs_lowvol", key
+        assert xsl[0].unavailable_reason == "", key
+        assert "PENDING_XS_ROTATION_MACHINERY" not in BOOKS[key].execution, key
+        assert BOOKS[key].execution.startswith("EVALUATING"), key
 
 
 def test_xs_books_refuse_whole_book(monkeypatch):
@@ -402,10 +410,12 @@ def test_mixed_book_without_context_refuses(monkeypatch):
 
 # Post-lane-4 partition of the real books (verified per book on main
 # c52933e1): the wave-2 member PRs merged in lane 4, so six books now
-# have every member module on main and EVALUATE; two still refuse
-# because a member is genuinely absent. The partition is pinned
-# exactly -- when a refusing book's remaining members land, move its
-# key into REAL_BOOKS_EVALUATING in the same change;
+# have every member module on main and EVALUATE. TASK-STR-FWD-030
+# landed the last two books' remaining members (DUAL 1d, SHW 1wk, ZSC
+# modules; xs_lowvol via the panel context the engine passes), so all
+# eight books evaluate and none refuses. The partition is pinned
+# exactly -- when a book's members stop landing, move its key back
+# into REAL_BOOKS_REFUSING in the same change;
 # test_real_books_partition_covers_all_books forces that deliberate
 # update instead of a silent behaviour change.
 REAL_BOOKS_EVALUATING = [
@@ -415,18 +425,15 @@ REAL_BOOKS_EVALUATING = [
     "ensemble_book_3928",  # DON (#987) + SHK k1.5 (#996) + STO fx (#994)
     "ensemble_book_3929",  # TSM (#991) + SHK k1.5 (#996) + STO fx (#994)
     "ensemble_book_3900",  # VA (#983) + SHK k1.0 (was on main) + STO crypto (#994)
+    "ensemble_book_3933",  # VA (#983) + SHK k1.5 (#996) + XSL (panel context, FWD-030)
+    "ensemble_book_3978",  # DUAL 1d + SHW 1wk + ZSC (FWD-030) + HA1d (#993) + XSL
 ]
 # key -> substring the refusal reason must name (the first member that
-# cannot be resolved, in declaration order).
-REAL_BOOKS_REFUSING = {
-    # XSL is declared module=None: a cross-sectional rotation cannot
-    # be a per-symbol member until the engine passes it panel context
-    # (books still refuse even though strategy_xs_lowvol exists).
-    "ensemble_book_3933": "xs_lowvol",
-    # DUAL 1d has no module yet (PR #991 built the 4h cell only); the
-    # SHW and ZSC modules also do not exist, and XSL is module=None.
-    "ensemble_book_3978": "strategy_tsmom2_dual_crypto_1d",
-}
+# cannot be resolved, in declaration order). Empty since FWD-030: no
+# real book refuses any more. Kept (with its test) so a future
+# refusing book is pinned deliberately instead of silently changing
+# the partition.
+REAL_BOOKS_REFUSING = {}
 
 
 def test_real_books_partition_covers_all_books():
@@ -915,27 +922,25 @@ def test_registry_book_specs_carry_lane_universe(registry):
     assert set(spec.timeframes) == {"1d", "1w"}
 
 
-def test_execute_strategy_refusal_raises_once_then_quiet(registry):
+def test_execute_strategy_evaluates_formerly_refusing_book(registry):
     # NOTE: this is the only test that calls THIS thin book module's
     # get_signal, so the first call is genuinely the first evaluation
-    # of ensemble_book_3933 in this process. Book 3933 still refuses
-    # (its xs_lowvol member is declared module=None). Before lane 4
-    # this test targeted book 3905; 3905's members have since landed
-    # and it now evaluates -- see
-    # test_execute_strategy_evaluates_landed_book.
+    # of ensemble_book_3933 in this process. Book 3933 REFUSED before
+    # TASK-STR-FWD-030 (its xs_lowvol member was declared module=None);
+    # its members have since landed and it now evaluates -- NO_SIGNAL
+    # on the flat fixture on every call, never the refusal ERROR this
+    # suite pinned for it before the fix. The raise-once-then-quiet
+    # refusal behaviour itself is still pinned by
+    # test_book_with_all_members_missing_refuses and
+    # test_book_never_partially_evaluates_with_a_missing_member.
     registry.set_demo_venues({"binance_futures", "oanda"})
     try:
-        first = registry.execute_strategy(
-            "strategy_ensemble_book_3933", _frame(), "1d", "BTCUSDT",
-            venue="binance_futures",
-        )
-        assert first["status"] == "ERROR", first
-        assert "xs_lowvol" in first["error"], first
-        second = registry.execute_strategy(
-            "strategy_ensemble_book_3933", _frame(), "1d", "BTCUSDT",
-            venue="binance_futures",
-        )
-        assert second["status"] == "NO_SIGNAL", second
+        for _ in range(2):
+            out = registry.execute_strategy(
+                "strategy_ensemble_book_3933", _frame(), "1d", "BTCUSDT",
+                venue="binance_futures",
+            )
+            assert out["status"] == "NO_SIGNAL", out
     finally:
         registry.set_demo_venues(set())
 

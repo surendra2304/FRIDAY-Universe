@@ -13,11 +13,13 @@ Per-book execution state (what still blocks the book from trading):
     an open wave-2 PR; the book refuses until those PRs merge AND the
     book module is appended to S1's STRATEX_STRATEGY_ALLOWLIST at deploy.
   * 3900: same, for its three members (shock k1.0 is already on main).
-  * 3933: blocked on xs_lowvol — a cross-sectional rotation, not a
-    per-symbol signal strategy (see XSL below); plus the wave-2 PRs.
-  * 3978: blocked on four members — DUAL 1d (no standalone module;
-    PR #991 built the 4h cell only), SHW (no 1wk module), ZSC (no
-    module), XSL (cross-sectional) — plus HA1d's wave-2 PR #993.
+  * 3933: every member module is on main (vol_adaptive #983, shock k1.5
+    #996); the xs member resolves via the panel context the engine
+    passes (TASK-STR-FWD-030) — strategy_xs_lowvol looks its symbol up
+    in the persisted panel membership (panel_signal_service.py).
+  * 3978: every member module is on main — DUAL 1d, SHW 1wk and ZSC
+    landed in TASK-STR-FWD-030, HA1d via wave-2 PR #993, and the xs
+    member resolves via panel context as above.
 
 Stop-cap overrides (FWD-012 method, measured 2026-11-18 from the judged
 signal bars via the harness fns, production Wilder ATR(14); see
@@ -39,12 +41,15 @@ signal bars via the harness fns, production Wilder ATR(14); see
 XSL (xs_lowvol lv20_r10): a CROSS-SECTIONAL rotation — rank all 30
 symbols by 20d volatility, hold the 3 lowest, rebalance every 10 bars
 (families3.py xs_lowvol_fn; bracket SL 2.0 / TP 4.0, max_bars 10). It is
-NOT a per-symbol signal strategy and cannot be a member of a per-symbol
-ensemble book without xs rotation machinery. It is therefore declared
-with module=None: the engine refuses any book containing it (whole
-book, never a subset) until that machinery is built. Its trades ARE in
-the judged pooled figures (510 trades, 275 wins) — the entry reasons
-say so.
+NOT a per-symbol signal strategy, so it has no per-symbol entry
+function of its own: the production module strategy_xs_lowvol
+(TASK-STR-FWD-024) looks its symbol up in the persisted panel
+membership (panel_signal_service.py) and therefore needs the
+evaluation context the engine passes (TASK-STR-FWD-030) — without a
+symbol it abstains. With no persisted membership (the first ranking
+has not run yet) it abstains too: an unranked panel must not trade
+its xs leg. Its trades ARE in the judged pooled figures (510 trades,
+275 wins) — the entry reasons say so.
 """
 
 from __future__ import annotations
@@ -93,11 +98,8 @@ ZSC = _m("strategy_zscore_reversion", "zscore_reversion",
          "w50_t2.5_filt", "forex28", "1d", 2.0, 2.0)
 HA1D = _m("strategy_ha_trend", "ha_trend",
           "two_candle", "crypto30", "1d", 2.0, 4.0)
-XSL = _m(None, "xs_lowvol", "lv20_r10", "crypto30", "1d", 2.0, 4.0,
-         reason="xs_lowvol is a cross-sectional rotation (rank 30 symbols "
-         "by 20d vol, hold 3 lowest, rebalance every 10 bars), not a "
-         "per-symbol signal strategy; it cannot be a member of a "
-         "per-symbol ensemble book without xs rotation machinery")
+XSL = _m("strategy_xs_lowvol", "xs_lowvol", "lv20_r10", "crypto30", "1d",
+         2.0, 4.0)
 
 BOOKS: dict[str, Book] = {
     "ensemble_book_3905": Book(
@@ -143,20 +145,18 @@ BOOKS: dict[str, Book] = {
         source="RD-025", members=(VA, SHK15, XSL),
         trades=1295, expectancy=0.009253, pf=1.4072, win_rate=0.4672,
         edge_bps=92.5, folds="4/5", max_stop_pct=0.60,
-        execution="PENDING_XS_ROTATION_MACHINERY: xs_lowvol (cross-sectional; "
-        "not a per-symbol member) + PENDING_WAVE_PR_MERGE: #983 (vol_adaptive), "
-        "#996 (shock k1.5)",
+        execution="EVALUATING (TASK-STR-FWD-030): every member module on "
+        "main; xs_lowvol resolves via the panel context the engine "
+        "passes. Book module allowlist at deploy.",
     ),
     "ensemble_book_3978": Book(
         key="ensemble_book_3978", trial=3978, verdict="PROVEN",
         source="RD-025", members=(DUAL_1D, SHW, ZSC, HA1D, XSL),
         trades=1698, expectancy=0.004728, pf=1.3262, win_rate=0.4441,
         edge_bps=47.3, folds="4/5", max_stop_pct=0.90,
-        execution="PENDING_MEMBER_MODULES: strategy_tsmom2_dual_crypto_1d "
-        "(DUAL 1d cell; PR #991 built the 4h cell only), "
-        "strategy_shock_breakout_1wk (SHW), strategy_zscore_reversion (ZSC) + "
-        "PENDING_XS_ROTATION_MACHINERY: xs_lowvol + PENDING_WAVE_PR_MERGE: "
-        "#993 (ha_trend)",
+        execution="EVALUATING (TASK-STR-FWD-030): DUAL 1d, SHW 1wk and ZSC "
+        "modules landed; xs_lowvol resolves via the panel context the "
+        "engine passes. Book module allowlist at deploy.",
     ),
     "ensemble_book_3900": Book(
         key="ensemble_book_3900", trial=3900, verdict="PROVEN",
