@@ -1399,7 +1399,10 @@ def _start_sensitivity():
     (TASK-VOI-018; default reverted by TASK-VOI-024). Pure —
     unit-tested.
 
-    Default HIGH — the pre-VOI-018 (VOI-012) value (env
+    Default is the single shared default with the CLI/desktop session
+    path (TASK-VOI-025): config.py's
+    VOICE_VAD_START_SENSITIVITY_DEFAULT, currently HIGH — the
+    pre-VOI-018 (VOI-012) value (env
     FRIDAY_VOICE_AAD_START_SENSITIVITY=low selects the VOI-018
     value explicitly): VOI-018 shipped LOW so steady background
     noise (a fan) would not register as a user turn and interrupt
@@ -1414,7 +1417,7 @@ def _start_sensitivity():
     precautionary default again; LOW stays one env var away if
     the fan defect returns with transcripts proven healthy.
     Any value other than "low" (including junk) resolves to
-    HIGH — the default side. Returns None when the genai SDK
+    the shared default. Returns None when the genai SDK
     lacks the sensitivity enum (the caller then builds no
     config at all).
     """
@@ -1422,6 +1425,14 @@ def _start_sensitivity():
         return None
     raw = (os.getenv("FRIDAY_VOICE_AAD_START_SENSITIVITY") or "").strip().lower()
     if raw == "low":
+        return genai_types.StartSensitivity.START_SENSITIVITY_LOW
+    if raw == "high":
+        return genai_types.StartSensitivity.START_SENSITIVITY_HIGH
+    try:
+        from friday.core.config import VOICE_VAD_START_SENSITIVITY_DEFAULT
+    except Exception:
+        VOICE_VAD_START_SENSITIVITY_DEFAULT = "HIGH"
+    if str(VOICE_VAD_START_SENSITIVITY_DEFAULT).strip().upper() == "LOW":
         return genai_types.StartSensitivity.START_SENSITIVITY_LOW
     return genai_types.StartSensitivity.START_SENSITIVITY_HIGH
 

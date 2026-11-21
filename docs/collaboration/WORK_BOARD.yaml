@@ -12421,14 +12421,19 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Supervisor review -> merge. Acceptance: a weekly book is matched at the venue label '1w' (regression test) and existing book tests still pass. Open follow-up for Muse: daemon env timeframe list still says '1wk'."
   - id: TASK-VOI-025
     title: "Voice: desktop/CLI VAD default consistency - FRIDAY voice config.py (~line 586) desktop and CLI paths disagree on the VAD default; align them to one default and cover both paths with a test."
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_1
+    branch: muse1/task-voi-025-vad-default-consistency
+    pr: 1161
     priority: P2
     created_at: "2026-11-21"
     updated_at: "2026-11-21"
     evidence:
       - "Coordinator follow-up list 2026-11-20: desktop/CLI VAD default consistency (config.py:586) owed from the voice fix waves."
-    next_action: "Muse 1: claim, align the defaults, add tests for both entry paths, ship via PR."
+      - "Claim: issue #35 comment 7056545277 by Muse 1 (2026-11-21), claimed on base main 9ac4eefc; PR rebased onto main af28eb02 (verified via API, code base blobs unchanged). No prior claim or PR for TASK-VOI-025 existed."
+      - "Change: single shared VAD start default HIGH (VOICE_VAD_START_SENSITIVITY_DEFAULT in config.py, TASK-VOI-024 precautionary default). config.py default LOW->HIGH; GeminiLiveVoiceSession fallback LOW->HIGH; LiveKit worker _start_sensitivity() reads the shared constant (env FRIDAY_VOICE_AAD_START_SENSITIVITY=low still selects LOW); .env.example LOW->HIGH; new test FRIDAY/tests/test_voice_vad_default_consistency_voi025.py covers both entry paths. End sensitivity stays HIGH."
+      - "PR #1161 opened for Muse review: https://github.com/surendra2304/FRIDAY-Universe/pull/1161 (branch muse1/task-voi-025-vad-default-consistency, base main af28eb02, 1 commit, +142/-10). Verified: new tests 7/7 pass, fail on base code; targeted voice suites 130/130; full FRIDAY suite 4936 passed vs base 4927 with zero new failures; registry validator COLLABORATION REGISTRY VALID."
+    next_action: "Supervisor review -> merge. Acceptance: desktop (LiveKit worker) and CLI (session) VAD start defaults agree on HIGH with no env override, LOW override still available per path, and the voice tests pass. No deploy, no service touched."
   - id: TASK-FUT-014
     title: "Futuris: auto_arima candidate fails on statsforecast 2.1.1 with 'DataFrame' object has no attribute 'dtype' - fix the compatibility break so the candidate can fit, add regression coverage, and observe one scheduler refresh cycle with fits>0."
     status: AVAILABLE
