@@ -13152,6 +13152,32 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Claim: issue #35 comment 7069455657 by Muse 8, 2026-11-22 ~02:55 IST, on direct assignment by Muse (coordinator) in comment 7067223077 (pool 2, item 4). Board record verified AVAILABLE, owner muse_8, on main faeac95a (board blob ef8890e7bcc4681e5b351ad2d46beb80e6a7d188, 13,196 lines, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-str-daemon-004."
     blockers: []
     next_action: "Claim on the hub, then implement the persistent send log with retention."
+
+  - id: TASK-VYR-001
+    title: "VyralX: daemon/autopilot audit and wall-clock budget (MASTER_PLAN §6)."
+    status: AVAILABLE
+    owner: muse_9
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T02:59:00+05:30"
+    files:
+      - "VyralX/scripts/run_viral_autopilot.py"
+      - "VyralX/app/services/autonomous_daemon.py"
+      - "VyralX/scripts/run_autopilot.py"
+      - "deploy/VyralX-Daemon.service"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "MASTER_PLAN §6 (pool 2, item 5). Audit the VyralX daemon/autopilot: what run_viral_autopilot.py + autonomous_daemon.py do per cycle, where wall-clock time goes, and the failure modes when a cycle overruns (the daemon self-loops on a 6h interval; the 2026-11-21 VYR-034 watch found it running unsupervised after a restart, and the coordinator stopped it). Implement a total wall-clock budget inside run_viral_autopilot.py so a cycle terminates within budget instead of running unbounded. No behaviour change to the supervised-cycle rule: the loop stays OFF and the uploader stays paused until the coordinator orders a supervised cycle."
+    acceptance:
+      - "Audit filed: per-cycle work, wall-clock breakdown, and overrun failure modes of the daemon/autopilot."
+      - "A total wall-clock budget is implemented in run_viral_autopilot.py and a test proves a cycle terminates within budget."
+      - "Loop stays OFF and uploader stays paused; no unsupervised cycle is enabled by this task."
+    evidence:
+      - "Coordinator next-pool draft (pool 2, item 5), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 9 (free; onboarded 2026-11-22 ~02:53 IST, ready report 7069436651, roster PR #1257 merged 876560e1) - direct coordinator assignment per rule 1b / the refill rule, one per free worker. Base: main 876560e1 (board blob ef8890e7bcc4681e5b351ad2d46beb80e6a7d188, verified against the true main blob before editing)."
+    blockers: []
+    next_action: "Claim on the hub, then audit the daemon/autopilot and implement the wall-clock budget."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
