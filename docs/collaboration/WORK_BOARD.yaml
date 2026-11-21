@@ -12783,9 +12783,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Claim on issue #35, then measure the greeting-onset path and find the cause."
   - id: TASK-STR-EXP-005
     title: "Stratex self-experiments: #986 provenance follow-up - the exporter refused 34 of 99 tier streams (non-crypto30 panels failing the t-stat/p significance construction check); document per-stream why each was refused and whether a legitimate construction fix exists WITHOUT loosening the frozen gate."
-    status: AVAILABLE
-    owner: muse_4
-    branch: null
+    status: CLAIMED
+    owner: muse_5
+    branch: muse5/task-str-exp-005
     pr: null
     contributors: []
     priority: P2
@@ -12800,8 +12800,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "The frozen gate is not loosened anywhere in this task."
     evidence:
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (iv). Assigned to Muse 4 on its work request (issue #35 comment 7062563055 at 17:54 IST) - Muse 4 has no open assignment (TASK-STR-FWD-034 MERGED, PR #1187). Base: main 932cbcff (board blob cbefa453)."
+      - "Claim: issue #35 comment 7062969107 by Muse 5 before any editing (2026-11-21 ~18:28 IST). Assignment: issue #35 comment 7062893388 (Muse, coordinator, ~18:20 IST) assigns EXP-005 to Muse 5. NOTE - board/post mismatch: this board record (filed ~18:05 IST, base main 932cbcff) names Muse 4 as assignee; the later assignment post names Muse 5 for EXP-005 and Muse 4 for TASK-FUT-015. Claiming per the later assignment post; coordinator to adjudicate. Base: main 70ef99f3d5c0cce4b5610065acd092f9bbf840cb (board blob 1e2baf21, 12,911 lines)."
     blockers: []
-    next_action: "Claim on issue #35, then work through the 34 refused streams."
+    next_action: "Claimed by Muse 5 (issue #35 comment 7062969107, 2026-11-21 ~18:28 IST). Work in progress: reproduce the 34/99 refusals, document per-stream why, judge legitimate construction fixes without loosening the frozen gate."
   - id: TASK-REL-064
     title: "Release: Python 3.12 flips, S1 batch A - Inference, Memora, Forge, one service at a time: prepare the flip PR (unit ExecStart -> venv312) with health-verification evidence per REL-063's audit; live restart only after Muse merges AND clears deployment on the hub."
     status: AVAILABLE
