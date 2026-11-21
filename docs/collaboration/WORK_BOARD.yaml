@@ -12914,14 +12914,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-DOC-001
     title: "Docs: sync repo docs/collaboration/ARCHITECTURE.md to the current design (15-minute ask-cycle + status rule + wrap-up rule, not the retired polling design)."
-    status: CLAIMED
+    status: MERGED
     owner: muse_7
     branch: muse7/task-doc-001-arch-sync
-    pr: null
+    pr: 1226
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T20:36:00+05:30"
+    updated_at: "2026-11-21T21:37:44+05:30"
     files:
       - "docs/collaboration/ARCHITECTURE.md"
     description: "Standing backlog item (x), coordinator refill pool 2026-11-21. Sync repo docs/collaboration/ARCHITECTURE.md to the current design: the 15-minute ask-cycle (a free worker asks for work every 15 minutes), the status rule (every Muse chat posts its state on issue #35 at every change and at least hourly while working), and the wrap-up rule (exhausted weekly usage wraps up to the board + hub and the task is reassigned) - not the retired polling design. The AUTH-PREP.md half of pool item (x) is coordinator-side (Pepperstone app retargeted to the new 'Stratex Demo', ID 49885, by the coordinator in this run); this task is the ARCHITECTURE.md sync only."
@@ -12931,8 +12931,49 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (x). Assigned to Muse 7 (free since TASK-STR-FWD-035 MERGED, PR #1218) - direct coordinator assignment per the refill rule, one per free worker. Base: main d1401014 (board blob 33139c12)."
       - "Claim: issue #35 comment 7064532572 by Muse 7 before any editing. Base: main b43f6a51 (board blob 44e2b808, verified against the git blobs API before editing). Assignment: issue #35 comment 7063970451 (Muse, coordinator ~19:50 IST). Work-request task muse7-work-request stays cancelled while assigned."
+      - "MERGED 2026-11-21 ~21:31 IST: coordinator reviewed work PR #1226 in full (1 file, docs/collaboration/ARCHITECTURE.md +24/-15, 251 -> 260 lines; zero 'poll' traces and zero 'every-5-minutes' remnants in the head file, verified on head blob 777893e0; section 6 15-minute ask-cycle + status rule + wrap-up rule all present) and merged it (merge commit 469b47fb, verified as main HEAD via ls-remote). CI 9/9 green on head 79749e15. The work PR carried no board hunk (record stayed CLAIMED); this board PR flips it to MERGED. The AUTH-PREP.md half of pool item (x) is coordinator-side (done 2026-11-21 ~19:50 IST)."
     blockers: []
-    next_action: "Claimed 2026-11-21 (issue #35 comment 7064532572). Syncing ARCHITECTURE.md to the current design and shipping via PR."
+    next_action: "None - closed. ARCHITECTURE.md now carries the 15-minute ask-cycle, status rule and wrap-up rule."
+  - id: TASK-STR-U1-001
+    title: "Stratex: AWS U1 move preparation - inventory everything the Stratex move from S1 to FRIDAY-Universe-1 needs (env, state, allowlist, credentials references) and file the cutover checklist as a PR; do NOT cut over without Muse's hub clearance."
+    status: AVAILABLE
+    owner: muse_7
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-21"
+    updated_at: "2026-11-21T21:37:44+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "Standing backlog item (xi), coordinator refill pool 2026-11-21. Stratex move from S1 to FRIDAY-Universe-1 (AWS): inventory everything the move needs - environment, state, allowlist, credentials references - and file the cutover checklist as a PR. Do NOT cut over without Muse's hub clearance."
+    acceptance:
+      - "Cutover checklist PR filed, covering env, state, allowlist and credentials references for the Stratex S1 -> U1 move."
+      - "No cutover executed without Muse's hub clearance."
+    evidence:
+      - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (xi). Assigned to Muse 7 (free since TASK-DOC-001 MERGED, PR #1226) - direct coordinator assignment per the refill rule, one per free worker. Assignment: issue #35 comment 7065396261 (Muse, coordinator ~21:35 IST). New series (no STR-U1 task existed). Base: main 80df3d60 (board blob 938477fa, verified against the true main blob before editing)."
+    blockers: []
+    next_action: "Claim on the hub before any editing, then inventory the U1 move needs and file the cutover checklist PR."
+  - id: TASK-INT-017
+    title: "IntelX: TASK-INT-016 production proof - observe one real fast-lane alert end-to-end (kill switch stays OFF); if none occurs naturally, file the armed-state evidence and the wait state."
+    status: AVAILABLE
+    owner: muse_3
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-21"
+    updated_at: "2026-11-21T21:37:44+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "Standing backlog item (xii), coordinator refill pool 2026-11-21. Production proof for the merged TASK-INT-016 instant-alert fast lane (PR #1068): observe one real fast-lane alert end-to-end with the kill switch OFF. If none occurs naturally, file the armed-state evidence and the wait state."
+    acceptance:
+      - "One real fast-lane alert observed end-to-end and filed with evidence, or the armed-state evidence + wait state filed if none occurs naturally."
+      - "Kill switch stays OFF throughout."
+    evidence:
+      - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (xii). Assigned to Muse 3 (free since TASK-REL-065 MERGED, PR #1225) - direct coordinator assignment per the refill rule, one per free worker. Assignment: issue #35 comment 7065396261 (Muse, coordinator ~21:35 IST). TASK-INT-016 itself is already MERGED (PR #1068); this is the production-proof follow-up, next free INT id 017. Base: main 80df3d60 (board blob 938477fa, verified against the true main blob before editing). Batch-B deploy clearance is NOT given yet - it waits for Muse 2's Inference repoint verification (batch A)."
+    blockers: []
+    next_action: "Claim on the hub before any editing, then observe the fast lane for one real alert end-to-end."
 
 
 task_id_warnings:
