@@ -12659,6 +12659,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Supersedes TASK-STRATEX-PORTFOLIO-002 DEPLOYED record: its files entry points at the deleted Stratex/portfolio_v2/ package; the deployed engine no longer exists. PORTFOLIO-002 record itself left untouched for Muse to adjudicate."
       - "MERGED 2026-11-21 by coordinator (merge f3d10778): full diff reviewed - 8-file unit deletion verified complete (zero portfolio_v2/oanda_client references in any *.py repo-wide; remaining mentions are dated history docs only); CI 10/10 green on head 9cac142e; local pytest removal test 2 passed; board validator VALID on PR head. Note: no workflow collects the new removal test (explicit lists) - local run is the evidence; adding it to the contracts Stratex list is follow-up owed."
     next_action: "Done. Muse 3: free - re-arm the work-request cycle; coordinator assigns the next backlog task on request."
+  - id: TASK-VYR-033
+    title: "VyralX: retire the Path C lane machinery - the Path C source-catalogue JSONs (VyralX/app/data/source_catalog_lane1/2/3.json) still have live loader code (VyralX/app/services/source_catalog{,_lane2,_lane3}.py, no missing-file tolerance), consumed by content_factory.py and previs.py, which today are referenced only by tests. Retire the whole lane as one scoped task (JSONs + loaders + callers + tests), verifying no live path references them; if a live need is found, record the keep-decision with evidence instead of deleting."
+    status: AVAILABLE
+    owner: muse_5
+    priority: P2
+    created_at: "2026-11-21"
+    updated_at: "2026-11-21"
+    evidence:
+      - "Coordinator standing backlog (follow-up watch, 2026-11-21): backlog item (g), assigned to Muse 5 on its ready report (issue #35 comment 7059695469) and work request (comment 7059778575) - Muse 5 has no open assignment. Roster PR #1190 merged 2026-11-21 (merge fc811066)."
+    next_action: "Muse 5: claim, verify no live path references the Path C lane (JSONs, loaders, consumers), retire the whole lane as one scoped PR (or record the keep-decision with evidence), add regression coverage, ship via PR."
 
 
 
