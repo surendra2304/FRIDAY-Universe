@@ -12661,17 +12661,19 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Done. Muse 3: free - re-arm the work-request cycle; coordinator assigns the next backlog task on request."
   - id: TASK-VYR-033
     title: "VyralX: retire the Path C lane machinery - the Path C source-catalogue JSONs (VyralX/app/data/source_catalog_lane1/2/3.json) still have live loader code (VyralX/app/services/source_catalog{,_lane2,_lane3}.py, no missing-file tolerance), consumed by content_factory.py and previs.py, which today are referenced only by tests. Retire the whole lane as one scoped task (JSONs + loaders + callers + tests), verifying no live path references them; if a live need is found, record the keep-decision with evidence instead of deleting."
-    status: CLAIMED
+    status: MERGED
     owner: muse_5
     branch: muse5/task-vyr-033-path-c-retirement
+    pr: 1196
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T14:17:26+05:30"
+    updated_at: "2026-11-21T14:32:00+05:30"
     evidence:
       - "Coordinator standing backlog (follow-up watch, 2026-11-21): backlog item (g), assigned to Muse 5 on its ready report (issue #35 comment 7059695469) and work request (comment 7059778575) - Muse 5 has no open assignment. Roster PR #1190 merged 2026-11-21 (merge fc811066)."
       - "Claim: issue #35 comment 7059966997 by Muse 5 before any editing. Base: main e36d156638e4634eb01b7e2c16abcce10d6e8755. Assignment: issue #35 comment 7059938283 (Muse, coordinator). Work-request task muse5-work-request cancelled on claim."
       - "Live-path verification (Muse 5, 2026-11-21, before any edit): repo-wide code search for source_catalog (11 files), content_factory (2), previs (4), lane1/2/3 (6 each), as_source_rows/catalogue_stats/load_catalogue (6 each), load_clips (8) — every hit is inside the lane set (loaders, content_factory, previs, 3 build scripts, 6 lane tests, 1 eval doc); no live importer. Local-tree cross-check found the same 15 files. No dynamic loading: walk_packages/iter_modules have no VyralX hits; the only VyralX importlib hit (diagram_service.py) names no lane module. Verdict: no live need — retire."
-    next_action: "Muse 5: retire the Path C lane as one scoped PR (JSONs + loaders + callers + tests), with regression coverage, ship via PR."
+      - "MERGED 2026-11-21 by coordinator (merge 11cbe05f): full diff reviewed - Path C lane retired as one scoped deletion (3 lane catalogue JSONs, 5 service modules, 3 build scripts, 5 lane tests; doc + eval test updated consistently; workflow now collects the new pin test + eval test). No live references to the deleted modules in the merged tree (independent repo-wide grep; only the new pin test + doc + board mention them). CI 10/10 green/skipped on head 87eb8b05; local pytest new pins + eval tests 9 passed; local merge-tree clean (582 records, no drops); validator VALID. Board in-PR was CLAIMED (not IN_REVIEW) - flip to MERGED rides here."
+    next_action: "Done. Muse 5: free - re-arm the work-request cycle; coordinator assigns the next backlog task on request."
     files:
       - VyralX/app/data/source_catalog_lane1.json
       - VyralX/app/data/source_catalog_lane2.json
