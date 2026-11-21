@@ -13018,14 +13018,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Rerun the post-#1066 routing probes and file the results. Work PR to follow."
   - id: TASK-FRD-032
     title: "FRIDAY: FRD-025 drilled-ALERT proof post-#1071 - verify a drilled alert reaches Telegram exactly once."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_7
     branch: muse7/task-frd-032-drilled-alert-proof
     pr: 1265
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-22T03:37:54+05:30"
+    updated_at: "2026-11-22T03:53:00+05:30"
     files:
       - "FRIDAY/docs/FRD-032-DRILLED-ALERT-PROOF.md"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -13033,11 +13033,12 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     acceptance:
       - "One drilled alert observed reaching Telegram exactly once, filed with evidence."
     evidence:
+      - "MERGED 2026-11-22: PR #1265 merged (merge 1832d072, verified as main HEAD via ls-remote). Drill verified FIRST-HAND by coordinator against the live S1 gate state file (FRIDAY/.data/owner_notify/state.json, read 03:50 IST): day 2026-11-22, day_count 1, exactly one key drill:frd-032, one text hash, one last_sent_at, all at the drill epoch 1795298698.61 — byte-identical to the filed evidence. CI 9/9 green on head d5e73111; merge-tree clean; board diff only this record."
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (xiv). FRD-025 itself is already MERGED (PR #1071); this production-proof follow-up takes the next free FRD id 032. Assigned to Muse 7 (free since TASK-STR-U1-001 MERGED, PR #1235) - direct coordinator assignment per the refill rule, one per free worker. Assignment: issue #35 comment 7066153025 (Muse, coordinator ~22:31 IST). Base: main dd7ed4ef (board blob 73a605bb724b4cf552d1fe3536e6e3d80b08751f, verified against the true main blob before editing)."
       - "Claim: issue #35 comment 7066903120 by Muse 7, 2026-11-21 ~23:28 IST, on direct assignment by Muse (coordinator) in comment 7066153025. Board record verified AVAILABLE, owner muse_7, on main 909f00de (board blob 92e37089, verified against the git blobs API before editing). No prior claim, branch or PR. Found by the hourly self-check 23:25 IST (STR-U1-001 MERGED, PR #1235). Work-request task muse7-work-request stays cancelled while assigned."
       - "Work: drill run once 2026-11-22 03:34:58 IST (event key drill:frd-032), NotifyResult.SENT; gate state after: day 2026-11-22, day_count 1, one key/text/last_sent_at at the drill epoch. Evidence: FRIDAY/docs/FRD-032-DRILLED-ALERT-PROOF.md (incl. the limitation that no Telegram message_id is captured server-side). Work PR #1265 (https://github.com/surendra2304/FRIDAY-Universe/pull/1265), branch muse7/task-frd-032-drilled-alert-proof, head cc951b30. Direction: coordinator re-issue 7069303518, endorsed in coordinator watch 7069505715."
     blockers: []
-    next_action: "Awaiting Muse review/merge of work PR #1265."
+    next_action: "MERGED. Drill proof filed; the exactly-once evidence was verified first-hand by the coordinator against the live S1 gate state. Telegram-side receipt is owner-visible."
   - id: TASK-STR-DAEMON-001
     title: "Stratex: daemon Telegram triple-send watch - root-cause any recurrence, otherwise file the monitoring evidence for the silent period since 2026-11-19."
     status: MERGED
@@ -13209,6 +13210,32 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator next-pool draft (pool 2, item 7), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 4 (free; TASK-STR-DAEMON-003 MERGED, PR #1262, merge 7b245061) - direct coordinator assignment per the refill rule, one per free worker. Base: main 7b245061 (board blob a89f40e8, verified against the true main blob before editing)."
     blockers: []
     next_action: "Claim on the hub, then audit the provider key pool (names and counts only)."
+  - id: TASK-INF-LLM-002
+    title: "Provider failover drill under simulated outage (MASTER_PLAN §6)."
+    status: AVAILABLE
+    owner: muse_2
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T03:53:00+05:30"
+    files:
+      - "Inference/app/inference_runtime/provider_selection.py"
+      - "Inference/app/providers/failover_log.py"
+      - "Inference/app/providers/gateway.py"
+      - "Inference/app/providers/gateway_litellm.py"
+      - "Inference/app/providers/base.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "MASTER_PLAN §6 standing backlog (pool 2, item 8). Run a provider failover drill under a simulated outage: take the primary provider down (simulated), verify Inference fails over to the next provider, and file the results. No live provider credentials are touched; the outage is simulated."
+    acceptance:
+      - "Failover drill runs under a simulated outage and the result (failover path, latency, errors) is filed."
+      - "No real provider outage is caused and no key value is read, printed, logged, or stored."
+      - "Gaps found are filed with the exact file/line and the fix or follow-up."
+    evidence:
+      - "Coordinator next-pool draft (pool 2, item 8), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 2 (free; TASK-STR-DAEMON-002 MERGED, PR #1255, merge 5d2fdc70; free-agent status post 7069988931, 03:40 IST) - direct coordinator assignment per rule 1b / the refill rule, one per free worker. Base: main b432050f (board blob 857809c2, verified against the true main blob before editing)."
+    blockers: []
+    next_action: "Claim on the hub, then run the failover drill under a simulated outage."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
