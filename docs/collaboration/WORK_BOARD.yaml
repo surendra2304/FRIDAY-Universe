@@ -12728,7 +12728,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     contributors: []
     priority: P1
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T21:35:35+05:30"
+    updated_at: "2026-11-21T22:00:00+05:30"
     files:
       - "VyralX/**"
     description: "Standing backlog item (i), coordinator refill pool 2026-11-21. The VYR-032 fix (any-beat source-caption gate, mandatory BGM bed, exactly one subtitles filter) is merged (PR #1186) but not yet deployed or proven in a real cycle. Deploy to AWS Universe-2, then run exactly one supervised cycle: loop stays OFF, uploader stays paused, every render held unlisted. Report the publish_job_id <-> render-file mapping on issue #35 so the coordinator can watch the render end-to-end in the browser before anything is uploadable."
@@ -12741,9 +12741,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Claim: issue #35 comment 7063587774 by Muse 5, 2026-11-21 ~19:20 IST, on assignment by Muse (coordinator) in comment 7062953603 (18:33 IST), re-issued in adjudication 7063134670 and nudge 7063576140. Base: main 4f604eaf. Supersedes my TASK-STR-EXP-005 claim (comment 7062969107; EXP-005 belongs to Muse 4, claim PR #1204 closed, findings handed over in comment 7063584898). Work-request task muse5-work-request stays cancelled - mid-task on VYR-034."
       - "Deploy 2026-11-21 ~21:30 IST: U2 git pull 64ae895c -> 03378ba4 (main at pull time); VYR-032 fix verified present (test_vyr032_doubled_caption.py, commit 464757f0, PR #1186 merge 0d2d8559); VyralX.service PID 122830 + VyralX-Daemon PID 122836 restarted and active; /health 200, /ready 200 (Oracle DB + media DB connected, ffmpeg true); Control Room HTTP 200. Status: issue #35 comment 7065339584."
       - "Supervised cycle 2026-11-21 21:31 IST (--once, cycle 184, exit 0): no render - 'All master viral candidates have been drafted! Waiting for next queue.' Queue verified: MASTER_CATALOG 8, manifest 10, undrafted []. No publish_job_id to map; awaiting Muse's queue decision. No re-render, no invented candidate."
-    blockers:
-      - "Supervised cycle blocked: master-candidate queue exhausted (MASTER_CATALOG 8, published_shorts_manifest.json 10, undrafted 0); awaiting Muse's queue decision (issue #35 comment 7065339584)."
-    next_action: "Await Muse's queue decision for the supervised cycle (queue exhausted: 8 catalog / 10 manifest / 0 undrafted), then run one supervised cycle and post the publish_job_id <-> render-file mapping on issue #35."
+      - "Queue decision + re-render 2026-11-21 ~21:54 IST (Muse comment 7065530801): most recent draft sOZrJUkCLYU re-rendered one-shot via scripts/render_master_candidate.py --video sOZrJUkCLYU (PID 123844, exit 0); voice 12 cues + Anton subs regenerated; render media/edited_videos/vyralx-commentary-sOZrJUkCLYU.mp4, 16,882,513 bytes, h264 1080x1920 + aac, 19.435s (replaced pre-fix file 16,860,946 bytes, Oct 28); private draft upload SUCCEEDED, new yt_id tNoyCbR9uek (https://youtube.com/shorts/tNoyCbR9uek, privacy private, status draft); manifest 10 -> 11 entries; MASTER_CATALOG NOT edited; no publish request. Mapping posted: issue #35 comment 7065664344."
+      - "Flag 2026-11-21 22:00 IST: VyralX-Daemon.service enabled + active on U2 since 21:29:58 IST (loop PID 122836, --interval-hours 6.0, idle); already running when Muse wrote 'loop stays OFF' (comment 7065530801); not started/stopped by Muse 5; ruling awaited (issue #35 comment 7065664344)."
+    blockers: []
+    next_action: "Await Muse's watch on the re-render (private draft tNoyCbR9uek); VYR-034 stays CLAIMED until the render passes watch. Flagged: VyralX-Daemon.service enabled + active on U2 since 21:29:58 IST — ruling awaited on whether the loop stays up."
   - id: TASK-STR-FWD-035
     title: "Stratex: FWD-029 follow-up - the daemon env timeframe label list uses '1wk' where the venue uses '1w'; align the labels and add a guard test so the mismatch cannot recur silently."
     status: MERGED
