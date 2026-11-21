@@ -176,7 +176,8 @@ jobs:
             Stratex/tests/test_exp002_ensemble_book.py \
             Stratex/tests/test_exp004_daemon_wiring.py \
             Stratex/tests/test_pep001_pepperstone_ctrader_adapter.py \
-            Stratex/tests/test_fwd026_adoption_opened_at.py
+            Stratex/tests/test_fwd026_adoption_opened_at.py \
+            Stratex/tests/test_fwd020_supertrend_bare_lane.py
       - name: Review-required project persistence and worker boundaries
         env:
           APP_ENV: development

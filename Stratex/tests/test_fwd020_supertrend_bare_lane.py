@@ -301,7 +301,16 @@ def test_supertrend_bare_judged_constants_verbatim():
     assert stb._JUDGED_OOS_WIN_RATE_PRIOR == pytest.approx(0.266)
     assert stb._JUDGED_RR_RATIO == pytest.approx(3.0)
     assert stb.MIN_BRACKET_PCT == pytest.approx(0.0030)
-    assert stb.BLOCK_SHORTS_IN_BULL_REGIME is True  # judged default env
+    # Env-derived expectation (TASK-STR-FWD-034): the flag is read from
+    # BLOCK_SHORTS_IN_BULL_REGIME at import time in both the module and
+    # the transcription above; assert against the same derivation rather
+    # than assuming the variable is unset in the test environment.
+    _expected_block = (
+        os.getenv("BLOCK_SHORTS_IN_BULL_REGIME", "true").strip().lower()
+        in ("1", "true", "yes", "on")
+    )
+    assert stb.BLOCK_SHORTS_IN_BULL_REGIME is _expected_block
+    assert _T_BLOCK_SHORTS is _expected_block
     # The lane's bindings come from SUPERTREND_BARE_STRATEGY.
     assert stb.TIMEFRAME == "4h"
     assert stb.BAR_SECONDS == 4 * 3600

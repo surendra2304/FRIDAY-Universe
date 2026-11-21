@@ -115,14 +115,20 @@ def _supertrend_frame(ema_50, ema_200, close, *, bearish=False):
 
 
 def test_supertrend_shorts_blocked_in_bull_regime():
-    """Batch-2: EMA50 > EMA200 (bull regime) blocks the bearish-flip short."""
-    import strategy_supertrend
+    """Batch-2: EMA50 > EMA200 (bull regime) blocks the bearish-flip short.
+
+    TASK-STR-FWD-034 hygiene: the original target, strategy_supertrend,
+    was deleted by TASK-STR-CLEANUP-001; its judged signal code survives
+    verbatim in strategy_supertrend_bare (TASK-STR-FWD-020), whose
+    judged_get_signal keeps the deleted module's direct SignalResult
+    contract. The gate is exercised there now."""
+    import strategy_supertrend_bare as stb
 
     # close < ema_200 (pullback dip) but ema_50 still above ema_200 (bull):
     # the old code would short this pullback; the regime gate must not.
     df = _supertrend_frame(ema_50=105.0, ema_200=100.0, close=99.0, bearish=True)
-    assert strategy_supertrend.BLOCK_SHORTS_IN_BULL_REGIME is True
-    res = strategy_supertrend.get_signal(df)
+    assert stb.BLOCK_SHORTS_IN_BULL_REGIME is True
+    res = stb.judged_get_signal(df)
     assert res.side is None, "shorts must be blocked while EMA50 > EMA200 (bull regime)"
 
 
@@ -131,18 +137,18 @@ def test_supertrend_shorts_allowed_in_full_bear_regime(monkeypatch):
     flag, not a hard removal)."""
     import pandas as pd  # noqa: F401
     monkeypatch.setenv("BLOCK_SHORTS_IN_BULL_REGIME", "false")
-    import strategy_supertrend
+    import strategy_supertrend_bare as stb
     import importlib
-    importlib.reload(strategy_supertrend)
+    importlib.reload(stb)
     try:
-        assert strategy_supertrend.BLOCK_SHORTS_IN_BULL_REGIME is False
+        assert stb.BLOCK_SHORTS_IN_BULL_REGIME is False
         df = _supertrend_frame(ema_50=95.0, ema_200=100.0, close=99.0, bearish=True)
-        res = strategy_supertrend.get_signal(df)
+        res = stb.judged_get_signal(df)
         # Full bear regime (close<EMA200, EMA50<EMA200): the flip short fires.
         assert res.side == "SELL"
     finally:
         monkeypatch.delenv("BLOCK_SHORTS_IN_BULL_REGIME", raising=False)
-        importlib.reload(strategy_supertrend)
+        importlib.reload(stb)
 
 
 # ---------------------------------------------------------------------------
