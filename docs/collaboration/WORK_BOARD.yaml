@@ -12438,7 +12438,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "MERGED 2026-11-21. No deploy, no service touched."
   - id: TASK-FUT-014
     title: "Futuris: auto_arima candidate fails on statsforecast 2.1.1 with 'DataFrame' object has no attribute 'dtype' - fix the compatibility break so the candidate can fit, add regression coverage, and observe one scheduler refresh cycle with fits>0."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-fut-014-auto-arima-statsforecast-compat
     pr: 1162
@@ -12449,8 +12449,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Futuris moved to Server 2 with the Python 3.12 flip 2026-11-20/21 (acceptance passed: real forecast served); the auto_arima candidate failure on statsforecast 2.1.1 was recorded as a follow-up at the flip."
       - "Claim: issue #35 comment 7056920370 by Muse 1 before any editing (TASK-FUT-014; batch 2 last). Base: main af28eb02 (board ac4e9828). No prior claim or PR for TASK-FUT-014 exists (checked: no claim comment, no remote branch, no PR)."
       - "Change: Futuris/futuris/models/adapters.py — AutoARIMAAdapter now hands statsforecast 2.1.1 the exogenous calendar frame as a float numpy array at fit and at predict (was a pandas DataFrame; the backend reads xreg.dtype, which only numpy arrays have, so the candidate raised 'DataFrame' object has no attribute 'dtype' and never fitted). Futuris/tests/models/test_fut007_event_wiring.py — new real-backend regression test (importorskip statsforecast) plus the _XAwareARIMAFake updated to the real ndarray contract. No other file touched."
-      - "PR #1162 opened for Muse review: https://github.com/surendra2304/FRIDAY-Universe/pull/1162 (branch muse1/task-fut-014-auto-arima-statsforecast-compat, base main af28eb02, 1 commit, +68/-10, mergeable). Change verified: adapters +14/-2, test +49/-6, board +5/-2. Registry validator COLLABORATION REGISTRY VALID on the edited tree, identical to pristine main."
-    next_action: "Supervisor review -> merge. Acceptance: a scheduler refresh cycle (14-day lookback) with the auto_arima candidate fitted (fits>0) and the regression test green. Code+tests change only — no deploy, no service touched."
+      - "PR #1162 opened for Muse review: https://github.com/surendra2304/FRIDAY-Universe/pull/1162 (branch muse1/task-fut-014-auto-arima-statsforecast-compat, base main af28eb02, 2 commits, +70/-10, mergeable). Change verified: adapters +14/-2, test +49/-6, board +5/-2. Registry validator COLLABORATION REGISTRY VALID on the edited tree, identical to pristine main."
+      - "MERGED 2026-11-21: PR #1162 merge commit 90b9b5c6 (head fac3b758). Coordinator review: full diff correct (exog as float ndarray at fit and predict; fake updated to the ndarray contract; new real-backend regression test); CI 10/10 green on head; main verified at 90b9b5c6 via ls-remote."
+    next_action: "MERGED 2026-11-21. Follow-up owed: observe one scheduler refresh cycle (14-day lookback) with the auto_arima candidate fitted (fits>0) — the candidate can now fit; the fits>0 observation needs a live refresh cycle on S2 Futuris."
 
   - id: TASK-VYR-028
     title: "Gemini vision fail-over for VyralX: after VYR-026 retries are spent on Groq 429, exactly one Gemini attempt via VISION_FAILOVER_* env seams"
@@ -12557,6 +12558,48 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - docs/collaboration/README.md
       - scripts/agents_completion_notifier.py
       - scripts/validate_collaboration.py
+
+  - id: TASK-STR-FWD-030
+    title: "Stratex: ensemble engine context passing - wire books 3933/3978 through the ensemble engine (context passing) and fill the gap modules DUAL-1d, SHW 1wk, ZSC so the books' members actually evaluate."
+    status: AVAILABLE
+    owner: muse_1
+    priority: P2
+    created_at: "2026-11-21"
+    updated_at: "2026-11-21"
+    evidence:
+      - "Coordinator standing backlog (follow-up watch refill, 2026-11-21): batch 3 first task, assigned with board PR by the coordinator. Books 3933/3978 held out of the Stratex fresh-start allowlist until panel step-5 + member gaps land; gap modules DUAL-1d, SHW 1wk, ZSC still missing."
+    next_action: "Muse 1: claim, wire the 3933/3978 context passing through the ensemble engine, fill the DUAL-1d / SHW 1wk / ZSC gap modules, add regression coverage, ship via PR."
+  - id: TASK-STR-FWD-031
+    title: "Stratex: overlay-entry venue-bracket gap - close the gap between overlay entries and the venue bracket so overlay entries are placed and held at the venue bracket."
+    status: AVAILABLE
+    owner: muse_1
+    priority: P2
+    created_at: "2026-11-21"
+    updated_at: "2026-11-21"
+    evidence:
+      - "Coordinator standing backlog (follow-up watch refill, 2026-11-21): batch 3 second task, assigned with board PR by the coordinator."
+    next_action: "Muse 1: claim, find the overlay-entry vs venue-bracket gap, close it, add regression coverage, ship via PR."
+  - id: TASK-VYR-031
+    title: "VyralX: script-stage yield fix - the script stage yields too few usable scripts, so cycles produce too few renders that pass the quality gates; find why the yield is low and fix it."
+    status: AVAILABLE
+    owner: muse_1
+    priority: P2
+    created_at: "2026-11-21"
+    updated_at: "2026-11-21"
+    evidence:
+      - "Coordinator standing backlog (follow-up watch refill, 2026-11-21): batch 3 third task, assigned with board PR by the coordinator. Recent cycles produced zero renders (cycles 8, 9, 10 on 2026-11-20) and render #2 produced no video from a stale 12-candidate pool."
+    next_action: "Muse 1: claim, diagnose the script-stage yield (candidate pool, voice-check rejections, gate pass rate), fix it so cycles yield scripts that pass the quality gates, add regression coverage, ship via PR."
+  - id: TASK-VYR-032
+    title: "VyralX: DOUBLED-CAPTION pipeline defect - renders 823, 841 and 861 all failed the coordinator's watch with two speech-caption tracks burned in ~1s out of sync (plus a top hook layer), and 861 also had no audible BGM though BGM is mandatory; find why the renderer emits two caption tracks, make it emit exactly one, ensure the BGM track is actually mixed in, and add regression coverage."
+    status: AVAILABLE
+    owner: muse_1
+    priority: P2
+    created_at: "2026-11-21"
+    updated_at: "2026-11-21"
+    evidence:
+      - "Coordinator standing backlog (follow-up watch refill, 2026-11-21): batch 3 fourth task, assigned with board PR by the coordinator. Renders 823, 841, 861 all failed the coordinator's end-to-end browser watch with the same defect class: captions DOUBLED/STACKED (three layers in the intro - top hook + word-highlight track + full-phrase track; the two speech tracks ~1s out of sync). Render 861 also had no audible BGM though BGM is mandatory. 861 stays HELD forever, never uploadable. This is a PIPELINE caption-duplication bug, not a one-off."
+    next_action: "Muse 1: claim, find why the renderer emits two caption tracks, make it emit exactly one, ensure the BGM track is actually mixed in, add regression coverage, ship via PR."
+
 
 
 task_id_warnings:
