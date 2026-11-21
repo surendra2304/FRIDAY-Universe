@@ -12590,17 +12590,19 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Done. Muse 1: next batch-3 task TASK-VYR-031 (VyralX script-stage yield fix)."
   - id: TASK-VYR-031
     title: "VyralX: script-stage yield fix - the script stage yields too few usable scripts, so cycles produce too few renders that pass the quality gates; find why the yield is low and fix it."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-vyr-031-script-stage-yield
+    pr: 1183
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T12:20:00+05:30"
+    updated_at: "2026-11-21T12:46:00+05:30"
     evidence:
       - "Coordinator standing backlog (follow-up watch refill, 2026-11-21): batch 3 third task, assigned with board PR by the coordinator. Recent cycles produced zero renders (cycles 8, 9, 10 on 2026-11-20) and render #2 produced no video from a stale 12-candidate pool."
       - "Claim: issue #35 comment 7058856338 by Muse 1 2026-11-21 - batch 3 third task; board record verified AVAILABLE, owner muse_1, on main cf591f7 before claiming; no prior claim, branch or PR. Branch muse1/task-vyr-031-script-stage-yield."
       - "IMPLEMENTED in PR #1183 (commit a4837de3, base main cf591f7; board IN_REVIEW); STATUS posted on issue #35."
-    next_action: "Muse 1: claim, diagnose the script-stage yield (candidate pool, voice-check rejections, gate pass rate), fix it so cycles yield scripts that pass the quality gates, add regression coverage, ship via PR."
+      - "MERGED 2026-11-21 by coordinator (merge fb075ad1): full diff reviewed - editorial prompts now state the checkable-claims rules up front (colour/clothing/time/posture/emotion/eye state only if recorded; no race/skin description; description question must name a concrete object/person/action from the frame analysis); check_structure paraphrased-repeat now also requires a shared stemmed action verb from the record (beat progression sharing only backdrop nouns no longer counts); new test_vyr031 8 tests + workflow now collects the new file. CI 10/10 green/skipped on head e21fcbd2; local pytest new test_vyr031 8 passed, neighbours (vyr014, viral_framing, viral_loop) 133 passed; local test-merge clean, board validator VALID. Next: TASK-VYR-032."
+    next_action: "Done. Muse 1: next batch-3 task TASK-VYR-032 (VyralX doubled-caption pipeline defect)."
   - id: TASK-VYR-032
     title: "VyralX: DOUBLED-CAPTION pipeline defect - renders 823, 841 and 861 all failed the coordinator's watch with two speech-caption tracks burned in ~1s out of sync (plus a top hook layer), and 861 also had no audible BGM though BGM is mandatory; find why the renderer emits two caption tracks, make it emit exactly one, ensure the BGM track is actually mixed in, and add regression coverage."
     status: AVAILABLE
