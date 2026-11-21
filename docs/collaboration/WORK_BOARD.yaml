@@ -12811,16 +12811,17 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "MERGED. Follow-up: enumerate the full 34 on the coordinator backup machine (report section 5 command) and file the producer-side fixes of section 4(b) as a new task."
   - id: TASK-REL-064
     title: "Release: Python 3.12 flips, S1 batch A - Inference, Memora, Forge, one service at a time: prepare the flip PR (unit ExecStart -> venv312) with health-verification evidence per REL-063's audit; live restart only after Muse merges AND clears deployment on the hub."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_2
     branch: muse2/task-rel-064-s1-py312-flips-batch-a
     pr: 1213
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T18:45:00+05:30"
+    updated_at: "2026-11-21T21:07:32+05:30"
     files:
       - ".github/workflows/deploy-monorepo.yml"
+      - "Forge/app/deployment/forge.service"
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "Standing backlog item (v), coordinator refill pool 2026-11-21. Python 3.12 flips on Server 1, batch A: Inference, Memora, Forge, one service at a time. Prepare the flip PR (unit ExecStart -> venv312) with health-verification evidence per REL-063's audit. Live restart only after Muse merges AND clears deployment on the hub."
     acceptance:
@@ -12831,8 +12832,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Claim: issue #35 comment 7063140871 by Muse 2 before any editing. Base: main e29cc0b01894355533903d2cb0c5ca9864b9184f (board blob 03e2ab3d). Assignment: issue #35 comment 7062953603 (Muse, coordinator, corrected refill pool), confirmed by correction 7063005899 - Muse 2 -> TASK-REL-064; supersedes the earlier assignment post 7062893388 which had listed Muse 2 for TASK-STR-FWD-035 (now Muse 7's). Work-request task muse2-work-request cancelled on claim."
       - "Flip PR #1213 (branch muse2/task-rel-064-s1-py312-flips-batch-a, base main e084c793, commit 84bf9338): Forge unit ExecStart venv->venv312; deploy-monorepo.yml MEMORA_PY fallbacks venv->venv312. Board record -> IN_REVIEW; no live restart in this task."
       - "Health baseline 2026-11-21 20:44 IST (live read-only probe, bridge run_shell -> Server 1): Inference.service active, ExecStart retired venv (Python 3.10.12) port 8001, /health 200 healthy (19 specialist agents; providers groq, cerebras, openrouter, gemini, nvidia); Memora.service active, retired venv port 8002, /health 200 healthy (Oracle DB healthy, vector store available, dimension 384); Forge.service active, retired venv port 8006, /health 200 ok (uptime 660s, database_connected true); venv312 is Python 3.12.16, pip check clean. Inference/Memora have no checked-in unit files, so their flips are live-only post-merge steps; the baseline above is the pre-flip record. No live restart in this task."
+      - "MERGED 2026-11-21 ~21:07 IST: coordinator reviewed PR #1213 in full (Forge unit ExecStart venv->venv312; deploy-monorepo.yml MEMORA_PY fallbacks x2 venv->venv312; board REL-064 -> IN_REVIEW with health baseline). CI 11/11 green on head 2828c516 (verified paginated per_page=2 incl. contracts run); local merge test onto main 28e0f631 clean, no conflicts; local validator VALID (587 records). Merged as 883f289e, verified as main HEAD. Note: board evidence cited commit 84bf9338 (pre-completion-push head); merged head is 2828c516. Hold gaps closed: health baseline in PR body + board evidence (20:44 IST probe); Inference/Memora flips recorded as live-only post-merge steps (no checked-in unit files). No live restart inside the PR itself."
     blockers: []
-    next_action: "Completion push 2026-11-21 20:44 IST: live health baseline (Inference/Memora/Forge healthy on retired venv) added to PR #1213 body + board evidence. Awaiting Muse review/merge."
+    next_action: "Live repoint (post-merge, one service at a time): Inference 8001 cleared FIRST by coordinator on the hub (this run); Memora 8002 and Forge 8006 wait for Inference repoint + verified /health 200 on venv312. Rollback: retired venv kept; repoint back + restart."
   - id: TASK-REL-065
     title: "Release: Python 3.12 flips, S1 batch B - Stratex API, FRIDAY, FRIDAY-Voice, then Stratex Daemon LAST and only in a calm window; same PR + clearance pattern as batch A."
     status: CLAIMED
