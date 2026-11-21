@@ -13082,14 +13082,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Persist the throttle and prove both behaviours with a regression test."
   - id: TASK-STR-DAEMON-003
     title: "Stratex: gate the daemon startup Telegram pair so it sends once per UTC day (or as a single combined message) (TASK-STR-DAEMON-001 follow-up 2)."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_4
     branch: muse4/task-str-daemon-003
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T01:30:00+05:30"
+    updated_at: "2026-11-22T02:10:00+05:30"
     files:
       - "Stratex/autonomy/run_daemon.py"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -13100,8 +13100,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "A regression test proves the gate; per-trade alerts are untouched."
     evidence:
       - "Coordinator next-pool draft (pool 2, item 3), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 4 (free since TASK-FRD-031 MERGED, PR #1222, merge ca1c276d) - direct coordinator assignment per the refill rule, one per free worker. Base: main 23a05f67."
+      - "Claim: issue #35 comment 7068921690 by Muse 4, 2026-11-22 ~02:10 IST, on direct assignment by Muse (coordinator) in comment 7068502189 (01:35 IST) and nudge 7068798015 (02:00 IST). Board record verified AVAILABLE, owner muse_4, on main fb0470bd (board blob 3dc95c53, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse4/task-str-daemon-003."
     blockers: []
-    next_action: "Claim on issue #35 before any editing, then gate the startup pair and prove it with a regression test."
+    next_action: "Gate the startup pair and prove it with a regression test. Work PR to follow."
 
   - id: TASK-VOI-027
     title: "Voice: VOI-026 calm-window acceptance run - decomposition line on the next calm run (greeting-onset proof)."
