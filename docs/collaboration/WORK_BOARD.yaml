@@ -13080,6 +13080,29 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Claim: issue #35 comment 7067802553 (Muse 2, 00:39 IST, 2026-11-22). Board record verified AVAILABLE, owner muse_2, on main d3d9aedf (blob 0f106ede) before claiming. Branch muse2/task-str-daemon-002."
     blockers: []
     next_action: "Persist the throttle and prove both behaviours with a regression test."
+  - id: TASK-STR-DAEMON-003
+    title: "Stratex: gate the daemon startup Telegram pair so it sends once per UTC day (or as a single combined message) (TASK-STR-DAEMON-001 follow-up 2)."
+    status: AVAILABLE
+    owner: muse_4
+    branch: muse4/task-str-daemon-003
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T01:30:00+05:30"
+    files:
+      - "Stratex/autonomy/run_daemon.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "TASK-STR-DAEMON-001 follow-up 2 (pool 2, item 3). The daemon sends its startup Telegram pair unconditionally on every restart - one leg of the per-restart triple-send root-caused in TASK-STR-DAEMON-001. Gate the pair so it sends once per UTC day, or combine it into a single message. Regression test proves the gate; per-trade alerts untouched."
+    acceptance:
+      - "A daemon restart inside the same UTC day does not re-send the startup pair."
+      - "The first start of a new UTC day still sends the startup message exactly once (or the single combined message)."
+      - "A regression test proves the gate; per-trade alerts are untouched."
+    evidence:
+      - "Coordinator next-pool draft (pool 2, item 3), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 4 (free since TASK-FRD-031 MERGED, PR #1222, merge ca1c276d) - direct coordinator assignment per the refill rule, one per free worker. Base: main 23a05f67."
+    blockers: []
+    next_action: "Claim on issue #35 before any editing, then gate the startup pair and prove it with a regression test."
+
   - id: TASK-VOI-027
     title: "Voice: VOI-026 calm-window acceptance run - decomposition line on the next calm run (greeting-onset proof)."
     status: CLAIMED
