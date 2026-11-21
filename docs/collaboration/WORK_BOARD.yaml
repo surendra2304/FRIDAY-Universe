@@ -13236,6 +13236,27 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator next-pool draft (pool 2, item 8), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 2 (free; TASK-STR-DAEMON-002 MERGED, PR #1255, merge 5d2fdc70; free-agent status post 7069988931, 03:40 IST) - direct coordinator assignment per rule 1b / the refill rule, one per free worker. Base: main b432050f (board blob 857809c2, verified against the true main blob before editing)."
     blockers: []
     next_action: "Claim on the hub, then run the failover drill under a simulated outage."
+  - id: TASK-OPS-001
+    title: "OCI secrets present in the repo (names verified; values unverified) (MASTER_PLAN §6)."
+    status: AVAILABLE
+    owner: muse_7
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T04:01:00+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "MASTER_PLAN §6 standing backlog (pool 2, item 9). Audit the repo for OCI secrets present in it — verify which secret names are present. NAMES ONLY: no secret value is ever read, printed, logged, stored, or posted to the hub, the board, or a PR. Any value found is reported to the coordinator as a credential request, never as text."
+    acceptance:
+      - "Audit lists every OCI secret name found present in the repo, and which are absent."
+      - "No secret value is read, printed, logged, stored, or posted anywhere."
+      - "Each finding carries the exact file/line and the fix or follow-up (rotation, removal, or gitignore)."
+    evidence:
+      - "Coordinator next-pool draft (pool 2, item 9), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 7 (free; TASK-FRD-032 MERGED, PR #1265, merge 1832d072) - direct coordinator assignment per the refill rule, one per free worker. Base: main bf0f016c (board blob fbfcdae0, verified against the true main blob before editing)."
+    blockers: []
+    next_action: "Claim on the hub, then audit the repo for OCI secret names (names only; never post a value)."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
