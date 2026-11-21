@@ -12769,14 +12769,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "MERGED. No deploy in this task; the label fix ships with the next Stratex deploy."
   - id: TASK-VOI-026
     title: "Voice: greeting-onset diagnosis - FRIDAY's greeting misses the 8s bar even on a calm box (11.3s/17.0s observed), a load-independent defect separate from the fixed send-cadence collapse; find the cause in the voice path and fix it, or file the precise blocker with evidence."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_6
-    branch: null
+    branch: muse6/task-voi-026
     pr: null
     contributors: []
     priority: P1
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T18:05:00+05:30"
+    updated_at: "2026-11-21T18:38:00+05:30"
     files:
       - "FRIDAY/src/friday/voice/**"
       - "FRIDAY/tests/test_voice_*.py"
