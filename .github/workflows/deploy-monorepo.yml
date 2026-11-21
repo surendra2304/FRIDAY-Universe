@@ -119,7 +119,7 @@ jobs:
                 echo "=== Applying Memora database migrations (TASK-MEM-009) ==="
                 MEMORA_PY=$(systemctl cat Memora.service 2>/dev/null | grep -E '^ExecStart=' | head -1 | sed 's/^ExecStart=//' | awk '{print $1}' || true)
                 if [ -z "$MEMORA_PY" ] || [ "${MEMORA_PY:0:1}" = "{" ] || [ ! -x "$MEMORA_PY" ]; then
-                  MEMORA_PY="/opt/friday_universe/venv/bin/python"
+                  MEMORA_PY="/opt/friday_universe/venv312/bin/python"
                 fi
                 if ! "$MEMORA_PY" /opt/friday_universe/Memora/scripts/run_migrations.py; then
                   echo "::error::Memora migration step FAILED — aborting deploy BEFORE any service restart; the fleet keeps running the previous code. Fix the migration and re-deploy."
@@ -295,7 +295,7 @@ jobs:
               echo "=== Memora memory-path smoke probe ==="
               MEMORA_PY=$(systemctl cat Memora.service 2>/dev/null | grep -E '^ExecStart=' | head -1 | sed 's/^ExecStart=//' | awk '{print $1}' || true)
               if [ -z "$MEMORA_PY" ] || [ "${MEMORA_PY:0:1}" = "{" ] || [ ! -x "$MEMORA_PY" ]; then
-                MEMORA_PY="/opt/friday_universe/venv/bin/python"
+                MEMORA_PY="/opt/friday_universe/venv312/bin/python"
               fi
               if "$MEMORA_PY" Memora/scripts/smoke_memory_path.py; then
                 echo "    Memora: memory-path smoke PASSED"
