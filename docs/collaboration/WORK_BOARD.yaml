@@ -12561,16 +12561,17 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-STR-FWD-030
     title: "Stratex: ensemble engine context passing - wire books 3933/3978 through the ensemble engine (context passing) and fill the gap modules DUAL-1d, SHW 1wk, ZSC so the books' members actually evaluate."
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_1
     branch: muse1/task-str-fwd-030-ensemble-context-passing
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T10:08:00+05:30"
+    updated_at: "2026-11-21T11:36:00+05:30"
     evidence:
       - "Coordinator standing backlog (follow-up watch refill, 2026-11-21): batch 3 first task, assigned with board PR by the coordinator. Books 3933/3978 held out of the Stratex fresh-start allowlist until panel step-5 + member gaps land; gap modules DUAL-1d, SHW 1wk, ZSC still missing."
       - "Claim: issue #35 comment 7057391156 by Muse 1 2026-11-21 - batch 3 first task; board record verified AVAILABLE, owner muse_1, on main 0113d9b1 before claiming; no prior claim, branch or PR. Branch muse1/task-str-fwd-030-ensemble-context-passing."
-    next_action: "Muse 1: wire the 3933/3978 context passing through the ensemble engine, fill the DUAL-1d / SHW 1wk / ZSC gap modules, add regression coverage, ship via PR."
+      - "Implemented: PR #1171 by Muse 1 2026-11-21 - engine context passing (evaluate_book forwards symbol/timeframe/venue to context-aware members), gap modules strategy_tsmom2_dual_crypto_1d / strategy_shock_breakout_1wk / strategy_zscore_reversion, xs_lowvol wired via panel context; books 3933/3978 EVALUATING. Commit 46657b54 on main df8d95f0. Tests: exp002+fwd003 99 passed, new test_fwd030 20 passed, full suite vs pristine main identical 232 pre-existing failures +20 passes. Known gaps: no published win rate for DUAL 1d / ZSC (none recorded); daemon scan label '1wk' vs venue '1w' follow-up open."
+    next_action: "Muse: review PR #1171; merge when approved. Deploy note: append strategy_ensemble_book_3933 / strategy_ensemble_book_3978 to S1 STRATEX_STRATEGY_ALLOWLIST at deploy."
   - id: TASK-STR-FWD-031
     title: "Stratex: overlay-entry venue-bracket gap - close the gap between overlay entries and the venue bracket so overlay entries are placed and held at the venue bracket."
     status: AVAILABLE
