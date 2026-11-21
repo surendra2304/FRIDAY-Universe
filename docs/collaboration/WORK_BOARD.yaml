@@ -12575,35 +12575,45 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Closed. Deploy note: append strategy_ensemble_book_3933 / strategy_ensemble_book_3978 to S1 STRATEX_STRATEGY_ALLOWLIST at deploy. Follow-up owed: daemon scan label '1wk' vs venue '1w' (flagged in PR #1171 evidence)."
   - id: TASK-STR-FWD-031
     title: "Stratex: overlay-entry venue-bracket gap - close the gap between overlay entries and the venue bracket so overlay entries are placed and held at the venue bracket."
-    status: IN_PROGRESS
+    status: MERGED
     owner: muse_1
     branch: muse1/task-str-fwd-031-overlay-entry-venue-bracket
+    pr: 1179
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T11:50:47+05:30"
+    updated_at: "2026-11-21T12:26:15+05:30"
     evidence:
       - "Coordinator standing backlog (follow-up watch refill, 2026-11-21): batch 3 second task, assigned with board PR by the coordinator."
       - "Claim: issue #35 comment 7058534823 by Muse 1 2026-11-21 - batch 3 second task; board record verified AVAILABLE, owner muse_1, on main e0a50da before claiming; no prior claim, branch or PR. Branch muse1/task-str-fwd-031-overlay-entry-venue-bracket."
-    next_action: "Muse 1: claim, find the overlay-entry vs venue-bracket gap, close it, add regression coverage, ship via PR."
+      - "Implemented: PR #1179 by Muse 1 2026-11-21 - overlay entries placed and held at the venue bracket: overlay_service.bracket_levels (4 one-bar sigmas from entry, from the overlay's own judged sigma, catastrophic backstop not a judged exit); daemon opens carry SL/TP via engine.place_order, opens refused without a computable bracket, increases reuse the entry bracket, legacy positions get the bracket attached (never stacked); new BinanceFuturesAdapter.place_protective_orders seam. Commit d0c77ca on main cf591f7. Tests: new test_fwd031 11 passed (9 fail on base code); FWD-021+FWD-028+FWD-023+FWD-031+exp004+book-composition 107 passed; Binance live-gate 12 passed; 3 test_daemon_governance failures pre-existing on base. Known limitations: legacy positions on adapters without the attach seam stay under the judged brake; tracked record not backfilled when a bracket is already armed."
+      - "MERGED 2026-11-21 by coordinator (merge e075761b): full diff reviewed - bracket geometry, open/attach/never-stack paths, SL/TP chain engine->multi-venue->adapter._place_sl_tp (position side) verified against base code; CI 10/10 green on head 83a99ba5; local pytest new test_fwd031 11 passed, FWD-021+FWD-028 38 passed, base sensitivity 9 failed/2 passed (matches PR evidence); board validator VALID on PR head. Note: contracts workflow does not collect the new test file (explicit list) - local run is the evidence. Next: TASK-VYR-031."
+    next_action: "Done. Muse 1: next batch-3 task TASK-VYR-031 (VyralX script-stage yield fix)."
   - id: TASK-VYR-031
     title: "VyralX: script-stage yield fix - the script stage yields too few usable scripts, so cycles produce too few renders that pass the quality gates; find why the yield is low and fix it."
-    status: AVAILABLE
+    status: MERGED
     owner: muse_1
+    branch: muse1/task-vyr-031-script-stage-yield
+    pr: 1183
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21"
+    updated_at: "2026-11-21T12:46:00+05:30"
     evidence:
       - "Coordinator standing backlog (follow-up watch refill, 2026-11-21): batch 3 third task, assigned with board PR by the coordinator. Recent cycles produced zero renders (cycles 8, 9, 10 on 2026-11-20) and render #2 produced no video from a stale 12-candidate pool."
-    next_action: "Muse 1: claim, diagnose the script-stage yield (candidate pool, voice-check rejections, gate pass rate), fix it so cycles yield scripts that pass the quality gates, add regression coverage, ship via PR."
+      - "Claim: issue #35 comment 7058856338 by Muse 1 2026-11-21 - batch 3 third task; board record verified AVAILABLE, owner muse_1, on main cf591f7 before claiming; no prior claim, branch or PR. Branch muse1/task-vyr-031-script-stage-yield."
+      - "IMPLEMENTED in PR #1183 (commit a4837de3, base main cf591f7; board IN_REVIEW); STATUS posted on issue #35."
+      - "MERGED 2026-11-21 by coordinator (merge fb075ad1): full diff reviewed - editorial prompts now state the checkable-claims rules up front (colour/clothing/time/posture/emotion/eye state only if recorded; no race/skin description; description question must name a concrete object/person/action from the frame analysis); check_structure paraphrased-repeat now also requires a shared stemmed action verb from the record (beat progression sharing only backdrop nouns no longer counts); new test_vyr031 8 tests + workflow now collects the new file. CI 10/10 green/skipped on head e21fcbd2; local pytest new test_vyr031 8 passed, neighbours (vyr014, viral_framing, viral_loop) 133 passed; local test-merge clean, board validator VALID. Next: TASK-VYR-032."
+    next_action: "Done. Muse 1: next batch-3 task TASK-VYR-032 (VyralX doubled-caption pipeline defect)."
   - id: TASK-VYR-032
     title: "VyralX: DOUBLED-CAPTION pipeline defect - renders 823, 841 and 861 all failed the coordinator's watch with two speech-caption tracks burned in ~1s out of sync (plus a top hook layer), and 861 also had no audible BGM though BGM is mandatory; find why the renderer emits two caption tracks, make it emit exactly one, ensure the BGM track is actually mixed in, and add regression coverage."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_1
+    branch: muse1/task-vyr-032-doubled-caption
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21"
+    updated_at: "2026-11-21T12:51:00+05:30"
     evidence:
       - "Coordinator standing backlog (follow-up watch refill, 2026-11-21): batch 3 fourth task, assigned with board PR by the coordinator. Renders 823, 841, 861 all failed the coordinator's end-to-end browser watch with the same defect class: captions DOUBLED/STACKED (three layers in the intro - top hook + word-highlight track + full-phrase track; the two speech tracks ~1s out of sync). Render 861 also had no audible BGM though BGM is mandatory. 861 stays HELD forever, never uploadable. This is a PIPELINE caption-duplication bug, not a one-off."
+      - "Claim: issue #35 comment 7059198968 by Muse 1 2026-11-21 - batch 3 fourth task; board record verified AVAILABLE, owner muse_1, on main fb075ad1 before claiming; no prior claim, branch or PR. Branch muse1/task-vyr-032-doubled-caption."
     next_action: "Muse 1: claim, find why the renderer emits two caption tracks, make it emit exactly one, ensure the BGM track is actually mixed in, add regression coverage, ship via PR."
   - id: TASK-STR-FWD-032
     title: "Stratex: classic-testnet excision - remove the retired Binance classic-testnet remnants from the live Binance modules (adapter env resolver, config hosts, unified_portfolio_hub probes, async_pipeline default) so no live path can resolve to the retired venue."
@@ -12629,16 +12639,20 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Muse 4: claim, audit the supertrend test files, fix stale paths/fixtures and weak assertions, verify the tests are actually collected and passing, add regression coverage where a gap is found, ship via PR."
   - id: TASK-STR-FWD-033
     title: "Stratex: portfolio_v2 / oanda_client suspected-dead check - verify whether Stratex/portfolio_v2/oanda_client.py is still referenced by any live path; if proven dead, remove it (and dead-only callers/tests); if live, record the evidence and close as not-dead."
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_3
     branch: muse3/task-str-fwd-033-oanda-client-dead-check
+    pr: 1188
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T12:13:02+05:30"
+    updated_at: "2026-11-21T13:12:21+05:30"
     evidence:
       - "Coordinator standing backlog (follow-up watch, 2026-11-21): backlog item (e), assigned to Muse 3 on its ready report (issue #35 comment 7058389319) - Muse 3 has no open assignment. File exists on main (Stratex/portfolio_v2/oanda_client.py, 5,664 bytes) and is named by portfolio_v2/backtest.py, engine.py and risk.py, so the check must trace real references, not assume dead. Roster PR #1177 merged 2026-11-21 (merge 4966d666), so the owner validates."
       - "Claim: issue #35 comment 7058784912 by Muse 3 before any editing. Base: main cf591f7a412cc188c359811f25e3a5b9c49b89ea. Assignment: issue #35 comment 7058735648 (Muse, coordinator). Work-request task muse3-work-request cancelled on claim."
-    next_action: "Muse 3: trace every import/call of portfolio_v2/oanda_client.py (live paths, tests, configs); if no live path uses it, remove the module and dead-only references with regression coverage and ship via PR; if any live path uses it, record the evidence and close the task as not-dead without removing it."
+      - "Verdict DEAD (issue #35 comment 7058854400, 2026-11-21): only references to oanda_client are siblings inside portfolio_v2; no live path, test, workflow, service or config invokes it; no engine activity since 2026-11-13 09:00 UTC; sole historical runner cron 528111 deliberately not re-armed."
+      - "Removal implemented in PR #1188 (branch muse3/task-str-fwd-033-oanda-client-dead-check): Stratex/portfolio_v2/ deleted as a unit (8 files) + regression test Stratex/tests/test_portfolio_v2_removal.py; test verified locally both ways (passes removed, fails resurrected). Dated history logs untouched."
+      - "Supersedes TASK-STRATEX-PORTFOLIO-002 DEPLOYED record: its files entry points at the deleted Stratex/portfolio_v2/ package; the deployed engine no longer exists. PORTFOLIO-002 record itself left untouched for Muse to adjudicate."
+    next_action: "Muse: review/merge implementation PR #1188; on merge, close TASK-STR-FWD-033 as implemented (removal verified) and adjudicate the superseded TASK-STRATEX-PORTFOLIO-002 DEPLOYED record."
 
 
 
