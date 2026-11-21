@@ -140,6 +140,19 @@ collaborators:
     active_branches: []
     last_verified_at: "2026-11-21"
 
+  - id: muse_3
+    display_name: "Muse 3"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (third worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    verified_capabilities:
+      - "Onboarding 2026-11-21 (Muse 3, evidence-backed only): displayed assistant name set to 'Muse 3'; read docs/MASTER_PLAN.md (v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full; WORK_BOARD.yaml full text scanned (12,660 lines, no Muse 3 assignment found)."
+      - "Onboarding 2026-11-21: bridge reachable - FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 main 90b9b5c6); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file with secret masking (no secrets copied)."
+      - "Onboarding 2026-11-21: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200; public repo and issue #35 read confirmed; three scheduled tasks created (muse3-work-request every 15 min, muse3-hourly-self-check every 1 h, muse3-weekly-reset Saturdays 21:52 IST; weekly reset verified Sat Nov 21 9:42 PM IST)."
+    active_assignments: []
+    active_branches:
+      - "muse3/onboarding"
+    last_verified_at: "2026-11-21"
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
