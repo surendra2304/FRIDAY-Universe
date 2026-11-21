@@ -44,13 +44,19 @@ IG3 clusters:
 
 | Video step | VyralX counterpart |
 |---|---|
-| Story → scene-by-scene breakdown | `previs.build_storyboard` — splits a script into beats and builds a storyboard with per-beat clip matching; `previs.contact_sheet_plan` |
+| Story → scene-by-scene breakdown | Retired with the Path C lane (TASK-VYR-033, 2026-11-21): `previs.build_storyboard` / `previs.contact_sheet_plan` were removed with the lane catalogues they matched beats against; beat-level storyboarding against stocked clips is no longer offered. The assembly step below still covers script → planned footage. |
 | Script → per-segment assembly plan | `short_video_assembly.build_assembly_plan` / `build_batch` — segments the script and plans footage per segment |
 | Clips on a timeline, in story order | `film_pipeline.build_film` — a validated film manifest (shots with start/duration/end computed in order, lanes restricted to the channel's three, Shorts <60s cap); `film_pipeline.render_film_html` — the single-file film artifact |
 | Human fixes before render | `film_pipeline.apply_studio_edit` — trim / move / restyle / retype, each logged, film stays `pending_review` |
 | Narration timing | `style_recipe.clean_transcript` (timed words, dead-air/false-start cuts); the rules folder's word-timing rule (`production_rules`, TASK-IG3-VYR-09) checks that visuals land on their words |
 | Run discipline + quality gates | `pipeline_orchestration.create_run` / `advance_run` (state machine with a storyboard approval gate) and `pipeline_orchestration.evaluate_quality_gate` (duration cap, captions present, provenance present, finance-advice screen) |
 | Post-assembly verification | `take_verification` (TASK-IG3-VYR-05) — blank-frame gate + take scoring over the assembled recording's evidence |
+
+Retirement note (TASK-VYR-033, 2026-11-21): the Path C lane —
+the lane catalogues, their loaders, `content_factory` and
+`previs` — was retired after verifying no live path used
+it. The composition layer above is what remains; the
+bottom line (§6) is unchanged.
 
 This is why the lane baseline graded cluster 120 PARTIAL
 with "the composition layer exists" rather than ABSENT:
@@ -102,7 +108,7 @@ here changes that position:
 If the owner wants a scene-by-scene cartoon assembled:
 
 1. Story, narration script and per-scene prompts are
-   produced in-fleet (the storyboard/assembly layer, §2) —
+   produced in-fleet (the assembly layer, §2) —
    this part needs nothing new.
 2. Scene clips are generated **off-fleet**, on the owner's
    hardware or a route the owner chooses and pays for (his

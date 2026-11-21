@@ -21,6 +21,14 @@ build it would be the failure. Behaviour pinned here:
   in-service rendering, and the composition functions
   the document names still exist.
 
+TASK-VYR-033 retired the Path C lane (2026-11-21): the
+previs storyboard step left the composition layer with
+it — ``previs.build_storyboard`` is no longer named in
+the document and is no longer pinned here. The assembly
+step is still answered by the remaining composition
+layer (``short_video_assembly`` / ``film_pipeline`` /
+``pipeline_orchestration``).
+
 On clean main the document tests fail: the evaluation
 does not exist.
 """
@@ -42,8 +50,7 @@ def test_evaluation_records_the_split_and_its_evidence():
     assert "TASK-IG3-VYR-10" in doc
     assert "De1VfkaOM_2" in doc
     # The composition layer, named as it exists.
-    for name in ("previs.build_storyboard",
-                 "short_video_assembly.build_assembly_plan",
+    for name in ("short_video_assembly.build_assembly_plan",
                  "film_pipeline.build_film",
                  "film_pipeline.apply_studio_edit",
                  "pipeline_orchestration.evaluate_quality_gate"):
@@ -53,6 +60,17 @@ def test_evaluation_records_the_split_and_its_evidence():
     assert "Google Vids" in doc
     assert "117" in doc
     assert "956MB" in doc
+
+
+def test_evaluation_records_previs_retirement():
+    # TASK-VYR-033 retired the Path C lane: previs left with it.
+    # The document must say so, and must no longer present previs
+    # as a live composition step (the old table row is gone; the
+    # retirement note names the removed functions explicitly).
+    doc = _doc()
+    assert "TASK-VYR-033" in doc
+    assert "Retired with the Path C lane" in doc
+    assert "builds a storyboard with per-beat clip matching" not in doc
 
 
 def test_evaluation_names_the_owner_path():
@@ -82,10 +100,9 @@ def test_the_facts_the_evaluation_rests_on_still_hold():
     assert gate["renders_in_service"] is False
 
     # The composition functions the document names exist.
-    from app.services import (pipeline_orchestration, previs,
+    from app.services import (pipeline_orchestration,
                               short_video_assembly)
     assert callable(film_pipeline.build_film)
     assert callable(film_pipeline.apply_studio_edit)
-    assert callable(previs.build_storyboard)
     assert callable(short_video_assembly.build_assembly_plan)
     assert callable(pipeline_orchestration.evaluate_quality_gate)
