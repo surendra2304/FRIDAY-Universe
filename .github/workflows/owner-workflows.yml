@@ -163,7 +163,7 @@ jobs:
             Inference/tests/test_inf015_flash_lite_catalogue.py
       - name: Stratex forward-test and self-experiment contracts
         run: |
-          python -m pip install 'pandas>=2.2,<4' requests flask
+          python -m pip install 'pandas>=2.2,<4' requests flask flask-cors python-binance
           python -m pytest -q \
             Stratex/tests/test_fwd018_bollinger_variants.py \
             Stratex/tests/test_fwd018_ichimoku_variants.py \
@@ -177,7 +177,16 @@ jobs:
             Stratex/tests/test_exp004_daemon_wiring.py \
             Stratex/tests/test_pep001_pepperstone_ctrader_adapter.py \
             Stratex/tests/test_fwd026_adoption_opened_at.py \
-            Stratex/tests/test_fwd020_supertrend_bare_lane.py
+            Stratex/tests/test_fwd020_supertrend_bare_lane.py \
+            Stratex/tests/test_str_fwd_032_classic_testnet_excision.py \
+            Stratex/tests/test_live_trading_guard.py \
+            Stratex/tests/test_binance_futures_agent.py \
+            Stratex/tests/test_binance_futures_live_gate.py \
+            Stratex/tests/test_binance_futures_oms_adapter.py \
+            Stratex/tests/test_data_client.py \
+            Stratex/tests/test_emergency_halt_endpoint.py \
+            Stratex/tests/test_quant_agent.py \
+            Stratex/tests/test_telegram_bot.py
       - name: Review-required project persistence and worker boundaries
         env:
           APP_ENV: development

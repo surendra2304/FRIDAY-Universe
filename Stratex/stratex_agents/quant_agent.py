@@ -44,7 +44,7 @@ class QuantitativeStrategyAgent:
         kalman_model: KalmanFilterMeanReversionModel | None = None,
         regime_model: VolatilityRegimeBreakoutModel | None = None,
         default_venue: str = "binance",
-        default_environment: str = "binance_testnet",
+        default_environment: str = "binance_demo",
     ):
         self.order_manager = order_manager
         self.statarb_model = statarb_model or StatisticalArbitrageModel(window=30)

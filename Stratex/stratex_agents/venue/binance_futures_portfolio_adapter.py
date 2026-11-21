@@ -1,8 +1,8 @@
 """Read-only Binance USDⓈ-M Futures account view for Stratex portfolio reporting.
 
 This adapter exposes balances and positions only. It obtains its client through the
-dedicated Binance venue agent, which pins the endpoint to current Demo Trading or
-legacy Futures Testnet and refuses a live-money flag.
+dedicated Binance venue agent, which pins the endpoint to current Demo Trading
+and refuses a live-money flag.
 """
 from __future__ import annotations
 
@@ -22,13 +22,11 @@ class BinanceFuturesPortfolioAdapter:
 
     def __init__(self, client: Any | None = None, venue_agent: BinanceFuturesAgent | None = None):
         self.venue_agent = venue_agent or BinanceFuturesAgent()
-        self.environment = "binance_demo" if self.venue_agent.demo_trading else "binance_testnet"
+        self.environment = "binance_demo"
         self._client = client or self.venue_agent.create_client(
             mode="FUTURES",
-            legacy_api_key=os.getenv("API_KEY", ""),
-            legacy_secret_key=os.getenv("SECRET_KEY", ""),
         )
-        expected = "demo_trading" if self.venue_agent.demo_trading else "legacy_futures_testnet"
+        expected = "demo_trading"
         actual = getattr(self._client, "stratex_environment", None)
         if actual != expected:
             raise BinancePortfolioReadOnlyError(

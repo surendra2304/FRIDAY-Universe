@@ -57,7 +57,7 @@ def test_market_data_client_research_mode():
         
         client = MarketDataClient()
         assert client.is_available() is True
-        assert client.data_source == "BINANCE_TESTNET_READ_ONLY"
+        assert client.data_source == "BINANCE_DEMO_TRADING_READ_ONLY"
         
         # Verify read operations pass through
         res = client.get_ticker()

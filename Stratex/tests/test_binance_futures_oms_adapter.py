@@ -173,15 +173,6 @@ def test_unknown_safety_close_raises_so_oms_marks_order_unknown(monkeypatch):
     assert client.cancelled_algos == []
 
 
-def test_adapter_refuses_mismatched_intent_environment(monkeypatch):
-    set_demo_env(monkeypatch)
-    client = FakeBinanceClient()
-    adapter = BinanceFuturesOMSAdapter(client=client, venue_agent=FakeAgent())
-    with pytest.raises(BinanceVenueError, match="does not match Binance environment"):
-        adapter.submit_intent(make_intent(environment="binance_testnet"))
-    assert client.order_calls == []
-
-
 def test_binance_adapter_refuses_entry_when_existing_position_needs_reconciliation(monkeypatch):
     set_demo_env(monkeypatch)
     client = FakeBinanceClient(hedge_mode=False)

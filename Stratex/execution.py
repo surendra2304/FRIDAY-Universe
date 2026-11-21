@@ -154,8 +154,6 @@ def get_exchange_client():
         from stratex_agents.venue.binance_futures_agent import BinanceFuturesAgent
         client = BinanceFuturesAgent().create_client(
             mode=mode,
-            legacy_api_key=API_KEY,
-            legacy_secret_key=SECRET_KEY,
             client_cls=Client,
         )
         try:
@@ -798,7 +796,12 @@ def _place_futures_market_order_via_oms(
         oms_client_id = "stx-" + hashlib.sha256(original_client_id.encode("utf-8")).hexdigest()[:28]
 
     demo = os.getenv("BINANCE_DEMO_TRADING", "false").strip().lower() in {"1", "true", "yes", "on"}
-    environment = "binance_demo" if demo else "binance_testnet"
+    if not demo:
+        raise RuntimeError(
+            "BINANCE_DEMO_TRADING is not enabled; the retired Binance classic-testnet "
+            "venue is no longer available for order submission."
+        )
+    environment = "binance_demo"
 
     from stratex_agents.order_intent import TradeIntent
     from stratex_agents.risk_agent import DeterministicRiskAgent

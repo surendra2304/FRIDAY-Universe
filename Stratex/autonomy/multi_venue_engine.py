@@ -52,7 +52,6 @@ class MultiVenueEngine:
         self,
         binance_api_key: str = "",
         binance_secret: str = "",
-        binance_testnet: bool = True,
         starting_balance: float = 1000.0,
         max_positions_per_venue: int = 9999,
         max_total_positions: int = 9999,
@@ -77,10 +76,12 @@ class MultiVenueEngine:
         if binance_key:
             try:
                 from exchanges.binance_futures_adapter import BinanceFuturesAdapter
+                # Demo Trading is the only non-production venue (TASK-STR-FWD-032):
+                # the adapter resolves its environment from BINANCE_ENV and
+                # refuses the retired classic-testnet venue.
                 self.venues["binance_futures"] = BinanceFuturesAdapter(
                     api_key=binance_key,
                     secret_key=binance_secret or os.getenv("BINANCE_API_SECRET", ""),
-                    testnet=binance_testnet,
                 )
                 logger.info("[MULTI_VENUE] Binance Futures adapter initialized")
             except Exception as e:
@@ -1150,13 +1151,11 @@ class MultiVenueEngine:
 def create_multi_venue_engine(
     binance_api_key: str = "",
     binance_secret: str = "",
-    binance_testnet: bool = True,
     **kwargs
 ) -> "MultiVenueEngine":
     """Create multi-venue engine from environment or parameters."""
     return MultiVenueEngine(
         binance_api_key=binance_api_key,
         binance_secret=binance_secret,
-        binance_testnet=binance_testnet,
         **kwargs
     )

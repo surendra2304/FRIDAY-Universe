@@ -32,7 +32,12 @@ logger = logging.getLogger("unified_portfolio_hub")
 
 
 class BinanceAccountClient:
-    """Live Binance client supporting Spot (Mainnet/Testnet) and Futures (Mainnet/Testnet)."""
+    """Live Binance client supporting Demo Trading Futures (demo-fapi) and Spot.
+
+    The classic-testnet venue was retired by owner decision 2026-11-15
+    (TASK-STR-RETIRE-001) and excised here (TASK-STR-FWD-032): the probe list
+    below contains no retired-venue endpoint.
+    """
 
     def __init__(self, api_key: str | None = None, secret_key: str | None = None):
         self.api_key = (
@@ -78,8 +83,12 @@ class BinanceAccountClient:
             return
         self._last_auth_attempt = now
 
+        # Demo Trading Futures is tried first: it is the only supported Binance
+        # Futures venue. The retired classic-testnet probe was removed here
+        # (TASK-STR-FWD-032); the remaining probes are unchanged and fail closed
+        # with Demo Trading credentials.
         candidates = [
-            ("futures_testnet", "https://testnet.binancefuture.com", "/fapi/v2/account"),
+            ("futures_demo", "https://demo-fapi.binance.com", "/fapi/v2/account"),
             ("spot_mainnet", "https://api.binance.com", "/api/v3/account"),
             ("spot_testnet", "https://testnet.binance.vision", "/api/v3/account"),
             ("futures_mainnet", "https://fapi.binance.com", "/fapi/v2/account"),

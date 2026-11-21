@@ -10,8 +10,11 @@ Locks in the fail-closed live-trading contract for exchanges/exchange_implementa
    they raise instead of inventing a fill.
 4. Bybit/OKX raise honestly (real execution not implemented) instead of faking.
 5. Coinbase (no testnet venue) requires explicit ALLOW_LIVE_TRADING=true.
-6. BINANCE_TESTNET routes the python-binance client to testnet by default; a
-   live-endpoint client is only built with explicit ALLOW_LIVE_TRADING=true.
+6. Demo Trading (demo-fapi) is the default non-production venue; a
+   live-endpoint client is only built with explicit ALLOW_LIVE_TRADING=true
+   AND the code-level config.py invariant. The retired classic-testnet
+   venue was excised in TASK-STR-FWD-032: BINANCE_TESTNET no longer
+   selects any endpoint.
 
 All venue clients here are clearly-labelled test doubles; no production
 exchange is contacted by this suite.
@@ -166,36 +169,45 @@ def fake_binance_module(monkeypatch):
     return _RecordingBinanceClient
 
 
-def test_binance_client_defaults_to_testnet(monkeypatch, fake_binance_module):
+def test_binance_client_defaults_to_demo(monkeypatch, fake_binance_module):
+    """TASK-STR-FWD-032: the default non-production client is Demo Trading."""
     _clear_env(monkeypatch)
     monkeypatch.setenv("TRADING_MODE", "TESTNET")
     adapter = BinanceExchangeAdapter(api_key="test-key", secret_key="test-secret")
     client = adapter._get_client()
     assert isinstance(client, fake_binance_module)
-    assert client.testnet is True
+    assert client.testnet is False
+    assert client.API_URL == "https://demo-api.binance.com/api"
+    assert client.FUTURES_URL == "https://demo-fapi.binance.com/fapi"
 
 
-def test_binance_live_endpoints_refused_without_opt_in(monkeypatch, fake_binance_module):
+def test_binance_client_is_demo_without_live_opt_in(monkeypatch, fake_binance_module):
+    """TASK-STR-FWD-032: without live authorization the client is Demo
+    Trading, never a live endpoint and never the retired testnet venue."""
     _clear_env(monkeypatch)
     monkeypatch.setenv("TRADING_MODE", "TESTNET")
     monkeypatch.setenv("BINANCE_TESTNET", "false")
     adapter = BinanceExchangeAdapter(api_key="test-key", secret_key="test-secret")
-    assert adapter._get_client() is None  # live-endpoint client refused
-    assert fake_binance_module.instances == []  # nothing was constructed
-    with pytest.raises(RuntimeError, match="Refusing to fabricate"):
-        adapter.place_order("BTC/USDT", "BUY", "MARKET", 0.01)
+    client = adapter._get_client()
+    assert isinstance(client, fake_binance_module)
+    assert client.testnet is False
+    assert client.FUTURES_URL == "https://demo-fapi.binance.com/fapi"
+    assert fake_binance_module.instances == [client]
 
 
-def test_binance_live_endpoints_refused_with_env_optin_alone(monkeypatch, fake_binance_module):
+def test_binance_env_optin_alone_still_builds_demo_client(monkeypatch, fake_binance_module):
     """TASK-STR-SAFETY-001: ALLOW_LIVE_TRADING=true ALONE must NOT enable
     live routing while TRADING_MODE is still TESTNET. Environment alone
-    can never authorize live trading."""
+    can never authorize live trading; the client stays Demo Trading."""
     _clear_env(monkeypatch)
     monkeypatch.setenv("TRADING_MODE", "TESTNET")
     monkeypatch.setenv("BINANCE_TESTNET", "false")
     monkeypatch.setenv("ALLOW_LIVE_TRADING", "true")
     adapter = BinanceExchangeAdapter(api_key="test-key", secret_key="test-secret")
-    assert adapter._get_client() is None
+    client = adapter._get_client()
+    assert isinstance(client, fake_binance_module)
+    assert client.testnet is False
+    assert client.FUTURES_URL == "https://demo-fapi.binance.com/fapi"
 
 
 def test_binance_live_endpoints_require_explicit_opt_in(monkeypatch, fake_binance_module):
@@ -216,7 +228,6 @@ def test_binance_live_endpoints_require_explicit_opt_in(monkeypatch, fake_binanc
 def test_binance_order_routes_through_client(monkeypatch, fake_binance_module):
     _clear_env(monkeypatch)
     monkeypatch.setenv("TRADING_MODE", "TESTNET")
-    monkeypatch.setenv("BINANCE_TESTNET", "true")
     adapter = BinanceExchangeAdapter(api_key="test-key", secret_key="test-secret")
     res = adapter.place_order("BTC/USDT", "BUY", "LIMIT", 0.02, price=61000.0)
     client = adapter._get_client()

@@ -1,12 +1,13 @@
 """
-exchanges/binance_futures_adapter.py — Binance USD-M Futures Adapter (Testnet/Live).
+exchanges/binance_futures_adapter.py — Binance USD-M Futures Adapter (Demo/Live).
 
 Features:
 - Real balance/equity from futures account
 - Real positions with unrealized PnL
 - Native SL/TP on orders
 - Real candles from Binance API (no Yahoo)
-- Testnet/Live switchable
+- Demo/Live switchable (the classic-testnet venue was retired by owner
+  decision 2026-11-15, TASK-STR-RETIRE-001; TASK-STR-FWD-032 excised it)
 - Cloud-native: Pure REST, no gateway needed
 """
 from __future__ import annotations
@@ -71,14 +72,14 @@ def _live_trading_authorized() -> bool:
 
 class BinanceFuturesAdapter(BaseExchange):
     """
-    Binance USD-M Futures Adapter (Testnet/Live).
+    Binance USD-M Futures Adapter (Demo/Live).
     
     Features:
     - Real balance/equity from futures account
     - Real positions with unrealized PnL
     - Native SL/TP on orders (bracket orders)
     - Real candles from Binance API
-    - Testnet/Live switchable
+    - Demo/Live switchable (classic-testnet retired 2026-11-15; TASK-STR-FWD-032)
     - Cloud-native: Pure REST, no gateway
     """
 
@@ -86,7 +87,6 @@ class BinanceFuturesAdapter(BaseExchange):
         self,
         api_key: str = "",
         secret_key: str = "",
-        testnet: bool = True,
     ):
         capabilities = ExchangeCapabilities(
             supports_futures=True,
@@ -102,32 +102,7 @@ class BinanceFuturesAdapter(BaseExchange):
         self.api_key = api_key or os.getenv("BINANCE_API_KEY", "")
         self.secret_key = secret_key or os.getenv("BINANCE_API_SECRET", "")
 
-        # Environment: BINANCE_ENV=demo|testnet|live (demo.binance.com is a
-        # separate host from the legacy testnet, and keys are not interchangeable)
-        env = (os.getenv("BINANCE_ENV", "") or "").strip().lower()
-        if env in ("live", "prod", "production", "real"):
-            self.environment = "live"
-        elif env in ("demo", "demo_trading", "demotrading"):
-            self.environment = "demo"
-        elif env == "testnet":
-            self.environment = "testnet"
-        else:
-            self.environment = "testnet" if testnet else "live"
-
-        self.testnet = self.environment != "live"
-
-        # API endpoints
-        if self.environment == "live":
-            self.base_url = "https://fapi.binance.com"
-        elif self.environment == "demo":
-            self.base_url = "https://demo-fapi.binance.com"
-        else:
-            self.base_url = "https://testnet.binancefuture.com"
-
-        # TASK-TRUST-001 fail-closed gate: a live-endpoint adapter must never
-        # exist without the owner's explicit opt-in. Checked BEFORE any network
-        # activity (_sync_time / _ensure_position_mode fire signed requests),
-        # so an unguarded live resolution cannot even reach fapi.binance.com.
+        # TASK-TRUST-001 fail-closed gate, checked BEFORE any venue resolution:
         # TRADING_MODE=LIVE stays permanently blocked by design regardless of
         # ALLOW_LIVE_TRADING, mirroring exchange_implementations.py.
         trading_mode = os.environ.get("TRADING_MODE", "TESTNET").upper()
@@ -136,6 +111,42 @@ class BinanceFuturesAdapter(BaseExchange):
                 "SECURITY CRITICAL: LIVE trading is permanently blocked by design "
                 f"(venue=binance_futures, TRADING_MODE={trading_mode})."
             )
+
+        # Environment: BINANCE_ENV=demo|live (demo-fapi is the only
+        # non-production venue; keys are not interchangeable across venues).
+        # The classic-testnet venue was retired by owner decision 2026-11-15
+        # (TASK-STR-RETIRE-001) and excised here (TASK-STR-FWD-032): a testnet
+        # resolution, or an unset BINANCE_ENV, is refused fail-closed instead
+        # of silently resolving to the retired venue.
+        env = (os.getenv("BINANCE_ENV", "") or "").strip().lower()
+        if env in ("live", "prod", "production", "real"):
+            self.environment = "live"
+        elif env in ("demo", "demo_trading", "demotrading"):
+            self.environment = "demo"
+        elif env == "testnet" or not env:
+            raise PermissionError(
+                "SECURITY CRITICAL: BINANCE_ENV=testnet (or unset) resolves to the retired "
+                "Binance classic-testnet venue (testnet.binancefuture.com), retired by owner "
+                "decision 2026-11-15 (TASK-STR-RETIRE-001). Set BINANCE_ENV=demo."
+            )
+        else:
+            raise PermissionError(
+                f"SECURITY CRITICAL: unrecognized BINANCE_ENV={env!r}; set BINANCE_ENV=demo."
+            )
+
+        self.testnet = self.environment != "live"
+
+        # API endpoints (demo is the only non-production venue)
+        if self.environment == "live":
+            self.base_url = "https://fapi.binance.com"
+        else:
+            self.base_url = "https://demo-fapi.binance.com"
+
+        # A live-endpoint adapter must never exist without the owner's explicit
+        # opt-in. Checked BEFORE any network activity (_sync_time /
+        # _ensure_position_mode fire signed requests), so an unguarded live
+        # resolution cannot even reach fapi.binance.com. (The permanent
+        # TRADING_MODE=LIVE block now runs before venue resolution, above.)
         if self.environment == "live" and not _live_trading_authorized():
             raise PermissionError(
                 "SECURITY CRITICAL: refusing to construct a live-endpoint "
@@ -143,7 +154,7 @@ class BinanceFuturesAdapter(BaseExchange):
                 "AND the code-level LIVE_TRADING_ENABLED invariant in config.py "
                 f"flipped by a human code edit (resolved environment={self.environment}, "
                 f"base_url={self.base_url}). Environment alone can never authorize "
-                "live trading. Set BINANCE_ENV=demo/testnet."
+                "live trading. Set BINANCE_ENV=demo."
             )
 
         logger.info(f"[BINANCE_FUTURES] Environment: {self.environment} ({self.base_url})")

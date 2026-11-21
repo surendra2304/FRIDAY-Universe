@@ -2,7 +2,7 @@
 
 This module intentionally has no automatic cross-venue failover. A timed-out order
 is UNKNOWN until reconciled and must never be blindly submitted to another broker.
-Only demo/testnet environments are accepted here.
+Only demo environments are accepted here.
 """
 from __future__ import annotations
 
@@ -88,7 +88,12 @@ class StratexOrderManager:
             if trading_mode != "FUTURES":
                 raise OrderBlockedError("The Binance OMS adapter in this release supports USDⓈ-M Futures only; TRADING_MODE must be FUTURES.")
             demo = _truthy(os.getenv("BINANCE_DEMO_TRADING"))
-            expected = "binance_demo" if demo else "binance_testnet"
+            if not demo:
+                raise OrderBlockedError(
+                    "BINANCE_DEMO_TRADING is not enabled; the retired Binance classic-testnet "
+                    "venue is no longer available for order submission."
+                )
+            expected = "binance_demo"
             if intent.environment != expected:
                 raise OrderBlockedError(
                     f"Intent environment {intent.environment!r} doesn't match selected Binance environment {expected!r}."

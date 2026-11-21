@@ -1,8 +1,8 @@
 """Read-only Binance USDⓈ-M Futures market-data adapter.
 
 This adapter is intentionally separate from Binance order execution. It uses an
-unauthenticated client pinned to the selected Demo Trading or legacy Futures
-Testnet environment, and never falls back to production prices or metadata.
+unauthenticated client pinned to the Demo Trading environment, and never falls
+back to production prices or metadata.
 """
 from __future__ import annotations
 
@@ -20,10 +20,10 @@ class BinanceFuturesMarketDataAdapter:
 
     def __init__(self, client: Any | None = None, venue_agent: BinanceFuturesAgent | None = None):
         self.venue_agent = venue_agent or BinanceFuturesAgent()
-        self.environment = "binance_demo" if self.venue_agent.demo_trading else "binance_testnet"
+        self.environment = "binance_demo"
         self.client = client or self.venue_agent.create_public_client(futures=True)
         actual = getattr(self.client, "stratex_environment", None)
-        expected = "demo_trading_public" if self.venue_agent.demo_trading else "legacy_testnet_public"
+        expected = "demo_trading_public"
         if actual != expected:
             raise BinanceMarketDataError(
                 f"Market-data environment mismatch or unverified client: expected {expected!r}, got {actual!r}"
@@ -34,7 +34,7 @@ class BinanceFuturesMarketDataAdapter:
         try:
             payload = self.client.futures_exchange_info()
         except Exception as exc:
-            raise BinanceMarketDataError("Cannot load symbol metadata from the selected Binance demo/testnet environment.") from exc
+            raise BinanceMarketDataError("Cannot load symbol metadata from the selected Binance demo environment.") from exc
         query_lower = str(query).strip().casefold()
         instruments = []
         for item in payload.get("symbols", []):

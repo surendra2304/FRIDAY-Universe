@@ -32,9 +32,7 @@ def test_demo_mode_uses_only_new_demo_credentials_and_demo_endpoints(monkeypatch
     monkeypatch.setenv("SECRET_KEY", "legacy-testnet-secret")
     monkeypatch.setenv("LIVE_TRADING_ENABLED", "false")
 
-    client = binance_agent.BinanceFuturesAgent().create_client(
-        "FUTURES", legacy_api_key="legacy-testnet-key", legacy_secret_key="legacy-testnet-secret"
-    )
+    client = binance_agent.BinanceFuturesAgent().create_client("FUTURES")
 
     assert client.api_key == "new-demo-key"
     assert client.api_secret == "new-demo-secret"
@@ -54,21 +52,29 @@ def test_demo_mode_fails_closed_instead_of_using_legacy_credentials(monkeypatch)
     monkeypatch.setenv("LIVE_TRADING_ENABLED", "false")
 
     with pytest.raises(RuntimeError, match="fresh Demo Trading credentials"):
-        binance_agent.BinanceFuturesAgent().create_client(
-            "FUTURES", legacy_api_key="legacy-testnet-key", legacy_secret_key="legacy-testnet-secret"
-        )
+        binance_agent.BinanceFuturesAgent().create_client("FUTURES")
 
 
-def test_legacy_mode_remains_on_legacy_testnet_endpoints(monkeypatch):
+def test_non_demo_mode_fails_closed_retired_venue(monkeypatch):
+    """TASK-STR-FWD-032: with Demo Trading off there is no fallback to the
+    retired classic-testnet venue; signed-client construction fails closed."""
     monkeypatch.setattr(binance_agent, "Client", FakeClient)
     monkeypatch.setenv("BINANCE_DEMO_TRADING", "false")
     monkeypatch.setenv("LIVE_TRADING_ENABLED", "false")
-    client = binance_agent.BinanceFuturesAgent().create_client(
-        "FUTURES", legacy_api_key="legacy-key", legacy_secret_key="legacy-secret"
-    )
-    assert client.testnet is True
-    assert client.FUTURES_URL == binance_agent.BINANCE_LEGACY_FUTURES_TESTNET_URL
-    assert client.stratex_environment == "legacy_futures_testnet"
+    with pytest.raises(RuntimeError, match="BINANCE_DEMO_TRADING is not enabled"):
+        binance_agent.BinanceFuturesAgent().create_client("FUTURES")
+
+
+def test_public_client_is_pinned_to_demo_even_when_demo_flag_is_off(monkeypatch):
+    """TASK-STR-FWD-032: the anonymous market-data client is pinned to Demo
+    Trading unconditionally; it never selects the retired venue."""
+    monkeypatch.setattr(binance_agent, "Client", FakeClient)
+    monkeypatch.setenv("BINANCE_DEMO_TRADING", "false")
+    client = binance_agent.BinanceFuturesAgent().create_public_client()
+    assert client.testnet is False
+    assert client.API_URL == binance_agent.BINANCE_DEMO_SPOT_API_URL
+    assert client.FUTURES_URL == binance_agent.BINANCE_DEMO_FUTURES_API_URL
+    assert client.stratex_environment == "demo_trading_public"
 
 
 def test_live_mode_fails_closed(monkeypatch):
@@ -76,4 +82,4 @@ def test_live_mode_fails_closed(monkeypatch):
     monkeypatch.setenv("BINANCE_DEMO_TRADING", "false")
     monkeypatch.setenv("LIVE_TRADING_ENABLED", "true")
     with pytest.raises(RuntimeError, match="LIVE_TRADING_ENABLED"):
-        binance_agent.BinanceFuturesAgent().create_client("FUTURES", legacy_api_key="k", legacy_secret_key="s")
+        binance_agent.BinanceFuturesAgent().create_client("FUTURES")

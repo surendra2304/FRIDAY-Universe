@@ -14,7 +14,9 @@ Contract now enforced:
    without BOTH explicit ALLOW_LIVE_TRADING=true AND the code-level
    LIVE_TRADING_ENABLED invariant in config.py (TASK-STR-SAFETY-001) —
    environment alone never unlocks it — before any network activity.
-3. demo/testnet construction is unaffected.
+3. demo construction is unaffected; testnet construction is refused (the
+   classic-testnet venue was retired by owner decision 2026-11-15,
+   TASK-STR-RETIRE-001, and excised in TASK-STR-FWD-032).
 4. place_order / cancel_order / cancel_algo_order re-check the gate
    (defense in depth) so a post-construction live flip cannot trade.
 
@@ -52,24 +54,23 @@ def adapter_cls(monkeypatch):
     return BinanceFuturesAdapter
 
 
-def test_env_unset_with_testnet_false_resolves_refused(adapter_cls, monkeypatch):
-    """THE latent live path: BINANCE_ENV unset + testnet=False used to resolve to live."""
-    monkeypatch.setenv("BINANCE_TESTNET", "false")
-    with pytest.raises(PermissionError, match="ALLOW_LIVE_TRADING=true"):
-        adapter_cls(testnet=False)
+def test_env_unset_refuses_retired_venue(adapter_cls, monkeypatch):
+    """An unset BINANCE_ENV used to default to the retired testnet venue."""
+    with pytest.raises(PermissionError, match="retired"):
+        adapter_cls()
+
+
+def test_binance_env_testnet_refused_retired_venue(adapter_cls, monkeypatch):
+    """BINANCE_ENV=testnet resolves to the retired venue and is refused."""
+    monkeypatch.setenv("BINANCE_ENV", "testnet")
+    with pytest.raises(PermissionError, match="retired"):
+        adapter_cls()
 
 
 def test_binance_env_live_refused_without_optin(adapter_cls, monkeypatch):
     monkeypatch.setenv("BINANCE_ENV", "live")
     with pytest.raises(PermissionError, match="ALLOW_LIVE_TRADING=true"):
         adapter_cls()
-
-
-def test_binance_env_live_refused_even_when_testnet_kwarg_true(adapter_cls, monkeypatch):
-    """BINANCE_ENV=live must dominate the constructor kwarg (keys are not interchangeable)."""
-    monkeypatch.setenv("BINANCE_ENV", "live")
-    with pytest.raises(PermissionError, match="ALLOW_LIVE_TRADING=true"):
-        adapter_cls(testnet=True)
 
 
 def test_trading_mode_live_permanently_blocked(adapter_cls, monkeypatch):
@@ -114,28 +115,30 @@ def test_demo_construction_unchanged(adapter_cls, monkeypatch):
     assert adapter.base_url == "https://demo-fapi.binance.com"
 
 
-def test_testnet_construction_unchanged(adapter_cls, monkeypatch):
+def test_testnet_construction_refused_retired_venue(adapter_cls, monkeypatch):
+    """TASK-STR-FWD-032: the retired classic-testnet venue can no longer be
+    constructed. BINANCE_ENV=testnet is refused fail-closed."""
     monkeypatch.setenv("BINANCE_ENV", "testnet")
-    adapter = adapter_cls()
-    assert adapter.environment == "testnet"
-    assert adapter.base_url == "https://testnet.binancefuture.com"
+    with pytest.raises(PermissionError, match="retired"):
+        adapter_cls()
 
 
-def _demo_adapter(adapter_cls):
+def _demo_adapter(adapter_cls, monkeypatch):
+    monkeypatch.setenv("BINANCE_ENV", "demo")
     return adapter_cls()
 
 
 def test_place_order_refuses_post_construction_live_flip(adapter_cls, monkeypatch):
     """Defense in depth: flipping .environment to live after construction
     cannot route orders to the live endpoint."""
-    adapter = _demo_adapter(adapter_cls)
+    adapter = _demo_adapter(adapter_cls, monkeypatch)
     adapter.environment = "live"
     with pytest.raises(PermissionError, match="live-endpoint order refused"):
         adapter.place_order("BTCUSDT", "BUY", "MARKET", 0.01)
 
 
-def test_cancel_paths_refuse_post_construction_live_flip(adapter_cls):
-    adapter = _demo_adapter(adapter_cls)
+def test_cancel_paths_refuse_post_construction_live_flip(adapter_cls, monkeypatch):
+    adapter = _demo_adapter(adapter_cls, monkeypatch)
     adapter.environment = "live"
     with pytest.raises(PermissionError, match="live-endpoint order refused"):
         adapter.cancel_order("BTCUSDT", "1")
@@ -145,7 +148,7 @@ def test_cancel_paths_refuse_post_construction_live_flip(adapter_cls):
 
 def test_order_path_rechecks_trading_mode(adapter_cls, monkeypatch):
     """TRADING_MODE can change after construction; every order path re-checks."""
-    adapter = _demo_adapter(adapter_cls)
+    adapter = _demo_adapter(adapter_cls, monkeypatch)
     monkeypatch.setenv("TRADING_MODE", "LIVE")
     with pytest.raises(PermissionError, match="permanently blocked"):
         adapter.place_order("BTCUSDT", "BUY", "MARKET", 0.01)
