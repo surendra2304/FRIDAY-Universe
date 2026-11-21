@@ -107,7 +107,7 @@ class Member:
     key: str  # registry key, e.g. "vol_adaptive_trend"
     cell: str  # judged config cell, e.g. "ema12_26_nogate"
     panel: str  # "crypto30" | "forex28"
-    timeframe: str  # "1d" | "1wk"
+    timeframe: str  # "1d" | "1w"
     venue: str  # demo venue the panel trades on
     sl_atr: float  # judged stop bracket (x ATR(14))
     tp_atr: float  # judged target bracket (x ATR(14))
@@ -454,7 +454,7 @@ KNOWN_STREAMS: dict[tuple[str, str, str, str], tuple[str, float, float]] = {
         "strategy_shock_breakout_k15", 2.0, 4.0),
     ("shock_breakout", "k1.0", "crypto30", "1d"): (
         "strategy_shock_breakout", 2.0, 4.0),
-    ("shock_breakout", "k1.0", "crypto30", "1wk"): (
+    ("shock_breakout", "k1.0", "crypto30", "1w"): (
         "strategy_shock_breakout_1wk", 2.0, 4.0),
     ("ichimoku_trend", "tk_cloud", "crypto30", "1d"): (
         "strategy_ichimoku_trend_1d", 2.0, 4.0),

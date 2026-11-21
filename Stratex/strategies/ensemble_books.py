@@ -28,7 +28,7 @@ signal bars via the harness fns, production Wilder ATR(14); see
     judged stops reach 49.22% (50.14% of its signals above the 0.15 env
     cap) — 0.50 would leave a 0.78pp margin and reject future tail
     signals; 0.60 covers the measured distribution with headroom.
-  * 0.90 for 3978: its weekly member (shock k1.0 @ 1wk) has judged stops
+  * 0.90 for 3978: its weekly member (shock k1.0 @ 1w) has judged stops
     to 87.16% (94.97% of its 199 signals above the cap; median 28.18%).
     0.90 is the sleeve precedent for weekly geometry.
   * STO-forex (max 20.03%, 0.02% of signals above cap) and ZSC (max
@@ -88,7 +88,7 @@ STO_CRYPTO = _m("strategy_stoch_reversion_crypto", "stoch_reversion",
 DUAL_1D = _m("strategy_tsmom2_dual_crypto_1d", "tsmom2_dual",
             "roc90_ema200", "crypto30", "1d", 2.5, 5.0)
 SHW = _m("strategy_shock_breakout_1wk", "shock_breakout",
-         "k1.0", "crypto30", "1wk", 2.0, 4.0)
+         "k1.0", "crypto30", "1w", 2.0, 4.0)
 ZSC = _m("strategy_zscore_reversion", "zscore_reversion",
          "w50_t2.5_filt", "forex28", "1d", 2.0, 2.0)
 HA1D = _m("strategy_ha_trend", "ha_trend",
