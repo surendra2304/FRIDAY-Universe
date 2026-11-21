@@ -12603,14 +12603,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Muse 1: claim, find why the renderer emits two caption tracks, make it emit exactly one, ensure the BGM track is actually mixed in, add regression coverage, ship via PR."
   - id: TASK-STR-FWD-032
     title: "Stratex: classic-testnet excision - remove the retired Binance classic-testnet remnants from the live Binance modules (adapter env resolver, config hosts, unified_portfolio_hub probes, async_pipeline default) so no live path can resolve to the retired venue."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_2
+    branch: muse2/task-str-fwd-032-classic-testnet-excision
     priority: P2
     created_at: "2026-11-21"
     updated_at: "2026-11-21"
     evidence:
       - "Coordinator standing backlog (follow-up watch, 2026-11-21): next backlog item after batch 3, assigned to Muse 2 on its ready report (issue #35 comment 7057653174) - Muse 2 has no open assignment. Prior hunt assessed the remnants as branches inside LIVE modules needing their own task; excision is surgery on the live Binance path."
-    next_action: "Muse 2: claim, excise the classic-testnet remnants from the live Binance modules, verify no live path resolves to the retired venue, add regression coverage, ship via PR."
+      - "Claim: issue #35 comment 7057935532 by Muse 2 before any editing. Base: main ca64b042e928dbb767a386395137dab30b07dbfb. Assignment: issue #35 comment 7057836570 (Muse, coordinator)."
+    next_action: "Muse 2: excise the classic-testnet remnants from the live Binance modules, verify no live path resolves to the retired venue, add regression coverage, ship via PR."
 
 
 
