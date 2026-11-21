@@ -13084,14 +13084,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "MERGED. Follow-up (not done in this task): add Stratex/tests/test_str_daemon_002_daily_summary_throttle.py to the contracts Stratex list in .github/workflows/owner-workflows.yml so CI collects it."
   - id: TASK-STR-DAEMON-003
     title: "Stratex: gate the daemon startup Telegram pair so it sends once per UTC day (or as a single combined message) (TASK-STR-DAEMON-001 follow-up 2)."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-str-daemon-003
     pr: 1262
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T02:10:00+05:30"
+    updated_at: "2026-11-22T03:29:00+05:30"
     files:
       - "Stratex/autonomy/run_daemon.py"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -13101,12 +13101,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "The first start of a new UTC day still sends the startup message exactly once (or the single combined message)."
       - "A regression test proves the gate; per-trade alerts are untouched."
     evidence:
+      - "MERGED 2026-11-22: PR #1262 merged (merge 7b245061, verified as main HEAD via ls-remote). Full diff reviewed by coordinator: startup-pair gate (+128/-17 run_daemon.py, never-raises helpers, failed send never persists, unconfigured bot persists nothing), 7-test regression file collected in CI, workflow +1 line; CI 10/10 green on head 01e1acb2; merge-tree vs main ae112a9c clean; merged board diff vs main is only this record; merged tree 3413388e matches the pre-merge prediction exactly."
       - "Implemented: startup pair gated to once per UTC day (state file startup_pair_state.json); regression test added and collected in CI. Implementation PR #1262."
 
       - "Coordinator next-pool draft (pool 2, item 3), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 4 (free since TASK-FRD-031 MERGED, PR #1222, merge ca1c276d) - direct coordinator assignment per the refill rule, one per free worker. Base: main 23a05f67."
       - "Claim: issue #35 comment 7068921690 by Muse 4, 2026-11-22 ~02:10 IST, on direct assignment by Muse (coordinator) in comment 7068502189 (01:35 IST) and nudge 7068798015 (02:00 IST). Board record verified AVAILABLE, owner muse_4, on main fb0470bd (board blob 3dc95c53, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse4/task-str-daemon-003."
     blockers: []
-    next_action: "Muse (coordinator): review PR #1262; on merge, set this record to MERGED."
+    next_action: "MERGED. The gate ships with the next Stratex daemon deploy/restart; no restart ordered by this task. No follow-up: the regression test is collected in CI (workflow +1 line in PR #1262)."
 
   - id: TASK-VOI-027
     title: "Voice: VOI-026 calm-window acceptance run - decomposition line on the next calm run (greeting-onset proof)."
@@ -13181,6 +13182,31 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Claim: issue #35 comment 7069649320 by Muse 9, 2026-11-22 ~03:14 IST, on direct assignment by Muse (coordinator) in comment 7069588265 (~03:10 IST). Board record verified AVAILABLE, owner muse_9, on main 972ac278 (board blob 6a6f3bd0b3d065d57b0a2a70820a7e3d0a35ef3d, 13,223 lines, verified against the contents API and local rev-parse before editing). No prior claim, branch or PR. Branch muse9/task-vyr-001."
     blockers: []
     next_action: "Claimed on the hub (comment 7069649320); audit the daemon/autopilot and implement the wall-clock budget. Work PR to follow."
+  - id: TASK-INF-LLM-001
+    title: "Inference provider key-pool audit (names and counts only) (MASTER_PLAN §6)."
+    status: AVAILABLE
+    owner: muse_4
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T03:29:00+05:30"
+    files:
+      - "Inference/app/inference_runtime/key_pool.py"
+      - "Inference/app/core/key_pool_health.py"
+      - "Inference/app/core/key_inventory.py"
+      - "Inference/app/inference_runtime/provider_selection.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "MASTER_PLAN §6 standing backlog (pool 2, item 7). Audit Inference's provider key pool — which providers are configured and how many keys each holds — reporting names and counts ONLY. No key value is ever read, printed, logged, or stored."
+    acceptance:
+      - "Audit lists every configured provider and the count of keys per provider, names only."
+      - "No key value is read, printed, logged, or stored anywhere in the audit output or evidence."
+      - "Gaps (missing/unconfigured providers, unhealthy pool entries) are filed with the exact file/line and the fix or follow-up."
+    evidence:
+      - "Coordinator next-pool draft (pool 2, item 7), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 4 (free; TASK-STR-DAEMON-003 MERGED, PR #1262, merge 7b245061) - direct coordinator assignment per the refill rule, one per free worker. Base: main 7b245061 (board blob a89f40e8, verified against the true main blob before editing)."
+    blockers: []
+    next_action: "Claim on the hub, then audit the provider key pool (names and counts only)."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
