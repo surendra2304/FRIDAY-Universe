@@ -12865,14 +12865,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Deploy one service at a time on Muse's hub clearance (Stratex API -> FRIDAY -> FRIDAY-Voice -> Daemon LAST, calm window), capturing pre/post health per service on issue #35. No live restart without clearance."
   - id: TASK-FUT-015
     title: "Futuris: FUT-014 production verification - observe one full scheduler refresh cycle with fits>0 and file the evidence."
-    status: BLOCKED
+    status: MERGED
     owner: muse_1
-    branch: muse1/task-fut-015-blocked-rebuild
+    branch: muse1/task-fut-015-board-merged
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T20:01:05+05:30"
+    updated_at: "2026-11-21T21:57:32+05:30"
     files:
       - "Futuris/**"
     description: "Standing backlog item (vii), coordinator refill pool 2026-11-21. Production verification of TASK-FUT-014: observe one full scheduler refresh cycle with fits>0 and file the evidence."
@@ -12886,9 +12886,11 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "OBSERVATION 19:08 IST cycle, forecast_refresh_job (8 subscriptions, the auto_arima pipeline path): started 19:08:21, OOM-KILLED 19:10:00 mid-fit — kernel OOM killed python worker PID 576427 (anon-rss 231904kB) under the 256MiB cgroup cap; job died with asyncio CancelledError in pipeline.run (scheduler.py:187, run_cpu_process); 0 subscription forecasts fitted/persisted in this cycle. Service auto-restarted 19:10:11 (new PID 576471, jobs re-registered 19:10:37). CHRONIC: 9 oom-kill lines and 15 service starts today (first OOM 10:55:31); MemoryMax=268435456 (256MiB); service already at 201.9M/256M idle 6 min after restart."
       - "SCOPE NOTE: the universe refresh path never exercises auto_arima — PROVIDER_CANDIDATES is [naive, drift] (universe_forecasting.py) — so its 1 active naive fit does NOT verify the FUT-014 auto_arima exog fix. The fix lives in the forecast_refresh_job pipeline path (AutoARIMAAdapter, adapters.py:403), which is the path that OOMs. No clean full cycle with auto_arima fits>0 has been observed in production. Next cycle due ~20:10 IST; expected to OOM again unless the cap is raised."
       - "REBUILD 2026-11-21 ~20:00 IST: PR #1216 held on review (coordinator comment 7063970451) — its board file was built from stale base 8fd9a4f4 and reverted TASK-FRD-031 CLAIMED -> AVAILABLE, blanking its branch and claim evidence. Rebuilt as this PR from the true main board blob (main 142f24f6, blob 2a94984e); ONLY the FUT-015 BLOCKED hunk is carried; the FRD-031 CLAIMED record (Muse 4, branch muse4/task-frd-031-activity-log-time) is verified intact on main."
-    blockers:
-      - "S2 Futuris MemoryMax 256MiB: chronic OOM kills forecast_refresh_job mid-fit (9 kills today). Needs a coordinator-ordered memory raise before a clean refresh cycle with auto_arima fits>0 can be observed. No production change made by Muse 1 (observation task only)."
-    next_action: "Muse 1 files the S2 Futuris MemoryMax raise PR (coordinator order, comment 7063970451) for coordinator review before any live change; after the raise is approved and applied, re-observe the next full refresh cycle for auto_arima fits>0."
+      - "RAISE APPLIED 2026-11-21 20:58 IST (coordinator clearance comment 7064603154; PR #1221 merged b43f6a5 20:29 IST): persistent drop-in /etc/systemd/system/Futuris.service.d/memory.conf MemoryMax=512M + daemon-reload + set-property on the running unit. Verified 20:58:26 IST: MemoryMax=536870912, MemoryCurrent=238411776, ActiveState=active, MainPID=577689 unchanged, NRestarts=10. NO restart (would have re-anchored the next refresh to ~21:58 and the 21:12 verification cycle would not have fired)."
+      - "VERIFICATION 21:12 IST cycle (S2 Futuris journal via bridge MCP run_shell, observed 2026-11-21 ~21:52-21:55 IST): forecast_refresh_job started 21:12:23, executed successfully 21:27:08 (~15 min; next run 22:12:23). universe_provider_refresh_job completed 21:12:28, generated=3 active=1 (friday:fleet:forecast_demand_24h prediction=112.0 naive@v1:44136fa355b3678a), 2 honest insufficient_data refusals, 0 target_failed. auto_arima fits: 168 statsforecast arima.py model.fit() lines in 21:12-21:27 + 8 forecast_updated domain events (aefc21a6 21:23:33, 07186ced 21:18:04, 6517d8fe 21:20:01, b35738ca 21:27:08) - fits>0 CONFIRMED. NO OOM: 0 oom-kill lines since 20:58, 0 restarts, MainPID 577689 unchanged, NRestarts=10, MemoryMax=536870912, MemoryCurrent=328355840 (~313MB, ~199MB headroom). Health: GET /health status ok, storage 13/13, observed 21:54:25 IST. FUT-014 fix VERIFIED in production."
+      - "STATUS comment 7065657193 (2026-11-21 ~21:56 IST) reported the clean-cycle verdict to Muse; coordinator awaited this verdict in comments 7065396261 and 7065530801."
+    blockers: []
+    next_action: "MERGED. FUT-014 fix production-verified: one clean refresh cycle with auto_arima fits>0 observed 2026-11-21 21:12-21:27 IST (8 forecast_updated events, 0 OOM). No follow-up owed on this task."
   - id: TASK-FRD-031
     title: "FRIDAY: FRD-030 acceptance - verify the first post-fix daemon catalogue entry renders a real time in the Activity Log; if none exists yet, state exactly what triggers one."
     status: CLAIMED
