@@ -7,13 +7,14 @@ crypto30 1d, shock_breakout k1.5 @ crypto30 1d, and xs_lowvol lv20_r10
 strategies/ensemble_book.py; the canonical book definition lives in
 strategies/ensemble_books.py.
 
-Execution state: BLOCKED on xs_lowvol — a cross-sectional rotation
-(rank 30 symbols by 20d vol, hold 3 lowest, rebalance every 10 bars),
-not a per-symbol signal strategy; it cannot be a member of a per-symbol
-ensemble book without xs rotation machinery. The book refuses
-(fail-closed, whole book, never a subset) until that machinery exists;
-its judged pooled figures (1295 trades, PF 1.4072) INCLUDE the xs legs.
-Also PENDING_WAVE_PR_MERGE — #983 (vol_adaptive), #996 (shock k1.5).
+Execution state: EVALUATING (TASK-STR-FWD-030) — every member module
+is on main (vol_adaptive #983, shock k1.5 #996) and the xs member
+resolves via the panel context the engine passes (strategy_xs_lowvol
+looks its symbol up in the persisted panel membership; with no
+persisted membership the xs leg abstains and the book nets the
+members that did signal). Its judged pooled figures (1295 trades,
+PF 1.4072) INCLUDE the xs legs. The book module itself still needs
+to be appended to S1's STRATEX_STRATEGY_ALLOWLIST at deploy.
 """
 
 from strategies.ensemble_book import BookState, evaluate_book

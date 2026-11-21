@@ -10,13 +10,18 @@ a per-member signal cache across scans — without context it refuses.
 The execution engine lives in strategies/ensemble_book.py; the
 canonical book definition lives in strategies/ensemble_books.py.
 
-Execution state: BLOCKED on four members — DUAL 1d has no standalone
-module (PR #991 built the 4h cell only), SHW has no 1wk module, ZSC has
-no module, and xs_lowvol is a cross-sectional rotation, not a
-per-symbol member. Only HA1d is in flight (#993). The book refuses
-(fail-closed, whole book, never a subset) until all four exist; its
-judged pooled figures (1698 trades, PF 1.3262, shallowest book DD
--0.168 of any proven book) INCLUDE the blocked members' trades.
+Execution state: EVALUATING (TASK-STR-FWD-030) — the DUAL 1d, SHW 1wk
+and ZSC production modules landed, HA1d is on main (#993), and the xs
+member resolves via the panel context the engine passes
+(strategy_xs_lowvol looks its symbol up in the persisted panel
+membership; with no persisted membership the xs leg abstains and the
+book nets the members that did signal). Its judged pooled figures
+(1698 trades, PF 1.3262, shallowest book DD -0.168 of any proven book)
+INCLUDE the previously-blocked members' trades. The book module
+itself still needs to be appended to S1's STRATEX_STRATEGY_ALLOWLIST
+at deploy. Known follow-up (flagged from TASK-STR-FWD-029, for Muse):
+the daemon's own scan timeframe list still says '1wk' while this
+book and the venue label say '1w'.
 """
 
 from strategies.ensemble_book import BookState, evaluate_book

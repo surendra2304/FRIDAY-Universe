@@ -56,6 +56,25 @@ at all — an allowlist omission silently skips the whole book (the proven
 FWD-003 lane root cause), which is why the deploy checklist names the
 8 book modules explicitly.
 
+MEMBER CONTEXT PASSING (TASK-STR-FWD-030): the book modules pass
+evaluation context (symbol/timeframe/venue) into evaluate_book, and the
+engine passes it on to every member whose get_signal accepts it — the
+same signature detection as the registry (strategies/strategy_registry.py:
+a member accepts context iff its get_signal declares symbol/timeframe/
+venue, or takes **kwargs; anything un-inspectable is called the classic
+single-argument way, exactly as before). Classic per-symbol members are
+unaffected. Context-aware members need it to evaluate at all: the
+cross-sectional xs_lowvol member cannot know its symbol without it
+(panel_signal_service.py ranks the whole panel; the module only looks
+its own symbol up), so without context passing it could never signal
+and the books carrying it could never trade their xs leg. A context-
+aware member that abstains (no panel membership yet, wrong timeframe,
+no signal on the bar) is an ordinary abstention — the book nets the
+members that did signal — exactly as a per-symbol member abstains on a
+bar it does not trade. Context passing never changes which members
+resolve: a member that cannot be imported, has no get_signal, or is
+not governed FORWARD_TEST/VALIDATED still refuses the whole book.
+
 REGISTRY INTEGRATION: books register in config_strategy.py as
 FORWARD_TEST entries (FWD-003 shape). The loop's admissions
 (Stratex/self_experiments/admissions.py, PR #986) live in the loop's own
@@ -70,6 +89,7 @@ importable, test_exp002 asserts the two views agree.
 from __future__ import annotations
 
 import importlib
+import inspect
 import logging
 import re
 from dataclasses import dataclass, field
@@ -187,6 +207,39 @@ def _governance_status(module_name: str) -> str:
     from strategies.strategy_registry import governance_status_for
 
     return governance_status_for(module_name)
+
+
+def _accepts_context(get_signal: Any) -> bool:
+    """True when a member's get_signal accepts evaluation context.
+
+    Same detection as the registry (strategies/strategy_registry.py):
+    the signature declares symbol/timeframe/venue, or takes **kwargs.
+    Anything un-inspectable is called the classic single-argument way.
+    """
+    try:
+        params = inspect.signature(get_signal).parameters
+    except (TypeError, ValueError):
+        return False
+    return bool(
+        {"symbol", "timeframe", "venue"} & set(params)
+    ) or any(
+        p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()
+    )
+
+
+def _call_member(
+    get_signal: Any,
+    df: pd.DataFrame,
+    *,
+    symbol: str | None,
+    timeframe: str | None,
+    venue: str | None,
+) -> Any:
+    """Evaluate one member, passing context iff it accepts it."""
+    if _accepts_context(get_signal):
+        return get_signal(df, symbol=symbol, timeframe=timeframe,
+                          venue=venue)
+    return get_signal(df)
 
 
 def _resolve_member(member: Member, state: BookState) -> Any:
@@ -357,8 +410,13 @@ def evaluate_book(
         cache_key = (book.key, symbol or panel, member.key)
         if member.timeframe == timeframe:
             # Evaluate now on this frame; cache the stance at the last
-            # closed bar (the daemon's bar-latch).
-            result = resolved[member.key].get_signal(df)
+            # closed bar (the daemon's bar-latch). Context-aware
+            # members receive the evaluation context (TASK-STR-FWD-030);
+            # classic members are called exactly as before.
+            result = _call_member(
+                resolved[member.key].get_signal, df,
+                symbol=symbol, timeframe=timeframe, venue=venue,
+            )
             signal = None
             if isinstance(result, dict) and result.get("side") in ("BUY", "SELL"):
                 signal = dict(result)
