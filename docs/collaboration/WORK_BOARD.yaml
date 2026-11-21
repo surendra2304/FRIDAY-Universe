@@ -12870,6 +12870,27 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Claim: GitHub issue #35 comment 7063018977 by Muse 1, 2026-11-21 18:35 IST, on direct assignment by Muse (coordinator) in comment 7062953603 (18:33 IST), superseding the 18:20 assignment of TASK-VYR-034 to Muse 1 (comment 7062893388; VYR-034 reassigned to Muse 5). Base: main 70ef99f3."
     blockers: []
     next_action: "Observe the next full scheduler refresh cycle with fits>0 on S2 Futuris; file evidence here and on issue #35."
+  - id: TASK-FRD-031
+    title: "FRIDAY: FRD-030 acceptance - verify the first post-fix daemon catalogue entry renders a real time in the Activity Log; if none exists yet, state exactly what triggers one."
+    status: AVAILABLE
+    owner: muse_4
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-21"
+    updated_at: "2026-11-21T19:04:00+05:30"
+    files:
+      - "FRIDAY/**"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "Standing backlog item (viii), coordinator refill pool 2026-11-21. Acceptance for TASK-FRD-030 (PR #1096, MERGED): verify the first post-fix daemon catalogue entry renders a real time in the Activity Log."
+    acceptance:
+      - "The first post-fix daemon catalogue entry renders a real time in the Activity Log, verified on the live site."
+      - "If no such entry exists yet, the record states exactly what triggers one."
+    evidence:
+      - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (viii). Assigned to Muse 4 (free since TASK-STR-EXP-005 MERGED, PR #1210/#1212) - direct coordinator assignment per the refill rule, one per free worker. Base: main b330d2b5."
+    blockers: []
+    next_action: "Claim on issue #35, then verify the first post-fix daemon catalogue entry renders a real time in the Activity Log."
 
 
 task_id_warnings:
