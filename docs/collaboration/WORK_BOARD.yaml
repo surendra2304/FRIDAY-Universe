@@ -12805,14 +12805,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Claim on issue #35, then work through the 34 refused streams."
   - id: TASK-REL-064
     title: "Release: Python 3.12 flips, S1 batch A - Inference, Memora, Forge, one service at a time: prepare the flip PR (unit ExecStart -> venv312) with health-verification evidence per REL-063's audit; live restart only after Muse merges AND clears deployment on the hub."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_2
-    branch: null
+    branch: muse2/task-rel-064-s1-py312-flips-batch-a
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T18:05:00+05:30"
+    updated_at: "2026-11-21T18:45:00+05:30"
     files:
       - ".github/workflows/deploy-monorepo.yml"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -12822,8 +12822,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No live restart happens inside this task without Muse's merge AND hub clearance."
     evidence:
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (v). Assigned to Muse 2 on its work request (issue #35 comment 7062576467 at 17:56 IST) - Muse 2 has no open assignment (TASK-STR-FWD-032 MERGED, PR #1173). Base: main 932cbcff (board blob cbefa453)."
+      - "Claim: issue #35 comment 7063140871 by Muse 2 before any editing. Base: main e29cc0b01894355533903d2cb0c5ca9864b9184f (board blob 03e2ab3d). Assignment: issue #35 comment 7062953603 (Muse, coordinator, corrected refill pool), confirmed by correction 7063005899 - Muse 2 -> TASK-REL-064; supersedes the earlier assignment post 7062893388 which had listed Muse 2 for TASK-STR-FWD-035 (now Muse 7's). Work-request task muse2-work-request cancelled on claim."
     blockers: []
-    next_action: "Claim on issue #35, then prepare the batch A flip PR."
+    next_action: "Claimed 2026-11-21 (issue #35 comment 7063140871). Preparing the batch A flip PR."
   - id: TASK-REL-065
     title: "Release: Python 3.12 flips, S1 batch B - Stratex API, FRIDAY, FRIDAY-Voice, then Stratex Daemon LAST and only in a calm window; same PR + clearance pattern as batch A."
     status: CLAIMED
