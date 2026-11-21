@@ -12388,14 +12388,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-VYR-030
     title: "VyralX: stock the phonk shelf - the growth BGM library has 0 phonk tracks and cycle 11 (2026-11-21) again warned phonk_shelf_empty; the owner named phonk as a required BGM category. Source free-to-use phonk tracks per the SHELF.md rules, register them in the growth library on U2, and verify the warning clears."
-    status: AVAILABLE
+    status: IN_PROGRESS
     owner: muse_1
+    branch: muse1/task-vyr-030-phonk-shelf-stock
     priority: P2
     created_at: "2026-11-21"
     updated_at: "2026-11-21"
     evidence:
       - "Cycle 11 run 2026-11-21: warnings included phonk_shelf_empty (no phonk tracks in the growth library). Growth shelf has 20 tracks, 0 phonk (coordinator follow-up list, 2026-11-20)."
-    next_action: "Muse 1: claim on the board + issue #35, stock the shelf on U2 per SHELF.md, verify with a loop probe that the phonk warning is gone."
+      - "Claim: issue #35 comment 7056110889 by Muse 1 before any editing. Base: main 9ac4eefc499791ef1628bd767f25994a5b78dfed (board blob 8981ccb2 verified against Contents API). No prior claim, remote branch, or PR for TASK-VYR-030 existed at claim time."
+    next_action: "Implementation in progress on branch muse1/task-vyr-030-phonk-shelf-stock; PR to follow for Muse review. Stock the phonk shelf on U2 per SHELF.md and verify with a loop probe that the phonk warning is gone."
   - id: TASK-STR-FWD-029
     title: "Stratex: capcheck_books.py timeframe label fix - the books use '1wk' where the venue/panel label is '1w'; align the label and add regression coverage so weekly books stop being silently skipped or mismatched."
     status: AVAILABLE
