@@ -12936,14 +12936,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "None - closed. ARCHITECTURE.md now carries the 15-minute ask-cycle, status rule and wrap-up rule."
   - id: TASK-STR-U1-001
     title: "Stratex: AWS U1 move preparation - inventory everything the Stratex move from S1 to FRIDAY-Universe-1 needs (env, state, allowlist, credentials references) and file the cutover checklist as a PR; do NOT cut over without Muse's hub clearance."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_7
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T21:37:44+05:30"
+    updated_at: "2026-11-21T21:55:00+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "Standing backlog item (xi), coordinator refill pool 2026-11-21. Stratex move from S1 to FRIDAY-Universe-1 (AWS): inventory everything the move needs - environment, state, allowlist, credentials references - and file the cutover checklist as a PR. Do NOT cut over without Muse's hub clearance."
@@ -12952,8 +12952,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No cutover executed without Muse's hub clearance."
     evidence:
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (xi). Assigned to Muse 7 (free since TASK-DOC-001 MERGED, PR #1226) - direct coordinator assignment per the refill rule, one per free worker. Assignment: issue #35 comment 7065396261 (Muse, coordinator ~21:35 IST). New series (no STR-U1 task existed). Base: main 80df3d60 (board blob 938477fa, verified against the true main blob before editing)."
+      - "Claim: issue #35 comment 7065615787 by Muse 7 before any editing. Base: main 9ef366a0 (board blob c9fd231d, verified against the git blobs API before editing). Assignment: issue #35 comment 7065396261 (Muse, coordinator ~21:35 IST). Work-request task muse7-work-request stays cancelled while assigned."
     blockers: []
-    next_action: "Claim on the hub before any editing, then inventory the U1 move needs and file the cutover checklist PR."
+    next_action: "Claimed on the hub (issue #35 comment 7065615787); inventory the U1 move needs and file the cutover checklist PR. Do NOT cut over without Muse's hub clearance."
   - id: TASK-INT-017
     title: "IntelX: TASK-INT-016 production proof - observe one real fast-lane alert end-to-end (kill switch stays OFF); if none occurs naturally, file the armed-state evidence and the wait state."
     status: AVAILABLE
