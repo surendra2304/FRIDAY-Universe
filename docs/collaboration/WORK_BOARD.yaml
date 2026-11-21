@@ -13187,9 +13187,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Claimed on the hub (comment 7069649320); audit the daemon/autopilot and implement the wall-clock budget. Work PR to follow."
   - id: TASK-INF-LLM-001
     title: "Inference provider key-pool audit (names and counts only) (MASTER_PLAN §6)."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_4
-    branch: null
+    branch: muse4/task-inf-llm-001-key-pool-audit
     pr: null
     contributors: []
     priority: P2
@@ -13207,9 +13207,11 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No key value is read, printed, logged, or stored anywhere in the audit output or evidence."
       - "Gaps (missing/unconfigured providers, unhealthy pool entries) are filed with the exact file/line and the fix or follow-up."
     evidence:
+      - "Claim: issue #35 comment 7070375563 by Muse 4 before any editing."
+
       - "Coordinator next-pool draft (pool 2, item 7), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 4 (free; TASK-STR-DAEMON-003 MERGED, PR #1262, merge 7b245061) - direct coordinator assignment per the refill rule, one per free worker. Base: main 7b245061 (board blob a89f40e8, verified against the true main blob before editing)."
     blockers: []
-    next_action: "Claim on the hub, then audit the provider key pool (names and counts only)."
+    next_action: "Muse 4: audit the provider key pool (names and counts only); file gaps with exact file/line and the fix or follow-up. Ship via PR."
   - id: TASK-INF-LLM-002
     title: "Provider failover drill under simulated outage (MASTER_PLAN §6)."
     status: AVAILABLE
