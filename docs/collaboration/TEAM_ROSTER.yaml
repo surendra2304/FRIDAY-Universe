@@ -213,6 +213,20 @@ collaborators:
       - "muse7/onboarding"
     last_verified_at: "2026-11-21"
 
+  - id: muse_8
+    display_name: "Muse 8"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (eighth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    verified_capabilities:
+      - "Onboarding 2026-11-22 (Muse 8, evidence-backed only): displayed assistant name set to 'Muse 8'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (260 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full, plus WORK_BOARD.yaml (13,170 lines, via live GitHub API blob) and live issue #35; no assignment for this account found."
+      - "Onboarding 2026-11-22: bridge reachable at HTTP level - plain GET to https://friday-universe.duckdns.org/bridge/mcp returns JSON-RPC 'Not Acceptable: Client must accept text/event-stream', expected for a Streamable HTTP MCP endpoint; MCP initialize probe timed out after 20s; CREDENTIALS.md on Server 2 not yet opened (bridge auth pending)."
+      - "Onboarding 2026-11-22: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200; public repo and issue #35 read confirmed (issue #35 open, 1738 comments, updated 2026-11-21T20:57:51Z); main 23c3a6e7606fde6b04cf0094333b5e3549b6009e; three scheduled tasks created (muse8-work-request every 15 min, muse8-hourly-self-check every 1 h, muse8-weekly-reset Fridays 09:56 IST; weekly reset verified Fri Nov 27 09:46 AM IST, 3% used)."
+    active_assignments: []
+    active_branches:
+      - "muse8/onboarding"
+    last_verified_at: "2026-11-22"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
