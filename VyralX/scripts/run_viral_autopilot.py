@@ -13,6 +13,13 @@ Each cycle it:
 4. hands the queued publish job to the normal worker, which runs the rights,
    silence and loudness gates before uploading **unlisted**.
 
+Each cycle runs inside a total wall-clock budget
+(``viral_autopilot_cycle_budget_seconds``, default 5400s, TASK-VYR-001):
+no new audition or publish job starts past the deadline, so a cycle
+terminates instead of running unbounded past the daemon's 6h interval.
+A single in-flight audition or worker job is a blocking call with no
+deadline of its own and may still overrun the budget.
+
     python scripts/run_viral_autopilot.py            # one cycle
     python scripts/run_viral_autopilot.py --loop     # run the channel forever
     python scripts/run_viral_autopilot.py --discover-only
@@ -111,7 +118,17 @@ def bootstrap() -> Settings:
     return settings
 
 
-def produce_one(settings: Settings, *, max_candidates: int) -> dict:
+def produce_one(settings: Settings, *, max_candidates: int, deadline: float | None = None) -> dict:
+    """Audition candidates until one is produced or the pool is exhausted.
+
+    TASK-VYR-001: ``deadline`` is a ``time.monotonic()`` value bounding
+    the whole cycle. It is checked before every audition; when it has
+    passed the cycle stops with ``CYCLE_BUDGET_EXCEEDED`` instead of
+    starting another download + Whisper + render. A single in-flight
+    audition is a blocking call with no deadline of its own, so it may
+    still overrun the budget — the guarantee is that the cycle starts
+    nothing new past the deadline and therefore terminates.
+    """
     if str(getattr(settings, "viral_producer_lane", "viral_remix")).lower() == "mpt":
         # IG2 B7-C1: the MoneyPrinterTurbo producer lane. It works from a
         # briefs file (no source downloads, so no cookie jar is needed)
@@ -158,6 +175,12 @@ def produce_one(settings: Settings, *, max_candidates: int) -> dict:
 
         attempts: list[dict] = []
         for candidate in candidates[: max(1, max_candidates)]:
+            if deadline is not None and time.monotonic() >= deadline:
+                log.warning(
+                    "Cycle wall-clock budget exceeded before %s; stopping auditions",
+                    candidate.video_id,
+                )
+                return {"status": "CYCLE_BUDGET_EXCEEDED", "attempts": attempts}
             log.info(
                 "Trying %s | %.1fs | %s views | score %.2f | %s",
                 candidate.video_id, candidate.duration, candidate.view_count,
@@ -173,10 +196,19 @@ def produce_one(settings: Settings, *, max_candidates: int) -> dict:
         return {"status": "ALL_CANDIDATES_REJECTED", "attempts": attempts}
 
 
-def drain_publish_queue(timeout_seconds: int = 1800) -> dict:
+def drain_publish_queue(timeout_seconds: int = 1800, *, deadline: float | None = None) -> dict:
+    """Drain the publish queue, bounded by the smaller of the drain timeout and the cycle deadline.
+
+    TASK-VYR-001: ``deadline`` is a ``time.monotonic()`` value for the
+    whole cycle. A single ``run_once()`` job is itself unbounded, so
+    the drain can still overrun on one long job — but no new job is
+    started once the deadline has passed.
+    """
     from app.worker import run_once
 
     started = time.time()
+    if deadline is not None:
+        timeout_seconds = max(0.0, min(float(timeout_seconds), deadline - time.monotonic()))
     uploaded = 0
     idle = 0
     while time.time() - started < timeout_seconds:
@@ -233,19 +265,38 @@ def _snapshot_ypp(settings: Settings) -> None:
 
 
 def run_cycle(settings: Settings, args: argparse.Namespace) -> dict:
+    """Run one autopilot cycle inside the total wall-clock budget.
+
+    TASK-VYR-001: the budget (settings
+    ``viral_autopilot_cycle_budget_seconds``, default 5400s, or the
+    ``--cycle-budget`` override) covers discovery + auditions + the
+    publish drain. The deadline is computed once here and handed down,
+    so the cycle terminates instead of running unbounded past the
+    daemon's 6h interval.
+    """
+    budget = float(getattr(args, "cycle_budget", 0) or 0)
+    if budget <= 0:
+        budget = float(getattr(settings, "viral_autopilot_cycle_budget_seconds", 5400))
+    started = time.monotonic()
+    deadline = started + budget
     _snapshot_ypp(settings)
     produced = produce_one(
         settings,
         max_candidates=args.max_candidates,
+        deadline=deadline,
     )
-    log.info("Production step: %s", produced.get("status"))
+    elapsed = round(time.monotonic() - started, 1)
+    produced["seconds"] = elapsed
+    produced["budget_seconds"] = budget
+    log.info("Production step: %s (%.1fs of %.0fs budget)", produced.get("status"), elapsed, budget)
     if produced.get("status") != "PRODUCED":
         return produced
     log.info("Edit mode: %s", produced["result"].get("edit_mode"))
     log.info("Queued publish job: %s", produced["result"].get("publish_job_id"))
-    drained = drain_publish_queue(timeout_seconds=args.timeout)
+    drained = drain_publish_queue(timeout_seconds=args.timeout, deadline=deadline)
     log.info("Queue drain: %s", drained)
     report()
+    produced["seconds"] = round(time.monotonic() - started, 1)
     return produced
 
 
@@ -267,6 +318,10 @@ def main() -> None:
     parser.add_argument("--interval", type=int, default=0, help="minutes between cycles (default: settings)")
     parser.add_argument("--max-candidates", type=int, default=10, help="candidates to audition per cycle")
     parser.add_argument("--timeout", type=int, default=1800, help="max seconds per publish drain")
+    parser.add_argument(
+        "--cycle-budget", type=int, default=0,
+        help="max wall-clock seconds per cycle (0 = settings default 5400)",
+    )
     parser.add_argument("--allow-narrated", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--discover-only", action="store_true", help="print ranked candidates and exit")
     args = parser.parse_args()
