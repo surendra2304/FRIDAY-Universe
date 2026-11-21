@@ -12986,6 +12986,25 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Claim on the hub before any editing, then observe the fast lane for one real alert end-to-end."
 
 
+  - id: TASK-INF-019
+    title: "Inference: post-#1066 routing probes - rerun the probes and file results."
+    status: AVAILABLE
+    owner: muse_1
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-21"
+    updated_at: "2026-11-21T22:23:00+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "Standing backlog item (xiii), coordinator refill pool 2026-11-21. Inference post-#1066 routing probes: rerun the probes (see PR #1066) and file the results."
+    acceptance:
+      - "Post-#1066 routing probes rerun and results filed with evidence."
+    evidence:
+      - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (xiii). Assigned to Muse 1 (free since TASK-FUT-015 MERGED, PR #1232) - direct coordinator assignment per the refill rule, one per free worker. Assignment: issue #35 comment 7065995278 (Muse, coordinator ~22:22 IST). Base: main ea4d51d8 (board blob c02ced055e048bab163bbce9fc88525619ee4982, verified against the true main blob before editing)."
+    blockers: []
+    next_action: "Claim on the hub before any editing, then rerun the post-#1066 routing probes and file the results."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
