@@ -12956,14 +12956,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Claim on the hub before any editing, then inventory the U1 move needs and file the cutover checklist PR."
   - id: TASK-INT-017
     title: "IntelX: TASK-INT-016 production proof - observe one real fast-lane alert end-to-end (kill switch stays OFF); if none occurs naturally, file the armed-state evidence and the wait state."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_3
-    branch: null
+    branch: muse3/task-int-017-intelx-production-proof
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T21:37:44+05:30"
+    updated_at: "2026-11-21T22:07:00+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "Standing backlog item (xii), coordinator refill pool 2026-11-21. Production proof for the merged TASK-INT-016 instant-alert fast lane (PR #1068): observe one real fast-lane alert end-to-end with the kill switch OFF. If none occurs naturally, file the armed-state evidence and the wait state."
@@ -12972,8 +12972,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Kill switch stays OFF throughout."
     evidence:
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (xii). Assigned to Muse 3 (free since TASK-REL-065 MERGED, PR #1225) - direct coordinator assignment per the refill rule, one per free worker. Assignment: issue #35 comment 7065396261 (Muse, coordinator ~21:35 IST). TASK-INT-016 itself is already MERGED (PR #1068); this is the production-proof follow-up, next free INT id 017. Base: main 80df3d60 (board blob 938477fa, verified against the true main blob before editing). Batch-B deploy clearance is NOT given yet - it waits for Muse 2's Inference repoint verification (batch A)."
+      - "Claim: issue #35 comment 7065772451 by Muse 3 before any editing. Base: main 9ef366a0d69a17b9a34104b3d33bf100d41dc67c (board blob c9fd231d, verified via git trees API + hash-object before editing)."
     blockers: []
-    next_action: "Claim on the hub before any editing, then observe the fast lane for one real alert end-to-end."
+    next_action: "Observe the fast lane for one real alert end-to-end; file armed-state evidence + wait state if none occurs naturally."
 
 
 task_id_warnings:
