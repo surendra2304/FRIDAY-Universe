@@ -211,7 +211,12 @@ ExecStart=$VENV_DIR/bin/python -m uvicorn futuris.api.app:app --host 0.0.0.0 --p
 Restart=always
 RestartSec=5
 TimeoutStopSec=10
-MemoryMax=180M
+# TASK-FUT-015 (2026-11-21): 180M -> 512M. Live S2 unit is 256M today (drift
+# from this file); chronic OOM kills forecast_refresh_job mid-fit (idle
+# ~202M, killed at ~232MB anon-rss, 19:08 IST cycle). S2 budget checked
+# 2026-11-21 20:07 IST: 956M total, 382M available; IntelX 123M/180M,
+# Cortex 25M/200M. Coordinator review required before any live change.
+MemoryMax=512M
 
 [Install]
 WantedBy=multi-user.target
