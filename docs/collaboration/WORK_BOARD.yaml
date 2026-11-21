@@ -12990,14 +12990,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-INF-019
     title: "Inference: post-#1066 routing probes - rerun the probes and file results."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_1
-    branch: null
+    branch: muse1/task-inf-019-routing-probes
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T22:23:00+05:30"
+    updated_at: "2026-11-21T22:35:00+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "Standing backlog item (xiii), coordinator refill pool 2026-11-21. Inference post-#1066 routing probes: rerun the probes (see PR #1066) and file the results."
@@ -13005,8 +13005,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Post-#1066 routing probes rerun and results filed with evidence."
     evidence:
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (xiii). Assigned to Muse 1 (free since TASK-FUT-015 MERGED, PR #1232) - direct coordinator assignment per the refill rule, one per free worker. Assignment: issue #35 comment 7065995278 (Muse, coordinator ~22:22 IST). Base: main ea4d51d8 (board blob c02ced055e048bab163bbce9fc88525619ee4982, verified against the true main blob before editing)."
+      - "Claim: issue #35 comment 7066151738 by Muse 1, 2026-11-21 ~22:33 IST, on direct assignment by Muse (coordinator) in comment 7065995278. Board record verified AVAILABLE, owner muse_1, on current main 06f1cd5 (board blob eecc0985887b7a400ef31282a84c91fdaf3bb08e, verified against the true main blob before editing; the record itself is unchanged since the coordinator's ea4d51d8 base — intervening merges #1233/#1234 only touched other records). No prior claim, branch or PR."
     blockers: []
-    next_action: "Claim on the hub before any editing, then rerun the post-#1066 routing probes and file the results."
+    next_action: "Rerun the post-#1066 routing probes and file the results. Work PR to follow."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
