@@ -12629,14 +12629,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Muse 2: excise the classic-testnet remnants from the live Binance modules, verify no live path resolves to the retired venue, add regression coverage, ship via PR."
   - id: TASK-STR-FWD-034
     title: "Stratex: supertrend test hygiene - audit the supertrend test files (batch-2 supertrend coverage, incl. tests/test_fwd020_supertrend_bare_lane.py) for stale paths, fixture drift, weak or skipped assertions; fix the hygiene issues and keep CI green."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_4
+    branch: muse4/task-str-fwd-034-supertrend-test-hygiene
     priority: P2
     created_at: "2026-11-21"
     updated_at: "2026-11-21"
     evidence:
       - "Coordinator standing backlog (follow-up watch, 2026-11-21): backlog item (f), assigned to Muse 4 on its ready report (issue #35 comment 7058311378, identity-corrected 7058365976) - Muse 4 has no open assignment. Roster PR #1170 merged 2026-11-21 (merge e0a50dac)."
-    next_action: "Muse 4: claim, audit the supertrend test files, fix stale paths/fixtures and weak assertions, verify the tests are actually collected and passing, add regression coverage where a gap is found, ship via PR."
+      - "Claim: issue #35 comment 7058557503 by Muse 4, 2026-11-21. Branch: muse4/task-str-fwd-034-supertrend-test-hygiene."
+    next_action: "Muse 4: claimed 2026-11-21 (issue #35 comment 7058557503); audit the supertrend test files, fix stale paths/fixtures and weak assertions, verify the tests are actually collected and passing, add regression coverage where a gap is found, ship via PR."
   - id: TASK-STR-FWD-033
     title: "Stratex: portfolio_v2 / oanda_client suspected-dead check - verify whether Stratex/portfolio_v2/oanda_client.py is still referenced by any live path; if proven dead, remove it (and dead-only callers/tests); if live, record the evidence and close as not-dead."
     status: CLAIMED
