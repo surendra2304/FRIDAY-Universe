@@ -11,6 +11,7 @@ The fix selects the tail of the SOURCE window before retiming
 graph so the pattern cannot regress.
 """
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -34,6 +35,20 @@ def _beat(index, start, end, audio, factor, trim_head=0.0, trim_tail=0.0, pad=0.
     }
 
 
+def _make_bed(tmp_path):
+    # TASK-VYR-032: the BGM bed is mandatory — render_scene_timed probes
+    # it with ffprobe before building the command, so the capture helper
+    # needs a real bed file, not just a path.
+    bed = tmp_path / "bed.wav"
+    subprocess.run(
+        ["ffmpeg", "-hide_banner", "-nostdin", "-y",
+         "-f", "lavfi", "-i", "sine=frequency=440:duration=1",
+         "-c:a", "pcm_s16le", str(bed)],
+        capture_output=True, check=True,
+    )
+    return bed
+
+
 def _capture_graph(monkeypatch, tmp_path, beats):
     captured = {}
 
@@ -51,6 +66,7 @@ def _capture_graph(monkeypatch, tmp_path, beats):
     vr.render_scene_timed(
         Path("/src.mp4"), tmp_path / "out.mp4", tracks, cues, "VIRAL",
         source_has_audio=True,
+        music_bed_path=_make_bed(tmp_path),
     )
     cmd = captured["cmd"]
     graph = cmd[cmd.index("-filter_complex") + 1]

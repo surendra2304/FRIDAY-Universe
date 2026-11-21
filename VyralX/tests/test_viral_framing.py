@@ -157,8 +157,25 @@ from pathlib import Path
 from app.services import viral_remix
 
 
-def _capture_render(monkeypatch, tmp_path, *, with_bed=True):
+def _make_bed(tmp_path, name="bed.wav"):
+    """A real 1s tone bed: _require_music_bed probes the file with ffprobe."""
+    bed = tmp_path / name
+    subprocess.run(
+        ["ffmpeg", "-hide_banner", "-nostdin", "-y",
+         "-f", "lavfi", "-i", "sine=frequency=440:duration=1",
+         "-c:a", "pcm_s16le", str(bed)],
+        capture_output=True, check=True,
+    )
+    return bed
+
+
+def _capture_render(monkeypatch, tmp_path, *, with_bed=True, bed_file=None):
     captured = {}
+
+    if with_bed:
+        bed_path = bed_file if bed_file is not None else _make_bed(tmp_path)
+    else:
+        bed_path = None
 
     def fake_run(cmd, *, timeout=600):
         captured["cmd"] = [str(part) for part in cmd]
@@ -180,7 +197,7 @@ def _capture_render(monkeypatch, tmp_path, *, with_bed=True):
         payoff_seconds=6.0,
         cues=cues,
         category="VIRAL",
-        music_bed_path=(tmp_path / "bed.wav") if with_bed else None,
+        music_bed_path=bed_path,
     )
     return captured
 
@@ -222,13 +239,21 @@ def test_render_framed_keeps_locked_rules_in_the_same_command(monkeypatch, tmp_p
     assert "loudnorm=I=-14:LRA=9:TP=-1.5" in chain
 
 
-def test_render_framed_without_bed_keeps_profile(monkeypatch, tmp_path):
-    captured = _capture_render(monkeypatch, tmp_path, with_bed=False)
-    chain = _filter_complex(captured["cmd"])
-    assert "scale=720:1280" in chain
-    assert "fps=30" in chain
-    assert "amix=inputs=2" in chain
-    assert _flag_value(captured["cmd"], "-preset") == "ultrafast"
+def test_render_framed_without_bed_refuses(monkeypatch, tmp_path):
+    # TASK-VYR-032: BGM is mandatory — render 861 shipped with no
+    # audible BGM because the renderer accepted music_bed_path=None and
+    # rendered fine. A missing bed is now a loud failure, not a silent
+    # ship. (The old test pinned the no-bed command shape; that shape
+    # no longer exists — the bed is always in the mix.)
+    with pytest.raises(ValueError, match="BGM bed is mandatory"):
+        _capture_render(monkeypatch, tmp_path, with_bed=False)
+
+
+def test_render_framed_with_empty_bed_refuses(monkeypatch, tmp_path):
+    bed = tmp_path / "bed.wav"
+    bed.write_bytes(b"")
+    with pytest.raises(ValueError, match="BGM bed is mandatory"):
+        _capture_render(monkeypatch, tmp_path, bed_file=bed)
 
 
 def test_base_video_filter_defaults_are_the_channel_format():
@@ -1069,9 +1094,17 @@ def test_cycle5_swapped_titles_are_rejected_by_the_grounding_gate():
 # tracks doubling for the whole video (the pattern the owner rejected
 # in cycle-5 job 823). VYR-024's caption_overlap could not see it: the
 # source's captions never overlapped EACH OTHER. The record now
-# reports per-beat caption presence; a strict majority of beats means
-# the source is already captioned and the candidate is skipped with
-# reason source_captioned before any render work.
+# reports per-beat caption presence; any flagged beat means the source
+# is already captioned and the candidate is skipped with reason
+# source_captioned before any render work.
+#
+# TASK-VYR-032: the VYR-025 rule was a strict majority of beats, and
+# render 861 slipped past it — its caption track was not visible in
+# two of the three sampled stills. Word-by-word captions flash per
+# word, so a majority of stills is the wrong test for a track that runs
+# through the clip. Under the record prompt's contract a flagged beat
+# means real speech captions (a one-off title is explicitly NOT
+# captions), so one flagged beat is evidence of a track.
 
 
 def _captioned_payload(flags):
@@ -1087,12 +1120,12 @@ def _captioned_payload(flags):
     }
 
 
-def test_caption_track_majority_rule():
+def test_caption_track_any_beat_rule():
     assert scene_analysis.source_caption_track(3, 3) is True
     assert scene_analysis.source_caption_track(2, 3) is True
-    assert scene_analysis.source_caption_track(1, 3) is False
+    assert scene_analysis.source_caption_track(1, 3) is True
     assert scene_analysis.source_caption_track(0, 3) is False
-    assert scene_analysis.source_caption_track(1, 2) is False
+    assert scene_analysis.source_caption_track(1, 2) is True
     assert scene_analysis.source_caption_track(2, 2) is True
     assert scene_analysis.source_caption_track(0, 0) is False
 
@@ -1104,20 +1137,24 @@ def test_record_flags_a_full_caption_track():
     assert record["source_caption_track"] is True
 
 
-def test_record_flags_a_majority_caption_track():
+def test_record_flags_a_partial_caption_track():
     record = scene_analysis._coerce_record(_captioned_payload([True, False, True]))
     assert record is not None
     assert record["caption_beats"] == 2
     assert record["source_caption_track"] is True
 
 
-def test_record_ignores_a_single_captioned_beat():
-    # One beat with a title card or a single captioned moment is not a
-    # track — the skip is final for the cycle, so it must not fire.
+def test_record_flags_a_single_captioned_beat():
+    # TASK-VYR-032 (render 861): one flagged beat IS a track. The old
+    # majority rule let a caption track through when it was not visible
+    # in two of the three sampled stills; word-by-word captions flash
+    # per word, so a single flagged beat is evidence of a track, not
+    # noise — the record prompt already excludes one-off titles from
+    # captions_present.
     record = scene_analysis._coerce_record(_captioned_payload([True, False, False]))
     assert record is not None
     assert record["caption_beats"] == 1
-    assert record["source_caption_track"] is False
+    assert record["source_caption_track"] is True
 
 
 def test_record_defaults_clean_when_vision_omits_caption_flags():

@@ -723,26 +723,35 @@ def _coerce_record(payload: Any) -> dict[str, Any] | None:
         # default the same way: no per-beat flags, no track.
         "watermark_text": _clean_field(payload.get("watermark_text"), 80),
         "caption_overlap": bool(payload.get("caption_overlap")),
-        # Already-captioned sources (TASK-VYR-025): the per-beat
-        # captions_present flags collapse to one record-level verdict —
-        # a full burned-in caption track is present in a strict majority
-        # of the sampled beats. A single flagged beat (a transient
-        # title or one captioned moment) is not a track.
+        # Already-captioned sources (TASK-VYR-025, sensitivity raised by
+        # TASK-VYR-032): the per-beat captions_present flags collapse to
+        # one record-level verdict — a burned-in caption track is present
+        # when ANY sampled beat carries speech captions. Render 861
+        # slipped past the old strict-majority rule because its track
+        # was not visible in two of the three sampled stills.
         "caption_beats": caption_beats,
         "source_caption_track": source_caption_track(caption_beats, len(beats)),
     }
 
 
 def source_caption_track(caption_beats: int, total_beats: int) -> bool:
-    """Majority rule for the already-captioned verdict (TASK-VYR-025).
+    """Any-beat rule for the already-captioned verdict (TASK-VYR-032).
 
     The vision pass samples three beats; a source counts as carrying a
-    full burned-in caption track only when captions transcribing speech
-    appear in a strict majority of them (2 of 3). Anything weaker — one
-    beat with a title card, one captioned moment — must not condemn the
-    candidate, because the skip is final for that cycle.
+    burned-in caption track when captions transcribing speech appear in
+    ANY of them. TASK-VYR-025 used a strict majority (2 of 3): render
+    861 shipped doubled after that gate because its caption track was
+    not visible in two of the three sampled stills — word-by-word
+    captions flash per word and may be absent during pauses, so a
+    majority of stills is the wrong test for a track that runs through
+    the clip. Under the record prompt's contract a flagged beat means
+    real speech captions (a one-off title or name card is explicitly
+    NOT captions), so one flagged beat is evidence of a track, not
+    noise. The cost is asymmetric: a false positive only skips one
+    candidate from a large pool, while a false negative ships a doubled
+    render the owner rejects. The skip stays final for that cycle.
     """
-    return total_beats > 0 and caption_beats * 2 > total_beats
+    return total_beats > 0 and caption_beats > 0
 
 
 def record_visual_defects(record: dict[str, Any] | None) -> list[str]:

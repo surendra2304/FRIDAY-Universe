@@ -136,6 +136,35 @@ def _run(cmd: list[str], *, timeout: int = 600) -> subprocess.CompletedProcess:
     return proc
 
 
+def _require_music_bed(music_bed_path: Path | None) -> Path:
+    """Fail closed when the BGM bed is missing (TASK-VYR-032).
+
+    BGM is mandatory: a render with no bed used to succeed silently
+    (render 861 shipped with no audible BGM — the renderers accepted
+    ``music_bed_path=None`` and the produce functions only prepare a
+    bed when ``viral_music_bed_enabled``). The bed must be a real,
+    non-empty audio file with a positive probed duration — a zero-byte
+    or undecodable file is the same failure as no file at all, and it
+    must surface here, before any encode work starts.
+    """
+    if music_bed_path is None:
+        raise ValueError(
+            "BGM bed is mandatory: music_bed_path must be a real audio file, not None"
+        )
+    bed = Path(music_bed_path)
+    if not bed.is_file() or bed.stat().st_size <= 0:
+        raise ValueError(f"BGM bed is mandatory: {bed} is missing or empty")
+    try:
+        duration = float(probe_media(bed).duration or 0.0)
+    except Exception as exc:
+        raise ValueError(
+            f"BGM bed is mandatory: {bed} could not be probed ({exc})"
+        ) from exc
+    if duration <= 0:
+        raise ValueError(f"BGM bed is mandatory: {bed} has no audible duration")
+    return bed
+
+
 def _fmt_timecode(seconds: float) -> str:
     seconds = max(0.0, float(seconds))
     return f"{int(seconds // 60)}:{int(seconds % 60):02d}"
@@ -1192,10 +1221,15 @@ def render_scene_timed(
     :func:`segment_timing`), the ducked source audio is retimed with it, and
     the per-beat narration — already assembled at the same total length —
     plays continuously over the top. Captions are burned on the final
-    timeline, whose word timings come from the narration itself.
+    timeline, whose word timings come from the narration itself. Exactly
+    one caption track is burned (the single ASS file from ``cues``), and
+    the BGM bed is mandatory (TASK-VYR-032): a render with no bed, or a
+    bed file that is empty or undecodable, raises instead of shipping
+    silent.
     """
     settings = get_settings()
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    bed_path = _require_music_bed(music_bed_path)
     ass_path = _write_ass(cues, output_path.with_suffix(".ass"))
     video_chain = _base_video_filter(cues, category, ass_path)
     beats = tracks["beats"]
@@ -1215,10 +1249,6 @@ def render_scene_timed(
         "".join(f"[vb{beat['index']}]" for beat in beats)
         + f"concat=n={len(beats)}:v=1:a=0,{video_chain}[v]"
     )
-    bed = (
-        f"[2:a]volume=0.10[bed];" if music_bed_path is not None else ""
-    )
-    bed_input = "[bed]" if music_bed_path is not None else ""
     if source_has_audio:
         for beat in beats:
             timing = beat["timing"]
@@ -1229,28 +1259,25 @@ def render_scene_timed(
             )
             chain += f",apad=whole_dur={beat['target_seconds']:.3f},atrim=0:{beat['target_seconds']:.3f}"
             filters.append(chain + f"[ab{beat['index']}]")
-        mix_inputs = 3 if music_bed_path is not None else 2
         filters.append(
             "".join(f"[ab{beat['index']}]" for beat in beats)
             + f"concat=n={len(beats)}:v=0:a=1,volume=0.20[orig];"
-            + bed
-            + f"[orig]{bed_input}[1:a]amix=inputs={mix_inputs}:duration=first:dropout_transition=2,"
-            "loudnorm=I=-14:LRA=9:TP=-1.5[a]"
-        )
-    elif music_bed_path is not None:
-        filters.append(
-            bed + "[1:a][bed]amix=inputs=2:duration=first:dropout_transition=2,"
+            + "[2:a]volume=0.10[bed];"
+            + "[orig][bed][1:a]amix=inputs=3:duration=first:dropout_transition=2,"
             "loudnorm=I=-14:LRA=9:TP=-1.5[a]"
         )
     else:
-        filters.append("[1:a]loudnorm=I=-14:LRA=9:TP=-1.5[a]")
+        filters.append(
+            "[2:a]volume=0.10[bed];"
+            "[1:a][bed]amix=inputs=2:duration=first:dropout_transition=2,"
+            "loudnorm=I=-14:LRA=9:TP=-1.5[a]"
+        )
     cmd = [
         settings.ffmpeg_bin, "-hide_banner", "-nostdin", "-y",
         "-i", str(source_path),
         "-i", str(tracks["narration_path"]),
+        "-i", str(bed_path),
     ]
-    if music_bed_path is not None:
-        cmd += ["-i", str(music_bed_path)]
     cmd += [
         "-filter_complex", ";".join(filters),
         "-map", "[v]", "-map", "[a]",

@@ -1091,10 +1091,13 @@ def render_framed(
     under her two lines (ducked to 0.22, the production duck level),
     her lines placed at the two ends, and the BGM bed at full level
     in the stretches where nobody speaks and ducked under her lines.
-    The mix is loudnormed to the production target.
+    The mix is loudnormed to the production target. The BGM bed is
+    mandatory (TASK-VYR-032): a render with no bed, or a bed file that
+    is empty or undecodable, raises instead of shipping silent.
     """
     settings = get_settings()
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    bed_path = vr._require_music_bed(music_bed_path)
     ass_path = vr._write_ass(cues, output_path.with_suffix(".ass"))
     video_chain = vr._base_video_filter(
         cues,
@@ -1121,30 +1124,23 @@ def render_framed(
         f"[2:a]adelay={payoff_delay_ms}|{payoff_delay_ms}[po]",
         "[hk][po]amix=inputs=2:duration=first:dropout_transition=0[nar]",
     ]
-    if music_bed_path is not None:
-        filters.append(
-            "[3:a]volume=0.12,"
-            f"volume=0.05:enable='between(t,0,{duck_hook_end:.3f})',"
-            f"volume=0.05:enable='between(t,{duck_payoff_start:.3f},{excerpt_seconds:.3f})'"
-            "[bed]"
-        )
-        filters.append(
-            "[src][nar][bed]amix=inputs=3:duration=first:dropout_transition=2,"
-            "loudnorm=I=-14:LRA=9:TP=-1.5[a]"
-        )
-    else:
-        filters.append(
-            "[src][nar]amix=inputs=2:duration=first:dropout_transition=2,"
-            "loudnorm=I=-14:LRA=9:TP=-1.5[a]"
-        )
+    filters.append(
+        "[3:a]volume=0.12,"
+        f"volume=0.05:enable='between(t,0,{duck_hook_end:.3f})',"
+        f"volume=0.05:enable='between(t,{duck_payoff_start:.3f},{excerpt_seconds:.3f})'"
+        "[bed]"
+    )
+    filters.append(
+        "[src][nar][bed]amix=inputs=3:duration=first:dropout_transition=2,"
+        "loudnorm=I=-14:LRA=9:TP=-1.5[a]"
+    )
     cmd = [
         settings.ffmpeg_bin, "-hide_banner", "-nostdin", "-y",
         "-i", str(source_path),
         "-i", str(hook_audio),
         "-i", str(payoff_audio),
+        "-i", str(bed_path),
     ]
-    if music_bed_path is not None:
-        cmd += ["-i", str(music_bed_path)]
     cmd += [
         "-filter_complex", ";".join(filters),
         "-map", "[v]", "-map", "[a]",
