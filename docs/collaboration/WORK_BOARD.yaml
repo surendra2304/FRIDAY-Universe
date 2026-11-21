@@ -162,16 +162,16 @@ tasks:
 
   - id: TASK-STRATEX-PORTFOLIO-002
     title: "Stratex portfolio_v2 — second validated engine (breakout-d1 + meanrev-d1), live trades on the practice account, deployed-service pricing defect"
-    status: DEPLOYED
+    status: CLOSED
     owner: zai
     branch: zai/TASK-STRATEX-PORTFOLIO-002
     pr: 85
     contributors: []
     priority: P0
     created_at: "2026-11-13T14:20:00+05:30"
-    updated_at: "2026-11-13T14:30:00+05:30"
+    updated_at: "2026-11-21T13:22:00+05:30"
     files:
-      - "Stratex/portfolio_v2/"            # zero-dependency dual-strategy package (client, indicators, strategy, risk, backtest, engine)
+      - "Stratex/portfolio_v2/"            # zero-dependency dual-strategy package (client, indicators, strategy, risk, backtest, engine) - DELETED 2026-11-21 by TASK-STR-FWD-033 / PR #1188; path kept as historical record only
     defect: "Owner directive 2026-11-13: 'Do the work properly.' Independent validation session: H1 strategy families (trend-pullback, meanrev, breakout — 192 configs, two windows) are ALL unprofitable after spread; moved to D1. Deployed-service pricing defect documented under TASK-STRATEX-OANDA-001 next_action."
     acceptance:
       - "Dual D1 portfolio validated on ~20y real candles net of practice spreads, two non-overlapping decades: breakout-d1 +26.7R/+30.9R per half (1088 trades); meanrev-d1 +23.0R/−1.7R per half, 69.0% win (994 trades); combined 2082 trades, 51.6% win, +78.9R, PF 1.08, ~4%/yr at 1% risk."
@@ -181,7 +181,8 @@ tasks:
     evidence:
       - "MERGED on origin/main: 474de179232634eaa561fc7d09b90af2d63da232 Merge pull request #85 from surendra2304/zai/TASK-STRATEX-PORTFOLIO-002 (board hygiene 2026-11-16, audit §2A: PR #85 already merged — status was stale IN_REVIEW)."
       - "DEPLOYED (board hygiene sweep #2 + flip-prep re-verification, 2026-11-17): all files listed in this entry verified present on origin/main 64ca017a; fleet S1 == S2 == main == 64ca017a (merge-866 crew verification, 2026-11-17 ~09:14 IST)."
-    next_action: "Post-merge: then per-instrument pricing + TP fix for the deployed Stratex-OANDA-Demo service (TASK-STRATEX-OANDA-001 follow-up) so the two engines can share the account safely."
+      - "CLOSED 2026-11-21 by coordinator (adjudication on TASK-STR-FWD-033, PR #1188 merge f3d10778): Stratex/portfolio_v2/ was proven dead and deleted as a unit (oanda_client + dead-only callers + sole-support files); the deployed engine no longer exists, so the DEPLOYED status was stale. Historical deployment fact preserved above. Note: this entry's +78.9R acceptance was already judged unverifiable in the 2026-11-14 Stratex truth audit. Do not resurrect portfolio_v2 references - guarded by Stratex/tests/test_portfolio_v2_removal.py."
+    next_action: "Closed. No live engine remains; the OANDA-demo follow-up in TASK-STRATEX-OANDA-001 is unaffected (different service)."
   - id: TASK-UI-MINIMAL-001
     title: "Minimal Console — replace the Living Universe UI (owner directive: minimalistic, dynamic, not laggy; chat too long)"
     status: VERIFIED
@@ -12639,20 +12640,21 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Muse 4: claim, audit the supertrend test files, fix stale paths/fixtures and weak assertions, verify the tests are actually collected and passing, add regression coverage where a gap is found, ship via PR."
   - id: TASK-STR-FWD-033
     title: "Stratex: portfolio_v2 / oanda_client suspected-dead check - verify whether Stratex/portfolio_v2/oanda_client.py is still referenced by any live path; if proven dead, remove it (and dead-only callers/tests); if live, record the evidence and close as not-dead."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_3
     branch: muse3/task-str-fwd-033-oanda-client-dead-check
     pr: 1188
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T13:12:21+05:30"
+    updated_at: "2026-11-21T13:22:00+05:30"
     evidence:
       - "Coordinator standing backlog (follow-up watch, 2026-11-21): backlog item (e), assigned to Muse 3 on its ready report (issue #35 comment 7058389319) - Muse 3 has no open assignment. File exists on main (Stratex/portfolio_v2/oanda_client.py, 5,664 bytes) and is named by portfolio_v2/backtest.py, engine.py and risk.py, so the check must trace real references, not assume dead. Roster PR #1177 merged 2026-11-21 (merge 4966d666), so the owner validates."
       - "Claim: issue #35 comment 7058784912 by Muse 3 before any editing. Base: main cf591f7a412cc188c359811f25e3a5b9c49b89ea. Assignment: issue #35 comment 7058735648 (Muse, coordinator). Work-request task muse3-work-request cancelled on claim."
       - "Verdict DEAD (issue #35 comment 7058854400, 2026-11-21): only references to oanda_client are siblings inside portfolio_v2; no live path, test, workflow, service or config invokes it; no engine activity since 2026-11-13 09:00 UTC; sole historical runner cron 528111 deliberately not re-armed."
       - "Removal implemented in PR #1188 (branch muse3/task-str-fwd-033-oanda-client-dead-check): Stratex/portfolio_v2/ deleted as a unit (8 files) + regression test Stratex/tests/test_portfolio_v2_removal.py; test verified locally both ways (passes removed, fails resurrected). Dated history logs untouched."
       - "Supersedes TASK-STRATEX-PORTFOLIO-002 DEPLOYED record: its files entry points at the deleted Stratex/portfolio_v2/ package; the deployed engine no longer exists. PORTFOLIO-002 record itself left untouched for Muse to adjudicate."
-    next_action: "Muse: review/merge implementation PR #1188; on merge, close TASK-STR-FWD-033 as implemented (removal verified) and adjudicate the superseded TASK-STRATEX-PORTFOLIO-002 DEPLOYED record."
+      - "MERGED 2026-11-21 by coordinator (merge f3d10778): full diff reviewed - 8-file unit deletion verified complete (zero portfolio_v2/oanda_client references in any *.py repo-wide; remaining mentions are dated history docs only); CI 10/10 green on head 9cac142e; local pytest removal test 2 passed; board validator VALID on PR head. Note: no workflow collects the new removal test (explicit lists) - local run is the evidence; adding it to the contracts Stratex list is follow-up owed."
+    next_action: "Done. Muse 3: free - re-arm the work-request cycle; coordinator assigns the next backlog task on request."
 
 
 
