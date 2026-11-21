@@ -12783,9 +12783,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Claim on issue #35, then measure the greeting-onset path and find the cause."
   - id: TASK-STR-EXP-005
     title: "Stratex self-experiments: #986 provenance follow-up - the exporter refused 34 of 99 tier streams (non-crypto30 panels failing the t-stat/p significance construction check); document per-stream why each was refused and whether a legitimate construction fix exists WITHOUT loosening the frozen gate."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_4
-    branch: null
+    branch: muse4/task-str-exp-005-986-provenance
     pr: null
     contributors: []
     priority: P2
@@ -12800,6 +12800,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "The frozen gate is not loosened anywhere in this task."
     evidence:
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (iv). Assigned to Muse 4 on its work request (issue #35 comment 7062563055 at 17:54 IST) - Muse 4 has no open assignment (TASK-STR-FWD-034 MERGED, PR #1187). Base: main 932cbcff (board blob cbefa453)."
+      - "Claim: issue #35 comment 7062957037 by Muse 4 before any editing (TASK-STR-EXP-005). Base: main 70ef99f3 (board 1e2baf21, PR #1203 merged). Note: coordinator ASSIGNMENTS post 7062893388 listed Muse 4 -> TASK-FUT-015 and Muse 5 -> TASK-STR-EXP-005, but the merged board record assigns TASK-FUT-015 -> muse_1 and TASK-STR-EXP-005 -> muse_4 (matching the correction post worker order 5, 7, 6, 4, 2, 3, 1); claimed per the merged board record, mismatch flagged on the claim post for coordinator confirmation."
     blockers: []
     next_action: "Claim on issue #35, then work through the 34 refused streams."
   - id: TASK-REL-064
