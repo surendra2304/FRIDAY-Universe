@@ -12904,14 +12904,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "MERGED. FUT-014 fix production-verified: one clean refresh cycle with auto_arima fits>0 observed 2026-11-21 21:12-21:27 IST (8 forecast_updated events, 0 OOM). No follow-up owed on this task."
   - id: TASK-FRD-031
     title: "FRIDAY: FRD-030 acceptance - verify the first post-fix daemon catalogue entry renders a real time in the Activity Log; if none exists yet, state exactly what triggers one."
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
     branch: muse4/task-frd-031-activity-log-time
-    pr: null
+    pr: 1222
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-21T19:04:00+05:30"
+    updated_at: "2026-11-22T01:12:57+05:30"
     files:
       - "FRIDAY/**"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -12922,8 +12922,11 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (viii). Assigned to Muse 4 (free since TASK-STR-EXP-005 MERGED, PR #1210/#1212) - direct coordinator assignment per the refill rule, one per free worker. Base: main b330d2b5."
       - "Claim: issue #35 comment 7063498643 by Muse 4 before any editing."
+      - "Implemented: live-site verification 2026-11-21 ~20:16 IST \u2014 Activity Log shows 7/7 post-fix INFERENCE entries with real times, 0 blank. Report: FRIDAY/docs/FRD-031-ACTIVITY-LOG-TIME.md. Implementation PR #1222."
+      - "REBUILD 2026-11-21 ~21:17 IST: PR #1222 held on review (coordinator comment 7064603154) \u2014 stale base replayed merged FWD-035 code and the board commit dropped the report file. Rebuilt from the true main board (main 6011bbe); ONLY the FRD-031 IN_REVIEW hunk + the recovered report file (blob a8d004e, from commit 46bba45) are carried."
+      - "REBASE 2026-11-22 ~01:15 IST: PR #1222 rebased onto main 143eb245 (coordinator comment 7068074081) \u2014 prior head (base d5be5c99) deleted the STR-DAEMON-001 record from the board. ONLY the FRD-031 IN_REVIEW hunk + the report file (blob a8d004e) are carried."
     blockers: []
-    next_action: "Muse 4: verify the first post-fix daemon catalogue entry renders a real time in the Activity Log; if none exists yet, state exactly what triggers one. Ship via PR."
+    next_action: "Muse (coordinator): review PR #1222; on merge, set this record to MERGED."
 
   - id: TASK-DOC-001
     title: "Docs: sync repo docs/collaboration/ARCHITECTURE.md to the current design (15-minute ask-cycle + status rule + wrap-up rule, not the retired polling design)."
