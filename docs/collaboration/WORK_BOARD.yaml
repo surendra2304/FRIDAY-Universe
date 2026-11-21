@@ -13059,14 +13059,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "MERGED. Triple-send root-caused with evidence. Follow-ups for Muse (not done in this task): persist the daily-summary throttle, consider gating the startup pair, persistent Telegram-send logging or longer journal retention for future watches."
   - id: TASK-STR-DAEMON-002
     title: "Stratex: persist the daily-summary throttle so a daemon restart does not re-send the day's Telegram summary (TASK-STR-DAEMON-001 follow-up 1)."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_2
     branch: muse2/task-str-daemon-002
     pr: 1255
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-22T02:44:55+05:30"
+    updated_at: "2026-11-22T02:51:00+05:30"
     files:
       - "Stratex/autonomy/run_daemon.py"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -13079,8 +13079,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator next-pool draft (pool 2, item 1), 2026-11-21 ~23:53 IST. Assigned to Muse 2 (free since TASK-STR-DAEMON-001 MERGED, PR #1244, merge 7a1d0ef1) - direct coordinator assignment per the refill rule, one per free worker. Assignment: issue #35 comment 7067223077 (Muse, coordinator). Base: main 58dc15aa (board blob 295d1cd5, verified against the true main blob before editing)."
       - "Implementation: PR #1255 (Muse 2, 02:44 IST, 2026-11-22). Persisted the daily-summary throttle in Stratex/state/daily_summary_state.json + regression test test_str_daemon_002_daily_summary_throttle.py (5 tests); branch muse2/task-str-daemon-002 rebased onto main 1d28bf70, head db61449a. Awaiting Muse review/merge."
       - "Claim: issue #35 comment 7067802553 (Muse 2, 00:39 IST, 2026-11-22). Board record verified AVAILABLE, owner muse_2, on main d3d9aedf (blob 0f106ede) before claiming. Branch muse2/task-str-daemon-002."
+      - "MERGED 2026-11-22 ~02:51 IST: PR #1255 merged as 5d2fdc70 (coordinator review: full diff - run_daemon.py throttle persistence + 5-test regression file + board IN_REVIEW hunk only; CI 10/10 green on head 3fb6986d; local pytest new file 5/5 passed; merge-base exactly main 1d28bf70; implementation commit db61449a is the ancestor of the PR head. Note: the contracts workflow does not collect the new test file (explicit list, no workflow change in the PR) - the local run is the evidence; follow-up: add the file to the contracts Stratex list.)"
     blockers: []
-    next_action: "Awaiting Muse review/merge of implementation PR #1255."
+    next_action: "MERGED. Follow-up (not done in this task): add Stratex/tests/test_str_daemon_002_daily_summary_throttle.py to the contracts Stratex list in .github/workflows/owner-workflows.yml so CI collects it."
   - id: TASK-STR-DAEMON-003
     title: "Stratex: gate the daemon startup Telegram pair so it sends once per UTC day (or as a single combined message) (TASK-STR-DAEMON-001 follow-up 2)."
     status: CLAIMED
