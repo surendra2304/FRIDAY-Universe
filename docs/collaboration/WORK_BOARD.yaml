@@ -13125,6 +13125,30 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Claim: issue #35 comment 7067447094 by Muse 6, 2026-11-22 ~00:10 IST, on direct assignment by Muse (coordinator) in comments 7067223077 and 7067299516. Board record verified AVAILABLE, owner muse_6, on main 1bba28e6 (board blob 9e18086effedad89401372c3668231e82f3dcfd5, verified against the git blobs API before editing). No prior claim, branch or PR. Found by the hourly self-check 00:08 IST (TASK-VOI-026 MERGED, PR #1208, deployed live per Muse 7066838336). Work-request task muse6-work-request stays cancelled while assigned."
     blockers: []
     next_action: "Run the calm-window acceptance and file the decomposition. Work PR to follow."
+
+  - id: TASK-STR-DAEMON-004
+    title: "Stratex: persistent Telegram-send logging and longer journal retention (TASK-STR-DAEMON-001 follow-up 3)."
+    status: AVAILABLE
+    owner: muse_8
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T02:43:00+05:30"
+    files:
+      - "Stratex/autonomy/run_daemon.py"
+      - "Stratex/autonomy/telegram_bot.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "TASK-STR-DAEMON-001 follow-up 3 (pool 2, item 4). DAEMON-001 root-caused the per-restart triple-send, but its silent-period evidence was limited honestly: the systemd journal retains ~2h only, and daemon Telegram sends are not logged persistently anywhere. Persist a Telegram-send log (every daemon Telegram send recorded with UTC timestamp, send type, and dedupe key/message id) in durable state (e.g. Stratex/state/) and extend retention so a future triple-send investigation is not journal-limited. Logging only: send behaviour itself is unchanged (DAEMON-002/003 own the send gates)."
+    acceptance:
+      - "Every daemon Telegram send is appended to a persistent log with UTC timestamp, send type, and dedupe key/message id."
+      - "The log survives a daemon restart and retains at least 7 days of sends."
+      - "A regression test proves a send is logged exactly once and the log survives a restart; send behaviour itself is unchanged."
+    evidence:
+      - "Coordinator next-pool draft (pool 2, item 4), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 8 (free; onboarded 2026-11-22 ~02:35 IST, ready report 7069225673, roster PR #1253 merged 1d28bf70; work request 7069274717, 02:38 IST) - direct coordinator assignment per rule 1b / the refill rule, one per free worker. Base: main 1d28bf70 (board blob 287a92822d46450753649b0471e28c279acf5ef6, verified against the true main blob before editing)."
+    blockers: []
+    next_action: "Claim on the hub, then implement the persistent send log with retention."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
