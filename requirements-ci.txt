@@ -67,3 +67,8 @@ pytest-mock>=3.10,<4
 
 # Async file IO used by Futuris infra and the root regression suites
 aiofiles>=23,<25
+
+# TASK-FUT-017: the Futuris scheduler (APScheduler) is imported by the
+# standing per-cycle scoring tests (Futuris/tests/test_fut017_...). Bound
+# follows Futuris/requirements.txt (apscheduler>=3.10.4,<4.0.0).
+apscheduler>=3.10.4,<4.0.0

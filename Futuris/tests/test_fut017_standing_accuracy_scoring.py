@@ -47,7 +47,6 @@ from futuris.core.lifecycle import LifecycleSweepReport
 from futuris.core.pipeline import ModelingInput, ModelingStage
 from futuris.core.schemas import Forecast, Outcome
 from futuris.features.normalize import DataQualityReport
-from futuris.infra.scheduler import ForecastScheduler
 from futuris.infra.self_healing import SelfHealingSupervisor
 from futuris.models.base import ModelPrediction, PredictionIntervals
 from futuris.models.fit_cost import (
@@ -68,6 +67,20 @@ from futuris.storage.score_repository import ForecastScoreRepository
 
 AS_OF = datetime(2026, 11, 1, 0, 0, tzinfo=UTC)
 TARGET = "trading:BTCUSDT:price_variance_24h"
+
+
+def _scheduler_class():
+    """ForecastScheduler, importing APScheduler only when present.
+
+    The scheduler module imports ``apscheduler`` at its top level, and
+    the CI test surface only carries it since TASK-FUT-017 added it to
+    requirements-ci.txt. Skipping (not erroring) without it follows the
+    TASK-FUT-006 pattern, so this file still collects anywhere.
+    """
+    pytest.importorskip("apscheduler")
+    from futuris.infra.scheduler import ForecastScheduler
+
+    return ForecastScheduler
 ROUTER_RANKED = [
     "mean_ensemble",
     "auto_ets",
@@ -546,7 +559,7 @@ async def test_tracker_rolling_hit_rate_thin_window(db_session: AsyncSession) ->
 async def test_lifecycle_sweep_scores_matured_forecasts_in_cycle(
     db_session: AsyncSession,
 ) -> None:
-    pytest.importorskip("apscheduler")
+    ForecastScheduler = _scheduler_class()
     await _issue_and_resolve(db_session, _forecast(), 105.0)
 
     sweep_report = LifecycleSweepReport(
@@ -584,7 +597,7 @@ async def test_lifecycle_sweep_scores_matured_forecasts_in_cycle(
 async def test_scoring_job_records_per_cycle_summary(
     db_session: AsyncSession,
 ) -> None:
-    pytest.importorskip("apscheduler")
+    ForecastScheduler = _scheduler_class()
     await _issue_and_resolve(db_session, _forecast(), 105.0)
     scheduler = ForecastScheduler(outcome_repo=OutcomeRepository(db_session))
     result = await scheduler.forecast_scoring_job()
@@ -595,7 +608,7 @@ async def test_scoring_job_records_per_cycle_summary(
 
 
 async def test_cycle_scoring_never_breaks_the_cycle() -> None:
-    pytest.importorskip("apscheduler")
+    ForecastScheduler = _scheduler_class()
     scheduler = ForecastScheduler(outcome_repo=None)
     summary = await scheduler._score_matured_forecasts(source="lifecycle_sweep_job")
     assert summary["status"] == "no_storage"
@@ -605,7 +618,7 @@ async def test_cycle_scoring_never_breaks_the_cycle() -> None:
 async def test_calibration_sweep_without_resolutions_does_not_score(
     db_session: AsyncSession,
 ) -> None:
-    pytest.importorskip("apscheduler")
+    ForecastScheduler = _scheduler_class()
     scheduler = ForecastScheduler(outcome_repo=OutcomeRepository(db_session))
     metrics = await scheduler.calibration_sweep_job()
     assert metrics["resolved_count"] == 0

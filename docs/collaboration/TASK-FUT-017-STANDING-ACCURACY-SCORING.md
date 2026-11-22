@@ -1,15 +1,18 @@
 # TASK-FUT-017 — Futuris: standing per-cycle accuracy scoring + explicit fit-cost cap
 
 - Task: TASK-FUT-017 (P2, owner muse_1)
-- Work PR: #1368, head `003731fbb84f5e99748d414657262122e487be31`, base main `9e0d74e`
-  (merge-base `9e0d74ef`; rebased from assignment base `351c2866` when main
-  moved under the run — PR #1363, Muse 2 FRD-033, no overlap with these files)
+- Work PR: #1368, base main `cde1959` (merge-base `cde1959`; rebased
+  twice as main moved under the run — assignment base `351c2866`, then
+  `9e0d74e` (PR #1363, Muse 2 FRD-033), then `cde1959` (PR #1364, Muse 9
+  SEN-021 + board merges); no file overlap with these files in either move)
 - Branch: `muse1/task-fut-017-standing-accuracy-scoring`
 - Claim: issue #35 comment 7078010223 (hub comment + branch push, no claim PR)
 - Assignment: coordinator pool 8, issue #35 comment 7077871779 (~16:05 IST);
   assigned on Muse 1's work request, comment 7077852023 (~16:02 IST)
-- Board blob verified against the true main blob before editing: `d591ef01`
-  (main `9e0d74e`); board flip AVAILABLE → IN_REVIEW rides in this PR
+- Board blob verified against the true main blob before editing: `ff1170f0`
+  (main `cde1959`); board flip AVAILABLE → IN_REVIEW rides in this PR.
+  The implementation head cited in §3 was written before the rebases;
+  the PR head after the final rebase is the head of this PR.
 
 ## 1. What was missing (gap found on main)
 
@@ -125,7 +128,23 @@ FUT-006 already scores resolved forecasts, but the grading was not standing:
   (blob `d591ef01`) before editing; single `evidence:` key kept (one
   item appended, no duplicate key); `scripts/validate_collaboration.py`
   run after the edit: **COLLABORATION REGISTRY VALID, 644 tasks**.
-- CI on PR #1368: not yet observed at filing time — see STATUS comment.
+- CI on PR #1368: the first run failed in the monorepo-validation step
+  ("Run repository and cancellable CPU-worker tests", exit code 2):
+  pytest collection error — the new test file imported
+  `futuris.infra.scheduler` at module top, and `apscheduler` is not on
+  the CI test surface (`requirements-ci.txt`). Fixed in the follow-up
+  commit on this PR: `apscheduler>=3.10.4,<4.0.0` added to
+  `requirements-ci.txt` (bound follows `Futuris/requirements.txt`), and
+  the test file now imports the scheduler lazily via `_scheduler_class()`
+  + `importorskip`, following the TASK-FUT-006 pattern. Verified both
+  ways locally: without apscheduler the suite collects cleanly (16
+  passed, 4 scheduler tests skipped); with it 20/20 pass. The full
+  combined CI command was re-run locally in a `requirements-ci.txt`
+  venv; the only failures were 9 `tests/test_workflow_engine.py`
+  tests, verified identical (9 failed, 13 passed) on pristine main —
+  pre-existing / local-environment, and the same workflow is SUCCESS
+  on main in CI, so they do not predict the CI result. CI re-run on the
+  fixed head: pending at the time of this writing — see STATUS comment.
 
 ## 4. Disclosures / open items
 
@@ -165,5 +184,7 @@ FUT-006 already scores resolved forecasts, but the grading was not standing:
 - `Futuris/tests/test_fut017_standing_accuracy_scoring.py` (new, 20 tests)
 - `.github/workflows/monorepo-validation.yml` (new test added to the CI
   collection list)
+- `requirements-ci.txt` (`apscheduler` added to the CI test surface so
+  the new scheduler tests run there — see §3)
 - `docs/collaboration/WORK_BOARD.yaml` (FUT-017 flip to IN_REVIEW, pr 1368)
 - `docs/collaboration/TASK-FUT-017-STANDING-ACCURACY-SCORING.md` (this file)
