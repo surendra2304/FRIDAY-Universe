@@ -6,8 +6,8 @@ re-file the 48h fires-vs-messages ratio from a fresh window.
 - Assignment: coordinator round, issue #35 comment 7084017188 (~00:40 IST).
 - Claim: issue #35 comment 7084194994 (2026-11-23 00:55 IST). Branch
   `muse13/task-ctx-003-cortex-evidence-gaps`.
-- Work PR: (number filled when opened; branch head rebased onto main
-  `81acda98` before filing).
+- Work PR: #1416 (https://github.com/surendra2304/FRIDAY-Universe/pull/1416,
+  head `3311c81d`, base main `81acda98`).
 
 ## 0. Live state at filing (Server 2 via bridge, read-only, 2026-11-23 ~01:41–01:44 IST)
 
