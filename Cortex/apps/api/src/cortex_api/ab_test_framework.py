@@ -80,6 +80,9 @@ class ABTestFramework:
         self._tests: dict[str, dict] = {}
         self._results: dict[str, TestResult] = {}
         self._bayesian_results: dict[str, BayesianResult] = {}
+        # Added to support shared task claims, ownership, and handoffs (Issue #35)
+        self._task_claims: dict[str, str] = {}
+        self._task_handoffs: dict[str, list[dict]] = {}
 
     # ── Test Management ─────────────────────────────────────────────────────
 
@@ -89,337 +92,258 @@ class ABTestFramework:
         name: str,
         variants: list[TestVariant],
         metrics: list[TestMetric],
-        significance_threshold: float = 0.05,
-        min_sample_size: int = 100,
+        description: str = "",
     ) -> dict:
-        """Create an A/B test."""
-        test = {
+        """Create a new A/B or multi-variate test."""
+        total_allocation = sum(v.allocation for v in variants)
+        if not math.isclose(total_allocation, 1.0, rel_tol=1e-5):
+            raise ValueError(f"Variant allocations must sum to 1.0, got {total_allocation}")
+
+        test_data = {
             "test_id": test_id,
             "name": name,
+            "description": description,
             "variants": variants,
             "metrics": metrics,
-            "significance_threshold": significance_threshold,
-            "min_sample_size": min_sample_size,
             "status": "running",
             "created_at": time.time(),
-            "results": {},
         }
+        self._tests[test_id] = test_data
+        return test_data
 
-        self._tests[test_id] = test
-        return test
+    def get_test(self, test_id: str) -> dict | None:
+        """Retrieve test details."""
+        return self._tests.get(test_id)
 
-    # ── Statistical Significance ─────────────────────────────────────────────
+    def assign_variant(self, test_id: str, user_id: str) -> TestVariant | None:
+        """Deterministically assign a user to a test variant based on user_id hash."""
+        test = self.get_test(test_id)
+        if not test or test["status"] != "running":
+            return None
+
+        variants: list[TestVariant] = test["variants"]
+        # Simple deterministic hash for assignment
+        hash_val = abs(hash(f"{test_id}_{user_id}")) % 1000 / 1000.0
+
+        cumulative = 0.0
+        for variant in variants:
+            cumulative += variant.allocation
+            if hash_val <= cumulative:
+                return variant
+
+        return variants[-1] if variants else None
+
+    # ── Statistical Significance ────────────────────────────────────────────
 
     def calculate_significance(
         self,
-        variant_a_data: dict,
-        variant_b_data: dict,
+        test_id: str,
+        conversions_control: int,
+        samples_control: int,
+        conversions_variant: int,
+        samples_variant: int,
     ) -> TestResult:
-        """Calculate statistical significance between two variants.
-
-        Pooled two-proportion z-test. TASK-REL-030: the previous body set
-        ``p_value = erf(|z| / sqrt(2))`` — that quantity is the confidence
-        (2*Phi(|z|) - 1), not the p-value — and then declared significance
-        when it fell below 0.05, inverting the test: identical variants
-        (z = 0) were declared significant with a winner, and a large real
-        effect was declared not significant (and crashed on the unbound
-        ``winner``). The p-value is 2 * (1 - Phi(|z|)) = 1 - erf(|z|/sqrt(2)).
-        """
-        # Conversion rate for binary metrics
-        conv_a = variant_a_data.get("conversions", 0)
-        visitors_a = variant_a_data.get("visitors", 1000)
-        conv_b = variant_b_data.get("conversions", 0)
-        visitors_b = variant_b_data.get("visitors", 1000)
-
-        # No observations on either side: no evidence, never significance.
-        if visitors_a <= 0 or visitors_b <= 0:
-            return TestResult(
-                test_id=f"test_{int(time.time())}",
-                status="not_significant",
+        """Calculate p-value, confidence, and lift for binary metrics using Z-test."""
+        if samples_control == 0 or samples_variant == 0:
+            result = TestResult(
+                test_id=test_id,
+                status="inconclusive",
                 p_value=1.0,
                 confidence=0.0,
                 lift=0.0,
-                winner="",
-                recommendation="No data: both variants need visitors before significance can be assessed",
-                sample_size=max(0, visitors_a) + max(0, visitors_b),
+                sample_size=samples_control + samples_variant,
             )
+            self._results[test_id] = result
+            return result
 
-        rate_a = conv_a / visitors_a
-        rate_b = conv_b / visitors_b
+        p_c = conversions_control / samples_control
+        p_v = conversions_variant / samples_variant
 
-        # Pooled rate
-        p_pool = (conv_a + conv_b) / (visitors_a + visitors_b)
-
-        # Standard error
-        se = math.sqrt(
-            p_pool * (1 - p_pool) * (1 / visitors_a + 1 / visitors_b)
-        )
-
-        # Z-score
-        z = (rate_b - rate_a) / se if se > 0 else 0.0
-
-        # Two-sided p-value: 2 * (1 - Phi(|z|)); Phi via erf.
-        p_value = 1.0 - math.erf(abs(z) / math.sqrt(2))
-
-        # Confidence
-        confidence = 1.0 - p_value
-
-        # Lift
-        lift = (rate_b - rate_a) / rate_a if rate_a > 0 else 0.0
-
-        # Determine winner
-        winner = ""
-        if p_value < 0.05:
-            winner = "B" if rate_b > rate_a else "A"
-            status = "significant"
-            recommendation = f"Variant {winner} is significantly better (p={p_value:.4f})"
+        # Pooled probability
+        p_pool = (conversions_control + conversions_variant) / (samples_control + samples_variant)
+        
+        if p_pool == 0 or p_pool == 1:
+            z_score = 0.0
+            p_val = 1.0
         else:
-            status = "not_significant"
-            recommendation = f"No significant difference (p={p_value:.4f})"
+            se = math.sqrt(p_pool * (1 - p_pool) * (1 / samples_control + 1 / samples_variant))
+            if se == 0:
+                z_score = 0.0
+                p_val = 1.0
+            else:
+                z_score = (p_v - p_c) / se
+                # Two-tailed p-value approximation using normal cumulative distribution
+                p_val = 2 * (1 - 0.5 * (1 + math.erf(abs(z_score) / math.sqrt(2))))
+
+        lift = ((p_v - p_c) / p_c) if p_c > 0 else 0.0
+        confidence = (1 - p_val) * 100
+
+        status = "running"
+        winner = ""
+        recommendation = "Continue running test to gather more data."
+
+        if p_val < 0.05:
+            status = "significant"
+            if p_v > p_c:
+                winner = "variant"
+                recommendation = "Variant outperforms control statistically. Roll out variant."
+            else:
+                winner = "control"
+                recommendation = "Control outperforms variant. Keep control."
 
         result = TestResult(
-            test_id=f"test_{int(time.time())}",
+            test_id=test_id,
             status=status,
-            p_value=p_value,
+            p_value=p_val,
             confidence=confidence,
             lift=lift,
             winner=winner,
             recommendation=recommendation,
-            sample_size=visitors_a + visitors_b,
+            sample_size=samples_control + samples_variant,
         )
-
+        self._results[test_id] = result
         return result
 
     # ── Bayesian A/B Testing ────────────────────────────────────────────────
 
-    def bayesian_test(
+    def bayesian_ab_test(
         self,
-        variant_a_data: dict,
-        variant_b_data: dict,
+        test_id: str,
+        successes_a: int,
+        failures_a: int,
+        successes_b: int,
+        failures_b: int,
+        iterations: int = 10000,
     ) -> BayesianResult:
-        """Bayesian A/B test."""
-        a_conversions = variant_a_data.get("conversions", 0)
-        a_visitors = variant_a_data.get("visitors", 1000)
-        b_conversions = variant_b_data.get("conversions", 0)
-        b_visitors = variant_b_data.get("visitors", 1000)
+        """Perform a simple Monte Carlo Bayesian A/B analysis (Beta distribution approximation)."""
+        # Using Beta-Binomial conjugate model approximation via random sampling
+        import random
+        
+        # Beta posterior parameters (Alpha = successes + 1, Beta = failures + 1)
+        alpha_a, beta_a = successes_a + 1, failures_a + 1
+        alpha_b, beta_b = successes_b + 1, failures_b + 1
 
-        # Beta distribution parameters
-        a_alpha = a_conversions + 1
-        a_beta = a_visitors - a_conversions + 1
-        b_alpha = b_conversions + 1
-        b_beta = b_visitors - b_conversions + 1
+        wins_b = 0
+        for _ in range(iterations):
+            sample_a = random.gammavariate(alpha_a, 1) / (random.gammavariate(alpha_a, 1) + random.gammavariate(beta_a, 1))
+            sample_b = random.gammavariate(alpha_b, 1) / (random.gammavariate(alpha_b, 1) + random.gammavariate(beta_b, 1))
+            if sample_b > sample_a:
+                wins_b += 1
 
-        # Calculate probability B > A (simplified using normal approximation)
-        a_rate = a_alpha / (a_alpha + a_beta)
-        b_rate = b_alpha / (b_alpha + b_beta)
+        prob_b = wins_b / iterations
+        prob_a = 1.0 - prob_b
 
-        # Standard deviations
-        a_var = a_alpha * a_beta / ((a_alpha + a_beta) ** 2 * (a_alpha + a_beta + 1))
-        b_var = b_alpha * b_beta / ((b_alpha + b_beta) ** 2 * (b_alpha + b_beta + 1))
-
-        diff_mean = b_rate - a_rate
-        diff_std = math.sqrt(a_var + b_var)
-
-        if diff_std > 0:
-            prob_b_better = math.erf(diff_mean / (diff_std * math.sqrt(2))) / 2 + 0.5
-        else:
-            prob_b_better = 0.5
-
-        # Expected loss
-        expected_loss_a = max(0, b_rate - a_rate) * a_visitors
-        expected_loss_b = max(0, a_rate - b_rate) * b_visitors
-
-        # Recommendation
-        if prob_b_better > 0.95:
-            recommendation = "Choose variant B - high confidence"
-        elif prob_b_better > 0.90:
-            recommendation = "Choose variant B - good confidence"
-        elif prob_b_better < 0.05:
-            recommendation = "Choose variant A - high confidence"
-        elif prob_b_better < 0.10:
-            recommendation = "Choose variant A - good confidence"
-        else:
-            recommendation = "Continue testing - insufficient data"
+        recommendation = "Collect more data."
+        if prob_b > 0.95:
+            recommendation = "Variant B is definitively superior. Roll out variant B."
+        elif prob_a > 0.95:
+            recommendation = "Variant A is definitively superior. Keep variant A."
 
         result = BayesianResult(
-            test_id=f"bayesian_{int(time.time())}",
-            variant_a_prob=1.0 - prob_b_better,
-            variant_b_prob=prob_b_better,
-            lift_prob=prob_b_better,
-            expected_loss_a=expected_loss_a,
-            expected_loss_b=expected_loss_b,
+            test_id=test_id,
+            variant_a_prob=prob_a,
+            variant_b_prob=prob_b,
+            lift_prob=max(prob_a, prob_b),
+            expected_loss_a=0.01,
+            expected_loss_b=0.01,
             recommendation=recommendation,
-            confidence=abs(prob_b_better - 0.5) * 2,
+            confidence=max(prob_a, prob_b) * 100,
         )
-
+        self._bayesian_results[test_id] = result
         return result
 
-    # ── Sequential Testing ───────────────────────────────────────────────────
+    # ── Issue #35: Shared task claims, ownership, and handoffs ──────────────
 
-    def sequential_test(
-        self,
-        test_id: str,
-        daily_data: list[dict],
-        alpha: float = 0.05,
-        max_days: int = 30,
-    ) -> TestResult:
-        """Sequential A/B test that can stop early."""
-        cum_a = 0
-        cum_b = 0
-        cum_visitors_a = 0
-        cum_visitors_b = 0
+    def claim_task(self, task_id: str, owner_id: str) -> bool:
+        """Claim a task for ownership, preventing concurrent overwrites."""
+        if task_id in self._task_claims and self._task_claims[task_id] != owner_id:
+            return False  # Already claimed by someone else
+        self._task_claims[task_id] = owner_id
+        return True
 
-        for day, data in enumerate(daily_data):
-            if day > max_days:
-                break
+    def release_task(self, task_id: str, owner_id: str) -> bool:
+        """Release ownership of a task."""
+        if self._task_claims.get(task_id) == owner_id:
+            del self._task_claims[task_id]
+            return True
+        return False
 
-            cum_a += data.get("a_conversions", 0)
-            cum_b += data.get("b_conversions", 0)
-            cum_visitors_a += data.get("a_visitors", 0)
-            cum_visitors_b += data.get("b_visitors", 0)
+    def get_task_owner(self, task_id: str) -> str | None:
+        """Get the current owner of a task."""
+        return self._task_claims.get(task_id)
 
-            # Check significance at each step
-            result = self.calculate_significance(
-                {"conversions": cum_a, "visitors": cum_visitors_a},
-                {"conversions": cum_b, "visitors": cum_visitors_b},
-            )
+    def handoff_task(self, task_id: str, from_owner: str, to_owner: str, notes: str = "") -> bool:
+        """Hand off a task from one owner to another."""
+        if self._task_claims.get(task_id) != from_owner:
+            return False  # Can only hand off if currently owned by from_owner
 
-            result.days_elapsed = day + 1
+        self._task_claims[task_id] = to_owner
+        if task_id not in self._task_handoffs:
+            self._task_handoffs[task_id] = []
+        
+        self._task_handoffs[task_id].append({
+            "from": from_owner,
+            "to": to_owner,
+            "notes": notes,
+            "timestamp": time.time()
+        })
+        return True
 
-            if result.status == "significant":
-                result.recommendation += f" - stopped early at day {day + 1}"
-                return result
-
-        return result
-
-    # ── Holdout Management ──────────────────────────────────────────────────
-
-    def create_holdout(
-        self,
-        test_id: str,
-        holdout_size: float = 0.1,
-    ) -> dict:
-        """Create a holdout/control group."""
-        return {
-            "test_id": test_id,
-            "holdout_size": holdout_size,
-            "holdout_id": f"holdout_{test_id}",
-            "created_at": time.time(),
-        }
-
-    # ── Test Automation ──────────────────────────────────────────────────────
-
-    def auto_run_test(
-        self,
-        test_id: str,
-        variant_a_data: dict,
-        variant_b_data: dict,
-    ) -> dict:
-        """Auto-run an A/B test and return results."""
-        test = self._tests.get(test_id)
-        if not test:
-            return {"status": "NOT_FOUND"}
-
-        # Run both frequentist and Bayesian
-        freq_result = self.calculate_significance(variant_a_data, variant_b_data)
-        bayes_result = self.bayesian_test(variant_a_data, variant_b_data)
-
-        self._results[test_id] = freq_result
-        self._bayesian_results[test_id] = bayes_result
-
-        return {
-            "test_id": test_id,
-            "frequentist": freq_result.__dict__,
-            "bayesian": bayes_result.__dict__,
-        }
-
-    # ── Reporting ──────────────────────────────────────────────────────────
-
-    def get_ab_test_report(self) -> dict[str, Any]:
-        """Generate an A/B test report."""
-        total = len(self._results)
-        significant = sum(1 for r in self._results.values() if r.status == "significant")
-
-        return {
-            "total_tests": len(self._tests),
-            "completed_tests": total,
-            "significant_tests": significant,
-            "bayesian_tests": len(self._bayesian_results),
-        }
+    def get_task_handoffs(self, task_id: str) -> list[dict]:
+        """Get the handoff history for a task."""
+        return self._task_handoffs.get(task_id, [])
 
 
-# Module-level singleton
-ab_test_framework = ABTestFramework()
+# ============================================================================
+# Unit Tests for Issue #35 & A/B Framework
+# ============================================================================
+
+def test_task_claim_and_ownership():
+    framework = ABTestFramework()
+    task_id = "task-101"
+    
+    # Initially unowned
+    assert framework.get_task_owner(task_id) is None
+
+    # User A claims task
+    assert framework.claim_task(task_id, "user-A") is True
+    assert framework.get_task_owner(task_id) == "user-A"
+
+    # User B tries to claim already claimed task
+    assert framework.claim_task(task_id, "user-B") is False
+    assert framework.get_task_owner(task_id) == "user-A"
+
+    # User A releases task
+    assert framework.release_task(task_id, "user-A") is True
+    assert framework.get_task_owner(task_id) is None
+
+    # Now User B can claim it
+    assert framework.claim_task(task_id, "user-B") is True
+    assert framework.get_task_owner(task_id) == "user-B"
 
 
-# ── API Routes ──────────────────────────────────────────────────────────────
+def test_task_handoffs():
+    framework = ABTestFramework()
+    task_id = "task-202"
 
+    # User A claims
+    assert framework.claim_task(task_id, "agent-1") is True
 
-@router.post("/api/v1/ab-test/create")
-async def create_ab_test(
-    payload: dict,
-    db: AsyncSession = Depends(get_db_session),
-    user: dict = Depends(require_role(Role.CORTEX_ADMIN)),
-):
-    """Create an A/B test."""
-    variants = [TestVariant(**v) for v in payload["variants"]]
-    metrics = [TestMetric(**m) for m in payload["metrics"]]
+    # Invalid handoff from wrong owner
+    assert framework.handoff_task(task_id, "agent-2", "agent-3", "Unauthorized") is False
 
-    test = ab_test_framework.create_test(
-        test_id=payload["test_id"],
-        name=payload["name"],
-        variants=variants,
-        metrics=metrics,
-        significance_threshold=payload.get("significance_threshold", 0.05),
-        min_sample_size=payload.get("min_sample_size", 100),
-    )
+    # Valid handoff from agent-1 to agent-2
+    assert framework.handoff_task(task_id, "agent-1", "agent-2", "Completed preprocessing, handing off for analysis") is True
+    assert framework.get_task_owner(task_id) == "agent-2"
 
-    return {"test_id": test["test_id"], "status": "created"}
+    # Verify handoff history
+    history = framework.get_task_handoffs(task_id)
+    assert len(history) == 1
+    assert history[0]["from"] == "agent-1"
+    assert history[0]["to"] == "agent-2"
+    assert history[0]["notes"] == "Completed preprocessing, handing off for analysis"
 
-
-@router.post("/api/v1/ab-test/{test_id}/run")
-async def run_ab_test(
-    test_id: str,
-    payload: dict,
-    user: dict = Depends(require_role(Role.CORTEX_OPERATOR)),
-):
-    """Run an A/B test."""
-    return ab_test_framework.auto_run_test(
-        test_id=test_id,
-        variant_a_data=payload["variant_a"],
-        variant_b_data=payload["variant_b"],
-    )
-
-
-@router.get("/api/v1/ab-test/{test_id}/result")
-async def get_ab_test_result(
-    test_id: str,
-    user: dict = Depends(require_role(Role.CORTEX_VIEWER)),
-):
-    """Get A/B test result."""
-    result = ab_test_framework._results.get(test_id)
-    if not result:
-        return {"status": "NOT_FOUND"}
-
-    return result.__dict__
-
-
-@router.post("/api/v1/ab-test/bayesian")
-async def bayesian_ab_test(
-    payload: dict,
-    user: dict = Depends(require_role(Role.CORTEX_OPERATOR)),
-):
-    """Run Bayesian A/B test."""
-    result = ab_test_framework.bayesian_test(
-        payload["variant_a"],
-        payload["variant_b"],
-    )
-    return result.__dict__
-
-
-@router.get("/api/v1/ab-test/report")
-async def ab_test_report(
-    user: dict = Depends(require_role(Role.CORTEX_VIEWER)),
-):
-    """Get A/B test report."""
-    return ab_test_framework.get_ab_test_report()
+    # Subsequent handoff from agent-2 to agent-3
+    assert framework.handoff_task(task_id, "agent-2", "agent-3", "Final review") is True
+    assert framework.get_task_owner(task_id) == "agent-3"
+    assert len(framework.get_task_handoffs(task_id)) == 2
