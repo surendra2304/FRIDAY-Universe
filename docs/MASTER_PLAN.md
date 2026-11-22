@@ -1,6 +1,6 @@
 # FRIDAY Universe — Master Plan (v3)
 
-Owner: Surendra Varma Jalli. This revision: 2026-11-14, Muse (lead coordinator), under the owner's direction of 2026-11-14 to revise the plan completely after the merge-all batch. v2 (2026-11-10, ZAI, decision D-022) and v1 are preserved in git history. The dated work chronicle that v2 accumulated at the end of this file (TASK-WF-004 → TASK-WF-014 entries) has been moved verbatim to docs/collaboration/ACTIVITY_LOG.md, where execution history belongs (§2: status does not live here).
+Owner: Surendra. This revision: 2026-11-14, Muse (lead coordinator), under the owner's direction of 2026-11-14 to revise the plan completely after the merge-all batch. v2 (2026-11-10, ZAI, decision D-022) and v1 are preserved in git history. The dated work chronicle that v2 accumulated at the end of this file (TASK-WF-004 → TASK-WF-014 entries) has been moved verbatim to docs/collaboration/ACTIVITY_LOG.md, where execution history belongs (§2: status does not live here).
 
 ## 1. North Star — what success means
 
