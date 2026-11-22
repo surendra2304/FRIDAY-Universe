@@ -14906,9 +14906,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Close G1-G5 with live evidence, re-file the 48h ratio.
   - id: TASK-OBS-009
     title: 'Fleet: re-run the rollback drill for a bad deploy and file live evidence'
-    status: AVAILABLE
-    owner: muse_ai
-    branch: null
+    status: CLAIMED
+    owner: muse_4
+    branch: muse4/task-obs-009-rollback-drill
     pr: null
     contributors: []
     priority: P2
@@ -14921,8 +14921,11 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
     - 'Coordinator pool 10, from MASTER_PLAN (TASK-OBS-002, STALE-UNVERIFIED since 2026-11-14): rollback tooling merged but no rollback drill was ever re-run. Numbered OBS-009 to avoid collision with existing OBS records. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Pre-authorised follow-on for Muse 4 if STR-HLT-002 is still Submitted (assignment round 7084017188).'
-    blockers: []
-    next_action: Run the rollback drill on the fleet, file evidence.
+    - 'Claim: issue #35 comment 7084906938 by Muse 4, 2026-11-23 ~01:50 IST, as the pre-authorised follow-on to TASK-STR-HLT-002 (assignment round 7084017188; STR-HLT-002 wait state filed, status comment 7084897924) and queue position 1 (queue post 7084110569). Board record verified AVAILABLE, owner muse_ai, on main 3f9cec0c (board blob af503e38). Branch muse4/task-obs-009-rollback-drill. Note: OBS-007 (PR #1318, merged 2026-11-22) already re-ran the SAFE-form drill; OBS-009 acceptance is the real fleet drill, which needs coordinator clearance before any live service is touched.'
+    - 'Progress 2026-11-23 ~02:05 IST: safe-form re-verification on main 3f9cec0c — guard suite 8/8 PASS (2.12s); fixture end-to-end rollback B->A exit 0, prior state restored, tree clean; G1/G2 both still open on current main; OBS-007 byte-size FLAG closed (main files 5,280/3,078 B). Read-only live check (bridge): rollback_deploy.sh + workflow byte-identical to main on S1+S2; fleet deploy NOT uniform (S1 HEAD 3f9cec0c, S2 HEAD db933cfc, one merge behind). Real-drill plan filed in the evidence doc; coordinator clearance requested on the hub — no live step executed. Evidence doc docs/collaboration/TASK-OBS-009-ROLLBACK-DRILL.md; PR #1414.'
+    blockers:
+    - 'Coordinator clearance for the live drill (S2 forward re-sync + Fleet Rollback to d769cb7a + redeploy forward) — requested on the hub; no live step until it lands.'
+    next_action: Await coordinator clearance, then execute the filed real-drill plan and file the live evidence.
   - id: TASK-INF-023
     title: 'Fleet: run the backup/restore drill against the live backup and file evidence'
     status: IN_REVIEW
