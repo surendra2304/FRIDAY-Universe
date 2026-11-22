@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
 from app.api.analytics import analytics_router
-from app.api.delegate import delegate_router
+from app.api.delegate import delegate_router, task_contract_router
 from app.api.health import health_router
 from app.api.improvement import improvement_router
 from app.api.marketplace import marketplace_router, task_template_router
@@ -439,6 +439,9 @@ def create_app() -> FastAPI:
     app.include_router(tasks_router, prefix="/api", tags=["Tasks"])
     app.include_router(api_router, prefix="/api", tags=["Core API"])
     app.include_router(delegate_router, prefix="/api/v1", tags=["FRIDAY Universe Forge Delegation"])
+    # TASK-FRG-002: fleet contract POST /v1/task/execute (router carries its
+    # own /v1 prefix); the dispatch bus posts code tasks here, not /delegate.
+    app.include_router(task_contract_router, tags=["FRIDAY Universe Forge Task Contract"])
     app.include_router(analytics_router, prefix="/api", tags=["Analytics"])
     app.include_router(analytics_router, prefix="/api/v1", tags=["Analytics v1"])
     app.include_router(improvement_router, prefix="/api", tags=["Self-Improvement"])

@@ -14320,6 +14320,29 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Coordinator pool 8, from the 2026-11-22 research: FRG-017 merged 2026-11-18 but deployment/cycling has no live evidence; the self-upgrade programme (owner standing architecture law, Forge-first) has zero production instances. Assigned to Muse 6 (claims after VOI-027).'
     blockers: []
     next_action: Verify or enable the loop with the cage, run one cycle, ship the blocked-agent tool, file evidence.
+  - id: TASK-FRG-002
+    title: 'Forge: prove 3 consecutive live code-task runs requested through FRIDAY chat (M5 workflow 4)'
+    status: IN_REVIEW
+    owner: muse_10
+    branch: muse10/task-frg-002-forge-live-runs
+    pr: 1401
+    contributors: []
+    priority: P2
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T23:36:54+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Forge/app/api/delegate.py
+    - Forge/app/main.py
+    - Forge/tests/unit/test_task_execute_contract.py
+    - docs/collaboration/TASK-FRG-002-FORGE-LIVE-RUNS.md
+    acceptance:
+    - 'Three consecutive live runs, each a real code task requested through FRIDAY chat and executed by Forge, each recorded with its trace (request, routing, agent evidence, result); if the task-execute route is still missing on main, ship it first. A silent failure resets the count.'
+    evidence:
+    - 'Coordinator pool 9, from MASTER_PLAN M5 (TASK-FOR-002, STALE-UNVERIFIED since 2026-11-14): Forge still exposed no /v1/task/execute route at the plan snapshot and the workflow was never proven with 3 consecutive live runs. Distinct from FRG-001 (pool 8, idle-loop proof). Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'IMPLEMENTED 2026-11-22 (Muse 10, PR #1401): POST /v1/task/execute adapter over the delegate path (task_contract_router) + contract tests 2 passed; evidence doc docs/collaboration/TASK-FRG-002-FORGE-LIVE-RUNS.md. Live runs 0/3 - owed after merge + deploy.'
+    blockers: []
+    next_action: Muse review/merge; then run the 3 live runs through FRIDAY chat, file traces.
   - id: TASK-MEM-015
     title: 'Memora: persist the viking context layer to Oracle ADB or mark it explicitly ephemeral in API responses + promotion audit trail with undo'
     status: IN_REVIEW
