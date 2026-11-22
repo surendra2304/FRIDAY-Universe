@@ -570,7 +570,12 @@ class FleetClient:
         t0 = time.time()
         try:
             headers = {"Authorization": f"Bearer {self.intelx_key}"} if self.intelx_key else {}
-            health_path = os.getenv("FRIDAY_INTELX_HEALTH_PATH", "/api/v1/healthz")
+            # TASK-REL-067: the fleet reads IntelX's contract /health, not
+            # the liveness-only /healthz (which stays 200/"ok" per INT-012).
+            # Safe pre-deploy: the old /health alias returned the same
+            # liveness body, which the classifier reads as pre-contract
+            # REACHABLE — identical to probing /healthz.
+            health_path = os.getenv("FRIDAY_INTELX_HEALTH_PATH", "/api/v1/health")
             r = await client.get(f"{self.intelx_url}{health_path}", headers=headers, timeout=8.0)
             lat = int((time.time() - t0) * 1000)
             status, contract_note = _classify_health_response(r)
