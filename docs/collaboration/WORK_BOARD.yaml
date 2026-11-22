@@ -13951,11 +13951,11 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: IN_REVIEW
     owner: muse_2
     branch: muse2/task-frd-033-intelx-peer-urls
-    pr: null
+    pr: 1363
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T15:49:30+05:30'
+    updated_at: '2026-11-22T15:51:23+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-FRD-033-INTELX-PEER-URLS.md
@@ -13964,7 +13964,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
     - 'Coordinator pool addition, 2026-11-22 ~12:30 IST: WF-001 F1 from the fresh M1 trace (PR #1333, merge f015a3b0, Muse 2). G1 root cause: FRIDAY/src/friday/ecosystem/fleet_client.py:116-126 CANONICAL_INTERNAL_MESH_URLS maps intelx to http://10.0.0.121:8005 (dead post-migration; live is 10.0.0.120:8005, verified 200 vs 000); dispatch-bus agent configs point IntelX at http://127.0.0.1:8005 (nothing listens on S1:8005) and Stratex at 127.0.0.1:8003 (dashboard, not engine). Same defect class as ORCH-011 G1 (supervision probe targets). Blocks MASTER_PLAN section 4 M1. Assigned to Muse 2 (free; TASK-WF-001 filed IN_REVIEW, PR #1333) - holds the trace context. Base: main 46e17b1c (board blob e00fd60c8db13c9ce9c43fac44569b0181e3ebc7, verified against the true main blob before editing). Worker claims via its own claim PR. LIVE-RESTART GATE: implement + PR first; restart FRIDAY only after Muse clears deployment on the hub.'
     - 'Claim: issue #35 comment 7075943856 by Muse 2 (2026-11-22 ~12:59 IST), on the coordinator pool addition ~12:30 IST. Branch muse2/task-frd-033-intelx-peer-urls from main f3dab30e (board blob 27dbed54, verified against the git blobs API before editing). Board claim PR follows.'
-    - 'Work (IN_REVIEW): re-pointed the three stale peer URLs to the post-migration hosts per TASK-REL-062 (intelx .121:8005 to .120:8005, futuris .121:8004 to .120:8004, sentinel .120:8008 to .121:8008) in fleet_client.py CANONICAL_INTERNAL_MESH_URLS, universe_dispatch_bus.py agent defaults and router.py SPECIALIST_CONFIGS; the other six map entries verified correct against the REL-062 layout and AGENTS.yaml ports; regression assertions added to FRIDAY/tests/test_codex_invariants_and_mesh.py. Evidence doc: docs/collaboration/TASK-FRD-033-INTELX-PEER-URLS.md. FRIDAY restart, live re-probe and WF-001 trace re-run owed after Muse clears deployment on the hub.'
+    - 'Work (IN_REVIEW): re-pointed the three stale peer URLs to the post-migration hosts per TASK-REL-062 (intelx .121:8005 to .120:8005, futuris .121:8004 to .120:8004, sentinel .120:8008 to .121:8008) in fleet_client.py CANONICAL_INTERNAL_MESH_URLS, universe_dispatch_bus.py agent defaults and router.py SPECIALIST_CONFIGS; the other six map entries verified correct against the REL-062 layout and AGENTS.yaml ports; regression assertions added to FRIDAY/tests/test_codex_invariants_and_mesh.py. Evidence doc: docs/collaboration/TASK-FRD-033-INTELX-PEER-URLS.md. FRIDAY restart, live re-probe and WF-001 trace re-run owed after Muse clears deployment on the hub. Work PR #1363; work commit 957dfeff.'
     blockers: []
     next_action: Work PR open (IN_REVIEW) - peer URLs re-pointed per REL-062 layout; FRIDAY restart, live re-probe and WF-001 trace re-run owed after Muse clears deployment on the hub.
 
