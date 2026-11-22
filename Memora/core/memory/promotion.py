@@ -28,7 +28,10 @@ This module completes both paths on the existing primitives:
 
   * Scope moves use ``MemoryScopeType`` + ``memory_shared_agents`` via
     ``storage.relational.access_scope`` (the single visibility authority),
-    so every read path honours a promotion immediately.
+    so every read path honours a promotion immediately: the policy engine
+    consults record scope for read/query since TASK-MEM-016 (MEM-014 G1 —
+    before that fix the engine decided by namespace type only and a
+    promoted record stayed unreadable to its audience).
   * Need signals and promotions are recorded as ``AuditLog`` rows — the
     existing, tenant-scoped audit trail — so no new table or migration is
     required and every promotion carries its evidence.
@@ -532,20 +535,70 @@ class MemoryPromotionService:
         second sweep over unchanged evidence promotes nothing further,
         because SHARED promotion puts the needers on the allow-list, which
         zeroes the outside-agent evidence UNIVERSAL requires.
+
+        Candidate selection is two-phase within the ``limit`` budget
+        (TASK-MEM-016 / MEM-014 G2): need-bearing memories are evaluated
+        first, most-recent-need first, because the old oldest-first scan
+        starved every recent memory — the 200-record window filled with
+        older records before it could ever reach one with recorded need.
+        The remaining budget then scans oldest-first as before, so a
+        no-need sweep behaves exactly as it used to.
         """
-        records = (
-            db.query(MemoryRecord)
+        now = datetime.now(timezone.utc)
+        cutoff = now - timedelta(days=window_days)
+        # Phase 1 — need-bearing candidates. Need rows are rare, so collect
+        # their memory ids (window-filtered in Python, mirroring
+        # need_evidence, so no DB timezone arithmetic is involved) and
+        # evaluate those first, most-recent-need first.
+        need_rows = (
+            db.query(AuditLog.memory_id, AuditLog.timestamp)
             .filter(
-                MemoryRecord.tenant_id == tenant_id,
-                MemoryRecord.scope != MemoryScopeType.UNIVERSAL,
-                MemoryRecord.lifecycle_state.in_(
-                    [LifecycleState.ACTIVE, LifecycleState.VERIFIED, LifecycleState.CANDIDATE]
-                ),
+                AuditLog.tenant_id == tenant_id,
+                AuditLog.action == ACTION_NEED,
+                AuditLog.memory_id.isnot(None),
             )
-            .order_by(MemoryRecord.created_at.asc())
-            .limit(limit)
             .all()
         )
+        latest_need: Dict[str, datetime] = {}
+        for memory_id, ts in need_rows:
+            ts_utc = _as_utc(ts)
+            if ts_utc is None or ts_utc < cutoff:
+                continue
+            if memory_id not in latest_need or ts_utc > latest_need[memory_id]:
+                latest_need[memory_id] = ts_utc
+        need_first_ids = sorted(
+            latest_need, key=lambda mid: latest_need[mid], reverse=True
+        )[:limit]
+
+        base_filters = [
+            MemoryRecord.tenant_id == tenant_id,
+            MemoryRecord.scope != MemoryScopeType.UNIVERSAL,
+            MemoryRecord.lifecycle_state.in_(
+                [LifecycleState.ACTIVE, LifecycleState.VERIFIED, LifecycleState.CANDIDATE]
+            ),
+        ]
+        records: List[MemoryRecord] = []
+        if need_first_ids:
+            records.extend(
+                db.query(MemoryRecord)
+                .filter(*base_filters, MemoryRecord.id.in_(need_first_ids))
+                .all()
+            )
+            # Keep the need-first evaluation in most-recent-need order.
+            order = {mid: i for i, mid in enumerate(need_first_ids)}
+            records.sort(key=lambda r: order.get(r.id, len(order)))
+        # Phase 2 — oldest-first scan filling the remaining budget.
+        remaining = limit - len(records)
+        if remaining > 0:
+            oldest_query = db.query(MemoryRecord).filter(*base_filters)
+            seen_ids = {r.id for r in records}
+            if seen_ids:
+                oldest_query = oldest_query.filter(~MemoryRecord.id.in_(seen_ids))
+            records.extend(
+                oldest_query.order_by(MemoryRecord.created_at.asc())
+                .limit(remaining)
+                .all()
+            )
         results: List[Dict[str, Any]] = []
         for record in records:
             target = cls.evaluate_auto_promotion(db, record, window_days=window_days)
