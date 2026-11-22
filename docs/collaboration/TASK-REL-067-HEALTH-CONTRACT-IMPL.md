@@ -3,8 +3,8 @@
 **Task:** Implement the health-capability contract per REL-004 section 8
 (design: `docs/collaboration/TASK-REL-004-HEALTH-CONTRACT.md`, Muse 9).
 **Branch:** `muse8/task-rel-067`. **Status:** Stratex + FRIDAY classifier +
-FRIDAY /health + Memora /health + Futuris /health slices implemented on the
-branch; 6 agents' `/health` remain. **Work PR not opened yet** — this
+FRIDAY /health + Memora /health + Futuris /health + IntelX /health slices
+implemented on the branch; 5 agents' `/health` remain. **Work PR not opened yet** — this
 document grows with the work and is filed with the work PR.
 
 ## Done this run (2026-11-22 ~15:00 IST, hourly self-check)
@@ -377,10 +377,139 @@ Futuris `/health` slice (design §5).
   `Memora/tests/test_health_observation_metadata.py`,
   `Futuris/tests/test_futuris_health_contract.py`.
 
+## Done this run (2026-11-22 ~21:30 IST, hourly self-check — stall repair) — IntelX /health (§5)
+
+IntelX was the first agent where the contract could NOT be applied to
+the existing `/health` handler: `/health` was an alias of the
+process-only liveness handler `/healthz`, and TASK-INT-012 pins that
+handler (with tests) to no database work, always 200/`"ok"`, and the
+exact key set with `database: "not_checked"` — FRIDAY's `ask_intelx`
+reads that field for display. Applying the §2.2 report to the shared
+handler would have broken INT-012 and destroyed the liveness surface
+(the Docker HEALTHCHECK hits `/healthz`). So the routes are split
+instead — the shape §2.2 rule 3 anticipates: the liveness-only endpoint
+keeps `process_liveness`, and `/health` becomes its own handler
+carrying the contract. Both paths are mounted twice (root + `/api/v1`,
+via `root_api_router` and `v1_router`), so the split applies to
+`/healthz` + `/api/v1/healthz` (liveness) and `/health` +
+`/api/v1/health` (contract) together.
+
+- `IntelX/intelx/api/v1/health.py` (commit `617e571d`) — new
+  `_capability_report()` builder + a separate `/health` route returning
+  `JSONResponse` (200 iff `ok`, else 503):
+  `capabilities.research` (required; no live probe exists anywhere in
+  the surveyed code, so `unknown` with detail `NO_LIVE_PROBE` — and
+  `degraded` / `MOCK_MODE` in mock mode, because synthetic findings
+  must never present as `ok`), `capabilities.model_provider`
+  (required when not `MOCK_MODE`; config-only today → `unknown` /
+  `CONFIG_ONLY` per §2.2 rule 7, never `ok` on config alone — in
+  `MOCK_MODE` `unknown` / `MOCK_MODE`, since there is no live provider
+  to report), `dependencies.database` (required; live
+  `check_database_health()` round-trip, `unavailable` +
+  `DATABASE_UNREACHABLE` on failure),
+  `dependencies.storage` (required; the writable data-dir probe,
+  `unavailable` + `STORAGE_UNWRITABLE` on failure). Top-level `status`
+  is derived (`ok` iff every required entry is `ok`, else `degraded`);
+  `evidence_class` is now `capability_report`; all pre-existing fields
+  kept. The legacy `database` field now reports the probed value
+  (`connected`/`unavailable`, as `/readyz` does) instead of
+  `"not_checked"` — `/health` does check the database. No secret or
+  raw exception text in any payload: `check_database_health()` never
+  raises (returns False, logs server-side), and the provider evidence
+  names only whether config is present, never key material.
+  **Honest consequence, stated plainly: IntelX `/health` is now
+  `degraded` / 503 even with the database and storage ready, because
+  `research` is required and unknown.** That is the contract's outcome
+  (§2.4 forbids reclassifying a required capability as optional to get
+  a green status); it clears only when a research probe is built.
+  Shared probes: `_probe_database()`, `_probe_storage()` and
+  `_provider_configured()` (the `/readyz` logic, verbatim) are used by
+  both `/health` and `/readyz`, so the two endpoints can never disagree
+  about database/storage/provider state (§2.5).
+- `/healthz` is unchanged in behaviour (same payload, same key set,
+  always 200, no database work) — only the `/health` alias decorators
+  and a docstring note were removed/added. `/readyz` is unchanged in
+  behaviour (same 200/503 gates, fields and values); it now consumes
+  the shared probe helpers instead of inline code, with the production
+  Oracle gate and the `database_backend` resolution verbatim.
+- Probe-routing verification (§7 prerequisite, IntelX):
+  `deploy/Caddyfile` sets no `health_uri` on any block (the file
+  contains no `health` string at all), so Caddy does not actively probe
+  IntelX health; no Caddy change needed. `IntelX/Dockerfile`
+  HEALTHCHECK and `IntelX/docker-compose.yml` healthcheck both hit
+  `/healthz`, which stays liveness-only and never 503s — no kill-loop
+  risk from the new `/health` 503, so the HEALTHCHECK is deliberately
+  NOT moved to `/readyz` (moving it would change the container health
+  gate from liveness to readiness: a DB outage would mark the
+  container unhealthy). `docker-compose.production.yml` has no IntelX
+  healthcheck (its line-12 healthcheck is Redis's).
+- FRIDAY fleet reads the contract now (commits `45d257ef`,
+  `881fba2d`): `FRIDAY/src/friday/ecosystem/fleet_client.py`
+  `probe_intelx` and `FRIDAY/src/friday/core/service_registry.py`
+  both default `FRIDAY_INTELX_HEALTH_PATH` to `/api/v1/health`
+  (was `/api/v1/healthz`; every other agent already defaults to
+  `/health`). Safe pre-deploy: the old `/health` alias returned the
+  same liveness body, which the §4 classifier reads as pre-contract
+  REACHABLE — identical to probing `/healthz`. Post-deploy, fleet-status
+  reads the contract: IntelX DEGRADED with its failing capability
+  named. `ask_intelx` still reads `/api/v1/healthz` (liveness + display
+  fields) — it requires HTTP 200, so it must not move to `/health`.
+  No FRIDAY test pins the old default path (checked:
+  `test_fleet_probe_labelling.py`, `test_peer_evidence_inversion.py`,
+  `test_prompt1_central_os.py` — the last only pins a Memora override).
+- Tests (commits `0afc2ee0`, `dd7df687`, `bd84b644`) —
+  `IntelX/tests/test_healthz_liveness.py`: the `/health` alias test is
+  removed (the alias no longer exists) and the module docstring records
+  the split; the four `/healthz`/`/readyz` tests are untouched.
+  `IntelX/tests/test_health.py`: `test_healthz_endpoint` and the
+  `/readyz` tests are untouched; `test_health_head_and_alias_endpoints`
+  now pins `/health` GET + HEAD at 503/`degraded`/`capability_report`
+  in mock mode. New `IntelX/tests/test_intelx_health_contract.py`
+  (7 tests): contract shape (capability/dependency key sets, closed
+  vocabulary, no `detail` on ok entries, legacy fields kept); mock
+  mode 503 with research degraded/`MOCK_MODE` and DB/storage ok;
+  live mode research unknown/`NO_LIVE_PROBE` + provider
+  unknown/`CONFIG_ONLY` with no key material in the payload; provider
+  key missing → unknown/`CONFIG_ONLY` naming the missing config; DB
+  down → database unavailable/`DATABASE_UNREACHABLE` + `/readyz`
+  503 (no §2.5 contradiction); storage failure →
+  unavailable/`STORAGE_UNWRITABLE` + `/readyz` storage error; the
+  split pinned (`/healthz` never calls the DB check, `/health` calls
+  it exactly once); `/readyz` fields unchanged in mock mode.
+- Verification status (same limits as the earlier slices): no local pytest /
+  import / build was run (execution-risk notice on the local clone stands);
+  edits verified by re-reading the changed regions + diffing the new
+  files against the branch base (the `/readyz` payload and return are
+  byte-identical; the only `/readyz` change is helper calls for the
+  three probes) + byte-verified upload (returned blob shas equal the
+  locally computed git blob hashes for all six files). **CI on the work
+  PR is the gate.**
+- CI wiring owed at work-PR time: no IntelX test file is in any
+  workflow's explicit file list today (checked 2026-11-22 on current
+  main: `friday-universe-ci.yml` pytest invocations list no IntelX
+  file; `owner-workflows.yml` contracts list has no IntelX file). The
+  new contract file and the two modified test files join the work-PR
+  wiring list, now 10 files: `Stratex/tests/test_engine_capability_truthfulness.py`,
+  `FRIDAY/tests/test_fleet_probe_labelling.py`,
+  `FRIDAY/tests/test_fleet_status_truth.py`,
+  `FRIDAY/tests/test_friday_health_contract.py`,
+  `Memora/tests/test_health_readiness_truth.py`,
+  `Memora/tests/test_health_observation_metadata.py`,
+  `Futuris/tests/test_futuris_health_contract.py`,
+  `IntelX/tests/test_intelx_health_contract.py`,
+  `IntelX/tests/test_health.py`,
+  `IntelX/tests/test_healthz_liveness.py`.
+- Stall repair: the 20:16 IST self-check reported this task stalled
+  (branch head `1e078f9c`, no checkpoint ~2h). This run resumed with
+  the IntelX slice: 6 commits on `muse8/task-rel-067`
+  (`617e571d`, `45d257ef`, `881fba2d`, `0afc2ee0`, `dd7df687`,
+  `bd84b644`), branch head now `bd84b644`. Work PR still pending
+  (5 agents remain + §6 Q2/Q3 + criterion 5/6 sweeps + CI wiring).
+
 ## Remaining (next runs)
 
-1. The other six agents' `/health` mappings per design §5 (IntelX,
-   Forge, Sentinel, Cortex, VyralX, Inference).
+1. The other five agents' `/health` mappings per design §5 (Forge,
+   Sentinel, Cortex, VyralX, Inference).
 2. §6 open questions still to resolve from source/live probe while implementing:
    Forge's three `/health`s (confirm by live probe which handler answers each path); Stratex master-control
    `/health` mount. (Memora `/health` dependency-failure mode resolved
@@ -397,4 +526,4 @@ Futuris `/health` slice (design §5).
    baseline for criterion 2 was taken on Oracle S1, so the post-merge
    live probe must target the new host.
 
-— Muse 8, TASK-REL-067, 2026-11-22 ~18:30 IST
+— Muse 8, TASK-REL-067, 2026-11-22 ~21:30 IST
