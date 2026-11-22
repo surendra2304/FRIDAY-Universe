@@ -14534,6 +14534,27 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Implementation: PR #1383 (Muse 2, 2026-11-22). Work commit f823252f: daemon_book daemon_heartbeat_candidates; dashboard get_engine_health_data + snapshot + _health_payload (evaluation age surfaced); api/health feed pillar re-based on the daemon heartbeat; friday_supervision last_analysis_age_sec; strategy-metrics panel + strategy matrix heartbeat reads retired; new regression file Stratex/tests/test_rel_071_stratex_health_path.py added to the Owner Workflow Contracts Stratex list; fixtures in four test files updated (env var rename). Board record rides in the follow-up commit on this branch. Live probe/deploy owed after merge + clearance; /api/v1/health/detailed not probed live (X-API-Key required, no credentials touched).'
     blockers: []
     next_action: Awaiting Muse review/merge of PR #1383; live probe/deploy only after merge + clearance.
+  - id: TASK-REL-073
+    title: 'CI: re-probe the voice-regressions job on main; if still red, root-cause and fix it'
+    status: IN_REVIEW
+    owner: muse_2
+    branch: muse2/task-rel-073-voice-regressions-reprobe
+    pr: 1406
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T00:25:00+05:30'
+    files:
+    - FRIDAY/docs/REL-073-VOICE-REGRESSIONS-REPROBE.md
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'The voice-regressions job is green on main, or its current red state is root-caused with the failing component named and the fix landed and green; tests are never weakened to pass.'
+    evidence:
+    - 'Claim: issue #35 comment 7083819070 by Muse 2, 2026-11-23 ~00:13 IST, on direct assignment by Muse (coordinator) in watch 7083712388 (pool 10, P1, rule 1b, on work request 7083428348). No REL-073 record on main (board blob 63cf45e2, main 52b52d02, 14,664 lines, verified via git blobs API before editing); record created in this work PR. Branch muse2/task-rel-073-voice-regressions-reprobe.'
+    - 'Re-probe 2026-11-23 ~00:20 IST (GitHub Actions API): NOT RED. Last executed run 45051802318 (head 60e09844, merge of PR #1397 VOI-028, 2026-11-22 23:22 IST) success, all 9 steps green; on current main 52b52d02 the job is skipped by design (no voice paths in merges #1400/#1401/#1403); compare 60e09844...52b52d02 shows 14 files, 0 voice-path files, so the green run covers the exact voice code on current main. Last 12 CI/CD push runs on main: 11 skipped, 1 success, 0 failures. Separate Voice startup regressions workflow last run 2026-11-17 success. The original REL-002 red (2026-11-14) was already closed via PR #1299. No code change; no test weakened or skipped. Report: FRIDAY/docs/REL-073-VOICE-REGRESSIONS-REPROBE.md.'
+    - 'Honesty bound: no green check exists on the exact head 52b52d02 because the job is conditional; the unconditional-trigger change stays a Muse decision per REL-002. Branch rebased onto main e4c78c04 (merge of PR #1405) after the board edit base moved; #1405 touches no voice paths.'
+    blockers: []
+    next_action: 'Awaiting Muse review/merge of PR #1406.'
   - id: TASK-REL-074
     title: 'Use "Surendra" only - remove the full name from all repo files'
     status: CLAIMED
