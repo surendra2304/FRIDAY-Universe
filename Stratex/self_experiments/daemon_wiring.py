@@ -36,10 +36,13 @@ Both are overridable via ``STRATEX_SELF_EXPERIMENTS_DATA_DIR`` /
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import threading
 from pathlib import Path
 from typing import Any, Callable
+
+logger = logging.getLogger(__name__)
 
 _STRATEX_ROOT = Path(__file__).resolve().parent.parent
 
@@ -84,7 +87,43 @@ class _ThreadControl:
         self.stop_event: asyncio.Event | None = None
 
 
+def _nice_current_thread(nice: int) -> bool:
+    """Best-effort: lower THIS thread's OS priority to ``nice``.
+
+    TASK-STR-EXP-006: the loop thread runs at the lowest priority so
+    a starvation-breaker trial only ever takes CPU nothing else
+    wants. os.setpriority with the thread's native id addresses
+    that thread alone (Linux threads are tasks); the daemon's
+    trading threads keep their priority. Returns True when the
+    priority was applied, False on any platform or permission
+    failure — never raises, so a platform without setpriority
+    simply runs the loop un-niced.
+    """
+    try:
+        os.setpriority(os.PRIO_PROCESS, threading.get_native_id(), nice)
+    except (AttributeError, OSError, ValueError):
+        return False
+    try:
+        return os.getpriority(os.PRIO_PROCESS, threading.get_native_id()) >= nice
+    except (AttributeError, OSError, ValueError):
+        return False
+
+
 def _thread_main(loop_obj: Any, control: _ThreadControl) -> None:
+    # TASK-STR-EXP-006: nice this thread before the loop starts.
+    from . import bounds
+
+    if _nice_current_thread(bounds.LOOP_THREAD_NICE):
+        logger.info(
+            "[STRATEX] Self-experiment loop thread niced to %d",
+            bounds.LOOP_THREAD_NICE,
+        )
+    else:
+        logger.warning(
+            "[STRATEX] Self-experiment loop thread could not be "
+            "niced; trials run at normal priority"
+        )
+
     async def _amain() -> None:
         control.asyncio_loop = asyncio.get_running_loop()
         control.stop_event = asyncio.Event()

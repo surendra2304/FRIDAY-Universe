@@ -19,12 +19,23 @@ Bounds (bounds.py, Self-Upgrade DESIGN section 5):
 
 run_forever() is the driver a follow-up wires after review; nothing
 in this slice starts it.
+
+TASK-STR-EXP-006 (starvation breaker, scheduling only): the
+whole-box load gate above never opens on the production host, so
+run_one_cycle() also offers ONE niced trial per starvation window
+when no trial has run for STARVATION_BREAKER_AFTER_S, the daemon
+is idle, and the load stays below the breaker ceiling. The breaker
+changes WHEN a trial runs, never how it is judged: the frozen
+admission gate (judge.py) and the daily cap, time box and
+declaration discipline are untouched, and a breaker trial is
+recorded as such (scheduling + load evidence on its result row).
 """
 
 from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import time
 from dataclasses import dataclass
@@ -43,6 +54,8 @@ from .store import StreamRecord, StreamStore
 
 UTC = timezone.utc
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class CycleReport:
@@ -54,6 +67,14 @@ class CycleReport:
     verdict: str = ""  # "PROVEN" | "FORWARD_TEST" | "FAIL" when ran
     n_global: int | None = None
     admission_key: str = ""
+    # TASK-STR-EXP-006: which gate let the trial run — "load_gate"
+    # (the normal whole-box gate) or "starvation_breaker" — plus the
+    # load averages observed at the gate check, so a breaker trial
+    # always carries its load evidence (load1 is the normal gate's
+    # signal; load5 is the breaker ceiling's signal).
+    via: str = "load_gate"
+    load1: float | None = None
+    load5: float | None = None
 
 
 class SelfExperimentLoop:
@@ -68,6 +89,8 @@ class SelfExperimentLoop:
         daily_cap: int = bounds.DEFAULT_DAILY_CAP,
         time_box_s: float = bounds.DEFAULT_TIME_BOX_S,
         load_gate_fraction: float = bounds.LOAD_GATE_FRACTION,
+        starvation_breaker_after_s: float = bounds.STARVATION_BREAKER_AFTER_S,
+        breaker_load_ceiling_fraction: float = bounds.BREAKER_LOAD_CEILING_FRACTION,
     ):
         self.store = store
         self.data_dir = Path(data_dir)
@@ -80,6 +103,8 @@ class SelfExperimentLoop:
         self.daily_cap = daily_cap
         self.time_box_s = time_box_s
         self.load_gate_fraction = load_gate_fraction
+        self.starvation_breaker_after_s = starvation_breaker_after_s
+        self.breaker_load_ceiling_fraction = breaker_load_ceiling_fraction
 
     # -- gates ------------------------------------------------------------
 
@@ -90,12 +115,95 @@ class SelfExperimentLoop:
         means disabled."""
         return os.getenv("STRATEX_SELF_EXPERIMENTS", "off").strip().lower() == "on"
 
-    def host_load_ok(self) -> bool:
+    @staticmethod
+    def _load1() -> float | None:
+        """The 1-minute load average, or None when it cannot be read.
+
+        None fails every gate closed: a trial never runs on an
+        unreadable load.
+        """
         try:
-            load1 = os.getloadavg()[0]
+            return os.getloadavg()[0]
         except (OSError, AttributeError):
+            return None
+
+    @staticmethod
+    def _load5() -> float | None:
+        """The 5-minute load average, or None when it cannot be read.
+
+        The starvation breaker's signal (see breaker_load_ok): the
+        sustained load, not the instantaneous spike.
+        """
+        try:
+            return os.getloadavg()[1]
+        except (OSError, AttributeError, IndexError):
+            return None
+
+    def host_load_ok(self, load1: float | None = None) -> bool:
+        """The normal whole-box gate, on the 1-minute average. The
+        caller may pass an already-read load so the gate decision
+        and the recorded evidence are the same sample."""
+        if load1 is None:
+            load1 = self._load1()
+        return (
+            load1 is not None
+            and load1 < self.load_gate_fraction * (os.cpu_count() or 1)
+        )
+
+    def breaker_load_ok(self, load5: float | None = None) -> bool:
+        """The starvation breaker's hard ceiling: the 5-minute load
+        average must stay below the ceiling multiple of the CPU
+        count, so the box is busy but not SUSTAINED-saturated. The
+        1-minute average is deliberately NOT the signal here: the
+        daemon's own 15-second scans spike it at whatever instant a
+        poll lands. A breaker trial runs niced, so it only ever
+        takes CPU nothing else wants; the ceiling guards the
+        sustained case where it would make no progress."""
+        if load5 is None:
+            load5 = self._load5()
+        return (
+            load5 is not None
+            and load5
+            < self.breaker_load_ceiling_fraction * (os.cpu_count() or 1)
+        )
+
+    def starved(self, now: datetime | None = None) -> bool:
+        """True when no trial has completed within the breaker window.
+
+        No result row ever means starved: the loop has never run a
+        trial in this data directory. An unreadable last-result
+        timestamp fails closed (not starved) — the gate is never
+        bypassed on state the loop cannot read.
+        """
+        last_ts = self.ledger.last_result_ts()
+        if last_ts is None:
+            return True
+        try:
+            last = datetime.fromisoformat(last_ts)
+        except ValueError:
+            logger.warning(
+                "self-experiment last-result timestamp unreadable "
+                "(%r); treating the loop as not starved",
+                last_ts,
+            )
             return False
-        return load1 < self.load_gate_fraction * (os.cpu_count() or 1)
+        if last.tzinfo is None:
+            last = last.replace(tzinfo=UTC)
+        moment = now or datetime.now(UTC)
+        return (moment - last).total_seconds() > self.starvation_breaker_after_s
+
+    def _breaker_allows(self, load5: float | None) -> bool:
+        """The starvation breaker: one niced trial when the loop has
+        not run one in a whole window, the box is busy but not
+        sustained-saturated, and the load is readable. The
+        daemon-activity probe and the daily cap are NOT decided here
+        — run_one_cycle still applies them authoritatively below, so
+        a breaker trial can never run while the daemon is working or
+        over its cap.
+        """
+        if not self.breaker_load_ok(load5):
+            return False
+        return self.starved()
 
     def is_idle(self) -> bool:
         if not self.host_load_ok():
@@ -176,12 +284,49 @@ class SelfExperimentLoop:
     def run_one_cycle(self) -> CycleReport:
         if not self.experiments_enabled():
             return CycleReport(status="skipped", reason="kill_switch_off")
-        if not self.host_load_ok():
-            return CycleReport(status="skipped", reason="host_load_gate")
+        load1 = self._load1()
+        load5 = self._load5()
+        via = "load_gate"
+        if not self.host_load_ok(load1):
+            # TASK-STR-EXP-006 starvation breaker: when the whole-box
+            # gate has not opened for a full window, one niced trial
+            # may run while the daemon is idle and the box is busy
+            # but not sustained-saturated. Anything else still skips
+            # here.
+            if not self._breaker_allows(load5):
+                return CycleReport(
+                    status="skipped",
+                    reason="host_load_gate",
+                    load1=load1,
+                    load5=load5,
+                )
+            via = "starvation_breaker"
+            logger.info(
+                "self-experiment starvation breaker firing: no trial "
+                "in %.0fh, load1=%.2f load5=%.2f (gate %.2f, "
+                "ceiling %.2f)",
+                self.starvation_breaker_after_s / 3600,
+                load1 if load1 is not None else -1,
+                load5 if load5 is not None else -1,
+                self.load_gate_fraction * (os.cpu_count() or 1),
+                self.breaker_load_ceiling_fraction * (os.cpu_count() or 1),
+            )
         if self.work_probe is not None and not self.work_probe():
-            return CycleReport(status="skipped", reason="work_in_progress")
+            return CycleReport(
+                status="skipped",
+                reason="work_in_progress",
+                via=via,
+                load1=load1,
+                load5=load5,
+            )
         if self.ledger.results_today() >= self.daily_cap:
-            return CycleReport(status="skipped", reason="daily_cap_reached")
+            return CycleReport(
+                status="skipped",
+                reason="daily_cap_reached",
+                via=via,
+                load1=load1,
+                load5=load5,
+            )
         self.flush_pending_lessons()
 
         declared = self.ledger.declared_hashes()
@@ -191,13 +336,26 @@ class SelfExperimentLoop:
                 proposal = candidate
                 break
         if proposal is None:
-            return CycleReport(status="skipped", reason="catalogue_exhausted")
+            return CycleReport(
+                status="skipped",
+                reason="catalogue_exhausted",
+                via=via,
+                load1=load1,
+                load5=load5,
+            )
 
         declaration_id = self.ledger.declare(proposal.to_dict())
-        return self.run_declared(declaration_id, proposal)
+        return self.run_declared(
+            declaration_id, proposal, via=via, load1=load1, load5=load5
+        )
 
     def run_declared(
-        self, declaration_id: str, proposal: catalogue.Proposal
+        self,
+        declaration_id: str,
+        proposal: catalogue.Proposal,
+        via: str = "load_gate",
+        load1: float | None = None,
+        load5: float | None = None,
     ) -> CycleReport:
         """Run one declared experiment end-to-end.
 
@@ -216,12 +374,18 @@ class SelfExperimentLoop:
                         "declaration_id": declaration_id,
                         "status": "aborted_timebox",
                         "experiment_type": proposal.experiment_type,
+                        "scheduling": via,
+                        "load1": load1,
+                        "load5": load5,
                     }
                 )
                 return CycleReport(
                     status="skipped",
                     reason="timebox_aborted",
                     declaration_id=declaration_id,
+                    via=via,
+                    load1=load1,
+                    load5=load5,
                 )
             metrics, n_global, verdict = outcome
         else:
@@ -269,6 +433,9 @@ class SelfExperimentLoop:
                 "verdict": verdict.to_dict(),
                 "trial": n_global,
                 "admission_key": admission_key or None,
+                "scheduling": via,
+                "load1": load1,
+                "load5": load5,
             }
         )
         self._bank_lesson(proposal, metrics, verdict, declaration_id, n_global)
@@ -279,6 +446,9 @@ class SelfExperimentLoop:
             verdict=verdict.verdict,
             n_global=n_global,
             admission_key=admission_key,
+            via=via,
+            load1=load1,
+            load5=load5,
         )
 
     # -- greedy forward selection --------------------------------------------
@@ -451,7 +621,26 @@ class SelfExperimentLoop:
         stop = stop_event or asyncio.Event()
         while not stop.is_set():
             try:
-                await asyncio.to_thread(self.run_one_cycle)
+                # TASK-STR-EXP-006: a skipped cycle is logged with its
+                # reason — before this the starvation was invisible
+                # except to outside load checks; the daemon log now
+                # shows every host_load_gate skip and every trial.
+                report = await asyncio.to_thread(self.run_one_cycle)
+                if report.status == "skipped":
+                    logger.info(
+                        "self-experiment cycle skipped: %s "
+                        "(load1=%s load5=%s)",
+                        report.reason,
+                        report.load1,
+                        report.load5,
+                    )
+                else:
+                    logger.info(
+                        "self-experiment trial %s ran via %s: %s",
+                        report.n_global,
+                        report.via,
+                        report.verdict,
+                    )
             except Exception:
                 # A failing cycle never kills the loop; the gates make
                 # cycles return reports rather than raise, so reaching

@@ -66,6 +66,38 @@ DEFAULT_TIME_BOX_S = 600.0
 #: includes it from the start).
 LOAD_GATE_FRACTION = 0.7
 
+# ---------------------------------------------------------------------------
+# Starvation-breaker scheduling (TASK-STR-EXP-006)
+#
+# The whole-box load gate above never opens on the production host
+# (2 CPUs, 7 agents, 15-second daemon scans: 1-minute load sits at
+# 3-4 against a 1.4 gate, so no trial has run since arming on
+# 2026-11-20). These constants schedule ONE niced trial when the
+# loop is starved; they change WHEN a trial runs, never how it is
+# judged — the frozen judgement bars above are not consulted here
+# and are unchanged, as is the frozen admission gate (judge.py).
+# ---------------------------------------------------------------------------
+
+#: No completed trial in this long means the loop is starved and the
+#: breaker may fire (once per starvation window — see loop.py).
+STARVATION_BREAKER_AFTER_S = 6 * 3600
+
+#: Hard ceiling for a breaker trial: the 5-minute load average must
+#: stay below this multiple of the CPU count. The 5-minute average
+#: (not the 1-minute) is the breaker's signal on purpose: the
+#: daemon's own 15-second scans spike the 1-minute average at
+#: whatever instant a poll lands, while the 5-minute average says
+#: whether the box is SUSTAINED-saturated — the thing a niced trial
+#: actually needs to avoid. The normal gate (LOAD_GATE_FRACTION)
+#: still governs every non-breaker cycle, on the 1-minute average
+#: as before.
+BREAKER_LOAD_CEILING_FRACTION = 2.0
+
+#: Lowest OS priority for the loop's own thread (daemon_wiring):
+#: the trial runs at nice 19, so live trading and the other agents
+#: always pre-empt it.
+LOOP_THREAD_NICE = 19
+
 DEFAULT_POLL_SECONDS = 900.0
 
 #: The OOS era every slice-1 experiment is judged on (the RD-002
