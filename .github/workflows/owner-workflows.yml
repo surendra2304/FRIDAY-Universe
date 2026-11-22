@@ -205,6 +205,7 @@ jobs:
             VyralX/tests/test_vyr031_script_stage_yield.py VyralX/tests/test_vyr032_doubled_caption.py \
             VyralX/tests/test_viral_loop.py \
             VyralX/tests/test_vyr001_autopilot_cycle_budget.py \
+            VyralX/tests/test_vyr035_mpt_cycle_deadline.py \
             VyralX/tests/test_path_c_lane_retired.py VyralX/tests/test_ig3_vyr10_scene_assembly_eval.py
       - name: Compile fresh research and deployed voice wiring
         run: >-

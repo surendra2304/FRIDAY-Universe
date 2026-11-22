@@ -71,6 +71,7 @@ import re
 import resource
 import shlex
 import subprocess
+import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -674,11 +675,23 @@ def produce_from_briefs(
     *,
     max_candidates: int = 10,
     runner: Runner | None = None,
+    deadline: float | None = None,
 ) -> dict[str, Any]:
     """Autopilot driver entry for the MPT lane: work the briefs file in
     order, stop at the first gated pass. Mirrors the native driver's
     result shape, except a pass is ``GATED_PASS`` — never ``PRODUCED``,
-    so the driver's publish drain is never triggered by this lane."""
+    so the driver's publish drain is never triggered by this lane.
+
+    TASK-VYR-035: ``deadline`` is a ``time.monotonic()`` value bounding
+    the whole cycle, the same contract as the native lane in
+    :func:`scripts.run_viral_autopilot.produce_one` (TASK-VYR-001). It
+    is checked before every brief; when it has passed the lane stops
+    with ``CYCLE_BUDGET_EXCEEDED`` instead of starting another MPT
+    render. A single in-flight MPT run is a blocking subprocess call
+    with no deadline of its own, so it may still overrun the budget —
+    the guarantee is that the lane starts nothing new past the
+    deadline and therefore terminates. ``deadline=None`` preserves the
+    previous unbounded behaviour for direct callers."""
     if str(getattr(settings, "viral_producer_lane", "viral_remix")).lower() != LANE_NAME \
             or not bool(getattr(settings, "viral_mpt_lane_enabled", False)):
         return {"status": "LANE_INACTIVE", "attempts": []}
@@ -687,6 +700,12 @@ def produce_from_briefs(
         return {"status": "NO_BRIEFS", "attempts": []}
     attempts: list[dict[str, Any]] = []
     for brief in briefs[: max(1, max_candidates)]:
+        if deadline is not None and time.monotonic() >= deadline:
+            log.warning(
+                "Cycle wall-clock budget exceeded before MPT brief %r; stopping",
+                brief.topic,
+            )
+            return {"status": "CYCLE_BUDGET_EXCEEDED", "attempts": attempts}
         result = produce_mpt_short(brief, settings, runner=runner)
         attempts.append(result)
         if result.get("status") == "GATED_PASS":
