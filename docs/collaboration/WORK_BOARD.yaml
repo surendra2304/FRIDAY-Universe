@@ -13098,14 +13098,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-INT-018
     title: "IntelX: synthesis-failure path must preserve the extractive excerpts the pre-#78 deployed path returned (PR #78 follow-up, MASTER_PLAN §6)."
-    status: CLAIMED
+    status: MERGED
     owner: muse_1
     branch: muse1/task-int-018-synthesis-excerpts
-    pr: null
+    pr: 1303
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T09:03:13+05:30"
+    updated_at: "2026-11-22T09:31:15+05:30"
     files:
       - "IntelX/deep_research_pipeline.py"
       - "IntelX/app/agents/real_intelx_osint.py"
@@ -13118,8 +13118,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 2. Assigned to Muse 1 (free; TASK-INF-019 MERGED, PR #1241, merge 4f40128a) - direct coordinator assignment per the refill rule, one per free worker. Next free INT id 018 (INT-001..017 all exist). Base: main 4f40128a (board blob aa08b5384180a06d8a1062f5a667957e3d89ec99, verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claim: issue #35 comment 7073609712 by Muse 1, 2026-11-22 ~09:03 IST, on direct assignment by Muse (coordinator) in comment 7072956811 item 2. Board record verified AVAILABLE, owner muse_1, on current main 1855bc28 (board blob f33f13c13b832d83e56305d883fc353f886d02eb, verified against the true main blob before editing). No prior claim, branch or PR."
+      - "MERGED 2026-11-22 ~09:31 IST: PR #1303 merged (merge ef42312f) after coordinator review in full - claim + implementation merged together in one PR (branch carried both commits): _extractive_excerpts/_degraded in IntelX/intelx/api/grounded_live_research.py, all 5 DEGRADED paths preserve verbatim cited excerpts, status stays DEGRADED, question_answered False; tests updated (tests/test_grounded_research_synthesis.py 19 passed, IntelX/tests/test_int005_verification_pass.py 8 passed locally on the merge tree); CI 10/10 green/skipped on head af299d2c; test-merge onto main 21fb6106 clean (stale-base artifacts REL-002/STR-PROFIT-001 resolved); validator VALID, 610 tasks."
     blockers: []
-    next_action: "Locate the synthesis-failure path in IntelX research, restore excerpt preservation, add a regression test, verify in the PR's own CI run."
+    next_action: "None - closed."
   - id: TASK-INF-019
     title: "Inference: post-#1066 routing probes - rerun the probes and file results."
     status: MERGED
@@ -13408,14 +13409,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-INF-LLM-003
     title: "Gemini deadline follow-up: measure Gemini completion time for ~9k-token prompts before any deadline change (MASTER_PLAN §6)."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_2
     branch: muse2/task-inf-llm-003-gemini-deadline
     pr: 1304
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T09:05:00+05:30"
+    updated_at: "2026-11-22T09:31:15+05:30"
     files:
       - "Inference/app/providers/gateway.py"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -13428,8 +13429,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator pool-3 draft (pool 2, item 12 carried over), 2026-11-22 ~05:38 IST (issue #35 comment 7071343939). Assigned to Muse 2 (free; TASK-INF-LLM-002 MERGED, PR #1277, merge 2cdb786a) - direct coordinator assignment per the refill rule, one per free worker. Base: main 70c862e9 (board blob 9f7cf38ac83dbce37923da5fca551976ad491a1d, verified against the true main blob before editing)."
       - "Measurement: PR #1304 (Muse 2, 09:05 IST, 2026-11-22). Live on Server 1, exact INF-019 probe A prompt (35,214 chars): direct Gemini (150s timeout) 6.38s / 99.32s / 67.32s, all served; compressed prompt not complete in 150s; gateway path reproduced INF-019 (Gemini cut at 14.7s, OpenRouter nemotron served in 21.39s). Recommendation: KEEP the deadline; report Inference/docs/INF-LLM-003-GEMINI-DEADLINE.md. Branch muse2/task-inf-llm-003-gemini-deadline rebased onto main 21fb6106, head fca6bfbd. Awaiting Muse review/merge."
       - "Claim: issue #35 comment 7072766699 (Muse 2, 07:45 IST, 2026-11-22). Board record verified AVAILABLE, owner muse_2, on main 93ce3427 (blob 4fb0beab) before claiming. Branch muse2/task-inf-llm-003-gemini-deadline."
+      - "MERGED 2026-11-22 ~09:31 IST: PR #1304 merged (merge 01f3b669) after coordinator review in full - report Inference/docs/INF-LLM-003-GEMINI-DEADLINE.md read in full: direct Gemini 6.38s / 99.32s / 67.32s, compressed prompt not complete in 150s, gateway reproduced the 14.7s cut (3rd occurrence); recommendation KEEP the deadline; gaps G1-G4 filed; CI 9/9 green/skipped on head e89c023f; test-merge onto main ef42312f clean; validator VALID, 610 tasks."
     blockers: []
-    next_action: "Awaiting Muse review/merge of measurement results PR #1304."
+    next_action: "None - closed."
   - id: TASK-OPS-001
     title: "OCI secrets present in the repo (names verified; values unverified) (MASTER_PLAN §6)."
     status: MERGED
@@ -13457,14 +13459,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Closed. Audit filed: docs/collaboration/TASK-OPS-001_AUDIT.md (no credential value in the repo; findings F1-F8)."
   - id: TASK-API-003
     title: "Authentication matrix test: each agent accepts only its configured keys (MASTER_PLAN §6)."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_10
     branch: muse10/task-api-003-auth-matrix
     pr: 1305
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T09:06:00+05:30"
+    updated_at: "2026-11-22T09:31:15+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/collaboration/TASK-API-003_AUDIT.md"
@@ -13477,8 +13479,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator next-pool draft (pool 2, item 6), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 10 (free; roster PR #1254 merged b432050f; API-003 reserved for Muse 10 per coordinator watch 7069505715) - direct coordinator assignment per the refill rule, one per free worker. Base: main 6e88d1bb (board blob 931b2717bae8bddb0e94454401339ccbb0638be9, verified against the true main blob before editing)."
       - "Claim: issue #35 comment 7072358568 by Muse 10, 2026-11-22 ~07:10 IST, on direct assignment by Muse (coordinator) in comment 7071808665 (~06:25 IST; assignment stands, comment 7072081008 ~06:45 IST). Board record verified AVAILABLE, owner muse_10, on main a202692a (board blob 1019fee2, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-api-003-auth-matrix. Work-request fix authorized (comment 7072081008): future work-request comments go through the bridge github_api helper; job body rewritten, cycle stays disabled while assigned."
       - "Work: audit run 2026-11-22 ~08:15-09:00 IST by Muse 10 (base main 21fb6106, board blob acc8de96). 9 of 10 agents probed live on read-only GETs (names only, no key value read/printed/logged/stored); VyralX not running, code-only. Result: per-agent isolation does NOT hold fleet-wide - Sentinel enforces nothing live (all keys/no key/random 200); Inference accepts 8 peer keys and IntelX 7 peer keys by design; Forge/VyralX accept FRIDAY key by design; Memora peer-key values drifted from fleet copies (all 9 differ, fleet keys 401 at Memora); Cortex FRIDAY_API_KEY value equals CORTEX_API_KEY value (fleet FRIDAY key 403, CORTEX key impersonates FRIDAY_SYSTEM). Full matrix + findings F1-F10 in docs/collaboration/TASK-API-003_AUDIT.md. Work PR: #1305 (https://github.com/surendra2304/FRIDAY-Universe/pull/1305)."
+      - "MERGED 2026-11-22 ~09:31 IST: PR #1305 merged (merge 436fb43a) after coordinator review in full - audit docs/collaboration/TASK-API-003_AUDIT.md read in full: 9 of 10 agents probed live (~140 requests), per-agent isolation does NOT hold fleet-wide (F1 Memora key drift, F2 Cortex FRIDAY key equals CORTEX key, F3 Sentinel enforces nothing, F4/F5 by-design peer acceptance); acceptance PARTIAL - VyralX not running, code-only; follow-ups F1/F2/F3 + INF-LLM-003 G1 filed in coordinator pool 6; code claims spot-checked first-hand (Inference security.py:79-96, Sentinel settings.py:335, IntelX auth.py:171); CI 9/9 green/skipped on head fb7ed29e; test-merge onto main 01f3b669 clean; validator VALID, 610 tasks."
     blockers: []
-    next_action: "Coordinator review (Muse merges). Follow-ups F1-F10: Memora key re-sync, Cortex FRIDAY key fix, Sentinel auth enable; coordinator decisions on F4/F5 (mesh-model acceptance) and F8 (FRIDAY loopback bypass)."
+    next_action: "None - closed. Follow-ups F1-F10 filed in coordinator pool 6 (drafted 2026-11-22 ~09:31 IST); F1-F3 + INF-LLM-003 G1 assigned next."
   - id: TASK-CTX-001
     title: "Cortex CRM/website-operations audit (MASTER_PLAN §6)."
     status: MERGED
@@ -13530,14 +13533,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Closed. Loop verified end-to-end up to the capacity gate: FRIDAY/docs/OPS-003-SNIPER-ALLOCATION-LOOP.md (gaps G1-G6 filed; follow-ups in the next pool: G1 doc correction / retire GitHub snipers, G2 auth-vs-capacity misreport, G3 duplicate guard, G4 telemetry helper, G5 journal depth, G6 throttle contention)."
   - id: TASK-STR-PROFIT-001
     title: "Stratex: state the venue/account mode for the winner-allowlist activation record and reconcile the PF selection threshold 1.19 vs 1.16 (PR #73 follow-up, MASTER_PLAN §6)."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-str-profit-001-winner-allowlist-record
     pr: 1306
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T09:17:14+05:30"
+    updated_at: "2026-11-22T09:31:15+05:30"
     files:
       - "docs/collaboration/TASK-STRATEX-PROFIT-3.md"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -13550,8 +13553,97 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 3 (PR #73 follow-up). Assigned to Muse 4 (free; TASK-REL-002 MERGED, PR #1299, merge 4bbc9e2e) - direct coordinator assignment per the refill rule, one per free worker. First STR-PROFIT id (new series for Stratex winner-allowlist records tasks). Base: main 4bbc9e2e (board blob 732bb4d8, verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claim: issue #35 comment 7073706512 by Muse 4, 2026-11-22 ~09:11 IST, on direct assignment by Muse (coordinator) in comment 7072956811 (~08:00 IST; pool-5 draft item 3). Board record verified AVAILABLE, owner muse_4, on main 21fb6106 (board blob acc8de96, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-str-profit-001-winner-allowlist-record."
       - "Implemented 2026-11-22 ~09:20 IST (PR #1306): docs/collaboration/TASK-STRATEX-PROFIT-3.md gains a Venue section (Binance Demo Trading, demo.binance.com — NOT real money; evidence: owner decision D-015 2026-11-10, Server 1 .env verified 2026-11-09 BINANCE_ENV=demo, Nov 13-era config has no real-money endpoint and LIVE_TRADING_ENABLED=False permanent invariant) and a PF reconciliation (policy PF>=1.19, 7 winners per PR #73 + comment 6842900038; scalping_breakout PF 1.16 kept as the single documented exception — only 5m strategy, passes every other criterion; activity log + board PF>=1.16 is the effective applied threshold). Docs only, no trading change."
+      - "MERGED 2026-11-22 ~09:31 IST: PR #1306 merged (merge db754a4b) after coordinator review in full - claim + implementation merged together in one PR: venue stated (Binance Demo Trading, NOT real money) + PF reconciliation (policy 1.19, scalping_breakout 1.16 single documented exception); key claims verified first-hand on main (D-015 ACTIVITY_LOG.md:90, LIVE_TRADING_ENABLED=False Stratex/config.py:95, table PF>=1.19 + scalping (kept) 1.16); docs only, no trading change; CI 9/9 green/skipped on head 859426e0; test-merge onto main 436fb43a clean; validator VALID, 610 tasks."
     blockers: []
-    next_action: "Awaiting Muse review/merge of PR #1306."
+    next_action: "None - closed."
+  - id: TASK-ORCH-010
+    title: "Re-verify TASK-ORCH-001: intent-classification routing table, end-to-end (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
+    status: AVAILABLE
+    owner: muse_1
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T09:31:15+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/TASK-ORCH-010-ROUTING-REPROBE.md"
+    description: "MASTER_PLAN §4 M1 / §6: TASK-ORCH-001 merged 2026-11-10 (explicit intent classification + tested routing table) but the routing table itself was never re-probed end-to-end (STALE-UNVERIFIED 2026-11-14). Re-probe the routing table end-to-end on the live fleet (or a faithful harness if live probing is unsafe) and file the trace + verdict. Do NOT re-implement routing in this task."
+    acceptance:
+      - "Routing table re-probed end-to-end with a recorded trace; each route's classification verified against the table."
+      - "Any misroute filed as a follow-up with file/line; no silent fix."
+      - "No routing change in this task unless a misroute is proven and the fix is filed separately."
+    evidence:
+      - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 1, in re-verification form: the pool-5 item named TASK-ORCH-001, which is DEPLOYED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 1 (free; TASK-INT-018 MERGED, PR #1303, merge ef42312f) - direct coordinator assignment per the refill rule, one per free worker. Next free ORCH id 010 (ORCH-001..005, 007, 008, 009 exist). Base: main db754a4b (board verified against the true main blob before editing). Worker claims via its own claim PR."
+    blockers: []
+    next_action: "Locate the routing table + intent classifier, re-probe end-to-end, file the trace."
+  - id: TASK-WF-001
+    title: "M1 acceptance gate: one end-to-end task across at least three agents with a recorded trace (MASTER_PLAN §4 M1)"
+    status: AVAILABLE
+    owner: muse_2
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T09:31:15+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/TASK-WF-001-M1-TRACE.md"
+    description: "MASTER_PLAN §4 M1, pool 5 item 2. The 2026-11-10 trace recorded 3 completed / 1 failed (Futuris 501) and the owner browser closure never happened; acceptance still owed. Run a FRESH multi-agent trace: one natural-language task via FRIDAY, dispatched across at least three agents, tracked with unified task records, result reported back; record the full trace. Prerequisites ORCH-001/002/004 are board-closed (DEPLOYED/DEPLOYED/MERGED) but STALE-UNVERIFIED - if the trace hits a routing or dispatch defect, file it as a follow-up, do not silently work around it."
+    acceptance:
+      - "One fresh end-to-end trace across at least three agents, all steps completed, trace recorded (request, routing, agent evidence, result)."
+      - "Futuris 501-class failure absent, or root-caused with file/line."
+      - "Owner-visible exit demonstrated: 'research X and give me the highlights' returns real IntelX findings."
+    evidence:
+      - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 2. Assigned to Muse 2 (free; TASK-INF-LLM-003 MERGED, PR #1304, merge 01f3b669) - direct coordinator assignment per the refill rule, one per free worker. No prior WF-001 board record. Base: main db754a4b (board verified against the true main blob before editing). Worker claims via its own claim PR."
+    blockers: []
+    next_action: "Run the fresh multi-agent trace via FRIDAY chat and file it."
+  - id: TASK-OBS-007
+    title: "Re-run the rollback drill for TASK-OBS-002 (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
+    status: AVAILABLE
+    owner: muse_4
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T09:31:15+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/TASK-OBS-007-ROLLBACK-DRILL.md"
+    description: "MASTER_PLAN §4 M4 / §6: TASK-OBS-002 (rollback procedure for a bad deploy) merged 2026-11-10 - ancestor-guarded rollback script + Fleet Rollback workflow + guard tests - but no rollback drill has been re-run since (STALE-UNVERIFIED 2026-11-14). Re-run the drill in a SAFE form (dry-run, or a staged bad deploy on a non-production path - never roll back a live production service without coordinator clearance on the hub) and file the drill evidence."
+    acceptance:
+      - "Drill executed and recorded; rollback restores the prior state (or the dry-run proves each step)."
+      - "Gaps filed with file/line."
+      - "No live production service rolled back or restarted without hub clearance."
+    evidence:
+      - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 3, in re-verification form: the pool-5 item named TASK-OBS-002, which is DEPLOYED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 4 (free; TASK-STR-PROFIT-001 MERGED, PR #1306, merge db754a4b) - direct coordinator assignment per the refill rule, one per free worker. Next free OBS id 007 (OBS-001..006 exist). Base: main db754a4b (board verified against the true main blob before editing). Worker claims via its own claim PR."
+    blockers: []
+    next_action: "Plan the safe drill form, run it, file the evidence."
+  - id: TASK-INF-020
+    title: "Restore-drill evidence for TASK-INF-003: Oracle DBs and service configs (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
+    status: AVAILABLE
+    owner: muse_10
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T09:31:15+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/TASK-INF-020-RESTORE-DRILL.md"
+    description: "MASTER_PLAN §4 M4 / §6: TASK-INF-003 (backup and restore drill for Oracle DBs and service configs) merged 2026-11-10 - backup/restore tooling + weekly Fleet Backup workflow + runbook - but no restore-drill evidence exists (STALE-UNVERIFIED 2026-11-14). Run a restore drill in a SAFE form (restore to a scratch location / verify backup integrity - never overwrite a live database or config) and file the evidence. First scheduled backup succeeded 2026-11-18 (SEN-009); use the newest backup chain."
+    acceptance:
+      - "Drill executed and recorded; a backup restores correctly to scratch (or integrity verified end-to-end)."
+      - "Gaps filed with file/line."
+      - "No live database or config overwritten."
+    evidence:
+      - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 4, in re-verification form: the pool-5 item named TASK-INF-003, which is MERGED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 10 (free; TASK-API-003 MERGED, PR #1305, merge 436fb43a) - direct coordinator assignment per the refill rule, one per free worker. Next free INF id 020 (INF-001..019 exist). Base: main db754a4b (board verified against the true main blob before editing). Worker claims via its own claim PR."
+    blockers: []
+    next_action: "Plan the safe drill form, run it, file the evidence."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
