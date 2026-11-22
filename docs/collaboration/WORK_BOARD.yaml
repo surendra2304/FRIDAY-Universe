@@ -14011,16 +14011,17 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-STR-LEDGER-001
     title: "Stratex: live fill-ledger verification - reconcile the daemon's fill/close ledger on S1 against the venue's positions/history; file the forward-window state (fills, closes, net P&L)"
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
     branch: muse4/task-str-ledger-001-fill-ledger-verification
-    pr: null
+    pr: 1350
     contributors: []
     priority: P1
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T14:27:55+05:30"
+    updated_at: "2026-11-22T14:55:21+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/TASK-STR-LEDGER-001-FILL-LEDGER-VERIFICATION.md"
     description: "Pool 7 item (i), whole-Universe backlog drafted by the coordinator 2026-11-22 ~12:45 IST. The 2026-11-22 briefing left a standing verification gap: the forward window's fills/closes/net P&L were reported but never reconciled against the venue. Read the Stratex daemon's fill/close ledger on Server 1 end to end, reconcile it against the venue's positions/history, and file the forward-window state (fills, closes, net P&L) as evidence. Read-only against the venue; no trade, no env flip, no live-money action."
     acceptance:
       - "Daemon fill/close ledger read end to end on Server 1, with the read method recorded."
@@ -14029,8 +14030,12 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator pool-7 draft, 2026-11-22 ~12:45 IST (muse1-followup-watch body), item (i). Assigned to Muse 4 (free; TASK-ORCH-012 MERGED, PR #1334, merge 712f1ca8) - direct coordinator assignment per the refill rule, one per free worker. Next free STR-LEDGER id 001. Base: main 4c0c30e9 (board verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claim: issue #35 comment 7076835833 by Muse 4, 2026-11-22 ~14:27 IST, on direct assignment by Muse (coordinator) in comment 7076750227 (~14:18 IST; pool-7 item i, board PR #1349 merged). Board record verified AVAILABLE, owner muse_4, on main f4cdbad4 (board blob b868bcdef46107358332abc61e1926f7ba6a4da5, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-str-ledger-001-fill-ledger-verification."
+      - "Implementation: ledger read end to end on S1 (73 rows, recorded 2026-11-14T12:41:21Z..2026-11-21T13:52:33Z; net +211.84 USDT; forward window 64 rows, binance net +16.83); venue read live on demo-fapi (account, positionRisk, userTrades x31, income all types, allOrders x31; 295 fills / 193 order groups / 190 FILLED orders, 0 without fills)."
+      - "Reconciliation: order-level match BOTH 32 (incl. all 29 FORWARD_TEST rows), EXIT_ONLY 3 (legacy), NO_MATCH 36 (6 testnet rows on the retired account + 30 Nov-19 reset-wiped rows, no venue fills). All 35 exit-matched rows agree with the venue to within fees (venue gross +224.36 vs ledger net +212.53; diff +11.83 = fees)."
+      - "Headline: Nov-19 07:35:04-26Z triple demo reset (+15000.03 USDT TRANSFER) wiped all open positions; daemon booked 30 zero-PnL placeholder closes. Scorecard DISCREPANCY +114.32 fully explained (missing closes +37.92 + window fees +2.54 + funding -0.44 + commission -7.52 + unrealized +81.83). 33 venue closes have no ledger row (+37.92; largest SUI +30.50, ETH +19.94, VET -10.92). Gaps G1-G8 in the report."
+      - "Report: docs/collaboration/TASK-STR-LEDGER-001-FILL-LEDGER-VERIFICATION.md. Read-only throughout: no order placed/cancelled, no restart, no env change, no secret copied."
     blockers: []
-    next_action: "Read the S1 daemon ledger end to end and reconcile against the venue; file the forward-window state evidence."
+    next_action: "Awaiting Muse's review/merge of PR #1350. No live change; follow-ups are the G1-G8 gaps (missing closes, reset detection)."
   - id: TASK-VYR-037
     title: "VyralX: next supervised-cycle candidate pool - VYR-034 verdict PASS; prepare the next candidate pool (discovery + machine QA gates first)"
     status: AVAILABLE
