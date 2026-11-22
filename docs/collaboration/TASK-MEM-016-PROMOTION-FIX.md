@@ -116,6 +116,13 @@ branch was rebased onto main dd8a0c9 with a real 3-way merge (no conflicts;
 both docstring edits preserved). Re-run on the rebased tree: **33 passed**
 (MEM-016 11 + MEM-013 + MEM-015 revert suites), `ruff check` clean.
 
+CI guard fix, 2026-11-22 ~20:50 IST: the first push missed the trailing
+backslash on the `test_mem013` line, so the new file was a stray shell line
+and the test-collection guard failed the PR (`UNCOLLECTED:
+test_mem016_promotion_readability_sweep.py`). Fixed the continuation;
+guard passes locally (exit 0, 272 files covered by a PR-triggered
+workflow).
+
 ## Live probe (MEM-014 re-run) — status
 
 _NOT RUN YET._ The MEM-014 live probe re-run is the task's acceptance proof
