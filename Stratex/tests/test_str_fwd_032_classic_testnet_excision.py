@@ -17,6 +17,9 @@ STRATEX_DIR = Path(__file__).resolve().parents[1]
 # Retired venue hosts, assembled so the literal never appears in this file.
 _RETIRED_FUTURES_HOST = "testnet" + ".binancefuture.com"
 _RETIRED_FUTURES_WS_HOST = "stream" + ".binancefuture.com"
+# TASK-STR-FWD-036: the retired spot host too — config_template.py, the hub
+# spot_testnet probe and the testnet_engine auth message all named it.
+_RETIRED_SPOT_HOST = "testnet" + ".binance.vision"
 _DEMO_FAPI = "https://demo-fapi.binance.com"
 _DEMO_FAPI_URL = "https://demo-fapi.binance.com/fapi"
 _DEMO_API = "https://demo-api.binance.com"
@@ -31,7 +34,11 @@ def test_no_live_module_resolves_to_the_retired_venue():
         if path.name == Path(__file__).name:
             continue
         for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-            if _RETIRED_FUTURES_HOST in line or _RETIRED_FUTURES_WS_HOST in line:
+            if (
+                _RETIRED_FUTURES_HOST in line
+                or _RETIRED_FUTURES_WS_HOST in line
+                or _RETIRED_SPOT_HOST in line
+            ):
                 hits.append((str(path.relative_to(STRATEX_DIR)), lineno, line.strip()))
     bad = [h for h in hits if "retired" not in h[2].lower()]
     assert not bad, f"live code still resolves to the retired venue: {bad}"
