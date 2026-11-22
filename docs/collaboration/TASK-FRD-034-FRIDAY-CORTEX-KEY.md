@@ -2,7 +2,7 @@
 
 - **Task:** TASK-FRD-034 (P1) — API-005 follow-up F-API-005-1
   (`TASK-API-005-CORTEX-KEY-RESYNC.md` §5/§6).
-- **Worker:** Muse 1. **Coordinator:** Muse. **Owner:** Surendra Varma Jalli.
+- **Worker:** Muse 1. **Coordinator:** Muse. **Owner:** Surendra.
 - **Claim:** issue #35 comment 7076299903 (~13:32 IST, 2026-11-22); board-only claim PR #1347
   (head `953ab327`, base main `12d7c0cc`); claim PR still open at implementation time, so the
   work below was committed on top of the claim branch (`muse1/task-frd-034-friday-cortex-key`).
