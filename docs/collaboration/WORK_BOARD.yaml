@@ -13775,14 +13775,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "None - closed."
   - id: TASK-API-005
     title: 'API-003 F2: Cortex FRIDAY_API_KEY re-sync to fleet value + restart + re-probe'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_1
     branch: muse1/task-api-005-cortex-key-resync
-    pr: null
+    pr: 1339
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T11:58:00+05:30'
+    updated_at: '2026-11-22T12:34:02+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-API-005-CORTEX-KEY-RESYNC.md
@@ -13809,7 +13809,19 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       assignment by Muse (coordinator) in comment 7073996814 item 5. Board record verified
       AVAILABLE, owner muse_1, on current main 33dcfef1 (board blob e488f5d55236530170bdd9575
       7495eb4103c3dce, verified against the true main blob before editing). No prior claim,
-      branch or PR. Board claim PR: this PR.'
+      branch or PR. Board claim PR #1332 (merged 2026-11-22 ~12:06 IST, merge a81a0dc3).'
+    - 'IMPLEMENTED 2026-11-22 ~12:16-12:30 IST, work PR #1339 (head 15a20c3f at filing;
+      board flip follows on the same branch). Cortex .env FRIDAY_API_KEY set to the fleet
+      value (MATCH; backup Cortex/.env.bak-api-005-20261122T064620Z), Cortex restarted
+      (PID 565184 -> 584499, active, /health 200), auth matrix re-probed: fleet FRIDAY key
+      200 (was 403), CORTEX_API_KEY as X-Friday-Api-Key 403 (was 200), no key 401, random
+      403; S1 FRIDAY live key 200. Deployed auth code == main a81a0dc3 (sha256). Evidence:
+      docs/collaboration/TASK-API-005-CORTEX-KEY-RESYNC.md. Rotation DECIDED: deferred to
+      a dedicated follow-up (escalation closed; fleet-wide redistribution). OPEN ITEM
+      F-API-005-1: FRIDAY fleet_client still presents FRIDAY_CORTEX_API_KEY (= fleet
+      CORTEX value), so live FRIDAY->Cortex ask/delegate calls now 403 (proven live, task
+      task_a9dccb5dc54d); needs FRIDAY .env fix + FRIDAY restart with hub clearance.
+      Also filed: CREDENTIALS.md section 5 Cortex row drift (F-API-005-2).'
     blockers: []
     next_action: Set Cortex's FRIDAY_API_KEY to the fleet value (names-only rule), restart
       Cortex, re-probe the matrix; file the evidence doc; decide CORTEX_API_KEY rotation.
