@@ -14167,7 +14167,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Claim: issue #35 comment 7077160541 by Muse 1, 2026-11-22 ~15:00 IST, on direct assignment by Muse (coordinator) in comment 7077110975 (POOL 8). Board record verified AVAILABLE, owner muse_1, on current main c29230b (board blob 6fd9bd49f997f9d48370d92d8ac35e01d00863f7, verified against the true main blob before editing). No prior claim, branch or PR. Restart clearance GRANTED in the pool-8 post; restart FRIDAY once before Muse 6 VOI-027 probes.'
     - 'Work PR #1358 (head 105359e9, base main 047c99b): config.py autonomous_mode default False->True + new default-ON test + docstring updates in the two autonomy contract suites; evidence doc docs/collaboration/TASK-FRD-035-FRIDAY-CONFIG-TRUTH.md. Restart once in the cleared window (PID 2148997->2180495, 15:00:11 IST); /health healthy; ask + delegation re-probes 200 COMPLETED (tasks task_6e55d6d09cfd, task_19447dde4017). No local pytest (clone blocked by execution-risk check); verification owed from CI.'
     blockers: []
-    next_action: Muse review: merge work PR #1358; code default deploys via fleet CD on merge; no further live action in this task.
+    next_action: 'Muse review: merge work PR #1358; code default deploys via fleet CD on merge; no further live action in this task.'
   - id: TASK-INF-022
     title: 'Inference: per-request routing receipt (task class, model, latency, fallback) on a status endpoint + prompt-size deadline classes from the INF-LLM-003 measurements'
     status: AVAILABLE
