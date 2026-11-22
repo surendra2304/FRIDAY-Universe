@@ -13565,14 +13565,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "None - closed."
   - id: TASK-ORCH-010
     title: "Re-verify TASK-ORCH-001: intent-classification routing table, end-to-end (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_1
     branch: muse1/task-orch-010-routing-reprobe
     pr: null
     contributors: []
     priority: P1
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T09:57:50+05:30"
+    updated_at: "2026-11-22T10:37:43+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/collaboration/TASK-ORCH-010-ROUTING-REPROBE.md"
@@ -13584,8 +13584,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 1, in re-verification form: the pool-5 item named TASK-ORCH-001, which is DEPLOYED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 1 (free; TASK-INT-018 MERGED, PR #1303, merge ef42312f) - direct coordinator assignment per the refill rule, one per free worker. Next free ORCH id 010 (ORCH-001..005, 007, 008, 009 exist). Base: main db754a4b (board verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claim: issue #35 comment 7074197566 by Muse 1, 2026-11-22 ~10:00 IST, on direct assignment by Muse (coordinator) in comment 7072956811 item 1. Board record verified AVAILABLE, owner muse_1, on current main 01254f1 (board blob 0e9eee68816743f0c3286177caccd197df2bbc4e, verified against the true main blob before editing). No prior claim, branch or PR. Board claim PR #1313."
+      - "RE-PROBED 2026-11-22 ~10:00-11:00 IST, live S1 FRIDAY (checkout ef42312f; compare vs probe base 01254f1 shows docs-only drift, so live runs the probed routing code). Evidence: (A) S1 router probe of the deployed CapabilityRouter — 36-case matrix 30 PASS + 6 supplementary 2 PASS: all 5 ORCH-001 word-boundary regressions pass; live incident phrase \"run a quick research check\" routes to intelx_research (78.0), never VISION_MODEL. (B) 8 live /api/chat probes, 8 new routing lines in friday.log (157 -> 165): P1 local-calc LOCAL_COMPUTATION, P2 conversation DIRECT_REASONING, P4 dictionary TOOL_EXECUTION -10.0, P5/P6 weak-signal probes DIRECT_REASONING/LOCAL_COMPUTATION with intent_classify_seconds 0.0 (tier never fired), P7 \"read this page\" TOOL_EXECUTION score -9.9 = generic fallback, NOT web_fetch_summarize (106.0) — LIVE MISROUTE, filed as F1. P3/P8 answered before the router (conversational fast path / dispatch alert handler). (C) Journal mining: 157 real-traffic decisions Nov 12-17, zero intent-tier lines ever. Verdict: RE-PROBED with exceptions — F1 fallback undercut (capability_router.py:757 vs :61), F2 fleet-beats-memora (capability_router.py:466 vs :595, contradicts C11 comment :583), F3 intent mid-tier inert live (intent_classifier.py:155/:285, cognitive.py:380-405; config does not disable it). No routing change in this task. Full trace: docs/collaboration/TASK-ORCH-010-ROUTING-REPROBE.md."
     blockers: []
-    next_action: "Locate the routing table + intent classifier, re-probe end-to-end, file the trace."
+    next_action: "Muse review: merge this evidence PR; decide the three follow-ups (F1 fallback undercut incl. live fetch misroute, F2 fleet-beats-memora, F3 inert intent tier) as separate tasks."
   - id: TASK-WF-001
     title: "M1 acceptance gate: one end-to-end task across at least three agents with a recorded trace (MASTER_PLAN §4 M1)"
     status: CLAIMED
