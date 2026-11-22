@@ -357,6 +357,12 @@ async def system_status():
 
     agents = agent_registry.list_agents()
 
+    from app.providers.gateway import (
+        LARGE_PROMPT_TOKEN_THRESHOLD,
+        routing_receipt_counts,
+        routing_receipts,
+    )
+
     return {
 
         "system": "Inference",
@@ -381,7 +387,33 @@ async def system_status():
 
         "active_specialists_count": len(agents),
 
-        "agents": [a.role for a in agents]
+        "agents": [a.role for a in agents],
+
+        "routing": {
+
+            "deadline_classes": {
+
+                "short_max_tokens": LARGE_PROMPT_TOKEN_THRESHOLD,
+
+                "large_min_tokens": LARGE_PROMPT_TOKEN_THRESHOLD + 1,
+
+                "note": (
+
+                    "Short prompts keep the tight default budget and 15 s primary slice; "
+
+                    "large prompts for Gemini route directly to the proven fallback "
+
+                    "(TASK-INF-022; INF-LLM-003)."
+
+                ),
+
+            },
+
+            "receipt_counts": routing_receipt_counts(),
+
+            "recent_receipts": routing_receipts(limit=20),
+
+        },
 
     }
 

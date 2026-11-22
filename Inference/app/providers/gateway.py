@@ -9,11 +9,14 @@ Features:
 """
 
 import asyncio
+import contextvars
 import math
 import os
 import threading
 import time
+from collections import deque
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from typing import Any
 
 from app.core.config import settings
@@ -122,6 +125,86 @@ def estimate_prompt_tokens(request: ProviderRequest) -> int:
 def groq_prompt_over_limit(request: ProviderRequest) -> bool:
     """Whether this prompt must not be sent to a Groq rung (TASK-REL-047)."""
     return estimate_prompt_tokens(request) > GROQ_PROMPT_TOKEN_LIMIT
+
+
+#: Prompt-size deadline classes (TASK-INF-022). The boundary is the
+#: Groq-guard limit (7,000 calibrated tokens): the codebase's existing
+#: oversized-prompt line, and the INF-019 shape (13,543 calibrated
+#: tokens) sits well above it. "short" prompts keep the tight default
+#: budget and the 15 s primary slice; "large" prompts are the class
+#: INF-LLM-003 measured Gemini missing on (2/2 gateway trials cut at
+#: 14.7 s; direct completions 6.4 s / 67.3 s / 99.3 s / >150 s), so a
+#: large Gemini primary is routed directly to the proven fallback
+#: instead of burning the primary slice on an attempt that misses.
+#: The budget itself is UNCHANGED for both classes (INF-LLM-003
+#: recommendation: KEEP the deadline -- no sane primary-slice deadline
+#: covers that tail).
+LARGE_PROMPT_TOKEN_THRESHOLD = GROQ_PROMPT_TOKEN_LIMIT
+
+
+def prompt_deadline_class(request: ProviderRequest) -> str:
+    """Prompt-size deadline class for a request: "short" or "large".
+
+    Classified on the calibrated token estimate (TASK-INF-021), so the
+    class a request gets is the size Gemini actually sees.
+    """
+    return "large" if estimate_prompt_tokens(request) > LARGE_PROMPT_TOKEN_THRESHOLD else "short"
+
+
+def _has_explicit_timeout(request: ProviderRequest) -> bool:
+    """Whether the caller set its own timeout (an explicit budget is honoured as given)."""
+    return "timeout" in (request.extra_params or {})
+
+
+#: Per-request routing receipts (TASK-INF-022): the last 100 gateway
+#: executions, newest last. A receipt is the audit trail for adaptive
+#: routing -- task class (capability), requested vs served
+#: provider/model, latency, deadline class, and whether the fallback
+#: ladder served the request (and whether the request went to it
+#: directly). In-memory and process-local by design: receipts describe
+#: this process's live traffic, never a persisted history; the health
+#: /status endpoint surfaces them.
+ROUTING_RECEIPT_LIMIT = 100
+_ROUTING_RECEIPTS: deque[dict[str, Any]] = deque(maxlen=ROUTING_RECEIPT_LIMIT)
+
+#: Receipt of the gateway execution running in this task, so the routing
+#: decision inside _execute_inner (direct-to-fallback) can annotate the
+#: receipt the execute() wrapper records. Context-local: concurrent
+#: executions each see their own receipt.
+_current_receipt: contextvars.ContextVar[dict[str, Any] | None] = contextvars.ContextVar(
+    "inf022_current_receipt", default=None
+)
+
+
+def record_routing_receipt(receipt: dict[str, Any]) -> None:
+    """Append a routing receipt. Recording must never break serving."""
+    try:
+        _ROUTING_RECEIPTS.append(dict(receipt))
+    except Exception:  # noqa: BLE001 - receipts are audit-only
+        pass
+
+
+def routing_receipts(limit: int = 20) -> list[dict[str, Any]]:
+    """Most recent routing receipts, newest first (up to ``limit``)."""
+    if limit <= 0:
+        return []
+    return list(reversed(list(_ROUTING_RECEIPTS)[-limit:]))
+
+
+def routing_receipt_counts() -> dict[str, int]:
+    """Outcome/fallback totals over the receipts currently held."""
+    counts = {"total": 0, "success": 0, "error": 0, "fallback_used": 0, "fallback_direct": 0}
+    for receipt in _ROUTING_RECEIPTS:
+        counts["total"] += 1
+        if receipt.get("outcome") == "success":
+            counts["success"] += 1
+        elif receipt.get("outcome") == "error":
+            counts["error"] += 1
+        if receipt.get("fallback_used"):
+            counts["fallback_used"] += 1
+        if receipt.get("fallback_direct"):
+            counts["fallback_direct"] += 1
+    return counts
 
 
 def nvidia_rung_enabled() -> bool:
@@ -462,7 +545,50 @@ class ModelGateway:
         4. Retries across alternate keys only for transient errors (429/503/timeout).
         5. If all keys exhausted/quarantined, routes through capability-matched fallback.
         6. Updates health metrics and records provenance.
+        7. Records a per-request routing receipt (TASK-INF-022) -- task
+           class, requested vs served provider/model, latency, deadline
+           class, fallback use -- surfaced on the /status endpoint.
         """
+        started = time.monotonic()
+        requested_provider = provider_name.lower().strip()
+        receipt: dict[str, Any] = {
+            "observed_at": datetime.now(UTC).isoformat(),
+            "capability": capability,
+            "stage": stage_name,
+            "provider_requested": requested_provider,
+            "model_requested": request.model,
+            "prompt_tokens_est": estimate_prompt_tokens(request),
+            "deadline_class": prompt_deadline_class(request),
+            "timeout_budget_s": _request_timeout_budget(request),
+            "outcome": "error",
+            "provider_served": None,
+            "model_served": None,
+            "latency_ms": None,
+            "fallback_used": False,
+            "fallback_direct": False,
+        }
+        token = _current_receipt.set(receipt)
+        try:
+            resp = await self._execute_inner(provider_name, request, capability, stage_name)
+        except Exception as exc:
+            receipt["latency_ms"] = round((time.monotonic() - started) * 1000.0, 1)
+            receipt["error"] = f"{type(exc).__name__}: {str(exc)[:200]}"
+            record_routing_receipt(receipt)
+            raise
+        finally:
+            _current_receipt.reset(token)
+        receipt["outcome"] = "success"
+        receipt["provider_served"] = resp.provider
+        receipt["model_served"] = resp.model
+        receipt["latency_ms"] = round((time.monotonic() - started) * 1000.0, 1)
+        receipt["fallback_used"] = resp.provider != requested_provider or resp.model != request.model
+        record_routing_receipt(receipt)
+        return resp
+
+    async def _execute_inner(
+        self, provider_name: str, request: ProviderRequest, capability: str = "general", stage_name: str = "general"
+    ) -> ProviderResponse:
+        """Gateway execution proper; execute() wraps this with the routing receipt (TASK-INF-022)."""
         timeout_budget = _request_timeout_budget(request)
         deadline = time.monotonic() + timeout_budget
         # Reserve the tail of the budget for the fallback ladder. Without this, a
@@ -573,6 +699,49 @@ class ModelGateway:
                 capability=capability,
                 stage_name=stage_name,
                 last_error=over_limit,
+                deadline=deadline,
+                skip_local_tier=local_tier_attempted,
+            )
+
+        # TASK-INF-022: large prompts go directly to the proven fallback
+        # when Gemini is the requested primary and the caller set no
+        # explicit timeout. INF-LLM-003 measured this shape (13,519
+        # Gemini tokens): the Gemini primary was cut at the 15 s slice
+        # on 3/3 gateway trials (14.7 s each) and direct completions
+        # took 6.4 s / 67.3 s / 99.3 s / >150 s -- no sane primary-slice
+        # deadline covers that tail, and the fallback ladder already
+        # serves a correct answer end-to-end (21.39 s gateway path,
+        # via OpenRouter). Attempting the primary first only burns
+        # 14.7 s of the budget on a miss. An explicit caller timeout
+        # opts out: the caller asked to wait for Gemini.
+        if (
+            prov_name == "gemini"
+            and prompt_deadline_class(request) == "large"
+            and not _has_explicit_timeout(request)
+        ):
+            direct_skip = TemporaryUnavailableError(
+                f"Prompt estimated at {estimate_prompt_tokens(request)} tokens is in the "
+                "large deadline class (over 7,000); the Gemini primary misses the 15 s "
+                "slice on this shape (INF-LLM-003: 3/3 gateway trials cut at 14.7 s), so "
+                "routing directly to the fallback ladder without a primary attempt.",
+                provider=prov_name,
+                model=request.model,
+            )
+            logger.warning(
+                "GATEWAY: Large prompt (~%d tokens) for Gemini; skipping the primary "
+                "attempt and routing directly to the fallback ladder (TASK-INF-022).",
+                estimate_prompt_tokens(request),
+            )
+            current = _current_receipt.get()
+            if current is not None:
+                current["fallback_direct"] = True
+                current["routing_note"] = "large prompt: Gemini primary skipped (INF-LLM-003)"
+            return await self._execute_dynamic_fallback(
+                failed_provider=prov_name,
+                request=request,
+                capability=capability,
+                stage_name=stage_name,
+                last_error=direct_skip,
                 deadline=deadline,
                 skip_local_tier=local_tier_attempted,
             )
