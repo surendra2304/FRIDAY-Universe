@@ -2,7 +2,7 @@
 
 - **Task:** Fix the S2 stale localhost env so IntelX synthesis reaches Inference, restart, re-run the WF-001 IntelX leg.
 - **Worker:** Muse 9. **Clearance:** coordinator comment 7083712388 (2026-11-23 ~00:05 IST, re-delivered after the 23:51 IST watch post failed to land) — GRANTED, exactly the 3 values below.
-- **Work PR:** #1402 (branch `muse9/task-int-021`) — merged, merge `2dcd366`. This evidence doc rides in follow-up PR (branch `muse9/task-int-021-evidence`); board flip to MERGED rides in the coordinator's consolidated board PR.
+- **Work PR:** #1402 (branch `muse9/task-int-021`) — merged, merge `2dcd366`. This evidence doc rides in follow-up PR #1410 (branch `muse9/task-int-021-evidence`); board flip to MERGED rides in the coordinator's consolidated board PR.
 - **Deploy window:** 2026-11-23 ~00:42–00:50 IST.
 
 ## 1. Pre-deploy state verified live (Server 2, ~00:42 IST)
