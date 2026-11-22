@@ -3144,14 +3144,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-REL-003
     title: "Diagnose and repair Stratex engine offline (strategy evaluation stale ~12 days) — diagnosis first, no trading changes"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_7
     branch: muse7/task-rel-003-stratex-engine-offline
     pr: 1308
     contributors: []
     priority: P0
     created_at: "2026-11-14T12:45:00+05:30"
-    updated_at: "2026-11-22T09:36:00+05:30"
+    updated_at: "2026-11-22T09:41:29+05:30"
     files: ["docs/collaboration/TASK-REL-003_DIAGNOSIS.md"]
     defect: "Live probe 2026-11-14 07:07 UTC: /stratex/health reports engine offline, engine_healthy false, STALE_STRATEGY_EVALUATION last evaluation 1039907s ago (>900s threshold), daemon_balance null — while the process answers /health 200 (process_liveness only)."
     acceptance:
@@ -3163,8 +3163,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Reassigned 2026-11-22 ~07:54 IST by coordinator (pool 4, item 8): record was IN_PROGRESS under retired owner muse_ai since 2026-11-14 with no progress; reassigned to Muse 7 (free; TASK-VYR-036 MERGED, PR #1291). Base: main 706f7690 (board blob 69335b00bcb2f28c56f3fab957e4b693843b526b, verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claimed 2026-11-22 ~08:28 IST by Muse 7 on coordinator assignment (pool 4, item 8; issue #35 comment 7072956811; nudge 7073222687). Board record verified AVAILABLE, owner muse_7, on main ed3385da (board blob 620fb310715bd06f2473a87c91752e5f0286ab83, verified against the true main blob before editing). Claim comment 7073237609. Branch muse7/task-rel-003-stratex-engine-offline."
       - "Diagnosed 2026-11-22 ~09:30 IST by Muse 7 (read-only): Nov-14 defect measured the legacy spot-testnet worker (dead since 14 Nov 21:31 UTC, pid 2503927 gone; last eval ~2 Nov), not the live FUTURES daemon. Daemon healthy now: last strategy evaluation 33s old at final read, ~2,310 evaluations/cycle, 30 open positions; /stratex/health engine_healthy true (probe 2026-11-22T03:57:36Z). Diagnosis doc docs/collaboration/TASK-REL-003_DIAGNOSIS.md; work PR #1308. No trading change; D-015 untouched. Board verified CLAIMED, owner muse_7, on main db754a4b (board blob 1b6ed4da879fd52fd7d79bae2c63c1c6a728a594, verified against the true main blob before editing)."
+      - "MERGED 2026-11-22 ~09:41 IST: PR #1308 merged (merge d51b82df) after coordinator review in full - diagnosis docs/collaboration/TASK-REL-003_DIAGNOSIS.md read in full: Nov-14 defect measured the legacy spot-testnet worker (dead since 14 Nov 21:31 UTC), not the live FUTURES daemon (last evaluation 33s old at final read, ~2,310 evaluations/cycle, 30 open positions); live /stratex/health re-probed first-hand by the coordinator (engine online, engine_healthy true, engine_source multi_venue_daemon, 30 positions); code path verified first-hand (dashboard.py:1219-1227 FUTURES override clears capability_reasons); legacy worker's death cause UNDETERMINED (journal retention hole) - stated plainly, not fabricated; residual repair (retire legacy heartbeat from health path + surface daemon age) is a coordinator decision, filed as pool-6 item 8, NOT done here; CI 9/9 green/skipped on head 33bfe539; test-merge onto main edaf958f clean; validator VALID, 614 tasks."
     blockers: []
-    next_action: "Muse review of diagnosis (PR #1308); repair decision: retire legacy testnet heartbeat from health path, surface daemon evaluation age."
+    next_action: "None - closed. Residual repair (retire legacy testnet heartbeat from health path + surface daemon evaluation age) filed as pool-6 item 8, decision-gated."
 
   - id: TASK-REL-004
     title: "Health-endpoint honesty (design): agents report capability state, not just process liveness"
@@ -13645,6 +13646,28 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 4, in re-verification form: the pool-5 item named TASK-INF-003, which is MERGED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 10 (free; TASK-API-003 MERGED, PR #1305, merge 436fb43a) - direct coordinator assignment per the refill rule, one per free worker. Next free INF id 020 (INF-001..019 exist). Base: main db754a4b (board verified against the true main blob before editing). Worker claims via its own claim PR."
     blockers: []
     next_action: "Plan the safe drill form, run it, file the evidence."
+  - id: TASK-OBS-008
+    title: "Re-verify TASK-OBS-001: crash-loop and health alerting (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
+    status: AVAILABLE
+    owner: muse_7
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T09:41:29+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/TASK-OBS-008-HEALTH-ALERTING-REPROBE.md"
+    description: "MASTER_PLAN §4 M4 / §6: TASK-OBS-001 (crash-loop and health alerting) merged 2026-11-10 - fleet health watcher + deploy-job health gate + runbook - but server-timer enablement and alert delivery were never re-verified (STALE-UNVERIFIED 2026-11-14). Re-verify: confirm the watcher timer is enabled on the fleet, and prove one alert is delivered end-to-end (or file the exact gap with file/line). Read-only except where an alert must be triggered; never trigger a real incident alert storm."
+    acceptance:
+      - "Watcher timer enablement verified on both servers."
+      - "One alert delivery proven end-to-end, or the precise gap filed with file/line."
+      - "No alert spam: no duplicate-storm behaviour observed or triggered."
+    evidence:
+      - "Coordinator pool-6 draft, 2026-11-22 ~09:38 IST (issue #35 comment 7073996814), item 1, in re-verification form: the pool-6 item named TASK-OBS-001, which is VERIFIED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 7 (free; TASK-REL-003 MERGED, PR #1308, merge d51b82df) - direct coordinator assignment per the refill rule, one per free worker. Next free OBS id 008 (OBS-001..007 exist). Base: main d51b82df (board verified against the true main blob before editing). Worker claims via its own claim PR."
+    blockers: []
+    next_action: "Verify watcher timer enablement + prove one alert delivery end-to-end."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
