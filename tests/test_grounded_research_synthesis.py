@@ -45,17 +45,53 @@ def test_source_grounded_draft_preserves_real_source_link_and_unverified_state()
     assert gateway.complete.await_count == 1
 
 
+# TASK-INT-018: a failed synthesis is a non-success, never a reason to
+# destroy evidence already retrieved. The pre-#78 deployed path returned
+# the extractive excerpts; the #78 synthesis path discarded them
+# (findings: []) on every failure. The failure return now preserves them,
+# labelled as raw source passages — never as a synthesised brief.
 @pytest.mark.parametrize('parsed', [result(quote='This invented quotation was never present in any fetched source document.'), result(source_id='invented'), result(insufficient=True), m.GroundedDraft(findings=[], insufficient_evidence=False), None])
-def test_invalid_or_insufficient_grounding_never_returns_completed_findings(parsed):
+def test_invalid_or_insufficient_grounding_returns_raw_excerpts_not_completed_findings(parsed):
     d, _ = run(parsed)
     assert d['status'] == 'DEGRADED'
-    assert not d['findings']
+    assert d['answer_kind'] == 'unsynthesised_raw_findings'
+    assert d['question_answered'] is False
+    assert d['findings']
+    assert all(f['status'] == 'source_excerpt' for f in d['findings'])
+    assert all(f['quote'] in TEXT for f in d['findings'])
+
+
+def test_synthesis_failure_excerpts_are_verbatim_and_cited():
+    d, _ = run(result(quote='This invented quotation was never present in any fetched source document.'))
+    assert d['status'] == 'DEGRADED'
+    assert d['error'] == 'synthesis_quote_unverified'
+    assert d['answer_kind'] == 'unsynthesised_raw_findings'
+    assert d['question_answered'] is False
+    assert d['findings']
+    for f in d['findings']:
+        assert f['status'] == 'source_excerpt'
+        assert f['statement'] == f['quote']
+        assert f['quote'] in TEXT
+        assert f['independently_verified'] is False
+        assert f['single_source'] is True
+        assert f['citations'][0]['source_url'] == DOCS[0]['url']
+        assert f['citations'][0]['source_id'] == DOCS[0]['source_id']
+
+
+def test_no_source_material_has_no_excerpts_to_preserve():
+    gateway = SimpleNamespace(complete=AsyncMock(return_value=SimpleNamespace(provider='inference', parsed=result())))
+    d = asyncio.run(m.synthesize_grounded('How are quoted commas handled?', [], gateway))
+    assert d['status'] == 'DEGRADED'
+    assert d['error'] == 'no_source_material'
+    assert d['findings'] == []
 
 
 def test_mock_response_is_never_live_synthesis():
     d, _ = run(result(), provider='mock')
     assert d['status'] == 'DEGRADED'
     assert d['error'] == 'mock_synthesis_refused'
+    # TASK-INT-018: the refusal still preserves the raw excerpts.
+    assert d['findings'] and all(f['status'] == 'source_excerpt' for f in d['findings'])
 
 
 def test_an_omitted_source_prefix_cannot_justify_a_model_quote():
