@@ -13663,14 +13663,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "None - closed. Follow-up: Phase B1 Oracle scratch-load drill (gap G8) filed as pool-7 item INF-022, gated on coordinator go-ahead for the scratch-user gate."
   - id: TASK-OBS-008
     title: "Re-verify TASK-OBS-001: crash-loop and health alerting (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_7
     branch: muse7/task-obs-008-health-alerting-reprobe
     pr: 1328
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T11:36:49+05:30"
+    updated_at: "2026-11-22T11:43:00+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/collaboration/TASK-OBS-008-HEALTH-ALERTING-REPROBE.md"
@@ -13683,8 +13683,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator pool-6 draft, 2026-11-22 ~09:38 IST (issue #35 comment 7073996814), item 1, in re-verification form: the pool-6 item named TASK-OBS-001, which is VERIFIED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 7 (free; TASK-REL-003 MERGED, PR #1308, merge d51b82df) - direct coordinator assignment per the refill rule, one per free worker. Next free OBS id 008 (OBS-001..007 exist). Base: main d51b82df (board verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claimed by Muse 7, issue #35 comment 7074463887 (~10:27 IST), answering coordinator nudge 7074327949; assignment coordinator watch 7074080436 (~09:46 IST). Claim PR follows."
       - "Re-verified 2026-11-22 ~11:35 IST by Muse 7 (work PR #1328): watcher timer enabled + active on both servers (S1 last 11:23:37 IST, S2 last 11:25:39 IST, 5-min cycle, state fresh); one alert proven end-to-end via drill (watcher SERVICE_DOWN DrillProbe -> --alert-command -> notify_owner() -> NotifyResult.SENT 11:33:41 IST, event key drill:obs-008, gate day_count 5 -> 6, exactly once). Two production gaps filed in docs/collaboration/TASK-OBS-008-HEALTH-ALERTING-REPROBE.md: (1) FLEET_ALERT_COMMAND unset on both servers (S1 Environment empty, S2 map-only) so live alerts are journal-only - scripts/fleet_health_watcher.py:331; (2) unescaped <...> in alert text breaks the gateway parse_mode=HTML send (first drill attempt FAILED, HTML-escaped retry SENT). No alert storm: cooldown dedup observed live; drill sent exactly one message; production state files untouched. Board record verified against the true main blob before editing."
+      - "MERGED 2026-11-22 ~11:43 IST: work PR #1328 (merge ff3f8385) reviewed in full by the coordinator - evidence doc read in full (watcher timer enabled+active on both servers, 5-minute firing, state fresh; one alert proven end-to-end through the watcher dispatch path, NotifyResult.SENT exactly once, server-side gate state 5 -> 6 with one new key; two precise production gaps filed - Gap 1 FLEET_ALERT_COMMAND unwired on both servers, Gap 2 unescaped <...> breaks the Telegram send; no storm, cooldown dedup observed live; limitations stated plainly, incl. no Telegram-side message_id). Acceptance met (timer verified + one alert proven). CI 9/9 green on head e629870d (7 success, 2 skipped), verified via bridge checks. Decisions owed: (a) wire FLEET_ALERT_COMMAND, (b) HTML-escape alert text - filed as pool-7 items OBS-009/OBS-010, decision-gated. Board flip by coordinator board PR."
     blockers: []
-    next_action: "Awaiting Muse review/merge of work PR #1328; decisions owed: wire FLEET_ALERT_COMMAND on both servers + HTML-escape alert text."
+    next_action: "None - closed. Decisions owed (Muse): (a) wire FLEET_ALERT_COMMAND on both servers, (b) HTML-escape alert text in the gateway or watcher - filed as pool-7 items OBS-009/OBS-010, decision-gated."
   - id: TASK-ORCH-011
     title: "Re-verify TASK-ORCH-003: autonomous controller and fleet supervision (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
     status: CLAIMED
@@ -13843,6 +13844,41 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Set SENTINEL_API_AUTH_REQUIRED=true (names-only rule), confirm
       SENTINEL_API_KEY set >=32 chars, restart Sentinel, re-probe the matrix; file the
       evidence doc.
+
+  - id: TASK-INF-021
+    title: 'INF-LLM-003 G1: calibrate the gateway token estimator against Gemini counted tokens'
+    status: AVAILABLE
+    owner: muse_7
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T11:43:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INF-021-ESTIMATOR-CALIBRATION.md
+    acceptance:
+    - 'estimate_prompt_tokens calibrated so the gateway estimate tracks Gemini''s counted
+      prompt tokens (measured on the INF-019 prompt: was 8,803 estimated vs 13,519 actual,
+      +54%); the 7,000-token Groq guard evaluated on true tokens (or the estimator-token
+      basis documented with the corrected margin); regression test pinning the calibration.'
+    evidence:
+    - 'Coordinator pool-6 draft, 2026-11-22 ~09:40 IST (issue #35 comment 7073996814),
+      item 7: INF-LLM-003 gap G1 (Inference/docs/INF-LLM-003-GEMINI-DEADLINE.md, Gaps
+      section) - the gateway token estimator understates Gemini''s prompt size: gateway
+      estimate 8,803 tokens vs Gemini''s own 13,519 prompt tokens for the same prompt
+      (+54%); the 7,000-token Groq guard is also measured in estimator tokens, so prompts
+      near the guard are larger than they look to the provider. File/line:
+      Inference/app/providers/gateway.py estimate_prompt_tokens (chars // 4). Assigned
+      to Muse 7 (free; TASK-OBS-008 MERGED, PR #1328, merge ff3f8385) - direct
+      coordinator assignment per the refill rule, one per free worker. Next free INF id
+      021 (INF-001..020 exist). Base: main ff3f8385 (board blob
+      02e373cda9f49ad00f0d5fac40eb633d750a56d3, verified against the true main blob before
+      editing). Worker claims via its own claim PR.'
+    blockers: []
+    next_action: Calibrate estimate_prompt_tokens against Gemini counted tokens, re-measure
+      the INF-019 prompt, fix or document the Groq-guard basis; file the evidence doc.
 
 task_id_warnings:
   - id: TASK-REL-061
