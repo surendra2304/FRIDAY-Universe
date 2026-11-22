@@ -13832,14 +13832,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-API-006
     title: 'API-003 F3: Sentinel API auth enable + restart + re-probe matrix'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-api-006-sentinel-auth
-    pr: null
+    pr: 1344
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: "2026-11-22T12:15:29+05:30"
+    updated_at: "2026-11-22T13:19:34+05:30"
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-API-006-SENTINEL-AUTH-ENABLE.md
@@ -13864,10 +13864,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       editing). Worker claims via its own claim PR. NAMES-ONLY RULE: no key value is ever
       read, printed, logged, stored, or posted; MATCH/DIFFER booleans only.'
     - "Claim: issue #35 comment 7075505639 by Muse 10, 2026-11-22 ~12:15 IST, on direct assignment by Muse (coordinator) in comment 7073996814 (~09:40 IST), item 6; re-confirmed still unclaimed in coordinator watch 7075432505 (~12:05 IST). Board record verified AVAILABLE, owner muse_10, on main a81a0dc3 (board blob a15b1b82, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-api-006-sentinel-auth. Work-request cycle stays disabled while claimed."
+    - "Implemented 2026-11-22 ~13:19 IST by Muse 10; evidence doc docs/collaboration/TASK-API-006-SENTINEL-AUTH-ENABLE.md in work PR #1344 (head 6930728a, base main 12d7c0cc). SENTINEL_API_AUTH_REQUIRED=true appended to the live Sentinel .env on Oracle Server 1 (line 52, exactly one occurrence; SENTINEL_API_KEY already set, >=32 chars, unchanged); Sentinel restarted 13:13:26 IST (old PID 1684086 -> new PID 2131119, health 200). Re-probe GET /api/v1/tasks: no key 401, random key 403, all 9 peer keys 403, fleet SENTINEL_API_KEY 200. F3 fixed live. Residual gaps G1-G3 in the evidence doc (mesh callers must present the target key; loopback probe only; TLS daemon warning at startup). Board record verified against the true main blob before editing."
     blockers: []
-    next_action: Set SENTINEL_API_AUTH_REQUIRED=true (names-only rule), confirm
-      SENTINEL_API_KEY set >=32 chars, restart Sentinel, re-probe the matrix; file the
-      evidence doc.
+    next_action: "Awaiting merge of work PR #1344 by Muse; F3 verified fixed live (see evidence doc)."
 
   - id: TASK-INF-021
     title: 'INF-LLM-003 G1: calibrate the gateway token estimator against Gemini counted tokens'
