@@ -5,6 +5,16 @@ name: Fleet Live Validation
 #   2. server-side systemctl status + NRestarts + local /health per agent
 # Evidence is printed into the job log (with timestamps) — cite the run URL
 # in WORK_BOARD/handoff. Run any time from the Actions tab.
+#
+# TASK-VAL-006 (2026-11-22): server lists follow the DEPLOYED layout
+# (verified live via the bridge, see TASK-VAL-005 §5 / TASK-VAL-006 doc):
+#   S1 = FRIDAY, Inference, Memora, Forge, Sentinel (+ Stratex SSH tunnel
+#        127.0.0.1:18003 -> AWS U1; the Stratex unit is masked by design)
+#   S2 = Futuris, IntelX, Cortex (+ Bridge :8011, Redis :6379)
+#   AWS = VyralX 16.176.9.247:8010 (probed from S1, which can reach it;
+#         the runner cannot). Do NOT re-add Futuris/IntelX to S1 or
+#         Sentinel/VyralX to S2 — those units no longer run there and the
+#         old lists reported healthy agents as down (VAL-005 finding F1).
 
 on:
   workflow_dispatch:
@@ -33,7 +43,7 @@ jobs:
           key: ${{ secrets.ORACLE_SSH_KEY }}
           script: |
             echo "=== Server 1 fleet evidence $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
-            for SVC in FRIDAY Inference Memora Stratex Futuris IntelX Forge Stratex-Daemon; do
+            for SVC in FRIDAY Inference Memora Forge Sentinel Stratex-Daemon; do
               if systemctl list-unit-files | grep -qw "${SVC}.service"; then
                 ACTIVE=$(systemctl is-active "${SVC}.service" || true)
                 RESTARTS=$(systemctl show "${SVC}.service" --property=NRestarts --value)
@@ -47,12 +57,19 @@ jobs:
               fi
             done
             echo "--- local /health probes ---"
-            for PAIR in "FRIDAY:10000" "Inference:8001" "Memora:8002" "Stratex:8003" "Futuris:8004" "IntelX:8005" "Forge:8006"; do
+            for PAIR in "FRIDAY:10000" "Inference:8001" "Memora:8002" "Forge:8006" "Sentinel:8008"; do
               AGENT="${PAIR%:*}"; PORT="${PAIR#*:}"
               CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 8 "http://127.0.0.1:${PORT}/health" || echo "000")
               echo "${AGENT}: /health HTTP ${CODE}"
               [ "$CODE" = "200" ] || echo "::warning::${AGENT} local /health returned ${CODE}"
             done
+            echo "--- Stratex via SSH tunnel + VyralX on AWS ---"
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 8 "http://127.0.0.1:18003/health" || echo "000")
+            echo "Stratex: /health HTTP ${CODE} (via 127.0.0.1:18003 tunnel to AWS U1)"
+            [ "$CODE" = "200" ] || echo "::warning::Stratex tunnel /health returned ${CODE}"
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 8 "http://16.176.9.247:8010/health" || echo "000")
+            echo "VyralX: /health HTTP ${CODE} (AWS 16.176.9.247:8010)"
+            [ "$CODE" = "200" ] || echo "::warning::VyralX AWS /health returned ${CODE}"
 
   server2:
     name: Server 2 systemctl evidence
@@ -66,7 +83,7 @@ jobs:
           key: ${{ secrets.ORACLE_SSH_KEY }}
           script: |
             echo "=== Server 2 fleet evidence $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
-            for SVC in VyralX Sentinel Cortex VyralX-Daemon; do
+            for SVC in Futuris IntelX Cortex; do
               if systemctl list-unit-files | grep -qw "${SVC}.service"; then
                 ACTIVE=$(systemctl is-active "${SVC}.service" || true)
                 RESTARTS=$(systemctl show "${SVC}.service" --property=NRestarts --value)
@@ -80,7 +97,7 @@ jobs:
               fi
             done
             echo "--- local /health probes ---"
-            for PAIR in "Sentinel:8008" "Cortex:8009" "VyralX:8010"; do
+            for PAIR in "Futuris:8004" "IntelX:8005" "Cortex:8009"; do
               AGENT="${PAIR%:*}"; PORT="${PAIR#*:}"
               CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 8 "http://127.0.0.1:${PORT}/health" || echo "000")
               echo "${AGENT}: /health HTTP ${CODE}"
