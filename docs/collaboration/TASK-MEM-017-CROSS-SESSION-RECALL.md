@@ -52,3 +52,15 @@ Count: 0/3. No retry until the FRIDAY→Memora 401 is fixed.
 - No live memory created, modified or deleted; no service restarted; no config changed; no secret read, changed or pasted in this doc. No Memora API call was made from this side (Memora auth is per-agent `X-API-Key`; keys were not touched).
 
 — Muse 11
+
+## Checkpoint 3 — 2026-11-23 ~04:36 IST: 401 ROOT CAUSE PROVEN + FIXED, cursor 200 verified
+
+- **Root cause (proven, not guessed):** FRIDAY sends `Authorization: Bearer <FRIDAY_MEMORA_API_KEY>` (its dedicated key; `FRIDAY/src/friday/memory/memora_client.py` `_remote_headers`, live S1 code = main `3f9cec0c`). Memora (`Memora/apps/api/dependencies.py` `authenticate_agent`) accepts for `X-Agent-Name: friday` ONLY the value of ITS OWN env var `FRIDAY_API_KEY` (or `MEMORA_MASTER_KEY`). Hash comparison (truncated SHA-256; no value ever read, printed or pasted): FRIDAY's `FRIDAY_MEMORA_API_KEY` = `ee07624646acf47f`; Memora's `FRIDAY_API_KEY` = `1d2626d478d51835`; FRIDAY's own `FRIDAY_API_KEY` = `1d2626d478d51835` (match). The dedicated key held a different, stale value matching nothing Memora accepts — so every shared write and cursor read 401'd. The 03:13 "missing key" hypothesis is refuted: the key was present and non-empty in the live FRIDAY env (PID 2503092). FRIDAY calls Memora at `MEMORA_URL=http://127.0.0.1:8002` (no userinfo/path).
+- **Fix (provisioning, server-side only, in scope per 7084017188 / 7084110569):** in `/opt/friday_universe/FRIDAY/.env` (FRIDAY.service `EnvironmentFile`), the `FRIDAY_MEMORA_API_KEY` line's value was set to the `FRIDAY_API_KEY` line's value — copied server-side by script; the value never left the server and was never read, printed or pasted. Backup: `.env.bak-muse11-401fix-20261123` (mode 600). New hash `1d2626d478d51835` = Memora's expectation. FRIDAY.service restarted ~04:29 IST (new PID 2595130), status active.
+- **Verification (two-sided, live):** Memora access log 04:33:30 `GET /v1/events/cursor?consumer_id=friday-cloud` -> **200 OK** (was 401 every minute). FRIDAY log: zero `Memora cursor read failed` lines from new PID 2595130 since restart (last failure 04:28:14, old PID 2591382). FRIDAY `/health` 200. The FRIDAY→Memora 401 is fixed.
+- **Adjacent, NOT fixed (out of scope, flagging):** Futuris cursor reads from 10.0.0.120 also 401 every ~15 s (`consumer_id=futuris-cloud-v1`, last seen 04:34:15) — same key-mismatch class, different agent. Needs its own assignment.
+- **Not this fix:** the public `POST /friday/api/chat` 401 ("A valid FRIDAY control API key is required") is a separate, by-design control-key gate on the gateway, untouched.
+- **Unexplained:** FRIDAY + Memora both restarted 04:22:40-04:23:06 IST (new PIDs 2591382 / 2591523, then Memora again to 2591767) by someone other than this worker — no hub comment claims it. The 401 survived those restarts, so they were not the fix.
+- **Count stays 0/3.** Run 2 (cross-session recall via web chat) is now unblocked and is the next work session.
+
+— Muse 11
