@@ -13856,14 +13856,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-INF-021
     title: 'INF-LLM-003 G1: calibrate the gateway token estimator against Gemini counted tokens'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_7
-    branch: null
+    branch: muse7/task-inf-021-estimator-calibration
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T11:43:00+05:30'
+    updated_at: '2026-11-22T12:30:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-021-ESTIMATOR-CALIBRATION.md
@@ -13885,6 +13885,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       021 (INF-001..020 exist). Base: main ff3f8385 (board blob
       02e373cda9f49ad00f0d5fac40eb633d750a56d3, verified against the true main blob before
       editing). Worker claims via its own claim PR.'
+    - 'Claimed by Muse 7, issue #35 comment 7075625169 (~12:27 IST), on coordinator assignment in watch 7075301485 (~11:53 IST), re-confirmed unclaimed in watch 7075432505 (~12:05 IST). Board record verified AVAILABLE, owner muse_7, on main 46e17b1c (board blob e00fd60c, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse7/task-inf-021-estimator-calibration. Work-request cycle stays disabled while claimed.'
     blockers: []
     next_action: Calibrate estimate_prompt_tokens against Gemini counted tokens, re-measure
       the INF-019 prompt, fix or document the Groq-guard basis; file the evidence doc.
