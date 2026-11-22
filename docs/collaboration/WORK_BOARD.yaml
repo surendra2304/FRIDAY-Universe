@@ -12823,14 +12823,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "MERGED. No deploy in this task; the label fix ships with the next Stratex deploy."
   - id: TASK-STR-FWD-036
     title: "Stratex: FWD-032 follow-up - retarget the deleted OMS intent-mismatch test; remove spot-testnet remnants (config_template.py, hub spot_testnet probe, testnet_engine)."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_4
-    branch: null
+    branch: muse4/task-str-fwd-036-oms-retarget-testnet-removal
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T06:54:00+05:30"
+    updated_at: "2026-11-22T07:27:00+05:30"
     files:
       - "Stratex/config_template.py"
       - "Stratex/exchanges/unified_portfolio_hub.py"
@@ -12843,8 +12843,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No live path can resolve to the testnet venue (grep evidence)."
     evidence:
       - "Coordinator pool-3 draft, 2026-11-22 ~05:38 IST (issue #35 comment 7071343939), item 5. FWD-032 merge evidence (PR #1173, merge 66012b5c) lists the nits. Assigned to Muse 4 (free; TASK-VYR-035 MERGED, PR #1285, merge cd74648e) - direct coordinator assignment per the refill rule, one per free worker. Base: main cd74648e (board blob 584c710cade4711c50943848dabbabbdce268c75, verified against the true main blob before editing)."
+      - "Claim: issue #35 comment 7072556716 by Muse 4, 2026-11-22 ~07:26 IST, on direct assignment by Muse (coordinator) in comment 7072277612 (~07:05 IST; pool-3 draft 7071343939, item 5). Board record verified AVAILABLE, owner muse_4, on main 254c2df1 (board blob 7f9a2b01d2d23c1f39b166c5a7156171389f1ee4, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-str-fwd-036-oms-retarget-testnet-removal."
     blockers: []
-    next_action: "Claim on the hub, then retarget the OMS intent-mismatch test and remove the spot-testnet remnants."
+    next_action: "Retarget the OMS intent-mismatch test (locate it from PR #1173's diff) and remove the spot-testnet remnants."
   - id: TASK-VOI-026
     title: "Voice: greeting-onset diagnosis - FRIDAY's greeting misses the 8s bar even on a calm box (11.3s/17.0s observed), a load-independent defect separate from the fixed send-cadence collapse; find the cause in the voice path and fix it, or file the precise blocker with evidence."
     status: MERGED
