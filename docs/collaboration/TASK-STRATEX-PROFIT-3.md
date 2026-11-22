@@ -3,6 +3,31 @@
 **Date:** 2026-11-13 IST
 **Action:** Replaced the live Stratex strategy allowlist with OOS-proven winners.
 
+## Venue / account mode — Binance Demo Trading, NOT real money (recorded 2026-11-22, TASK-STR-PROFIT-001)
+
+Every "live" in this record means the live (running) daemon on Server 1, not a
+live-money account. The activation applied to the **Binance Demo Trading
+(Binance Futures Demo, demo.binance.com)** account. The orders executed
+08:52–09:50 IST and the +$31.83 unrealized were demo-account fills.
+
+Evidence:
+
+- Owner decision D-015 (2026-11-10, `docs/collaboration/ACTIVITY_LOG.md`):
+  "Stratex's production venue is Binance demo by design ('Yes it is demo only')".
+- Server 1 Stratex `.env` verified 2026-11-09 (non-secret flags only,
+  TASK-STR-001): `BINANCE_ENV=demo` — the daemon's active venue is
+  BinanceFuturesAdapter in demo mode (demo.binance.com). That verification
+  predates the activation by 4 days; the activation itself is covered by D-015
+  and by the owner's own words in the Nov 12–13 session: "Stratex is losing
+  >$1,000/day on the demo account".
+- Nov 13-era code (`Stratex/config.py` at commit 88c5eb99): no real-money
+  Binance endpoint exists in the daemon's config — the only venues are
+  demo-api.binance.com (when `BINANCE_DEMO_TRADING` is set) or
+  testnet.binance.vision / testnet.binancefuture.com by default;
+  `LIVE_TRADING_ENABLED = False` is a permanent invariant, enforced by
+  `validate_environment_safety()` at import. Real-money trading was impossible
+  by design on 2026-11-13.
+
 ## Why
 
 The daemon *was* trading (8–9 fills/day), but every strategy on the live
@@ -22,7 +47,7 @@ governor's 0.5% fee-drag floor on most signals ("Skip … stop 0.31% < min
 0.50%"), so most fired signals never even reached the order book. Result:
 few, losing trades — exactly what the owner observed.
 
-## New allowlist (measured winners; IS≥0 AND OOS>0 AND PF≥1.19 AND ≥300 OOS trades)
+## New allowlist (measured winners; IS≥0 AND OOS>0 AND PF≥1.19 AND ≥300 OOS trades — see PF reconciliation below; one exception: strategy_scalping_breakout, PF 1.16)
 
 | Strategy | TF | OOS net | trades | wr | PF |
 | --- | --- | --- | --- | --- | --- |
@@ -34,6 +59,31 @@ few, losing trades — exactly what the owner observed.
 | strategy_adx_trend | 1h | +9,061 | 935 | 0.41 | 1.31 |
 | strategy_ehlers_hma | 1d | +4,141 | 731 | 0.38 | 1.19 |
 | strategy_scalping_breakout (kept) | 5m | +1,798 | 321 | 0.41 | 1.16 |
+
+## PF threshold reconciliation (recorded 2026-11-22, TASK-STR-PROFIT-001)
+
+- The selection policy as stated and sent for review was **PF≥1.19** (PR #73
+  review request; issue #35 comment 6842900038, which lists exactly the 7
+  winners meeting it). The heading above keeps that policy figure.
+- The allowlist actually applied has **8** winners: strategy_scalping_breakout
+  (PF **1.16**, OOS +1,798, 321 trades, win rate 0.41) was kept as an
+  exception — marked "(kept)" in the table above.
+- The activity log (2026-11-13 11:25 IST entry) and the WORK_BOARD
+  TASK-STRATEX-PROFIT-3 acceptance record the **effective** threshold of the
+  applied allowlist, **PF≥1.16** — the minimum PF actually admitted. The two
+  numbers describe different things (policy vs applied set), not a typo in
+  either place.
+- Exception grounds, from this record's own numbers: scalping_breakout passes
+  every other selection criterion (OOS +1,798 > 0, 321 OOS trades ≥ 300, win
+  rate 0.41), and it is the only 5m strategy in the new allowlist — the other
+  seven are 1h/1d — while the daemon still trades 5m (`STRATEX_TIMEFRAMES`
+  includes 5m after the change), so dropping it would have left the 5m slot
+  empty. No contemporaneous written justification for keeping it was found in
+  this record, PR #73, or issue #35; this note is that record.
+- Limitation: the 480-run sweep source data (`stage_results.csv`) lives on the
+  server, not in the repo, so the near-threshold band (PF 1.16–1.19) could not
+  be re-checked from the repo; the reconciliation rests on the documentary
+  evidence above.
 
 ## Changes applied on Server 1 (backups: .env.bak-1794540071, priors.bak-1794540071)
 
