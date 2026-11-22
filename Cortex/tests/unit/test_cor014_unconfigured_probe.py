@@ -13,14 +13,23 @@ These tests pin the tri-state contract at three levels:
 * supervisor — UNCONFIGURED is listed as ``unconfigured`` (never
   ``unhealthy``), logged once per streak, and never repaired, counted as a
   repair failure or escalated; the configured paths are unchanged.
+
+TASK-CTX-002: the probe is a real HTTP check now, not DNS-only — it does
+``GET {base}/health`` (5s timeout, no proxy env) and reports HEALTHY only
+on HTTP 200 from a gateway that says it is healthy. With both env URLs
+unset it probes the fleet-default Inference gateway
+(``http://10.0.0.121:8001``) instead of reporting UNCONFIGURED: in
+production the probe observes the real dependency instead of nothing.
+The tri-state contract above is unchanged for the unparseable-URL case.
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
+import httpx
 import pytest
 from cortex_core.resilience import (
     CircuitState,
@@ -38,16 +47,105 @@ def _run(coro):
 # ── probe level: cortex_api.self_healing.probe_ai_universe ──────────────────
 
 
+class _FakeHealthResponse:
+    """Minimal stand-in for the httpx response of ``GET {base}/health``."""
+
+    def __init__(
+        self, status_code: int = 200, json_body=None, json_raises: bool = False
+    ):
+        self.status_code = status_code
+        self._json_body = json_body
+        self._json_raises = json_raises
+
+    def json(self):
+        if self._json_raises:
+            raise ValueError("not JSON")
+        return self._json_body
+
+
+class _FakeAsyncClient:
+    """Fake ``httpx.AsyncClient`` recording the URLs it is asked to GET."""
+
+    def __init__(
+        self, response: _FakeHealthResponse | None = None, exc: Exception | None = None
+    ):
+        self._response = response
+        self._exc = exc
+        self.get_calls: list[str] = []
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *args):
+        return False
+
+    async def get(self, url: str):
+        self.get_calls.append(url)
+        if self._exc is not None:
+            raise self._exc
+        assert self._response is not None
+        return self._response
+
+
+def _patch_http(
+    monkeypatch,
+    *,
+    status: int = 200,
+    json_body=None,
+    json_raises: bool = False,
+    exc: Exception | None = None,
+):
+    """Point the probe's ``httpx.AsyncClient`` at a fake; return (client, ctor_kwargs).
+
+    ``ctor_kwargs`` captures the keyword arguments the probe passed to the
+    client constructor (timeout, trust_env) so tests can pin them.
+    """
+    client = _FakeAsyncClient(
+        response=_FakeHealthResponse(status, json_body, json_raises), exc=exc
+    )
+    ctor_kwargs: dict = {}
+
+    def _factory(*args, **kwargs):
+        ctor_kwargs.update(kwargs)
+        return client
+
+    monkeypatch.setattr("httpx.AsyncClient", _factory)
+    return client, ctor_kwargs
+
+
 def _clear_url_env(monkeypatch):
     monkeypatch.delenv("INFERENCE_BASE_URL", raising=False)
     monkeypatch.delenv("AI_UNIVERSE_BASE_URL", raising=False)
 
 
-def test_probe_unconfigured_when_both_urls_unset(monkeypatch):
+def test_probe_uses_fleet_default_when_both_urls_unset(monkeypatch):
+    """TASK-CTX-002: unset env no longer means "nothing to probe".
+
+    The probe checks the fleet-default Inference gateway (Server 1:8001)
+    and reports what it finds there — in production this is the live
+    dependency, not a standing unconfigured notice.
+    """
     from cortex_api.self_healing import probe_ai_universe
 
     _clear_url_env(monkeypatch)
-    assert _run(probe_ai_universe()) is ProbeResult.UNCONFIGURED
+    client, _ctor = _patch_http(
+        monkeypatch, status=200, json_body={"status": "healthy"}
+    )
+
+    assert _run(probe_ai_universe()) is ProbeResult.HEALTHY
+    assert client.get_calls == ["http://10.0.0.121:8001/health"]
+
+
+def test_probe_unhealthy_when_fleet_default_is_down(monkeypatch):
+    from cortex_api.self_healing import probe_ai_universe
+
+    _clear_url_env(monkeypatch)
+    client, _ctor = _patch_http(
+        monkeypatch, exc=httpx.ConnectError("refused", request=MagicMock())
+    )
+
+    assert _run(probe_ai_universe()) is ProbeResult.UNHEALTHY
+    assert client.get_calls == ["http://10.0.0.121:8001/health"]
 
 
 def test_probe_unconfigured_when_url_has_no_host(monkeypatch):
@@ -58,32 +156,118 @@ def test_probe_unconfigured_when_url_has_no_host(monkeypatch):
     assert _run(probe_ai_universe()) is ProbeResult.UNCONFIGURED
 
 
-def test_probe_unhealthy_when_configured_host_does_not_resolve(monkeypatch):
+def test_probe_prefers_inference_url_over_legacy(monkeypatch):
     from cortex_api.self_healing import probe_ai_universe
 
     _clear_url_env(monkeypatch)
-    monkeypatch.setenv("INFERENCE_BASE_URL", "http://inference.invalid:8001")
+    monkeypatch.setenv("INFERENCE_BASE_URL", "http://inference:8001")
+    monkeypatch.setenv("AI_UNIVERSE_BASE_URL", "http://legacy:8000")
+    client, _ctor = _patch_http(
+        monkeypatch, status=200, json_body={"status": "healthy"}
+    )
 
-    mock_loop = MagicMock()
-    mock_loop.getaddrinfo = AsyncMock(side_effect=OSError("name resolution failed"))
-    with patch("asyncio.get_running_loop", return_value=mock_loop):
-        assert _run(probe_ai_universe()) is ProbeResult.UNHEALTHY
-    mock_loop.getaddrinfo.assert_awaited_once()
+    assert _run(probe_ai_universe()) is ProbeResult.HEALTHY
+    assert client.get_calls == ["http://inference:8001/health"]
 
 
-def test_probe_healthy_when_configured_host_resolves(monkeypatch):
+def test_probe_uses_legacy_url_when_inference_unset(monkeypatch):
     from cortex_api.self_healing import probe_ai_universe
 
     _clear_url_env(monkeypatch)
     monkeypatch.setenv("AI_UNIVERSE_BASE_URL", "http://ai-universe.local:8000")
-
-    mock_loop = MagicMock()
-    mock_loop.getaddrinfo = AsyncMock(
-        return_value=[(None, None, None, None, ("127.0.0.1", 8000))]
+    client, _ctor = _patch_http(
+        monkeypatch, status=200, json_body={"status": "healthy"}
     )
-    with patch("asyncio.get_running_loop", return_value=mock_loop):
-        assert _run(probe_ai_universe()) is ProbeResult.HEALTHY
-    mock_loop.getaddrinfo.assert_awaited_once()
+
+    assert _run(probe_ai_universe()) is ProbeResult.HEALTHY
+    assert client.get_calls == ["http://ai-universe.local:8000/health"]
+
+
+def test_probe_unhealthy_when_health_endpoint_unreachable(monkeypatch):
+    from cortex_api.self_healing import probe_ai_universe
+
+    _clear_url_env(monkeypatch)
+    monkeypatch.setenv("INFERENCE_BASE_URL", "http://inference.invalid:8001")
+    client, _ctor = _patch_http(
+        monkeypatch,
+        exc=httpx.ConnectError("name resolution failed", request=MagicMock()),
+    )
+
+    assert _run(probe_ai_universe()) is ProbeResult.UNHEALTHY
+    assert client.get_calls == ["http://inference.invalid:8001/health"]
+
+
+def test_probe_unhealthy_on_timeout(monkeypatch):
+    from cortex_api.self_healing import probe_ai_universe
+
+    _clear_url_env(monkeypatch)
+    monkeypatch.setenv("INFERENCE_BASE_URL", "http://inference:8001")
+    _client, _ctor = _patch_http(
+        monkeypatch, exc=httpx.TimeoutException("timed out", request=MagicMock())
+    )
+
+    assert _run(probe_ai_universe()) is ProbeResult.UNHEALTHY
+
+
+def test_probe_unhealthy_when_health_status_is_not_healthy(monkeypatch):
+    from cortex_api.self_healing import probe_ai_universe
+
+    _clear_url_env(monkeypatch)
+    monkeypatch.setenv("INFERENCE_BASE_URL", "http://inference:8001")
+    _client, _ctor = _patch_http(
+        monkeypatch, status=200, json_body={"status": "degraded"}
+    )
+
+    assert _run(probe_ai_universe()) is ProbeResult.UNHEALTHY
+
+
+def test_probe_unhealthy_on_non_200(monkeypatch):
+    from cortex_api.self_healing import probe_ai_universe
+
+    _clear_url_env(monkeypatch)
+    monkeypatch.setenv("INFERENCE_BASE_URL", "http://inference:8001")
+    _client, _ctor = _patch_http(
+        monkeypatch, status=503, json_body={"status": "unhealthy"}
+    )
+
+    assert _run(probe_ai_universe()) is ProbeResult.UNHEALTHY
+
+
+def test_probe_healthy_on_200_without_status_field(monkeypatch):
+    """A 200 whose body carries no status is liveness, not a verdict against."""
+    from cortex_api.self_healing import probe_ai_universe
+
+    _clear_url_env(monkeypatch)
+    monkeypatch.setenv("INFERENCE_BASE_URL", "http://inference:8001")
+    _client, _ctor = _patch_http(
+        monkeypatch, status=200, json_body={"service": "inference"}
+    )
+
+    assert _run(probe_ai_universe()) is ProbeResult.HEALTHY
+
+
+def test_probe_healthy_on_200_non_json_body(monkeypatch):
+    from cortex_api.self_healing import probe_ai_universe
+
+    _clear_url_env(monkeypatch)
+    monkeypatch.setenv("INFERENCE_BASE_URL", "http://inference:8001")
+    _client, _ctor = _patch_http(monkeypatch, status=200, json_raises=True)
+
+    assert _run(probe_ai_universe()) is ProbeResult.HEALTHY
+
+
+def test_probe_uses_short_timeout_without_proxy_env(monkeypatch):
+    """The probe must not hang the 30s loop tick or be proxy-intercepted."""
+    from cortex_api.self_healing import PROBE_TIMEOUT_SECONDS, probe_ai_universe
+
+    _clear_url_env(monkeypatch)
+    _client, ctor = _patch_http(
+        monkeypatch, status=200, json_body={"status": "healthy"}
+    )
+
+    assert _run(probe_ai_universe()) is ProbeResult.HEALTHY
+    assert ctor.get("timeout") == PROBE_TIMEOUT_SECONDS == 5.0
+    assert ctor.get("trust_env") is False
 
 
 def test_probe_result_coerce_keeps_bool_probes_working():
@@ -254,30 +438,37 @@ def test_unconfigured_recovers_to_healthy_without_a_repair():
     assert registry.circuit("ai_universe").snapshot()["total_successes"] == 1
 
 
-@pytest.mark.parametrize("env", [{}, {"INFERENCE_BASE_URL": "http://inference.invalid:8001"}])
-def test_end_to_end_probe_through_supervisor(monkeypatch, env):
-    """The real probe + registry + supervisor, driven only by the env."""
+@pytest.mark.parametrize(
+    "env,http_kwargs,expect",
+    [
+        # TASK-CTX-002: with no env the probe checks the fleet default and,
+        # when Inference answers healthy, the supervisor sees a plain pass.
+        ({}, {"status": 200, "json_body": {"status": "healthy"}}, "healthy"),
+        # Same setup, gateway down: the failure path still escalates once
+        # the repair budget is exhausted.
+        ({}, {"exc": httpx.ConnectError("refused", request=MagicMock())}, "escalated"),
+        # An explicitly configured gateway that is down escalates the same way.
+        (
+            {"INFERENCE_BASE_URL": "http://inference.invalid:8001"},
+            {"exc": httpx.ConnectError("down", request=MagicMock())},
+            "escalated",
+        ),
+    ],
+)
+def test_end_to_end_probe_through_supervisor(monkeypatch, env, http_kwargs, expect):
+    """The real probe + registry + supervisor, driven only by env + HTTP."""
     from cortex_api.self_healing import probe_ai_universe
 
     _clear_url_env(monkeypatch)
     for key, value in env.items():
         monkeypatch.setenv(key, value)
-    if env:
-        mock_loop = MagicMock()
-        mock_loop.getaddrinfo = AsyncMock(side_effect=OSError("down"))
-        patcher = patch("asyncio.get_running_loop", return_value=mock_loop)
-        patcher.start()
-    else:
-        patcher = None
-    try:
-        registry, supervisor, repairs = _supervisor_with_probe(probe_ai_universe)
-        runs = [_run(supervisor.run_cycle()) for _ in range(4)]
-    finally:
-        if patcher is not None:
-            patcher.stop()
+    _patch_http(monkeypatch, **http_kwargs)
 
-    if not env:
-        assert all(run.unconfigured == ["ai_universe"] for run in runs)
+    registry, supervisor, repairs = _supervisor_with_probe(probe_ai_universe)
+    runs = [_run(supervisor.run_cycle()) for _ in range(4)]
+
+    if expect == "healthy":
+        assert all(run.unconfigured == [] for run in runs)
         assert all(run.unhealthy == [] for run in runs)
         assert repairs["attempts"] == 0
         assert supervisor.escalations == []

@@ -60,24 +60,27 @@ async def test_f1_memora_arequest_happy_path(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_f1_self_healing_probe_async_dns(monkeypatch):
-    """F1.2: probe_ai_universe executes non-blocking DNS resolution."""
+async def test_f1_self_healing_probe_async_http(monkeypatch):
+    """F1.2: probe_ai_universe executes a non-blocking HTTP health check."""
     from cortex_api.self_healing import probe_ai_universe
 
     monkeypatch.setenv("AI_UNIVERSE_BASE_URL", "http://ai-universe.local:8000")
 
-    with patch("asyncio.get_running_loop") as mock_get_loop:
-        mock_loop = MagicMock()
-        mock_loop.getaddrinfo = AsyncMock(return_value=[(None, None, None, None, ("127.0.0.1", 8000))])
-        mock_get_loop.return_value = mock_loop
+    mock_resp = httpx.Response(200, json={"status": "healthy", "service": "inference"})
+    with patch("httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.__aenter__.return_value = mock_client
+        mock_client.get.return_value = mock_resp
+        mock_client_cls.return_value = mock_client
 
         result = await probe_ai_universe()
-        # TASK-COR-014: the probe is tri-state now; a configured host that
-        # resolves is HEALTHY (previously the bool True).
+        # TASK-COR-014: the probe is tri-state now; a configured gateway
+        # answering healthy is HEALTHY (previously the bool True).
+        # TASK-CTX-002: the probe checks GET {base}/health, not DNS.
         from cortex_core.resilience import ProbeResult
 
         assert result is ProbeResult.HEALTHY
-        mock_loop.getaddrinfo.assert_awaited_once()
+        mock_client.get.assert_awaited_once_with("http://ai-universe.local:8000/health")
 
 
 def test_f1_memora_record_interaction_payload_structure(monkeypatch):
