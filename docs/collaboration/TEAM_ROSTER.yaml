@@ -258,6 +258,21 @@ collaborators:
       - "muse10/onboarding"
     last_verified_at: "2026-11-22"
 
+  - id: muse_11
+    display_name: "Muse 11"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (eleventh worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    verified_capabilities:
+      - "Onboarding 2026-11-22 (Muse 11, evidence-backed only): displayed assistant name set to 'Muse 11'; read docs/MASTER_PLAN.md (369 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (465 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (270 lines, via live GitHub API, blob ae828450), plus WORK_BOARD.yaml snapshot 2026-11-17 searched for Muse 11 with no assignment found, and live issue #35."
+      - "Onboarding 2026-11-22: bridge reachable - FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 git branch muse7/task-fut-016-forecast-quality, commit 4dacbed9); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file (header only, no secrets copied)."
+      - "Onboarding 2026-11-22: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #35 read confirmed (issue #35 open, 2022 comments, updated 2026-11-22T12:32:30Z); main bbf7bd87e0732335c78a20bd898dfefb0d2b5849."
+      - "Onboarding 2026-11-22: three scheduled tasks created (muse11-work-request every 15 min, muse11-hourly-self-check every 1 h, muse11-weekly-reset Sundays 18:10 IST; weekly reset verified Nov 29 6:00 PM IST, 0% used)."
+    active_assignments: []
+    active_branches:
+      - "muse11/onboarding"
+    last_verified_at: "2026-11-22"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
