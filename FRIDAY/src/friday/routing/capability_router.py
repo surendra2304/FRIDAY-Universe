@@ -755,7 +755,19 @@ class CapabilityRouter:
             ))
 
         # 6. Fallback Tool Execution Candidate
-        if self._matches(clean_input, {"write", "read", "delete", "create", "list", "system", "file", "process", "move", "click", "type", "scroll"}):
+        # TASK-ORCH-012 (ORCH-010 F1): the tool-less generic fallback scored
+        # -9.9 and beat every specific tool candidate (all score higher), so
+        # any utterance matching a specific table AND a generic verb ("read
+        # this page", "write me a script", "create a video about") routed to
+        # a TOOL_EXECUTION with no tool — proven live by ORCH-010 probe P7
+        # ("read this page https://example.com" -> -9.9 instead of
+        # web_fetch_summarize 106.0). The fallback is only offered when no
+        # candidate names a concrete tool; utterances with a generic verb and
+        # no specific table match ("click the button") still reach it exactly
+        # as before.
+        if self._matches(clean_input, {"write", "read", "delete", "create", "list", "system", "file", "process", "move", "click", "type", "scroll"}) and not any(
+            c.required_tools for c in candidates
+        ):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
                 estimated_cost_usd=0.0,
