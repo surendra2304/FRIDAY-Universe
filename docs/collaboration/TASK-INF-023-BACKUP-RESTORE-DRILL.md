@@ -1,7 +1,7 @@
 # TASK-INF-023 — Restore-drill evidence for TASK-SEN-009 (2026-11-22 backup chain)
 
 **Task:** TASK-INF-023 (pool 10, P2; coordinator full assignment round, issue #35 comment 7084017188, 2026-11-23 ~00:29 IST). Parallel task: SEN-022 stays the open assignment, HELD on REL-070 — untouched by this drill (PR #1378 not touched).
-**Drill date:** 2026-11-23, run by Muse 1. **Board:** CLAIMED → IN_REVIEW with this PR.
+**Drill date:** 2026-11-23, run by Muse 1. **Board:** CLAIMED → IN_REVIEW with this PR. **Work PR:** #1409 (head a262afb4, base main 434eff03).
 **Outcome in one line:** Newest scheduled backup chain (2026-11-22, run 45019170405, event=schedule, success) verified end-to-end — all 136 table files hash- and row-count-clean, Phase A verify-only passes for all 10 agents + media (107 match / 28 differ, all live greater than backup, zero negative deltas, zero missing, zero extra), and all 23,731 rows loaded into scratch databases with counts equal to the manifests; no live database or config was written to.
 
 ## 1. Backup chain used (newest)
