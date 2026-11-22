@@ -128,15 +128,20 @@ def produce_one(settings: Settings, *, max_candidates: int, deadline: float | No
     audition is a blocking call with no deadline of its own, so it may
     still overrun the budget — the guarantee is that the cycle starts
     nothing new past the deadline and therefore terminates.
+    TASK-VYR-035: the same deadline is handed to the MPT lane
+    (``produce_from_briefs``), which checks it before every brief; the
+    MPT branch used to return before the deadline was ever consulted.
     """
     if str(getattr(settings, "viral_producer_lane", "viral_remix")).lower() == "mpt":
         # IG2 B7-C1: the MoneyPrinterTurbo producer lane. It works from a
         # briefs file (no source downloads, so no cookie jar is needed)
         # and never queues a publish job — a pass is GATED_PASS, so the
         # publish drain in main() is never triggered by this lane.
+        # TASK-VYR-035: the cycle deadline is passed through, so an
+        # over-budget MPT run stops at the deadline like the native lane.
         from app.services.mpt_lane import produce_from_briefs
 
-        return produce_from_briefs(settings, max_candidates=max_candidates)
+        return produce_from_briefs(settings, max_candidates=max_candidates, deadline=deadline)
     if not cookies_file():
         # Every source download goes through yt-dlp, and YouTube refuses
         # datacenter IPs without a signed-in jar. Fail fast with a clear reason
