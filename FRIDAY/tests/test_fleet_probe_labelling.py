@@ -29,7 +29,7 @@ from types import SimpleNamespace
 
 import httpx
 
-from friday.ecosystem.fleet_client import FleetClient, _probe_failure
+from friday.ecosystem.fleet_client import FleetClient, _classify_health_response, _probe_failure
 
 
 def _fleet() -> FleetClient:
@@ -39,6 +39,8 @@ def _fleet() -> FleetClient:
             intelx_api_key="unit-test-key",
             memora_url="http://memora:8000",
             memora_api_key="unit-test-key",
+            stratex_url="http://stratex:8000",
+            stratex_api_key="unit-test-key",
             futuris_url="http://futuris:8000",
             futuris_api_key="unit-test-key",
             vyralx_url="http://vyralx:8000",
@@ -190,7 +192,8 @@ def test_futuris_degraded_health_body_is_degraded_not_unreachable():
 
     status = _run(_go())
     assert status.status == "DEGRADED"
-    assert "200" in status.details
+    # TASK-REL-067: the details now name the peer verdict, not the code.
+    assert "peer reports status=degraded" in status.details
 
 
 def test_futuris_cloud_probe_budget_is_8s_like_peers():
@@ -208,7 +211,11 @@ def test_futuris_cloud_probe_budget_is_8s_like_peers():
             await client.aclose()
 
     status = _run(_go())
-    assert status.status == "ONLINE"
+    # TASK-REL-067 (REL-004 section 4.2): a pre-contract {"status": "ok"}
+    # body is REACHABLE, never ONLINE — ONLINE is earned only by a contract
+    # body with all required capabilities ok.
+    assert status.status == "REACHABLE"
+    assert "capability unknown" in status.details
     assert captured["timeout"].get("read") == 8.0
 
 
@@ -242,3 +249,136 @@ def test_vyralx_connect_refused_stays_unreachable():
     status = _run(_go())
     assert status.status == "UNREACHABLE"
     assert "ConnectError" in status.details
+
+
+# ------------------------------------------------- REL-067: REL-004 section 4
+# The classifier reads the section 2.2 contract fields first: a peer that
+# sends a `capabilities` block is judged on its capability states; a peer
+# with no capabilities block is reachability-only and never ONLINE.
+
+
+def _contract_body(status="ok", **capabilities):
+    return {
+        "status": status,
+        "service": "stratex",
+        "evidence_class": "capability_report",
+        "capabilities": {
+            name: {
+                "state": state,
+                "evidence": "test",
+                "checked_at": "2026-11-22T00:00:00Z",
+                **({"detail": detail} if detail else {}),
+            }
+            for name, (state, detail) in capabilities.items()
+        },
+    }
+
+
+def _response(status_code, body):
+    request = httpx.Request("GET", "http://stratex:8000/health")
+    return httpx.Response(status_code, json=body, request=request)
+
+
+def test_classifier_contract_ok_body_is_online():
+    status, note = _classify_health_response(
+        _response(200, _contract_body(trading_engine=("ok", ""), market_data=("ok", "")))
+    )
+    assert status == "ONLINE"
+    assert note == "capabilities ok"
+
+
+def test_classifier_contract_503_degraded_names_failing_capability():
+    status, note = _classify_health_response(
+        _response(
+            503,
+            _contract_body(
+                "degraded",
+                trading_engine=("unavailable", "STALE_STRATEGY_EVALUATION"),
+                market_data=("ok", ""),
+            ),
+        )
+    )
+    assert status == "DEGRADED"
+    assert note == "trading_engine unavailable (STALE_STRATEGY_EVALUATION)"
+
+
+def test_classifier_contract_degraded_body_over_200():
+    # A peer that reports degraded in the body but still answers 200 is
+    # DEGRADED: the body is the contract, the code has not migrated yet.
+    status, note = _classify_health_response(
+        _response(200, _contract_body("degraded", trading_engine=("degraded", "HEARTBEAT_FILE_MISSING")))
+    )
+    assert status == "DEGRADED"
+    assert note == "trading_engine degraded (HEARTBEAT_FILE_MISSING)"
+
+
+def test_classifier_precontract_ok_body_is_reachable_never_online():
+    status, note = _classify_health_response(_response(200, {"status": "ok"}))
+    assert status == "REACHABLE"
+    assert note == "capability unknown — pre-contract /health"
+
+
+def test_classifier_unknown_capability_is_reachable_never_online():
+    # An unknown capability is never silently reported ok — but it is not a
+    # failure either: the peer answered, its capability state is unknown.
+    status, note = _classify_health_response(
+        _response(200, _contract_body("ok", trading_engine=("unknown", "CONFIG_ONLY")))
+    )
+    assert status == "REACHABLE"
+    assert note == "capability unknown — trading_engine unknown (CONFIG_ONLY)"
+
+
+def test_classifier_malformed_capabilities_falls_back_to_legacy():
+    status, note = _classify_health_response(
+        _response(200, {"status": "ok", "capabilities": {"trading_engine": "ok"}})
+    )
+    assert status == "REACHABLE"
+    assert "pre-contract" in note
+
+
+def test_stratex_503_contract_body_is_degraded_with_reason():
+    async def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            503,
+            json=_contract_body(
+                "degraded",
+                trading_engine=("unavailable", "STALE_STRATEGY_EVALUATION"),
+                trading_capable=("unavailable", "STALE_STRATEGY_EVALUATION"),
+                market_data=("ok", ""),
+            ),
+            request=request,
+        )
+
+    async def _go():
+        client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+        try:
+            return await _fleet().probe_stratex(client)
+        finally:
+            await client.aclose()
+
+    status = _run(_go())
+    assert status.status == "DEGRADED"
+    assert status.details == (
+        "Stratex DEGRADED: trading_engine unavailable (STALE_STRATEGY_EVALUATION); "
+        "trading_capable unavailable (STALE_STRATEGY_EVALUATION)"
+    )
+
+
+def test_stratex_contract_ok_body_is_online_with_capabilities_ok():
+    async def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json=_contract_body(trading_engine=("ok", ""), market_data=("ok", "")),
+            request=request,
+        )
+
+    async def _go():
+        client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+        try:
+            return await _fleet().probe_stratex(client)
+        finally:
+            await client.aclose()
+
+    status = _run(_go())
+    assert status.status == "ONLINE"
+    assert "capabilities ok" in status.details
