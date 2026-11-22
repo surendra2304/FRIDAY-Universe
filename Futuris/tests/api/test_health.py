@@ -11,20 +11,33 @@ from futuris.api.app import app
 
 @pytest.mark.asyncio
 async def test_health_check(health_storage):
-    """Verify GET /health returns status ok and correct version.
+    """Verify GET /health returns the capability report and correct version.
 
-    ``health_storage`` is the point: status is ``ok`` only when the process-wide
-    storage engine has its schema, so the test installs one instead of relying on
-    whatever database happens to exist in the working directory.
+    ``health_storage`` is the point: the storage capability is ``ok`` only
+    when the process-wide storage engine has its schema, so the test installs
+    one instead of relying on whatever database happens to exist in the
+    working directory.
+
+    TASK-REL-067 (§2.2): the top level is ``degraded`` with HTTP 503 even
+    with storage ready, because ``forecasting`` is a required capability
+    with no model probe yet (``unknown`` / ``NO_MODEL_PROBE``). Storage
+    readiness is not forecasting ability, and must never be presented as
+    such. This is the contract's honest outcome, not a bug.
     """
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         response = await client.get("/health")
-    assert response.status_code == 200
+    assert response.status_code == 503
     data = response.json()
-    assert data["status"] == "ok"
+    assert data["status"] == "degraded"
     assert data["service"] == "futuris"
+    assert data["agent"] == "futuris"
+    assert data["evidence_class"] == "capability_report"
     assert data["version"] == __version__
+    assert data["capabilities"]["storage"]["state"] == "ok"
+    assert data["capabilities"]["forecasting"]["state"] == "unknown"
+    assert data["capabilities"]["forecasting"]["detail"] == "NO_MODEL_PROBE"
+    assert data["dependencies"]["database"]["state"] == "ok"
 
 
 @pytest.mark.asyncio
@@ -37,9 +50,9 @@ async def test_health_declares_evidence_class_and_observation_time(health_storag
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         response = await client.get("/health")
-    assert response.status_code == 200
+    assert response.status_code == 503
     data = response.json()
-    assert data["evidence_class"] == "process_liveness"
+    assert data["evidence_class"] == "capability_report"
     assert data["service"] == "futuris"
     assert datetime.fromisoformat(data["observed_at"]).tzinfo is not None
     assert data["storage"]["expected"] >= 1
@@ -51,14 +64,17 @@ async def test_health_answers_head_request(health_storage):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         response = await client.head("/health")
-    assert response.status_code == 200
+    # TASK-REL-067: HEAD carries the same status as GET — 503 while a
+    # required capability is unknown.
+    assert response.status_code == 503
 
 
 @pytest.mark.asyncio
 async def test_health_reports_degraded_when_storage_is_not_ready(tmp_path, monkeypatch):
     """The counterpart contract: unusable storage must never be reported as ok.
 
-    ``/health`` answers 200 either way -- the process is up -- but the verdict
+    ``/health`` answers 503 either way once the contract applies -- the
+    process is up, but a required capability is not ``ok`` -- and the verdict
     and the storage block must say what was measured. This is the half of the
     contract a clean checkout exercises: no schema, so ``degraded`` and the
     missing tables named.
@@ -75,11 +91,14 @@ async def test_health_reports_degraded_when_storage_is_not_ready(tmp_path, monke
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://testserver") as client:
             response = await client.get("/health")
-        assert response.status_code == 200
+        assert response.status_code == 503
         data = response.json()
         assert data["status"] == "degraded"
         assert data["storage"]["ready"] is False
         assert data["storage"]["missing"], "the answer must name what is missing"
         assert data["storage"]["present"] == 0
+        assert data["capabilities"]["storage"]["state"] == "unavailable"
+        assert data["capabilities"]["storage"]["detail"] == "SCHEMA_INCOMPLETE"
+        assert data["dependencies"]["database"]["state"] == "unavailable"
     finally:
         await empty.dispose()
