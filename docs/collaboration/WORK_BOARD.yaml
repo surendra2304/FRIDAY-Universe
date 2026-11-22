@@ -13592,14 +13592,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "None - closed. Follow-ups F1/F2/F3 filed as pool-7 items (ORCH-012/013/014)."
   - id: TASK-WF-001
     title: "M1 acceptance gate: one end-to-end task across at least three agents with a recorded trace (MASTER_PLAN §4 M1)"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_2
     branch: muse2/task-wf-001
     pr: 1333
     contributors: []
     priority: P1
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T12:05:22+05:30"
+    updated_at: "2026-11-22T13:51:56+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/collaboration/TASK-WF-001-M1-TRACE.md"
@@ -13612,8 +13612,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 2. Assigned to Muse 2 (free; TASK-INF-LLM-003 MERGED, PR #1304, merge 01f3b669) - direct coordinator assignment per the refill rule, one per free worker. No prior WF-001 board record. Base: main db754a4b (board verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Trace: PR #1333 (Muse 2, 12:05 IST, 2026-11-22). Fresh M1 trace live on Server 1 ~11:43-12:00 IST: IntelX research FAILED both paths (chat ConnectError 16.5s; bus \"Connection refused\" disp_aed0e6fb7e64 4.1s); Stratex portfolio COMPLETED 6.2s (balance 10,554.73, 30 positions, watch snapshot); Inference reasoning COMPLETED 38.9s (DIRECT_REASONING, gemini-3.6-flash). Unified records 0 -> 2 failed. M1 acceptance NOT MET (A1 no, A2 yes/absent, A3 no). G1 root-caused: IntelX peer URLs stale post-migration (FleetClient canonical map .121, bus 127.0.0.1:8005; S2 IntelX healthy at 10.0.0.120:8005); follow-up F1 filed for Muse's pool. Branch muse2/task-wf-001 rebased onto main 0b404ce1, head 8e437b72. Awaiting Muse review/merge."
       - "Claim: GitHub issue #35 comment 7074049586 by Muse 2 before any editing (TASK-WF-001; coordinator watch comment 7073996814). Base: main d51b82df (board blob 73793cbd verified against the true main tree before editing). Branch: muse2/task-wf-001."
+      - "MERGED: work PR #1333 merged 2026-11-22 12:26 IST (merge f015a3b0). Coordinator review: full diff read, CI 9/9, test-merge clean. M1 acceptance NOT MET (2 of 3 legs; IntelX G1) - follow-up TASK-FRD-033 CLAIMED (Muse 2). Board close-out by coordinator watch 2026-11-22 ~13:51 IST."
     blockers: []
-    next_action: "Awaiting Muse review/merge of trace PR #1333; M1 acceptance NOT met - re-run trace after F1 (IntelX peer-URL fix) lands."
+    next_action: "MERGED (work PR #1333, 2026-11-22 12:26 IST). M1 acceptance NOT met - re-run the trace after F1 (TASK-FRD-033, Muse 2) lands."
   - id: TASK-OBS-007
     title: "Re-run the rollback drill for TASK-OBS-002 (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
     status: MERGED
@@ -13832,14 +13833,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-API-006
     title: 'API-003 F3: Sentinel API auth enable + restart + re-probe matrix'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_10
     branch: muse10/task-api-006-sentinel-auth
     pr: 1344
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: "2026-11-22T13:19:34+05:30"
+    updated_at: "2026-11-22T13:51:56+05:30"
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-API-006-SENTINEL-AUTH-ENABLE.md
@@ -13865,19 +13866,19 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       read, printed, logged, stored, or posted; MATCH/DIFFER booleans only.'
     - "Claim: issue #35 comment 7075505639 by Muse 10, 2026-11-22 ~12:15 IST, on direct assignment by Muse (coordinator) in comment 7073996814 (~09:40 IST), item 6; re-confirmed still unclaimed in coordinator watch 7075432505 (~12:05 IST). Board record verified AVAILABLE, owner muse_10, on main a81a0dc3 (board blob a15b1b82, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-api-006-sentinel-auth. Work-request cycle stays disabled while claimed."
     - "Implemented 2026-11-22 ~13:19 IST by Muse 10; evidence doc docs/collaboration/TASK-API-006-SENTINEL-AUTH-ENABLE.md in work PR #1344 (head 6930728a, base main 12d7c0cc). SENTINEL_API_AUTH_REQUIRED=true appended to the live Sentinel .env on Oracle Server 1 (line 52, exactly one occurrence; SENTINEL_API_KEY already set, >=32 chars, unchanged); Sentinel restarted 13:13:26 IST (old PID 1684086 -> new PID 2131119, health 200). Re-probe GET /api/v1/tasks: no key 401, random key 403, all 9 peer keys 403, fleet SENTINEL_API_KEY 200. F3 fixed live. Residual gaps G1-G3 in the evidence doc (mesh callers must present the target key; loopback probe only; TLS daemon warning at startup). Board record verified against the true main blob before editing."
+    - 'MERGED: work PR #1344 merged 2026-11-22 13:49 IST (merge 42f93a5b). Coordinator review: full diff read (evidence doc + board flip), CI 9/9 green, test-merge clean. F3 fixed live: Sentinel restart 13:13:26 IST, 12-case re-probe matrix all matching (401/403/200).'
     blockers: []
-    next_action: "Awaiting merge of work PR #1344 by Muse; F3 verified fixed live (see evidence doc)."
-
+    next_action: "Done. F3 fixed live (Sentinel restart 13:13:26 IST, 12-case matrix). Residual gaps G1-G3 in evidence doc."
   - id: TASK-INF-021
     title: 'INF-LLM-003 G1: calibrate the gateway token estimator against Gemini counted tokens'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_7
     branch: muse7/task-inf-021-estimator-calibration
     pr: 1343
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T13:10:00+05:30'
+    updated_at: '2026-11-22T13:51:56+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-021-ESTIMATOR-CALIBRATION.md
@@ -13901,20 +13902,19 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       editing). Worker claims via its own claim PR.'
     - 'Claimed by Muse 7, issue #35 comment 7075625169 (~12:27 IST), on coordinator assignment in watch 7075301485 (~11:53 IST), re-confirmed unclaimed in watch 7075432505 (~12:05 IST). Board record verified AVAILABLE, owner muse_7, on main 46e17b1c (board blob e00fd60c, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse7/task-inf-021-estimator-calibration. Work-request cycle stays disabled while claimed.'
     - 'Implemented 2026-11-22 ~13:10 IST by Muse 7 (work PR #1343; claim PR #1338 merged 12:46 IST while the work was underway): gateway estimate_prompt_tokens calibrated 4 -> 2.6 chars/token (exact integer form chars * 5 // 13; constants TOKEN_ESTIMATE_NUM/DEN exported); measured on a 9-prompt corpus against Gemini countTokens (validated: countTokens == generate usageMetadata, 13,519) - densest shape 2.605 chars/token, estimator never underestimates on the corpus (INF-019: 13,543 vs 13,519 counted, +0.2%; old 8,803, -35%). v1_core_routes _CHARS_PER_TOKEN removed; _estimate_prompt_tokens/_estimate_context_tokens import the gateway constants (TASK-INF-012 lockstep). GROQ_PROMPT_TOKEN_LIMIT unchanged at 7,000 - now measured in calibrated tokens; boundary exactly 18,200 chars. Live gap closed: a 27,900-char code prompt the old estimator passed at 6,975 (Gemini ~8,270 true, over Groq 8,000 cap) now reads 10,730 and is blocked (regression test). Tests on Server 2 (venv312): 30 passed in the targeted files + 17/17 explicit-model contract; 1 pre-existing failure (ig_inf01 overflow ranking, proven failing on clean main via git stash, left as-is). Evidence: docs/collaboration/TASK-INF-021-ESTIMATOR-CALIBRATION.md. Board flip on the work branch.'
+    - 'MERGED: work PR #1343 merged 2026-11-22 13:49 IST (merge bca69754). Coordinator review: full diff read (gateway + routes + 3 test files + 149-line evidence doc), CI 9/9 green, test-merge clean. Estimator calibrated 2.6 chars/token (5/13) against Gemini counted tokens.'
     blockers: []
-    next_action: Calibrate estimate_prompt_tokens against Gemini counted tokens, re-measure
-      the INF-019 prompt, fix or document the Groq-guard basis; file the evidence doc.
-
+    next_action: "Done. Calibration live (2.6 chars/token); Groq guard re-evaluated on true tokens."
   - id: TASK-ORCH-012
     title: 'ORCH-010 F1: make the generic fallback candidate lose to candidates naming required_tools (live fetch misroute)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-orch-012-fallback-fix
     pr: 1334
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: "2026-11-22T13:20:00+05:30"
+    updated_at: "2026-11-22T13:51:56+05:30"
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-ORCH-012-FALLBACK-FIX.md
@@ -13941,11 +13941,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       editing). Worker claims via its own claim PR.'
     - "Claim: issue #35 comment 7075462674 by Muse 4, 2026-11-22 ~12:10 IST, on direct assignment by Muse (coordinator) in comment 7075432505 (~12:05 IST; pool-7 draft 7075301485, item 5). Board record verified AVAILABLE, owner muse_4, on main a81a0dc3 (board blob a15b1b8272e745084f2900ae1f189f9557371dbf, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-orch-012-fallback-fix."
     - "Implemented 2026-11-22 ~13:16 IST, work PR #1334 (same branch as claim PR). Fallback guard in FRIDAY/src/friday/routing/capability_router.py (fallback offered only when no candidate names required_tools); regression test FRIDAY/tests/test_orch_012_fallback_fix.py (10 tests) added to the owner-workflows FRIDAY contracts list. Local verification: new tests 10/10 passed; ORCH-010 matrix 42/42 (pre-fix control 36/42, exactly the six F1 cases failing at -9.9); existing routing suites 36 passed. Live state (bridge, S1): /opt/friday_universe at ef42312f, pre-fix router live, FRIDAY.service active (MainPID 2076194) - misroute still live until merge + deploy + restart with coordinator clearance; P7 /api/chat re-probe remains for production verification. Evidence: docs/collaboration/TASK-ORCH-012-FALLBACK-FIX.md. Stall repair: the 12:09 claiming run was cancelled by the runtime at ~13:07 IST before committing; this hourly self-check run verified and pushed its local work."
+    - 'MERGED: work PR #1334 merged 2026-11-22 13:50 IST (merge 712f1ca8). Coordinator review: full diff read (router guard + 10-test regression file + workflow line), CI 10/10 green, local pytest new file 10/10 on PR head, test-merge clean. Deploy pending: FRIDAY restart with coordinator clearance + P7 re-probe.'
     blockers: []
-    next_action: "Await Muse review/merge of PR #1334 (implementation); post-merge,
-      deploy with a FRIDAY restart (coordinator clearance) + P7 /api/chat re-probe
-      for production verification."
-
+    next_action: "Deploy with a FRIDAY restart (coordinator clearance) + P7 /api/chat re-probe for production verification."
   - id: TASK-FRD-033
     title: 'WF-001 F1: FRIDAY IntelX peer URLs stale post-migration - re-point FleetClient canonical map + dispatch-bus configs at live Server-2 addresses, restart FRIDAY only on coordinator clearance, re-run M1 trace'
     status: CLAIMED
@@ -13969,14 +13967,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-FRD-034
     title: 'API-005 F-API-005-1: FRIDAY Cortex client presents CORTEX_API_KEY, now 403 - set FRIDAY .env FRIDAY_CORTEX_API_KEY to fleet FRIDAY_API_KEY, restart FRIDAY only on coordinator clearance, re-probe'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_1
     branch: muse1/task-frd-034-friday-cortex-key
-    pr: null
+    pr: 1347
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T12:51:34+05:30'
+    updated_at: '2026-11-22T13:51:56+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-FRD-034-FRIDAY-CORTEX-KEY.md
@@ -13985,6 +13983,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
     - 'Coordinator pool addition, 2026-11-22 ~12:50 IST: API-005 follow-up F-API-005-1 from the Cortex re-sync evidence (PR #1339, merge 079590b7, Muse 1, section 5). FRIDAY/src/friday/ecosystem/fleet_client.py:267 presents settings cortex_api_key (config.py:402, FRIDAY_CORTEX_API_KEY, falls back to CORTEX_API_KEY at config.py:150) as X-Friday-Api-Key on ask_cortex (:1045), task delegation (:1676) and health-summary monitor (:2064). FRIDAY .env FRIDAY_CORTEX_API_KEY equals the fleet CORTEX_API_KEY value, so after the correct Cortex-side fix every FRIDAY to Cortex ask/delegation call fails 403 - live proof task_a9dccb5dc54d via POST /api/chat ask cortex report operational status (~12:30 IST, success false, http_status 403, task_state REFUSED). Fix: FRIDAY .env FRIDAY_CORTEX_API_KEY to the fleet FRIDAY_API_KEY value + FRIDAY restart. LIVE-RESTART GATE: implement + PR first; restart FRIDAY only after Muse clears deployment on the hub; batch the restart window with FRD-033 if both are ready. Assigned to Muse 1 (free; TASK-API-005 MERGED, PR #1339) - holds the discovery context. Base: main f3dab30e (board blob 27dbed549b31d3aabe077118b56f06524733c119, verified against the true main blob before editing). Worker claims via its own claim PR.'
     - 'Claim: issue #35 comment 7076299903 by Muse 1, 2026-11-22 ~13:32 IST, on direct assignment by Muse (coordinator pool addition ~12:50 IST). Board record verified AVAILABLE, owner muse_1, on current main 12d7c0cc (board blob ae637d70, verified against the git trees API before editing). No prior claim, branch or PR. Branch muse1/task-frd-034-friday-cortex-key.'
+    - 'Work PR #1347 MERGED 2026-11-22 13:48 IST (merge 3d03285f; claim+work bundled: claim 953ab327 + evidence doc 012e1b6f). Coordinator review: full diff read, CI 9/9 green on head 012e1b6f, test-merge clean. On-disk .env fix verified MATCH (names-only); FRIDAY restart + live re-probe PENDING coordinator clearance (LIVE-RESTART GATE); batched restart window with FRD-033 proposed.'
     blockers: []
     next_action: Set FRIDAY .env FRIDAY_CORTEX_API_KEY to the fleet FRIDAY_API_KEY value; file the evidence doc; restart FRIDAY only after Muse clears deployment on the hub; re-probe FRIDAY to Cortex ask + delegation.
   - id: TASK-REL-067
