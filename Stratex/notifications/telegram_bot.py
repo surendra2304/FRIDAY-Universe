@@ -29,6 +29,7 @@ from dotenv import load_dotenv
 import requests
 
 from logger import get_logger
+from notifications.telegram_send_log import append_send_log, classify_send_type
 from panic_state import is_kill_switch_locked, is_panic_active, write_panic_state
 
 load_dotenv()
@@ -54,6 +55,17 @@ def _http_ok(resp: Any, data: Any) -> bool:
     status = getattr(resp, "status_code", None)
     status_ok = not isinstance(status, int) or 200 <= status < 300
     return status_ok and bool(data.get("ok"))
+
+
+def _telegram_message_id(data: Any) -> int | None:
+    """Telegram message_id from a sendMessage/sendPhoto response, else None."""
+    if isinstance(data, dict):
+        result = data.get("result")
+        if isinstance(result, dict):
+            message_id = result.get("message_id")
+            if isinstance(message_id, int):
+                return message_id
+    return None
 
 
 def _positions_label(value: Any) -> str:
@@ -334,8 +346,18 @@ class TelegramBotClient:
     # ==========================================================================
     # OUTBOUND NOTIFICATIONS
     # ==========================================================================
-    def send_message(self, text: str, parse_mode: str = "HTML") -> bool:
-        """Send a message to the authorized chat ID."""
+    def send_message(
+        self, text: str, parse_mode: str = "HTML", send_type: str | None = None
+    ) -> bool:
+        """Send a message to the authorized chat ID.
+
+        A confirmed delivery is appended to the persistent send log
+        (TASK-STR-DAEMON-004: Stratex/state/telegram_sends.jsonl) with its
+        UTC timestamp, send type, dedupe key and Telegram message id.
+        Dedupe-suppressed and failed sends are never logged — the log holds
+        one line per send that actually happened. Logging never changes the
+        send behaviour or the return value.
+        """
         if not self.is_configured:
             logger.debug("[TELEGRAM] Bot not fully configured; message suppressed.")
             return False
@@ -376,6 +398,9 @@ class TelegramBotClient:
                     retry_data = retry_resp.json()
                     if _http_ok(retry_resp, retry_data):
                         _mark_delivered()
+                        self._log_send(
+                            text, dedupe_key, _telegram_message_id(retry_data), send_type
+                        )
                         logger.info("[TELEGRAM] Message sent as plain text (%d chars).", len(text))
                         return True
                 logger.warning(
@@ -385,12 +410,37 @@ class TelegramBotClient:
                 self._sent_text_cache.pop(dedupe_key, None)
                 return False
             _mark_delivered()
+            self._log_send(text, dedupe_key, _telegram_message_id(data), send_type)
             logger.info("[TELEGRAM] Message sent (%d chars).", len(text))
             return True
         except Exception as exc:
             self._sent_text_cache.pop(dedupe_key, None)
             logger.warning("[TELEGRAM] Error sending message: %s", exc)
             return False
+
+    def _log_send(
+        self,
+        text: str,
+        dedupe_key: str | None,
+        message_id: int | None,
+        send_type: str | None,
+    ) -> None:
+        """Append a confirmed delivery to the persistent send log.
+
+        Best-effort only (TASK-STR-DAEMON-004): logging must never break a
+        send, so any failure here is swallowed. Called only after Telegram
+        confirmed delivery — dedupe-suppressed and failed sends never
+        reach this method, so the log holds exactly one line per send.
+        """
+        try:
+            append_send_log(
+                text=text,
+                send_type=send_type or classify_send_type(text),
+                dedupe_key=dedupe_key,
+                message_id=message_id,
+            )
+        except Exception:
+            pass
 
     def send_photo(self, photo_path: str, caption: str = "", parse_mode: str = "HTML") -> bool:
         """Send a chart/image to the authorized chat."""
@@ -409,6 +459,15 @@ class TelegramBotClient:
             if not data.get("ok"):
                 logger.warning("[TELEGRAM] SendPhoto failed: %s", data.get("description"))
                 return False
+            # A photo is a Telegram send too (TASK-STR-DAEMON-004): log it
+            # with its caption as the identifying line. Photos carry no
+            # dedupe key (send_message's 120s dedupe does not apply).
+            self._log_send(
+                caption or os.path.basename(photo_path),
+                None,
+                _telegram_message_id(data),
+                "photo",
+            )
             return True
         except Exception as exc:
             logger.warning("[TELEGRAM] Error sending photo: %s", exc)
