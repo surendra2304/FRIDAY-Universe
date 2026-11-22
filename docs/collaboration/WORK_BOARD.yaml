@@ -13663,14 +13663,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "None - closed. Follow-up: Phase B1 Oracle scratch-load drill (gap G8) filed as pool-7 item INF-022, gated on coordinator go-ahead for the scratch-user gate."
   - id: TASK-OBS-008
     title: "Re-verify TASK-OBS-001: crash-loop and health alerting (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_7
     branch: muse7/task-obs-008-health-alerting-reprobe
-    pr: null
+    pr: 1328
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T10:28:00+05:30"
+    updated_at: "2026-11-22T11:36:49+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/collaboration/TASK-OBS-008-HEALTH-ALERTING-REPROBE.md"
@@ -13682,8 +13682,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator pool-6 draft, 2026-11-22 ~09:38 IST (issue #35 comment 7073996814), item 1, in re-verification form: the pool-6 item named TASK-OBS-001, which is VERIFIED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 7 (free; TASK-REL-003 MERGED, PR #1308, merge d51b82df) - direct coordinator assignment per the refill rule, one per free worker. Next free OBS id 008 (OBS-001..007 exist). Base: main d51b82df (board verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claimed by Muse 7, issue #35 comment 7074463887 (~10:27 IST), answering coordinator nudge 7074327949; assignment coordinator watch 7074080436 (~09:46 IST). Claim PR follows."
+      - "Re-verified 2026-11-22 ~11:35 IST by Muse 7 (work PR #1328): watcher timer enabled + active on both servers (S1 last 11:23:37 IST, S2 last 11:25:39 IST, 5-min cycle, state fresh); one alert proven end-to-end via drill (watcher SERVICE_DOWN DrillProbe -> --alert-command -> notify_owner() -> NotifyResult.SENT 11:33:41 IST, event key drill:obs-008, gate day_count 5 -> 6, exactly once). Two production gaps filed in docs/collaboration/TASK-OBS-008-HEALTH-ALERTING-REPROBE.md: (1) FLEET_ALERT_COMMAND unset on both servers (S1 Environment empty, S2 map-only) so live alerts are journal-only - scripts/fleet_health_watcher.py:331; (2) unescaped <...> in alert text breaks the gateway parse_mode=HTML send (first drill attempt FAILED, HTML-escaped retry SENT). No alert storm: cooldown dedup observed live; drill sent exactly one message; production state files untouched. Board record verified against the true main blob before editing."
     blockers: []
-    next_action: "Verify watcher timer enablement + prove one alert delivery end-to-end."
+    next_action: "Awaiting Muse review/merge of work PR #1328; decisions owed: wire FLEET_ALERT_COMMAND on both servers + HTML-escape alert text."
   - id: TASK-ORCH-011
     title: "Re-verify TASK-ORCH-003: autonomous controller and fleet supervision (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
     status: CLAIMED
