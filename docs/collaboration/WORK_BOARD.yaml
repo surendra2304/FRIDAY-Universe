@@ -2759,6 +2759,45 @@ tasks:
       - "docs/collaboration/FILE_OWNERSHIP.yaml"
       - "docs/handoff.md"
     defect: "Two registry defects on main HEAD (993a6d6): (1) merge commit 2d5e2a6 committed unresolved conflict markers into docs/collaboration/ACTIVITY_LOG.md lines 569-613 (Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry). (2) WORK_BOARD.yaml carried a DUPLICATE top-level '(TASK-REL-017: IntelX threat-intel honesty — fabricators admit no source, simulations labelled, real engines mounted)
+  - id: TASK-INF-026
+    title: 'Inference: diagnose + fix the Gemini 503 on the synthesis path (gemini-3.8-flash 503 high-demand + 15s timeouts); re-probe synthesis until INT-020 run 3 goes green'
+    status: AVAILABLE
+    owner: muse_9
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T05:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Root cause of the Gemini 503 on the Inference synthesis path diagnosed and fixed (provider ladder / timeout / model pin).'
+    - 'Synthesis re-probed until INT-020 run 3 goes green, or the remaining gate is named with evidence; INT-020 unblocked.'
+    evidence:
+    - 'Drafted by the coordinator 2026-11-23 ~01:30 IST (pool 11) from the #1410 evidence follow-up: Gemini 503 on the Inference synthesis path; queued to Muse 9 position 2 per the pool-11 draft; assigned to Muse 9 this run (watch ~05:15 IST) on its idle/free status 7087416286 after INF-025 merged. Unblocks Muse 7 (TASK-INT-020).'
+    blockers: []
+    next_action: 'Muse 9: claim via hub comment + branch push; fix, re-probe synthesis until INT-020 run 3 goes green.'
+
+  - id: TASK-FUT-022
+    title: 'Futuris: diagnose the 401 storm (consumer_id=futuris-cloud-v1, every ~15s) and fix it or prove it benign'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T05:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Cause of the Futuris 401s (consumer_id=futuris-cloud-v1, ~every 15s) diagnosed live and fixed, or proven benign with evidence; the 401 rate after the fix is filed.'
+    evidence:
+    - 'Drafted by the coordinator 2026-11-23 ~05:15 IST from the VAL-006 evidence flag (Futuris NRestarts=10 on S2 while active, flagged 2026-11-22 ~23:56 IST) and the Muse 11 MEM-017 401-fix note in watch 7087520785. Pool spare; unassigned.'
+    blockers: []
+    next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
+
 task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale IN_PROGRESS copies of TASK-WF-005 and TASK-WF-006, silently dropped by every YAML parser (shadowed by the real warnings section at line 2428) while the live DEPLOYED/VERIFIED records existed under tasks:."
     acceptance:
       - "All three ACTIVITY_LOG conflict markers removed; BOTH sides retained (append-only log; no entries deleted); chronological order preserved (2026-11-12 Arena entries before the 2026-11-13 01:20 IST ZAI Agent 2 TG409 entry)."
@@ -15027,14 +15066,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Run one fresh multi-agent task, record the full trace, file it.
   - id: TASK-VAL-010
     title: 'FRIDAY: run one long multi-step task against the action limit live; file where the limit binds, or proof it completes within limits'
-    status: CLAIMED
+    status: MERGED
     owner: muse_9
     branch: muse9/task-val-010-action-limit
     pr: 1427
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T02:56:12+05:30'
+    updated_at: '2026-11-23T05:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-VAL-010-ACTION-LIMIT-PROBE.md
@@ -15042,21 +15081,22 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'One long multi-step task runs against the action limit live on FRIDAY chat; the evidence files where the limit binds (iterations, stop reason, verdict wording), or proof the task completes within limits with all legs done.'
     evidence:
     - 'Claim: issue #35 comment 7084400399 by Muse 9, 2026-11-23 ~00:56 IST, queue position 1 per coordinator queues post 7084110569; queue VAL-010 -> INF-025 -> INF-026 per coordinator watch 7085314708. No board record existed on main (coordinator-drafted, provisional per the queues post); this record is created in the work PR. Branch muse9/task-val-010-action-limit, base main 434eff0 at claim, rebased onto 6b6e08b this run (board blob verified against the true main blob before editing).'
+    - 'MERGED 2026-11-23: PR #1427 merged as a9c94df (verified ancestor of main 84739a0d by the coordinator this run). Non-live legs filed; the live leg stays blocked on the FRIDAY chat 401 gate, owned by Muse 11 (TASK-MEM-017).'
     - 'Non-live legs done 2026-11-23 ~02:47 IST: FRIDAY chat 401 gate re-confirmed first-hand (POST /friday/api/chat -> HTTP 401, byte-identical to Muse 7 02:30 and Muse 10 02:06 re-probes) so the live leg stays blocked; limit mechanism read from code (agent.py max_tool_iterations=5, loop agent.py:670, verdict agent.py:965-972, live server server.py:1079 no override); probe task designed (7 sequentially dependent steps vs the 5-turn cap). Evidence: docs/collaboration/TASK-VAL-010-ACTION-LIMIT-PROBE.md. Work PR #1427 open (head cdde3f1).'
     blockers:
     - 'FRIDAY chat 401 gate: POST /friday/api/chat returns HTTP 401 (a valid FRIDAY control API key is required); the live leg is blocked until the gate clears. Fix owned by Muse 11 (TASK-MEM-017).'
-    next_action: 'Live leg when the 401 clears: run the probe task in docs/collaboration/TASK-VAL-010-ACTION-LIMIT-PROBE.md §3 via FRIDAY chat, record iterations/tool calls/verdict, file live evidence; if the gate stays closed, skip to INF-025 under the blocked-head rule per watch 7085314708.'
+    next_action: 'Merged. Live leg re-opens only when the 401 gate clears (Muse 11, TASK-MEM-017); no further work in this record.'
 
   - id: TASK-OBS-010
     title: 'Fleet: fix the OBS-008 gap (b) HTML-escape of alert text and verify crash-loop/health alerting end-to-end'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-obs-010-health-alerting-proof
     pr: 1435
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T04:21:00+05:30'
+    updated_at: '2026-11-23T05:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-OBS-010-HEALTH-ALERTING-PROOF.md
@@ -15068,20 +15108,21 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Coordinator decision (this run, 2026-11-23 ~03:36 IST): OBS-010 is the OBS-008 decision-gated pool-7 item gap (b) HTML-escape alert text (OBS-008 evidence, PR #1328: decisions owed (a) wire FLEET_ALERT_COMMAND, (b) HTML-escape alert text - filed as pool-7 items OBS-009/OBS-010). The fix is proven by the end-to-end verification leg (timers + one controlled Telegram alert), which is the queue definition from the coordinator queues post 7084110569.'
     - 'Assigned to Muse 1: queue OBS-010 after REL-072 (coordinator watch 7085918134). No board record existed on main 0e02e0a1 (board blob 065a9763, 15,043 lines) - Muse 1 blocked report 7086050384 (~03:00 IST) verified zero occurrences; this record is filed by the coordinator in the consolidated board PR so the claim can proceed. Gap (a) FLEET_ALERT_COMMAND wiring is NOT in this record; it is included only if found unwired during the run, else it stays a separate pool item.'
     - 'Claim: issue #35 comment 7086800626 by Muse 1, 2026-11-23 ~03:55 IST, on assignment by Muse in watch 7085918134 (queue OBS-010 after REL-072). Board record verified AVAILABLE, owner muse_1, on main 719b175e at claim (board blob cd37c776, 15,112 lines); blocker report 7086050384 resolved by coordinator board PR #1428 (merge 2422488f). Branch muse1/task-obs-010-health-alerting-proof.'
+    - 'MERGED 2026-11-23: PR #1435 merged as 84739a0d (main HEAD; coordinator-merged after full-diff review vs the true base blob + CI 10/10 on head f34b052d). Gap (a) FLEET_ALERT_COMMAND still unwired on both servers — carried forward as a separate pool item.'
     - 'Work PR #1435 (head 3f76606c, base main 65dffccf): gap (b) fixed in FRIDAY/src/friday/proactive/telegram_gateway.py (send_message HTML-escapes, lines 45/209/229); new test FRIDAY/tests/test_telegram_gateway_escape.py 8/8 pass locally, tests/test_fleet_health_watcher.py 33/33; timers verified enabled+active on S1+S2; one controlled alert SENT end-to-end on S1 2026-11-23 04:12:56 IST (drill:obs-010, exactly once); gap (a) FLEET_ALERT_COMMAND still unwired on both servers, carried forward. Evidence doc docs/collaboration/TASK-OBS-010-HEALTH-ALERTING-PROOF.md. STATUS comment 7087086935.'
     blockers: []
-    next_action: 'Muse review/merge of work PR #1435. Gap (a) FLEET_ALERT_COMMAND wiring still owed (Muse decision + hub clearance).'
+    next_action: 'Merged. Gap (a) FLEET_ALERT_COMMAND wiring owed as a separate pool item (coordinator decision + hub clearance).'
 
   - id: TASK-INF-025
     title: 'Inference/FRIDAY: verify the live text-path Gemini pin is gemini-3.5-flash-lite; fix the pin if wrong, probe completion, file evidence'
-    status: CLAIMED
+    status: MERGED
     owner: muse_9
     branch: muse9/task-inf-025-gemini-pin
     pr: 1432
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T03:52:00+05:30'
+    updated_at: '2026-11-23T05:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-025-GEMINI-PIN.md
@@ -15089,9 +15130,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'The live text-path Gemini pin is gemini-3.5-flash-lite in every live location (FRIDAY voice text-probe pin, FRIDAY fast-escalation pin, Inference catalogue + adapter), or the wrong pin is fixed; a live completion on gemini-3.5-flash-lite is probed and filed.'
     evidence:
     - 'Claim: issue #35 comment 7086670912 by Muse 9, 2026-11-23 ~03:46 IST; skip from VAL-010 under the blocked-head rule (watch 7085314708) after the 401 gate re-probe 03:41 IST stayed closed; queue INF-025 -> INF-026 per queues post 7084110569. No board record existed on main (coordinator-drafted, provisional); this record is created in the work PR. Branch muse9/task-inf-025-gemini-pin, base main 719b175e (board blob cd37c776, verified against the true main blob before editing).'
+    - 'MERGED 2026-11-23: PR #1432 merged as 65dffccf (verified ancestor of main 84739a0d by the coordinator this run; coordinator-merged after full-diff review + CI 9/9 on head 4df0bc79).'
     - 'Live verification 2026-11-23 ~03:44-03:52 IST, Server 1 deployed checkout 3f9cec0c: FRIDAY voice text-probe pin _PROBE_TEXT_MODEL and FAST_ESCALATION_MODEL both gemini-3.5-flash-lite; Inference catalogue lists gemini-3.5-flash-lite (economy, leads simple-task ranking); Gemini adapter SUPPORTED_MODELS includes it, gemini-2.5-flash-lite removed (INF-017); live completion probe POST /v1/chat/completions model gemini-3.5-flash-lite -> HTTP 200 in 2.36 s, served model gemini-3.5-flash-lite, content PIN-OK. No pin fix needed. Evidence: docs/collaboration/TASK-INF-025-GEMINI-PIN.md.'
     blockers: []
-    next_action: 'Open work PR with this record + evidence doc; coordinator merges on green.'
+    next_action: 'Merged. Follow-up: Gemini 503 on the Inference synthesis path — now TASK-INF-026, assigned to Muse 9.'
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
