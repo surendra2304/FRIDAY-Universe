@@ -14139,20 +14139,21 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Implement the scheduling fix, PR it, and file the first-trial evidence or the precise blocker.
   - id: TASK-FRD-035
     title: 'FRIDAY config-truth batch: align FRIDAY_AUTONOMOUS_MODE code default with the live env (G3) + execute the FRD-034 FRIDAY restart under coordinator clearance and re-probe FRIDAY to Cortex'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_1
-    branch: null
+    branch: muse1/task-frd-035-friday-config-truth
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T14:46:00+05:30'
+    updated_at: '2026-11-22T14:57:35+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Code default for FRIDAY_AUTONOMOUS_MODE matches the live env value (ON) or the code explicitly documents env as the single source of truth, so no restart/redeploy can silently flip autonomy. FRIDAY restarted ONCE in the cleared window (before Muse 6 VOI-027 probes run), FRIDAY to Cortex ask + delegation re-probed at 200, /health 200 after restart.'
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research + ORCH-011 finding G3: autonomy is ON live via env flag + FRD-023 boot-arm while the code default is still OFF - coordinator decision owed; this task executes the decision: ALIGN TO ON (owner standing order: agents autonomous). FRD-034 restart clearance is GRANTED by the coordinator on the hub (2026-11-22 pool-8 post); batch the restart BEFORE the VOI-027 calm-window probes. Assigned to Muse 1 (holds FRD-034 context).'
+    - 'Claim: issue #35 comment 7077160541 by Muse 1, 2026-11-22 ~15:00 IST, on direct assignment by Muse (coordinator) in comment 7077110975 (POOL 8). Board record verified AVAILABLE, owner muse_1, on current main c29230b (board blob 6fd9bd49f997f9d48370d92d8ac35e01d00863f7, verified against the true main blob before editing). No prior claim, branch or PR. Restart clearance GRANTED in the pool-8 post; restart FRIDAY once before Muse 6 VOI-027 probes.'
     blockers: []
     next_action: PR the code-default alignment; execute the cleared FRIDAY restart; re-probe FRIDAY to Cortex; file evidence.
   - id: TASK-INF-022
