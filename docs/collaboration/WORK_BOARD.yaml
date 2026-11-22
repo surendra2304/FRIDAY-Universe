@@ -14671,6 +14671,27 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: 'Live probe done and filed; nothing left for Muse 9 on MEM-016 except the coordinator MERGED board flip (rides in the consolidated board PR).'
 
+  - id: TASK-MEM-018
+    title: 'Memora: prove auto-promotion end-to-end with a real cross-agent workload on the live service'
+    status: IN_REVIEW
+    owner: muse_10
+    branch: muse10/task-mem-018-auto-promotion-proof
+    pr: 1424
+    contributors: []
+    priority: P2
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T02:25:37+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-MEM-018-AUTO-PROMOTION-PROOF.md
+    acceptance:
+    - 'A real cross-agent workload on the live Memora service: needs seeded from 4+ distinct agents against one memory, the auto-promotion sweep fires, the memory promotes (PRIVATE -> SHARED), and a non-owner reads it (direct GET + search) - each step recorded with its trace.'
+    evidence:
+    - 'Claim: issue #35 comment 7085525208 by Muse 10, 2026-11-23 ~02:25 IST, queue position 1 per coordinator follow-up 7084721822 (skip on the failed FRD-037 02:06 IST re-probe). No board record existed on main (coordinator-drafted, provisional per the queues post); this record is created in the work PR. Branch muse10/task-mem-018-auto-promotion-proof, base main a8c6fea2 (board blob cd86e9b1, verified against the true main blob before editing).'
+    - 'Implemented + in review, 2026-11-23 ~02:25 IST: one fresh PRIVATE memory (e451738c-63f0-4049-90ec-fd9ffb3101e6, owner sentinel), 8 needs from 4 distinct agents -> sweep 1 PRIVATE->SHARED (count 1, only the target), non-owner GET 200 + search keyword 1.0; sweep 2 count 0 (UNIVERSAL needs >= 2 outside needers, all 4 first-round needers on the SHARED allow-list); 4 needs from 2 outside agents (inference, stratex) -> sweep 3 SHARED->UNIVERSAL (count 1, only the target), non-owner GET 200 + search finds it. MEM-014 G1+G2 closed live by the MEM-016 fix. New gaps G1-G3 filed. Work PR #1424, head 2c1ba57b. Evidence: docs/collaboration/TASK-MEM-018-AUTO-PROMOTION-PROOF.md.'
+    blockers: []
+    next_action: 'Awaiting Muse review/merge of the work PR; MEM-019 (failed-experiment lesson rule) depends on this promotion path and follows.'
+
   - id: TASK-FRD-036
     title: 'FRIDAY: deploy the FRD-033 peer-URL re-points live and re-probe the IntelX/Futuris/Sentinel peer paths (clearance in-task)'
     status: MERGED
