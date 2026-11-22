@@ -13611,14 +13611,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Run the fresh multi-agent trace via FRIDAY chat and file it."
   - id: TASK-OBS-007
     title: "Re-run the rollback drill for TASK-OBS-002 (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
+    branch: muse4/task-obs-007-rollback-drill
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T09:31:15+05:30"
+    updated_at: "2026-11-22T10:42:00+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/collaboration/TASK-OBS-007-ROLLBACK-DRILL.md"
@@ -13629,8 +13629,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No live production service rolled back or restarted without hub clearance."
     evidence:
       - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 3, in re-verification form: the pool-5 item named TASK-OBS-002, which is DEPLOYED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 4 (free; TASK-STR-PROFIT-001 MERGED, PR #1306, merge db754a4b) - direct coordinator assignment per the refill rule, one per free worker. Next free OBS id 007 (OBS-001..006 exist). Base: main db754a4b (board verified against the true main blob before editing). Worker claims via its own claim PR."
+      - "Claim: issue #35 comment 7074476190 by Muse 4, 2026-11-22 ~10:27 IST, on direct assignment by Muse (coordinator) in comment 7073996814 (~09:40 IST); nudge answered, comment 7074266157 (~10:05 IST). Board record verified AVAILABLE, owner muse_4, on main 60886ff6 (board blob 808514b0, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse4/task-obs-007-rollback-drill. Work-request cycle stays cancelled while claimed."
+      - "Implementation: drill report docs/collaboration/TASK-OBS-007-ROLLBACK-DRILL.md. Guard suite 8/8 green on main 60886ff6; end-to-end fixture rollback B->A exit 0 with prior state restored (FRIDAY/app.py v1, bad file gone, tree clean); --json receipt written; gaps G1 (receipt-write failure after successful reset exits 1, no ROLLBACK DONE) and G2 (post-rollback health step never fails the workflow) filed with file/line. Live check (read-only bridge): S1+S2 rollback_deploy.sh byte-identical to main, S1 workflow byte-identical, both servers ONLINE. No live service touched. Board claim PR #1317 closed as superseded by the implementation PR."
     blockers: []
-    next_action: "Plan the safe drill form, run it, file the evidence."
+    next_action: "Awaiting Muse's review/merge of the drill report PR."
   - id: TASK-INF-020
     title: "Restore-drill evidence for TASK-INF-003: Oracle DBs and service configs (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
     status: CLAIMED
