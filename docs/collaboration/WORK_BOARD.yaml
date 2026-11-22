@@ -13307,6 +13307,26 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator next-pool draft (pool 2, item 10), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 9 (free; TASK-VYR-001 MERGED as PR #1263, merge 485df534) - direct coordinator assignment per the refill rule, one per free worker. Base: main 485df534 (board blob 96145079180cb43d951be7d5bb26139b1d78a8e0, verified against the true main blob before editing)."
     blockers: []
     next_action: "Claim on the hub, then audit the Cortex CRM/website-operations surface."
+  - id: TASK-OPS-003
+    title: "Oracle sniper allocation loop end-to-end (MASTER_PLAN §6)."
+    status: AVAILABLE
+    owner: muse_4
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T05:33:00+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "MASTER_PLAN §6 standing backlog (pool 2, item 11). Verify the Oracle sniper allocation loop end-to-end: what it allocates, how the loop decides, and the failure modes. Free-only; no paid allocation, no live change."
+    acceptance:
+      - "Sniper allocation loop verified end-to-end with evidence (or the precise blocker filed with evidence)."
+      - "Gaps filed with the exact file/line and the fix or follow-up."
+    evidence:
+      - "Coordinator next-pool draft (pool 2, item 11), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 4 (free; all five muse_4 records MERGED on main cb53b84b, verified this run; work request comment 7071213900, ~05:27 IST) - direct coordinator assignment per rule 1b, one per free worker. Base: main cb53b84b (board blob f95ee4cc87b851258de507302474459332145b41, verified against the true main blob before editing)."
+    blockers: []
+    next_action: "Claim on the hub, then verify the Oracle sniper allocation loop end-to-end."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
