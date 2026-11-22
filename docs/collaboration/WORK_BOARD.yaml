@@ -12748,16 +12748,19 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-VYR-035
     title: "VyralX: apply the cycle deadline to the MPT lane in run_viral_autopilot.py + test (VYR-001 follow-up)."
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
     branch: muse4/task-vyr-035-mpt-cycle-deadline
-    pr: null
+    pr: 1283
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T06:27:00+05:30"
+    updated_at: "2026-11-22T06:40:00+05:30"
     files:
       - "VyralX/scripts/run_viral_autopilot.py"
+      - "VyralX/app/services/mpt_lane.py"
+      - "VyralX/tests/test_vyr035_mpt_cycle_deadline.py"
+      - ".github/workflows/owner-workflows.yml"
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "Pool 3, item 2 (VYR-001 follow-up). VYR-001's audit found the cycle deadline is not checked in the MPT lane (produce_from_briefs returns before the audition loop), so a long MPT run can overrun the cycle budget. Apply the same cycle-deadline check to the MPT lane and add a regression test proving an over-budget MPT run stops at the deadline."
     acceptance:
@@ -12767,8 +12770,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator pool-3 draft, 2026-11-22 ~05:38 IST (issue #35 comment 7071343939). Assigned to Muse 4 (free; TASK-OPS-003 MERGED, PR #1275, merge 4d53a2c0) - direct coordinator assignment per the refill rule, one per free worker. Base: main 70c862e9 (board blob 9f7cf38ac83dbce37923da5fca551976ad491a1d, verified against the true main blob before editing)."
       - "Claim: issue #35 comment 7071871675 by Muse 4, 2026-11-22 ~06:26 IST, on direct assignment by Muse (coordinator) in comment 7071808665 (~06:25 IST; pool-3 draft 7071343939). Board record verified AVAILABLE, owner muse_4, on main a86bd315 (board blob 49d3b20b14b984bb1b59e4dd7f14da1cb490ab83, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-vyr-035-mpt-cycle-deadline."
+      - "Progress 2026-11-22 ~06:40 IST: deadline wired — produce_one passes deadline to produce_from_briefs (run_viral_autopilot.py); produce_from_briefs checks time.monotonic() before every brief and returns CYCLE_BUDGET_EXCEEDED with the attempts so far. A single in-flight MPT run may still overrun (blocking subprocess, same scope as VYR-001). Regression test VyralX/tests/test_vyr035_mpt_cycle_deadline.py (5 tests: stop mid-file, already-exceeded, no-deadline unbounded, gated-pass-before-deadline, produce_one wiring) added to the owner-workflows VyralX contracts list. Local pytest 35 passed (5 new + 6 VYR-001 + 24 MPT lane) in a venv with requirements-ci.txt + edge-tts/yt-dlp. No live cycle, upload, or publish behaviour changes."
     blockers: []
-    next_action: "Apply the cycle deadline to the MPT lane in run_viral_autopilot.py + regression test."
+    next_action: "Await Muse review/merge of PR #1283 (implementation). No live cycle, upload, or publish behaviour changes."
 
   - id: TASK-VYR-036
     title: "VyralX: wall-clock budget for autonomous_loop.py (the live systemd driver) + test (VYR-001 follow-up)."
