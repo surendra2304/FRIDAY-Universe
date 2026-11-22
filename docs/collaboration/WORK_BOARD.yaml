@@ -3169,14 +3169,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-REL-004
     title: "Health-endpoint honesty (design): agents report capability state, not just process liveness"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_9
     branch: muse9/task-rel-004
     pr: 1311
     contributors: []
     priority: P1
     created_at: "2026-11-14T12:45:00+05:30"
-    updated_at: "2026-11-22T09:49:00+05:30"
+    updated_at: "2026-11-22T09:56:26+05:30"
     files:
       - "docs/collaboration/TASK-REL-004-HEALTH-CONTRACT.md"
     defect: "Every agent /health reports evidence_class process_liveness; a degraded agent (e.g. Stratex with engine offline) still presents status ok / HTTP 200 at the top level, and FRIDAY's fleet-status answer can only cite reachability. Design task only in this step."
@@ -3188,8 +3188,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Reassigned 2026-11-22 ~08:03 IST by coordinator (pool 4 last item / pool 5 item 1): record was IN_PROGRESS under retired owner muse_ai since 2026-11-14 with no progress; reassigned to Muse 9 (free; TASK-CTX-001 MERGED, PR #1295). Base: main e3fff574 (board blob c67b98d6524940da1330bbfe37cb86407bf1a876, verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claim: issue #35 comment 7073401093 by Muse 9, 2026-11-22 ~08:43 IST, on direct assignment by Muse (coordinator) in comment 7072956811 (~08:01 IST); nudge comment 7073222687 (~08:25 IST). Board record verified AVAILABLE, owner muse_9, on main ed3385da (board blob 620fb310715bd06f2473a87c91752e5f0286ab83, verified against the contents API and local rev-parse before editing). No prior claim, branch or PR. Branch muse9/task-rel-004."
       - "Design: docs/collaboration/TASK-REL-004-HEALTH-CONTRACT.md (540 lines) — all 10 agents' /health + /ready surveyed from source at base main f113d71; contract: derived status, evidence_class capability_report, capabilities/dependencies maps (ok/degraded/unavailable/unknown) + reason codes, HTTP follows status (ok 200 / degraded 503), FRIDAY fleet-status ONLINE only for contract bodies with all required capabilities ok. Work PR #1311 (branch muse9/task-rel-004, base main f113d71, ahead 1 / behind 0, +540/-0, 1 file). Verified first-hand by Muse 9 (spot-checks: FRIDAY, Memora, Stratex 90 s/900 s bounds, Forge shadowed health, Cortex/VyralX constants, FleetClient classifier); one draft correction (8→9 of 10 agents return 200 while degraded). Not verified against running agents; open questions in doc §6."
+      - "MERGED 2026-11-22 ~09:56 IST: PR #1311 merged (merge 01254f14) after coordinator review in full - design docs/collaboration/TASK-REL-004-HEALTH-CONTRACT.md (540 lines) read in full: all 10 agents' /health + /ready surveyed from source; contract (derived status, evidence_class capability_report, capabilities/dependencies maps, HTTP follows status, FRIDAY ONLINE only for contract bodies); key claims spot-checked first-hand (fleet_client.py:36 string-only classifier, Memora health.py 200/503 + process_liveness label, Forge health_router mounted first at main.py:414 shadowing routes.py:74); open questions in doc section 6 stated honestly, including no live verification done; section 7 review-on-#35 recorded by this merge + hub post, implementation is a separate task (pool 6 item 9); first head e90a8e73 had 3 CI jobs cancelled by the worker's own follow-up push (board flip added in 5ae37863) - cancelled runs were superseded, not failures; CI 9/9 green/skipped on merged head 5ae37863; test-merge onto main 3b77e2c6 clean; validator VALID, 615 tasks."
     blockers: []
-    next_action: "Await Muse review of the design on issue #35; implementation is a separate task, opened only after the review is recorded."
+    next_action: "None - closed. Design review recorded on issue #35 by this merge + hub post; implementation is a separate task (pool 6 item 9, REL-006)."
 
   - id: TASK-REL-005
     title: "Fix FRIDAY memory round-trip: remember-write (local_only fallback) is invisible to recall"
@@ -13671,6 +13672,28 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator pool-6 draft, 2026-11-22 ~09:38 IST (issue #35 comment 7073996814), item 1, in re-verification form: the pool-6 item named TASK-OBS-001, which is VERIFIED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 7 (free; TASK-REL-003 MERGED, PR #1308, merge d51b82df) - direct coordinator assignment per the refill rule, one per free worker. Next free OBS id 008 (OBS-001..007 exist). Base: main d51b82df (board verified against the true main blob before editing). Worker claims via its own claim PR."
     blockers: []
     next_action: "Verify watcher timer enablement + prove one alert delivery end-to-end."
+  - id: TASK-ORCH-011
+    title: "Re-verify TASK-ORCH-003: autonomous controller and fleet supervision (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
+    status: AVAILABLE
+    owner: muse_9
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T09:56:26+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/TASK-ORCH-011-SUPERVISION-REPROBE.md"
+    description: "MASTER_PLAN §4 M4 / §6: TASK-ORCH-003 (verify the autonomous controller and fleet supervision before any autonomy claim) merged 2026-11-10 - audit doc + 8 guard tests (supervision verified+honest, autonomy OFF by default) - but the supervision state was never re-probed (STALE-UNVERIFIED 2026-11-14). Re-probe the supervision state from source + live state and file the verdict. Read-only: do NOT enable autonomy, change controller settings, or flip any supervision flag."
+    acceptance:
+      - "Supervision state re-probed (controller + guard tests + live state) with a recorded verdict."
+      - "Autonomy still OFF by default, verified, not assumed."
+      - "Any supervision gap filed with file/line; no controller change in this task."
+    evidence:
+      - "Coordinator pool-6 draft, 2026-11-22 ~09:38 IST (issue #35 comment 7073996814), item 2, in re-verification form: the pool-6 item named TASK-ORCH-003, which is VERIFIED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 9 (free; TASK-REL-004 MERGED, PR #1311, merge 01254f14) - direct coordinator assignment per the refill rule, one per free worker. Next free ORCH id 011 (ORCH-001..010 exist). Base: main 01254f14 (board verified against the true main blob before editing). Worker claims via its own claim PR."
+    blockers: []
+    next_action: "Re-probe the supervision state from source + live state and file the verdict."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
