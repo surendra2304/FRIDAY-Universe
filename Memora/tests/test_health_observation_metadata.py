@@ -20,6 +20,8 @@ def test_health_reports_server_observation_timestamp_and_evidence_class(monkeypa
 
     body = json.loads(health.health_check(db=DatabaseProbe()).body)
 
-    assert body["evidence_class"] in ["process_liveness", "server_live_probe"]
+    # REL-004 §2.2 rule 3: a /health that carries capability states is a
+    # capability report, not a liveness report.
+    assert body["evidence_class"] == "capability_report"
     observed_at = datetime.fromisoformat(body["observed_at"])
     assert observed_at.tzinfo is not None
