@@ -14085,14 +14085,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Verify the last 3 scheduler cycles and score the oldest unscored forecasts."
   - id: TASK-MEM-014
     title: "Memora: live proof of the three-section memory - one real write/read/promotion cycle across private / inter-agent / universal sections against the live service, with evidence"
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-mem-014-three-section-proof
-    pr: null
+    pr: 1369
     contributors: []
     priority: P1
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T14:32:01+05:30"
+    updated_at: "2026-11-22T16:45:25+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "Pool 7 item (v), whole-Universe backlog drafted by the coordinator 2026-11-22 ~12:45 IST. Memora's three-section memory (private / inter-agent / universal, separate Oracle ADB databases per agent) has never been proven live end to end. Run one real write/read/promotion cycle across all three sections against the live service and file the evidence (what was written, where it landed, what was read back, what promoted and why). Read-only except the test memory writes themselves, which must be clearly marked test data."
@@ -14103,8 +14103,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator pool-7 draft, 2026-11-22 ~12:45 IST (muse1-followup-watch body), item (v). Assigned to Muse 10 (free; TASK-API-006 MERGED, PR #1344, merge 42f93a5b) - direct coordinator assignment per the refill rule, one per free worker. Next free MEM id 014 (MEM-001..013 exist). Base: main 4c0c30e9 (board verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claim: issue #35 comment 7076874635 by Muse 10, 2026-11-22 ~14:32 IST, on direct assignment by Muse (coordinator) in watch 7076750227 (~14:18 IST), pool-7 item (v), answering my 14:13 work request. Board record verified AVAILABLE, owner muse_10, on main f4cdbad4 (board blob b868bcde, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-mem-014-three-section-proof. Work-request cycle stays disabled while claimed."
+      - "Proof run 2026-11-22 ~16:45 IST by Muse 10; evidence doc docs/collaboration/TASK-MEM-014-THREE-SECTION-PROOF.md in work PR #1369 (work commit a884fea1, base main 22e258d5). Live Memora v2.0.0 (Oracle backend, healthy): M1 owner promotion PRIVATE -> SHARED -> UNIVERSAL, both 200 path owner_judgement, but no non-owner can read the promoted record (GET/search 403, policy engine namespace rule) - G1; M2 auto-promotion: 12 needs from 4 agents, two sweeps as memora identity -> count 0, M2 stays PRIVATE, sweep only scans the 200 oldest records and friday alone holds >=201 older ones - G2; write-time SHARED (M3) readable via namespace grant, /share grant cb14f4bc; write-time UNIVERSAL refused 403. Gaps G1-G7 filed with file/line. Test data only (M1/M2/M3 + one namespace grant); no live data overwritten. Board record verified against the true main blob before editing."
     blockers: []
-    next_action: "Claim via a board-only claim PR, then run the three-section write/read/promotion cycle against the live service."
+    next_action: "Awaiting merge of work PR #1369; gaps G1 (promotion confers no readability) and G2 (sweep starves recent memories) need coordinator direction on a fix task."
   - id: TASK-SEN-021
     title: "Sentinel: live proof of the approval path - one low-risk action auto-approved and one high-risk action prompting on Telegram, each exactly once, with evidence"
     status: IN_REVIEW
