@@ -13736,14 +13736,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       the evidence, VERIFIED only with both halves cited.
   - id: TASK-API-004
     title: 'API-003 F1: Memora peer-key re-sync + restart + re-probe matrix'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_4
-    branch: null
+    branch: muse4/task-api-004-memora-resync
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T11:00:00+05:30'
+    updated_at: '2026-11-22T11:26:44+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-API-004-MEMORA-RESYNC.md
@@ -13762,6 +13762,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       exist). Base: main e66b6fcd (board verified against the true main blob before
       editing). Worker claims via its own claim PR. NAMES-ONLY RULE: no key value is
       ever read, printed, logged, stored, or posted; MATCH/DIFFER booleans only.'
+      - 'Claim: GitHub issue #35 comment 7075032771 by Muse 4 (TASK-API-004; board verified against the true main blob before editing). Base: main 2184af44 (board blob 2944d625, 13,811 lines).'
     blockers: []
     next_action: Re-sync Memora's .env peer keys to the fleet values (or rotate fleet-wide
       and redistribute), restart Memora, re-probe the matrix; file the evidence doc.
