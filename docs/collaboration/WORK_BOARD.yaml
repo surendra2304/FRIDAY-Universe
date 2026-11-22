@@ -14943,7 +14943,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T03:36:00+05:30'
+    updated_at: '2026-11-23T04:05:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -14955,10 +14955,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Claimed by Muse 13 in issue #35 comment 7084194994; work PR #1416 (head 09418867, base main 81acda98, merged a8c6fea2 2026-11-23 02:05:23 IST by Surendra, CI 9/9 green): G1 /ready probe code + tests, G2 fresh-window re-file (1,780 lines, 1,612 fires counted), G3 live supervisor state, evidence doc docs/collaboration/TASK-CTX-003-CORTEX-EVIDENCE-GAPS.md.'
     - 'G4 follow-up 02:36 self-check: restart clearance conditionally granted by Muse in 7085400525, re-probe completed 02:13:52 IST (7085500872, FAILED 401). Restart HELD: S2 checkout still muse10/task-frd-037-chat-live-runs @ db933cfc, on-disk probe is /health not /ready, so a restart alone cannot satisfy the grant verification. Pre-restart baseline: PID 584499 since Nov 22 12:16:38 IST, supervisor cycles 1725, last_unconfigured ai_universe, 0 Telegram deliveries. Deploy direction requested from Muse.'
     - 'G5 follow-up 02:36 self-check: exact execution-risk check output filed in the evidence doc section 5 per Muse direction 7085400525; check not overridden, clone deleted unused, no tests run. Re-run route is CI via spare TASK-REL-080* drafted by Muse.'
+    - 'G4 RESTART DONE 2026-11-23 ~03:57-04:01 IST per coordinator direction 7085971598 (RESTART NOW for the /health probe as a partial G4 close): pre-restart PID 584499 (since Nov 22 12:16:38 IST), cycles 1878, ai_universe UNCONFIGURED samples 0, last_unconfigured [ai_universe], delivered 0; oracle_restart_service on S2, no checkout change (still muse10/task-frd-037-chat-live-runs @ db933cfc, on-disk probe /health, 0 /ready strings); post-restart PID 598506 active since 03:57:30 IST, supervisor cycles 3 at ~03:59 IST and 7 at ~04:01 IST, errors 0, ai_universe HEALTHY (samples counting), last_unconfigured [], delivered 0; no rollback needed. G4 partially closed; /ready verification stays open under TASK-CTX-005*. Evidence doc section 4 follow-up.'
     blockers:
-    - 'G4: restart clearance granted (7085400525) but restart HELD: S2 checkout lacks the /ready code, so a restart alone loads /health. Awaiting Muse deploy direction (merge /ready into deployed FRD-037 branch or re-point checkout) plus restart.'
     - 'G5: tier-1 re-run owed - local pytest run blocked by an execution-risk check on the cloned content; Muse direction 7085400525: do NOT override, file exact output (filed in evidence doc section 5). Approved run route is CI via spare TASK-REL-080*.'
-    next_action: 'Merged 2026-11-23; G4 restart per coordinator direction 7085971598; CTX-004 follows.'
+    next_action: 'Merged 2026-11-23; G4 partial close filed (restart evidence in doc section 4 + this record); /ready verification open under TASK-CTX-005*; CTX-004 claimed next per queue.'
   - id: TASK-OBS-009
     title: 'Fleet: re-run the rollback drill for a bad deploy and file live evidence'
     status: CLAIMED

@@ -134,7 +134,7 @@ returned HTTP 403 `Invalid FRIDAY service token.`; with
   1,612 successes, 0 failures; ingestion and tools have no probe
   (`samples 0`, `reason "no probe"`).
 
-## 4. G4 — not yet deployed → OPEN, restart clearance granted, restart HELD pending deploy direction
+## 4. G4 — PARTIALLY CLOSED (restart done, /health probe reports; /ready verification open under TASK-CTX-005*)
 
 The running Cortex (PID 584499, since Nov 22 12:16:38 IST) still runs
 the old DNS-only probe: its last `ai_universe` probe result is
@@ -186,6 +186,16 @@ counting up, `last_unconfigured` empty).
   /ready code on S2 + restart in one step, or confirmation to restart
   now for the /health probe and file that as a partial G4 close. No
   restart performed by this worker; no checkout change made.
+
+**Follow-up — G4 RESTART EXECUTED 2026-11-23 ~03:57-04:01 IST (Muse 13, per coordinator direction 7085971598):**
+
+- **Direction carried out.** Coordinator follow-up 7085971598 (~03:06 IST): "RESTART NOW for the /health probe as a partial G4 close" — restart S2 Cortex only (PID 584499), verify the supervisor resumes and the /health probe reports, file the resume evidence, roll back if it does not resume cleanly; do NOT re-point the S2 checkout (Muse 10 FRD-037 live-run environment).
+- **Pre-restart baseline re-verified first-hand via the bridge (~03:57 IST):** `oracle_check_service` — Cortex.service active since Nov 22 12:16:38 IST, Main PID **584499**, 15h uptime. `get_system_info` — S2 checkout still `muse10/task-frd-037-chat-live-runs` @ `db933cfc`. On-disk `self_healing.py`: **0 occurrences of `/ready`** (the restart loads the /health probe, as the direction states). Live supervisor state: background running, **cycles 1878**, errors 0, `ai_universe` last probe UNCONFIGURED (samples 0, successes 0, failures 0), `last_unconfigured: ["ai_universe"]`, escalation attempts 0, delivered 0.
+- **Restart executed:** `oracle_restart_service` (Cortex, Server 2) — "Restarted Cortex.service on Server 2. Active Status: active". No checkout change made; no other service touched.
+- **Post-restart verification, two points, first-hand:**
+  - ~03:59 IST: Cortex.service active since **03:57:30 IST**, Main PID **598506** (new), uvicorn on port 8009. Supervisor: background running, **cycles 3**, errors 0; `ai_universe` last probe **HEALTHY** (healthy true, samples 3, total_successes 3, total_failures 0); `last_unconfigured: []`; siblings healthy 3/3; escalation delivered 0.
+  - ~04:01 IST: **cycles 7**, errors 0, `ai_universe` still HEALTHY, `last_unconfigured: []`, delivered 0 — the 30 s tick is advancing cleanly, no rollback needed.
+- **G4 PARTIAL CLOSE:** the /health probe now reports (UNCONFIGURED -> HEALTHY, samples counting from 0). The /ready verification stays OPEN and moves to queue task TASK-CTX-005*, which needs the /ready code deployed — that deploy decision rides with Muse 11's MEM-017 fix, not tonight. No rollback was required; the service resumed cleanly on the first restart.
 
 ## 5. G5 — 19 pre-existing tier-1 failures → OPEN, re-run owed
 
