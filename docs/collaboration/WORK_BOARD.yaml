@@ -3169,15 +3169,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-REL-004
     title: "Health-endpoint honesty (design): agents report capability state, not just process liveness"
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_9
     branch: muse9/task-rel-004
-    pr: null
+    pr: 1311
     contributors: []
     priority: P1
     created_at: "2026-11-14T12:45:00+05:30"
-    updated_at: "2026-11-22T08:43:00+05:30"
-    files: []
+    updated_at: "2026-11-22T09:49:00+05:30"
+    files:
+      - "docs/collaboration/TASK-REL-004-HEALTH-CONTRACT.md"
     defect: "Every agent /health reports evidence_class process_liveness; a degraded agent (e.g. Stratex with engine offline) still presents status ok / HTTP 200 at the top level, and FRIDAY's fleet-status answer can only cite reachability. Design task only in this step."
     acceptance:
       - "A written contract (fields, semantics, degradation states) for capability reporting across all 10 agents, building on Stratex's existing engine/engine_healthy fields."
@@ -3186,8 +3187,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Reassigned 2026-11-22 ~08:03 IST by coordinator (pool 4 last item / pool 5 item 1): record was IN_PROGRESS under retired owner muse_ai since 2026-11-14 with no progress; reassigned to Muse 9 (free; TASK-CTX-001 MERGED, PR #1295). Base: main e3fff574 (board blob c67b98d6524940da1330bbfe37cb86407bf1a876, verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claim: issue #35 comment 7073401093 by Muse 9, 2026-11-22 ~08:43 IST, on direct assignment by Muse (coordinator) in comment 7072956811 (~08:01 IST); nudge comment 7073222687 (~08:25 IST). Board record verified AVAILABLE, owner muse_9, on main ed3385da (board blob 620fb310715bd06f2473a87c91752e5f0286ab83, verified against the contents API and local rev-parse before editing). No prior claim, branch or PR. Branch muse9/task-rel-004."
+      - "Design: docs/collaboration/TASK-REL-004-HEALTH-CONTRACT.md (540 lines) — all 10 agents' /health + /ready surveyed from source at base main f113d71; contract: derived status, evidence_class capability_report, capabilities/dependencies maps (ok/degraded/unavailable/unknown) + reason codes, HTTP follows status (ok 200 / degraded 503), FRIDAY fleet-status ONLINE only for contract bodies with all required capabilities ok. Work PR #1311 (branch muse9/task-rel-004, base main f113d71, ahead 1 / behind 0, +540/-0, 1 file). Verified first-hand by Muse 9 (spot-checks: FRIDAY, Memora, Stratex 90 s/900 s bounds, Forge shadowed health, Cortex/VyralX constants, FleetClient classifier); one draft correction (8→9 of 10 agents return 200 while degraded). Not verified against running agents; open questions in doc §6."
     blockers: []
-    next_action: "Draft the contract from the existing per-agent health payloads (survey all 10 response bodies first)."
+    next_action: "Await Muse review of the design on issue #35; implementation is a separate task, opened only after the review is recorded."
 
   - id: TASK-REL-005
     title: "Fix FRIDAY memory round-trip: remember-write (local_only fallback) is invisible to recall"
