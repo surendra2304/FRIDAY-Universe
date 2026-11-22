@@ -73,8 +73,16 @@ def test_default_secure_authorizer_autonomous_mode():
         assert resp.decision == AuthorizationDecision.APPROVED
 
 
-def test_personal_assistant_defaults_keep_privileged_modes_disabled():
-    """Fresh local setup does not silently enable autonomous/full access modes."""
+def test_autonomous_mode_code_default_is_on(monkeypatch):
+    """TASK-FRD-035: the code default is ON (aligned to the live env); the
+    env flag is the opt-out, not the opt-in."""
+    monkeypatch.delenv("FRIDAY_AUTONOMOUS_MODE", raising=False)
+    settings = Settings(_env_file=None)
+    assert settings.autonomous_mode is True
+
+
+def test_personal_assistant_explicit_opt_out_keeps_privileged_modes_disabled():
+    """An explicit opt-out still disables autonomous/full access modes."""
     settings = Settings(_env_file=None, autonomous_mode=False, full_access_mode=False)
     assert settings.autonomous_mode is False
     assert settings.full_access_mode is False

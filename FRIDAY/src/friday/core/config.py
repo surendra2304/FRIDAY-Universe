@@ -211,8 +211,8 @@ class Settings(BaseSettings):
     )
     # Autonomous laptop execution mode – execute user directives without interactive confirmation prompts
     autonomous_mode: bool = Field(
-        default=False,
-        description="Enable owner-requested actions without confirmation prompts; disabled by default.",
+        default=True,
+        description="Enable owner-requested actions without confirmation prompts; enabled by default (TASK-FRD-035: aligned to the live env, owner standing order — agents autonomous). The FRIDAY_AUTONOMOUS_MODE env flag opts out.",
     )
     # Full access mode – give complete control to owner over laptop actions
     full_access_mode: bool = Field(

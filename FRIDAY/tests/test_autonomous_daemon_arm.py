@@ -124,8 +124,9 @@ async def test_lifespan_does_not_start_daemon_when_autonomous_mode_disabled(
 
 def test_lifespan_gates_daemon_start_on_the_owner_flag() -> None:
     """The start call must sit under the settings.autonomous_mode check —
-    an unconditional start would arm the daemon for owners who never
-    opted in (the flag defaults to False)."""
+    an unconditional start would arm the daemon even for owners who explicitly
+    opted out (the flag defaults to True since TASK-FRD-035; the gate is what
+    honours an opt-out)."""
     tree = ast.parse(SERVER.read_text(encoding="utf-8"))
     lifespan = next(
         n

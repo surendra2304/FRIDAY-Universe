@@ -162,7 +162,7 @@ class TestAutonomyIsRuntimeOnly:
         return AutonomousController()
 
     def test_enabling_autonomy_does_not_survive_a_settings_rebuild(self, monkeypatch, tmp_path):
-        """Simulate a process restart: a fresh Settings must default autonomous_mode OFF."""
+        """Simulate a process restart: a runtime toggle must not survive a settings rebuild."""
         from friday.core import config
 
         controller = self._controller()
@@ -174,7 +174,10 @@ class TestAutonomyIsRuntimeOnly:
 
         # …the process restarts (cache cleared = fresh Settings)…
         config.get_settings(reload=True)
-        # …and autonomy is OFF again unless the owner re-enables it.
+        # …and the toggle is gone: a fresh Settings re-reads from env (false in
+        # this suite), so autonomy is OFF again unless the owner re-enables it.
+        # The code default is ON since TASK-FRD-035; this test pins the toggle,
+        # not the default.
         assert config.get_settings().autonomous_mode is False, (
             "autonomous_mode must be runtime-only: a restarted FRIDAY must never "
             "inherit a flipped-on autonomy flag from a previous process"
