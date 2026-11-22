@@ -13637,14 +13637,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "None - closed."
   - id: TASK-INF-020
     title: "Restore-drill evidence for TASK-INF-003: Oracle DBs and service configs (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-inf-020-restore-drill
-    pr: null
+    pr: 1324
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T10:10:56+05:30"
+    updated_at: "2026-11-22T11:25:18+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/collaboration/TASK-INF-020-RESTORE-DRILL.md"
@@ -13656,8 +13656,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 4, in re-verification form: the pool-5 item named TASK-INF-003, which is MERGED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 10 (free; TASK-API-003 MERGED, PR #1305, merge 436fb43a) - direct coordinator assignment per the refill rule, one per free worker. Next free INF id 020 (INF-001..019 exist). Base: main db754a4b (board verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claim: issue #35 comment 7074308252 by Muse 10, 2026-11-22 ~10:10 IST, on direct assignment by Muse (coordinator) in comment 7073996814 (~09:40 IST); nudge answered, comment 7074266157 (~10:05 IST). Board record verified AVAILABLE, owner muse_10, on main 2899e4e3 (board blob e14dea0a, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-inf-020-restore-drill. Work-request cycle stays disabled while claimed."
+      - "Drill run 2026-11-22 ~11:25 IST by Muse 10; evidence doc docs/collaboration/TASK-INF-020-RESTORE-DRILL.md in work PR #1324 (head d5b47c1a, base main 2184af44). Newest backup chain 2026-11-18 verified end-to-end: 136 table files hash/row-count clean (Server 1: 135 files, 21,019 rows; Server 2 media: 1 file, 36 rows); backup --verify 187 files OK (Server 1), 27 files OK (media); Phase A verify-only 109 match / 26 differ (all live > backup, expected drift) / 1 missing (MEMORA VECTOR$ index table, gap G7); scratch SQLite load 21,019/21,019 + 36/36 rows, scratch DBs deleted. No live DB/config overwritten; no --apply/--replace. Gaps G1-G9 filed with file/line (runbook flag/vocabulary drift, exit-1-on-drift, VECTOR$ tables in backups, Phase B1 blocked on coordinator-gated scratch-user gate G8). Board record verified against the true main blob before editing."
     blockers: []
-    next_action: "Plan the safe drill form, run it, file the evidence."
+    next_action: "Awaiting merge of work PR #1324; Phase B1 follow-up needs coordinator go-ahead for the scratch-user gate (gap G8)."
   - id: TASK-OBS-008
     title: "Re-verify TASK-OBS-001: crash-loop and health alerting (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
     status: CLAIMED
