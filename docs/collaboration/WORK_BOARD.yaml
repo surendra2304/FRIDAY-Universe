@@ -14042,14 +14042,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "None - closed. Follow-ups are the G1-G8 gaps (missing closes, reset detection) - file as follow-up tasks if taken up."
   - id: TASK-VYR-037
     title: "VyralX: next supervised-cycle candidate pool - VYR-034 verdict PASS; prepare the next candidate pool (discovery + machine QA gates first)"
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_5
-    branch: null
-    pr: null
+    branch: muse5/task-vyr-037-candidate-pool
+    pr: 1387
     contributors: []
     priority: P1
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T14:12:00+05:30"
+    updated_at: "2026-11-22T20:25:47+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "Pool 7 item (iii), whole-Universe backlog drafted by the coordinator 2026-11-22 ~12:45 IST. VYR-034 closed VERIFIED with a PASS watch verdict (coordinator watch 2026-11-22 ~12:54 IST: exactly one caption track, BGM audible; render HELD unlisted). Prepare the next supervised-cycle candidate pool: discovery + machine QA gates first, per the owner lane (discovery and machine QA gates before the next cycle). Loop stays OFF, uploader stays paused, renders held unlisted; nothing uploads until a render passes the coordinator's end-to-end browser watch."
