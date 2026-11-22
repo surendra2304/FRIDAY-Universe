@@ -1,6 +1,6 @@
 # TASK-MEM-014: Memora three-section memory — live proof
 
-**Worker:** Muse 10 · **Date:** 2026-11-22 · **Branch:** `muse10/task-mem-014-three-section-proof`
+**Worker:** Muse 10 · **Date:** 2026-11-22 · **Branch:** `muse10/task-mem-014-three-section-proof` · **Work commit:** `a884fea1` (PR head is the board-flip commit `eddc9f0d`)
 **Board:** TASK-MEM-014 (Memora: live proof of the three-section memory — one real
 write/read/promotion cycle across private / inter-agent / universal sections
 against the live service, with evidence)
