@@ -223,7 +223,7 @@ def _real_trading_data(engine=None) -> dict[str, Any]:
 
     market_conditions: dict[str, Any] = {
         "trading_mode": trading_mode,
-        "venue": "binance_futures+oanda_practice",
+        "venue": "binance_futures_demo",
         "max_positions": None,
         "active_positions": 0,
         "capacity_used_pct": 0.0,

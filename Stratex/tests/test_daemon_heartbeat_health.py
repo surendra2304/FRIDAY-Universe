@@ -23,7 +23,11 @@ import pytest
 
 import config
 import paper_runner_supervisor
-from dashboard import _health_payload, get_engine_health_data
+from dashboard import (
+    _daemon_capability_warnings,
+    _health_payload,
+    get_engine_health_data,
+)
 
 
 def _stale_testnet_hb(tmp_path, monkeypatch):
@@ -94,8 +98,10 @@ class TestMultiVenueDaemonSnapshot:
         assert data["daemon_balance"] == 1234.5
         assert data["open_positions"] == 3
         assert data["unrealized_pnl"] == 12.35
-        assert data["environment"] == "multi_venue_testnet_practice"
-        assert any("testnet" in w for w in data["capability_warnings"])
+        assert data["environment"] == "binance_futures_demo"
+        assert any("Binance Futures demo" in w for w in data["capability_warnings"])
+        assert any("Pepperstone pending-approval" in w for w in data["capability_warnings"])
+        assert not any("oanda" in w.lower() for w in data["capability_warnings"])
 
         payload = _health_payload("process_liveness")
         assert payload["engine"] == "online"
@@ -217,3 +223,31 @@ class TestDaemonHeartbeatWriter:
         stopped = json.loads((tmp_path / "daemon_heartbeat.json").read_text())
         assert stopped["status"] == "STOPPED"
         assert stopped["last_strategy_evaluation"] == first["last_strategy_evaluation"]
+
+
+class TestDaemonCapabilityWarnings:
+    """TASK-STR-HLT-001: /health capability text names the live venue truthfully.
+
+    OANDA was retired 2026-11-19 and the Binance testnet host was excised
+    in TASK-STR-FWD-032; the capability warning must say Binance Futures
+    demo with Pepperstone pending-approval, and never name OANDA.
+    """
+
+    def test_names_binance_demo_and_pepperstone_pending(self):
+        warnings = _daemon_capability_warnings(
+            {"engine_source": "multi_venue_daemon"}
+        )
+        assert warnings == [
+            "DEMO_ENVIRONMENT: execution venue is Binance Futures demo; "
+            "Pepperstone pending-approval"
+        ]
+
+    def test_no_oanda_mention_in_any_warning(self):
+        warnings = _daemon_capability_warnings(
+            {"engine_source": "multi_venue_daemon"}
+        )
+        assert warnings
+        assert not any("oanda" in w.lower() for w in warnings)
+
+    def test_no_snapshot_means_no_warnings(self):
+        assert _daemon_capability_warnings(None) == []

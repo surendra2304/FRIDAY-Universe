@@ -14218,22 +14218,23 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Fix or remove the probe; collect the 48h evidence; file it.
   - id: TASK-STR-HLT-001
     title: 'Stratex /health capability text: remove the stale OANDA reference, state Binance Futures demo + Pepperstone-pending truthfully'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_2
-    branch: null
-    pr: null
+    branch: muse2/task-str-hlt-001-stratex-health-capability-text
+    pr: 1371
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T14:46:00+05:30'
+    updated_at: '2026-11-22T17:36:51+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Live Stratex /health capability output names Binance Futures demo as the active venue and Pepperstone as pending-approval; no OANDA mention remains; probe evidence filed.'
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research: OANDA was fully removed 2026-11-19, yet Stratex /health still cited OANDA practice in a live probe on 2026-11-22 - stale self-description propagating into FRIDAY fleet-status answers. Assigned to Muse 2.'
+    - 'Implementation: PR #1371 (Muse 2, 2026-11-22). Work commit 79a5c564: dashboard _daemon_capability_warnings now names Binance Futures demo with Pepperstone pending-approval, snapshot environment binance_futures_demo; friday_supervision venue binance_futures_demo; run_daemon startup pair corrected; test_daemon_heartbeat_health assertions updated + regression class added; test file added to the Owner Workflow Contracts Stratex list (it was collected by no workflow). Board flip rides in this PR per the new standing orders. Live probe/deploy owed after merge + clearance.'
     blockers: []
-    next_action: Correct the capability text, deploy via the normal PR + clearance path, probe live, file evidence.
+    next_action: Awaiting Muse review/merge of PR #1371; live probe/deploy only after merge + clearance.
   - id: TASK-INT-019
     title: 'IntelX: move the INT-876 soak state onto the fleet (S2) so a sandbox cleanup can never burn the chain again + one traced IntelX to Memora universal to FRIDAY consumption'
     status: AVAILABLE
