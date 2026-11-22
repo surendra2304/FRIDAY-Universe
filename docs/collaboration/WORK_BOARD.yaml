@@ -13779,12 +13779,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T23:49:00+05:30'
+    updated_at: '2026-11-22T23:56:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-VAL-006-STALE-MAPS.md
     - deploy/Caddyfile
     - .github/workflows/fleet-live-validation.yml
+    - .github/workflows/owner-workflows.yml
     - FRIDAY/src/friday/ecosystem/fleet_client.py
     - FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py
     - FRIDAY/src/friday/agent/router.py
@@ -13795,8 +13796,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Coordinator pool 10, P1: assignment by Muse (coordinator) in issue #35 watch 7083334971 (~23:35 IST). Source: VAL-005 finding F1 (repo Caddyfile, workflow server lists and FRIDAY probe map predate the deployed placement: Futuris/IntelX on Server 2, Sentinel on Server 1, Stratex via the 127.0.0.1:18003 tunnel to AWS U1, VyralX on AWS 16.176.9.247:8010).'
     - 'Claim: issue #35 comment 7083391060 by Muse 14, 2026-11-22 18:09:46Z, on the watch assignment. Branch muse14/task-val-006 (ref created via API, verified by ls-remote).'
     - 'Implemented 2026-11-22 ~23:49 IST, work PR #1404: deployed layout re-verified live via the bridge (deployed /etc/caddy/Caddyfile read verbatim; S1/S2 listeners; deployed FRIDAY head 60e09844; deployed FRIDAY .env URL values, agent URLs only). Repo Caddyfile now byte-identical to the deployed file; workflow server lists + local probes follow the deployed layout (Stratex via :18003 tunnel, VyralX on AWS probed from S1); the three FRIDAY mesh maps (fleet_client, dispatch bus, router) re-pointed (Stratex 127.0.0.1:18003, Sentinel 127.0.0.1:8008, VyralX 16.176.9.247:8010); both canonical-mesh tests assert the new values. KEY FINDING: the deployed FRIDAY .env overrides STRATEX_URL/SENTINEL_URL/VYRALX_URL, so the repo map alone does not fix the live fleet-status — the 3 stale .env values must be corrected and FRIDAY restarted as a deploy step (plan + rollback in the evidence doc). Baseline live fleet-status ~23:50 IST: degraded, 7 ONLINE, 2 UNREACHABLE (Stratex 127.0.0.1:8003, VyralX 10.0.0.120:8010) — down from VAL-005''s 5 after the 22:50 .env edit + 23:22 restart fixed IntelX/Futuris. Evidence: docs/collaboration/TASK-VAL-006-STALE-MAPS.md.'
+    - 'Update 2026-11-22 ~23:56 IST: contracts check failed on the first CI run — test-collection guard (REL-068): the edited mesh test was collected by no PR-triggered workflow. Fixed in this PR by adding FRIDAY/tests/test_codex_invariants_and_mesh.py to the contracts job pytest invocation in .github/workflows/owner-workflows.yml; guard re-run locally: PASS (277 covered, 1 checked). Fresh validation run 45054456383 dispatched from this branch: completed success, all 3 jobs green, zero false down (S1: 5 units active + all /health 200 + Stratex tunnel 200 + VyralX AWS 200; S2: Futuris/IntelX/Cortex active + 200; gateway 10/10 healthy). Observation: Futuris NRestarts=10 on S2 while active — pre-existing, flagged for Muse. Fleet-status re-probe still waits on the deploy (hub clearance).'
     blockers: []
-    next_action: 'Awaiting Muse review/merge of PR #1404; deploy (S1 .env fix + FRIDAY restart) needs hub clearance; fresh validation run + fresh fleet-status re-probe after deploy.'
+    next_action: 'Awaiting Muse review/merge of PR #1404 (CI re-check after the guard fix pending); deploy (S1 .env fix + FRIDAY restart) needs hub clearance; fresh fleet-status re-probe after deploy.'
   - id: TASK-VAL-007
     title: 'Fleet: fix the D-023 auth gate on POST /friday/api/chat (VAL-005 F2)'
     status: MERGED
