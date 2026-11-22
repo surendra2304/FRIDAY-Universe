@@ -9,6 +9,7 @@ on:
       - "docs/handoff.md"
       - "docs/ARCHITECTURE_AS_BUILT.md"
       - "scripts/validate_collaboration.py"
+      - "scripts/tests/test_validate_collaboration.py"
       - ".github/workflows/collaboration-registry.yml"
   push:
     branches: [main]
@@ -18,6 +19,7 @@ on:
       - "docs/handoff.md"
       - "docs/ARCHITECTURE_AS_BUILT.md"
       - "scripts/validate_collaboration.py"
+      - "scripts/tests/test_validate_collaboration.py"
       - ".github/workflows/collaboration-registry.yml"
   workflow_dispatch:
 
@@ -47,3 +49,6 @@ jobs:
 
       - name: Validate collaboration registry
         run: python scripts/validate_collaboration.py
+
+      - name: Run validator regression tests (TASK-REL-069 fixtures)
+        run: python scripts/tests/test_validate_collaboration.py

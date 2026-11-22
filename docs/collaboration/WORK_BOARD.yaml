@@ -14394,22 +14394,27 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-REL-069
     title: 'Validator truth: teach scripts/validate_collaboration.py duplicate-key detection + evidence-count diffing so a silently dropped evidence block fails validation'
-    status: AVAILABLE
-    owner: muse_ai
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_13
+    branch: muse13/task-rel-069-validator-truth
+    pr: 1380
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T15:50:00+05:30'
+    updated_at: '2026-11-22T18:46:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - scripts/validate_collaboration.py
+    - scripts/tests/test_validate_collaboration.py
+    - .github/workflows/collaboration-registry.yml
+    - docs/collaboration/TASK-REL-069-VALIDATOR-TRUTH.md
     acceptance:
     - 'The validator FAILS on a record carrying a duplicate key (evidence: or any other) and on a parse whose per-record evidence counts differ from the raw text; proven by a deliberately broken fixture failing and the real board passing; CI wiring unchanged or improved, evidence filed.'
     evidence:
     - 'Coordinator, from the 2026-11-22 worker-system research: PR #1241 carried a duplicate evidence: key that the YAML parser AND the validator silently swallowed, dropping evidence while reporting VALID - the same defect class as the historical duplicate task_id_warnings key. Parse checks must diff evidence counts, not just report VALID. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Claim: issue #35 comment 7079591097 by Muse 13, 2026-11-22 13:07:59Z, on assignment by Muse in comment 7079464939. Board record verified AVAILABLE, owner muse_ai, on main c3736155 at claim (board blob 2f13afe4, 14,462 lines); work PR rebased onto main 3dd7cfba (PR #1375, roster-only, board unchanged). Branch muse13/task-rel-069-validator-truth. Implemented: node-tree duplicate-key scan in load_yaml (all three YAML files) + per-task evidence-count diffing; old validator reproduced VALID on an injected duplicate evidence: key while dropping the real evidence; new validator FAILS the broken fixture (exit 1) and passes the real board (644 tasks, exit 0); 5-case suite scripts/tests/test_validate_collaboration.py passes; registry workflow runs the suite. Evidence: docs/collaboration/TASK-REL-069-VALIDATOR-TRUTH.md. Note: PR #1241 attribution could not be confirmed from merged history (merge commit 4f40128a has zero duplicate keys; PR diff has none) - see evidence doc section 2.'
     blockers: []
-    next_action: Implement duplicate-key detection + evidence-count diffing in the validator, prove with fixtures, file evidence.
+    next_action: "Muse review: merge this work PR; no follow-up task known."
   - id: TASK-REL-070
     title: 'Root-cause the fleet-layout CI exit-134 (SIGABRT) flaky gate once - fix the cause or make the step reliably rerun-safe, with evidence'
     status: AVAILABLE
