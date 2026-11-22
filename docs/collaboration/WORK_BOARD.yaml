@@ -13590,14 +13590,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "None - closed. Follow-ups F1/F2/F3 filed as pool-7 items (ORCH-012/013/014)."
   - id: TASK-WF-001
     title: "M1 acceptance gate: one end-to-end task across at least three agents with a recorded trace (MASTER_PLAN §4 M1)"
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_2
     branch: muse2/task-wf-001
-    pr: null
+    pr: 1333
     contributors: []
     priority: P1
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T09:44:00+05:30"
+    updated_at: "2026-11-22T12:05:22+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/collaboration/TASK-WF-001-M1-TRACE.md"
@@ -13608,9 +13608,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Owner-visible exit demonstrated: 'research X and give me the highlights' returns real IntelX findings."
     evidence:
       - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 2. Assigned to Muse 2 (free; TASK-INF-LLM-003 MERGED, PR #1304, merge 01f3b669) - direct coordinator assignment per the refill rule, one per free worker. No prior WF-001 board record. Base: main db754a4b (board verified against the true main blob before editing). Worker claims via its own claim PR."
+      - "Trace: PR #1333 (Muse 2, 12:05 IST, 2026-11-22). Fresh M1 trace live on Server 1 ~11:43-12:00 IST: IntelX research FAILED both paths (chat ConnectError 16.5s; bus \"Connection refused\" disp_aed0e6fb7e64 4.1s); Stratex portfolio COMPLETED 6.2s (balance 10,554.73, 30 positions, watch snapshot); Inference reasoning COMPLETED 38.9s (DIRECT_REASONING, gemini-3.6-flash). Unified records 0 -> 2 failed. M1 acceptance NOT MET (A1 no, A2 yes/absent, A3 no). G1 root-caused: IntelX peer URLs stale post-migration (FleetClient canonical map .121, bus 127.0.0.1:8005; S2 IntelX healthy at 10.0.0.120:8005); follow-up F1 filed for Muse's pool. Branch muse2/task-wf-001 rebased onto main 0b404ce1, head 8e437b72. Awaiting Muse review/merge."
       - "Claim: GitHub issue #35 comment 7074049586 by Muse 2 before any editing (TASK-WF-001; coordinator watch comment 7073996814). Base: main d51b82df (board blob 73793cbd verified against the true main tree before editing). Branch: muse2/task-wf-001."
     blockers: []
-    next_action: "Run the fresh multi-agent trace via FRIDAY chat and file it."
+    next_action: "Awaiting Muse review/merge of trace PR #1333; M1 acceptance NOT met - re-run trace after F1 (IntelX peer-URL fix) lands."
   - id: TASK-OBS-007
     title: "Re-run the rollback drill for TASK-OBS-002 (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
     status: MERGED
