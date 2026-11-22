@@ -14202,22 +14202,24 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Implement receipts + deadline classes; live-probe both prompt classes; file the numbers.
   - id: TASK-CTX-002
     title: 'Cortex: fix or remove the dead ai-universe health probe (INFERENCE_BASE_URL / AI_UNIVERSE_BASE_URL unset in production) + file 48h fires-vs-messages evidence'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_9
-    branch: null
-    pr: null
+    branch: muse9/task-ctx-002
+    pr: 1379
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T14:46:00+05:30'
+    updated_at: '2026-11-22T18:44:56+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-CTX-002-DEAD-PROBE.md
     acceptance:
     - 'probe_ai_universe either checks the real fleet endpoints (Inference answers on 8001) and returns truthful results, or is removed; 48h of live logs show fires vs Telegram messages at the designed ratio with no suppressed-noise streaks; evidence filed.'
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research (absorbs pool-7 item x): the PR #1054 dedupe fix is proven live (71 fires, 1 message) but the underlying probe is always False because its env URLs are unset in production - suppressed noise, not health. Assigned to Muse 9 (Cortex context from ORCH-011/REL-004).'
+    - 'Implemented + in review, 2026-11-22 ~18:45 IST: probe now GETs {base}/health (precedence INFERENCE_BASE_URL > AI_UNIVERSE_BASE_URL > fleet default http://10.0.0.121:8001, Inference Server 1, 5s timeout, trust_env False); tri-state kept. 48h live evidence (Cortex.service journal Nov 20 18:31 - Nov 22 ~18:00 IST, 1,858 lines): 5 ai_universe lines, all the standing-configuration notice, one per process start; 0 Telegram lines; ~5,760 fires derived from the 30s tick. Live target verified from Server 2: GET http://10.0.0.121:8001/health 200. Tests: 23/23 COR-014 + 2/2 F1.2 probe tests; 19 tier-1 failures pre-existing (identical set on base); ruff clean. Evidence: docs/collaboration/TASK-CTX-002-DEAD-PROBE.md. Work PR #1379, work commit 1a415fc7, base main c373615.'
     blockers: []
-    next_action: Fix or remove the probe; collect the 48h evidence; file it.
+    next_action: Awaiting Muse's review/merge of PR #1379.
   - id: TASK-STR-HLT-001
     title: 'Stratex /health capability text: remove the stale OANDA reference, state Binance Futures demo + Pepperstone-pending truthfully'
     status: IN_REVIEW
