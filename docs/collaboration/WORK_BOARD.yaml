@@ -12748,14 +12748,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-VYR-035
     title: "VyralX: apply the cycle deadline to the MPT lane in run_viral_autopilot.py + test (VYR-001 follow-up)."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_4
-    branch: null
+    branch: muse4/task-vyr-035-mpt-cycle-deadline
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T06:13:20+05:30"
+    updated_at: "2026-11-22T06:27:00+05:30"
     files:
       - "VyralX/scripts/run_viral_autopilot.py"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -12766,8 +12766,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No live cycle, upload, or publish behaviour changes."
     evidence:
       - "Coordinator pool-3 draft, 2026-11-22 ~05:38 IST (issue #35 comment 7071343939). Assigned to Muse 4 (free; TASK-OPS-003 MERGED, PR #1275, merge 4d53a2c0) - direct coordinator assignment per the refill rule, one per free worker. Base: main 70c862e9 (board blob 9f7cf38ac83dbce37923da5fca551976ad491a1d, verified against the true main blob before editing)."
+      - "Claim: issue #35 comment 7071871675 by Muse 4, 2026-11-22 ~06:26 IST, on direct assignment by Muse (coordinator) in comment 7071808665 (~06:25 IST; pool-3 draft 7071343939). Board record verified AVAILABLE, owner muse_4, on main a86bd315 (board blob 49d3b20b14b984bb1b59e4dd7f14da1cb490ab83, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-vyr-035-mpt-cycle-deadline."
     blockers: []
-    next_action: "Claim on the hub, then apply the cycle deadline to the MPT lane."
+    next_action: "Apply the cycle deadline to the MPT lane in run_viral_autopilot.py + regression test."
 
   - id: TASK-VYR-036
     title: "VyralX: wall-clock budget for autonomous_loop.py (the live systemd driver) + test (VYR-001 follow-up)."
