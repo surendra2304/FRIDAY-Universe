@@ -131,7 +131,7 @@ def run(command: str, boss_verified: bool = False) -> dict:
 @pytest.mark.parametrize(
     "text,tier",
     [
-        ("my name is surendra varma jalli", "pinned"),
+        ("my name is surendra", "pinned"),
         ("my phone number is 555-0100", "pinned"),
         ("my favorite chai is masala chai", "pinned"),
         ("i prefer dark themes everywhere", "pinned"),

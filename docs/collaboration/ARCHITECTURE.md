@@ -6,13 +6,13 @@ builds FRIDAY Universe. It replaces the previous mixed-team collaboration
 model (the "equal AI collaborators" design written for ZAI, Arena, ChatGPT and
 Grok). Where any older collaboration document conflicts with this one, this
 document governs.
-**Owner:** Surendra Varma Jalli — owner and final decision-maker.
+**Owner:** Surendra — owner and final decision-maker.
 
 ---
 
 ## 1. Team shape and naming
 
-- **Owner** — Surendra Varma Jalli. Final decision-maker on everything.
+- **Owner** — Surendra. Final decision-maker on everything.
 - **Muse** — the Head Manager (unnumbered). The owner is Boss and CEO;
   Muse is his Head Manager; the numbered Muses are the workers. Muse
   works *beside* the worker accounts, not only above them: it does real
