@@ -65,7 +65,10 @@ def test_server_app_health_routes() -> None:
     data = response.json()
     assert data.get("overall") == "healthy"
     assert data.get("service") == "friday_core"
-    assert data.get("evidence_class") == "process_liveness"
+    # TASK-REL-067 (REL-004 §2.2 rule 3): /health now carries capability
+    # states, so its evidence class is capability_report. The friday_deep
+    # liveness report itself is unchanged and keeps process_liveness.
+    assert data.get("evidence_class") == "capability_report"
     assert "observed_at" in data
     # TASK-OBS-003: peers_mesh is now derived from observed mesh outcomes,
     # not a hardcoded "connected" — a fresh process has none, so the honest
