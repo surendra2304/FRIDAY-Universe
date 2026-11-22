@@ -14299,19 +14299,20 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
   - id: TASK-FUT-017
     title: 'Futuris: standing per-cycle accuracy scoring (every forecast scored when its horizon passes, rolling hit-rate on her status surface) + explicit fit-cost cap'
     status: AVAILABLE
-    owner: muse_ai
+    owner: muse_1
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T14:46:00+05:30'
+    updated_at: '2026-11-22T16:05:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Each scheduler cycle stores forecasts with horizons and scores matured ones automatically; rolling hit-rate visible on her status surface; a pre-fit memory estimate + model shortlist caps fit cost so the 512M MemoryMax is a backstop, not the control.'
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research: FUT-016 (assigned Muse 7) grades the backlog once; this task makes grading permanent and caps the fit cost that caused the OOM saga (MemoryMax raised 180M to 512M on a 956MB box). Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Assigned to Muse 1 (free; TASK-FRD-035 MERGED, PR #1358) on its work request, issue #35 comment 7077852023 (~16:02 IST); coordinator assignment comment 7077871779 (~16:05 IST). Claim via hub comment + branch push; CLAIMED flip rides in the work PR.'
     blockers: []
     next_action: Implement standing scoring + fit-cost cap, prove over one live cycle, file evidence.
   - id: TASK-SEN-022
