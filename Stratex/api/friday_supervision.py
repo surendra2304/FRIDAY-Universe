@@ -15,6 +15,7 @@ Provides:
    (orders and gate bypass attempts by external agents are rejected fail-closed).
 """
 
+import atexit
 import datetime
 import json
 import os
@@ -91,6 +92,18 @@ _MARKET_ANALYSIS_INTERVAL_SEC: float = 60.0
 # at most one refresh thread runs at a time; status reads never wait on it.
 _ANALYSIS_REFRESH_LOCK = threading.Lock()
 _ANALYSIS_REFRESH_RUNNING = False
+# TASK-REL-070: shutdown coordination for the module's daemon threads.
+# pytest passes all tests and then CPython aborts at interpreter shutdown
+# (exit 134, `_enter_buffered_busy ... possibly due to daemon threads`)
+# when a refresh thread is still logging to the already-closed stderr.
+# Every daemon thread this module spawns is tracked here and joined from
+# the atexit handler below, so no thread is alive writing to stderr when
+# the interpreter finalizes.
+_ANALYSIS_REFRESH_STOP = threading.Event()
+_ANALYSIS_REFRESH_THREAD: threading.Thread | None = None
+_STATUS_SUMMARY_REFRESH_THREAD: threading.Thread | None = None
+_STATUS_SUMMARY_KEEPER_STOP = threading.Event()
+_SHUTDOWN_JOIN_TIMEOUT_S = 60.0  # per thread, bounded; see _shutdown_background_threads
 
 
 def _safe_engine():
@@ -307,8 +320,15 @@ def _real_trading_data(engine=None) -> dict[str, Any]:
     }
 
 
-def _run_market_analysis(payload: Any = None) -> dict[str, Any]:
-    """Run a real analysis cycle using the engine and log the results."""
+def _run_market_analysis(payload: Any = None, stop_event: threading.Event | None = None) -> dict[str, Any]:
+    """Run a real analysis cycle using the engine and log the results.
+
+    ``stop_event`` is set only by the background refresh path (see
+    ``_refresh_market_analysis``); the synchronous task-handler call site
+    passes None, so a shutdown request never cancels a live task.
+    When the event is set mid-cycle the cycle aborts promptly and returns
+    status CANCELLED without publishing a partial snapshot.
+    """
     global _LAST_MARKET_ANALYSIS, _LAST_MARKET_ANALYSIS_TS
 
     engine = _safe_engine()
@@ -339,10 +359,17 @@ def _run_market_analysis(payload: Any = None) -> dict[str, Any]:
     signals: list[dict[str, Any]] = []
     errors: list[str] = []
     analyzed = 0
+    cancelled = False
     for symbol in symbols:
+        if stop_event is not None and stop_event.is_set():
+            cancelled = True
+            break
         best_signal = None
         best_score = -1.0
         for tf in timeframes:
+            if stop_event is not None and stop_event.is_set():
+                cancelled = True
+                break
             analyzed += 1
             try:
                 sig = engine.evaluate_symbol_timeframe(symbol, tf) if engine is not None else None
@@ -363,6 +390,8 @@ def _run_market_analysis(payload: Any = None) -> dict[str, Any]:
             if score > best_score:
                 best_score = score
                 best_signal = sig_dict
+        if cancelled:
+            break
         if best_signal is not None:
             signals.append(best_signal)
             logger.info(
@@ -373,6 +402,23 @@ def _run_market_analysis(payload: Any = None) -> dict[str, Any]:
 
     buys = sum(1 for s in signals if str(s.get("action", "")).upper() == "BUY")
     sells = sum(1 for s in signals if str(s.get("action", "")).upper() == "SELL")
+
+    if cancelled:
+        logger.info(
+            "[STRATEX_ANALYSIS] Cycle cancelled by shutdown request "
+            f"after {len(signals)} signals from {analyzed} evaluations."
+        )
+        return {
+            "status": "CANCELLED",
+            "analysis_timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
+            "symbols_analyzed": symbols,
+            "timeframes": timeframes,
+            "signals": signals,
+            "signal_count": len(signals),
+            "buy_signals": buys,
+            "sell_signals": sells,
+            "errors": errors[:10],
+        }
 
     trading_data = _real_trading_data(engine)
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
@@ -431,7 +477,7 @@ def _refresh_market_analysis(engine=None) -> None:
     completion ``_run_market_analysis`` republishes ``_LAST_MARKET_ANALYSIS``
     and its timestamp, which is what status reads serve.
     """
-    global _ANALYSIS_REFRESH_RUNNING
+    global _ANALYSIS_REFRESH_RUNNING, _ANALYSIS_REFRESH_THREAD
     try:
         engine = _safe_engine() if engine is None else engine
         symbols = None
@@ -439,12 +485,16 @@ def _refresh_market_analysis(engine=None) -> None:
         if engine is not None:
             symbols = list(getattr(engine, "symbols", []) or [])[:5]
             timeframes = list(getattr(engine, "timeframes", []) or [])[:1]
-        _run_market_analysis({"symbols": symbols, "timeframes": timeframes})
+        _run_market_analysis(
+            {"symbols": symbols, "timeframes": timeframes},
+            stop_event=_ANALYSIS_REFRESH_STOP,
+        )
     except Exception as exc:
         logger.debug(f"[FRIDAY_SUPERVISION] Market analysis refresh failed: {exc}")
     finally:
         with _ANALYSIS_REFRESH_LOCK:
             _ANALYSIS_REFRESH_RUNNING = False
+            _ANALYSIS_REFRESH_THREAD = None
 
 
 def _ensure_market_analysis(engine=None) -> None:
@@ -471,10 +521,12 @@ def _ensure_market_analysis(engine=None) -> None:
     ``analysis_timestamp`` visible, so staleness is disclosed in the
     payload rather than hidden behind a blocked request.
     """
-    global _ANALYSIS_REFRESH_RUNNING
+    global _ANALYSIS_REFRESH_RUNNING, _ANALYSIS_REFRESH_THREAD
     now = time.time()
     if _LAST_MARKET_ANALYSIS is not None and (now - _LAST_MARKET_ANALYSIS_TS) < _MARKET_ANALYSIS_INTERVAL_SEC:
         return
+    if _ANALYSIS_REFRESH_STOP.is_set():
+        return  # shutting down: never start a new refresh thread
     with _ANALYSIS_REFRESH_LOCK:
         if _ANALYSIS_REFRESH_RUNNING:
             return
@@ -487,6 +539,7 @@ def _ensure_market_analysis(engine=None) -> None:
     )
     try:
         thread.start()
+        _ANALYSIS_REFRESH_THREAD = thread
     except Exception as exc:
         with _ANALYSIS_REFRESH_LOCK:
             _ANALYSIS_REFRESH_RUNNING = False
@@ -624,12 +677,12 @@ def _keeper_refresh_once() -> bool:
 
 
 def _status_summary_keeper_loop() -> None:
-    while True:
+    while not _STATUS_SUMMARY_KEEPER_STOP.is_set():
         try:
             _keeper_refresh_once()
         except Exception as exc:  # the keeper must never die silently
             logger.debug(f"[FRIDAY_SUPERVISION] status keeper pass failed: {exc}")
-        time.sleep(_STATUS_SUMMARY_KEEPER_INTERVAL_S)
+        _STATUS_SUMMARY_KEEPER_STOP.wait(_STATUS_SUMMARY_KEEPER_INTERVAL_S)
 
 
 def start_status_summary_keeper() -> threading.Thread | None:
@@ -658,8 +711,47 @@ def start_status_summary_keeper() -> threading.Thread | None:
         return thread
 
 
+def _shutdown_background_threads() -> None:
+    """TASK-REL-070: stop and join every daemon thread this module spawns.
+
+    Registered with ``atexit`` at import time. atexit handlers run before
+    the interpreter closes the standard streams, so joining here is what
+    keeps a daemon thread from logging to closed stderr at finalization
+    (the exit-134 / SIGABRT the CI gate hit on 4 board PRs).
+    Join order matters: the keeper first (a keeper pass can itself start
+    a status-summary refresh and a market-analysis refresh), then the
+    status-summary refresh, then the market-analysis refresh.
+    Each join is bounded; a thread still alive after its timeout is
+    logged, not waited on forever — the interpreter will then exit with
+    it daemonised, which is the pre-existing behaviour, not a hang.
+    """
+    _ANALYSIS_REFRESH_STOP.set()
+    _STATUS_SUMMARY_KEEPER_STOP.set()
+
+    for name, thread in (
+        ("stratex-status-summary-keeper", _STATUS_SUMMARY_KEEPER_THREAD),
+        ("stratex-status-summary-refresh", _STATUS_SUMMARY_REFRESH_THREAD),
+        ("stratex-market-analysis-refresh", _ANALYSIS_REFRESH_THREAD),
+    ):
+        if thread is None:
+            continue
+        try:
+            thread.join(timeout=_SHUTDOWN_JOIN_TIMEOUT_S)
+        except Exception as exc:  # joining must never break interpreter shutdown
+            logger.debug(f"[FRIDAY_SUPERVISION] shutdown join of {name} failed: {exc}")
+            continue
+        if thread.is_alive():
+            logger.debug(
+                f"[FRIDAY_SUPERVISION] background thread {name} still alive after "
+                f"{_SHUTDOWN_JOIN_TIMEOUT_S}s shutdown join; exiting with it daemonised"
+            )
+
+
+atexit.register(_shutdown_background_threads)
+
+
 def _get_engine_status_summary() -> dict[str, Any]:
-    global _STATUS_SUMMARY_CACHE, _STATUS_SUMMARY_TS, _STATUS_SUMMARY_REFRESHING
+    global _STATUS_SUMMARY_CACHE, _STATUS_SUMMARY_TS, _STATUS_SUMMARY_REFRESHING, _STATUS_SUMMARY_REFRESH_THREAD
     now = time.time()
     cache = _STATUS_SUMMARY_CACHE
     if cache is not None:
@@ -673,11 +765,13 @@ def _get_engine_status_summary() -> dict[str, Any]:
                     _STATUS_SUMMARY_REFRESHING = True
             if start:
                 try:
-                    threading.Thread(
+                    thread = threading.Thread(
                         target=_refresh_status_summary,
                         daemon=True,
                         name="stratex-status-summary-refresh",
-                    ).start()
+                    )
+                    thread.start()
+                    _STATUS_SUMMARY_REFRESH_THREAD = thread
                 except Exception as exc:
                     with _STATUS_SUMMARY_LOCK:
                         _STATUS_SUMMARY_REFRESHING = False
