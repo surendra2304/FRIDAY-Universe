@@ -225,7 +225,7 @@ class TestnetService:
             if _is_auth_err:
                 raise RuntimeError(
                     "CRITICAL ERROR: Testnet AUTHENTICATION failed — verify API_KEY/SECRET_KEY "
-                    f"are the TESTNET keys issued by testnet.binance.vision. Reason: {e}"
+                    f"are the keys configured for this engine. Reason: {e}"
                 )
             if isinstance(e, (_RequestException, ConnectionError, TimeoutError, OSError)) and not _is_auth_err:
                 raise RuntimeError(
