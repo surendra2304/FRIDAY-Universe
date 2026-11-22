@@ -14115,6 +14115,223 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Claim via a board-only claim PR, then run the two approval-path legs (auto-approve once, Telegram prompt once, no high-risk execution)."
 
+  - id: TASK-STR-EXP-006
+    title: 'Unstarve the Stratex self-experiment loop: judgement scheduling fix (per-strategy idle check or niced single-trial slot with hard CPU cap, or judge on AWS U1) - frozen admission gate UNTOUCHED'
+    status: AVAILABLE
+    owner: muse_4
+    branch: null
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T14:46:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'The self-experiment judgement step runs without requiring a whole-box calm+idle coincidence: first trial (counter 3980) lands in experiments.jsonl, OR the precise remaining blocker is filed with load evidence. Frozen admission gate (t-stat/p construction check) byte-unchanged. No env flip without coordinator hub clearance.'
+    evidence:
+    - 'Coordinator pool 8, from the 2026-11-22 all-agent research: the loop has been armed since 2026-11-20 (counter 3979, 65 streams admitted) and has NEVER run - every 2h watch check found S1 load above the <1.4 whole-box gate (1.58 at the 2026-11-22 12:59 check). Armed-but-starved deadline 2026-11-23 09:00 IST. This task changes SCHEDULING only, never admission standards. Assigned to Muse 4 (Stratex context; claims after STR-LEDGER-001).'
+    blockers: []
+    next_action: Implement the scheduling fix, PR it, and file the first-trial evidence or the precise blocker.
+  - id: TASK-FRD-035
+    title: 'FRIDAY config-truth batch: align FRIDAY_AUTONOMOUS_MODE code default with the live env (G3) + execute the FRD-034 FRIDAY restart under coordinator clearance and re-probe FRIDAY to Cortex'
+    status: AVAILABLE
+    owner: muse_1
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T14:46:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Code default for FRIDAY_AUTONOMOUS_MODE matches the live env value (ON) or the code explicitly documents env as the single source of truth, so no restart/redeploy can silently flip autonomy. FRIDAY restarted ONCE in the cleared window (before Muse 6 VOI-027 probes run), FRIDAY to Cortex ask + delegation re-probed at 200, /health 200 after restart.'
+    evidence:
+    - 'Coordinator pool 8, from the 2026-11-22 research + ORCH-011 finding G3: autonomy is ON live via env flag + FRD-023 boot-arm while the code default is still OFF - coordinator decision owed; this task executes the decision: ALIGN TO ON (owner standing order: agents autonomous). FRD-034 restart clearance is GRANTED by the coordinator on the hub (2026-11-22 pool-8 post); batch the restart BEFORE the VOI-027 calm-window probes. Assigned to Muse 1 (holds FRD-034 context).'
+    blockers: []
+    next_action: PR the code-default alignment; execute the cleared FRIDAY restart; re-probe FRIDAY to Cortex; file evidence.
+  - id: TASK-INF-022
+    title: 'Inference: per-request routing receipt (task class, model, latency, fallback) on a status endpoint + prompt-size deadline classes from the INF-LLM-003 measurements'
+    status: AVAILABLE
+    owner: muse_7
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T14:46:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'A status surface returns per-request routing receipts for live traffic; short prompts keep the tight Gemini deadline while ~9k-token prompts use the measured budget or route directly to the proven fallback; live probe evidence filed for both classes.'
+    evidence:
+    - 'Coordinator pool 8, from the 2026-11-22 research: INF-019 found Gemini deadline misses 2/2 on ~9k-token prompts with silent dependence on the OpenRouter fallback; INF-LLM-003 measured completion times (deadline KEEP). Adaptive routing (owner decision 2026-11-18) has no live audit evidence. Assigned to Muse 7 (claims after FUT-016).'
+    blockers: []
+    next_action: Implement receipts + deadline classes; live-probe both prompt classes; file the numbers.
+  - id: TASK-CTX-002
+    title: 'Cortex: fix or remove the dead ai-universe health probe (INFERENCE_BASE_URL / AI_UNIVERSE_BASE_URL unset in production) + file 48h fires-vs-messages evidence'
+    status: AVAILABLE
+    owner: muse_9
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T14:46:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'probe_ai_universe either checks the real fleet endpoints (Inference answers on 8001) and returns truthful results, or is removed; 48h of live logs show fires vs Telegram messages at the designed ratio with no suppressed-noise streaks; evidence filed.'
+    evidence:
+    - 'Coordinator pool 8, from the 2026-11-22 research (absorbs pool-7 item x): the PR #1054 dedupe fix is proven live (71 fires, 1 message) but the underlying probe is always False because its env URLs are unset in production - suppressed noise, not health. Assigned to Muse 9 (Cortex context from ORCH-011/REL-004).'
+    blockers: []
+    next_action: Fix or remove the probe; collect the 48h evidence; file it.
+  - id: TASK-STR-HLT-001
+    title: 'Stratex /health capability text: remove the stale OANDA reference, state Binance Futures demo + Pepperstone-pending truthfully'
+    status: AVAILABLE
+    owner: muse_2
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T14:46:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Live Stratex /health capability output names Binance Futures demo as the active venue and Pepperstone as pending-approval; no OANDA mention remains; probe evidence filed.'
+    evidence:
+    - 'Coordinator pool 8, from the 2026-11-22 research: OANDA was fully removed 2026-11-19, yet Stratex /health still cited OANDA practice in a live probe on 2026-11-22 - stale self-description propagating into FRIDAY fleet-status answers. Assigned to Muse 2.'
+    blockers: []
+    next_action: Correct the capability text, deploy via the normal PR + clearance path, probe live, file evidence.
+  - id: TASK-INT-019
+    title: 'IntelX: move the INT-876 soak state onto the fleet (S2) so a sandbox cleanup can never burn the chain again + one traced IntelX to Memora universal to FRIDAY consumption'
+    status: AVAILABLE
+    owner: muse_3
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T14:46:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Soak state + log live on S2 with the daily run writing there; the 2026-11-27 D4 judgement chain is intact and fleet-backed. One IntelX research product is consumed by FRIDAY through Memora universal with a timed, filed trace.'
+    evidence:
+    - 'Coordinator pool 8, from the 2026-11-22 research: the first soak chain (4 days) was lost in the 2026-11-20 sandbox workspace cleanup and restarted 2026-11-21; day 2 of 7 recorded 2026-11-22. No traced instance exists of any agent consuming IntelX research through the designed path. Assigned to Muse 3 (holds INT-017 context; claims after it).'
+    blockers: []
+    next_action: Migrate soak state to S2, verify the daily run writes there, run the traced consumption, file evidence.
+  - id: TASK-VYR-038
+    title: 'VyralX pipeline yield: render-fit profile on the excerpt cut (720x1280, fps cap 30, ultrafast) + confirm the 20-track BGM shelf stocked on U2 + real-track gate field per job + headline emoji glyph fix'
+    status: AVAILABLE
+    owner: muse_5
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T14:46:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Excerpt cut uses the render-fit profile and the cycle-1 timeout class is gone in a supervised cycle; U2 BGM shelf contents listed as evidence with real-track (not synth_fallback) reported per job; headline emoji renders as a glyph, not a hollow box, in the next render.'
+    evidence:
+    - 'Coordinator pool 8, from the 2026-11-22 research + the VYR-034 PASS watch (hub 7075907547): cycle 1 produced zero renders from encode timeouts at the excerpt cut; cycle 2 renders all used synth_fallback BGM with no stocking confirmation for the owner-approved 20-track batch; the PASS render headline emoji rendered as a hollow box. Assigned to Muse 5 (holds VYR-037; claims after it). Loop stays OFF, uploader paused, renders held unlisted.'
+    blockers: []
+    next_action: Apply the cut profile, verify the BGM shelf on U2, add the gate field, fix the glyph, file evidence from a supervised cycle.
+  - id: TASK-FRG-001
+    title: 'Forge: prove the FRG-017 idle loop is deployed and cycling (or switch it on) inside a hard resource cage + ship the first tool another agent is blocked on'
+    status: AVAILABLE
+    owner: muse_6
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T14:46:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Live evidence the idle loop cycles (timestamps of completed idle experiments) under a MemoryMax/CPU-quota cage on a separate transient unit, with build/test execution kept off the production host per D-029 (sandbox/CI, results as PRs); one named blocked-agent tool shipped and used by that agent.'
+    evidence:
+    - 'Coordinator pool 8, from the 2026-11-22 research: FRG-017 merged 2026-11-18 but deployment/cycling has no live evidence; the self-upgrade programme (owner standing architecture law, Forge-first) has zero production instances. Assigned to Muse 6 (claims after VOI-027).'
+    blockers: []
+    next_action: Verify or enable the loop with the cage, run one cycle, ship the blocked-agent tool, file evidence.
+  - id: TASK-MEM-015
+    title: 'Memora: persist the viking context layer to Oracle ADB or mark it explicitly ephemeral in API responses + promotion audit trail with undo'
+    status: AVAILABLE
+    owner: muse_10
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T14:46:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'No agent can mistake the viking layer for durable memory: it is either ADB-backed across restarts (proven by a restart write/read probe) or every response labels it ephemeral. Every promotion (agent-judged and auto) writes an audit record (who/what/when) reversible by one call; probe evidence filed.'
+    evidence:
+    - 'Coordinator pool 8, from the 2026-11-22 research: repo docs record the viking:// layer is an in-process store, empty after restart - a silent data-loss path for every agent; the owner-designed promotion system (locked 2026-11-18) has no audit trail or undo. Assigned to Muse 10 (holds MEM-014; claims after it).'
+    blockers: []
+    next_action: Implement persistence-or-labelling + the audit trail, probe across a restart, file evidence.
+  - id: TASK-FUT-017
+    title: 'Futuris: standing per-cycle accuracy scoring (every forecast scored when its horizon passes, rolling hit-rate on her status surface) + explicit fit-cost cap'
+    status: AVAILABLE
+    owner: muse_ai
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T14:46:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Each scheduler cycle stores forecasts with horizons and scores matured ones automatically; rolling hit-rate visible on her status surface; a pre-fit memory estimate + model shortlist caps fit cost so the 512M MemoryMax is a backstop, not the control.'
+    evidence:
+    - 'Coordinator pool 8, from the 2026-11-22 research: FUT-016 (assigned Muse 7) grades the backlog once; this task makes grading permanent and caps the fit cost that caused the OOM saga (MemoryMax raised 180M to 512M on a 956MB box). Unassigned - the coordinator watch assigns it to the next free worker.'
+    blockers: []
+    next_action: Implement standing scoring + fit-cost cap, prove over one live cycle, file evidence.
+  - id: TASK-SEN-022
+    title: 'Sentinel: startup self-check that fails VISIBLE when Telegram credentials are missing + direct verification of the S1 backup manifest + manifest completeness inside the backup success criteria'
+    status: AVAILABLE
+    owner: muse_ai
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T14:46:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'On boot Sentinel verifies her Telegram credentials and logs a loud failure (or readiness) - the 2026-11-15 silent-failure class cannot recur unnoticed; the S1 backup manifest complete=true is verified directly once and completeness becomes part of the scheduled backup success check.'
+    evidence:
+    - 'Coordinator pool 8, from the 2026-11-22 research: the 2026-11-15 drill reached nobody because the process env held no Telegram variables; the S1 manifest complete=true was never directly verified from the coordinator side (recorded gap). Unassigned - the coordinator watch assigns it to the next free worker.'
+    blockers: []
+    next_action: Implement the self-check, verify the manifest, file evidence.
+  - id: TASK-REL-068
+    title: 'CI truth: make the contracts workflow collect every shipped test file (REL-001 lineage) and prove it with a canary test that is collected and run'
+    status: AVAILABLE
+    owner: muse_ai
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T14:46:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'The collection rule is fixed so any test file shipped in a PR is collected by the contracts workflow (or the PR fails loudly saying why not); a canary test file lands, is collected and runs in CI, and the run link is filed as evidence.'
+    evidence:
+    - 'Coordinator pool 8, from the 2026-11-22 research: new test files repeatedly land where CI never collects them (PR #936 class; DAEMON-002 follow-up owed; REL-001 open since 2026-11-14) - green CI proving less than it claims undermines every merge decision, now including worker peer-merges. Unassigned - the coordinator watch assigns it to the next free worker.'
+    blockers: []
+    next_action: Fix collection, land the canary, file the CI run evidence.
+
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
