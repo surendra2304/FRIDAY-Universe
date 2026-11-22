@@ -95,7 +95,8 @@ class MemoraContextService:
             node = self.db.write(uri, content, tags)
         except (ValueError, FileExistsError, IsADirectoryError) as exc:
             raise ValueError(str(exc)) from exc
-        return {"uri": node.path.uri, "tokens": node.tokens, "tags": list(node.tags)}
+        return {"uri": node.path.uri, "tokens": node.tokens, "tags": list(node.tags),
+                "durability": self.durability()}
 
     def read(self, uri: str, level: str = "L2") -> dict[str, Any]:
         level = self._level(level)
@@ -107,9 +108,10 @@ class MemoraContextService:
             summary = self.db.summary(uri)
             return {"uri": uri, "level": level,
                     "content": summary.overview if level != "L0" else summary.abstract,
-                    "is_dir": True}
+                    "is_dir": True, "durability": self.durability()}
         return {"uri": uri, "level": level, "content": text, "is_dir": False,
-                "tokens": len(text.split()) + len(text) // 8}
+                "tokens": len(text.split()) + len(text) // 8,
+                "durability": self.durability()}
 
     def ls(self, uri: str = SCHEME) -> list[dict[str, Any]]:
         try:
@@ -136,7 +138,8 @@ class MemoraContextService:
     def remember(self, kind: str, key: str, title: str, body: str,
                  confidence: float = 0.8) -> dict[str, Any]:
         uri = self.db.remember(kind, key, title, body, confidence)
-        return {"uri": uri, "kind": kind, "confidence": confidence}
+        return {"uri": uri, "kind": kind, "confidence": confidence,
+                "durability": self.durability()}
 
     def recall(self, query: str, limit: int = 5, level: str = "L0",
                uri: str | None = None) -> list[dict[str, Any]]:
@@ -171,25 +174,53 @@ class MemoraContextService:
         result = self.db.commit_session(session)
         d = result.as_dict()
         d["committed"] = True
+        d["durability"] = self.durability()
         return d
 
     def compile_wiki(self, persist: bool = True) -> dict[str, Any]:
         report = self.db.compile(root=self.root, persist=persist)
         payload = report.as_dict()
         payload["index"] = report.render_index()
+        payload["durability"] = self.durability()
         return payload
 
     def layers(self) -> dict[str, str]:
         return dict(vk.LAYERS)
 
+    def durability(self) -> dict[str, Any]:
+        """Current durability label for this service's context database.
+
+        TASK-MEM-015: every ``/v1/context`` response carries this, so no
+        caller can mistake the layer's durability. Snapshot-backed databases
+        report the live file count (the restore-time receipt's file counts go
+        stale after the first post-restore write); a plain in-memory database
+        says so explicitly (``state: ephemeral``).
+        """
+        receipt = getattr(self.db, "last_snapshot", None)
+        if isinstance(receipt, dict):
+            return {
+                "enabled": True,
+                "state": receipt.get("state", "unknown"),
+                "backend": receipt.get("backend", "relational"),
+                "tenant_id": receipt.get("tenant_id", ""),
+                "scope_key": receipt.get("scope_key", ""),
+                "node_count": receipt.get("node_count"),
+                "files": self.db.stats().get("files"),
+                "updated_at": receipt.get("updated_at"),
+            }
+        return {
+            "enabled": False,
+            "state": "ephemeral",
+            "backend": None,
+            "note": "in-memory only; content is lost on restart",
+        }
+
     def stats(self) -> dict[str, Any]:
         payload = self.db.stats()
         payload["root"] = self.root
-        # TASK-MEM-010: say what the durability layer actually did, so callers
-        # can tell a snapshot-backed context from a process-local one.
-        receipt = getattr(self.db, "last_snapshot", None)
-        if isinstance(receipt, dict):
-            payload["durability"] = dict(receipt)
+        # TASK-MEM-010/015: say what the durability layer actually did, so
+        # callers can tell a snapshot-backed context from a process-local one.
+        payload["durability"] = self.durability()
         return payload
 
     def bootstrap(self, documents: Iterable[dict[str, Any]]) -> int:
@@ -359,18 +390,21 @@ if _ROUTER_AVAILABLE:
 
     @router.get("/layers")
     def layers() -> dict[str, Any]:
-        return {"layers": get_service().layers()}
+        return {"layers": get_service().layers(),
+                "durability": get_service().durability()}
 
     @router.get("/ls")
     def ls(uri: str = SCHEME) -> dict[str, Any]:
         try:
-            return {"uri": uri, "entries": get_service().ls(uri)}
+            return {"uri": uri, "entries": get_service().ls(uri),
+                    "durability": get_service().durability()}
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     @router.get("/tree")
     def tree(uri: str = SCHEME, depth: int = 3) -> dict[str, Any]:
-        return {"uri": uri, "tree": get_service().tree(uri, depth)}
+        return {"uri": uri, "tree": get_service().tree(uri, depth),
+                "durability": get_service().durability()}
 
     @router.get("/read")
     def read(uri: str, level: str = "L2") -> dict[str, Any]:
@@ -388,16 +422,19 @@ if _ROUTER_AVAILABLE:
 
     @router.get("/grep")
     def grep(pattern: str, uri: str = SCHEME) -> dict[str, Any]:
-        return {"pattern": pattern, "hits": get_service().grep(pattern, uri)}
+        return {"pattern": pattern, "hits": get_service().grep(pattern, uri),
+                "durability": get_service().durability()}
 
     @router.get("/find")
     def find(pattern: str, uri: str = SCHEME) -> dict[str, Any]:
-        return {"pattern": pattern, "matches": get_service().find(pattern, uri)}
+        return {"pattern": pattern, "matches": get_service().find(pattern, uri),
+                "durability": get_service().durability()}
 
     @router.get("/search")
     def search(query: str, level: str = "L0", limit: int = 5) -> dict[str, Any]:
         try:
-            return {"query": query, "hits": get_service().recall(query, limit, level)}
+            return {"query": query, "hits": get_service().recall(query, limit, level),
+                    "durability": get_service().durability()}
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 
