@@ -275,10 +275,14 @@ async def test_health_reports_measured_storage_state(
     ``./data/futuris.db`` already existed, and failed on a clean checkout.
     """
     response = await client.get("/health")
-    assert response.status_code == 200
+    # TASK-REL-067 (§2.2): storage ready, but ``forecasting`` is a required
+    # capability with no probe yet, so the top level is ``degraded`` / 503.
+    assert response.status_code == 503
     body = response.json()
     assert body["storage"]["ready"] is True
-    assert body["status"] == "ok"
+    assert body["status"] == "degraded"
+    assert body["capabilities"]["storage"]["state"] == "ok"
+    assert body["capabilities"]["forecasting"]["state"] == "unknown"
     assert body["storage"]["expected"] >= 12
 
 
