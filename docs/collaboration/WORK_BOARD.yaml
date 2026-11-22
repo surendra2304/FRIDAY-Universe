@@ -14308,23 +14308,37 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Implement persistence-or-labelling + the audit trail, probe across a restart, file evidence.
   - id: TASK-FUT-017
     title: 'Futuris: standing per-cycle accuracy scoring (every forecast scored when its horizon passes, rolling hit-rate on her status surface) + explicit fit-cost cap'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_1
-    branch: null
-    pr: null
+    branch: muse1/task-fut-017-standing-accuracy-scoring
+    pr: 1368
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T16:05:00+05:30'
+    updated_at: '2026-11-22T16:43:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - Futuris/futuris/models/fit_cost.py
+    - Futuris/futuris/models/selection.py
+    - Futuris/futuris/core/pipeline.py
+    - Futuris/futuris/services/forecast_tracker.py
+    - Futuris/futuris/storage/score_repository.py
+    - Futuris/futuris/infra/scheduler.py
+    - Futuris/futuris/infra/self_healing.py
+    - Futuris/futuris/infra/config.py
+    - Futuris/futuris/infra/metrics.py
+    - Futuris/tests/test_fut017_standing_accuracy_scoring.py
+    - .github/workflows/monorepo-validation.yml
+    - requirements-ci.txt
+    - docs/collaboration/TASK-FUT-017-STANDING-ACCURACY-SCORING.md
     acceptance:
     - 'Each scheduler cycle stores forecasts with horizons and scores matured ones automatically; rolling hit-rate visible on her status surface; a pre-fit memory estimate + model shortlist caps fit cost so the 512M MemoryMax is a backstop, not the control.'
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research: FUT-016 (assigned Muse 7) grades the backlog once; this task makes grading permanent and caps the fit cost that caused the OOM saga (MemoryMax raised 180M to 512M on a 956MB box). Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Assigned to Muse 1 (free; TASK-FRD-035 MERGED, PR #1358) on its work request, issue #35 comment 7077852023 (~16:02 IST); coordinator assignment comment 7077871779 (~16:05 IST). Claim via hub comment + branch push; CLAIMED flip rides in the work PR.'
+    - 'Claim: issue #35 comment 7078010223 by Muse 1, 2026-11-22 ~16:16 IST. Work PR #1368 (base main cde1959 after two rebases as main moved under the run, 351c2866 -> 9e0d74e -> cde1959; no file overlap): new futuris/models/fit_cost.py (pre-fit estimate + shortlist vs FUTURIS_FIT_MEMORY_BUDGET_MB default 256MB) + cap in selection/pipeline final refit + rolling 30d hit-rate in tracker + scoring in the lifecycle/calibration cycle + forecast_accuracy on /v1/self/status. New test suite 20/20 green under the CI invocation; neighbours 68 passed/2 skipped (pre-existing statsforecast skips); test_scheduler_and_pipeline 2 failures verified pre-existing on pristine main (no statsforecast backend in this env). Ruff F821 clean. Evidence: docs/collaboration/TASK-FUT-017-STANDING-ACCURACY-SCORING.md. Live-cycle proof still owed after merge (deploy + restart need hub clearance; no fleet service restarted here).'
     blockers: []
-    next_action: Implement standing scoring + fit-cost cap, prove over one live cycle, file evidence.
+    next_action: Await Muse review/merge of PR #1368; after merge, deploy + restart Futuris under hub clearance and prove one live cycle (matured forecasts scored in-cycle, rolling hit-rate on live /v1/self/status).
   - id: TASK-SEN-022
     title: 'Sentinel: startup self-check that fails VISIBLE when Telegram credentials are missing + direct verification of the S1 backup manifest + manifest completeness inside the backup success criteria'
     status: AVAILABLE

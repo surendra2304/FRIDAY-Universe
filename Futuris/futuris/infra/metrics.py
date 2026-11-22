@@ -104,3 +104,10 @@ DEGRADED_SUBSYSTEMS = Gauge(
     "Number of subsystems the agent currently reports as degraded.",
 )
 
+FORECAST_ROLLING_HIT_RATE = Gauge(
+    "futuris_forecast_rolling_hit_rate",
+    "Rolling 30-day share of scored forecasts whose actual landed inside "
+    "the issued interval (TASK-FUT-017 standing accuracy scoring). "
+    "Unset (NaN) while fewer than 30 forecasts are scored.",
+)
+

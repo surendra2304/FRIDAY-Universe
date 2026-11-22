@@ -107,6 +107,13 @@ class ForecastScheduler:
         ]
         self._in_flight_tasks: set[asyncio.Task] = set()
         self._mae_history: dict[str, list[float]] = {}
+        # TASK-FUT-017: the standing per-cycle scoring record. Every cycle
+        # that resolves matured forecasts scores them in the same pass
+        # (see _score_matured_forecasts); the last pass is kept here so
+        # the status surface can show it, and the scheduler never claims
+        # a cycle scored anything it did not.
+        self.last_scoring_summary: dict[str, Any] = {}
+        self.last_cycle_scoring: dict[str, Any] = {}
 
     def should_suppress_refresh_event(
         self,
@@ -324,7 +331,14 @@ class ForecastScheduler:
             connector = build_scheduler_connector()
             obs = await connector.fetch(now - timedelta(days=2), now)
             df = pd.DataFrame([{"timestamp": o.observed_at, "value": o.value} for o in obs])
-            return await self.lifecycle_manager.run_lifecycle_sweep(observations_df=df, as_of=now)
+            report = await self.lifecycle_manager.run_lifecycle_sweep(
+                observations_df=df, as_of=now
+            )
+            # TASK-FUT-017: the sweep just matured forecasts (their
+            # horizons passed and outcomes were recorded); score them in
+            # this same cycle instead of leaving them for a later job.
+            await self._score_matured_forecasts(source="lifecycle_sweep_job")
+            return report
         return None
 
     async def backtest_nightly_job(self) -> None:
@@ -409,6 +423,12 @@ class ForecastScheduler:
                             forecast_id=str(f.forecast_id),
                             error=str(exc),
                         )
+
+        # TASK-FUT-017: the sweep just recorded outcomes for matured
+        # forecasts; score them in this same cycle, so a forecast whose
+        # horizon passed is scored by the cycle that resolved it.
+        if resolved_count:
+            await self._score_matured_forecasts(source="calibration_sweep_job")
 
         # 2. Compute Brier calibration metrics across resolved pairs
         analyzer = CalibrationAnalyzer()
@@ -518,6 +538,26 @@ class ForecastScheduler:
         logger.info("calibration_sweep_job_completed", metrics=metrics)
         return metrics
 
+    async def _score_matured_forecasts(self, *, source: str) -> dict[str, Any]:
+        """Score matured forecasts as part of the calling cycle (TASK-FUT-017).
+
+        Best-effort by design: scoring reads the tracker store and must
+        never abort the cycle that called it. The result is recorded as
+        the last cycle scoring summary either way, so the status surface
+        shows what the last cycle actually did -- including a failure.
+        """
+        try:
+            result = await self.forecast_scoring_job()
+        except Exception as exc:  # scoring must never break a cycle
+            result = {"scored": 0, "status": "error", "error": str(exc)}
+            logger.warning("cycle_scoring_failed", source=source, error=str(exc))
+        self.last_cycle_scoring = {
+            **result,
+            "source": source,
+            "at": datetime.now(UTC).isoformat(),
+        }
+        return self.last_cycle_scoring
+
     async def forecast_scoring_job(self) -> dict[str, Any]:
         """TASK-FUT-006: score resolved forecasts into the live tracker store.
 
@@ -528,23 +568,43 @@ class ForecastScheduler:
         aggregates. Scoring is idempotent, so cadence overlaps are
         harmless; a scoring failure is logged and reported, never raised
         into the scheduler.
+
+        TASK-FUT-017: this is also the standing per-cycle scoring step --
+        the lifecycle and calibration sweeps call it at the end of the
+        cycle that resolves matured forecasts, so a forecast is scored
+        by the cycle its horizon passed in, not by a later job.
         """
         logger.info("forecast_scoring_job_started")
         if not self.outcome_repo:
-            return {"scored": 0, "status": "no_storage"}
+            result: dict[str, Any] = {"scored": 0, "status": "no_storage"}
+            self.last_scoring_summary = {
+                **result,
+                "scored_at": datetime.now(UTC).isoformat(),
+            }
+            return result
         try:
             from futuris.services.forecast_tracker import ForecastTracker
 
             tracker = ForecastTracker(self.outcome_repo.session)
-            result: dict[str, Any] = dict(await tracker.score_resolved())
+            result = dict(await tracker.score_resolved())
             report = await tracker.calibration_report()
             result["report_status"] = report["status"]
             result["n_scored_total"] = report["n_scored"]
+            result["rolling_hit_rate_30d"] = report["rolling_hit_rate_30d"]
+            self.last_scoring_summary = {
+                **result,
+                "scored_at": datetime.now(UTC).isoformat(),
+            }
             logger.info("forecast_scoring_job_completed", metrics=result)
             return result
         except Exception as exc:
             logger.warning("forecast_scoring_job_failed", error=str(exc))
-            return {"scored": 0, "status": "error", "error": str(exc)}
+            result = {"scored": 0, "status": "error", "error": str(exc)}
+            self.last_scoring_summary = {
+                **result,
+                "scored_at": datetime.now(UTC).isoformat(),
+            }
+            return result
 
     async def stream_risk_pulse_job(self) -> dict[str, Any]:
         """Periodic pulse computing portfolio tail-risk and forward Monte Carlo fan charts.

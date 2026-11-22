@@ -50,7 +50,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 from uuid import UUID, uuid4
@@ -70,6 +70,16 @@ DEFAULT_NOMINAL_LEVEL = 0.90
 #: Minimum scored forecasts before the calibration report will call itself
 #: "measured". Below this it reports ``insufficient_data`` and null metrics.
 MIN_REPORT_SAMPLES = 30
+
+#: Rolling window (days) for the hit-rate on the status surface: the share
+#: of scored forecasts whose actual landed inside the interval, over the
+#: most recent window, not over all time.
+ROLLING_HIT_RATE_WINDOW_DAYS = 30
+
+#: Maximum score rows the rolling hit-rate reads. The status surface is a
+#: liveness endpoint the mesh polls constantly, so the query is bounded:
+#: the newest rows are the window, and the window is what the hit-rate is.
+ROLLING_HIT_RATE_ROW_LIMIT = 1000
 
 #: |empirical coverage - nominal level| within this band reads "calibrated".
 CALIBRATION_TOLERANCE = 0.05
@@ -220,6 +230,72 @@ def score_forecast(
     )
 
 
+def _ensure_utc(dt: datetime) -> datetime:
+    """Normalise a stored timestamp to aware UTC (SQLite returns naive)."""
+    return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
+
+
+def build_rolling_hit_rate(
+    rows: list[ForecastScoreModel],
+    *,
+    window_days: int = ROLLING_HIT_RATE_WINDOW_DAYS,
+    as_of: datetime | None = None,
+    min_samples: int = MIN_REPORT_SAMPLES,
+) -> dict[str, Any]:
+    """Rolling interval hit-rate over the most recent ``window_days``.
+
+    The hit-rate is the share of scored forecasts whose landed actual
+    fell inside the issued interval -- the one-number answer to "how
+    often was Futuris right lately". The window ends at ``as_of``
+    (default: the newest score row, so a report built from stored rows
+    is reproducible); rows older than the window do not count. Below
+    ``min_samples`` in-window scores the status is ``insufficient_data``
+    and the hit-rate is null: a thin window is reported as thin, never
+    as a verdict. A hit-rate of exactly 1.0 on a full window is a real
+    measurement, not a default.
+    """
+    total = len(rows)
+    if not rows:
+        return {
+            "window_days": window_days,
+            "window_start_utc": None,
+            "window_end_utc": None,
+            "n_in_window": 0,
+            "n_scored_total": 0,
+            "hit_rate": None,
+            "status": "insufficient_data",
+            "min_samples": min_samples,
+        }
+    end = _ensure_utc(as_of) if as_of is not None else max(
+        _ensure_utc(r.scored_at) for r in rows
+    )
+    start = end - timedelta(days=window_days)
+    in_window = [r for r in rows if start <= _ensure_utc(r.scored_at) <= end]
+    n = len(in_window)
+    if n < min_samples:
+        return {
+            "window_days": window_days,
+            "window_start_utc": start.isoformat(),
+            "window_end_utc": end.isoformat(),
+            "n_in_window": n,
+            "n_scored_total": total,
+            "hit_rate": None,
+            "status": "insufficient_data",
+            "min_samples": min_samples,
+        }
+    hits = sum(1 for r in in_window if r.interval_hit)
+    return {
+        "window_days": window_days,
+        "window_start_utc": start.isoformat(),
+        "window_end_utc": end.isoformat(),
+        "n_in_window": n,
+        "n_scored_total": total,
+        "hit_rate": round(hits / n, 6),
+        "status": "measured",
+        "min_samples": min_samples,
+    }
+
+
 def _coverage_key(level: float) -> str:
     return f"coverage_{int(round(level * 100))}"
 
@@ -299,6 +375,10 @@ def build_calibration_report(
         "status": "insufficient_data",
         "metrics": None,
         "verdict": None,
+        # TASK-FUT-017: the rolling hit-rate rides in every report, so the
+        # status surface and the calibration report never disagree about
+        # what "recent accuracy" means.
+        "rolling_hit_rate_30d": build_rolling_hit_rate(rows),
         "by_nominal_level": {},
         "by_target": {},
         "by_evidence_class": {},
@@ -408,3 +488,33 @@ class ForecastTracker:
             evidence_class=evidence_class,
             min_samples=min_samples,
         )
+
+    async def rolling_hit_rate(
+        self,
+        *,
+        window_days: int = ROLLING_HIT_RATE_WINDOW_DAYS,
+        as_of: datetime | None = None,
+        min_samples: int = MIN_REPORT_SAMPLES,
+    ) -> dict[str, Any]:
+        """Rolling interval hit-rate for the status surface (TASK-FUT-017).
+
+        Bounded: at most ``ROLLING_HIT_RATE_ROW_LIMIT`` newest score rows
+        are read, so the liveness endpoint that serves this never scans
+        the whole store. The window ends at ``as_of`` (default: now).
+        """
+        rows = await self.score_repo.list_recent_scores(
+            limit=ROLLING_HIT_RATE_ROW_LIMIT
+        )
+        result = build_rolling_hit_rate(
+            rows,
+            window_days=window_days,
+            as_of=as_of or datetime.now(UTC),
+            min_samples=min_samples,
+        )
+        result["n_scored_total"] = await self.score_repo.count_scores()
+        # The window is computed over the newest rows_read rows; when the
+        # store holds more than the read limit, the hit-rate covers the
+        # newest slice of the window, and this count says so.
+        result["rows_read"] = len(rows)
+        result["row_limit"] = ROLLING_HIT_RATE_ROW_LIMIT
+        return result

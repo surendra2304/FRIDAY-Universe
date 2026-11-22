@@ -146,6 +146,19 @@ class Settings(BaseSettings):
             "synthetic generator (default), NEXUS telemetry broker, or VyralX trend stream."
         ),
     )
+    FUTURIS_FIT_MEMORY_BUDGET_MB: int = Field(
+        default=256,
+        ge=1,
+        description=(
+            "TASK-FUT-017: explicit pre-fit memory budget (MB) for one "
+            "forecast's model fits. Before any candidate is fitted, "
+            "futuris.models.fit_cost estimates each fit and shortlists the "
+            "candidates to fit inside this budget; the winner's full-data "
+            "refit is checked the same way. Half the 512M MemoryMax "
+            "backstop, so the cap binds while there is still headroom -- "
+            "the MemoryMax is the backstop, not the control."
+        ),
+    )
     NEXUS_URL: str = Field(
         default="http://nexus-service.local",
         description="NEXUS telemetry broker URL (used when FUTURIS_TELEMETRY_SOURCE=nexus)",
