@@ -192,7 +192,8 @@ jobs:
             Stratex/tests/test_emergency_halt_endpoint.py \
             Stratex/tests/test_quant_agent.py \
             Stratex/tests/test_telegram_bot.py \
-            Stratex/tests/test_daemon_heartbeat_health.py
+            Stratex/tests/test_daemon_heartbeat_health.py \
+            Stratex/tests/test_rel_071_stratex_health_path.py
       - name: Install ffmpeg for VyralX real-render contracts
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Review-required project persistence and worker boundaries

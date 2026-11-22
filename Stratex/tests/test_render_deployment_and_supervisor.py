@@ -24,8 +24,8 @@ def client():
 class TestHealthAndHeartbeatArchitecture:
     def test_health_endpoint_response(self, client, tmp_path, monkeypatch):
         """GET /health must return 200 with dashboard and engine status."""
-        hb_file = str(tmp_path / "testnet_heartbeat.json")
-        monkeypatch.setenv("TESTNET_HEARTBEAT_FILE", hb_file)
+        hb_file = str(tmp_path / "heartbeat.json")
+        monkeypatch.setenv("STRATEX_HEARTBEAT_FILE", hb_file)
         
         hb_data = {
             "worker_alive": True,
@@ -54,8 +54,8 @@ class TestHealthAndHeartbeatArchitecture:
         """Stale heartbeat (>60s) must report engine offline even if dashboard is online."""
         import config
         monkeypatch.setattr(config, "TRADING_MODE", "FUTURES")
-        hb_file = str(tmp_path / "testnet_heartbeat.json")
-        monkeypatch.setenv("TESTNET_HEARTBEAT_FILE", hb_file)
+        hb_file = str(tmp_path / "heartbeat.json")
+        monkeypatch.setenv("STRATEX_HEARTBEAT_FILE", hb_file)
         
         old_time = (datetime.datetime.utcnow() - datetime.timedelta(seconds=120)).isoformat() + "Z"
         hb_data = {
@@ -79,7 +79,7 @@ class TestHealthAndHeartbeatArchitecture:
     def test_missing_heartbeat_reports_engine_offline(self, client, tmp_path, monkeypatch):
         """Missing heartbeat file must report engine offline."""
         hb_file = str(tmp_path / "non_existent_heartbeat.json")
-        monkeypatch.setenv("TESTNET_HEARTBEAT_FILE", hb_file)
+        monkeypatch.setenv("STRATEX_HEARTBEAT_FILE", hb_file)
         
         res = client.get('/api/engine-health')
         assert res.status_code == 200
@@ -90,8 +90,8 @@ class TestHealthAndHeartbeatArchitecture:
 
     def test_api_engine_health_full_telemetry(self, client, tmp_path, monkeypatch):
         """GET /api/engine-health returns complete engine telemetry."""
-        hb_file = str(tmp_path / "testnet_heartbeat.json")
-        monkeypatch.setenv("TESTNET_HEARTBEAT_FILE", hb_file)
+        hb_file = str(tmp_path / "heartbeat.json")
+        monkeypatch.setenv("STRATEX_HEARTBEAT_FILE", hb_file)
         
         now_str = datetime.datetime.utcnow().isoformat() + "Z"
         hb_data = {
