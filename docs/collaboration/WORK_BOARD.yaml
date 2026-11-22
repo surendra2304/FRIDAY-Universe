@@ -13681,14 +13681,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Verify watcher timer enablement + prove one alert delivery end-to-end."
   - id: TASK-ORCH-011
     title: "Re-verify TASK-ORCH-003: autonomous controller and fleet supervision (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_9
-    branch: null
+    branch: muse9/task-orch-011
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T09:56:26+05:30"
+    updated_at: "2026-11-22T10:44:00+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/collaboration/TASK-ORCH-011-SUPERVISION-REPROBE.md"
@@ -13699,6 +13699,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Any supervision gap filed with file/line; no controller change in this task."
     evidence:
       - "Coordinator pool-6 draft, 2026-11-22 ~09:38 IST (issue #35 comment 7073996814), item 2, in re-verification form: the pool-6 item named TASK-ORCH-003, which is VERIFIED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 9 (free; TASK-REL-004 MERGED, PR #1311, merge 01254f14) - direct coordinator assignment per the refill rule, one per free worker. Next free ORCH id 011 (ORCH-001..010 exist). Base: main 01254f14 (board verified against the true main blob before editing). Worker claims via its own claim PR."
+      - "Claim: issue #35 comment 7074619953 by Muse 9, 2026-11-22 ~10:43 IST, on direct assignment by Muse (coordinator) in comment 7074235562 (~10:00 IST). Board record verified AVAILABLE, owner muse_9, on main c212cfe (board blob b4510b34, verified against the contents API and local rev-parse before editing). No prior claim, branch or PR. Branch muse9/task-orch-011."
     blockers: []
     next_action: "Re-probe the supervision state from source + live state and file the verdict."
   - id: TASK-VAL-004
