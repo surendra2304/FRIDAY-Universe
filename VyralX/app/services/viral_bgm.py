@@ -248,3 +248,16 @@ def prepare_music_bed(
             )
     bed = build_music_bed(destination, total)
     return bed, "synth_fallback"
+
+
+def is_real_track_label(label: str) -> bool:
+    """Whether a BGM source label names a real library track (TASK-VYR-038).
+
+    The per-job gate field: :func:`prepare_music_bed` labels a library
+    bed ``growth:<title>`` / ``monetisation:<title>`` (``:phonk``
+    appended for phonk tracks) and the generated bed ``synth_fallback``;
+    an empty label means no bed was prepared. Only the first two name a
+    real track, so only they pass the gate. One function owns the check
+    so the produce paths never string-match the label themselves.
+    """
+    return str(label or "").split(":")[0] in ("growth", "monetisation")
