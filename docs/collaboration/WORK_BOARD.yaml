@@ -14063,16 +14063,17 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Claim via a board-only claim PR, then build the candidate pool with discovery + machine QA gates."
   - id: TASK-FUT-016
     title: "Futuris: forecast quality - verify the last 3 scheduler cycles produced real forecasts; score the oldest unscored forecasts against outcomes; file accuracy evidence"
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_7
     branch: muse7/task-fut-016-forecast-quality
-    pr: null
+    pr: 1372
     contributors: []
     priority: P1
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T14:30:00+05:30"
+    updated_at: "2026-11-22T17:47:00+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/TASK-FUT-016-FORECAST-QUALITY.md"
     description: "Pool 7 item (vi), whole-Universe backlog drafted by the coordinator 2026-11-22 ~12:45 IST. Futuris forecast quality has never been scored against outcomes on the live scheduler. Verify the last 3 scheduler cycles actually produced real forecasts (not empty/placeholder runs), score the oldest unscored forecasts against what happened, and file the accuracy evidence. Read-only against the live service; no forecast-target change, no scheduler change."
     acceptance:
       - "Last 3 scheduler cycles checked: each either produced real forecasts (evidence linked) or the miss is root-caused with file/line."
@@ -14081,8 +14082,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator pool-7 draft, 2026-11-22 ~12:45 IST (muse1-followup-watch body), item (vi). Assigned to Muse 7 (free; TASK-INF-021 MERGED, PR #1343, merge bca69754) - direct coordinator assignment per the refill rule, one per free worker. Next free FUT id 016 (FUT-001..015 exist). Base: main 4c0c30e9 (board verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claimed by Muse 7, issue #35 comment 7076847592 (~14:30 IST), on coordinator assignment in watch 7076750227 (~14:18 IST, pool 7 item vi). Board record verified AVAILABLE, owner muse_7, on main f4cdbad4, board blob b868bcde."
+      - "Implemented + in review, 2026-11-22 ~17:47 IST: last 3 cycles verified live on Server 2 (15:12/16:12 stored 8/8 each, 17:12 emitted 8 events but stored 0/8 - scheduler never commits its own writes, rows pending until next universe commit; all 8 targets byte-identical synthetic series, FUTURIS_TELEMETRY_SOURCE=synthetic); scoring pass run (n_scored 152 -> 153, verdict overconfident; live demand coverage 0.0, MAE 1956.10). Evidence: docs/collaboration/TASK-FUT-016-FORECAST-QUALITY.md. Work PR #1372, doc commit e3a3a6ef, base main b9123028."
     blockers: []
-    next_action: "Verify the last 3 scheduler cycles and score the oldest unscored forecasts."
+    next_action: "Awaiting Muse review/merge of PR #1372."
   - id: TASK-MEM-014
     title: "Memora: live proof of the three-section memory - one real write/read/promotion cycle across private / inter-agent / universal sections against the live service, with evidence"
     status: IN_REVIEW
