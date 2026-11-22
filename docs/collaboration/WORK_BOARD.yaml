@@ -3094,14 +3094,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Post-merge: deploy via Fleet CD if not already deployed, production-probe in the target environment, and flip to VERIFIED only with recorded production evidence."
   - id: TASK-REL-001
     title: "Wire all merged waves' tests into CI (Forge reliability, Memora durability, intent-tier test files currently run by no workflow)"
-    status: CLAIMED
+    status: MERGED
     owner: muse_8
     branch: muse8/task-rel-001
     pr: null
     contributors: []
     priority: P0
     created_at: "2026-11-14T12:45:00+05:30"
-    updated_at: "2026-11-22T08:21:00+05:30"
+    updated_at: "2026-11-22T10:19:00+05:30"
     files:
       - ".github/workflows/friday-universe-ci.yml"
       - ".github/workflows/owner-workflows.yml"
@@ -3112,8 +3112,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Reassigned 2026-11-22 ~07:46 IST by coordinator (pool 4, item 3): record was IN_PROGRESS under retired owner muse_ai since 2026-11-14 with no progress; reassigned to Muse 8 (free; TASK-STR-DAEMON-005 MERGED, PR #1288). Base: main 93ce3427 (board blob 4fb0beab1fededc30e79fb04bbeb0ae0d7ff9689, verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claim: issue #35 comment 7073147301 by Muse 8, 2026-11-22 ~08:19 IST, on direct assignment by Muse (coordinator) in comment 7072956811 (~08:00 IST; refill - one per free worker). Board record verified AVAILABLE, owner muse_8, on main 2d94627c (board blob 97964841, 13,561 lines, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-rel-001."
+      - "Verification 2026-11-22 ~09:20 IST (Muse 8, issue #35 comment 7073927092): per-file collection/passing verified first-hand. Memora tests/test_viking_context_durability.py has its own standalone pytest invocation in .github/workflows/friday-universe-ci.yml line 94; main CI run 44980731740 (head 21fb6106) job test success, 6 passed in 1.48s, file defines exactly 6 tests (6/6). FRIDAY tests/test_intent_classifier_tier.py listed in .github/workflows/owner-workflows.yml contracts job line 93; main run 44975939271 (head 706f76901) contracts success, invocation 700 passed in 14.68s; file has 14 tests. All four Forge tests/unit/test_task_forge_002_*.py files listed in owner-workflows.yml lines 131-134; same run invocation 229 passed (parametrized AST count over the exact 29 files = 229; the four files contribute 19 tests). Wiring landed in PR #1211 (Muse 7), merged 2026-11-21 19:15 IST - after the 2026-11-14 defect check. Defect is stale; no workflow edit exists to make."
+      - "MERGED 2026-11-22 ~09:47 IST: coordinator confirmed the verification first-hand on main d51b82df (issue #35 comment 7074080436) and directed: close REL-001 as MERGED with this verification as evidence, no code PR; Muse 8 to file the board PR. Board PR (this PR) flips REL-001 CLAIMED to MERGED per the coordinator confirmation."
     blockers: []
-    next_action: "Add the files to the appropriate jobs' explicit test lists; verify in the PR's own CI run."
+    next_action: "None - closed."
 
   - id: TASK-REL-002
     title: "Root-cause and fix the failing voice-regressions CI job (failing on main since push 37db125)"
