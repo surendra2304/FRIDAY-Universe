@@ -7,7 +7,9 @@ re-file the 48h fires-vs-messages ratio from a fresh window.
 - Claim: issue #35 comment 7084194994 (2026-11-23 00:55 IST). Branch
   `muse13/task-ctx-003-cortex-evidence-gaps`.
 - Work PR: #1416 (https://github.com/surendra2304/FRIDAY-Universe/pull/1416,
-  head `3311c81d`, base main `81acda98`).
+  head `09418867`, base main `81acda98`). **MERGED 2026-11-23 02:05:23 IST
+  by Surendra, merge commit `a8c6fea2`, CI 9/9 green** (coordinator
+  follow-up, issue #35 comment 7085400525, ~02:06 IST).
 
 ## 0. Live state at filing (Server 2 via bridge, read-only, 2026-11-23 ~01:41–01:44 IST)
 
@@ -132,7 +134,7 @@ returned HTTP 403 `Invalid FRIDAY service token.`; with
   1,612 successes, 0 failures; ingestion and tools have no probe
   (`samples 0`, `reason "no probe"`).
 
-## 4. G4 — not yet deployed → OPEN, blocked on hub clearance
+## 4. G4 — not yet deployed → OPEN, restart clearance granted, restart HELD pending deploy direction
 
 The running Cortex (PID 584499, since Nov 22 12:16:38 IST) still runs
 the old DNS-only probe: its last `ai_universe` probe result is
@@ -148,6 +150,43 @@ coordinator-cleared restart, with a post-restart supervisor query as
 the proof (expected: `ai_universe` last probe HEALTHY, samples
 counting up, `last_unconfigured` empty).
 
+**Follow-up — hourly self-check 2026-11-23 ~02:36–02:42 IST (Muse 13):**
+
+- **Clearance GRANTED, condition met.** Coordinator follow-up
+  7085400525 (~02:06 IST): "You may restart Cortex on S2 (PID 584499)
+  once Muse 10's 02:06 IST re-probe has completed — S2 only, nothing
+  else. Verify the supervisor resumes and the new /ready probe reports,
+  then file the evidence." The re-probe **has completed**: Muse 10
+  status 7085500872 (02:13:52 IST) — re-probe FAILED, the 401 persists
+  on the correct path `/friday/api/chat`. The grant's condition is met.
+- **Restart HELD — the grant's verification cannot be satisfied by a
+  restart alone.** Pre-restart verification this run, first-hand via
+  the bridge:
+  - `get_system_info`: S2 checkout still
+    `muse10/task-frd-037-chat-live-runs` @ `db933cfc` — unchanged.
+  - `oracle_check_service`: Cortex.service active since Nov 22
+    12:16:38 IST, Main PID **584499**, 14h uptime.
+  - On-disk `Cortex/apps/api/src/cortex_api/self_healing.py` line 90
+    still performs `GET {url}/health` (CTX-002 probe); **no `/ready`
+    string anywhere in the file**. The /ready code from merged PR
+    #1416 is on main (`a8c6fea2`), not on the S2 checkout.
+  - Live supervisor state at 02:40:19 IST: background running,
+    **cycles 1725** (was 1612 at 01:43 IST — the 30 s tick, as
+    expected), errors 0, `last_unconfigured: ["ai_universe"]`,
+    escalation attempts 0, delivered 0.
+  - A restart now would load the /health probe, not /ready, and would
+    reset the counted-cycle baseline (the G2 1,612-fire snapshot stays
+    filed) without producing the "/ready probe reports" verification
+    the grant requires. Changing the S2 checkout (merge /ready into
+    the deployed FRD-037 branch, or re-point it at main) is a deploy
+    step, outside the restart grant — and the FRD-037 branch is Muse
+    10's live-run environment, so the re-point is a coordinator
+    decision.
+- **Asked of Muse (status post, this run):** deploy direction for the
+  /ready code on S2 + restart in one step, or confirmation to restart
+  now for the /health probe and file that as a partial G4 close. No
+  restart performed by this worker; no checkout change made.
+
 ## 5. G5 — 19 pre-existing tier-1 failures → OPEN, re-run owed
 
 CTX-002's baseline (2026-11-22): the two tier-1 files together
@@ -161,6 +200,36 @@ The F1.2 test in both tier-1 files is updated to the /ready contract,
 so the re-run, when it happens on an approved route, must show the
 same 19 pre-existing failures and no new ones. No pass/fail count is
 claimed here.
+
+**Follow-up — hourly self-check 2026-11-23 ~02:36–02:42 IST (Muse 13):
+exact execution-risk output, filed per Muse direction 7085400525
+("do NOT override the local execution-risk check — file its exact
+output in the evidence doc"):**
+
+- Re-attempt this run, to capture the check's exact output: shallow
+  clone of main to `/tmp/ctx003-g5` succeeded (exit 0; the two tier-1
+  files present). The execution-risk check then fired on the tool
+  result itself. No pytest command was run, no test executed.
+- The check's notice, verbatim in substance: the untrusted tool
+  result "failed an execution-risk check"; the result and any files it
+  delivered "can run code during ordinary processing, even if they
+  contain no instructions." It prohibits running, cloning, checking
+  out, extracting, unpacking, applying, installing, building,
+  testing, importing, loading or sourcing the content; prohibits
+  running git or package-manager commands inside its content, even
+  status, diff or log ("Hooks and filters in it can run code");
+  prohibits copying or moving its files into home, config
+  directories, a repository, PATH or tools, and pointing settings or
+  environment variables at them; permits reading its text with plain
+  file viewing that runs nothing. It directs that if a prohibited
+  action is necessary, the worker explain that the content failed an
+  execution-risk check and ask whether to go ahead, and wait.
+- The clone was deleted unused (`rm -rf /tmp/ctx003-g5`, verified
+  gone). The check was **not** overridden, per Muse's direction.
+- Re-run route: the re-run goes through CI once the test job collects
+  Cortex tests; Muse is drafting that as spare TASK-REL-080* (CI
+  collects Cortex tier-1 + re-run green) for the next queue refill.
+  Until then the re-run stays owed and no pass/fail count is claimed.
 
 ## Files
 
