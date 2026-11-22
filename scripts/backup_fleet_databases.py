@@ -330,20 +330,109 @@ def verify_backup(out_dir: Path, manifest: dict, log=print) -> tuple[int, int]:
     return ok, failed
 
 
+def derive_manifest_complete(
+    manifest: dict, *, live_verify_failed: int | None = None
+) -> tuple[bool, list[str]]:
+    """Re-derive completeness from a manifest's own contents (TASK-SEN-022).
+
+    The written ``complete`` flag is a claim; this is the audit of it.
+    A backup counts as complete only when:
+
+    * no agent failed,
+    * the file verification was clean — the manifest's own ``verify``
+      block, or a live ``--verify`` count when one is supplied,
+    * every requested agent is present in the dump list (when the
+      manifest records ``requested_agents`` — a partial run cannot
+      silently pass as a full one), and
+    * every dumped agent actually dumped at least one table (a
+      zero-table dump is a wrong-schema resolution, SEN-009 §4, not a
+      backup — an empty schema "backs up" cleanly under the old rule).
+
+    Returns ``(complete, reasons)`` — the reasons name each failing
+    condition so callers can say WHY a backup is incomplete instead of
+    just that it is. The flag itself is part of the verdict: a run that
+    recorded ``complete: false`` stays incomplete even if its contents
+    look clean (the run's own verdict is not overruled by re-reading
+    its files). A missing or unreadable manifest is the caller's
+    problem (``None`` from ``backup_completeness``), not this function's.
+    """
+    reasons: list[str] = []
+    if manifest.get("complete") is False:
+        reasons.append("manifest flag complete=false (the run's own verdict)")
+    failed_agents = manifest.get("failed_agents") or []
+    if failed_agents:
+        reasons.append(f"failed agents: {', '.join(str(a) for a in failed_agents)}")
+    if live_verify_failed is None:
+        verify = manifest.get("verify")
+        if not isinstance(verify, dict):
+            reasons.append("no verify block (files were never checksum-verified)")
+        elif verify.get("failed", 1) != 0:
+            reasons.append(f"verify failed: {verify.get('failed')} file(s)")
+    elif live_verify_failed != 0:
+        reasons.append(f"verify failed: {live_verify_failed} file(s)")
+    dumped = {entry.get("agent") for entry in manifest.get("agents") or []}
+    requested = manifest.get("requested_agents")
+    if requested is not None:
+        missing = [a for a in requested if a not in dumped]
+        if missing:
+            reasons.append(f"requested agents not dumped: {', '.join(missing)}")
+    for entry in manifest.get("agents") or []:
+        if not entry.get("tables"):
+            reasons.append(f"{entry.get('agent')}: dumped 0 tables (wrong-schema resolution?)")
+    return (not reasons, reasons)
+
+
+def _newest_backup_dir(root: Path) -> Path | None:
+    """Newest subdir of a backup root that holds a manifest, else None."""
+    if not root.is_dir():
+        return None
+    candidates = sorted(
+        (d for d in root.iterdir() if d.is_dir() and (d / "manifest.json").is_file()),
+        reverse=True)
+    return candidates[0] if candidates else None
+
+
 def run(args, log=print) -> int:
     agents = [a.strip().upper() for a in args.agents.split(",") if a.strip()]
     media = bool(args.media or getattr(args, "media_only", False))
     requested = [] if getattr(args, "media_only", False) else (agents or ALL_AGENTS)
+    # TASK-SEN-022: the full scope this run was asked for — recorded in
+    # the manifest so completeness is auditable downstream and a partial
+    # run can never masquerade as a full one.
+    requested_all = list(requested) + ([MEDIA_SCHEMA] if media else [])
 
     if args.verify:
-        base = Path(args.from_dir or args.out)
+        if args.from_dir:
+            base = Path(args.from_dir)
+        else:
+            # TASK-SEN-022: --verify with no --from-dir verifies the
+            # NEWEST backup (the --help text always promised this; the
+            # old code verified the root itself and aborted).
+            base = _newest_backup_dir(Path(args.out))
+            if base is None:
+                log(f"VERIFY-ABORT: no backup directory under {args.out}")
+                return 2
         manifest_path = base / "manifest.json"
         if not manifest_path.is_file():
             log(f"VERIFY-ABORT: no manifest at {manifest_path}")
             return 2
         manifest = json.loads(manifest_path.read_text())
         ok, failed = verify_backup(base, manifest, log=log)
-        log(f"[VERIFY] {ok} files OK, {failed} failed — backup {base}")
+        # TASK-SEN-022: file checksums alone are not success — the
+        # manifest's completeness is part of the verdict now. A backup
+        # whose files verify but whose manifest is incomplete (a failed
+        # agent, a missing schema, an empty dump) is NOT a success.
+        complete, reasons = derive_manifest_complete(manifest, live_verify_failed=failed)
+        if manifest.get("complete") is not None and bool(manifest["complete"]) != complete:
+            log("[VERIFY-WARN] manifest 'complete' flag disagrees with the "
+                f"derived verdict (flag={manifest['complete']!r}, derived={complete}); "
+                "trusting the derived verdict")
+        if not complete:
+            for reason in reasons:
+                log(f"[VERIFY-FAIL] manifest incomplete: {reason}")
+            log(f"[VERIFY] {ok} files OK, {failed} failed — backup {base} INCOMPLETE, not a success")
+            return 1
+        log(f"[VERIFY] {ok} files OK, {failed} failed — backup {base} complete")
         return 0 if failed == 0 else 1
 
     if args.dry_run:
@@ -365,7 +454,8 @@ def run(args, log=print) -> int:
     os.chmod(out_dir, 0o700)
 
     manifest: dict = {"task": "TASK-INF-003", "created_at": utcnow(), "agents": [],
-                      "configs": [], "agent_envs": [], "root": str(out_dir)}
+                      "configs": [], "agent_envs": [], "root": str(out_dir),
+                      "requested_agents": requested_all}
     failed_agents = []
     for agent in requested:
         try:
@@ -391,17 +481,34 @@ def run(args, log=print) -> int:
 
     ok, failed = verify_backup(out_dir, manifest, log=log)
     manifest["verify"] = {"ok": ok, "failed": failed, "verified_at": utcnow()}
+    # TASK-SEN-022: an agent that "dumped" zero tables resolved to the
+    # wrong schema (or an empty one) — that is a failure, not a backup.
+    # SEN-009 §4 names it explicitly; before this it sailed through as
+    # complete because only exceptions counted as failures. Row counts
+    # are deliberately NOT judged here: a live-empty schema (STRATEX's
+    # tables hold 0 rows in production today) is still a real backup.
+    for entry in manifest["agents"]:
+        if not entry.get("tables"):
+            agent = entry.get("agent")
+            log(f"[{agent}] FAILED: dumped 0 tables (wrong-schema resolution?)")
+            if agent not in failed_agents:
+                failed_agents.append(agent)
     manifest["failed_agents"] = failed_agents
     # TASK-SEN-009: completeness is the retention/freshness currency — a
     # backup only counts as a restorable copy when every requested schema
-    # dumped and every written file verified.
-    manifest["complete"] = not failed_agents and failed == 0
+    # dumped and every written file verified. TASK-SEN-022: the flag is
+    # now derived from the manifest's own contents (see
+    # derive_manifest_complete), never asserted independently of them.
+    manifest["complete"], complete_reasons = derive_manifest_complete(manifest)
+    if not manifest["complete"]:
+        for reason in complete_reasons:
+            log(f"[BACKUP] INCOMPLETE: {reason}")
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     os.chmod(out_dir / "manifest.json", 0o600)
     log(f"[BACKUP] complete: {out_dir} (verify: {ok} OK / {failed} failed; agents failed: {failed_agents or 'none'})")
     if args.keep:
         prune_old_backups(out_root, keep=args.keep, log=log)
-    return 0 if not failed_agents and failed == 0 else 1
+    return 0 if manifest["complete"] else 1
 
 
 def backup_completeness(backup_dir: Path) -> bool | None:
@@ -412,6 +519,12 @@ def backup_completeness(backup_dir: Path) -> bool | None:
     have (no failed agents and a clean verify). A missing or unreadable
     manifest is None (unknown) — such directories are treated
     conservatively by the pruner.
+
+    TASK-SEN-022: the flag is no longer trusted on its own — the verdict
+    is re-derived from the manifest's contents (see
+    derive_manifest_complete), so a flag that disagrees with its own
+    manifest cannot mark a partial backup complete. The flag is still
+    written (it is the run's own claim); this function is the audit.
     """
     manifest_path = backup_dir / "manifest.json"
     if not manifest_path.is_file():
@@ -420,10 +533,8 @@ def backup_completeness(backup_dir: Path) -> bool | None:
         manifest = json.loads(manifest_path.read_text())
     except Exception:  # noqa: BLE001 — unreadable manifest = unknown
         return None
-    if "complete" in manifest:
-        return bool(manifest["complete"])
-    verify = manifest.get("verify") or {}
-    return not manifest.get("failed_agents") and verify.get("failed", 1) == 0
+    complete, _reasons = derive_manifest_complete(manifest)
+    return complete
 
 
 def prune_old_backups(root: Path, *, keep: int, log=print) -> None:

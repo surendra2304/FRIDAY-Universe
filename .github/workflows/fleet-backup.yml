@@ -77,6 +77,19 @@ jobs:
             echo "=== Latest backups ==="
             sudo ls -lt /var/backups/friday-universe | head -5
 
+      - name: Verify newest backup manifest is complete (TASK-SEN-022)
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SERVER1_HOST }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/friday_universe
+            LATEST=$(sudo ls -1d /var/backups/friday-universe/[0-9]*/ | sort | tail -1)
+            echo "Verifying manifest completeness: $LATEST"
+            sudo /opt/friday_universe/venv/bin/python scripts/backup_fleet_databases.py --verify --from-dir "/var/backups/friday-universe/$LATEST"
+
       - name: Encrypt newest backup for the offsite copy (G3)
         if: success()
         uses: appleboy/ssh-action@v1.2.5
@@ -156,6 +169,19 @@ jobs:
             sudo /opt/friday_universe/venv/bin/python scripts/backup_fleet_databases.py --media-only --keep 4
             echo "=== Latest backups ==="
             sudo ls -lt /var/backups/friday-universe | head -5
+
+      - name: Verify newest media manifest is complete (TASK-SEN-022)
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SERVER2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/friday_universe
+            LATEST=$(sudo ls -1d /var/backups/friday-universe/[0-9]*/ | sort | tail -1)
+            echo "Verifying manifest completeness: $LATEST"
+            sudo /opt/friday_universe/venv/bin/python scripts/backup_fleet_databases.py --verify --from-dir "/var/backups/friday-universe/$LATEST"
 
       - name: Alert on failure (never silent again)
         if: failure()
