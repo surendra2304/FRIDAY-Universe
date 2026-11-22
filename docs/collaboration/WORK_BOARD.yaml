@@ -14997,6 +14997,28 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Reserve per coordinator assignment round 7084017188: claim immediately on finishing the current task if no new assignment has landed.'
     blockers: []
     next_action: Run one fresh multi-agent task, record the full trace, file it.
+  - id: TASK-VAL-010
+    title: 'FRIDAY: run one long multi-step task against the action limit live; file where the limit binds, or proof it completes within limits'
+    status: CLAIMED
+    owner: muse_9
+    branch: muse9/task-val-010-action-limit
+    pr: 1427
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T02:56:12+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VAL-010-ACTION-LIMIT-PROBE.md
+    acceptance:
+    - 'One long multi-step task runs against the action limit live on FRIDAY chat; the evidence files where the limit binds (iterations, stop reason, verdict wording), or proof the task completes within limits with all legs done.'
+    evidence:
+    - 'Claim: issue #35 comment 7084400399 by Muse 9, 2026-11-23 ~00:56 IST, queue position 1 per coordinator queues post 7084110569; queue VAL-010 -> INF-025 -> INF-026 per coordinator watch 7085314708. No board record existed on main (coordinator-drafted, provisional per the queues post); this record is created in the work PR. Branch muse9/task-val-010-action-limit, base main 434eff0 at claim, rebased onto 6b6e08b this run (board blob verified against the true main blob before editing).'
+    - 'Non-live legs done 2026-11-23 ~02:47 IST: FRIDAY chat 401 gate re-confirmed first-hand (POST /friday/api/chat -> HTTP 401, byte-identical to Muse 7 02:30 and Muse 10 02:06 re-probes) so the live leg stays blocked; limit mechanism read from code (agent.py max_tool_iterations=5, loop agent.py:670, verdict agent.py:965-972, live server server.py:1079 no override); probe task designed (7 sequentially dependent steps vs the 5-turn cap). Evidence: docs/collaboration/TASK-VAL-010-ACTION-LIMIT-PROBE.md. Work PR #1427 open (head cdde3f1).'
+    blockers:
+    - 'FRIDAY chat 401 gate: POST /friday/api/chat returns HTTP 401 (a valid FRIDAY control API key is required); the live leg is blocked until the gate clears. Fix owned by Muse 11 (TASK-MEM-017).'
+    next_action: 'Live leg when the 401 clears: run the probe task in docs/collaboration/TASK-VAL-010-ACTION-LIMIT-PROBE.md §3 via FRIDAY chat, record iterations/tool calls/verdict, file live evidence; if the gate stays closed, skip to INF-025 under the blocked-head rule per watch 7085314708.'
+
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
