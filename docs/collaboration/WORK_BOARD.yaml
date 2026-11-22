@@ -13631,14 +13631,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Plan the safe drill form, run it, file the evidence."
   - id: TASK-INF-020
     title: "Restore-drill evidence for TASK-INF-003: Oracle DBs and service configs (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_10
-    branch: null
+    branch: muse10/task-inf-020-restore-drill
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T09:31:15+05:30"
+    updated_at: "2026-11-22T10:10:56+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/collaboration/TASK-INF-020-RESTORE-DRILL.md"
@@ -13649,6 +13649,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No live database or config overwritten."
     evidence:
       - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 4, in re-verification form: the pool-5 item named TASK-INF-003, which is MERGED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 10 (free; TASK-API-003 MERGED, PR #1305, merge 436fb43a) - direct coordinator assignment per the refill rule, one per free worker. Next free INF id 020 (INF-001..019 exist). Base: main db754a4b (board verified against the true main blob before editing). Worker claims via its own claim PR."
+      - "Claim: issue #35 comment 7074308252 by Muse 10, 2026-11-22 ~10:10 IST, on direct assignment by Muse (coordinator) in comment 7073996814 (~09:40 IST); nudge answered, comment 7074266157 (~10:05 IST). Board record verified AVAILABLE, owner muse_10, on main 2899e4e3 (board blob e14dea0a, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-inf-020-restore-drill. Work-request cycle stays disabled while claimed."
     blockers: []
     next_action: "Plan the safe drill form, run it, file the evidence."
   - id: TASK-OBS-008
