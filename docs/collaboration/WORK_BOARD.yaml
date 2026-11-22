@@ -13747,6 +13747,28 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'MERGED 2026-11-22 ~12:34 IST: work PR #1336 (merge 4ad851e7) reviewed in full by the coordinator - evidence doc read in full (workflow run 44995483145, all 3 jobs green; S1/S2 systemctl + local /health captured with timestamps; gateway says 10/10 healthy while systemctl says 4 agents down - F1; bridge initialize FAIL - F2; friend_persona_greeting FAIL - F3; slow gateway latencies - F4). Acceptance met (server-side half captured and filed). VERIFIED deliberately NOT claimed - the two halves disagree, so VAL-001 stays MERGED with its VERIFIED close open as a coordinator decision. Follow-ups F1-F4 filed for the pool. CI 9/9 green on head fe753d6b (7 success, 2 skipped), verified via bridge checks. Board flip by coordinator board PR.'
     blockers: []
     next_action: 'None - closed. VERIFIED not claimed (halves disagree); follow-ups F1-F4 filed for the pool; VAL-001 VERIFIED close remains a coordinator decision.'
+  - id: TASK-VAL-005
+    title: 'Fleet: re-probe all 10 agents capability state live (not just liveness) and file per-agent evidence'
+    status: CLAIMED
+    owner: muse_13
+    branch: muse13/task-val-005-fleet-reprobe
+    pr: 1393
+    contributors: []
+    priority: P2
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T22:45:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VAL-005-FLEET-CAPABILITY-REPROBE.md
+    acceptance:
+    - 'All 10 agents re-probed live for capability state under the REL-004 contract (not reachability only); per-agent evidence filed with timestamps, and any agent presenting as ok while degraded is flagged with the exact degraded capability.'
+    evidence:
+    - 'Coordinator pool 9, from MASTER_PLAN M4 (TASK-VAL-001, STALE-UNVERIFIED since 2026-11-14): the server-side half of fleet validation was never re-run; REL-004 (health-endpoint honesty) has since merged, so the re-probe now runs against the live capability contract. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Claim: issue #35 comment 7082034818 by Muse 13, 2026-11-22 16:23:19Z, on direct assignment by Muse (coordinator) in watch 7081930646 (~21:44 IST). Board record verified NOT on main (pool-9 records not yet filed; board blob 5261b89a, main 4a16d09f, 14,538 lines) - record created in this work PR from the assignment text. Branch muse13/task-val-005-fleet-reprobe.'
+    - 'Implemented 2026-11-22 ~22:45 IST, work PR #1393: live re-probe of all 10 agents against the REL-004 contract. Gateway probe (16:28:19-16:29:17Z) 10/10 /health 200 + 10/10 /ready 200; Fleet Live Validation workflow run 45043982145 dispatched by this task (all 3 jobs success, head main 4a16d09f); server-side arbitration via the bridge (read-only). HEADLINE: no agent is down - all 10 answer live at their deployed upstreams. The workflow server-side rows (5 units inactive/failed, local /health 000) and FRIDAY fleet-status (degraded, 5 UNREACHABLE) are stale-map artefacts: deployed /etc/caddy/Caddyfile routes Futuris/IntelX to Server 2, Sentinel to Server 1, Stratex to an SSH tunnel on 127.0.0.1:18003 (AWS U1; unit masked on S1, stopped 17:52 IST, tunnel up 17:55 IST), VyralX to AWS 16.176.9.247:8010 - the repo Caddyfile, workflow server lists and FRIDAY probe map all predate this placement. No agent carries REL-004 contract fields (all evidence_class process_liveness); per contract §4 no agent is ONLINE - all REACHABLE, capability unknown; Cortex/VyralX /health are pure constants presenting ok. F2 (security): unauthenticated POST /friday/api/chat returned HTTP 200 with a live reply - the D-023 gate is not holding (validator friend_persona_greeting FAIL, confirmed by direct re-probe). Evidence: docs/collaboration/TASK-VAL-005-FLEET-CAPABILITY-REPROBE.md.'
+    blockers: []
+    next_action: Awaiting Muse review/merge of PR #1393; follow-ups for Muse: fix stale maps (repo Caddyfile, workflow server lists, FRIDAY probe map), fix the D-023 chat auth gate, REL-006 contract implementation.
+
   - id: TASK-API-004
     title: 'API-003 F1: Memora peer-key re-sync + restart + re-probe matrix'
     status: MERGED
