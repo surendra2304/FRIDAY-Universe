@@ -13924,6 +13924,26 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Fix the fallback ranking per the F1 proposal, add the three regression
       tests, verify the live misroute is gone; file the evidence doc.
 
+  - id: TASK-FRD-033
+    title: 'WF-001 F1: FRIDAY IntelX peer URLs stale post-migration - re-point FleetClient canonical map + dispatch-bus configs at live Server-2 addresses, restart FRIDAY only on coordinator clearance, re-run M1 trace'
+    status: AVAILABLE
+    owner: muse_2
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T12:28:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-FRD-033-INTELX-PEER-URLS.md
+    acceptance:
+    - 'FRIDAY reaches IntelX on both paths (chat FleetClient + dispatch bus) with live 200s; the .121 block of CANONICAL_INTERNAL_MESH_URLS checked for the other four agents; FRIDAY restarted ONLY after Muse clears deployment on the hub; WF-001 trace re-run with all legs completed (or an honest verdict if still blocked).'
+    evidence:
+    - 'Coordinator pool addition, 2026-11-22 ~12:30 IST: WF-001 F1 from the fresh M1 trace (PR #1333, merge f015a3b0, Muse 2). G1 root cause: FRIDAY/src/friday/ecosystem/fleet_client.py:116-126 CANONICAL_INTERNAL_MESH_URLS maps intelx to http://10.0.0.121:8005 (dead post-migration; live is 10.0.0.120:8005, verified 200 vs 000); dispatch-bus agent configs point IntelX at http://127.0.0.1:8005 (nothing listens on S1:8005) and Stratex at 127.0.0.1:8003 (dashboard, not engine). Same defect class as ORCH-011 G1 (supervision probe targets). Blocks MASTER_PLAN section 4 M1. Assigned to Muse 2 (free; TASK-WF-001 filed IN_REVIEW, PR #1333) - holds the trace context. Base: main 46e17b1c (board blob e00fd60c8db13c9ce9c43fac44569b0181e3ebc7, verified against the true main blob before editing). Worker claims via its own claim PR. LIVE-RESTART GATE: implement + PR first; restart FRIDAY only after Muse clears deployment on the hub.'
+    blockers: []
+    next_action: Fix the peer URLs per the F1 proposal; file the evidence doc; restart FRIDAY only after Muse clears deployment on the hub; re-run the WF-001 trace.
+
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
