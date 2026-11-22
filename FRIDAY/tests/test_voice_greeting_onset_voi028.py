@@ -132,15 +132,20 @@ def test_yielded_build_lets_gate_cap_fire_on_time():
     """The fix's mechanism: the same 1.8 s build with a
     ``sleep(0)`` yield between its chunks lets the 0.5 s gate cap
     fire on wall-clock time while the build is still running — the
-    greeting task gets loop time during the build. Measured ~1.25 s
-    on this host (the timeout->cancel->resume chain takes two extra
-    loop turns past the first due chunk), vs ~1.85 s with no yields:
+    greeting task gets loop time during the build. The chunks are
+    fine (18 x 0.1 s) on purpose: the timeout->cancel->resume chain
+    needs a fixed number of loop turns, and on Python 3.11 (CI) the
+    ``wait_for`` chain is longer than on 3.12 — with coarse 0.3 s
+    chunks the cap resolved at ~1.85 s on 3.11, i.e. no better than
+    no yields at all (CI run 45049431053 proved this). With 0.1 s
+    chunks it resolves at ~1.05 s through a faithful 3.11-style
+    ``wait_for`` port and ~0.75 s on 3.12, vs ~1.85 s with no yields:
     the bound sits between the yielded resolution and the unyielded
     control, and well inside the 1.8 s build itself."""
 
     async def yielding_build():
-        for _ in range(6):
-            time.sleep(0.3)
+        for _ in range(18):
+            time.sleep(0.1)
             await asyncio.sleep(0)
 
     heard, elapsed = asyncio.run(_gate_during_build(yielding_build))
