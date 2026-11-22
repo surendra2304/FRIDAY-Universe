@@ -12823,18 +12823,20 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "MERGED. No deploy in this task; the label fix ships with the next Stratex deploy."
   - id: TASK-STR-FWD-036
     title: "Stratex: FWD-032 follow-up - retarget the deleted OMS intent-mismatch test; remove spot-testnet remnants (config_template.py, hub spot_testnet probe, testnet_engine)."
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
     branch: muse4/task-str-fwd-036-oms-retarget-testnet-removal
-    pr: null
+    pr: 1290
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T07:27:00+05:30"
+    updated_at: "2026-11-22T07:47:00+05:30"
     files:
       - "Stratex/config_template.py"
       - "Stratex/exchanges/unified_portfolio_hub.py"
-      - "Stratex/testnet_engine"
+      - "Stratex/testnet_engine/service.py"
+      - "Stratex/tests/test_binance_futures_oms_adapter.py"
+      - "Stratex/tests/test_str_fwd_032_classic_testnet_excision.py"
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "Pool 3, item 5 (FWD-032 follow-up). PR #1173's merge evidence lists two non-blocking nits: the OMS intent-mismatch test was deleted, not retargeted; spot-testnet remnants remain in config_template.py, the hub spot_testnet probe, and the testnet_engine message. Retarget the OMS test (locate it from PR #1173's diff) and remove the spot-testnet remnants so no live path can resolve to the retired testnet venue."
     acceptance:
@@ -12844,8 +12846,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator pool-3 draft, 2026-11-22 ~05:38 IST (issue #35 comment 7071343939), item 5. FWD-032 merge evidence (PR #1173, merge 66012b5c) lists the nits. Assigned to Muse 4 (free; TASK-VYR-035 MERGED, PR #1285, merge cd74648e) - direct coordinator assignment per the refill rule, one per free worker. Base: main cd74648e (board blob 584c710cade4711c50943848dabbabbdce268c75, verified against the true main blob before editing)."
       - "Claim: issue #35 comment 7072556716 by Muse 4, 2026-11-22 ~07:26 IST, on direct assignment by Muse (coordinator) in comment 7072277612 (~07:05 IST; pool-3 draft 7071343939, item 5). Board record verified AVAILABLE, owner muse_4, on main 254c2df1 (board blob 7f9a2b01d2d23c1f39b166c5a7156171389f1ee4, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-str-fwd-036-oms-retarget-testnet-removal."
+      - "Progress 2026-11-22 ~07:47 IST: implemented on branch muse4/task-str-fwd-036-oms-retarget-testnet-removal (PR #1290 carries the claim + implementation). (1) OMS test retargeted: test_adapter_refuses_mismatched_intent_environment restored in Stratex/tests/test_binance_futures_oms_adapter.py — same name/assertions, but the legacy binance_testnet intent is now built via object.__new__ (TradeIntent rejects binance_testnet at construction since FWD-032); adapter still refuses with 'does not match Binance environment' before any client call. (2) config_template.py repointed to Demo Trading (demo-api.binance.com, wss://demo-api.binance.com/ws-api/v3, demo key placeholders, portal demo.binance.com). (3) Hub spot_testnet probe removed from unified_portfolio_hub.py (docstring + comment corrected — the docstring claim of no retired endpoint was false while the probe lived). (4) testnet_engine/service.py auth-failure message no longer names testnet.binance.vision; the retired engine itself stays preserved per RETIRE-001. (5) FWD-032 repo-wide scan extended to the retired spot host. Verification (local, venv pytest 9.2.0): both affected suites 27 passed, 1 failed — test_async_pipeline_defaults_to_demo_fapi fails identically on clean main (httpx InvalidURL in AsyncMarketDataEngine construction; pre-existing env failure, proven via stash, untouched by this diff). Non-vacuity: extended scan fails on the pre-change tree naming exactly the 5 remnant lines, passes after. Grep evidence: no Stratex .py file names testnet.binance.vision; only the adapter refusal message names a retired host (testnet.binancefuture.com, contains 'retired'). Observed, out of scope: 'spot_testnet'/'binance_spot_testnet' mode labels remain in execution.py ledger venues, telegram_bot.py display map, test_stratex_oms.py test name — labels, not venue resolution; historical docs (AUDIT_PHASE0-2.md, FUTURES_MIGRATION_PLAN.md) still name the host as history; AGENTS.md Stratex caveat still says testnet-only (stale, pre-retirement). No live path, no deploy, no service touched."
     blockers: []
-    next_action: "Retarget the OMS intent-mismatch test (locate it from PR #1173's diff) and remove the spot-testnet remnants."
+    next_action: "Awaiting Muse review/merge of PR #1290. No deploy in this task."
   - id: TASK-VOI-026
     title: "Voice: greeting-onset diagnosis - FRIDAY's greeting misses the 8s bar even on a calm box (11.3s/17.0s observed), a load-independent defect separate from the fixed send-cadence collapse; find the cause in the voice path and fix it, or file the precise blocker with evidence."
     status: MERGED
