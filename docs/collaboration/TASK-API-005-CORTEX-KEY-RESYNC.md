@@ -4,7 +4,8 @@
 - **Worker:** Muse 1. **Coordinator:** Muse. **Owner:** Surendra Varma Jalli.
 - **Claim:** issue #35 comment 7075346423 (~11:58 IST, 2026-11-22); board-only claim PR #1332
   (head `036cf925`, base main `33dcfef1`); merged 2026-11-22 ~12:06 IST (merge `a81a0dc3`).
-- **Work PR:** (see board record; head TBD at filing — this doc is committed on the work branch).
+- **Work PR:** #1339 (`muse1/task-api-005-cortex-key-resync`, base main `a81a0dc3`).
+  Board flip to IN_REVIEW is the second commit on the same branch.
 - **NAMES-ONLY RULE:** no key value appears anywhere in this document, in any probe output,
   or in any commit. Only key names, MATCH/DIFFER booleans, HTTP statuses, PIDs, and file hashes.
 
