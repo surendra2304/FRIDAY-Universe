@@ -6,7 +6,7 @@
 
 ## Verdict (read this first)
 
-_NOT PROVEN YET — 0/3 runs._ Checkpoint 1 (this doc) lands the probe design and the verified preconditions. No live run has been attempted yet: the FRIDAY web chat route is not yet established from this side (see "Route" below). Nothing here claims recall works.
+_RUN 1 FAILED honestly — 0/3. Not a recall failure: a write-path failure._ The marker never reached Memora. FRIDAY's shared write to Memora was rejected HTTP 401 at 23:19:37 IST; FRIDAY saved the marker locally and queued a re-sync, which exhausted at 23:21:37 IST — the marker remains local-only. Session B's recall did run (10 hits returned, other stored items surfaced) but the marker was not among them because it was never written to shared memory. **Do not retry until the FRIDAY→Memora 401 is fixed** — a retry would fail the same deterministic way. The fix (FRIDAY's Memora credentials) needs coordinator direction; no credential was read, changed or pasted by this worker.
 
 ## Probe design
 
@@ -14,34 +14,41 @@ _NOT PROVEN YET — 0/3 runs._ Checkpoint 1 (this doc) lands the probe design an
 - 3 consecutive PASSes required. Any FAIL resets the count to 0 (same honesty rule as INT-020 run 1).
 - Test data only; no live memory touched; no service restarted; no config changed.
 
-## Preconditions verified live (this run, 2026-11-22 ~22:13–22:25 IST)
+## Route — established 23:13–23:19 IST
 
-- MEM-016 fix is live: Memora.service on S1 active (running) since 21:25:29 IST, Main PID 2374327, `/health` 200 (verified via bridge `oracle_check_service`). Muse 9's live probe re-run passed 26/26 (hub comment 7082275213, ~22:10 IST): promoted SHARED readable by friday/intelx (200, was 403), UNIVERSAL readable by futuris (200, was 403). The G1 watch item from the claim run is resolved — live Memora is post-fix.
-- FRIDAY.service on S1 active (running) since 21:08:43 IST, Main PID 2364980, uvicorn on port 10000, `/health` 200 at 22:15:03 IST (verified via bridge `oracle_check_service`).
-- Both Oracle servers ONLINE (bridge `get_system_info`).
-- Board record for TASK-MEM-017 absent on main (verified 21:37 IST: board blob `5261b89a`, 14,538 lines, zero hits; repo code search 0 items). Record to be created in the work PR, same pattern as MEM-016 / FRG-002 / INT-020.
+- FRIDAY web chat: `https://friday-universe.duckdns.org/` serves the FRIDAY Next.js web UI (verified 200). No login prompt; chat accepts typed messages. Chat endpoint is `POST /api/chat`; conversation history is `GET /api/v1/conversation/history`.
+- Caveat: the UI has no visible new-chat button, and conversation history is shared across tabs — session B (fresh tab) loaded session A's history ("PICKED UP FROM BEFORE"). Session isolation for future runs needs a real new-conversation control or a cleared history; secondary to the 401 blocker, since the marker never reached Memora anyway.
 
-## Watch item — Memora event-cursor 401s (not yet a blocker)
+## Preconditions verified live (2026-11-22 ~22:13–23:25 IST)
 
-- FRIDAY logs (22:15–22:16 IST): `Memora cursor read failed (HTTPError)` / "Memora event consumption did not complete" twice. Memora logs show `GET /v1/events/cursor?consumer_id=friday-cloud 401 Unauthorized` (and futuris-cloud-v1 401). The direct FRIDAY→Memora path reports ONLINE on the CORE MODULES panel (per Muse 7's hub post 7082234516); the failing piece is background event consumption, not the health check. If a recall run fails, this 401 is the first suspect — record the outcome, do not re-probe around it.
-- FRD-036 (IntelX/Futuris/Sentinel peer paths broken — stale `FRIDAY_*_URL` localhost overrides, per Muse 7's post 7082234516) is NOT a MEM-017 blocker: recall uses FRIDAY→Memora, which is ONLINE. A run that needs IntelX would fail; MEM-017 runs must not.
+- MEM-016 fix is live: Memora.service on S1 active (running) since 21:25:29 IST, Main PID 2374327, `/health` 200; Muse 9's live probe re-run passed 26/26 (hub comment 7082275213, ~22:10 IST): promoted SHARED readable by friday/intelx (200, was 403), UNIVERSAL readable by futuris (200, was 403). The G1 watch item from the claim run is resolved — live Memora is post-fix.
+- FRIDAY.service on S1 restarted 22:51:13 IST (FRD-036 deploy, PID 2418691, uvicorn :10000), `/health` 200. Both Oracle servers ONLINE. Gateway `/api/agents/status` 200 — 7 ONLINE (incl. memora, intelx, futuris), 2 UNREACHABLE (stratex, vyralx — not MEM-017 blockers).
+- FRD-036 merged as PR #1394 → main `ebb9240e`; peer paths IntelX/Futuris/Sentinel confirmed ONLINE via the gateway.
+- Board record for TASK-MEM-017 absent on main (verified 23:13 IST: zero hits in WORK_BOARD.yaml). Record to be created in the work PR, same pattern as MEM-016 / FRG-002 / INT-020.
 
-## Route — not yet established
+## Run 1 — FAILED (2026-11-22 23:19–23:21 IST)
 
-- Muse 7 ran INT-020 run 1 through "FRIDAY web chat" (request 21:59:55 IST, reply 22:00:07 IST, hub 7082234516). The URL/route is not in the repo yet (Muse 7's claim PR #1392 currently holds only the board change) and was not found in the Caddyfile paths checked from this side. Next step: establish the route (from Muse 7's INT-020 trace when filed, or the FRIDAY web UI docs) and attempt run 1.
+- **Session A (write), 23:19:37 IST:** asked FRIDAY to remember `MUSE11-TEST-MEM-017 — the violet kettle sings at 47`. FRIDAY replied verbatim: "Saved on the local memory backend, Boss: MUSE11-TEST-MEM-017 — the violet kettle sings at 47. I will ask you about it later in a new chat session.. Shared Memora synchronization is not confirmed."
+- **Session B (recall), 23:20:25 IST, fresh tab:** asked "What did I ask you to remember earlier? Please repeat back anything you remember from our earlier conversation, exactly as I said it." (Marker never mentioned in the prompt.) FRIDAY replied verbatim: "Of course I remember, Boss. Here's what I'm holding onto: • my favorite chai is masala chai and I review the fleet every morning at 9 • my secret favorite number is owner favorite test marker ZQ1794340686". Neither `MUSE11-TEST-MEM-017` nor "the violet kettle sings at 47" appears. **FAIL.**
+- **Root cause, from FRIDAY's own service log (Server 1, read-only):**
+  - 23:19:37 `[WARNING] [friday.memory.memora_client]: Memora shared write failed (HTTP 401); saving locally and queueing re-sync.` — the write never reached Memora.
+  - 23:19:49 / 23:20:49 / 23:21:49 `Memora cursor read failed (HTTPError)` / "Memora event consumption did not complete" — cursor reads also failing, same 401 class seen in Memora logs (`GET /v1/events/cursor?consumer_id=friday-cloud 401`).
+  - 23:20:25 session B recall ran normally: primary draw returned 10 hits, owner-fact probe 10 hits (2 presentable) — the recall path works; it surfaced other stored items, just not a marker that was never written.
+  - 23:21:37 `[WARNING] [friday.memory.memora_client]: Memora re-sync exhausted for local fact c20d738f-f6d2-4699-acab-68d29caeab23; it remains local-only.` — the queued re-sync gave up; the marker is permanently local-only.
+- **Conclusion:** the 401 on FRIDAY→Memora shared writes (and cursor reads) is the blocker. It is the same 401 class watched since 22:15 IST, now proven as the cause of a failed run. Memora itself is healthy (`/health` 200, direct reads/writes by other agents proven 26/26 in MEM-016); FRIDAY's Memora credentials are what Memora rejects. Fix needs coordinator direction — this worker did not read, change or paste any credential.
 
 ## Run log
 
 | Run | Session A (write) | Session B (recall) | Result |
 | --- | --- | --- | --- |
-| 1 | not attempted | not attempted | — |
+| 1 | 23:19:37 IST, marker written locally only (Memora write 401) | 23:20:25 IST, marker absent; other items recalled | **FAIL** — write-path 401, count stays 0/3 |
 | 2 | — | — | — |
 | 3 | — | — | — |
 
-Count: 0/3.
+Count: 0/3. No retry until the FRIDAY→Memora 401 is fixed.
 
 ## What was NOT done
 
-- No live memory created, modified or deleted; no service restarted; no config changed; no secret in this doc.
+- No live memory created, modified or deleted; no service restarted; no config changed; no secret read, changed or pasted in this doc. No Memora API call was made from this side (Memora auth is per-agent `X-API-Key`; keys were not touched).
 
 — Muse 11
