@@ -3565,6 +3565,17 @@ async def entrypoint(ctx: JobContext):
         verified key; they never re-run provider selection. Since
         TASK-VOI-009 there is exactly one provider to build, so the
         TASK-VOI-004 per-rung ``kind`` branch is gone.
+
+        TASK-VOI-028: the build yields the job loop between its
+        synchronous construction steps (``await asyncio.sleep(0)``).
+        The build is 1.1-5.1 s of purely local work (VOI-011) that
+        otherwise runs without yielding, and the greeting task shares
+        this loop — its participant poll, 0.3 s settle and listening-
+        gate timer cannot fire while the build holds the loop, so the
+        5 s gate cap stretches with the build (VOI-026's prime
+        suspect). A yield between steps lets the loop run the
+        greeting task's pending callbacks, so the gate cap stays
+        wall-clock instead of build-time.
         """
         artifacts = artifacts or {}
         agent = Agent(instructions=instr,
@@ -3573,11 +3584,13 @@ async def entrypoint(ctx: JobContext):
                           turn_transcript_provider=_turn_transcript_snapshot,
                           dispatch_observer=_observe_dispatch,
                           bridge_sink=bridge_slot))
+        await asyncio.sleep(0)  # TASK-VOI-028: yield so the greeting task's gate timer can fire on wall-clock time while the build runs.
         model = artifacts.get("model")
         if model is None:
             model = _build_realtime_model(pinned["key"], instr)
         if model is None:
             return None, None
+        await asyncio.sleep(0)  # TASK-VOI-028: same yield before the AgentSession construction.
         # TASK-VOI-017 (F2): every session built here — the first
         # (which since F3 arrives through this same path) and every
         # ladder rung alike — carries frame counters, so its input
@@ -3785,7 +3798,15 @@ async def entrypoint(ctx: JobContext):
     if _proof_model is not None:
         pinned.update(kind="gemini", key=_used_key, instructions=instructions)
         greet_timing["build_start"] = time.time()  # TASK-VOI-026
-        session, agent = await _make_session(instructions)
+        # TASK-VOI-028: reuse the proof model built above instead of
+        # constructing a second identical one — the model is built
+        # twice per job today, and the duplicate construction is pure
+        # synchronous work on the job loop that starves the greeting
+        # task's gate timer (VOI-026's prime suspect). The artifacts
+        # mechanism exists for this.
+        session, agent = await _make_session(
+            instructions, artifacts={"model": _proof_model}
+        )
         greet_timing["build_done"] = time.time()  # TASK-VOI-026
         _build_stage = "ready" if session is not None else "session"
     # The session-build window opens when BOTH the key and the
