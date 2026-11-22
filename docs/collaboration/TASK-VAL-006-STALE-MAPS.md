@@ -103,6 +103,16 @@ the 22:50 `.env`, which is why IntelX/Futuris are ONLINE now.
 6. `FRIDAY/tests/test_codex_invariants_and_mesh.py` — the two canonical
    mesh tests assert the new values (docstrings updated); no other test
    asserts the old values.
+7. `.github/workflows/owner-workflows.yml` — the mesh test is added to the
+   contracts job's pytest invocation. The test-collection guard (REL-068)
+   failed PR #1404's first CI run because the edited test file was
+   collected by NO PR-triggered workflow; adding it to the invocation is
+   the guard's prescribed fix (not EXCLUDED — the tests are real pytest
+   tests and should run). Guard re-run locally after the edit: PASS
+   (277 covered, 1 checked). Import chain checked statically: stdlib +
+   httpx + pydantic + pydantic-settings + sqlalchemy only, all installed
+   by the contracts job; `FRIDAY/tests/conftest.py` puts `FRIDAY/src` on
+   sys.path. No pytest on this VM, so the run itself is verified by PR CI.
 
 Deliberately NOT touched (follow-ups for Muse, §5): other agents' peer
 defaults (Forge/Inference/IntelX/Memora configs, Sentinel watchdog script,
@@ -136,10 +146,26 @@ No live change was made by this run. To reach the acceptance, after merge:
 ## Verification status
 
 - Implemented: repo maps fixed (this PR), local validation passed
-  (py_compile, workflow YAML, AST map assertions, Caddyfile byte-diff).
-- NOT yet verified: fresh validation run on the fixed workflow (dispatch
-  from this branch after the PR opens — the workflow on main is still the
-  old file) and the fresh fleet-status answer (needs the deploy above).
-  CI on this PR is the gate for the mesh-test changes.
+  (py_compile, workflow YAML, AST map assertions, Caddyfile byte-diff,
+  test-collection guard PASS after the owner-workflows.yml fix).
+- Fresh validation run: **done, zero false down.** Fleet Live Validation
+  run 45054456383, dispatched from branch `muse14/task-val-006` 2026-11-22
+  ~23:50 IST, completed `success`, all 3 jobs green. S1 job (stamp
+  18:20:09Z): FRIDAY/Inference/Memora/Forge/Sentinel active, all local
+  /health 200; Stratex /health 200 via the :18003 tunnel; VyralX /health
+  200 on AWS. S2 job: Futuris/IntelX/Cortex active, all local /health
+  200. Public-gateway job: `SUMMARY: 10/10 agents healthy; bridge OK`.
+  No `000`, no false-down rows. (Stratex-Daemon reported inactive on S1,
+  as before — it is not probed as a live agent.)
+- Observation for Muse (not a VAL-006 failure): the S2 job shows Futuris
+  NRestarts=10 (since Sat 2026-11-21 20:12:08 IST) — above the workflow's
+  >5 crash-loop suspicion threshold — while active and answering 200.
+  Pre-existing, not caused by this change; whether the workflow's warning
+  fired was not verified from the excerpted logs. Suggest a look at why
+  Futuris restarted 10 times.
+- NOT yet verified: the fresh fleet-status answer (needs the deploy
+  below). CI on this PR: first run had one failure — the `contracts`
+  check failed on the test-collection guard (mesh test uncollected);
+  fixed by change 7 above, re-check pending at the time of writing.
 
 — Muse 14, TASK-VAL-006, 2026-11-22 ~23:55 IST
