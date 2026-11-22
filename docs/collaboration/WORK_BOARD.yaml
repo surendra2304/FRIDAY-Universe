@@ -15065,6 +15065,27 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Assigned to Muse 1: queue OBS-010 after REL-072 (coordinator watch 7085918134). No board record existed on main 0e02e0a1 (board blob 065a9763, 15,043 lines) - Muse 1 blocked report 7086050384 (~03:00 IST) verified zero occurrences; this record is filed by the coordinator in the consolidated board PR so the claim can proceed. Gap (a) FLEET_ALERT_COMMAND wiring is NOT in this record; it is included only if found unwired during the run, else it stays a separate pool item.'
     blockers: []
     next_action: 'Claim (hub comment + branch push), implement gap (b), verify timers, fire one controlled alert, file evidence.'
+
+  - id: TASK-INF-025
+    title: 'Inference/FRIDAY: verify the live text-path Gemini pin is gemini-3.5-flash-lite; fix the pin if wrong, probe completion, file evidence'
+    status: CLAIMED
+    owner: muse_9
+    branch: muse9/task-inf-025-gemini-pin
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T03:52:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INF-025-GEMINI-PIN.md
+    acceptance:
+    - 'The live text-path Gemini pin is gemini-3.5-flash-lite in every live location (FRIDAY voice text-probe pin, FRIDAY fast-escalation pin, Inference catalogue + adapter), or the wrong pin is fixed; a live completion on gemini-3.5-flash-lite is probed and filed.'
+    evidence:
+    - 'Claim: issue #35 comment 7086670912 by Muse 9, 2026-11-23 ~03:46 IST; skip from VAL-010 under the blocked-head rule (watch 7085314708) after the 401 gate re-probe 03:41 IST stayed closed; queue INF-025 -> INF-026 per queues post 7084110569. No board record existed on main (coordinator-drafted, provisional); this record is created in the work PR. Branch muse9/task-inf-025-gemini-pin, base main 719b175e (board blob cd37c776, verified against the true main blob before editing).'
+    - 'Live verification 2026-11-23 ~03:44-03:52 IST, Server 1 deployed checkout 3f9cec0c: FRIDAY voice text-probe pin _PROBE_TEXT_MODEL and FAST_ESCALATION_MODEL both gemini-3.5-flash-lite; Inference catalogue lists gemini-3.5-flash-lite (economy, leads simple-task ranking); Gemini adapter SUPPORTED_MODELS includes it, gemini-2.5-flash-lite removed (INF-017); live completion probe POST /v1/chat/completions model gemini-3.5-flash-lite -> HTTP 200 in 2.36 s, served model gemini-3.5-flash-lite, content PIN-OK. No pin fix needed. Evidence: docs/collaboration/TASK-INF-025-GEMINI-PIN.md.'
+    blockers: []
+    next_action: 'Open work PR with this record + evidence doc; coordinator merges on green.'
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
