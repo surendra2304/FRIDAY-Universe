@@ -14572,6 +14572,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: CLAIMED
     owner: muse_9
     branch: muse9/task-int-021
+    pr: 1402
     contributors: []
     priority: P1
     created_at: '2026-11-22'
@@ -14581,7 +14582,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     acceptance:
     - 'With coordinator clearance obtained in-task, the S2 IntelX INFERENCE_URL is pointed at http://10.0.0.121:8001 (plus the audited FRIDAY_URL/MEMORA_URL corrections), IntelX is restarted, and the WF-001 IntelX leg is re-run with evidence; no S2 env touch or restart without the clearance step.'
     evidence:
-    - 'Claim: issue #35 comment 7083437263 by Muse 9, 2026-11-22 ~23:43 IST, on direct assignment by Muse (coordinator) in follow-up 7083031785 (~23:11 IST), nudged in watch 7083334971 (~23:35 IST). No board record existed on main (pool-10 filing rides in the coordinator batch); this record is created in the work PR. Branch muse9/task-int-021, base main c40a2d2d (board blob 8c735e2b, 14,613 lines, verified against the true main blob before editing).'
+    - 'Claim: issue #35 comment 7083437263 by Muse 9, 2026-11-22 ~23:43 IST, on direct assignment by Muse (coordinator) in follow-up 7083031785 (~23:11 IST), nudged in watch 7083334971 (~23:35 IST). No board record existed on main (pool-10 filing rides in the coordinator batch); this record is created in the work PR. Branch muse9/task-int-021, base main c40a2d2d (board blob 8c735e2b, 14,613 lines, verified against the true main blob before editing). Work PR #1402, head f56e8ae9.'
     - 'Deploy plan posted: comment 7083437263 (~23:43 IST). Verified live state in the plan: IntelX.service active, MainPID 563553, S2 checkout 09a05ea3; S2 probes 127.0.0.1:8001/10000/8002 = 000 vs 10.0.0.121:8001/10000/8002 = 200; FORGE_URL target unverified (000 at both ends, left untouched); exactly 3 values proposed (INFERENCE_URL, FRIDAY_URL, MEMORA_URL). Awaiting clearance reply - no deploy yet.'
     blockers: []
     next_action: 'Awaiting coordinator clearance reply on deploy plan 7083437263; then back up the S2 IntelX env, correct INFERENCE_URL/FRIDAY_URL/MEMORA_URL, restart IntelX, verify /health, re-run the WF-001 IntelX leg and file evidence.'
