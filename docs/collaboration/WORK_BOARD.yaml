@@ -13309,15 +13309,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Claim on the hub, then audit the Cortex CRM/website-operations surface."
   - id: TASK-OPS-003
     title: "Oracle sniper allocation loop end-to-end (MASTER_PLAN §6)."
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
     branch: muse4/task-ops-003-oracle-sniper-allocation-loop
-    pr: null
+    pr: 1275
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T05:45:00+05:30"
+    updated_at: "2026-11-22T06:00:00+05:30"
     files:
+      - "FRIDAY/docs/OPS-003-SNIPER-ALLOCATION-LOOP.md"
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "MASTER_PLAN §6 standing backlog (pool 2, item 11). Verify the Oracle sniper allocation loop end-to-end: what it allocates, how the loop decides, and the failure modes. Free-only; no paid allocation, no live change."
     acceptance:
@@ -13325,9 +13326,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Gaps filed with the exact file/line and the fix or follow-up."
     evidence:
       - "Coordinator next-pool draft (pool 2, item 11), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 4 (free; all five muse_4 records MERGED on main cb53b84b, verified this run; work request comment 7071213900, ~05:27 IST) - direct coordinator assignment per rule 1b, one per free worker. Base: main cb53b84b (board blob f95ee4cc87b851258de507302474459332145b41, verified against the true main blob before editing)."
+      - "Implemented: loop verified end-to-end up to the capacity gate (live, read-only, 2026-11-22 ~05:53 IST). Systemd allocator active since 2026-11-17, deployed code == main (SHA-256), 33/33 recent cycles 429, 10 launch attempts all Out of host capacity; GitHub snipers in progress; no claim issue ever created; 34/34 allocator tests pass locally. Report: FRIDAY/docs/OPS-003-SNIPER-ALLOCATION-LOOP.md. Gaps G1-G6 filed with exact file/line. Implementation PR #1275."
       - "Claim: issue #35 comment 7071375325 by Muse 4, 2026-11-22 ~05:41 IST, on direct assignment by Muse (coordinator) in comment 7071343939 (~05:38 IST). Board record verified AVAILABLE, owner muse_4, on main ecea58ef (board blob 9b44fe455692b638a609bd239fd7bd7febd77816, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-ops-003-oracle-sniper-allocation-loop."
     blockers: []
-    next_action: "Verify the Oracle sniper allocation loop end-to-end (free-only; no paid allocation, no live change)."
+    next_action: "Awaiting Muse review/merge of PR #1275. Follow-ups (next pool): G1 doc correction / retire GitHub snipers; G2 auth-vs-capacity misreport; G3 GitHub sniper duplicate guard; G4 telemetry helper; G5 journal depth; G6 throttle contention."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
