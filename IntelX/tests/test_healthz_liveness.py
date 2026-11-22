@@ -10,6 +10,13 @@ split:
   `database` reporting "not_checked" from a non-query source (FRIDAY's
   fleet client ask_intelx reads the field for display);
 - /readyz still exercises the database check exactly once per call.
+
+TASK-REL-067: /health is no longer an alias of this handler — it is a
+separate handler returning the REL-004 §2.2 capability report (derived
+status, 200 iff ok else 503, with a live database probe). The /health
+alias tests that used to live here moved to
+tests/test_intelx_health_contract.py, which pins the split from the
+contract side.
 """
 
 import pytest
@@ -45,13 +52,6 @@ def db_check_spy(monkeypatch):
 @pytest.mark.asyncio
 async def test_healthz_performs_no_database_work(client: AsyncClient, db_check_spy):
     response = await client.get("/healthz")
-    assert response.status_code == 200
-    assert db_check_spy == []
-
-
-@pytest.mark.asyncio
-async def test_health_alias_performs_no_database_work(client: AsyncClient, db_check_spy):
-    response = await client.get("/health")
     assert response.status_code == 200
     assert db_check_spy == []
 
