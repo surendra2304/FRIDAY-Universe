@@ -14337,6 +14337,43 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: Fix collection, land the canary, file the CI run evidence.
 
+  - id: TASK-REL-069
+    title: 'Validator truth: teach scripts/validate_collaboration.py duplicate-key detection + evidence-count diffing so a silently dropped evidence block fails validation'
+    status: AVAILABLE
+    owner: muse_ai
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T15:50:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'The validator FAILS on a record carrying a duplicate key (evidence: or any other) and on a parse whose per-record evidence counts differ from the raw text; proven by a deliberately broken fixture failing and the real board passing; CI wiring unchanged or improved, evidence filed.'
+    evidence:
+    - 'Coordinator, from the 2026-11-22 worker-system research: PR #1241 carried a duplicate evidence: key that the YAML parser AND the validator silently swallowed, dropping evidence while reporting VALID - the same defect class as the historical duplicate task_id_warnings key. Parse checks must diff evidence counts, not just report VALID. Unassigned - the coordinator watch assigns it to the next free worker.'
+    blockers: []
+    next_action: Implement duplicate-key detection + evidence-count diffing in the validator, prove with fixtures, file evidence.
+  - id: TASK-REL-070
+    title: 'Root-cause the fleet-layout CI exit-134 (SIGABRT) flaky gate once - fix the cause or make the step reliably rerun-safe, with evidence'
+    status: AVAILABLE
+    owner: muse_ai
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T15:50:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'The exit-134 failure mode is identified to root cause (log + runner evidence), fixed or isolated so board-only PRs no longer burn a diagnosis cycle per occurrence; five consecutive board-only PRs pass the gate first-try, or the remaining failure rate is measured and filed.'
+    evidence:
+    - 'Coordinator, from the 2026-11-22 worker-system research: the fleet-layout/monorepo step-6 exit-134 SIGABRT failed on board-only diffs at least 6 times (PRs #1186, #1240, #1263, #1330, #1348, #1350) and went green on re-run every time - each occurrence costs a full diagnosis cycle across the team. Unassigned - the coordinator watch assigns it to the next free worker.'
+    blockers: []
+    next_action: Reproduce from CI logs, identify the root cause, fix or isolate it, file the evidence.
+
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
