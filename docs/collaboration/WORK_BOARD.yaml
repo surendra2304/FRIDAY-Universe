@@ -3117,14 +3117,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-REL-002
     title: "Root-cause and fix the failing voice-regressions CI job (failing on main since push 37db125)"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-rel-002-voice-regressions
     pr: 1299
     contributors: []
     priority: P0
     created_at: "2026-11-14T12:45:00+05:30"
-    updated_at: "2026-11-22T08:44:03+05:30"
+    updated_at: "2026-11-22T08:52:00+05:30"
     files:
       - ".github/workflows/friday-universe-ci.yml"
       - "FRIDAY/docs/REL-002-VOICE-REGRESSIONS-ROOT-CAUSE.md"
@@ -3138,8 +3138,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Reassigned 2026-11-22 ~07:46 IST by coordinator (pool 4, item 4): record was IN_PROGRESS under retired owner muse_ai since 2026-11-14 with no progress; reassigned to Muse 4 (free; TASK-STR-FWD-036 MERGED, PR #1290). Base: main 93ce3427 (board blob 4fb0beab1fededc30e79fb04bbeb0ae0d7ff9689, verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claim: issue #35 comment 7073219023 by Muse 4, 2026-11-22 ~08:27 IST, on direct assignment by Muse (coordinator) in comment 7072956811 (~08:00 IST; board PR #1293). Board record verified AVAILABLE, owner muse_4, on main ed3385da (board blob 620fb310, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-rel-002-voice-regressions."
       - "Progress 2026-11-22 ~08:44 IST: implemented on branch muse4/task-rel-002-voice-regressions (PR #1299 carries the claim + implementation). Root cause: PR #92 (commit 101dd85, TASK-INTENT-001) added Settings.intent_classify_timeout (2.5) and intent_classify_enabled (True) in FRIDAY/src/friday/core/config.py without documenting them in FRIDAY/.env.example, failing the contract test test_env_example_documents_every_settings_field (1 failed, 157 passed, run 43569163089, 2026-11-14, head 573da9c1). Fix already on main before this claim: Surendra direct commit 4ac6b270 (2026-11-14 13:01 IST, parent 573da9c1), FRIDAY/.env.example +2 lines — no code change by Muse 4, duplicating it would be wrong. CI verification: voice-regressions ran green 3x since (runs 44489048264, 44489413337 on 2026-11-19; 44864933295 on 2026-11-21 head 1b8d7b23, 406 passed, 0 failed); intervening runs skipped (conditional job — only runs when voice paths change). Local verification (venv pytest 9.2.0, Python 3.12; CI uses 3.11): failure reproduced at 573da9c1 (exact CI assertion); at main ed3385da contract test 1 passed, ruff lint All checks passed, full 27-file voice list 406 passed in 18.45s; static check 165/165 Settings fields documented. Local note: full-list collection first failed under this VM proxy env (httpx InvalidURL from NO_PROXY IPv6 entries); unsetting proxy vars reproduces the CI-clean env — not a repo defect. Report: FRIDAY/docs/REL-002-VOICE-REGRESSIONS-ROOT-CAUSE.md. Observation, no change: conditional trigger let the failure sit undetected 2026-11-14 to 2026-11-19; unconditional runs on main pushes would close the gap (Muse decision)."
+      - "MERGED 2026-11-22 ~08:52 IST: PR #1299 merged (merge 4bbc9e2e) after coordinator review in full - report FRIDAY/docs/REL-002-VOICE-REGRESSIONS-ROOT-CAUSE.md read in full; key claims verified first-hand: fix commit 4ac6b270 (Surendra, 2026-11-14 13:01 IST, parent 573da9c1) exists on main, FRIDAY/.env.example on main holds both FRIDAY_INTENT_CLASSIFY_* lines, contract test at FRIDAY/tests/test_voice_live_features.py:431, voice-regressions completed/success on head 1b8d7b23 (run 44864933295); CI 9/9 green/skipped on PR head 4f95cdf9 (monorepo-policy job showed stale in_progress in the list endpoint, re-read directly: completed/success 08:48:08 IST); test-merge onto main 1c3e7962 clean. Acceptance met: root cause established, fix already on main, job green on main."
     blockers: []
-    next_action: "Awaiting Muse review/merge of PR #1299. No deploy in this task."
+    next_action: "None - closed. Observation carried: the conditional voice-regressions trigger let the failure sit undetected 2026-11-14 to 2026-11-19; unconditional runs on main pushes is a Muse decision, not part of this task."
 
   - id: TASK-REL-003
     title: "Diagnose and repair Stratex engine offline (strategy evaluation stale ~12 days) — diagnosis first, no trading changes"
@@ -13523,6 +13524,28 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "MERGED 2026-11-22 ~06:03 IST: PR #1275 merged as 4d53a2c0 (coordinator review: full diff - report FRIDAY/docs/OPS-003-SNIPER-ALLOCATION-LOOP.md, 222 lines, loop verified end-to-end up to the capacity gate with live read-only evidence, gaps G1-G6 with exact file/line, + board IN_REVIEW hunk only; cited file/lines spot-checked first-hand on main - oci_a1_common.py:6-15, oci_a1_continuous.py:38-41, scripts/oci_arm_sniper.py:13-14; board parses 603 tasks, no duplicate keys; merge-base exactly main ecea58ef; CI 9/9 green on head 5f157627; merge verified as main HEAD via ls-remote)."
     blockers: []
     next_action: "Closed. Loop verified end-to-end up to the capacity gate: FRIDAY/docs/OPS-003-SNIPER-ALLOCATION-LOOP.md (gaps G1-G6 filed; follow-ups in the next pool: G1 doc correction / retire GitHub snipers, G2 auth-vs-capacity misreport, G3 duplicate guard, G4 telemetry helper, G5 journal depth, G6 throttle contention)."
+  - id: TASK-STR-PROFIT-001
+    title: "Stratex: state the venue/account mode for the winner-allowlist activation record and reconcile the PF selection threshold 1.19 vs 1.16 (PR #73 follow-up, MASTER_PLAN §6)."
+    status: AVAILABLE
+    owner: muse_4
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T08:52:00+05:30"
+    files:
+      - "docs/collaboration/TASK-STRATEX-PROFIT-3.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "MASTER_PLAN §6 (PR #73 follow-up), pool 5 item 3. State the venue/account mode (demo/testnet vs real-money) for the Stratex winner-allowlist activation record (docs/collaboration/TASK-STRATEX-PROFIT-3.md), and reconcile the PF selection threshold stated as 1.19 in the task doc vs 1.16 in the activity log/work board (strategy_scalping_breakout kept at PF 1.16, below the stated 1.19 bar). Records task - docs only, no trading change."
+    acceptance:
+      - "Venue/account mode the allowlist activation applied to is stated in the record."
+      - "PF 1.19 vs 1.16 reconciled: threshold corrected, or the 1.16 exception justified and recorded."
+      - "No trading change."
+    evidence:
+      - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 3 (PR #73 follow-up). Assigned to Muse 4 (free; TASK-REL-002 MERGED, PR #1299, merge 4bbc9e2e) - direct coordinator assignment per the refill rule, one per free worker. First STR-PROFIT id (new series for Stratex winner-allowlist records tasks). Base: main 4bbc9e2e (board blob 732bb4d8, verified against the true main blob before editing). Worker claims via its own claim PR."
+    blockers: []
+    next_action: "Read docs/collaboration/TASK-STRATEX-PROFIT-3.md, determine the venue/account mode the allowlist activation applied to, state it in the record, and reconcile the PF threshold."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
@@ -13556,6 +13579,7 @@ task_id_warnings:
     files:
       - .github/workflows/deploy-monorepo.yml
       - docs/collaboration/WORK_BOARD.yaml
+
   - id: "WARN-TASK-ID-001"
     severity: "high"
     description: "PR #23 is labelled TASK-CI-003 but does not match TASK-CI-003's current Master Plan acceptance criteria (workspace test runner)."
