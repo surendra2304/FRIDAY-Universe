@@ -443,7 +443,14 @@ class FleetClient:
                     self._shared_client = None
         limits = httpx.Limits(max_connections=100, max_keepalive_connections=20, keepalive_expiry=30.0)
         timeout = httpx.Timeout(30.0, connect=5.0, read=30.0, write=10.0)
-        client = httpx.AsyncClient(limits=limits, timeout=timeout, follow_redirects=True)
+        # TASK-REL-067: trust_env=False — the fleet client talks to internal
+        # peers only. It must never route through an egress proxy, and must
+        # never crash parsing proxy env vars: httpx raises InvalidURL on
+        # bracketed-IPv6 NO_PROXY entries (port ':1]'), which broke
+        # TestRenderTool + the tier1 f1 tests the moment CI collected them.
+        client = httpx.AsyncClient(
+            limits=limits, timeout=timeout, follow_redirects=True, trust_env=False
+        )
         self._clients_by_loop[loop] = client
         self._shared_client = client
         return client

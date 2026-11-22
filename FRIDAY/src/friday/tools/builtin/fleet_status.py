@@ -144,10 +144,13 @@ class FleetStatusTool(BaseTool):
 
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
                     statuses = pool.submit(
-                        lambda: asyncio.run(client.get_all_statuses())
+                        lambda: asyncio.run(client.get_all_statuses(force_refresh=True))
                     ).result(timeout=self.timeout)
             else:
-                statuses = asyncio.run(client.get_all_statuses())
+                # force_refresh=True: this tool answers with a REAL probe —
+                # cached answers are not truthful here (the contract test
+                # fake enforces it: "fleet answers must be fresh, not cached").
+                statuses = asyncio.run(client.get_all_statuses(force_refresh=True))
         except Exception as exc:
             # Truthful failure: say the probe failed, never invent a status.
             return ToolResult(

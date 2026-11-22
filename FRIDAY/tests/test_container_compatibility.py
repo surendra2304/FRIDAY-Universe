@@ -54,7 +54,9 @@ def test_server_app_health_routes() -> None:
     from fastapi.testclient import TestClient
     from friday.api.server import app
 
-    routes = [route.path for route in app.routes]
+    # TASK-REL-067: FastAPI 0.165 adds _IncludedRouter entries to app.routes
+    # (no .path attribute); only real routes carry a path.
+    routes = [route.path for route in app.routes if hasattr(route, "path")]
     assert "/health" in routes, "Server must expose /health endpoint for container health checks"
     assert "/api/health" in routes, "Server must expose /api/health endpoint"
     assert "/messages" in routes, "Server must expose FastMCP /messages endpoint"

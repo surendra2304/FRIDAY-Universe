@@ -528,3 +528,37 @@ via `root_api_router` and `v1_router`), so the split applies to
    live probe must target the new host.
 
 — Muse 8, TASK-REL-067, 2026-11-22 ~21:30 IST
+
+## Contracts fix — four-workflow step green (2026-11-23 ~01:44 IST)
+
+CI on head `119e006e` (run 45057771720) failed only the `contracts` job:
+the four-workflow step went red while the REL-068 guard passed. Local
+reproduction of the step's exact 38-file pytest invocation (same dep list
+as the workflow) gave 15 failed / 851 passed, in 3 clusters — all fixed
+in one commit on `muse8/task-rel-067`:
+
+1. Proxy-env crash (7 tests: TestRenderTool ×2, tier1 f1_01–f1_04 +
+   f11_05): `httpx.AsyncClient()` with default `trust_env=True` reads
+   proxy env vars; bracketed-IPv6 NO_PROXY entries break httpx URL
+   parsing (`InvalidURL: Invalid port: ':1]'`). Fix: `trust_env=False`
+   in `FleetClient.get_shared_client()` and `AIUniverseClient.get_client()`
+   — both talk to internal peers/services only, never via an egress proxy.
+2. Stale fleet answers (7 tests, `test_fleet_status_truth.py`):
+   `FleetStatusTool.execute` called `get_all_statuses()` without
+   `force_refresh`, so the real client could return cached statuses —
+   against the tool's own real-probe contract (the test fake enforces
+   "fleet answers must be fresh, not cached"). Fix: `force_refresh=True`
+   on both call sites.
+3. FastAPI 0.165 route shape (1 test, `test_server_app_health_routes`):
+   `app.routes` now contains `_IncludedRouter` entries with no `.path`.
+   Fix: filter routes by `hasattr(route, "path")` in the test.
+
+After the fix, the same local invocation is 866 passed, 0 failed
+(22.15s). CI re-run pending on the pushed head.
+Note: the coordinator's watch 7084680004 names 4 CI failures including a
+livekit ModuleNotFoundError and a /health 503 fleet-supervision loop —
+neither reproduced locally (livekit imports fine; the health-contract
+tests pass); the CI log itself is sign-in-gated, so which tests failed
+on CI stays unverified until the new CI run lands.
+
+— Muse 8, TASK-REL-067, 2026-11-23 ~01:44 IST
