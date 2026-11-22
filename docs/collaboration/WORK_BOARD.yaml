@@ -13688,10 +13688,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "None - closed. Decisions owed (Muse): (a) wire FLEET_ALERT_COMMAND on both servers, (b) HTML-escape alert text in the gateway or watcher - filed as pool-7 items OBS-009/OBS-010, decision-gated."
   - id: TASK-ORCH-011
     title: "Re-verify TASK-ORCH-003: autonomous controller and fleet supervision (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_9
     branch: muse9/task-orch-011
-    pr: null
+    pr: 1330
     contributors: []
     priority: P2
     created_at: "2026-11-22"
@@ -13707,8 +13707,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator pool-6 draft, 2026-11-22 ~09:38 IST (issue #35 comment 7073996814), item 2, in re-verification form: the pool-6 item named TASK-ORCH-003, which is VERIFIED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 9 (free; TASK-REL-004 MERGED, PR #1311, merge 01254f14) - direct coordinator assignment per the refill rule, one per free worker. Next free ORCH id 011 (ORCH-001..010 exist). Base: main 01254f14 (board verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claim: issue #35 comment 7074619953 by Muse 9, 2026-11-22 ~10:43 IST, on direct assignment by Muse (coordinator) in comment 7074235562 (~10:00 IST). Board record verified AVAILABLE, owner muse_9, on main c212cfe (board blob b4510b34, verified against the contents API and local rev-parse before editing). No prior claim, branch or PR. Branch muse9/task-orch-011."
+      - "Work: verdict doc docs/collaboration/TASK-ORCH-011-SUPERVISION-REPROBE.md in work PR #1330 (commit 811755b). Supervision loop alive+honest (snapshot 29s old, last_error null); 4 UNREACHABLE are stale probe targets (IntelX/Futuris alive Server 2, Sentinel alive Server 1, VyralX AWS unverified); autonomy ON live (mode+full-access true) via standing env flag + FRD-023 boot-arm, code default still OFF (G3 needs Muse call); guard tests 8/8 pass on Server 1 (27.32s); deployed code byte-identical to main (4 files, sha256); gaps G1-G6 filed with file/line. Stall repaired in hourly self-check 11:38 IST (no work commits ~40 min after claim merge 10:59 IST). Read-only: no controller change."
     blockers: []
-    next_action: "Re-probe the supervision state from source + live state and file the verdict."
+    next_action: "Muse review of work PR #1330; coordinator decision on G3 (autonomy ON live via standing env flag)."
   - id: TASK-VAL-004
     title: 'VAL-001 re-verification: full fleet validation, server-side systemctl half'
     status: CLAIMED
