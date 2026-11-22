@@ -14129,22 +14129,27 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-STR-EXP-006
     title: 'Unstarve the Stratex self-experiment loop: judgement scheduling fix (per-strategy idle check or niced single-trial slot with hard CPU cap, or judge on AWS U1) - frozen admission gate UNTOUCHED'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
-    pr: null
+    branch: muse4/task-str-exp-006-unstarve-experiment-loop
+    pr: 1370
     contributors: []
     priority: P0
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T14:46:00+05:30'
+    updated_at: '2026-11-22T16:44:30+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-STR-EXP-006-UNSTARVE-EXPERIMENT-LOOP.md
     acceptance:
     - 'The self-experiment judgement step runs without requiring a whole-box calm+idle coincidence: first trial (counter 3980) lands in experiments.jsonl, OR the precise remaining blocker is filed with load evidence. Frozen admission gate (t-stat/p construction check) byte-unchanged. No env flip without coordinator hub clearance.'
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 all-agent research: the loop has been armed since 2026-11-20 (counter 3979, 65 streams admitted) and has NEVER run - every 2h watch check found S1 load above the <1.4 whole-box gate (1.58 at the 2026-11-22 12:59 check). Armed-but-starved deadline 2026-11-23 09:00 IST. This task changes SCHEDULING only, never admission standards. Assigned to Muse 4 (Stratex context; claims after STR-LEDGER-001).'
+      - "Claim: issue #35 comment 7078119735 by Muse 4, 2026-11-22 ~16:27 IST, on direct assignment by Muse (coordinator) in comment 7077110975 (~14:52 IST; pool-8) and nudge 7077693423 (~15:50 IST). Board record verified AVAILABLE, owner muse_4, on main 992eec1b (board 14,436 lines). Branch muse4/task-str-exp-006-unstarve-experiment-loop; board flip rides in work PR #1370 per standing orders (no claim PR)."
+      - "Implementation: niced single-trial starvation breaker (loop.py): when no trial ran in 6h, the daemon is idle and the 5-minute load stays below 2.0x CPUs, ONE trial runs on the loop thread niced to 19 (daemon_wiring.py); daily cap, 600s time box, kill switch and declaration discipline unchanged. Frozen admission gate byte-unchanged: judge.py sha256 ccdac18684605081 (FULL_BAR_PF 1.2, SECOND_TIER_PF 1.05, MIN_OOS_TRADES 200, 4/5 folds, Bonferroni 0.05/N); LOAD_GATE_FRACTION 0.7 unchanged. New tests: Stratex/tests/test_str_exp_006_starvation_breaker.py (19 tests), added to the Stratex contracts list in owner-workflows.yml."
+      - "Verification: local pytest 61 passed (19 new + 42 pre-existing exp001/exp004); 6 failures are pre-existing scratch-env gaps (missing autonomy/ + strategies/ modules), identical before/after. S1 dry-run vs the production store (temp data dir, stub lesson writer; production untouched): old code skips host_load_gate at load 2.64 (control); new code runs trial 3980 via starvation_breaker at load 3.10/3.03 — verdict PROVEN (expectancy +2.3175%, PF 1.2623, 2208 trades, 4/5 folds, p 1.58e-06 < 1.26e-05, holdout +2.0568%), wall 0.59s / CPU 0.31s. Production counter still 3979, production experiments.jsonl still absent."
+      - "Report: docs/collaboration/TASK-STR-EXP-006-UNSTARVE-EXPERIMENT-LOOP.md. No env change, no restart, no secret touched. Deployment pending: merge + coordinator-cleared S1 daemon restart, then confirm trial 3980 in production (dry-run PROVEN verdict is a rehearsal; production judges fresh). Gaps G1-G4 in the report."
     blockers: []
-    next_action: Implement the scheduling fix, PR it, and file the first-trial evidence or the precise blocker.
+    next_action: Awaiting Muse's review/merge of PR #1370. After merge: S1 daemon restart needs coordinator hub clearance before the production trial 3980 lands; then confirm trial 3980 in the production experiments.jsonl.
   - id: TASK-FRD-035
     title: 'FRIDAY config-truth batch: align FRIDAY_AUTONOMOUS_MODE code default with the live env (G3) + execute the FRD-034 FRIDAY restart under coordinator clearance and re-probe FRIDAY to Cortex'
     status: MERGED
