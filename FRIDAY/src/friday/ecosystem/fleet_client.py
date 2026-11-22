@@ -113,20 +113,26 @@ def _probe_failure(exc: BaseException) -> tuple[str, str]:
     return "DEGRADED", f"probe failed ({_error_text(exc)})"
 
 
-# Post-6/4-migration layout (TASK-REL-062, MERGED): S1 = 10.0.0.121
-# (inference, memora, stratex, forge, sentinel), S2 = 10.0.0.120
-# (intelx, futuris, cortex). TASK-FRD-033 re-pointed the three
-# entries the migration moved; the rest were verified correct.
+# Deployed layout (TASK-VAL-006, verified live 2026-11-22): S1 = 10.0.0.121
+# (inference, memora, forge) + loopback Sentinel; S2 = 10.0.0.120
+# (futuris, intelx, cortex); Stratex on AWS U1 via the S1 SSH tunnel on
+# 127.0.0.1:18003 (its S1 unit is masked by design); VyralX on AWS
+# 16.176.9.247:8010. The pre-VAL-006 map pointed Stratex at 10.0.0.121:8003
+# and VyralX at 10.0.0.120:8010 — nothing listens there, so /api/agents/status
+# reported both UNREACHABLE while they were alive (VAL-005 finding F1).
+# NOTE: the deployed FRIDAY .env overrides STRATEX_URL / SENTINEL_URL /
+# VYRALX_URL — the .env values must match this map too (deploy step in
+# TASK-VAL-006 doc), or env wins over the map and the false-down returns.
 CANONICAL_INTERNAL_MESH_URLS: dict[str, str] = {
     "inference": "http://10.0.0.121:8001",
     "memora": "http://10.0.0.121:8002",
-    "stratex": "http://10.0.0.121:8003",
+    "stratex": "http://127.0.0.1:18003",
     "futuris": "http://10.0.0.120:8004",
     "intelx": "http://10.0.0.120:8005",
     "forge": "http://10.0.0.121:8006",
-    "sentinel": "http://10.0.0.121:8008",
+    "sentinel": "http://127.0.0.1:8008",
     "cortex": "http://10.0.0.120:8009",
-    "vyralx": "http://10.0.0.120:8010",
+    "vyralx": "http://16.176.9.247:8010",
 }
 
 # TASK-REL-007D: overall deadline for one fleet probe sweep (seconds).
