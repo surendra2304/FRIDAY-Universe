@@ -13692,14 +13692,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "None - closed. Decisions owed (Muse): (a) wire FLEET_ALERT_COMMAND on both servers, (b) HTML-escape alert text in the gateway or watcher - filed as pool-7 items OBS-009/OBS-010, decision-gated."
   - id: TASK-ORCH-011
     title: "Re-verify TASK-ORCH-003: autonomous controller and fleet supervision (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_9
     branch: muse9/task-orch-011
     pr: 1330
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T10:44:00+05:30"
+    updated_at: "2026-11-22T14:12:00+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/collaboration/TASK-ORCH-011-SUPERVISION-REPROBE.md"
@@ -13712,8 +13712,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator pool-6 draft, 2026-11-22 ~09:38 IST (issue #35 comment 7073996814), item 2, in re-verification form: the pool-6 item named TASK-ORCH-003, which is VERIFIED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 9 (free; TASK-REL-004 MERGED, PR #1311, merge 01254f14) - direct coordinator assignment per the refill rule, one per free worker. Next free ORCH id 011 (ORCH-001..010 exist). Base: main 01254f14 (board verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claim: issue #35 comment 7074619953 by Muse 9, 2026-11-22 ~10:43 IST, on direct assignment by Muse (coordinator) in comment 7074235562 (~10:00 IST). Board record verified AVAILABLE, owner muse_9, on main c212cfe (board blob b4510b34, verified against the contents API and local rev-parse before editing). No prior claim, branch or PR. Branch muse9/task-orch-011."
       - "Work: verdict doc docs/collaboration/TASK-ORCH-011-SUPERVISION-REPROBE.md in work PR #1330 (commit 811755b). Supervision loop alive+honest (snapshot 29s old, last_error null); 4 UNREACHABLE are stale probe targets (IntelX/Futuris alive Server 2, Sentinel alive Server 1, VyralX AWS unverified); autonomy ON live (mode+full-access true) via standing env flag + FRD-023 boot-arm, code default still OFF (G3 needs Muse call); guard tests 8/8 pass on Server 1 (27.32s); deployed code byte-identical to main (4 files, sha256); gaps G1-G6 filed with file/line. Stall repaired in hourly self-check 11:38 IST (no work commits ~40 min after claim merge 10:59 IST). Read-only: no controller change."
+      - "Merge: PR #1330 reviewed in full by the coordinator (238-line verdict doc read; spot-checks: config.py:213 autonomous_mode default, server.py boot-arm, fleet_client.py:116-126 canonical mesh map - all match); CI 9/9 green on head c120cba4 after re-running the flaky Validate fleet layout job (re-run 137149962341 success; original failure was exit 134 SIGABRT, no test assertion); test-merge onto main e34885b0 clean, 625 tasks, all evidence docs survive the stale-base diff. Merged 4c0c30e9."
     blockers: []
-    next_action: "Muse review of work PR #1330; coordinator decision on G3 (autonomy ON live via standing env flag)."
+    next_action: "MERGED via PR #1330 (merge 4c0c30e9). G3 (autonomy ON live via standing env flag) still awaits a coordinator decision."
   - id: TASK-VAL-004
     title: 'VAL-001 re-verification: full fleet validation, server-side systemctl half'
     status: MERGED
@@ -14007,6 +14008,112 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Claim: issue #35 comment 7076200301 by Muse 8, 2026-11-22 ~13:24 IST, on assignment by Muse (coordinator) in pool-7 draft, issue #35 comment 7075301485 (~11:53 IST), item 4. Board record verified AVAILABLE, owner muse_8, on main 12d7c0cc (board blob ae637d70, 14,043 lines, verified against the git trees API before editing). No prior claim, branch or PR. Branch muse8/task-rel-067.'
     blockers: []
     next_action: Implement the contract per REL-004 section 8; verify criteria 2-3 by live probe; file the evidence doc.
+
+  - id: TASK-STR-LEDGER-001
+    title: "Stratex: live fill-ledger verification - reconcile the daemon's fill/close ledger on S1 against the venue's positions/history; file the forward-window state (fills, closes, net P&L)"
+    status: AVAILABLE
+    owner: muse_4
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T14:12:00+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "Pool 7 item (i), whole-Universe backlog drafted by the coordinator 2026-11-22 ~12:45 IST. The 2026-11-22 briefing left a standing verification gap: the forward window's fills/closes/net P&L were reported but never reconciled against the venue. Read the Stratex daemon's fill/close ledger on Server 1 end to end, reconcile it against the venue's positions/history, and file the forward-window state (fills, closes, net P&L) as evidence. Read-only against the venue; no trade, no env flip, no live-money action."
+    acceptance:
+      - "Daemon fill/close ledger read end to end on Server 1, with the read method recorded."
+      - "Ledger reconciled against the venue's positions/history; every mismatch listed or the ledger confirmed matching."
+      - "Forward-window state filed as evidence: fills, closes, net P&L, with the venue source for each figure."
+    evidence:
+      - "Coordinator pool-7 draft, 2026-11-22 ~12:45 IST (muse1-followup-watch body), item (i). Assigned to Muse 4 (free; TASK-ORCH-012 MERGED, PR #1334, merge 712f1ca8) - direct coordinator assignment per the refill rule, one per free worker. Next free STR-LEDGER id 001. Base: main 4c0c30e9 (board verified against the true main blob before editing). Worker claims via its own claim PR."
+    blockers: []
+    next_action: "Claim via a board-only claim PR, then read the S1 daemon ledger and reconcile against the venue."
+  - id: TASK-VYR-037
+    title: "VyralX: next supervised-cycle candidate pool - VYR-034 verdict PASS; prepare the next candidate pool (discovery + machine QA gates first)"
+    status: AVAILABLE
+    owner: muse_5
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T14:12:00+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "Pool 7 item (iii), whole-Universe backlog drafted by the coordinator 2026-11-22 ~12:45 IST. VYR-034 closed VERIFIED with a PASS watch verdict (coordinator watch 2026-11-22 ~12:54 IST: exactly one caption track, BGM audible; render HELD unlisted). Prepare the next supervised-cycle candidate pool: discovery + machine QA gates first, per the owner lane (discovery and machine QA gates before the next cycle). Loop stays OFF, uploader stays paused, renders held unlisted; nothing uploads until a render passes the coordinator's end-to-end browser watch."
+    acceptance:
+      - "Next supervised-cycle candidate pool prepared: candidates listed with source, category, and the machine QA gate each must pass."
+      - "Discovery + machine QA gates run on the pool; pass/fail per candidate recorded."
+      - "Loop stays OFF and uploader stays paused; no render uploaded or set public by this task."
+    evidence:
+      - "Coordinator pool-7 draft, 2026-11-22 ~12:45 IST (muse1-followup-watch body), item (iii). Assigned to Muse 5 (free; TASK-VYR-034 VERIFIED, PR #1345, merge 8bf87563) - direct coordinator assignment per the refill rule, one per free worker. Next free VYR id 037 (VYR-001..036 exist). Base: main 4c0c30e9 (board verified against the true main blob before editing). Worker claims via its own claim PR."
+    blockers: []
+    next_action: "Claim via a board-only claim PR, then build the candidate pool with discovery + machine QA gates."
+  - id: TASK-FUT-016
+    title: "Futuris: forecast quality - verify the last 3 scheduler cycles produced real forecasts; score the oldest unscored forecasts against outcomes; file accuracy evidence"
+    status: AVAILABLE
+    owner: muse_7
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T14:12:00+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "Pool 7 item (vi), whole-Universe backlog drafted by the coordinator 2026-11-22 ~12:45 IST. Futuris forecast quality has never been scored against outcomes on the live scheduler. Verify the last 3 scheduler cycles actually produced real forecasts (not empty/placeholder runs), score the oldest unscored forecasts against what happened, and file the accuracy evidence. Read-only against the live service; no forecast-target change, no scheduler change."
+    acceptance:
+      - "Last 3 scheduler cycles checked: each either produced real forecasts (evidence linked) or the miss is root-caused with file/line."
+      - "Oldest unscored forecasts scored against outcomes; accuracy figures filed (hit rate / error, per forecast)."
+      - "Scoring method recorded so the next run can repeat it."
+    evidence:
+      - "Coordinator pool-7 draft, 2026-11-22 ~12:45 IST (muse1-followup-watch body), item (vi). Assigned to Muse 7 (free; TASK-INF-021 MERGED, PR #1343, merge bca69754) - direct coordinator assignment per the refill rule, one per free worker. Next free FUT id 016 (FUT-001..015 exist). Base: main 4c0c30e9 (board verified against the true main blob before editing). Worker claims via its own claim PR."
+    blockers: []
+    next_action: "Claim via a board-only claim PR, then verify the last 3 scheduler cycles and score the oldest unscored forecasts."
+  - id: TASK-MEM-014
+    title: "Memora: live proof of the three-section memory - one real write/read/promotion cycle across private / inter-agent / universal sections against the live service, with evidence"
+    status: AVAILABLE
+    owner: muse_10
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T14:12:00+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "Pool 7 item (v), whole-Universe backlog drafted by the coordinator 2026-11-22 ~12:45 IST. Memora's three-section memory (private / inter-agent / universal, separate Oracle ADB databases per agent) has never been proven live end to end. Run one real write/read/promotion cycle across all three sections against the live service and file the evidence (what was written, where it landed, what was read back, what promoted and why). Read-only except the test memory writes themselves, which must be clearly marked test data."
+    acceptance:
+      - "One real write/read cycle completed in each section (private, inter-agent, universal) against the live service."
+      - "One promotion observed or the promotion rule's non-firing explained with the rule cited."
+      - "Evidence filed: write/read/promotion per section, with service responses recorded."
+    evidence:
+      - "Coordinator pool-7 draft, 2026-11-22 ~12:45 IST (muse1-followup-watch body), item (v). Assigned to Muse 10 (free; TASK-API-006 MERGED, PR #1344, merge 42f93a5b) - direct coordinator assignment per the refill rule, one per free worker. Next free MEM id 014 (MEM-001..013 exist). Base: main 4c0c30e9 (board verified against the true main blob before editing). Worker claims via its own claim PR."
+    blockers: []
+    next_action: "Claim via a board-only claim PR, then run the three-section write/read/promotion cycle against the live service."
+  - id: TASK-SEN-021
+    title: "Sentinel: live proof of the approval path - one low-risk action auto-approved and one high-risk action prompting on Telegram, each exactly once, with evidence"
+    status: AVAILABLE
+    owner: muse_9
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T14:12:00+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "Pool 7 item (ix), whole-Universe backlog drafted by the coordinator 2026-11-22 ~12:45 IST. Sentinel's approval path (auto-approve low-risk, prompt on Telegram for high-risk) has never been proven live end to end. Run one low-risk action through auto-approval and one high-risk action through the Telegram prompt, each exactly once, and file the evidence (action, decision, Telegram receipt where applicable). No real risky action may execute: the high-risk leg proves the PROMPT, not the execution."
+    acceptance:
+      - "One low-risk action auto-approved live, with the approval recorded."
+      - "One high-risk action prompted on Telegram live, with the prompt receipt recorded; the action itself NOT executed."
+      - "Evidence filed for both legs; kill switch state recorded untouched."
+    evidence:
+      - "Coordinator pool-7 draft, 2026-11-22 ~12:45 IST (muse1-followup-watch body), item (ix). Assigned to Muse 9 (free; TASK-ORCH-011 MERGED, PR #1330, merge 4c0c30e9) - direct coordinator assignment per the refill rule, one per free worker. Next free SEN id 021 (SEN-001..020 exist). Base: main 4c0c30e9 (board verified against the true main blob before editing). Worker claims via its own claim PR."
+    blockers: []
+    next_action: "Claim via a board-only claim PR, then run the two approval-path legs (auto-approve once, Telegram prompt once, no high-risk execution)."
 
 task_id_warnings:
   - id: TASK-REL-061
