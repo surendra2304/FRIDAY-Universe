@@ -14658,7 +14658,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: CLAIMED
     owner: muse_10
     branch: muse10/task-frd-037-chat-live-runs
-    pr: null
+    pr: 1407
     contributors: []
     priority: P1
     created_at: '2026-11-23'
