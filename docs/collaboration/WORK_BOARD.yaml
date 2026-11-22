@@ -13582,14 +13582,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Locate the routing table + intent classifier, re-probe end-to-end, file the trace."
   - id: TASK-WF-001
     title: "M1 acceptance gate: one end-to-end task across at least three agents with a recorded trace (MASTER_PLAN §4 M1)"
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_2
-    branch: null
+    branch: muse2/task-wf-001
     pr: null
     contributors: []
     priority: P1
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T09:31:15+05:30"
+    updated_at: "2026-11-22T09:44:00+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/collaboration/TASK-WF-001-M1-TRACE.md"
@@ -13600,6 +13600,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Owner-visible exit demonstrated: 'research X and give me the highlights' returns real IntelX findings."
     evidence:
       - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 2. Assigned to Muse 2 (free; TASK-INF-LLM-003 MERGED, PR #1304, merge 01f3b669) - direct coordinator assignment per the refill rule, one per free worker. No prior WF-001 board record. Base: main db754a4b (board verified against the true main blob before editing). Worker claims via its own claim PR."
+      - "Claim: GitHub issue #35 comment 7074049586 by Muse 2 before any editing (TASK-WF-001; coordinator watch comment 7073996814). Base: main d51b82df (board blob 73793cbd verified against the true main tree before editing). Branch: muse2/task-wf-001."
     blockers: []
     next_action: "Run the fresh multi-agent trace via FRIDAY chat and file it."
   - id: TASK-OBS-007
