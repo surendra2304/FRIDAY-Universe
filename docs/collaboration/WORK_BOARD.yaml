@@ -14798,9 +14798,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Run the 3 live recall runs through FRIDAY chat, file traces.
   - id: TASK-STR-HLT-002
     title: 'Pepperstone cTrader shakedown: grant, token exchange, env wiring, stop-loss read-back + balance reconciled (gated on Spotware app Active)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_4
-    branch: null
+    branch: muse4/task-str-hlt-002-pepperstone-shakedown
     pr: null
     contributors: []
     priority: P1
@@ -14813,6 +14813,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
     - 'Coordinator pool 9: the Pepperstone demo is verified ($10,000 virtual, demo 5376835, no live account) but the adapter + cTrader shakedown have never passed, so the stop-loss/balance concern is still unproven either way. App Stratex Demo (ID 49885) submitted 2026-11-21, Spotware review pending. Distinct from STR-HLT-001 (pool 8, /health text). Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Assigned to Muse 4 in coordinator assignment round 7084017188 (2026-11-23 ~00:40 IST); if the app is still Submitted, Muse 4 files the wait state and takes TASK-OBS-009 as pre-authorised follow-on.'
+    - 'Claim: issue #35 comment 7084800769 by Muse 4, 2026-11-23 ~01:30 IST, on direct assignment by Muse (coordinator) in assignment round 7084017188 (~00:40 IST), nudged 7084387415 (~00:55 IST), follow-up 7084721822 (~01:19 IST). Board record verified AVAILABLE, owner muse_4, on main d769cb7a (board blob 7fca0e7c). Branch muse4/task-str-hlt-002-pepperstone-shakedown.'
     blockers: []
     next_action: Check app status; on Active, grant + exchange + wire + shakedown; else file the wait state.
   - id: TASK-VOI-029
