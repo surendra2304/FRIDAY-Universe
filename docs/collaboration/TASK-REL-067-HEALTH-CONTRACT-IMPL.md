@@ -2,10 +2,10 @@
 
 **Task:** Implement the health-capability contract per REL-004 section 8
 (design: `docs/collaboration/TASK-REL-004-HEALTH-CONTRACT.md`, Muse 9).
-**Branch:** `muse8/task-rel-067`. **Status:** Stratex + FRIDAY classifier
-slices implemented on the branch; 8 agents' `/health` remain. **Work PR
-not opened yet** — this document grows with the work and is filed with the
-work PR.
+**Branch:** `muse8/task-rel-067`. **Status:** Stratex + FRIDAY classifier +
+FRIDAY /health slices implemented on the branch; 8 agents' `/health`
+remain. **Work PR not opened yet** — this document grows with the work
+and is filed with the work PR.
 
 ## Done this run (2026-11-22 ~15:00 IST, hourly self-check)
 
@@ -144,25 +144,112 @@ already exists in its `/health` body; the work is a derivation, not a probe).
   list today (checked: owner-workflows.yml contracts list +
   friday-universe-ci.yml), and neither is
   `Stratex/tests/test_engine_capability_truthfulness.py`. The work PR must
-  add all three to the contracts job lists in the same PR (standing order
-  5) — deferred now because main's `owner-workflows.yml` moved since the
+  add them to the contracts job lists in the same PR (standing order 5) —
+  deferred now because main's `owner-workflows.yml` moved since the
   branch base (main 92f84677 vs branch d023c095); the wiring goes on top
-  of the rebase, per standing order 3.
+  of the rebase, per standing order 3. (Update 16:30 IST: the FRIDAY
+  /health slice adds a fourth unlisted file,
+  `FRIDAY/tests/test_friday_health_contract.py` — see the §3 section
+  below; all four ride in the work PR.)
+
+## Done this run (2026-11-22 ~16:30 IST hourly self-check) — FRIDAY's own /health (§3)
+
+- `FRIDAY/src/friday/api/server.py` — `health_check()` now returns the §2.2
+  capability report (JSONResponse, HTTP 200 iff `ok` else 503):
+  `capabilities.orchestration` (required; from the `friday_deep.health`
+  import-check report — HEALTHY → `ok`, DEGRADED → `degraded` /
+  `IMPORT_CHECK_FAILED`, FAILED → `unavailable`; evidence says
+  import/liveness only), `capabilities.memory_backend` (required; the live
+  DB round-trip `/ready` performs — SQLite `SELECT 1` / Oracle
+  `SELECT 1 FROM DUAL`), `capabilities.peer_mesh` (optional; from
+  `_peers_mesh_state()` — `connected` → `ok`, `configured_unverified` →
+  `unknown` / `CONFIG_UNVERIFIED`, `unavailable` → `unknown` /
+  `MESH_UNAVAILABLE`), `dependencies.database` (required; same DB probe),
+  `dependencies.disk` (required; ≥ 50 MB free as `/ready` enforces,
+  `LOW_DISK_SPACE` / `DISK_PROBE_FAILED`), `dependencies.environment`
+  (required; `validate_runtime_environment` — added so `/health` never
+  contradicts `/ready` per §2.5, which fails readiness on an invalid
+  environment). Top-level `status` is derived (`ok` iff every required
+  capability/dependency is `ok`, else `degraded`); `evidence_class` is now
+  `capability_report` on the /health response (the `friday_deep` Report
+  itself is unchanged — it genuinely proves liveness only and keeps
+  `process_liveness`). All pre-existing fields are kept (`overall`,
+  `checks`, `observed_at`, `service`, `agent`, `canonical_name`,
+  `version`, `peers_mesh`). No secret or raw exception text in any
+  payload: failure classes are exception type names only.
+- `readiness_check()` refactored to share the probes: `_probe_memory_database()`
+  (the exact /ready DB logic — sqlite `connect_sqlite` seam preserved, so
+  the existing patch-based regressions still apply) and `_probe_disk()`
+  (the exact /ready disk logic). /ready's returned fields, values and HTTP
+  codes are unchanged; its env validation and production-Oracle gate stay
+  inline as today. The production-Oracle gate is a /ready-only routing
+  policy (production runs Oracle; the sqlite case cannot occur in
+  production), so it is not duplicated into /health.
+- Tests: `FRIDAY/tests/test_obs003_health_honesty.py` — the two tests that
+  pinned `status: "healthy"` now pin the contract vocabulary (`ok` +
+  HTTP 200 when the report is healthy; `degraded` + HTTP 503 with
+  `IMPORT_CHECK_FAILED` when it is degraded).
+  `FRIDAY/tests/test_tier1_resilience_and_contracts.py` —
+  `test_health_endpoint_contract` now pins `status: "ok"`,
+  `evidence_class: "capability_report"`, the full capability/dependency
+  key sets, and every required entry `ok` in the hermetic test env.
+  `FRIDAY/tests/e2e/test_tier1_features.py` — F7.1 now pins `status: "ok"`.
+  `FRIDAY/tests/test_container_compatibility.py` — now pins
+  `evidence_class: "capability_report"` on /health.
+  New: `FRIDAY/tests/test_friday_health_contract.py` — 8 tests pin the §3
+  contract (ok path + legacy fields kept; degraded orchestration → 503;
+  DB down → 503 + `DATABASE_UNREACHABLE` with only the exception type
+  name in evidence; DB unconfigured → `DATABASE_UNCONFIGURED`; disk low
+  → `LOW_DISK_SPACE`; env invalid → both /ready and /health 503, §2.5;
+  peer_mesh unknown does not degrade; /ready fields unchanged).
+- Verification status (same limits as the earlier slices): no local pytest /
+  import / build was run (execution-risk notice on the local clone stands);
+  edits verified by re-reading the changed regions + `py_compile` + AST
+  parse of all six files, and by diffing `readiness_check` against the
+  branch base to confirm /ready's behaviour is identical. **CI on the work
+  PR is the gate.**
+- CI wiring owed at rebase/work-PR time (new standing orders): now FOUR
+  test files are in no workflow's explicit file list —
+  `Stratex/tests/test_engine_capability_truthfulness.py`,
+  `FRIDAY/tests/test_fleet_probe_labelling.py`,
+  `FRIDAY/tests/test_fleet_status_truth.py` and the new
+  `FRIDAY/tests/test_friday_health_contract.py`. The work PR must add all
+  four to the contracts job lists in the same PR (standing order 5).
+
+## §6 open questions resolved from source this run
+
+- **Q1 — FRIDAY `peers_mesh` provenance: RESOLVED.** `_peers_mesh_state()`
+  (`FRIDAY/src/friday/api/server.py`) inspects the LIVE in-process mesh
+  (`get_mesh().status()` state_counts of observed outcomes) — a live
+  observation of this process's recorded mesh outcomes, not config and
+  not a probe of peers. The `peer_mesh` capability evidence says so
+  ("mesh observed COMPLETED/SUCCESS peer outcomes in-process" /
+  "no completed peer outcome observed in-process").
+- **Q4 — FRIDAY `/health/deep` mount: RESOLVED (not mounted in live FRIDAY).**
+  The constant `{"status": "healthy", "engines": 7}` lives on the separate
+  FastAPI app in `FRIDAY/apps/core/src/friday_core/real_deep_api_server.py`
+  (own app, "FRIDAY Universe Deep API" v3.0.0, docs put it on port 8011).
+  The live FRIDAY process is `friday.api.server:app` on port 10000
+  (AGENTS.md, DEPLOYMENT_GUIDE, README agree); `server.py` never
+  references `real_deep_api_server`, mounts only `/static` and `/` (UI),
+  and no test or code references `/health/deep` except its definition.
+  The deep app's models are imported by `real_engines_router.py` (typing
+  only), never its app. So `/health/deep` is NOT reachable on the live
+  FRIDAY process and needs no contract change; if the deep app is ever
+  deployed as a fleet service it needs its own contract pass. Live
+  confirmation is folded into the post-merge probe (a 404 on port 10000
+  is expected).
 
 ## Remaining (next runs)
 
 1. The other eight agents' `/health` mappings per design §5 (Memora,
-   Futuris, IntelX, Forge, Sentinel, Cortex, VyralX, Inference) and
-   FRIDAY's own `/health` (§3: orchestration, memory_backend, peer_mesh,
-   database, disk).
-2. §6 open questions to resolve from source/live probe while implementing:
-   FRIDAY `peers_mesh` provenance; Forge's three `/health`s (confirm by
-   live probe which handler answers each path); Stratex master-control
-   `/health` mount; FRIDAY `/health/deep` mount; Memora `/health`
-   dependency-failure mode; Futuris `verify_schema()` liveness.
+   Futuris, IntelX, Forge, Sentinel, Cortex, VyralX, Inference).
+2. §6 open questions still to resolve from source/live probe while implementing:
+   Forge's three `/health`s (confirm by live probe which handler answers each path); Stratex master-control
+   `/health` mount; Memora `/health` dependency-failure mode; Futuris `verify_schema()` liveness.
 3. Criterion 5 sweep: no secret in any health payload (Futuris `/ready`
    and Cortex raw exception text are named in the design §2.2 rule 8).
 4. Criterion 6: all ten `/ready` behaviours unchanged; Caddy/Docker
    probes confirmed on `/ready` per agent before its `/health` flips.
 
-— Muse 8, TASK-REL-067, 2026-11-22 ~15:35 IST
+— Muse 8, TASK-REL-067, 2026-11-22 ~16:30 IST
