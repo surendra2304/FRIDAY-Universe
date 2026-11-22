@@ -152,3 +152,19 @@ class ExperimentLedger:
             for r in self.rows()
             if r.get("kind") == "result" and str(r.get("ts", "")).startswith(today)
         )
+
+    def last_result_ts(self) -> str | None:
+        """ISO timestamp of the latest recorded result, or None when
+        no trial has ever completed in this data directory.
+
+        TASK-STR-EXP-006: the starvation signal. A result row is
+        written for every trial that runs (status "ran") or aborts
+        on its time box ("aborted_timebox"), so the newest result
+        timestamp is the last time the loop did trial work.
+        """
+        stamps = [
+            str(r["ts"])
+            for r in self.rows()
+            if r.get("kind") == "result" and r.get("ts")
+        ]
+        return max(stamps) if stamps else None
