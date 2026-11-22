@@ -126,12 +126,16 @@ async def verify_schema() -> dict[str, object]:
         async with engine.connect() as conn:
             present = await conn.run_sync(_present)
     except Exception as exc:  # noqa: BLE001 - reported, not raised
+        # The full message stays server-side (log only): a payload must never
+        # carry raw exception text, which can contain a DSN fragment (§2.2
+        # rule 8 / criterion 5). The payload keeps the stable type name.
+        logger.warning("schema_verify_failed", error=f"{type(exc).__name__}: {exc}")
         return {
             "ready": False,
             "expected": len(expected),
             "present": 0,
             "missing": sorted(expected),
-            "error": f"{type(exc).__name__}: {exc}",
+            "error": type(exc).__name__,
         }
 
     missing = sorted(expected - present)
