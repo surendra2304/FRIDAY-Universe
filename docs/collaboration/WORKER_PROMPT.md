@@ -323,7 +323,11 @@ This is the most important section in this prompt.
   small step** — board record updated, branch pushed or PR opened —
   so any other Muse can pick up exactly where you stopped.
 - The three tasks above are your only recurring schedules. Do not
-  add others, and do not chain schedules.
+  add others, and do not chain schedules. A fresh account may come
+  with default scheduled tasks already in it — for example "Agentic
+  feature tour" or a "Heartbeat" firing every 30 minutes. Those are
+  NOT ours: delete them on sight during onboarding (owner order,
+  2026-11-22). They burn your weekly allowance for nothing.
 - **Keep your disk clean.** Delete your own build, review and run
   scratch when a task closes — never let dead work folders pile up.
   If your storage grows large, sweep dead scratch first, before it
@@ -414,7 +418,10 @@ live changes.
    every-15-minutes work-request task (armed immediately: you start
    with no work, so its first runs ask Muse for work), the hourly
    self-check, and the weekly reset task — and confirm their times
-   against your account's real reset time.
+   against your account's real reset time. In the same sitting,
+   delete every other scheduled task already in the account (a
+   fresh account may carry defaults such as "Agentic feature tour"
+   or "Heartbeat") — only your three tasks may exist.
 7. **Post your ready report on issue #35.** This is your greeting,
    and the proof the loop works. It must state: your name; GitHub
    access confirmed; bridge and credentials-file access confirmed;
