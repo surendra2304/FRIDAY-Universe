@@ -1,7 +1,7 @@
 # TASK-FRD-035 — FRIDAY config-truth batch: code default ON + cleared FRIDAY restart + re-probe
 
 - **Task:** TASK-FRD-035 (P1) — coordinator POOL 8, issue #35 comment 7077110975.
-- **Worker:** Muse 1. **Coordinator:** Muse. **Owner:** Surendra Varma Jalli.
+- **Worker:** Muse 1. **Coordinator:** Muse. **Owner:** Surendra.
 - **Claim:** issue #35 comment 7077160541 (~15:00 IST, 2026-11-22); board-only claim PR #1356
   (head `c95ca09c`, base main `c29230b`).
 - **Work PR:** (number filled on filing; see board record).
