@@ -3138,14 +3138,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-REL-003
     title: "Diagnose and repair Stratex engine offline (strategy evaluation stale ~12 days) — diagnosis first, no trading changes"
-    status: IN_PROGRESS
-    owner: muse_ai
+    status: AVAILABLE
+    owner: muse_7
     branch: null
     pr: null
     contributors: []
     priority: P0
     created_at: "2026-11-14T12:45:00+05:30"
-    updated_at: "2026-11-14T12:45:00+05:30"
+    updated_at: "2026-11-22T07:54:58+05:30"
     files: []
     defect: "Live probe 2026-11-14 07:07 UTC: /stratex/health reports engine offline, engine_healthy false, STALE_STRATEGY_EVALUATION last evaluation 1039907s ago (>900s threshold), daemon_balance null — while the process answers /health 200 (process_liveness only)."
     acceptance:
@@ -3154,6 +3154,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No trading-behaviour changes in this task; the demo-only fail-closed guard (D-015 / ALLOW_LIVE_TRADING) is untouched."
     evidence:
       - "Stratex /health body captured 2026-11-14T07:06-07:07Z (two probe sets, concordant)."
+      - "Reassigned 2026-11-22 ~07:54 IST by coordinator (pool 4, item 8): record was IN_PROGRESS under retired owner muse_ai since 2026-11-14 with no progress; reassigned to Muse 7 (free; TASK-VYR-036 MERGED, PR #1291). Base: main 706f7690 (board blob 69335b00bcb2f28c56f3fab957e4b693843b526b, verified against the true main blob before editing). Worker claims via its own claim PR."
     blockers: []
     next_action: "Read-only diagnosis: Stratex service state, engine/daemon logs and evaluation loop code path on Server 1."
 
@@ -12780,14 +12781,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-VYR-036
     title: "VyralX: wall-clock budget for autonomous_loop.py (the live systemd driver) + test (VYR-001 follow-up)."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_7
     branch: muse7/task-vyr-036-wall-clock-budget
     pr: 1291
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T07:44:00+05:30"
+    updated_at: "2026-11-22T07:54:58+05:30"
     files:
       - "VyralX/scripts/autonomous_loop.py"
       - "VyralX/tests/test_vyr036_autonomous_loop_budget.py"
@@ -12801,8 +12802,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator pool-3 draft, 2026-11-22 ~05:38 IST (issue #35 comment 7071343939). Assigned to Muse 7 (free; TASK-OPS-001 MERGED, PR #1278, merge d15008cf) - direct coordinator assignment per the refill rule, one per free worker. Base: main 70c862e9 (board blob 9f7cf38ac83dbce37923da5fca551976ad491a1d, verified against the true main blob before editing)."
       - "Progress 2026-11-22 ~07:44 IST: budget wired — run_autonomous_cycle takes a time.monotonic() deadline, checks it before every render, logs CYCLE_BUDGET_EXCEEDED and stops, returning the drafts so far; no deadline given means the 5400s default (same as VYR-001). A single in-flight render may still overrun (blocking call, same scope as VYR-001/VYR-035). Regression test VyralX/tests/test_vyr036_autonomous_loop_budget.py (4 tests: stop mid-batch, already-exceeded, no-deadline default budget, within-budget full batch) added to the owner-workflows VyralX contracts list. Work PR #1291 opened (3 code commits + board flip on muse7/task-vyr-036-wall-clock-budget, base main 5c702165 after rebuild from a86bd315; claim PR #1284 merged 06:44 IST, merge 083679bd). Both changed Python files parse clean; local pytest not run in this repair run, CI on PR #1291 is the verification. No live cycle, restart, or loop-state change."
+      - "MERGED 2026-11-22 ~07:54 IST: work PR #1291 merged 706f7690 (coordinator review: true diff exactly 4 files — autonomous_loop.py +43/-6 deadline logic, new test file 111 lines, owner-workflows.yml +1 line, board; CI 10/10 green incl. contracts success; local pytest new file 4/4 on the PR head and again on the merge tree onto main 2d15b24d; test-merge clean, validator VALID; stale-base two-dot diff correctly ignored). No live change: driver not restarted, loop stays OFF."
     blockers: []
-    next_action: "Awaiting Muse review/merge of work PR #1291 (CI pending); no live change."
+    next_action: "MERGED. No live change: driver not restarted, loop stays OFF unless the coordinator orders a supervised cycle."
   - id: TASK-STR-FWD-035
     title: "Stratex: FWD-029 follow-up - the daemon env timeframe label list uses '1wk' where the venue uses '1w'; align the labels and add a guard test so the mismatch cannot recur silently."
     status: MERGED
