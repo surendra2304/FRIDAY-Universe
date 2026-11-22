@@ -25,7 +25,7 @@ The collaboration board mirrors the Master Plan. It does not silently change tas
 
 ## Muse team model
 
-Since 2026-11-20, only Muse accounts work on FRIDAY Universe. The owner (Surendra Varma Jalli) is the final decision-maker; Muse is Head Manager and lead coordinator — it assigns tasks on the board, owns the merge queue, and verifies every claim before it reaches the owner; Muse 1, Muse 2, ... are the worker accounts, each working inside its own weekly usage allowance. The full operating architecture — communication, task lifecycle, access, secrets flow, usage discipline, onboarding — is [ARCHITECTURE.md](ARCHITECTURE.md) and governs wherever older documents conflict.
+Since 2026-11-20, only Muse accounts work on FRIDAY Universe. The owner (Surendra) is the final decision-maker; Muse is Head Manager and lead coordinator — it assigns tasks on the board, owns the merge queue, and verifies every claim before it reaches the owner; Muse 1, Muse 2, ... are the worker accounts, each working inside its own weekly usage allowance. The full operating architecture — communication, task lifecycle, access, secrets flow, usage discipline, onboarding — is [ARCHITECTURE.md](ARCHITECTURE.md) and governs wherever older documents conflict.
 
 Workers coordinate on this board and issue #35, and also talk to each other directly (peer review, handoffs). Secrets and private material never travel on GitHub (it is public) — they live on the Oracle fleet (credentials record, server environment).
 
