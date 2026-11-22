@@ -12772,14 +12772,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-VYR-036
     title: "VyralX: wall-clock budget for autonomous_loop.py (the live systemd driver) + test (VYR-001 follow-up)."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_7
-    branch: null
+    branch: muse7/task-vyr-036-wall-clock-budget
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T06:13:20+05:30"
+    updated_at: "2026-11-22T06:28:17+05:30"
     files:
       - "VyralX/scripts/autonomous_loop.py"
       - "docs/collaboration/WORK_BOARD.yaml"
