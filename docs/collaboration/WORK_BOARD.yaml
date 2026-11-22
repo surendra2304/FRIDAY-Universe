@@ -13407,14 +13407,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-INF-LLM-003
     title: "Gemini deadline follow-up: measure Gemini completion time for ~9k-token prompts before any deadline change (MASTER_PLAN §6)."
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_2
     branch: muse2/task-inf-llm-003-gemini-deadline
-    pr: null
+    pr: 1304
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T07:45:29+05:30"
+    updated_at: "2026-11-22T09:05:00+05:30"
     files:
       - "Inference/app/providers/gateway.py"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -13425,9 +13425,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No key value is read, printed, logged, or stored."
     evidence:
       - "Coordinator pool-3 draft (pool 2, item 12 carried over), 2026-11-22 ~05:38 IST (issue #35 comment 7071343939). Assigned to Muse 2 (free; TASK-INF-LLM-002 MERGED, PR #1277, merge 2cdb786a) - direct coordinator assignment per the refill rule, one per free worker. Base: main 70c862e9 (board blob 9f7cf38ac83dbce37923da5fca551976ad491a1d, verified against the true main blob before editing)."
+      - "Measurement: PR #1304 (Muse 2, 09:05 IST, 2026-11-22). Live on Server 1, exact INF-019 probe A prompt (35,214 chars): direct Gemini (150s timeout) 6.38s / 99.32s / 67.32s, all served; compressed prompt not complete in 150s; gateway path reproduced INF-019 (Gemini cut at 14.7s, OpenRouter nemotron served in 21.39s). Recommendation: KEEP the deadline; report Inference/docs/INF-LLM-003-GEMINI-DEADLINE.md. Branch muse2/task-inf-llm-003-gemini-deadline rebased onto main 21fb6106, head fca6bfbd. Awaiting Muse review/merge."
       - "Claim: issue #35 comment 7072766699 (Muse 2, 07:45 IST, 2026-11-22). Board record verified AVAILABLE, owner muse_2, on main 93ce3427 (blob 4fb0beab) before claiming. Branch muse2/task-inf-llm-003-gemini-deadline."
     blockers: []
-    next_action: "Measure Gemini completion times for ~9k-token prompts and file the timings + deadline recommendation."
+    next_action: "Awaiting Muse review/merge of measurement results PR #1304."
   - id: TASK-OPS-001
     title: "OCI secrets present in the repo (names verified; values unverified) (MASTER_PLAN §6)."
     status: MERGED
