@@ -148,15 +148,17 @@ class UniverseDispatchBus:
     def _register_default_agents(self) -> None:
         """Register default agent dispatch configurations."""
         # Real fleet endpoints from AGENTS.yaml (single source of truth for ports).
-        # Post-6/4 layout (TASK-REL-062): S1 = 10.0.0.121 (Inference, Memora,
-        # Stratex, Forge, Sentinel); S2 = 10.0.0.120 (IntelX, Futuris, Cortex).
+        # Deployed layout (TASK-VAL-006, 2026-11-22): S1 = 10.0.0.121 (Inference,
+        # Memora, Forge) + loopback Sentinel; S2 = 10.0.0.120 (IntelX, Futuris,
+        # Cortex); Stratex on AWS U1 via the S1 SSH tunnel 127.0.0.1:18003;
+        # VyralX on AWS 16.176.9.247:8010.
         # Every value is overridable with FRIDAY_DISPATCH_<NAME>_URL.
         agents = [
             ("Inference", "http://10.0.0.121:8001"), ("Memora", "http://10.0.0.121:8002"),
-            ("Stratex", "http://10.0.0.121:8003"), ("Futuris", "http://10.0.0.120:8004"),
+            ("Stratex", "http://127.0.0.1:18003"), ("Futuris", "http://10.0.0.120:8004"),
             ("IntelX", "http://10.0.0.120:8005"), ("Forge", "http://10.0.0.121:8006"),
-            ("Sentinel", "http://10.0.0.121:8008"), ("Cortex", "http://10.0.0.120:8009"),
-            ("VyralX", "http://10.0.0.120:8010"),
+            ("Sentinel", "http://127.0.0.1:8008"), ("Cortex", "http://10.0.0.120:8009"),
+            ("VyralX", "http://16.176.9.247:8010"),
         ]
         for name, default_base in agents:
             service = name.lower()
