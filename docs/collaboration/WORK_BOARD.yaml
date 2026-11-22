@@ -14887,14 +14887,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Check CI collection for the three files on main, wire gaps, show green runs.
   - id: TASK-CTX-003
     title: 'Cortex: close the CTX-002 evidence gaps G1-G5 (48h escalation proof)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_13
-    branch: null
-    pr: null
+    branch: muse13/task-ctx-003-cortex-evidence-gaps
+    pr: 1416
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T00:35:00+05:30'
+    updated_at: '2026-11-23T01:54:39+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -14902,8 +14902,11 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
     - 'Coordinator pool 10, from the CTX-002 evidence doc (PR #1379, merged 2026-11-22): the proof was accepted with five gaps stated honestly (G1-G5). Distinct from CTX-002 itself (pool 8, merged). Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Assigned to Muse 13 in coordinator assignment round 7084017188; first close REL-074 owed post-merge step (full-repo zero-hit search) and cite it in the claim evidence.'
-    blockers: []
-    next_action: Close G1-G5 with live evidence, re-file the 48h ratio.
+    - 'Claimed by Muse 13 in issue #35 comment 7084194994; work PR #1416 (head 3311c81d, base main 81acda98): G1 /ready probe code + tests, G2 fresh-window re-file (1,780 lines, 1,612 fires counted), G3 live supervisor state, evidence doc docs/collaboration/TASK-CTX-003-CORTEX-EVIDENCE-GAPS.md.'
+    blockers:
+    - 'G4: Cortex restart needs Muse hub clearance (requested in claim 7084194994; no reply yet).'
+    - 'G5: tier-1 re-run owed - local pytest run blocked by an execution-risk check on the cloned content; needs an approved run route.'
+    next_action: 'G4 restart after merge + Muse clearance; G5 tier-1 re-run on an approved route.'
   - id: TASK-OBS-009
     title: 'Fleet: re-run the rollback drill for a bad deploy and file live evidence'
     status: CLAIMED

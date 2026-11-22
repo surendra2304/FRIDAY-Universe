@@ -61,12 +61,12 @@ async def test_f1_memora_arequest_happy_path(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_f1_self_healing_probe_async_http(monkeypatch):
-    """F1.2: probe_ai_universe executes a non-blocking HTTP health check."""
+    """F1.2: probe_ai_universe executes a non-blocking HTTP readiness check."""
     from cortex_api.self_healing import probe_ai_universe
 
     monkeypatch.setenv("AI_UNIVERSE_BASE_URL", "http://ai-universe.local:8000")
 
-    mock_resp = httpx.Response(200, json={"status": "healthy", "service": "inference"})
+    mock_resp = httpx.Response(200, json={"status": "ready", "service": "inference"})
     with patch("httpx.AsyncClient") as mock_client_cls:
         mock_client = AsyncMock()
         mock_client.__aenter__.return_value = mock_client
@@ -77,10 +77,11 @@ async def test_f1_self_healing_probe_async_http(monkeypatch):
         # TASK-COR-014: the probe is tri-state now; a configured gateway
         # answering healthy is HEALTHY (previously the bool True).
         # TASK-CTX-002: the probe checks GET {base}/health, not DNS.
+        # TASK-CTX-003 (G1): the probe checks GET {base}/ready — readiness, not liveness.
         from cortex_core.resilience import ProbeResult
 
         assert result is ProbeResult.HEALTHY
-        mock_client.get.assert_awaited_once_with("http://ai-universe.local:8000/health")
+        mock_client.get.assert_awaited_once_with("http://ai-universe.local:8000/ready")
 
 
 def test_f1_memora_record_interaction_payload_structure(monkeypatch):
