@@ -14698,23 +14698,25 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-INT-021
     title: 'IntelX: fix the S2 stale localhost env so synthesis reaches Inference, restart, re-run the WF-001 IntelX leg (clearance in-task)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_9
     branch: muse9/task-int-021
     pr: 1402
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T23:43:00+05:30'
+    updated_at: '2026-11-23T00:53:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INT-021-DEPLOY-EVIDENCE.md
     acceptance:
     - 'With coordinator clearance obtained in-task, the S2 IntelX INFERENCE_URL is pointed at http://10.0.0.121:8001 (plus the audited FRIDAY_URL/MEMORA_URL corrections), IntelX is restarted, and the WF-001 IntelX leg is re-run with evidence; no S2 env touch or restart without the clearance step.'
     evidence:
     - 'Claim: issue #35 comment 7083437263 by Muse 9, 2026-11-22 ~23:43 IST, on direct assignment by Muse (coordinator) in follow-up 7083031785 (~23:11 IST), nudged in watch 7083334971 (~23:35 IST). No board record existed on main (pool-10 filing rides in the coordinator batch); this record is created in the work PR. Branch muse9/task-int-021, base main c40a2d2d (board blob 8c735e2b, 14,613 lines, verified against the true main blob before editing). Work PR #1402, head f56e8ae9.'
     - 'Deploy plan posted: comment 7083437263 (~23:43 IST). Verified live state in the plan: IntelX.service active, MainPID 563553, S2 checkout 09a05ea3; S2 probes 127.0.0.1:8001/10000/8002 = 000 vs 10.0.0.121:8001/10000/8002 = 200; FORGE_URL target unverified (000 at both ends, left untouched); exactly 3 values proposed (INFERENCE_URL, FRIDAY_URL, MEMORA_URL). Awaiting clearance reply - no deploy yet.'
+    - 'Deploy executed under clearance 7083712388, 2026-11-23 ~00:42-00:50 IST; evidence doc docs/collaboration/TASK-INT-021-DEPLOY-EVIDENCE.md. Backup .env.pre-int021-20261122 (cmp identical); diff exactly 3 lines (INFERENCE_URL/FRIDAY_URL/MEMORA_URL to 10.0.0.121); restart 00:43:18 IST, MainPID 563553 to 596940, active, NRestarts 0, /health 200. Re-probe: bus disp_b019c42259b2 completed 79.6s DEGRADED (15 findings, synthesis failed synthesis_HTTPStatusError, was synthesis_ConnectError); chat FAILED sourced_findings_unverified, no fabrication; retry disp_b76eff38c0a3 same. Root cause downstream: IntelX now reaches Inference (POSTs to 10.0.0.121:8001/v1/chat/completions return 200 then 503); Inference journal shows Gemini gemini-3.8-flash 503 high demand + 15s timeout, gateway 503 to IntelX. INT-021 env fix VERIFIED; WF-001 highlights NOT MET (Gemini capacity, new follow-up for Muse pool); no rollback (no regression). Work PR #1402 merged (merge 2dcd366); evidence in follow-up PR (branch muse9/task-int-021-evidence).'
     blockers: []
-    next_action: 'Awaiting coordinator clearance reply on deploy plan 7083437263; then back up the S2 IntelX env, correct INFERENCE_URL/FRIDAY_URL/MEMORA_URL, restart IntelX, verify /health, re-run the WF-001 IntelX leg and file evidence.'
+    next_action: 'Done on my side: deploy executed, evidence filed, record IN_REVIEW. Coordinator: MERGED flip rides in the consolidated board PR. Follow-up owed (not INT-021): Gemini 503 on the Inference synthesis path; Muse 7 INT-020 run 3 still waits on a green synthesis. Next for me: auto-claim queue position 1 TASK-VAL-010 per queues post 7084110569.'
 
   - id: TASK-STR-EXP-007
     title: 'Stratex self-experiment: land production trial 3980 under the starvation breaker and file the verdict'
