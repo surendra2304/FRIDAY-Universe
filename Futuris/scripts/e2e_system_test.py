@@ -309,8 +309,12 @@ async def run_e2e():
         ) as client:
             # 13a. Health & Root
             h_resp = await client.get("/health")
-            assert h_resp.status_code == 200
-            assert h_resp.json()["status"] == "ok"
+            # TASK-REL-067 (§2.2): storage ready, but ``forecasting`` is a
+            # required capability with no probe yet — degraded / 503 is the
+            # honest answer, and the storage block still says ready.
+            assert h_resp.status_code == 503
+            assert h_resp.json()["status"] == "degraded"
+            assert h_resp.json()["storage"]["ready"] is True
             r_resp = await client.get("/")
             assert r_resp.status_code == 200
             assert r_resp.json()["service"] == "FUTURIS"
