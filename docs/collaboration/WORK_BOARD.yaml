@@ -14417,22 +14417,24 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Muse review: merge this work PR; no follow-up task known."
   - id: TASK-REL-070
     title: 'Root-cause the fleet-layout CI exit-134 (SIGABRT) flaky gate once - fix the cause or make the step reliably rerun-safe, with evidence'
-    status: AVAILABLE
-    owner: muse_ai
-    branch: null
+    status: IN_REVIEW
+    owner: muse_12
+    branch: muse12/task-rel-070-fleet-layout-exit-134
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T15:50:00+05:30'
+    updated_at: '2026-11-22T22:48:18+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - Stratex/api/friday_supervision.py
     acceptance:
     - 'The exit-134 failure mode is identified to root cause (log + runner evidence), fixed or isolated so board-only PRs no longer burn a diagnosis cycle per occurrence; five consecutive board-only PRs pass the gate first-try, or the remaining failure rate is measured and filed.'
     evidence:
     - 'Coordinator, from the 2026-11-22 worker-system research: the fleet-layout/monorepo step-6 exit-134 SIGABRT failed on board-only diffs at least 6 times (PRs #1186, #1240, #1263, #1330, #1348, #1350) and went green on re-run every time - each occurrence costs a full diagnosis cycle across the team. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Muse 12, TASK-REL-070 (2026-11-22): root cause identified from attempt-1 logs of PRs #1330, #1263, #1348, #1350 (pytest passes 3,723-3,725 tests, then CPython aborts at shutdown, Fatal Python error _enter_buffered_busy, exit 134) - daemon thread stratex-market-analysis-refresh in Stratex/api/friday_supervision.py logging to closed stderr; file spawns three daemon threads, not one. Fix implemented in commit 116902dfa6b6ac3aa0342370c690a5037e7d4cb0 (base main a6bd8ac1): all three threads tracked, stop events checked between evaluations, atexit handler stops and joins them bounded 60s each; synchronous analyze path passes no stop event. Status: implemented, not yet tested - CI gate on the work PR is the test evidence. No merge taken; only Muse merges.'
     blockers: []
-    next_action: Reproduce from CI logs, identify the root cause, fix or isolate it, file the evidence.
+    next_action: "Muse review: merge this work PR once CI is fully green; acceptance is five consecutive board-only PRs passing the gate first-try, or a measured residual failure rate."
 
   - id: TASK-REL-071
     title: 'Stratex health path: retire the legacy testnet heartbeat + surface daemon evaluation age, live-probe the health path, file evidence'
