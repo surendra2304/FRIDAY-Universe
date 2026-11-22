@@ -13086,16 +13086,41 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Observe the fast lane for one real alert end-to-end; file armed-state evidence + wait state if none occurs naturally."
 
 
+
+
+  - id: TASK-INT-018
+    title: "IntelX: synthesis-failure path must preserve the extractive excerpts the pre-#78 deployed path returned (PR #78 follow-up, MASTER_PLAN §6)."
+    status: AVAILABLE
+    owner: muse_1
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T08:10:52+05:30"
+    files:
+      - "IntelX/deep_research_pipeline.py"
+      - "IntelX/app/agents/real_intelx_osint.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "MASTER_PLAN §6 (PR #78 follow-up), pool 5 item 2. The research synthesis-failure path must preserve the extractive excerpts the pre-#78 deployed path returned, instead of discarding them when synthesis fails. Behaviour-regression risk was accepted onto main under the owner's merge-all override (2026-11-14); this fix closes it. The separable topic-overlap negative-control fix from the same PR is clean and needs no work."
+    acceptance:
+      - "On synthesis failure, the extractive excerpts are returned/preserved, not discarded."
+      - "Regression test proves the failure path returns excerpts."
+      - "No synthesis-success behaviour change."
+    evidence:
+      - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 2. Assigned to Muse 1 (free; TASK-INF-019 MERGED, PR #1241, merge 4f40128a) - direct coordinator assignment per the refill rule, one per free worker. Next free INT id 018 (INT-001..017 all exist). Base: main 4f40128a (board blob aa08b5384180a06d8a1062f5a667957e3d89ec99, verified against the true main blob before editing). Worker claims via its own claim PR."
+    blockers: []
+    next_action: "Locate the synthesis-failure path in IntelX research, restore excerpt preservation, add a regression test, verify in the PR's own CI run."
   - id: TASK-INF-019
     title: "Inference: post-#1066 routing probes - rerun the probes and file results."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-inf-019-routing-probes
     pr: 1241
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: "2026-11-22T07:01:18+05:30"
+    updated_at: "2026-11-22T08:10:52+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/verification/INF019_ROUTING_PROBES.md"
@@ -13109,8 +13134,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "PROBE A oversized (code_generator, 35,214 chars, ~8,803 est tokens; journal ~8,880 incl. system instruction), ran twice: HTTP 200, status success, degraded false, real answer served (~980 chars). Journal WARNING both runs (22:39:55, 22:41:22 IST): 'Unified Groq size guard: prompt ~8880 tokens > 7000 guard; rerouting role code_generator from groq/openai/gpt-oss-120b to gemini/gemini-flash-latest before dispatch (TASK-INF-017)'. GUARD VERIFIED - oversized prompt never reached Groq."
       - "PROBE A CAVEAT: no gemini serve either run - fallback_reason 'Request deadline exceeded for provider gemini after 14.7s' 2/2; served by openrouter/qwen-2.5-coder-32b-instruct (latency 29,802 ms / 25,902 ms). End-to-end success via a deliberate fallback rung, not the catalogue-blind ladder, but NOT the disclosed gemini serve. Open question for Muse: raise the Gemini deadline for the reroute path, pick another reroute target, or accept the openrouter fallback for oversized prompts."
       - "PROBE B control (173 chars, ~43 tokens): HTTP 200, groq/openai/gpt-oss-120b, fallback_reason null, degraded false, latency 1,116 ms, real answer. CONTROL PASSED - under-limit still serves from Groq."
+      - "MERGED 2026-11-22 ~08:10 IST: PR #1241 merged 4f40128a (coordinator review: rebased head e9392f42, single commit on main 706f7690; board hunk only INF-019, exactly ONE evidence list, 6 items; probe doc 84 lines read in full and matches the board evidence; CI 9/9 green; test-merge onto main 66ebac06 clean, validator VALID). Open question carried forward: Gemini deadline for the reroute path (INF-LLM-003 measurement in progress with Muse 2)."
     blockers: []
-    next_action: "Muse review: merge this evidence PR, and decide the Gemini-deadline question (raise deadline / change reroute target / accept openrouter fallback for oversized prompts)."
+    next_action: "MERGED. Open question (Gemini deadline for the reroute path) is with Muse 2 under TASK-INF-LLM-003."
   - id: TASK-FRD-032
     title: "FRIDAY: FRD-025 drilled-ALERT proof post-#1071 - verify a drilled alert reaches Telegram exactly once."
     status: MERGED
