@@ -14011,14 +14011,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-STR-LEDGER-001
     title: "Stratex: live fill-ledger verification - reconcile the daemon's fill/close ledger on S1 against the venue's positions/history; file the forward-window state (fills, closes, net P&L)"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-str-ledger-001-fill-ledger-verification
-    pr: 1350
+    pr: 1355
     contributors: []
     priority: P1
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T14:55:21+05:30"
+    updated_at: "2026-11-22T15:14:00+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/collaboration/TASK-STR-LEDGER-001-FILL-LEDGER-VERIFICATION.md"
@@ -14034,8 +14034,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Reconciliation: order-level match BOTH 32 (incl. all 29 FORWARD_TEST rows), EXIT_ONLY 3 (legacy), NO_MATCH 36 (6 testnet rows on the retired account + 30 Nov-19 reset-wiped rows, no venue fills). All 35 exit-matched rows agree with the venue to within fees (venue gross +224.36 vs ledger net +212.53; diff +11.83 = fees)."
       - "Headline: Nov-19 07:35:04-26Z triple demo reset (+15000.03 USDT TRANSFER) wiped all open positions; daemon booked 30 zero-PnL placeholder closes. Scorecard DISCREPANCY +114.32 fully explained (missing closes +37.92 + window fees +2.54 + funding -0.44 + commission -7.52 + unrealized +81.83). 33 venue closes have no ledger row (+37.92; largest SUI +30.50, ETH +19.94, VET -10.92). Gaps G1-G8 in the report."
       - "Report: docs/collaboration/TASK-STR-LEDGER-001-FILL-LEDGER-VERIFICATION.md. Read-only throughout: no order placed/cancelled, no restart, no env change, no secret copied."
+      - "MERGED 2026-11-22 ~15:13 IST: PR #1355 merged (merge 047c99b7) after coordinator review in full - 115-line evidence doc read in full: 73 ledger rows reconciled against live demo-fapi (295 fills / 193 order groups); Nov-19 triple reset +15000.03 USDT wiped all positions, 30 zero-PnL placeholder closes; scorecard DISCREPANCY +114.32 fully decomposed; all 35 exit-matched rows agree to within fees; G1-G8 gaps filed. First CI 8/9 - test job failed on test_real_realtime_pipeline.py::TestAnomalyDetector::test_normal_data (job 137162522777, run 45007587844); re-run of the failed job (HTTP 201) went 9/9 green on the same head 552e8914 - flake, not a PR defect. Test-merge onto main 2529ac85 clean; validator VALID, 642 tasks. CORRECTION: record carried pr: 1350 / next_action PR #1350 (the claim PR) - corrected here to the work PR #1355; the evidence doc itself still cites PR #1350 in its header/section-10 prose (stale number, content unaffected)."
     blockers: []
-    next_action: "Awaiting Muse's review/merge of PR #1350. No live change; follow-ups are the G1-G8 gaps (missing closes, reset detection)."
+    next_action: "None - closed. Follow-ups are the G1-G8 gaps (missing closes, reset detection) - file as follow-up tasks if taken up."
   - id: TASK-VYR-037
     title: "VyralX: next supervised-cycle candidate pool - VYR-034 verdict PASS; prepare the next candidate pool (discovery + machine QA gates first)"
     status: AVAILABLE
