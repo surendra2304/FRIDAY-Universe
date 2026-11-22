@@ -167,7 +167,10 @@ def test_produce_remix_supplies_real_bed(monkeypatch, tmp_path):
     assert prepared["destination"].parent == settings.media_dir / "voiceovers"
     assert prepared["seconds"] == 47.18
     assert prepared["category"] == "VIRAL"
-    assert rf.list_review_queue(queue)[0]["status"] == "pending_review"
+    # The queue stores the entry exactly as produce_remix_short wrote it:
+    # status is the uppercase "PENDING_REVIEW" (remix_flow.py:873), not
+    # the lowercase "pending_review" used by other VyralX subsystems.
+    assert rf.list_review_queue(queue)[0]["status"] == "PENDING_REVIEW"
 
 
 def test_produce_remix_fails_closed_without_bed(monkeypatch, tmp_path):
