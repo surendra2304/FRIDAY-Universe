@@ -3,9 +3,9 @@
 **Task:** Implement the health-capability contract per REL-004 section 8
 (design: `docs/collaboration/TASK-REL-004-HEALTH-CONTRACT.md`, Muse 9).
 **Branch:** `muse8/task-rel-067`. **Status:** Stratex + FRIDAY classifier +
-FRIDAY /health + Memora /health slices implemented on the branch; 7
-agents' `/health` remain. **Work PR not opened yet** — this document
-grows with the work and is filed with the work PR.
+FRIDAY /health + Memora /health + Futuris /health slices implemented on the
+branch; 6 agents' `/health` remain. **Work PR not opened yet** — this
+document grows with the work and is filed with the work PR.
 
 ## Done this run (2026-11-22 ~15:00 IST, hourly self-check)
 
@@ -306,17 +306,95 @@ dependency surface.
   `Memora/tests/test_health_readiness_truth.py`,
   `Memora/tests/test_health_observation_metadata.py`.
 
+## Done this run (2026-11-22 ~18:30 IST, hourly self-check)
+
+Futuris `/health` slice (design §5).
+
+- `Futuris/futuris/api/app.py` — new `_health_payload()` builder + the
+  `/health` route now returns `JSONResponse` (200 iff `ok`, else 503):
+  `capabilities.storage` (required; live `verify_schema()` — see §6 Q6
+  below), `capabilities.forecasting` (required; **no model probe exists
+  anywhere in the surveyed code, so `unknown` with detail
+  `NO_MODEL_PROBE`** — storage readiness is not forecasting ability and
+  is never presented as such), `dependencies.database` (required; the same
+  live schema-inspection round-trip). Top-level `status` is derived (`ok`
+  iff every required capability/dependency is `ok`, else `degraded`);
+  `evidence_class` is now `capability_report`; `agent: futuris` added;
+  all pre-existing fields kept, including the legacy `storage` block.
+  **Honest consequence, stated plainly: Futuris `/health` is now
+  `degraded` / 503 even with storage ready, because `forecasting` is
+  required and unknown.** That is the contract's outcome (§2.4 forbids
+  reclassifying a required capability as optional to get a green status);
+  it clears only when a forecasting-model probe is built. `/ready` is
+  unchanged in behaviour (same 200/503 gates and fields).
+- `Futuris/futuris/api/app.py` `execute_task` (`/v1/task/execute`
+  status/health action) now calls `_health_payload()` instead of the old
+  dict-returning `health_check()` — it keeps its dict access and its
+  `SUCCESS`/`DEGRADED` verdict mapping, which now honestly reports
+  `DEGRADED` while `forecasting` is unknown.
+- Criterion 5 scrub (design §2.2 rule 8): `verify_schema()` returned raw
+  exception text in its `error` field, which `/health`, `/ready` and
+  `/status` all echoed — the message can carry a DSN fragment. The payload
+  now carries only the exception type name; the full message is logged
+  server-side (`schema_verify_failed`). `/ready`'s own except branch is
+  scrubbed the same way. `/ready` codes/fields are otherwise identical.
+- `Futuris/Dockerfile` — HEALTHCHECK moved from `/health` to `/ready`
+  (design §2.5; the pre-existing port 8000 vs production 8004 gap is left
+  as-is, out of scope). `deploy/Caddyfile` sets no `health_uri` on the
+  Futuris `reverse_proxy` block — Caddy does not actively probe it, so no
+  Caddy change is needed.
+- Tests: `Futuris/tests/api/test_health.py` updated (storage-ready is now
+  503/`degraded` with `storage` ok + `forecasting` unknown; evidence class
+  `capability_report`; HEAD carries the same 503; not-ready is 503 with
+  `storage`/`database` unavailable + `SCHEMA_INCOMPLETE`);
+  `Futuris/tests/api/test_hostile_inputs.py` health test updated the same
+  way; `Futuris/scripts/e2e_system_test.py` health assertions updated
+  (503/`degraded`, storage still ready). New
+  `Futuris/tests/test_futuris_health_contract.py` (4 tests): contract shape
+  with storage ready; schema-incomplete → 503 + `SCHEMA_INCOMPLETE`;
+  connect failure → `DATABASE_UNREACHABLE` with no DSN/URL/password text
+  anywhere in the payload; `/ready` codes unchanged (200 ready / 503
+  not_ready). `Futuris/tests/api/test_round2_hardening.py` needs no change
+  (its two `/health` calls assert headers only, not the status code).
+- **§6 Q6 resolved from source:** `Futuris/futuris/storage/db.py`
+  `verify_schema()` (lines 108–145) IS a live check — it opens a real
+  connection (`engine.connect()`, `pool_pre_ping: True`) and runs the
+  SQLAlchemy inspector against the live Oracle schema on every call; there
+  is no caching. `storage` may therefore report `ok` on its basis.
+- Verification status (same limits as the earlier slices): no local pytest /
+  import / build was run (execution-risk notice on the local clone stands);
+  edits verified by re-reading the changed regions + `py_compile` + AST
+  parse of all six Python files + byte-verified upload (returned blob shas
+  equal the local git blob hashes). **CI on the work PR is the gate.**
+- CI wiring owed at work-PR time: no Futuris test file is in any workflow's
+  explicit file list today (checked 2026-11-22 on current main
+  `c3736155`). The new contract file joins the work-PR wiring list, now 7
+  files: `Stratex/tests/test_engine_capability_truthfulness.py`,
+  `FRIDAY/tests/test_fleet_probe_labelling.py`,
+  `FRIDAY/tests/test_fleet_status_truth.py`,
+  `FRIDAY/tests/test_friday_health_contract.py`,
+  `Memora/tests/test_health_readiness_truth.py`,
+  `Memora/tests/test_health_observation_metadata.py`,
+  `Futuris/tests/test_futuris_health_contract.py`.
+
 ## Remaining (next runs)
 
-1. The other seven agents' `/health` mappings per design §5 (Futuris,
-   IntelX, Forge, Sentinel, Cortex, VyralX, Inference).
+1. The other six agents' `/health` mappings per design §5 (IntelX,
+   Forge, Sentinel, Cortex, VyralX, Inference).
 2. §6 open questions still to resolve from source/live probe while implementing:
    Forge's three `/health`s (confirm by live probe which handler answers each path); Stratex master-control
-   `/health` mount; Futuris `verify_schema()` liveness. (Memora `/health`
-   dependency-failure mode resolved this run: 503 via `get_db()`, see above.)
-3. Criterion 5 sweep: no secret in any health payload (Futuris `/ready`
-   and Cortex raw exception text are named in the design §2.2 rule 8).
+   `/health` mount. (Memora `/health` dependency-failure mode resolved
+   17:16 IST: 503 via `get_db()`; Futuris `verify_schema()` liveness
+   resolved this run: live, see above.)
+3. Criterion 5 sweep: no secret in any health payload (Cortex raw
+   exception text is still named in the design §2.2 rule 8; Futuris
+   `/ready` + `verify_schema()` scrubbed this run).
 4. Criterion 6: all ten `/ready` behaviours unchanged; Caddy/Docker
    probes confirmed on `/ready` per agent before its `/health` flips.
+5. Note for the work PR / deploy: Stratex cut over to FRIDAY-Universe-1
+   ("Stratex Server", AWS U1) on 2026-11-22 ~17:36–18:00 IST (owner order,
+   issue #35 comments 7078890756 / 7079118898) — the Stratex live-probe
+   baseline for criterion 2 was taken on Oracle S1, so the post-merge
+   live probe must target the new host.
 
-— Muse 8, TASK-REL-067, 2026-11-22 ~17:30 IST
+— Muse 8, TASK-REL-067, 2026-11-22 ~18:30 IST
