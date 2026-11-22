@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
-"""Validate FRIDAY Universe's shared multi-AI collaboration registry."""
+"""Validate FRIDAY Universe's shared multi-AI collaboration registry.
+
+Strictness notes (TASK-REL-069):
+- PyYAML's default loader silently keeps the LAST value for a repeated
+  mapping key. PR #1241 carried a duplicate ``evidence:`` key that the
+  parser AND this validator swallowed, dropping evidence while reporting
+  VALID. Every YAML file loaded here is therefore also scanned at the
+  node-tree level (``yaml.compose`` preserves duplicate keys) and any
+  duplicate mapping key fails validation.
+- As a second line of defence, the per-task ``evidence`` item counts in
+  the parsed board are diffed against the raw-text counts taken from the
+  node tree. A parse that silently drops an evidence block fails even if
+  the duplicate-key scan were ever bypassed.
+"""
 
 from __future__ import annotations
 
@@ -56,18 +69,127 @@ class RegistryValidationError(Exception):
     """Raised when the shared collaboration registry is inconsistent."""
 
 
+def _collect_duplicate_keys(node: Any, rel_path: str, errors: list[str]) -> None:
+    """Recursively record duplicate mapping keys found in a YAML node tree.
+
+    ``yaml.compose`` keeps every key node, unlike ``yaml.safe_load`` which
+    silently drops all but the last value for a repeated key. A key is
+    identified by its (tag, scalar value): ``1`` and ``"1"`` are different
+    keys to the parser, so they are different here too.
+    """
+    if isinstance(node, yaml.MappingNode):
+        seen: dict[tuple[str, str], int] = {}
+        for key_node, value_node in node.value:
+            if isinstance(key_node, yaml.ScalarNode):
+                identity = (key_node.tag, key_node.value)
+                line = key_node.start_mark.line + 1
+                if identity in seen:
+                    errors.append(
+                        f"{rel_path}: duplicate key {key_node.value!r} "
+                        f"at line {line} (first occurrence at line {seen[identity]})"
+                    )
+                else:
+                    seen[identity] = line
+            _collect_duplicate_keys(value_node, rel_path, errors)
+    elif isinstance(node, yaml.SequenceNode):
+        for item_node in node.value:
+            _collect_duplicate_keys(item_node, rel_path, errors)
+
+
 def load_yaml(path: Path) -> dict[str, Any]:
+    rel_path = str(path.relative_to(ROOT))
     try:
-        with path.open("r", encoding="utf-8") as handle:
-            value = yaml.safe_load(handle)
+        text = path.read_text(encoding="utf-8")
     except FileNotFoundError as exc:
-        raise RegistryValidationError(f"Missing required YAML file: {path.relative_to(ROOT)}") from exc
+        raise RegistryValidationError(f"Missing required YAML file: {rel_path}") from exc
+    try:
+        node = yaml.compose(text)
+        errors: list[str] = []
+        _collect_duplicate_keys(node, rel_path, errors)
+        if errors:
+            raise RegistryValidationError(
+                "Duplicate YAML keys (silently dropped by a plain parse): " + "; ".join(errors)
+            )
+        value = yaml.safe_load(text)
     except yaml.YAMLError as exc:
-        raise RegistryValidationError(f"Invalid YAML in {path.relative_to(ROOT)}: {exc}") from exc
+        raise RegistryValidationError(f"Invalid YAML in {rel_path}: {exc}") from exc
 
     if not isinstance(value, dict):
-        raise RegistryValidationError(f"{path.relative_to(ROOT)} must contain a YAML mapping")
+        raise RegistryValidationError(f"{rel_path} must contain a YAML mapping")
     return value
+
+
+def _raw_evidence_counts(board_path: Path) -> dict[str, int]:
+    """Count ``evidence:`` list items per task straight from the raw text.
+
+    The counts come from the YAML node tree, so every ``evidence:`` block
+    in the text contributes -- including one a plain parse would drop
+    because its key is duplicated.
+    """
+    text = board_path.read_text(encoding="utf-8")
+    root = yaml.compose(text)
+    counts: dict[str, int] = {}
+    if not isinstance(root, yaml.MappingNode):
+        return counts
+    tasks_node = None
+    for key_node, value_node in root.value:
+        if isinstance(key_node, yaml.ScalarNode) and key_node.value == "tasks":
+            tasks_node = value_node
+            break
+    if not isinstance(tasks_node, yaml.SequenceNode):
+        return counts
+    for task_node in tasks_node.value:
+        if not isinstance(task_node, yaml.MappingNode):
+            continue
+        task_id: str | None = None
+        raw_count = 0
+        for key_node, value_node in task_node.value:
+            if isinstance(key_node, yaml.ScalarNode) and key_node.value == "id":
+                task_id = value_node.value if isinstance(value_node, yaml.ScalarNode) else None
+            if isinstance(key_node, yaml.ScalarNode) and key_node.value == "evidence":
+                if isinstance(value_node, yaml.SequenceNode):
+                    raw_count += len(value_node.value)
+                else:
+                    raw_count += 1
+        if task_id is not None:
+            counts[task_id] = raw_count
+    return counts
+
+
+def check_board_evidence_counts(board_path: Path, board: dict[str, Any]) -> None:
+    """Fail when a task's parsed evidence count differs from the raw text.
+
+    A mismatch means the parse silently dropped evidence -- the PR #1241
+    defect class -- and the board must not report VALID.
+    """
+    tasks = board.get("tasks")
+    if not isinstance(tasks, list):
+        return
+    raw_counts = _raw_evidence_counts(board_path)
+    mismatches: list[str] = []
+    for task in tasks:
+        if not isinstance(task, dict):
+            continue
+        task_id = task.get("id")
+        if not isinstance(task_id, str) or task_id not in raw_counts:
+            continue
+        evidence = task.get("evidence")
+        if isinstance(evidence, list):
+            parsed_count = len(evidence)
+        elif evidence is None:
+            parsed_count = 0
+        else:
+            parsed_count = 1
+        if raw_counts[task_id] != parsed_count:
+            mismatches.append(
+                f"{task_id}: raw text has {raw_counts[task_id]} evidence items, "
+                f"parsed board has {parsed_count}"
+            )
+    if mismatches:
+        raise RegistryValidationError(
+            "WORK_BOARD.yaml: evidence counts differ from raw text "
+            "(silently dropped evidence?): " + "; ".join(mismatches)
+        )
 
 
 def require(condition: bool, message: str) -> None:
@@ -142,6 +264,8 @@ def validate_registry() -> list[str]:
     require(len(task_ids) == len(set(task_ids)),
             "WORK_BOARD.yaml: task IDs must be unique")
 
+    check_board_evidence_counts(COLLAB / "WORK_BOARD.yaml", board)
+
     claims = ownership.get("claims")
     require(isinstance(claims, list), "FILE_OWNERSHIP.yaml: claims must be a list")
     claim_paths: list[str] = []
@@ -212,6 +336,7 @@ def main() -> int:
     print(f"Task records: {len(load_yaml(COLLAB / 'WORK_BOARD.yaml')['tasks'])}")
     print(f"File claims: {len(load_yaml(COLLAB / 'FILE_OWNERSHIP.yaml')['claims'])}")
     print(f"File conflicts: {len(load_yaml(COLLAB / 'FILE_OWNERSHIP.yaml').get('conflicts_to_resolve', []))}")
+    print("Strict YAML checks: no duplicate keys; per-task evidence counts match raw text")
     return 0
 
 
