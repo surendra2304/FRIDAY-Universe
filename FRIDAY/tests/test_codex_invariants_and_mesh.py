@@ -52,7 +52,11 @@ def test_settings_sqlite_db_path_tmpfs(monkeypatch):
 
 
 def test_specialist_router_canonical_mesh_in_production():
-    """Verify router defaults to internal VPC mesh URLs (10.0.0.12x) in production."""
+    """Verify router defaults to the deployed mesh layout (TASK-VAL-006).
+
+    S1 loopback for S1-local peers (Sentinel), S2 VPC for S2 peers,
+    AWS U1 tunnel for Stratex, AWS for VyralX.
+    """
     router = SpecialistRouter()
     
     with patch.dict(os.environ, {"FRIDAY_ENV": "production"}, clear=False):
@@ -74,8 +78,8 @@ def test_specialist_router_canonical_mesh_in_production():
             "FRIDAY_FUTURIS_URL": "",
         }):
             assert router.get_agent_url("inference") == "http://10.0.0.121:8001"
-            assert router.get_agent_url("vyralx") == "http://10.0.0.120:8010"
-            assert router.get_agent_url("sentinel") == "http://10.0.0.121:8008"
+            assert router.get_agent_url("vyralx") == "http://16.176.9.247:8010"
+            assert router.get_agent_url("sentinel") == "http://127.0.0.1:8008"
             assert router.get_agent_url("intelx") == "http://10.0.0.120:8005"
             assert router.get_agent_url("futuris") == "http://10.0.0.120:8004"
             assert router.get_agent_url("cortex") == "http://10.0.0.120:8009"
@@ -83,7 +87,7 @@ def test_specialist_router_canonical_mesh_in_production():
 
 
 def test_fleet_client_canonical_mesh_in_production():
-    """Verify FleetClient defaults to internal VPC mesh URLs in production."""
+    """Verify FleetClient defaults to the deployed mesh layout (TASK-VAL-006)."""
     with patch.dict(os.environ, {"FRIDAY_ENV": "production"}, clear=False):
         with patch.dict(os.environ, {
             "FRIDAY_INFERENCE_URL": "",
@@ -101,11 +105,11 @@ def test_fleet_client_canonical_mesh_in_production():
         }):
             client = FleetClient()
             assert client.inference_url == "http://10.0.0.121:8001"
-            assert client.stratex_url == "http://10.0.0.121:8003"
-            assert client.vyralx_url == "http://10.0.0.120:8010"
+            assert client.stratex_url == "http://127.0.0.1:18003"
+            assert client.vyralx_url == "http://16.176.9.247:8010"
             assert client.intelx_url == "http://10.0.0.120:8005"
             assert client.futuris_url == "http://10.0.0.120:8004"
-            assert client.sentinel_url == "http://10.0.0.121:8008"
+            assert client.sentinel_url == "http://127.0.0.1:8008"
 
 
 def test_oracle_dsn_normalization():
