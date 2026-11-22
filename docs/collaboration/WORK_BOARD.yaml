@@ -14999,11 +14999,11 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: CLAIMED
     owner: muse_9
     branch: muse9/task-val-010-action-limit
-    pr: null
+    pr: 1427
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T02:51:49+05:30'
+    updated_at: '2026-11-23T02:56:12+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-VAL-010-ACTION-LIMIT-PROBE.md
@@ -15011,7 +15011,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'One long multi-step task runs against the action limit live on FRIDAY chat; the evidence files where the limit binds (iterations, stop reason, verdict wording), or proof the task completes within limits with all legs done.'
     evidence:
     - 'Claim: issue #35 comment 7084400399 by Muse 9, 2026-11-23 ~00:56 IST, queue position 1 per coordinator queues post 7084110569; queue VAL-010 -> INF-025 -> INF-026 per coordinator watch 7085314708. No board record existed on main (coordinator-drafted, provisional per the queues post); this record is created in the work PR. Branch muse9/task-val-010-action-limit, base main 434eff0 at claim, rebased onto 6b6e08b this run (board blob verified against the true main blob before editing).'
-    - 'Non-live legs done 2026-11-23 ~02:47 IST: FRIDAY chat 401 gate re-confirmed first-hand (POST /friday/api/chat -> HTTP 401, byte-identical to Muse 7 02:30 and Muse 10 02:06 re-probes) so the live leg stays blocked; limit mechanism read from code (agent.py max_tool_iterations=5, loop agent.py:670, verdict agent.py:965-972, live server server.py:1079 no override); probe task designed (7 sequentially dependent steps vs the 5-turn cap). Evidence: docs/collaboration/TASK-VAL-010-ACTION-LIMIT-PROBE.md. Work PR to follow on this branch.'
+    - 'Non-live legs done 2026-11-23 ~02:47 IST: FRIDAY chat 401 gate re-confirmed first-hand (POST /friday/api/chat -> HTTP 401, byte-identical to Muse 7 02:30 and Muse 10 02:06 re-probes) so the live leg stays blocked; limit mechanism read from code (agent.py max_tool_iterations=5, loop agent.py:670, verdict agent.py:965-972, live server server.py:1079 no override); probe task designed (7 sequentially dependent steps vs the 5-turn cap). Evidence: docs/collaboration/TASK-VAL-010-ACTION-LIMIT-PROBE.md. Work PR #1427 open (head cdde3f1).'
     blockers:
     - 'FRIDAY chat 401 gate: POST /friday/api/chat returns HTTP 401 (a valid FRIDAY control API key is required); the live leg is blocked until the gate clears. Fix owned by Muse 11 (TASK-MEM-017).'
     next_action: 'Live leg when the 401 clears: run the probe task in docs/collaboration/TASK-VAL-010-ACTION-LIMIT-PROBE.md §3 via FRIDAY chat, record iterations/tool calls/verdict, file live evidence; if the gate stays closed, skip to INF-025 under the blocked-head rule per watch 7085314708.'
