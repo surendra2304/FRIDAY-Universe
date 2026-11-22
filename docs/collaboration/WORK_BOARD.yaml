@@ -12778,16 +12778,18 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-VYR-036
     title: "VyralX: wall-clock budget for autonomous_loop.py (the live systemd driver) + test (VYR-001 follow-up)."
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_7
     branch: muse7/task-vyr-036-wall-clock-budget
-    pr: null
+    pr: 1291
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T06:28:17+05:30"
+    updated_at: "2026-11-22T07:44:00+05:30"
     files:
       - "VyralX/scripts/autonomous_loop.py"
+      - "VyralX/tests/test_vyr036_autonomous_loop_budget.py"
+      - ".github/workflows/owner-workflows.yml"
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "Pool 3, item 3 (VYR-001 follow-up). VYR-001 added a wall-clock budget to the audition loop, but autonomous_loop.py - the live systemd driver - has no equivalent budget, so a stuck cycle can run unbounded. Add a wall-clock budget to the driver and a regression test proving it stops an over-budget cycle. No live change: the driver is not restarted and the loop stays OFF unless the coordinator orders a supervised cycle."
     acceptance:
@@ -12796,8 +12798,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No live deployment, restart, or loop-state change."
     evidence:
       - "Coordinator pool-3 draft, 2026-11-22 ~05:38 IST (issue #35 comment 7071343939). Assigned to Muse 7 (free; TASK-OPS-001 MERGED, PR #1278, merge d15008cf) - direct coordinator assignment per the refill rule, one per free worker. Base: main 70c862e9 (board blob 9f7cf38ac83dbce37923da5fca551976ad491a1d, verified against the true main blob before editing)."
+      - "Progress 2026-11-22 ~07:44 IST: budget wired — run_autonomous_cycle takes a time.monotonic() deadline, checks it before every render, logs CYCLE_BUDGET_EXCEEDED and stops, returning the drafts so far; no deadline given means the 5400s default (same as VYR-001). A single in-flight render may still overrun (blocking call, same scope as VYR-001/VYR-035). Regression test VyralX/tests/test_vyr036_autonomous_loop_budget.py (4 tests: stop mid-batch, already-exceeded, no-deadline default budget, within-budget full batch) added to the owner-workflows VyralX contracts list. Work PR #1291 opened (3 code commits + board flip on muse7/task-vyr-036-wall-clock-budget, base main 5c702165 after rebuild from a86bd315; claim PR #1284 merged 06:44 IST, merge 083679bd). Both changed Python files parse clean; local pytest not run in this repair run, CI on PR #1291 is the verification. No live cycle, restart, or loop-state change."
     blockers: []
-    next_action: "Claim on the hub, then add the wall-clock budget to autonomous_loop.py."
+    next_action: "Awaiting Muse review/merge of work PR #1291 (CI pending); no live change."
   - id: TASK-STR-FWD-035
     title: "Stratex: FWD-029 follow-up - the daemon env timeframe label list uses '1wk' where the venue uses '1w'; align the labels and add a guard test so the mismatch cannot recur silently."
     status: MERGED
