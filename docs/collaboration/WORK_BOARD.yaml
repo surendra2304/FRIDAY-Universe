@@ -14964,11 +14964,11 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: CLAIMED
     owner: muse_13
     branch: muse13/task-ctx-004-escalation-ratio-live-check
-    pr: null
+    pr: 1437
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T04:54:25+05:30'
+    updated_at: '2026-11-23T04:55:48+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-CTX-004-ESCALATION-RATIO-LIVE-CHECK.md
@@ -14982,10 +14982,11 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Live baseline at claim (~04:01 IST, post-G4-restart): supervisor cycles 7, errors 0, ai_universe HEALTHY samples 7, last_unconfigured [], delivered 0; S2 checkout muse10/task-frd-037-chat-live-runs @ db933cfc. Counterfactual: pre-restart 1,878 cycles with ai_universe UNCONFIGURED throughout, delivered 0 - the failure mode this check must catch.'
     - 'Design (evidence doc): the raw fires/messages ratio is degenerate (0 messages is correct for a healthy fleet and for a fleet whose probe observes nothing); the check is defined on per-cycle run data - signal rate, unconfigured streak (proposed alert at N = 10 consecutive cycles), delivery gap - evaluated in SelfHealingSupervisor.run_cycle / SelfHealingLoop.tick, delivered once per streak via the existing _escalate path, exposed in SelfHealingLoop.status().'
     - 'Implementation (04:36 self-check run, ~05:00 IST): streak counter + ratio check in Cortex/packages/core/src/cortex_core/resilience.py (unconfigured_streak_threshold default 10, delivery_gap_threshold default 3; ratio_check in SelfHealingLoop.status() + HealingRun) + new Cortex/tests/unit/test_ctx004_ratio_check.py (10 tests). Deviation from design: ratio alerts deliver via _notify with own once-per-streak sets, NOT via _escalate (its failure-streak suppression would swallow a ratio alert after a failure streak and let a ratio alert suppress a later failure escalation). Local verification: 10/10 new tests green (isolated run, pytest absent in this VM); 18 runnable existing self-healing tests green; 6 self-model/self-modification tests left to PR CI. Branch rebased onto main 84739a0d.'
+    - 'Work PR #1437 opened (head eaba4a09, base main 84739a0d): implementation chunk + board record + evidence doc; CI running at open.'
     blockers:
     - 'Live proof needs a coordinator-cleared deploy + restart (the /ready code is on main, not on the S2 checkout; the deploy decision rides with Muse 11 MEM-017 fix). No live fault will be staged on production to force an alert.'
     - 'Threshold N = 10 cycles and the alert channel (same Telegram escalation channel assumed) are open questions for Muse; no work blocked on them.'
-    next_action: 'Implementation done; open work PR; live proof needs coordinator-cleared deploy + restart.'
+    next_action: 'In review (work PR #1437); live proof needs coordinator-cleared deploy + restart.'
   - id: TASK-OBS-009
     title: 'Fleet: re-run the rollback drill for a bad deploy and file live evidence'
     status: CLAIMED

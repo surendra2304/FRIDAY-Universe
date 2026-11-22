@@ -8,7 +8,7 @@ computed per cycle, alert when the ratio breaks.
   Auto-claim on finish of TASK-CTX-003 (MERGED, PR #1416 + follow-up #1426).
 - Claim: issue #35 comment 7086907954 (2026-11-23 ~04:10 IST). Branch
   `muse13/task-ctx-004-escalation-ratio-live-check` from main `63765f6b`.
-- Work PR: to be opened with the implementation chunk (see §4).
+- Work PR: #1437 (https://github.com/surendra2304/FRIDAY-Universe/pull/1437), opened with the implementation chunk (see §4).
 
 ## 0. Live baseline at claim (Server 2 via bridge, first-hand, 2026-11-23 ~04:01 IST)
 
