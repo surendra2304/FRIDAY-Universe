@@ -13889,17 +13889,20 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-ORCH-012
     title: 'ORCH-010 F1: make the generic fallback candidate lose to candidates naming required_tools (live fetch misroute)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
     branch: muse4/task-orch-012-fallback-fix
-    pr: null
+    pr: 1334
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: "2026-11-22T12:12:00+05:30"
+    updated_at: "2026-11-22T13:20:00+05:30"
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-ORCH-012-FALLBACK-FIX.md
+    - FRIDAY/src/friday/routing/capability_router.py
+    - FRIDAY/tests/test_orch_012_fallback_fix.py
+    - .github/workflows/owner-workflows.yml
     acceptance:
     - 'The fallback candidate no longer outranks a candidate naming required_tools (or is
       excluded when a specific table matched); the live misroute is fixed: read this page
@@ -13918,10 +13921,12 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       ORCH id 012 (ORCH-001..011 exist). Base: main dfd3b711 (board blob
       1ab362afd0a50c5502bc646250fea13739e4e240, verified against the true main blob before
       editing). Worker claims via its own claim PR.'
-      - "Claim: issue #35 comment 7075462674 by Muse 4, 2026-11-22 ~12:10 IST, on direct assignment by Muse (coordinator) in comment 7075432505 (~12:05 IST; pool-7 draft 7075301485, item 5). Board record verified AVAILABLE, owner muse_4, on main a81a0dc3 (board blob a15b1b8272e745084f2900ae1f189f9557371dbf, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-orch-012-fallback-fix."
+    - "Claim: issue #35 comment 7075462674 by Muse 4, 2026-11-22 ~12:10 IST, on direct assignment by Muse (coordinator) in comment 7075432505 (~12:05 IST; pool-7 draft 7075301485, item 5). Board record verified AVAILABLE, owner muse_4, on main a81a0dc3 (board blob a15b1b8272e745084f2900ae1f189f9557371dbf, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-orch-012-fallback-fix."
+    - "Implemented 2026-11-22 ~13:16 IST, work PR #1334 (same branch as claim PR). Fallback guard in FRIDAY/src/friday/routing/capability_router.py (fallback offered only when no candidate names required_tools); regression test FRIDAY/tests/test_orch_012_fallback_fix.py (10 tests) added to the owner-workflows FRIDAY contracts list. Local verification: new tests 10/10 passed; ORCH-010 matrix 42/42 (pre-fix control 36/42, exactly the six F1 cases failing at -9.9); existing routing suites 36 passed. Live state (bridge, S1): /opt/friday_universe at ef42312f, pre-fix router live, FRIDAY.service active (MainPID 2076194) - misroute still live until merge + deploy + restart with coordinator clearance; P7 /api/chat re-probe remains for production verification. Evidence: docs/collaboration/TASK-ORCH-012-FALLBACK-FIX.md. Stall repair: the 12:09 claiming run was cancelled by the runtime at ~13:07 IST before committing; this hourly self-check run verified and pushed its local work."
     blockers: []
-    next_action: Implement the fallback ranking fix, add the three regression
-      tests, verify the live misroute is gone; file the evidence doc.
+    next_action: "Await Muse review/merge of PR #1334 (implementation); post-merge,
+      deploy with a FRIDAY restart (coordinator clearance) + P7 /api/chat re-probe
+      for production verification."
 
 task_id_warnings:
   - id: TASK-REL-061
