@@ -216,6 +216,37 @@ class PolicyEngine:
                 cls._handle_decision(db, decision, actor.id, memory_id, log_audit)
                 return decision
 
+            # Promotion readability (TASK-MEM-016 / MEM-014 G1): a record
+            # whose scope was promoted out of PRIVATE is readable by its
+            # promotion audience even though its namespace stays private.
+            # Read/query only — promotion never confers write, share or any
+            # other mutation, and it never overrides the bounded-scope or
+            # temporal-validity checks above. The record-level authority is
+            # access_scope.record_is_visible; the engine consults it here
+            # instead of re-deriving scope rules, so the direct-GET path
+            # and the search policy gate agree.
+            if action.lower() in {"read", "query"} and memory_id:
+                from storage.relational.access_scope import record_is_visible
+
+                record = db.query(MemoryRecord).filter(
+                    MemoryRecord.id == memory_id,
+                    MemoryRecord.tenant_id == actor_tenant,
+                    MemoryRecord.namespace_id == namespace.id,
+                ).first()
+                if record is not None and record_is_visible(record, actor.name):
+                    scope_name = getattr(record.scope, "value", None) or "promoted"
+                    decision = PolicyDecision(
+                        allowed=True,
+                        reason=(
+                            f"Record '{memory_id}' is {scope_name} and readable "
+                            f"by '{actor.name}' under its promoted scope."
+                        ),
+                        rule_matched="RULE_1_PROMOTED_SCOPE_READ",
+                        dimensions=dims,
+                    )
+                    cls._handle_decision(db, decision, actor.id, memory_id, log_audit)
+                    return decision
+
             decision = PolicyDecision(
                 allowed=False,
                 reason=f"Private namespace '{namespace.path}' is private to another agent and isolated. Agent '{actor.name}' cannot access it without promotion.",
