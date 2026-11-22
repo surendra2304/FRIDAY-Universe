@@ -125,7 +125,14 @@ async def test_synthesis_degrades_on_unentailed_statement():
     )
     assert result["status"] == "DEGRADED"
     assert result["error"] == "synthesis_entailment_unverified"
-    assert result["findings"] == []
+    # TASK-INT-018: the failure degrades, but the extractive excerpts are
+    # preserved — verbatim WHO passages, labelled raw, never a brief.
+    assert result["answer_kind"] == "unsynthesised_raw_findings"
+    assert result["question_answered"] is False
+    assert result["findings"]
+    assert all(f["status"] == "source_excerpt" for f in result["findings"])
+    assert all(f["quote"] in WHO_TEXT for f in result["findings"])
+    assert all(f["citations"][0]["source_id"] == "who1" for f in result["findings"])
 
 
 # ── collect_live_brief chrome filter tests ──────────────────────────────────

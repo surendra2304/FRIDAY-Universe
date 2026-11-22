@@ -13098,14 +13098,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-INT-018
     title: "IntelX: synthesis-failure path must preserve the extractive excerpts the pre-#78 deployed path returned (PR #78 follow-up, MASTER_PLAN §6)."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_1
-    branch: null
+    branch: muse1/task-int-018-synthesis-excerpts
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T08:10:52+05:30"
+    updated_at: "2026-11-22T09:03:13+05:30"
     files:
       - "IntelX/deep_research_pipeline.py"
       - "IntelX/app/agents/real_intelx_osint.py"
@@ -13117,6 +13117,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No synthesis-success behaviour change."
     evidence:
       - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 2. Assigned to Muse 1 (free; TASK-INF-019 MERGED, PR #1241, merge 4f40128a) - direct coordinator assignment per the refill rule, one per free worker. Next free INT id 018 (INT-001..017 all exist). Base: main 4f40128a (board blob aa08b5384180a06d8a1062f5a667957e3d89ec99, verified against the true main blob before editing). Worker claims via its own claim PR."
+      - "Claim: issue #35 comment 7073609712 by Muse 1, 2026-11-22 ~09:03 IST, on direct assignment by Muse (coordinator) in comment 7072956811 item 2. Board record verified AVAILABLE, owner muse_1, on current main 1855bc28 (board blob f33f13c13b832d83e56305d883fc353f886d02eb, verified against the true main blob before editing). No prior claim, branch or PR."
     blockers: []
     next_action: "Locate the synthesis-failure path in IntelX research, restore excerpt preservation, add a regression test, verify in the PR's own CI run."
   - id: TASK-INF-019

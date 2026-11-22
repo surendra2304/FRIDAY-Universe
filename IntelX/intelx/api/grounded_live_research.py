@@ -284,12 +284,52 @@ def reaudit_finding(
             "reasons": ["quote_and_coverage_verified"], "single_source": single_source}
 
 
+def _extractive_excerpts(supplied: dict[str, dict]) -> list[dict]:
+    """Verbatim passages from the supplied source material, shaped exactly
+    like collect_live_brief's extractive findings (TASK-INT-018).
+
+    The pre-#78 deployed path returned these excerpts; PR #78's synthesis
+    path discarded them on every failure (``findings: []``). A failed
+    synthesis is a non-success, never a reason to destroy evidence already
+    retrieved: the excerpts are returned labelled as raw source passages,
+    never as a synthesised brief (status stays DEGRADED, question_answered
+    False)."""
+    excerpts: list[dict] = []
+    for source_id, document in supplied.items():
+        text = str(document.get("text") or "")
+        passages = [" ".join(p.split()) for p in text.splitlines()]
+        passages = [p for p in passages if 40 <= len(p) <= 4000
+                    and re.search(r"[.!?](?:\s|$)", p)]
+        for passage in list(dict.fromkeys(passages))[:3]:
+            excerpt = passage[:1200]
+            excerpts.append({"statement": excerpt, "status": "source_excerpt",
+                             "quote": excerpt,
+                             "truncated": len(passage) > len(excerpt),
+                             "independently_verified": False,
+                             "single_source": True,
+                             "citations": [{"source_id": source_id,
+                                            "source_title": str(document.get("title") or source_id),
+                                            "source_url": str(document.get("url") or "")}]})
+    return excerpts
+
+
+def _degraded(error: str, supplied: dict[str, dict]) -> dict:
+    """Explicit non-success that preserves the extractive excerpts."""
+    return {"status": "DEGRADED", "error": error,
+            "findings": _extractive_excerpts(supplied),
+            "answer_kind": "unsynthesised_raw_findings",
+            "question_answered": False}
+
+
 async def synthesize_grounded(query: str, documents: list[dict], gateway: Any = None) -> dict:
     """Return source-attributed draft claims, or an explicit non-success.
 
     Only exact spans from the bounded public material actually supplied to the
     model qualify. A fabricated URL, quote, or an absent source invalidates the
     WHOLE draft; rejected claims are never silently counted as completed work.
+    On any non-success the extractive excerpts from the supplied material are
+    preserved (TASK-INT-018), labelled as raw source passages — never a
+    synthesised brief.
     """
     if gateway is None:
         gateway = GroundedInferenceGateway()
@@ -346,25 +386,25 @@ async def synthesize_grounded(query: str, documents: list[dict], gateway: Any = 
         response = await gateway.complete(**complete_kwargs)
     # Defense in depth: no mock output qualifies even with a misconfigured caller.
     if response.provider == "mock":
-        return {"status": "DEGRADED", "error": "mock_synthesis_refused", "findings": []}
+        return _degraded("mock_synthesis_refused", supplied)
     draft = response.parsed
     if not isinstance(draft, GroundedDraft):
-        return {"status": "DEGRADED", "error": "invalid_synthesis_shape", "findings": []}
+        return _degraded("invalid_synthesis_shape", supplied)
     if draft.insufficient_evidence or not draft.findings:
-        return {"status": "DEGRADED", "error": "question_evidence_insufficient", "findings": []}
+        return _degraded("question_evidence_insufficient", supplied)
     findings = []
     for item in draft.findings:
         source = supplied.get(item.source_id)
         if (source is None or len(normalized(item.quote)) < 30 or len(normalized(item.statement)) < 20
                 or normalized(item.quote) not in normalized(source["text"])):
-            return {"status": "DEGRADED", "error": "synthesis_quote_unverified", "findings": []}
+            return _degraded("synthesis_quote_unverified", supplied)
         # TASK-INT-005 verification pass: a verbatim quote establishes
         # attribution only. The statement itself must also be supported by
         # the cited source's text, or the whole draft degrades — the same
         # fail-closed rule as the quote gate.
         supported, _reason = statement_support(item.statement, source["text"])
         if not supported:
-            return {"status": "DEGRADED", "error": "synthesis_entailment_unverified", "findings": []}
+            return _degraded("synthesis_entailment_unverified", supplied)
         findings.append({"statement": item.statement, "quote": item.quote,
                          "status": "source_attributed_model_draft", "independently_verified": False,
                          # TASK-INT-009: each draft finding cites exactly one
