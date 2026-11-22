@@ -26,6 +26,16 @@ configuration notice — logged once per unconfigured streak, never repaired, ne
 counted as a repair failure and never escalated. That distinction is the root-cause
 fix for the 2026-11-17→19 escalation spam, where ``probe_ai_universe`` returned
 ``False`` for an unset URL and the supervisor escalated an absent provider every cycle.
+
+The escalation ratio is a standing live check (TASK-CTX-004): the raw
+fires/messages ratio is degenerate — zero deliveries is the correct output of a
+healthy fleet *and* of a fleet whose probe observes nothing — so the check is
+defined on the per-cycle run data instead. A per-subsystem unconfigured streak
+(consecutive cycles in ``run.unconfigured``) alerts once per streak through the
+existing escalation channel when it reaches ``unconfigured_streak_threshold``
+cycles; a run of consecutive failed deliveries alerts once per broken-channel
+streak; the check state is exposed in ``SelfHealingLoop.status()`` as
+``ratio_check`` (streaks, per-subsystem signal rate, delivery gap, last alert).
 """
 
 from __future__ import annotations
@@ -334,6 +344,9 @@ class HealingRun:
     unconfigured: list[str] = field(default_factory=list)
     repairs: list[RepairOutcome] = field(default_factory=list)
     escalations_delivered: list[dict[str, Any]] = field(default_factory=list)
+    # TASK-CTX-004 ratio-check snapshot for this cycle (streaks, signal
+    # rates, delivery gap, alerts); {} when the check evaluated nothing.
+    ratio_check: dict[str, Any] = field(default_factory=dict)
     duration_ms: float = 0.0
 
     @property
@@ -354,6 +367,7 @@ class HealingRun:
             "escalated": self.escalated,
             "repairs": [r.as_dict() for r in self.repairs],
             "escalations_delivered": list(self.escalations_delivered),
+            "ratio_check": dict(self.ratio_check),
             "duration_ms": round(self.duration_ms, 3),
         }
 
@@ -367,14 +381,48 @@ class SelfHealingSupervisor:
         repair_cooldown_seconds: float = 30.0,
         max_repairs_per_subsystem: int = 3,
         notifier: EscalationNotifier | None = None,
+        # TASK-CTX-004: alert when a subsystem reports no health signal for
+        # this many consecutive cycles (default 10 = 5 min at the 30 s tick —
+        # long enough to ride out a restart, short enough to catch a silently
+        # dead probe within minutes). Proposed value; the coordinator may
+        # adjust it. 0 disables the unconfigured-streak alert.
+        unconfigured_streak_threshold: int = 10,
+        # TASK-CTX-004: alert when this many escalation deliveries fail in a
+        # row (the escalation channel itself is broken). 0 disables it.
+        delivery_gap_threshold: int = 3,
     ) -> None:
         self.registry = registry
         self.repair_cooldown_seconds = repair_cooldown_seconds
         self.max_repairs_per_subsystem = max_repairs_per_subsystem
+        self.unconfigured_streak_threshold = unconfigured_streak_threshold
+        self.delivery_gap_threshold = delivery_gap_threshold
         self._repairs: dict[str, list[float]] = {}
         self._attempts: dict[str, int] = {}
         self._repair_fns: dict[str, Callable[[], Awaitable[bool]]] = {}
         self.escalations: list[dict[str, Any]] = []
+        # TASK-CTX-004: consecutive cycles each subsystem has spent in
+        # ``run.unconfigured`` — the "no health signal" streak. A restart
+        # builds a new supervisor, so streaks reset with the process (and a
+        # healthy observation clears the streak mid-process, below).
+        self._unconfigured_streaks: dict[str, int] = {}
+        # Subsystems already alerted for their current unconfigured streak.
+        # Marked only when the alert delivery actually lands (the TASK-COR-013
+        # fix-up): a failed first delivery must not consume the streak, so
+        # enabling the channel mid-streak still pages. Cleared when a probe
+        # observes the subsystem configured again.
+        self._ratio_alerted: set[str] = set()
+        # TASK-CTX-004: consecutive failed escalation deliveries, across all
+        # escalation paths (they all flow through ``_notify``). A successful
+        # delivery resets it, so a later broken-channel period alerts afresh.
+        self._delivery_failures: int = 0
+        # Whether the channel-broken alert has been attempted for the current
+        # broken-channel streak. Marked on a landed delivery — or on an
+        # attempt that fails only because no channel is configured at all
+        # (retrying that every cycle could never land); a later successful
+        # delivery clears it.
+        self._channel_broken_alerted: bool = False
+        # Last ratio-check alert (either kind), for ``ratio_check_status``.
+        self._last_ratio_alert: dict[str, Any] | None = None
         # Subsystems already escalated during their current continuous failure
         # streak (TASK-COR-013): an escalation is delivered once per streak,
         # not once per cycle. Cleared when a probe observes the subsystem
@@ -399,6 +447,15 @@ class SelfHealingSupervisor:
         except Exception as exc:  # noqa: BLE001 - defensive: the notifier already guards itself
             delivery = {"delivered": False, "detail": f"{type(exc).__name__}: {exc}"}
         run.escalations_delivered.append(delivery)
+        # TASK-CTX-004 delivery gap: every escalation path flows through
+        # here, so this is the one place the channel's own health is counted.
+        # A dedupe suppression is not a channel failure (that exact page
+        # already landed inside the window), so it must not count.
+        if delivery.get("delivered"):
+            self._delivery_failures = 0
+            self._channel_broken_alerted = False
+        elif "duplicate suppressed" not in str(delivery.get("detail", "")):
+            self._delivery_failures += 1
         return delivery
 
     async def _escalate(self, escalation: dict[str, Any], run: HealingRun) -> None:
@@ -444,6 +501,114 @@ class SelfHealingSupervisor:
         history = [t for t in self._repairs.get(subsystem, []) if time.monotonic() - t < self.repair_cooldown_seconds]
         return bool(history)
 
+    def ratio_check_status(self) -> dict[str, Any]:
+        """Current TASK-CTX-004 ratio-check state (also the shape stored on each run).
+
+        ``signal_rate`` is healthy observations / all circuit observations
+        (``total_successes`` / ``total_successes + total_failures``); an
+        unconfigured subsystem records no circuit outcome, so its rate is
+        ``None`` with 0 samples — the "no health signal" signature.
+        """
+        signal_rate: dict[str, dict[str, Any]] = {}
+        for status in self.registry.status():
+            successes = status.detail.get("total_successes", 0)
+            failures = status.detail.get("total_failures", 0)
+            samples = successes + failures
+            signal_rate[status.name] = {
+                "rate": round(successes / samples, 4) if samples else None,
+                "samples": samples,
+            }
+        return {
+            "threshold_cycles": self.unconfigured_streak_threshold,
+            "delivery_gap_threshold": self.delivery_gap_threshold,
+            "unconfigured_streaks": {k: v for k, v in self._unconfigured_streaks.items() if v},
+            "signal_rate": signal_rate,
+            "consecutive_failed_deliveries": self._delivery_failures,
+            "channel_broken": self.delivery_gap_threshold > 0
+            and self._delivery_failures >= self.delivery_gap_threshold,
+            "last_alert": dict(self._last_ratio_alert) if self._last_ratio_alert else None,
+        }
+
+    async def _deliver_ratio_alert(self, escalation: dict[str, Any], run: HealingRun) -> dict[str, Any]:
+        """Deliver a ratio-check alert through the escalation channel.
+
+        Deliberately NOT routed through ``_escalate``: that path suppresses
+        on ``_escalated_streaks`` (failure streaks), which would both swallow
+        a ratio alert that follows a failure streak and let a ratio alert
+        suppress a later genuine failure escalation. The ratio check tracks
+        its own once-per-streak state (``_ratio_alerted`` /
+        ``_channel_broken_alerted``) and reuses the delivery machinery
+        (``_notify``) plus the COR-013 fix-up — only a landed delivery marks
+        the streak.
+        """
+        self.escalations.append(escalation)
+        self.escalations = self.escalations[-20:]
+        return await self._notify(escalation, run)
+
+    async def _evaluate_ratio_check(self, run: HealingRun) -> None:
+        """TASK-CTX-004: alert on a silent probe or a broken alert channel.
+
+        Runs at the end of every cycle, after the per-subsystem loop has
+        updated the streaks. Both alerts are once per streak; a failed
+        delivery never consumes the streak (retry next cycle), except the
+        channel-broken alert when no channel is configured at all — that
+        attempt can never land, so it is marked attempted once and the
+        broken state stays visible in ``ratio_check_status`` instead.
+        """
+        # (a) Unconfigured streak: no health signal for N consecutive cycles.
+        if self.unconfigured_streak_threshold > 0:
+            for name, streak in sorted(self._unconfigured_streaks.items()):
+                if streak < self.unconfigured_streak_threshold or name in self._ratio_alerted:
+                    continue
+                escalation = {
+                    "subsystem": name,
+                    "reason": (
+                        f"no health signal from {name} for "
+                        f"{self.unconfigured_streak_threshold}+ consecutive cycles (unconfigured)"
+                    ),
+                    "at": _utcnow().isoformat(),
+                    "detail": f"unconfigured for {streak} consecutive cycles; 0 circuit samples",
+                }
+                delivery = await self._deliver_ratio_alert(escalation, run)
+                if delivery.get("delivered"):
+                    self._ratio_alerted.add(name)
+                    self._last_ratio_alert = dict(escalation)
+                    run.repairs.append(
+                        RepairOutcome(name, "ratio-check", False, True, escalation["reason"])
+                    )
+                    logger.warning(
+                        "self-healing ratio-check: %s unconfigured for %d cycles; escalated",
+                        name,
+                        streak,
+                    )
+        # (b) Delivery gap: the escalation channel itself is not delivering.
+        if (
+            self.delivery_gap_threshold > 0
+            and self._delivery_failures >= self.delivery_gap_threshold
+            and not self._channel_broken_alerted
+        ):
+            escalation = {
+                "subsystem": "escalation-channel",
+                "reason": "escalation channel not delivering",
+                "at": _utcnow().isoformat(),
+                "detail": f"{self._delivery_failures} consecutive failed deliveries",
+            }
+            # NB: a landed delivery resets ``_delivery_failures`` inside
+            # ``_notify``, so the triggering count is captured beforehand.
+            failures = self._delivery_failures
+            delivery = await self._deliver_ratio_alert(escalation, run)
+            if delivery.get("delivered") or "no escalation channel configured" in str(
+                delivery.get("detail", "")
+            ):
+                self._channel_broken_alerted = True
+                self._last_ratio_alert = dict(escalation)
+                logger.warning(
+                    "self-healing ratio-check: escalation channel not delivering "
+                    "(%d consecutive failures); escalated",
+                    failures,
+                )
+        run.ratio_check = self.ratio_check_status()
+
     async def run_cycle(self) -> HealingRun:
         run = HealingRun(started_at=_utcnow())
         started = time.perf_counter()
@@ -468,6 +633,10 @@ class SelfHealingSupervisor:
                 # below on purpose: UNCONFIGURED is not a healthy observation
                 # and must not end an escalated failure streak.
                 run.unconfigured.append(status.name)
+                # TASK-CTX-004: count consecutive cycles with no health signal.
+                self._unconfigured_streaks[status.name] = (
+                    self._unconfigured_streaks.get(status.name, 0) + 1
+                )
                 if status.name not in self._unconfigured_noticed:
                     self._unconfigured_noticed.add(status.name)
                     logger.info(
@@ -477,6 +646,11 @@ class SelfHealingSupervisor:
                     )
                 continue
             self._unconfigured_noticed.discard(status.name)
+            # TASK-CTX-004: a configured probe — healthy or not — IS a health
+            # signal, so the unconfigured streak ends and a later unconfigured
+            # period alerts afresh.
+            self._unconfigured_streaks[status.name] = 0
+            self._ratio_alerted.discard(status.name)
             healthy = probe_result is ProbeResult.HEALTHY
             if healthy:
                 # A healthy observation ends any failure streak: a later
@@ -546,6 +720,9 @@ class SelfHealingSupervisor:
                 run.repairs.append(
                     RepairOutcome(status.name, "repair+probe", False, False, "repair did not restore health")
                 )
+
+        # TASK-CTX-004: evaluate the standing ratio check on this cycle's data.
+        await self._evaluate_ratio_check(run)
 
         run.duration_ms = (time.perf_counter() - started) * 1000
         return run
@@ -642,6 +819,9 @@ class SelfHealingLoop:
                 r.as_dict() if hasattr(r, "as_dict") else r for r in (self.last_run.repairs if self.last_run else [])
             ],
             "escalation_channel": self.supervisor.notifier.status(),
+            # TASK-CTX-004: the standing escalation-ratio check — per-subsystem
+            # unconfigured streaks, signal rates, delivery gap, last alert.
+            "ratio_check": self.supervisor.ratio_check_status(),
         }
 
 
