@@ -13777,14 +13777,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "None - closed."
   - id: TASK-API-005
     title: 'API-003 F2: Cortex FRIDAY_API_KEY re-sync to fleet value + restart + re-probe'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-api-005-cortex-key-resync
     pr: 1339
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T12:34:02+05:30'
+    updated_at: '2026-11-22T12:51:34+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-API-005-CORTEX-KEY-RESYNC.md
@@ -13824,9 +13824,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       CORTEX value), so live FRIDAY->Cortex ask/delegate calls now 403 (proven live, task
       task_a9dccb5dc54d); needs FRIDAY .env fix + FRIDAY restart with hub clearance.
       Also filed: CREDENTIALS.md section 5 Cortex row drift (F-API-005-2).'
+    - 'MERGED 2026-11-22 ~12:48 IST: work PR #1339 (merge 079590b7) reviewed in full by the coordinator - evidence doc read in full (F2 reproduced pre-fix 403 on fleet FRIDAY key / 200 on CORTEX key; one FRIDAY_API_KEY line replaced in Cortex .env with backup, restart new PID 584499, /health 200; post-fix matrix fleet key 200, CORTEX key 403, controls 401/403; names-only rule obeyed). Acceptance met on the Cortex side. Follow-ups filed: F-API-005-1 (FRIDAY Cortex client key, live 403 - TASK-FRD-034), F-API-005-2 (CREDENTIALS.md Cortex row drift), F-API-005-3 (CORTEX_API_KEY rotation deferred). CI 9/9 green on head a6921b75 (7 success, 2 skipped), verified via bridge checks. Board flip by coordinator board PR.'
     blockers: []
-    next_action: Set Cortex's FRIDAY_API_KEY to the fleet value (names-only rule), restart
-      Cortex, re-probe the matrix; file the evidence doc; decide CORTEX_API_KEY rotation.
+    next_action: 'None - closed. Follow-ups: F-API-005-1 (TASK-FRD-034, assigned Muse 1), F-API-005-2 (CREDENTIALS.md Cortex row drift), F-API-005-3 (rotation deferred, dedicated task).'
 
   - id: TASK-API-006
     title: 'API-003 F3: Sentinel API auth enable + restart + re-probe matrix'
@@ -13957,6 +13957,45 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Coordinator pool addition, 2026-11-22 ~12:30 IST: WF-001 F1 from the fresh M1 trace (PR #1333, merge f015a3b0, Muse 2). G1 root cause: FRIDAY/src/friday/ecosystem/fleet_client.py:116-126 CANONICAL_INTERNAL_MESH_URLS maps intelx to http://10.0.0.121:8005 (dead post-migration; live is 10.0.0.120:8005, verified 200 vs 000); dispatch-bus agent configs point IntelX at http://127.0.0.1:8005 (nothing listens on S1:8005) and Stratex at 127.0.0.1:8003 (dashboard, not engine). Same defect class as ORCH-011 G1 (supervision probe targets). Blocks MASTER_PLAN section 4 M1. Assigned to Muse 2 (free; TASK-WF-001 filed IN_REVIEW, PR #1333) - holds the trace context. Base: main 46e17b1c (board blob e00fd60c8db13c9ce9c43fac44569b0181e3ebc7, verified against the true main blob before editing). Worker claims via its own claim PR. LIVE-RESTART GATE: implement + PR first; restart FRIDAY only after Muse clears deployment on the hub.'
     blockers: []
     next_action: Fix the peer URLs per the F1 proposal; file the evidence doc; restart FRIDAY only after Muse clears deployment on the hub; re-run the WF-001 trace.
+
+  - id: TASK-FRD-034
+    title: 'API-005 F-API-005-1: FRIDAY Cortex client presents CORTEX_API_KEY, now 403 - set FRIDAY .env FRIDAY_CORTEX_API_KEY to fleet FRIDAY_API_KEY, restart FRIDAY only on coordinator clearance, re-probe'
+    status: AVAILABLE
+    owner: muse_1
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T12:51:34+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-FRD-034-FRIDAY-CORTEX-KEY.md
+    acceptance:
+    - 'FRIDAY .env FRIDAY_CORTEX_API_KEY equals the fleet FRIDAY_API_KEY value; FRIDAY restarted ONLY after Muse clears deployment on the hub; FRIDAY ask cortex + task-delegation calls succeed (200) with a live probe; no other agent .env touched.'
+    evidence:
+    - 'Coordinator pool addition, 2026-11-22 ~12:50 IST: API-005 follow-up F-API-005-1 from the Cortex re-sync evidence (PR #1339, merge 079590b7, Muse 1, section 5). FRIDAY/src/friday/ecosystem/fleet_client.py:267 presents settings cortex_api_key (config.py:402, FRIDAY_CORTEX_API_KEY, falls back to CORTEX_API_KEY at config.py:150) as X-Friday-Api-Key on ask_cortex (:1045), task delegation (:1676) and health-summary monitor (:2064). FRIDAY .env FRIDAY_CORTEX_API_KEY equals the fleet CORTEX_API_KEY value, so after the correct Cortex-side fix every FRIDAY to Cortex ask/delegation call fails 403 - live proof task_a9dccb5dc54d via POST /api/chat ask cortex report operational status (~12:30 IST, success false, http_status 403, task_state REFUSED). Fix: FRIDAY .env FRIDAY_CORTEX_API_KEY to the fleet FRIDAY_API_KEY value + FRIDAY restart. LIVE-RESTART GATE: implement + PR first; restart FRIDAY only after Muse clears deployment on the hub; batch the restart window with FRD-033 if both are ready. Assigned to Muse 1 (free; TASK-API-005 MERGED, PR #1339) - holds the discovery context. Base: main f3dab30e (board blob 27dbed549b31d3aabe077118b56f06524733c119, verified against the true main blob before editing). Worker claims via its own claim PR.'
+    blockers: []
+    next_action: Set FRIDAY .env FRIDAY_CORTEX_API_KEY to the fleet FRIDAY_API_KEY value; file the evidence doc; restart FRIDAY only after Muse clears deployment on the hub; re-probe FRIDAY to Cortex ask + delegation.
+  - id: TASK-REL-067
+    title: 'Implement the health-capability contract per REL-004 section 8 - every agent health reports capability state with derived status and 503 on degraded'
+    status: AVAILABLE
+    owner: muse_8
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T12:51:34+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-REL-067-HEALTH-CONTRACT-IMPL.md
+    acceptance:
+    - 'REL-004 section 8 criteria met: every agent health returns the section 2.2 fields with derived status and HTTP 503 on degraded; Stratex engine-offline condition returns degraded/503 with capabilities.trading_engine unavailable and STALE_STRATEGY_EVALUATION (live probe); FRIDAY fleet-status names degraded peers with failing capability and labels pre-contract peers capability unknown (live probe); no unknown required capability silently dropped or reported ok; no secret in any health payload; all ready behaviour unchanged.'
+    evidence:
+    - 'Coordinator pool-7 draft, 2026-11-22 ~11:53 IST (issue #35 comment 7075301485), item 4 (correction: pool-6 REL-006 collides with the in-progress REL-006 voice-latency task, re-id as 067). Design: docs/collaboration/TASK-REL-004-HEALTH-CONTRACT.md (Muse 9, surveyed from source at base d51b82d). Implementation is a separate task per the design section 7; acceptance is design section 8. Assigned to Muse 8 (free; TASK-VAL-004 MERGED, PR #1336, board #1340) - holds the fleet-validation context. Base: main f3dab30e (board blob 27dbed549b31d3aabe077118b56f06524733c119, verified against the true main blob before editing). Worker claims via its own claim PR.'
+    blockers: []
+    next_action: Implement the contract per REL-004 section 8; verify criteria 2-3 by live probe; file the evidence doc.
 
 task_id_warnings:
   - id: TASK-REL-061
