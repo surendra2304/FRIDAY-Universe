@@ -9,7 +9,7 @@ crash-loop/health alerting end-to-end.
 Claim PR #1433 merged 2026-11-23 04:15:03 IST (merge `41ba369a`;
 CI 9/9 green — 7 success, 2 skipped, 0 failed — mergeable clean).
 **Work:** this document + gap (b) fix + tests + board flip CLAIMED →
-IN_REVIEW. Work PR: see board record.
+IN_REVIEW. Work PR #1435.
 
 ## Verdict
 
@@ -89,6 +89,20 @@ tests **33/33 pass** (32 existing + 1 new). Negative control: the
 same 8 gateway tests against the UNFIXED gateway file fail 4 (the
 escaping tests) and pass 4 — the tests genuinely test the fix.
 CI on the work PR is the authority on the real tree.
+
+**CI note — `contracts` guard (fixed in this PR):** the first work-PR
+head failed the `contracts` check (Owner Workflow Contracts,
+`scripts/ci_test_collection_audit.py`, TASK-REL-068) with
+`UNCOLLECTED: FRIDAY/tests/test_telegram_gateway_escape.py` — the new
+test file was collected by no PR-triggered workflow. Fixed by adding
+the file to the pytest invocation in
+`.github/workflows/owner-workflows.yml`, next to
+`test_telegram_webhook.py`, which runs in the same job. Verified with
+the audit's own parser before pushing: the edited workflow covers the
+file, the original does not. The new test's import footprint is a
+subset of the webhook test's (same gateway import, no FastAPI
+TestClient), so it runs in the same job environment. No other check
+failed on the first head (9/10: 7 success, 2 skipped).
 
 ## 2. Timer enablement — both servers (bridge, 2026-11-23 ~04:03–04:06 IST)
 
