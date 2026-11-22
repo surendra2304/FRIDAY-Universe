@@ -138,7 +138,7 @@ Do not update only the board while leaving contradictory status in the Master Pl
 - Never fabricate success, live telemetry, positions, balances or health.
 - Never commit credentials or secrets.
 - Never force-push, blindly reset, or discard work.
-- Never merge PRs or deploy/restart production without explicit owner authorization.
+- Never merge your own PR, and never merge on failing CI. Peer merges happen only under the standing flat merge rule (full-diff review + fully green CI). Never deploy or restart production without Muse's hub clearance.
 - Never place live trading orders. Stratex stays on the owner-approved testnet configuration.
 - Keep unverified facts explicitly marked as unverified.
 

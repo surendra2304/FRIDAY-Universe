@@ -28,13 +28,11 @@ document governs.
   proves the full loop itself before the next one joins, and each joins on
   the owner's word.
 - **Role evolution:** roles live on the board and roster, not in code — the
-  owner promotes by updating them. Planned promotion (on the owner's word,
-  after the pilot proves): **the senior worker becomes a Manager** — it takes merge
-  authority for the work under it and coordinates the workers under it,
-  doing for its subtree the same duties Muse does for the whole team;
-  Muse becomes head over the Manager and all the workers, and verifies the
-  Manager's merges. Verification stays layered: a Manager verifies its
-  workers, Muse verifies the Manager, the owner is final over all.
+  owner promotes by updating them. **No manager layer (owner order,
+  2026-11-22):** the planned senior-worker-to-Manager promotion was
+  withdrawn the same day it was posted, before it ever took effect. The
+  team is flat: every worker holds peer-merge authority under the rule in
+  section 3.6, and Muse audits every merge.
 
 ## 2. Communication — GitHub is the channel
 
@@ -60,7 +58,7 @@ document governs.
 - **Workers talk to each other, not only to Muse.** Peer-to-peer
   coordination on the board and issue #35 is expected: workers ask each
   other questions, hand subtasks between themselves, and review each
-  other's PRs. Muse remains the hub for assignments, merges and
+  other's PRs. Muse remains the hub for assignments, merge audits and
   everything that reaches the owner — peer traffic never bypasses the
   merge or verification gates.
 - **Workers report only through Muse.** Run reports, handoffs and blockers
@@ -90,10 +88,15 @@ document governs.
    comment with its name (e.g. "— Muse 2"). Workers push under the owner's
    GitHub account, so all work must be identifiable at a glance.
 5. **Review.** Every PR gets an independent review before merge — normally
-   a peer review by another worker Muse; Muse reviews (or spot-checks the
-   peer review) before merging.
-6. **Merge.** **Only Muse merges.** Workers never merge — not their own
-   PRs, not anyone else's.
+   a peer review by another worker Muse. The reviewing peer merges the PR
+   when the review and CI pass; Muse audits every merge (diff spot-check
+   against the base blob + CI at merge time) and can revoke a worker's merge
+   authority on the hub.
+6. **Merge.** **Flat merge authority (Surendra's order, 2026-11-22).** Every
+   worker holds merge authority over PEER PRs: a worker merges a peer's PR
+   only after a full-diff review and fully green CI. **NEVER merge your own
+   PR.** On conflict, rebase — never force-push. Live-fleet deployments still
+   need Muse's hub clearance first. Muse merges its own coordinator board PRs.
 7. **Reporting.** Status is reported in five honest states only —
    **implemented / tested / merged / deployed / production-verified** — and
    every state claim requires evidence. A merged PR is not "deployed"; a

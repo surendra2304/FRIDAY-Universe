@@ -116,7 +116,7 @@ collaborators:
     display_name: "Muse 1"
     contributor_type: "ai"
     status: "active_contributor"
-    authority: "Worker Muse account (first worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    authority: "Worker Muse account (first worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
     verified_capabilities:
       - "Onboarding 2026-11-21 (Muse 1, evidence-backed only): displayed assistant name set to 'Muse 1'; read docs/MASTER_PLAN.md (409 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (478 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full, plus WORK_BOARD.yaml snapshot 2026-11-17 and TASK-REL-057 record; local clone of origin/main at 9e07a99 (Merge PR #1142)."
       - "Onboarding 2026-11-21: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 main dddbe327); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file with secret masking (header only, no secrets copied)."
@@ -130,7 +130,7 @@ collaborators:
     display_name: "Muse 2"
     contributor_type: "ai"
     status: "active_contributor"
-    authority: "Worker Muse account (second worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    authority: "Worker Muse account (second worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
     verified_capabilities:
       - "Onboarding 2026-11-21 (Muse 2, evidence-backed only): displayed assistant name set to 'Muse 2'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (251 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full, plus WORK_BOARD.yaml snapshot 2026-11-17 (12648 lines) refreshed via live GitHub API; local clone of origin/main at 37b38a9."
       - "Onboarding 2026-11-21: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 git 90b9b5c6); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file with secret masking (header only, no secrets copied)."
@@ -144,7 +144,7 @@ collaborators:
     display_name: "Muse 4"
     contributor_type: "ai"
     status: "active_contributor"
-    authority: "Worker Muse account (fourth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    authority: "Worker Muse account (fourth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
     verified_capabilities:
       - "Onboarding 2026-11-21 (Muse 4, evidence-backed only): displayed assistant name set to 'Muse 4'. Identity correction: this account was first onboarded the same day as 'Muse 3' (PR #1169, closed unmerged); Surendra renumbered this account to Muse 4 and the other account from Muse 4 to Muse 3."
       - "Onboarding 2026-11-21: read docs/MASTER_PLAN.md (v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full; WORK_BOARD.yaml full text scanned (12,660 lines, no assignment for this account found)."
@@ -159,7 +159,7 @@ collaborators:
     display_name: "Muse 3"
     contributor_type: "ai"
     status: "active_contributor"
-    authority: "Worker Muse account (roster id muse_3; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    authority: "Worker Muse account (roster id muse_3; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
     verified_capabilities:
       - "Onboarding 2026-11-21 (Muse 3, evidence-backed only): displayed assistant name set to 'Muse 3' — this account first onboarded as Muse 4 and was renamed to Muse 3 by Surendra 2026-11-21 (the account formerly known as Muse 3 is now Muse 4); read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (251 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full, plus WORK_BOARD.yaml snapshot 2026-11-17 (12660 lines) and live issue #35; no assignment for this account."
       - "Onboarding 2026-11-21: bridge reachable — plain GET to https://friday-universe.duckdns.org/bridge/mcp returns HTTP 406 JSON-RPC 'Not Acceptable: Client must accept text/event-stream', expected for a Streamable HTTP MCP endpoint; CREDENTIALS.md on Server 2 not yet opened (bridge auth pending)."
@@ -173,7 +173,7 @@ collaborators:
     display_name: "Muse 5"
     contributor_type: "ai"
     status: "active_contributor"
-    authority: "Worker Muse account (fifth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    authority: "Worker Muse account (fifth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
     verified_capabilities:
       - "Onboarding 2026-11-21 (Muse 5, evidence-backed only): displayed assistant name set to 'Muse 5'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (251 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full, plus WORK_BOARD.yaml (12,702 lines, snapshot 2026-11-17) and live issue #35; no assignment for this account found."
       - "Onboarding 2026-11-21: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 main fb075ad1); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file with secret masking (header only, no secrets copied)."
@@ -188,7 +188,7 @@ collaborators:
     display_name: "Muse 6"
     contributor_type: "ai"
     status: "active_contributor"
-    authority: "Worker Muse account (sixth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    authority: "Worker Muse account (sixth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
     verified_capabilities:
       - "Onboarding 2026-11-21 (Muse 6, evidence-backed only): displayed assistant name set to 'Muse 6'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (251 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full, plus WORK_BOARD.yaml (12,716 lines, snapshot 2026-11-17) and live issue #35; no assignment for this account found."
       - "Onboarding 2026-11-21: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 main cd3abecb); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file with secret masking (header only, no secrets copied)."
@@ -203,7 +203,7 @@ collaborators:
     display_name: "Muse 7"
     contributor_type: "ai"
     status: "active_contributor"
-    authority: "Worker Muse account (seventh worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    authority: "Worker Muse account (seventh worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
     verified_capabilities:
       - "Onboarding 2026-11-21 (Muse 7, evidence-backed only): displayed assistant name set to 'Muse 7'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (251 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full, plus WORK_BOARD.yaml (12,717 lines, 581 tasks, snapshot 2026-11-17) and live issue #35; no assignment for this account found."
       - "Onboarding 2026-11-21: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 main cd3abecb); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_text (header only, no secrets copied)."
@@ -217,7 +217,7 @@ collaborators:
     display_name: "Muse 8"
     contributor_type: "ai"
     status: "active_contributor"
-    authority: "Worker Muse account (eighth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    authority: "Worker Muse account (eighth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
     verified_capabilities:
       - "Onboarding 2026-11-22 (Muse 8, evidence-backed only): displayed assistant name set to 'Muse 8'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (260 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full, plus WORK_BOARD.yaml (13,170 lines, via live GitHub API blob) and live issue #35; no assignment for this account found."
       - "Onboarding 2026-11-22: bridge reachable - FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 git c6c129ea); Server 2 CREDENTIALS.md opens via bridge read_file with relative path (24,324 bytes, header only, no secrets copied)."
@@ -231,7 +231,7 @@ collaborators:
     display_name: "Muse 9"
     contributor_type: "ai"
     status: "active_contributor"
-    authority: "Worker Muse account (ninth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    authority: "Worker Muse account (ninth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
     verified_capabilities:
       - "Onboarding 2026-11-22 (Muse 9, evidence-backed only): displayed assistant name set to 'Muse 9'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (260 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full, plus WORK_BOARD.yaml (13,170 lines, snapshot 2026-11-17) and live issue #35; no assignment for this account found."
       - "Onboarding 2026-11-22: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 git c6c129ea); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file with relative path (7,395 bytes returned, header only, no secrets copied)."
@@ -246,7 +246,7 @@ collaborators:
     display_name: "Muse 10"
     contributor_type: "ai"
     status: "active_contributor"
-    authority: "Worker Muse account (tenth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    authority: "Worker Muse account (tenth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
     verified_capabilities:
       - "Onboarding 2026-11-22 (Muse 10, evidence-backed only): displayed assistant name set to 'Muse 10'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (260 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml (225 lines) in full, plus WORK_BOARD.yaml snapshot 2026-11-17 (13,170 lines) and live issue #35; no assignment for this account found."
       - "Onboarding 2026-11-22: bridge reachable — FRIDAY-Cloud-Engineering-Bridge at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE); Server 2 /opt/friday_universe/CREDENTIALS.md confirmed readable (359 lines, no secrets copied)."
@@ -262,7 +262,7 @@ collaborators:
     display_name: "Muse 11"
     contributor_type: "ai"
     status: "active_contributor"
-    authority: "Worker Muse account (eleventh worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    authority: "Worker Muse account (eleventh worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
     verified_capabilities:
       - "Onboarding 2026-11-22 (Muse 11, evidence-backed only): displayed assistant name set to 'Muse 11'; read docs/MASTER_PLAN.md (369 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (465 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (270 lines, via live GitHub API, blob ae828450), plus WORK_BOARD.yaml snapshot 2026-11-17 searched for Muse 11 with no assignment found, and live issue #35."
       - "Onboarding 2026-11-22: bridge reachable - FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 git branch muse7/task-fut-016-forecast-quality, commit 4dacbed9); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file (header only, no secrets copied)."
@@ -277,7 +277,7 @@ collaborators:
     display_name: "Muse 13"
     contributor_type: "ai"
     status: "active_contributor"
-    authority: "Worker Muse account (thirteenth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    authority: "Worker Muse account (thirteenth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
     verified_capabilities:
       - "Onboarding 2026-11-22 (Muse 13, evidence-backed only): displayed assistant name set to 'Muse 13'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (260 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (270 lines at onboarding base c373615; rebased onto current main 3dd7cfba, 285 lines), plus WORK_BOARD.yaml checked (14,462 lines, main c373615, no assignment for Muse 13 found), and live issue #35."
       - "Onboarding 2026-11-22: bridge reachable - FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 git branch muse7/task-fut-016-forecast-quality, commit 4dacbed9); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file (header only, no secrets copied)."
