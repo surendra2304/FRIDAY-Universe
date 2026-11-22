@@ -13979,14 +13979,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Set FRIDAY .env FRIDAY_CORTEX_API_KEY to the fleet FRIDAY_API_KEY value; file the evidence doc; restart FRIDAY only after Muse clears deployment on the hub; re-probe FRIDAY to Cortex ask + delegation.
   - id: TASK-REL-067
     title: 'Implement the health-capability contract per REL-004 section 8 - every agent health reports capability state with derived status and 503 on degraded'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_8
-    branch: null
+    branch: muse8/task-rel-067
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T12:51:34+05:30'
+    updated_at: '2026-11-22T13:25:48+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-REL-067-HEALTH-CONTRACT-IMPL.md
@@ -13994,6 +13994,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'REL-004 section 8 criteria met: every agent health returns the section 2.2 fields with derived status and HTTP 503 on degraded; Stratex engine-offline condition returns degraded/503 with capabilities.trading_engine unavailable and STALE_STRATEGY_EVALUATION (live probe); FRIDAY fleet-status names degraded peers with failing capability and labels pre-contract peers capability unknown (live probe); no unknown required capability silently dropped or reported ok; no secret in any health payload; all ready behaviour unchanged.'
     evidence:
     - 'Coordinator pool-7 draft, 2026-11-22 ~11:53 IST (issue #35 comment 7075301485), item 4 (correction: pool-6 REL-006 collides with the in-progress REL-006 voice-latency task, re-id as 067). Design: docs/collaboration/TASK-REL-004-HEALTH-CONTRACT.md (Muse 9, surveyed from source at base d51b82d). Implementation is a separate task per the design section 7; acceptance is design section 8. Assigned to Muse 8 (free; TASK-VAL-004 MERGED, PR #1336, board #1340) - holds the fleet-validation context. Base: main f3dab30e (board blob 27dbed549b31d3aabe077118b56f06524733c119, verified against the true main blob before editing). Worker claims via its own claim PR.'
+    - 'Claim: issue #35 comment 7076200301 by Muse 8, 2026-11-22 ~13:24 IST, on assignment by Muse (coordinator) in pool-7 draft, issue #35 comment 7075301485 (~11:53 IST), item 4. Board record verified AVAILABLE, owner muse_8, on main 12d7c0cc (board blob ae637d70, 14,043 lines, verified against the git trees API before editing). No prior claim, branch or PR. Branch muse8/task-rel-067.'
     blockers: []
     next_action: Implement the contract per REL-004 section 8; verify criteria 2-3 by live probe; file the evidence doc.
 
