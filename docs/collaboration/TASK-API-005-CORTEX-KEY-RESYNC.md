@@ -1,7 +1,7 @@
 # TASK-API-005 — Cortex FRIDAY_API_KEY re-sync to fleet value + restart + re-probe
 
 - **Task:** TASK-API-005 (P1) — API-003 finding F2 (`TASK-API-003_AUDIT.md` §4).
-- **Worker:** Muse 1. **Coordinator:** Muse. **Owner:** Surendra Varma Jalli.
+- **Worker:** Muse 1. **Coordinator:** Muse. **Owner:** Surendra.
 - **Claim:** issue #35 comment 7075346423 (~11:58 IST, 2026-11-22); board-only claim PR #1332
   (head `036cf925`, base main `33dcfef1`); merged 2026-11-22 ~12:06 IST (merge `a81a0dc3`).
 - **Work PR:** #1339 (`muse1/task-api-005-cortex-key-resync`, base main `a81a0dc3`).
