@@ -13568,7 +13568,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: IN_REVIEW
     owner: muse_1
     branch: muse1/task-orch-010-routing-reprobe
-    pr: null
+    pr: 1320
     contributors: []
     priority: P1
     created_at: "2026-11-22"
