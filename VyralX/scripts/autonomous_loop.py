@@ -8,6 +8,14 @@ Autonomously runs the entire lifecycle on a scheduled cadence:
 5. Video Composition: Full-bleed vertical 1080x1920 @ 60fps with contrast/saturation enhancements.
 6. Audience Learning & Timing: Calculates optimal posting window per topic cohort.
 7. Safe Drafting: Uploads strictly as private drafts (privacyStatus: private) to YouTube Studio for user review.
+
+Each cycle runs inside a total wall-clock budget (TASK-VYR-036, default
+5400s — the same default as the autopilot's
+``viral_autopilot_cycle_budget_seconds``, TASK-VYR-001): no new render
+starts past the deadline, so a cycle terminates instead of running
+unbounded past the daemon's 180-minute interval. A single in-flight
+render is a blocking call with no deadline of its own and may still
+overrun the budget.
 """
 from __future__ import annotations
 
@@ -34,6 +42,15 @@ logging.basicConfig(
 )
 log = logging.getLogger("vyralx.loop")
 
+# TASK-VYR-036: wall-clock budget for one autonomous cycle, in seconds.
+# Same 5400s default as the autopilot's viral_autopilot_cycle_budget_seconds
+# (TASK-VYR-001): a cycle must terminate inside the daemon's 180-minute
+# interval instead of rendering unbounded past it. A single in-flight
+# render is a blocking call with no deadline of its own and may still
+# overrun the budget — the guarantee is that the cycle starts nothing new
+# past the deadline and therefore terminates.
+DEFAULT_CYCLE_BUDGET_SECONDS = 5400.0
+
 
 def get_processed_video_ids() -> set[str]:
     """Retrieves all video IDs that have already been published or drafted."""
@@ -52,8 +69,20 @@ def get_processed_video_ids() -> set[str]:
     return ids
 
 
-def run_autonomous_cycle(batch_size: int = 1) -> list[dict[str, Any]]:
-    """Executes a single end-to-end master candidate discovery, rendering, and drafting cycle."""
+def run_autonomous_cycle(batch_size: int = 1, deadline: float | None = None) -> list[dict[str, Any]]:
+    """Executes a single end-to-end master candidate discovery, rendering, and drafting cycle.
+
+    TASK-VYR-036: ``deadline`` is a ``time.monotonic()`` value bounding the
+    whole cycle. It is checked before every render; when it has passed the
+    cycle logs ``CYCLE_BUDGET_EXCEEDED`` and stops instead of starting
+    another render, returning the drafts produced so far. With no deadline
+    ``DEFAULT_CYCLE_BUDGET_SECONDS`` budget from its start. A single
+    in-flight render is a blocking call with no deadline of its own, so it
+    may still overrun the budget — the guarantee is that the cycle starts
+    nothing new past the deadline and therefore terminates.
+    """
+    if deadline is None:
+        deadline = time.monotonic() + DEFAULT_CYCLE_BUDGET_SECONDS
     log.info("==================================================================")
     log.info("STARTING VYRALX MASTER AUTONOMOUS CYCLE (BATCH SIZE: %d)", batch_size)
     log.info("==================================================================")
@@ -113,6 +142,16 @@ def run_autonomous_cycle(batch_size: int = 1) -> list[dict[str, Any]]:
             "Selected Master Candidate: %s ('%s', topic: '%s', weight: %.2f)",
             vid, conf["title"], conf["topic"], chosen_weight
         )
+
+        # TASK-VYR-036: no new render starts past the cycle deadline.
+        if time.monotonic() >= deadline:
+            log.warning(
+                "CYCLE_BUDGET_EXCEEDED: wall-clock budget exhausted after %d draft(s); "
+                "stopping cycle without rendering %s",
+                len(results),
+                vid,
+            )
+            break
 
         try:
             result = render_and_draft_video(vid, conf)
