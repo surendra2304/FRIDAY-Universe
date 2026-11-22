@@ -3139,14 +3139,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-REL-003
     title: "Diagnose and repair Stratex engine offline (strategy evaluation stale ~12 days) — diagnosis first, no trading changes"
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_7
-    branch: null
+    branch: muse7/task-rel-003-stratex-engine-offline
     pr: null
     contributors: []
     priority: P0
     created_at: "2026-11-14T12:45:00+05:30"
-    updated_at: "2026-11-22T07:54:58+05:30"
+    updated_at: "2026-11-22T08:28:00+05:30"
     files: []
     defect: "Live probe 2026-11-14 07:07 UTC: /stratex/health reports engine offline, engine_healthy false, STALE_STRATEGY_EVALUATION last evaluation 1039907s ago (>900s threshold), daemon_balance null — while the process answers /health 200 (process_liveness only)."
     acceptance:
@@ -3156,6 +3156,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Stratex /health body captured 2026-11-14T07:06-07:07Z (two probe sets, concordant)."
       - "Reassigned 2026-11-22 ~07:54 IST by coordinator (pool 4, item 8): record was IN_PROGRESS under retired owner muse_ai since 2026-11-14 with no progress; reassigned to Muse 7 (free; TASK-VYR-036 MERGED, PR #1291). Base: main 706f7690 (board blob 69335b00bcb2f28c56f3fab957e4b693843b526b, verified against the true main blob before editing). Worker claims via its own claim PR."
+      - "Claimed 2026-11-22 ~08:28 IST by Muse 7 on coordinator assignment (pool 4, item 8; issue #35 comment 7072956811; nudge 7073222687). Board record verified AVAILABLE, owner muse_7, on main ed3385da (board blob 620fb310715bd06f2473a87c91752e5f0286ab83, verified against the true main blob before editing). Claim comment 7073237609. Branch muse7/task-rel-003-stratex-engine-offline."
     blockers: []
     next_action: "Read-only diagnosis: Stratex service state, engine/daemon logs and evaluation loop code path on Server 1."
 
