@@ -816,8 +816,25 @@ def produce_remix_short(
     if not cues:
         raise RuntimeError("caption generation produced no cues")
     render_path = settings.render_dir / f"{project_key}.mp4"
+    bed_path: Path | None = None
+    bgm_source = ""
+    if bool(getattr(settings, "viral_music_bed_enabled", True)):
+        # TASK-VYR-039: the VYR-032 mandatory bed was never supplied on
+        # this path — render_scene_timed fails closed on
+        # music_bed_path=None, so every remix produce died at render
+        # (proven live 2026-11-22 on U2, VYR-037 pool candidate 1).
+        # Same preparation as produce_viral_short: a real bed from the
+        # BGM policy, never silence.
+        from app.services.viral_bgm import prepare_music_bed
+
+        bed_path, bgm_source = prepare_music_bed(
+            settings.media_dir / "voiceovers" / f"{project_key}-bed.wav",
+            tracks["total_seconds"],
+            category=category,
+        )
     vr.render_scene_timed(
-        source_path, render_path, tracks, cues, category.upper(), probe.has_audio
+        source_path, render_path, tracks, cues, category.upper(), probe.has_audio,
+        music_bed_path=bed_path,
     )
 
     meta = build_remix_metadata(record, title=title, hook=hook)
@@ -861,6 +878,7 @@ def produce_remix_short(
         "format": format_name,
         "render": str(render_path),
         "ass": str(render_path.with_suffix(".ass")),
+        "bgm_source": bgm_source,
         "narration_seconds": tracks["total_seconds"],
         "source_duration": round(duration, 2),
         "beats": beats,
