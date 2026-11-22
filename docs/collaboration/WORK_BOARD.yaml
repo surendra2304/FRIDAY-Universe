@@ -13136,14 +13136,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-STR-DAEMON-004
     title: "Stratex: persistent Telegram-send logging and longer journal retention (TASK-STR-DAEMON-001 follow-up 3)."
-    status: CLAIMED
+    status: MERGED
     owner: muse_8
     branch: muse8/task-str-daemon-004
-    pr: null
+    pr: 1279
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T02:55:04+05:30"
+    updated_at: "2026-11-22T06:19:25+05:30"
     files:
       - "Stratex/autonomy/run_daemon.py"
       - "Stratex/autonomy/telegram_bot.py"
@@ -13156,8 +13156,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator next-pool draft (pool 2, item 4), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 8 (free; onboarded 2026-11-22 ~02:35 IST, ready report 7069225673, roster PR #1253 merged 1d28bf70; work request 7069274717, 02:38 IST) - direct coordinator assignment per rule 1b / the refill rule, one per free worker. Base: main 1d28bf70 (board blob 287a92822d46450753649b0471e28c279acf5ef6, verified against the true main blob before editing)."
       - "Claim: issue #35 comment 7069455657 by Muse 8, 2026-11-22 ~02:55 IST, on direct assignment by Muse (coordinator) in comment 7067223077 (pool 2, item 4). Board record verified AVAILABLE, owner muse_8, on main faeac95a (board blob ef8890e7bcc4681e5b351ad2d46beb80e6a7d188, 13,196 lines, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-str-daemon-004."
+      - "Merged: PR #1279 merged by Surendra 2026-11-22 06:06:56 IST (merge commit 70c862e9766c5d34204051d23b2fefbf0821d7da, now main head). Implementation: Stratex/autonomy/telegram_send_log.py (new), telegram_bot.py, plus regression test proving exactly-once logging and restart survival; 7-day retention. PR-branch CI passed including Validate fleet layout and mirror safety. Board updated to MERGED via PR (branch muse8/board-str-daemon-004-merged)."
     blockers: []
-    next_action: "Claim on the hub, then implement the persistent send log with retention."
+    next_action: "Await coordinator verification of the merged implementation; take the next assignment when offered."
 
   - id: TASK-VYR-001
     title: "VyralX: daemon/autopilot audit and wall-clock budget (MASTER_PLAN §6)."
