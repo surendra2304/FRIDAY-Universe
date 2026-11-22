@@ -123,19 +123,56 @@ test_mem016_promotion_readability_sweep.py`). Fixed the continuation;
 guard passes locally (exit 0, 272 files covered by a PR-triggered
 workflow).
 
-## Live probe (MEM-014 re-run) — status
+## Live probe (MEM-014 re-run) — RUN 2026-11-22 ~22:05 IST, 26/26 PASS
 
-_NOT RUN YET._ The MEM-014 live probe re-run is the task's acceptance proof
-and needs the fixed code deployed to the live Memora service on Server 1:
-the running service still carries the pre-fix engine/sweep, so probing it
-now would only re-prove the old behaviour. Deployment needs Muse's
-clearance (live-fleet change through a reviewed PR). After merge + deploy
-clearance, the re-run repeats the MEM-014 M1/M2 sequences against the live
-service (test data only, `MUSE9-TEST-MEM-016` prefix): M1 — owner promotes
-PRIVATE → SHARED → UNIVERSAL and a recipient/outside read returns 200;
-M2 — a recent memory with above-threshold needs is promoted by a sweep.
-This doc will be updated with the live results then; nothing here claims
-live proof before that run.
+**Verdict: both MEM-014 gaps are fixed live.** The re-run repeated the
+MEM-014 M1/M2 sequences against the live Memora service on Server 1
+(test data only, `MUSE9-TEST-MEM-016` prefix), run by Muse 9 under the
+clearance granted in coordinator watch 7081948976 (~21:48 IST).
+
+**Deploy state found (verified first-hand, not assumed):** the live
+Memora checkout on Server 1 was already at merged main `4a16d09f`
+(PR #1388, CI 10/10 green), fix markers present in the deployed files
+(`RULE_1_PROMOTED_SCOPE_READ` in `core/policy/engine.py`,
+need-first sweep in `core/memory/promotion.py`), and `Memora.service`
+had restarted at 21:25:29 IST (right after the 21:24 IST merge) — the
+deploy was already in place when this run began, so no further deploy
+step was needed. `GET /health` 200 before and after the probe
+(`status: healthy`, `database_backend: oracle`, durable).
+
+**M1 — owner-promotion ladder (G1 fixed live).** Memory
+`32635fcc-7db9-4c5c-88fd-833020861610`, namespace
+`memora://sentinel/private`, owner `sentinel`:
+write PRIVATE 201; owner GET 200 (`scope: PRIVATE`); friday GET 404
+while PRIVATE; promote → SHARED `[friday, intelx]` 200
+(`owner_judgement`); friday GET **200** and intelx GET **200** (MEM-014
+got 403 here); futuris GET 404 (outsider still hidden); friday search
+for the exact marker **finds M1** (MEM-014: absent from 50 results);
+promote → UNIVERSAL 200; futuris GET **200** (MEM-014: 403).
+Promoted scope now confers readability, by direct GET and by search.
+
+**M2 — auto-promotion path (G2 fixed live).** Memory
+`d271b0ac-4d48-4555-be8e-0879274e7834`, same namespace, owner
+`sentinel`: write PRIVATE 201; needs recorded friday ×2, intelx ×1,
+futuris ×3, cortex ×3 (9 total, 4 distinct — above both thresholds).
+Pre-sweep audit check (`GET /audit?action=MEMORY_NEED_RECORDED`):
+21 rows across exactly 2 memory ids — only this M2 and MEM-014's M2,
+so the sweep's blast radius was bounded before running it. Sweep 200,
+`count: 2` — promoted this M2 **and** MEM-014's M2
+(`b3562067-e808-415b-b16c-a633bd9d299b`), both PRIVATE → SHARED via
+`auto_repeated_need`. The MEM-014 M2 promotion is a side effect on
+marked test data: it has carried above-threshold needs since MEM-014
+and the fixed need-first sweep finally evaluated it. After the sweep:
+M2 `scope: SHARED`, friday GET **200**. A recent need-bearing memory
+is now promoted instead of starving behind the 200-oldest window.
+
+**Raw evidence:** 25 JSON response files in `/tmp/muse9_mem016/` on
+Oracle Server 1 (ephemeral; the numbers above are the durable record).
+Probe script ran on Server 1, read keys from the service env file at
+runtime, and was deleted afterwards; no key value appears here, in any
+issue comment, or in the probe script. No live data besides the two
+marked test memories (and the MEM-014 M2 scope change above) was
+created, modified, or deleted; no service was restarted by this probe.
 
 ## What was NOT done
 
