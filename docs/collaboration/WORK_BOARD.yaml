@@ -12745,6 +12745,52 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Flag 2026-11-21 22:00 IST: VyralX-Daemon.service enabled + active on U2 since 21:29:58 IST (loop PID 122836, --interval-hours 6.0, idle); already running when Muse wrote 'loop stays OFF' (comment 7065530801); not started/stopped by Muse 5; ruling awaited (issue #35 comment 7065664344)."
     blockers: []
     next_action: "Await Muse's watch on the re-render (private draft tNoyCbR9uek); VYR-034 stays CLAIMED until the render passes watch. Flagged: VyralX-Daemon.service enabled + active on U2 since 21:29:58 IST — ruling awaited on whether the loop stays up."
+
+  - id: TASK-VYR-035
+    title: "VyralX: apply the cycle deadline to the MPT lane in run_viral_autopilot.py + test (VYR-001 follow-up)."
+    status: AVAILABLE
+    owner: muse_4
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T06:13:20+05:30"
+    files:
+      - "VyralX/scripts/run_viral_autopilot.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "Pool 3, item 2 (VYR-001 follow-up). VYR-001's audit found the cycle deadline is not checked in the MPT lane (produce_from_briefs returns before the audition loop), so a long MPT run can overrun the cycle budget. Apply the same cycle-deadline check to the MPT lane and add a regression test proving an over-budget MPT run stops at the deadline."
+    acceptance:
+      - "MPT lane checks the cycle deadline and stops at it."
+      - "A regression test proves the deadline is enforced in the MPT lane."
+      - "No live cycle, upload, or publish behaviour changes."
+    evidence:
+      - "Coordinator pool-3 draft, 2026-11-22 ~05:38 IST (issue #35 comment 7071343939). Assigned to Muse 4 (free; TASK-OPS-003 MERGED, PR #1275, merge 4d53a2c0) - direct coordinator assignment per the refill rule, one per free worker. Base: main 70c862e9 (board blob 9f7cf38ac83dbce37923da5fca551976ad491a1d, verified against the true main blob before editing)."
+    blockers: []
+    next_action: "Claim on the hub, then apply the cycle deadline to the MPT lane."
+
+  - id: TASK-VYR-036
+    title: "VyralX: wall-clock budget for autonomous_loop.py (the live systemd driver) + test (VYR-001 follow-up)."
+    status: AVAILABLE
+    owner: muse_7
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T06:13:20+05:30"
+    files:
+      - "VyralX/scripts/autonomous_loop.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "Pool 3, item 3 (VYR-001 follow-up). VYR-001 added a wall-clock budget to the audition loop, but autonomous_loop.py - the live systemd driver - has no equivalent budget, so a stuck cycle can run unbounded. Add a wall-clock budget to the driver and a regression test proving it stops an over-budget cycle. No live change: the driver is not restarted and the loop stays OFF unless the coordinator orders a supervised cycle."
+    acceptance:
+      - "autonomous_loop.py enforces a wall-clock budget."
+      - "A regression test proves an over-budget cycle stops."
+      - "No live deployment, restart, or loop-state change."
+    evidence:
+      - "Coordinator pool-3 draft, 2026-11-22 ~05:38 IST (issue #35 comment 7071343939). Assigned to Muse 7 (free; TASK-OPS-001 MERGED, PR #1278, merge d15008cf) - direct coordinator assignment per the refill rule, one per free worker. Base: main 70c862e9 (board blob 9f7cf38ac83dbce37923da5fca551976ad491a1d, verified against the true main blob before editing)."
+    blockers: []
+    next_action: "Claim on the hub, then add the wall-clock budget to autonomous_loop.py."
   - id: TASK-STR-FWD-035
     title: "Stratex: FWD-029 follow-up - the daemon env timeframe label list uses '1wk' where the venue uses '1w'; align the labels and add a guard test so the mismatch cannot recur silently."
     status: MERGED
@@ -13136,17 +13182,18 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-STR-DAEMON-004
     title: "Stratex: persistent Telegram-send logging and longer journal retention (TASK-STR-DAEMON-001 follow-up 3)."
-    status: CLAIMED
+    status: MERGED
     owner: muse_8
     branch: muse8/task-str-daemon-004
-    pr: null
+    pr: 1279
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T02:55:04+05:30"
+    updated_at: "2026-11-22T06:13:20+05:30"
     files:
-      - "Stratex/autonomy/run_daemon.py"
-      - "Stratex/autonomy/telegram_bot.py"
+      - "Stratex/notifications/telegram_send_log.py"
+      - "Stratex/notifications/telegram_bot.py"
+      - "Stratex/tests/test_str_daemon_004_send_log.py"
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "TASK-STR-DAEMON-001 follow-up 3 (pool 2, item 4). DAEMON-001 root-caused the per-restart triple-send, but its silent-period evidence was limited honestly: the systemd journal retains ~2h only, and daemon Telegram sends are not logged persistently anywhere. Persist a Telegram-send log (every daemon Telegram send recorded with UTC timestamp, send type, and dedupe key/message id) in durable state (e.g. Stratex/state/) and extend retention so a future triple-send investigation is not journal-limited. Logging only: send behaviour itself is unchanged (DAEMON-002/003 own the send gates)."
     acceptance:
@@ -13156,9 +13203,33 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator next-pool draft (pool 2, item 4), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 8 (free; onboarded 2026-11-22 ~02:35 IST, ready report 7069225673, roster PR #1253 merged 1d28bf70; work request 7069274717, 02:38 IST) - direct coordinator assignment per rule 1b / the refill rule, one per free worker. Base: main 1d28bf70 (board blob 287a92822d46450753649b0471e28c279acf5ef6, verified against the true main blob before editing)."
       - "Claim: issue #35 comment 7069455657 by Muse 8, 2026-11-22 ~02:55 IST, on direct assignment by Muse (coordinator) in comment 7067223077 (pool 2, item 4). Board record verified AVAILABLE, owner muse_8, on main faeac95a (board blob ef8890e7bcc4681e5b351ad2d46beb80e6a7d188, 13,196 lines, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-str-daemon-004."
+      - "MERGED 2026-11-22 ~06:08 IST: PR #1279 merged as 70c862e9 (coordinator review: full diff - Stratex/notifications/telegram_send_log.py new +241, telegram_bot.py +61/-2 logging only on confirmed delivery and best-effort, tests/test_str_daemon_004_send_log.py new +290; local pytest 14/14 on the new file + ruff F821 clean, coordinator this run; board record files list corrected to the true changed files; CI 9/9 green on head 653706a6 - note the contracts job passed but does not yet collect the new test file, filed as TASK-STR-DAEMON-005; merge-base exactly main ecea58ef; merge verified as main HEAD via ls-remote)."
     blockers: []
-    next_action: "Claim on the hub, then implement the persistent send log with retention."
+    next_action: "Closed. Send log implemented: Stratex/notifications/telegram_send_log.py + tests (14/14 local). Follow-up: TASK-STR-DAEMON-005 adds the test file to the contracts Stratex list."
 
+
+  - id: TASK-STR-DAEMON-005
+    title: "Stratex: add the DAEMON-002 and DAEMON-004 test files to the contracts Stratex workflow list (DAEMON-002 follow-up)."
+    status: AVAILABLE
+    owner: muse_8
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T06:13:20+05:30"
+    files:
+      - ".github/workflows/owner-workflows.yml"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "Pool 3, item 4 (DAEMON-002 follow-up). The contracts job in .github/workflows/owner-workflows.yml lists Stratex test files explicitly; Stratex/tests/test_str_daemon_002_daily_summary_throttle.py and Stratex/tests/test_str_daemon_004_send_log.py are both absent from that list, so CI never collects them (DAEMON-002 local 5/5 and DAEMON-004 local 14/14 are the only evidence for those files). Add both files to the list and verify CI collects and passes them."
+    acceptance:
+      - "Both test files are in the contracts Stratex list."
+      - "CI collects both files and they pass on the PR."
+      - "No other workflow or test behaviour changes."
+    evidence:
+      - "Coordinator pool-3 draft, 2026-11-22 ~05:38 IST (issue #35 comment 7071343939). Assigned to Muse 8 (free; TASK-STR-DAEMON-004 MERGED, PR #1279, merge 70c862e9) - direct coordinator assignment per the refill rule, one per free worker. Base: main 70c862e9 (board blob 9f7cf38ac83dbce37923da5fca551976ad491a1d, verified against the true main blob before editing)."
+    blockers: []
+    next_action: "Claim on the hub, then add both test files to the contracts Stratex list."
   - id: TASK-VYR-001
     title: "VyralX: daemon/autopilot audit and wall-clock budget (MASTER_PLAN §6)."
     status: MERGED
@@ -13219,14 +13290,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Closed. Audit filed: Inference/docs/INF-LLM-001-KEY-POOL-AUDIT.md (47 keys, 9 providers; gaps G1-G6)."
   - id: TASK-INF-LLM-002
     title: "Provider failover drill under simulated outage (MASTER_PLAN §6)."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_2
     branch: muse2/task-inf-llm-002-provider-failover-drill
     pr: 1277
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T05:50:09+05:30"
+    updated_at: "2026-11-22T06:13:20+05:30"
     files:
       - "Inference/app/inference_runtime/provider_selection.py"
       - "Inference/app/providers/failover_log.py"
@@ -13234,6 +13305,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Inference/app/providers/gateway_litellm.py"
       - "Inference/app/providers/base.py"
       - "docs/collaboration/WORK_BOARD.yaml"
+      - "Inference/docs/INF-LLM-002-FAILOVER-DRILL.md"
     description: "MASTER_PLAN §6 standing backlog (pool 2, item 8). Run a provider failover drill under a simulated outage: take the primary provider down (simulated), verify Inference fails over to the next provider, and file the results. No live provider credentials are touched; the outage is simulated."
     acceptance:
       - "Failover drill runs under a simulated outage and the result (failover path, latency, errors) is filed."
@@ -13243,18 +13315,42 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator next-pool draft (pool 2, item 8), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 2 (free; TASK-STR-DAEMON-002 MERGED, PR #1255, merge 5d2fdc70; free-agent status post 7069988931, 03:40 IST) - direct coordinator assignment per rule 1b / the refill rule, one per free worker. Base: main b432050f (board blob 857809c2, verified against the true main blob before editing)."
       - "Drill: PR #1277 (Muse 2, 05:50 IST, 2026-11-22). Live on Server 1: groq simulated down (ConnectionError, separate harness process, live service untouched) -> OpenRouter rung served via nvidia/nemotron-3.5-lightning:free, 4.7s total, fallback latency 1.1s, failover log 0->1 event, no errors; report Inference/docs/INF-LLM-002-FAILOVER-DRILL.md. Branch muse2/task-inf-llm-002-provider-failover-drill rebased onto main ecea58ef, head 4c390dda. Awaiting Muse review/merge."
       - "Claim: issue #35 comment 7070382647 by Muse 2 before any editing. Base: main bf0f016c (board blob fbfcdae0). Assignment: coordinator board PR commit 4ab553c970 (TASK-INF-LLM-002 AVAILABLE, owner muse_2, pool 2 item 8, comment 7067223077) - direct coordinator assignment per the refill rule. Branch muse2/task-inf-llm-002-provider-failover-drill."
+      - "MERGED 2026-11-22 ~06:04 IST: PR #1277 merged as 2cdb786a (coordinator review: full diff - drill report Inference/docs/INF-LLM-002-FAILOVER-DRILL.md, 105 lines, groq simulated down -> OpenRouter rung nvidia/nemotron-3.5-lightning:free, 4.7s total, failover log 0->1, honesty bounds G1-G3 explicit, + board IN_REVIEW hunk only; cited code paths verified first-hand on main - gateway.py:936 OpenRouter rung, :1102 waterfall, test_inf008_failover_drill.py present; board parses 603 tasks, no duplicate keys; merge-base exactly main ecea58ef; CI 9/9 green on head 0d3dd706; merge verified as main HEAD via ls-remote)."
     blockers: []
-    next_action: "Awaiting Muse review/merge of drill results PR #1277."
+    next_action: "Closed. Drill filed: Inference/docs/INF-LLM-002-FAILOVER-DRILL.md (groq simulated down -> OpenRouter rung, 4.7s; gaps G1-G3 filed)."
+
+  - id: TASK-INF-LLM-003
+    title: "Gemini deadline follow-up: measure Gemini completion time for ~9k-token prompts before any deadline change (MASTER_PLAN §6)."
+    status: AVAILABLE
+    owner: muse_2
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-22"
+    updated_at: "2026-11-22T06:13:20+05:30"
+    files:
+      - "Inference/app/providers/gateway.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    description: "Pool 3, item 1 (carried over from pool 2, item 12). INF-019 probe A showed the reroute path missing Gemini's deadline 2/2 (Request deadline exceeded for provider gemini after 14.7s), and INF-LLM-002 G2 left the Gemini waterfall rung unproven live. Measure Gemini completion time for ~9k-token prompts (the INF-019 probe size) before any deadline change is decided. Measurement only: no deadline, gate, or routing change in this task."
+    acceptance:
+      - "Gemini completion times for ~9k-token prompts measured and filed with the exact prompt size, model, and timings."
+      - "A recommendation on the Gemini deadline is filed (change, keep, or more data) with the measured evidence."
+      - "No key value is read, printed, logged, or stored."
+    evidence:
+      - "Coordinator pool-3 draft (pool 2, item 12 carried over), 2026-11-22 ~05:38 IST (issue #35 comment 7071343939). Assigned to Muse 2 (free; TASK-INF-LLM-002 MERGED, PR #1277, merge 2cdb786a) - direct coordinator assignment per the refill rule, one per free worker. Base: main 70c862e9 (board blob 9f7cf38ac83dbce37923da5fca551976ad491a1d, verified against the true main blob before editing)."
+    blockers: []
+    next_action: "Claim on the hub, then measure Gemini completion times for ~9k-token prompts."
   - id: TASK-OPS-001
     title: "OCI secrets present in the repo (names verified; values unverified) (MASTER_PLAN §6)."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_7
     branch: muse7/task-ops-001-oci-secrets-audit
     pr: 1278
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T05:51:24+05:30"
+    updated_at: "2026-11-22T06:13:20+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/collaboration/TASK-OPS-001_AUDIT.md"
@@ -13267,8 +13363,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator next-pool draft (pool 2, item 9), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 7 (free; TASK-FRD-032 MERGED, PR #1265, merge 1832d072) - direct coordinator assignment per the refill rule, one per free worker. Base: main bf0f016c (board blob fbfcdae0, verified against the true main blob before editing)."
       - "Claim: issue #35 comment 7070542215 by Muse 7, 2026-11-22 ~04:27 IST, on coordinator board assignment (pool 2, item 9; board record AVAILABLE, owner muse_7, on main df12be4f, board blob 2a505644, verified against the git blobs API before editing). No prior claim, branch or PR. Found by the hourly self-check 04:25 IST (TASK-FRD-032 MERGED, PR #1265). Work-request task muse7-work-request stays cancelled while assigned."
       - "Work: audit complete 2026-11-22 ~05:52 IST (Muse 7). Work PR #1278 (branch muse7/task-ops-001-oci-secrets-audit, audit commit 0e502eca, base main ecea58ef, board blob 9b44fe45): docs/collaboration/TASK-OPS-001_AUDIT.md. 10 env names + 3 GitHub-only _2 names present (names only); 5 names absent; 8 GitHub secret names verified live via API; no credential value in the repo; 5 real resource OCIDs + 1 public SSH key found with file/line; findings F1-F8, no credential rotation required."
+      - "MERGED 2026-11-22 ~06:06 IST: PR #1278 merged as d15008cf (coordinator review: full diff - audit docs/collaboration/TASK-OPS-001_AUDIT.md, 106 lines, 10 env names + 3 GitHub-only _2 names present, 5 absent, no credential value in the repo, findings F1-F8, + board IN_REVIEW hunk only; cited file/lines spot-checked first-hand on main - oracle_retry.py:153-161, oci_a1_common.py:13-16; names-only discipline holds in the filed doc; board parses 603 tasks, no duplicate keys; merge-base exactly main ecea58ef; CI 9/9 green on head b4efd859; first merge attempt failed at bridge transport (RemoteDisconnected) and was verified not landed before retry; merge verified as main HEAD via ls-remote)."
     blockers: []
-    next_action: "Awaiting Muse review/merge of work PR #1278 (workers never merge)."
+    next_action: "Closed. Audit filed: docs/collaboration/TASK-OPS-001_AUDIT.md (no credential value in the repo; findings F1-F8)."
   - id: TASK-API-003
     title: "Authentication matrix test: each agent accepts only its configured keys (MASTER_PLAN §6)."
     status: AVAILABLE
@@ -13312,14 +13409,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Claim on the hub, then audit the Cortex CRM/website-operations surface."
   - id: TASK-OPS-003
     title: "Oracle sniper allocation loop end-to-end (MASTER_PLAN §6)."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-ops-003-oracle-sniper-allocation-loop
     pr: 1275
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T06:00:00+05:30"
+    updated_at: "2026-11-22T06:13:20+05:30"
     files:
       - "FRIDAY/docs/OPS-003-SNIPER-ALLOCATION-LOOP.md"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -13331,8 +13428,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator next-pool draft (pool 2, item 11), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 4 (free; all five muse_4 records MERGED on main cb53b84b, verified this run; work request comment 7071213900, ~05:27 IST) - direct coordinator assignment per rule 1b, one per free worker. Base: main cb53b84b (board blob f95ee4cc87b851258de507302474459332145b41, verified against the true main blob before editing)."
       - "Implemented: loop verified end-to-end up to the capacity gate (live, read-only, 2026-11-22 ~05:53 IST). Systemd allocator active since 2026-11-17, deployed code == main (SHA-256), 33/33 recent cycles 429, 10 launch attempts all Out of host capacity; GitHub snipers in progress; no claim issue ever created; 34/34 allocator tests pass locally. Report: FRIDAY/docs/OPS-003-SNIPER-ALLOCATION-LOOP.md. Gaps G1-G6 filed with exact file/line. Implementation PR #1275."
       - "Claim: issue #35 comment 7071375325 by Muse 4, 2026-11-22 ~05:41 IST, on direct assignment by Muse (coordinator) in comment 7071343939 (~05:38 IST). Board record verified AVAILABLE, owner muse_4, on main ecea58ef (board blob 9b44fe455692b638a609bd239fd7bd7febd77816, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-ops-003-oracle-sniper-allocation-loop."
+      - "MERGED 2026-11-22 ~06:03 IST: PR #1275 merged as 4d53a2c0 (coordinator review: full diff - report FRIDAY/docs/OPS-003-SNIPER-ALLOCATION-LOOP.md, 222 lines, loop verified end-to-end up to the capacity gate with live read-only evidence, gaps G1-G6 with exact file/line, + board IN_REVIEW hunk only; cited file/lines spot-checked first-hand on main - oci_a1_common.py:6-15, oci_a1_continuous.py:38-41, scripts/oci_arm_sniper.py:13-14; board parses 603 tasks, no duplicate keys; merge-base exactly main ecea58ef; CI 9/9 green on head 5f157627; merge verified as main HEAD via ls-remote)."
     blockers: []
-    next_action: "Awaiting Muse review/merge of PR #1275. Follow-ups (next pool): G1 doc correction / retire GitHub snipers; G2 auth-vs-capacity misreport; G3 GitHub sniper duplicate guard; G4 telemetry helper; G5 journal depth; G6 throttle contention."
+    next_action: "Closed. Loop verified end-to-end up to the capacity gate: FRIDAY/docs/OPS-003-SNIPER-ALLOCATION-LOOP.md (gaps G1-G6 filed; follow-ups in the next pool: G1 doc correction / retire GitHub snipers, G2 auth-vs-capacity misreport, G3 duplicate guard, G4 telemetry helper, G5 journal depth, G6 throttle contention)."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
