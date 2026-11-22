@@ -7,7 +7,7 @@ post-repair probe):
   connections are dropped (the classic "hanging pool" failure).
 * ``schema``     — probe the table manifest; repair runs the idempotent create-all.
 * ``redis``      — probe ``PING``; repair resets the client's connection pool.
-* ``ai_universe`` — probe ``GET {base}/health`` on the Inference gateway
+* ``ai_universe`` — probe ``GET {base}/ready`` on the Inference gateway
   (explicit env URL, else the fleet default: Inference on Server 1,
   port 8001); repair re-installs the deterministic fallback policy so
   deliberations keep working while the provider is down (graceful
@@ -54,15 +54,20 @@ PROBE_TIMEOUT_SECONDS = 5.0
 
 
 async def probe_ai_universe() -> ProbeResult:
-    """Real HTTP health check for the Inference gateway (TASK-CTX-002).
+    """Real HTTP readiness check for the Inference gateway (TASK-CTX-003).
 
     The old probe only resolved the configured host's DNS — and with
     ``INFERENCE_BASE_URL`` / ``AI_UNIVERSE_BASE_URL`` both unset in
     production it observed nothing at all (UNCONFIGURED every cycle:
-    suppressed noise, not health). It now performs ``GET {base}/health``
-    and reports HEALTHY only on HTTP 200 from a gateway that says it is
-    healthy, so a down or degraded Inference is observed truthfully and
-    the supervisor's repair/escalation path means something.
+    suppressed noise, not health). TASK-CTX-002 made it a real HTTP check
+    against ``GET {base}/health`` — but ``/health`` is liveness only
+    ("Report process liveness only; no dependency readiness is implied"),
+    so a degraded Inference still answered 200 healthy (gap G1). It now
+    performs ``GET {base}/ready`` and reports HEALTHY only on HTTP 200
+    from a gateway that says it is ready (``status`` ``"ready"`` — or
+    ``"healthy"`` for a gateway that only speaks liveness), so a down or
+    degraded Inference is observed truthfully and the supervisor's
+    repair/escalation path means something.
 
     Base URL precedence: ``INFERENCE_BASE_URL`` > ``AI_UNIVERSE_BASE_URL``
     (legacy migration fallback) > the fleet default above. Tri-state
@@ -87,7 +92,7 @@ async def probe_ai_universe() -> ProbeResult:
         # a configured/fleet endpoint — ambient HTTP(S)_PROXY variables must
         # not intercept or break it.
         async with httpx.AsyncClient(timeout=PROBE_TIMEOUT_SECONDS, trust_env=False) as client:
-            response = await client.get(f"{url}/health")
+            response = await client.get(f"{url}/ready")
     except Exception:
         # Any transport failure (DNS, connect, timeout) means the gateway
         # cannot be verified healthy. The registry treats a raising probe
@@ -101,7 +106,7 @@ async def probe_ai_universe() -> ProbeResult:
         # 200 with a non-JSON body: the process answers; liveness only.
         return ProbeResult.HEALTHY
     if isinstance(body, dict) and "status" in body:
-        return ProbeResult.HEALTHY if body["status"] == "healthy" else ProbeResult.UNHEALTHY
+        return ProbeResult.HEALTHY if body["status"] in ("healthy", "ready") else ProbeResult.UNHEALTHY
     return ProbeResult.HEALTHY
 
 
