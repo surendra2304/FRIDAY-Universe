@@ -173,6 +173,44 @@ def test_unknown_safety_close_raises_so_oms_marks_order_unknown(monkeypatch):
     assert client.cancelled_algos == []
 
 
+def test_adapter_refuses_mismatched_intent_environment(monkeypatch):
+    """Retargeted (TASK-STR-FWD-036): the adapter still refuses an intent whose
+    environment does not match the configured Binance environment.
+
+    The pre-FWD-032 version submitted make_intent(environment="binance_testnet");
+    FWD-032 deleted it instead of retargeting it because TradeIntent now rejects
+    binance_testnet at construction (see test_binance_testnet_intent_is_rejected_at_validation
+    in test_str_fwd_032_classic_testnet_excision.py). The adapter-level guard can
+    now only be reached by a legacy intent that bypasses construction — e.g. a
+    pre-FWD-032 serialized intent rehydrated without validation — so the test
+    builds one directly and proves the adapter refuses it before any client call.
+    """
+    set_demo_env(monkeypatch)
+    client = FakeBinanceClient()
+    adapter = BinanceFuturesOMSAdapter(client=client, venue_agent=FakeAgent())
+    legacy = object.__new__(TradeIntent)
+    for field, value in (
+        ("venue", "binance"),
+        ("symbol", "BTCUSDT"),
+        ("side", "BUY"),
+        ("order_type", "MARKET"),
+        ("quantity", 0.105),
+        ("environment", "binance_testnet"),
+        ("stop_loss", 95.0),
+        ("take_profit", 110.0),
+        ("strategy", "adapter-test"),
+        ("client_order_id", "stx-binance-oms-001"),
+        ("limit_price", None),
+        ("reduce_only", False),
+        ("created_at", 0.0),
+        ("metadata", {}),
+    ):
+        object.__setattr__(legacy, field, value)
+    with pytest.raises(BinanceVenueError, match="does not match Binance environment"):
+        adapter.submit_intent(legacy)
+    assert client.order_calls == []
+
+
 def test_binance_adapter_refuses_entry_when_existing_position_needs_reconciliation(monkeypatch):
     set_demo_env(monkeypatch)
     client = FakeBinanceClient(hedge_mode=False)
