@@ -1256,6 +1256,12 @@ def test_produce_framed_short_records_bgm_real_track(monkeypatch, tmp_path):
     from types import SimpleNamespace
 
     from app.models import RenderJob
+    # thumbnail_designer imports cv2 at module level, but this test stubs
+    # its only used function (generate_genre_thumbnail) and never touches
+    # cv2 — stub the module so the import works where opencv is absent (CI).
+    import sys
+    from unittest.mock import MagicMock
+    sys.modules.setdefault("cv2", MagicMock())
     from app.services import scene_analysis, thumbnail_designer, viral_bgm
     from app.services import viral_remix as vr
 
