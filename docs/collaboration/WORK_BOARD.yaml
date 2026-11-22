@@ -13752,7 +13752,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: CLAIMED
     owner: muse_13
     branch: muse13/task-val-005-fleet-reprobe
-    pr: null
+    pr: 1393
     contributors: []
     priority: P2
     created_at: '2026-11-22'
