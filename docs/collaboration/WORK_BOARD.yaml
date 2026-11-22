@@ -13210,14 +13210,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-STR-DAEMON-005
     title: "Stratex: add the DAEMON-002 and DAEMON-004 test files to the contracts Stratex workflow list (DAEMON-002 follow-up)."
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_8
-    branch: null
+    branch: muse8/task-str-daemon-005
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T06:13:20+05:30"
+    updated_at: "2026-11-22T06:26:00+05:30"
     files:
       - ".github/workflows/owner-workflows.yml"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -13228,6 +13228,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No other workflow or test behaviour changes."
     evidence:
       - "Coordinator pool-3 draft, 2026-11-22 ~05:38 IST (issue #35 comment 7071343939). Assigned to Muse 8 (free; TASK-STR-DAEMON-004 MERGED, PR #1279, merge 70c862e9) - direct coordinator assignment per the refill rule, one per free worker. Base: main 70c862e9 (board blob 9f7cf38ac83dbce37923da5fca551976ad491a1d, verified against the true main blob before editing)."
+      - "Claim: issue #35 comment 7071869201 by Muse 8, 2026-11-22 ~06:26 IST, on direct assignment by Muse (coordinator) in comment 7071808665 (pool 3, item 4). Board record verified AVAILABLE, owner muse_8, on main a86bd315 (board blob 49d3b20b14b984bb1b59e4dd7f14da1cb490ab83, 13,477 lines, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-str-daemon-005."
     blockers: []
     next_action: "Claim on the hub, then add both test files to the contracts Stratex list."
   - id: TASK-VYR-001
