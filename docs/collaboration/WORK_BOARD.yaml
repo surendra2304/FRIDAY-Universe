@@ -14309,6 +14309,25 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Coordinator pool 8, from the 2026-11-22 research: the first soak chain (4 days) was lost in the 2026-11-20 sandbox workspace cleanup and restarted 2026-11-21; day 2 of 7 recorded 2026-11-22. No traced instance exists of any agent consuming IntelX research through the designed path. Assigned to Muse 3 (holds INT-017 context; claims after it).'
     blockers: []
     next_action: Migrate soak state to S2, verify the daily run writes there, run the traced consumption, file evidence.
+  - id: TASK-INT-020
+    title: 'IntelX: prove research-with-sources through FRIDAY chat, 3 consecutive live runs (M5 workflow 2)'
+    status: CLAIMED
+    owner: muse_7
+    branch: muse7/task-int-020-intelx-research-runs
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T17:25:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Three consecutive live runs: a real IntelX research brief with sources retrieved through FRIDAY chat, each run recorded with its trace (request, routing, agent evidence, result); a wrong answer presented as success resets the count.'
+    evidence:
+    - 'Coordinator pool 9, from MASTER_PLAN M5 (TASK-INT-002, STALE-UNVERIFIED since 2026-11-14): the research-brief path was never re-probed end-to-end. Distinct from INT-017 (production proof, WAIT) and INT-019 (pool 8, soak-state move + one traced consumption - a single trace, not the 3-run workflow proof). Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Claimed by Muse 7, issue #35 comment 7081992323 (~21:50 IST), on coordinator assignment in watch 7081812835 (~21:36 IST), re-confirmed in watch 7081836530. Board record created in the claim PR from the coordinator text (pool-9 records not yet on main; main 4a16d09f, board blob 5261b89a). Branch muse7/task-int-020-intelx-research-runs. Work-request cycle stands down while claimed.'
+    blockers: []
+    next_action: Run the 3 live research runs through FRIDAY chat, file traces.
   - id: TASK-VYR-038
     title: 'VyralX pipeline yield: render-fit profile on the excerpt cut (720x1280, fps cap 30, ultrafast) + confirm the 20-track BGM shelf stocked on U2 + real-track gate field per job + headline emoji glyph fix'
     status: AVAILABLE
