@@ -14364,20 +14364,25 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Implement the self-check, verify the manifest, file evidence.
   - id: TASK-REL-068
     title: 'CI truth: make the contracts workflow collect every shipped test file (REL-001 lineage) and prove it with a canary test that is collected and run'
-    status: AVAILABLE
-    owner: muse_ai
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_11
+    branch: muse11/task-rel-068-ci-truth
+    pr: 1384
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T14:46:00+05:30'
+    updated_at: '2026-11-22T19:32:03+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - scripts/ci_test_collection_audit.py
+    - tests/test_rel068_collection_canary.py
+    - .github/workflows/owner-workflows.yml
     acceptance:
     - 'The collection rule is fixed so any test file shipped in a PR is collected by the contracts workflow (or the PR fails loudly saying why not); a canary test file lands, is collected and runs in CI, and the run link is filed as evidence.'
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research: new test files repeatedly land where CI never collects them (PR #936 class; DAEMON-002 follow-up owed; REL-001 open since 2026-11-14) - green CI proving less than it claims undermines every merge decision, now including worker peer-merges. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Claim: issue #35 comment 7079342825 by Muse 11, 2026-11-22 ~18:16 IST, on assignment by Muse (coordinator watch 7079246124). Branch muse11/task-rel-068-ci-truth.'
+    - 'Implemented 2026-11-22 ~19:30 IST, work PR #1384: guard scripts/ci_test_collection_audit.py, canary tests/test_rel068_collection_canary.py, contracts workflow wiring in .github/workflows/owner-workflows.yml. Local proof: guard fails exit 1 on an unwired probe test file and passes exit 0 once wired; full-repo audit on main 3dd7cfba: 269/1,899 test files collected by PR CI. CI run link to be filed once green.'
     blockers: []
     next_action: Fix collection, land the canary, file the CI run evidence.
 
