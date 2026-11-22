@@ -149,7 +149,9 @@ class ServiceRegistry:
                 api_key=intelx_key,
                 enabled=True,
                 required=False,
-                health_path=os.getenv("FRIDAY_INTELX_HEALTH_PATH", "/api/v1/healthz"),
+                # TASK-REL-067: fleet reads IntelX's contract /health, not
+                # the liveness-only /healthz (200/"ok" per INT-012).
+                health_path=os.getenv("FRIDAY_INTELX_HEALTH_PATH", "/api/v1/health"),
                 timeout_sec=4.0,
             ),
             "futuris": ServiceConfig(
