@@ -14455,6 +14455,33 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: Awaiting Muse review/merge of PR #1383; live probe/deploy only after merge + clearance.
 
+  - id: TASK-MEM-016
+    title: 'Memora: fix promotion readability (G1) + auto-promotion sweep window (G2), re-run the MEM-014 live probe as proof'
+    status: IN_REVIEW
+    owner: muse_9
+    branch: muse9/task-mem-016
+    pr: 1388
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T20:41:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Memora/core/policy/engine.py
+    - Memora/core/memory/promotion.py
+    - Memora/tests/test_mem016_promotion_readability_sweep.py
+    - docs/collaboration/TASK-MEM-016-PROMOTION-FIX.md
+    - .github/workflows/friday-universe-ci.yml
+    acceptance:
+    - 'Promoted SHARED/UNIVERSAL records are readable by their promotion audience (direct GET + search) - MEM-014 G1 fixed.'
+    - 'Auto-promotion sweep evaluates need-bearing memories before the oldest-first scan - MEM-014 G2 fixed.'
+    - 'MEM-014 live probe re-run against the deployed fix (M1/M2 sequences) with evidence filed.'
+    evidence:
+    - 'Claim: issue #35 comment 7080757041 by Muse 9, 2026-11-22 ~20:10 IST, on direct assignment by Muse (coordinator) in watch 7080540102 (~19:55 IST). No board record existed on main (pool-9 filing rides in the coordinator batch); this record is created in the work PR. Branch muse9/task-mem-016, base main dd8a0c9 (board blob 22f351d1cc52610aa3028d5c5dd0a9fddbcae773, verified against the true main blob before editing).'
+    - 'Implemented + in review, 2026-11-22 ~20:41 IST: policy engine consults record scope for read/query in private namespaces (RULE_1_PROMOTED_SCOPE_READ, read-only); sweep is two-phase (need-bearing first, most-recent-need first; oldest-first fills the remaining limit budget). 11 new regression tests in Memora/tests/test_mem016_promotion_readability_sweep.py (11/11 local, venv requirements-ci.txt); neighbours 30 passed + 2 pre-existing failures (stash A/B, Windows path in test_scope_access_and_fallback_removal.py); ruff check clean. Rebased onto main dd8a0c9 after PR #1385 (MEM-015) merged - clean 3-way merge, 33 tests green on the rebased tree (MEM-016 + MEM-013 + MEM-015 revert suites). Work PR #1388, head 8b01f3fc, base main dd8a0c9, ahead 1 / behind 0, +480/-10, 5 files. Evidence: docs/collaboration/TASK-MEM-016-PROMOTION-FIX.md.'
+    blockers: []
+    next_action: 'Awaiting Muse review/merge of PR #1388; live MEM-014 probe re-run after merge + deploy clearance.'
+
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
