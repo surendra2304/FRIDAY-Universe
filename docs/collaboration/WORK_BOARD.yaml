@@ -14916,7 +14916,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T01:54:39+05:30'
+    updated_at: '2026-11-23T02:45:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -14924,11 +14924,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
     - 'Coordinator pool 10, from the CTX-002 evidence doc (PR #1379, merged 2026-11-22): the proof was accepted with five gaps stated honestly (G1-G5). Distinct from CTX-002 itself (pool 8, merged). Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Assigned to Muse 13 in coordinator assignment round 7084017188; first close REL-074 owed post-merge step (full-repo zero-hit search) and cite it in the claim evidence.'
-    - 'Claimed by Muse 13 in issue #35 comment 7084194994; work PR #1416 (head 3311c81d, base main 81acda98): G1 /ready probe code + tests, G2 fresh-window re-file (1,780 lines, 1,612 fires counted), G3 live supervisor state, evidence doc docs/collaboration/TASK-CTX-003-CORTEX-EVIDENCE-GAPS.md.'
+    - 'Claimed by Muse 13 in issue #35 comment 7084194994; work PR #1416 (head 09418867, base main 81acda98, merged a8c6fea2 2026-11-23 02:05:23 IST by Surendra, CI 9/9 green): G1 /ready probe code + tests, G2 fresh-window re-file (1,780 lines, 1,612 fires counted), G3 live supervisor state, evidence doc docs/collaboration/TASK-CTX-003-CORTEX-EVIDENCE-GAPS.md.'
+    - 'G4 follow-up 02:36 self-check: restart clearance conditionally granted by Muse in 7085400525, re-probe completed 02:13:52 IST (7085500872, FAILED 401). Restart HELD: S2 checkout still muse10/task-frd-037-chat-live-runs @ db933cfc, on-disk probe is /health not /ready, so a restart alone cannot satisfy the grant verification. Pre-restart baseline: PID 584499 since Nov 22 12:16:38 IST, supervisor cycles 1725, last_unconfigured ai_universe, 0 Telegram deliveries. Deploy direction requested from Muse.'
+    - 'G5 follow-up 02:36 self-check: exact execution-risk check output filed in the evidence doc section 5 per Muse direction 7085400525; check not overridden, clone deleted unused, no tests run. Re-run route is CI via spare TASK-REL-080* drafted by Muse.'
     blockers:
-    - 'G4: Cortex restart needs Muse hub clearance (requested in claim 7084194994; no reply yet).'
-    - 'G5: tier-1 re-run owed - local pytest run blocked by an execution-risk check on the cloned content; needs an approved run route.'
-    next_action: 'G4 restart after merge + Muse clearance; G5 tier-1 re-run on an approved route.'
+    - 'G4: restart clearance granted (7085400525) but restart HELD: S2 checkout lacks the /ready code, so a restart alone loads /health. Awaiting Muse deploy direction (merge /ready into deployed FRD-037 branch or re-point checkout) plus restart.'
+    - 'G5: tier-1 re-run owed - local pytest run blocked by an execution-risk check on the cloned content; Muse direction 7085400525: do NOT override, file exact output (filed in evidence doc section 5). Approved run route is CI via spare TASK-REL-080*.'
+    next_action: 'Await Muse deploy direction for /ready on S2, then restart Cortex and file post-restart supervisor proof; G5 tier-1 re-run via CI per TASK-REL-080*.'
   - id: TASK-OBS-009
     title: 'Fleet: re-run the rollback drill for a bad deploy and file live evidence'
     status: CLAIMED
