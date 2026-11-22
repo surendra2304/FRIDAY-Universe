@@ -8,6 +8,9 @@ The two owner-locked promotion paths (2026-11-18):
   (C) POST /v1/promotion/need    — an agent records that it needs a memory;
       POST /v1/promotion/sweep   — the Memora service identity runs one
       auto-promotion pass over the recorded need evidence.
+  (D) POST /v1/promotion/revert  — the owning agent (or the Memora service
+      identity) reverts the latest promotion by exactly one rung, back to
+      the from_scope its audit row recorded (TASK-MEM-015).
 
 The caller acts as itself: the actor identity comes from the authenticated
 header, never from the request body. The sweep is restricted to the Memora
@@ -58,6 +61,32 @@ def promote_memory(
             memory_id=req.memory_id,
             target_scope=req.target_scope,
             shared_with=req.shared_with,
+            reason=req.reason or "",
+            tenant_id="default",
+        )
+    except PromotionPermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
+    except PromotionError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+class RevertRequest(BaseModel):
+    memory_id: str = Field(..., min_length=1, max_length=64)
+    reason: Optional[str] = Field(default=None, max_length=512)
+
+
+@router.post("/revert")
+def revert_promotion(
+    req: RevertRequest,
+    actor_name: str = Depends(get_actor_header),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    """(D) Revert the latest promotion of a memory you own, by one rung."""
+    try:
+        return MemoryPromotionService.revert_scope(
+            db,
+            actor_name=actor_name,
+            memory_id=req.memory_id,
             reason=req.reason or "",
             tenant_id="default",
         )

@@ -7,9 +7,11 @@ post-repair probe):
   connections are dropped (the classic "hanging pool" failure).
 * ``schema``     — probe the table manifest; repair runs the idempotent create-all.
 * ``redis``      — probe ``PING``; repair resets the client's connection pool.
-* ``ai_universe`` — probe a lightweight URL reachability check; repair re-installs the
-  deterministic fallback policy so deliberations keep working while the provider is down
-  (graceful degradation, not a fake success).
+* ``ai_universe`` — probe ``GET {base}/health`` on the Inference gateway
+  (explicit env URL, else the fleet default: Inference on Server 1,
+  port 8001); repair re-installs the deterministic fallback policy so
+  deliberations keep working while the provider is down (graceful
+  degradation, not a fake success).
 * ``agents``     — probe that the registry has every expected specialist; repair re-registers
   the built-in agents.
 
@@ -38,38 +40,69 @@ EXPECTED_AGENT_IDS = (
     "agent_competitive",
 )
 
+# Fleet default for the Inference gateway (TASK-CTX-002): Inference answers
+# on port 8001 on Server 1 (10.0.0.121) — the verified production layout
+# (AGENTS.md "Verified Production Deployment"). Cortex runs on Server 2 and
+# reaches Server 1 over the private network, so the probe checks Inference
+# itself, not the public Caddy/DuckDNS ingress — a failure there would
+# misreport a healthy Inference as down. An explicit env URL always wins.
+FLEET_INFERENCE_BASE_URL = "http://10.0.0.121:8001"
+
+# The loop ticks every 30s; a probe that hangs must never wedge it. Matches
+# the timeouts of the sibling HTTP clients (adapter, notifier: 5.0s).
+PROBE_TIMEOUT_SECONDS = 5.0
+
 
 async def probe_ai_universe() -> ProbeResult:
-    """Non-blocking DNS and reachability check for the AI Universe backend.
+    """Real HTTP health check for the Inference gateway (TASK-CTX-002).
 
-    Tri-state (TASK-COR-014): when neither ``INFERENCE_BASE_URL`` nor
-    ``AI_UNIVERSE_BASE_URL`` is set — the production state — the provider is
-    *unconfigured*, not down, and the probe says so. Returning False there
-    made the supervisor burn its repair budget and escalate an absent
-    provider every cycle (the 2026-11-17→19 Telegram spam: 247 sends).
-    A configured-but-unparseable URL is likewise UNCONFIGURED (there is no
-    host to probe); a configured host that fails DNS resolution is
-    UNHEALTHY, exactly as before.
+    The old probe only resolved the configured host's DNS — and with
+    ``INFERENCE_BASE_URL`` / ``AI_UNIVERSE_BASE_URL`` both unset in
+    production it observed nothing at all (UNCONFIGURED every cycle:
+    suppressed noise, not health). It now performs ``GET {base}/health``
+    and reports HEALTHY only on HTTP 200 from a gateway that says it is
+    healthy, so a down or degraded Inference is observed truthfully and
+    the supervisor's repair/escalation path means something.
+
+    Base URL precedence: ``INFERENCE_BASE_URL`` > ``AI_UNIVERSE_BASE_URL``
+    (legacy migration fallback) > the fleet default above. Tri-state
+    (TASK-COR-014) is kept: a set-but-unparseable URL (no host) is
+    UNCONFIGURED — there is nothing to probe; anything else that cannot
+    be verified healthy is UNHEALTHY, never a silent pass.
     """
-    import asyncio
     import urllib.parse
+
+    import httpx
 
     url = (
         os.getenv("INFERENCE_BASE_URL", "")
         or os.getenv("AI_UNIVERSE_BASE_URL", "")  # legacy migration fallback
+        or FLEET_INFERENCE_BASE_URL
     ).rstrip("/")
-    if not url:
-        return ProbeResult.UNCONFIGURED
-
     host = urllib.parse.urlparse(url).hostname
     if not host:
         return ProbeResult.UNCONFIGURED
     try:
-        loop = asyncio.get_running_loop()
-        await loop.getaddrinfo(host, None)
-        return ProbeResult.HEALTHY
-    except OSError:
+        # trust_env=False, mirroring EscalationNotifier: the probe target is
+        # a configured/fleet endpoint — ambient HTTP(S)_PROXY variables must
+        # not intercept or break it.
+        async with httpx.AsyncClient(timeout=PROBE_TIMEOUT_SECONDS, trust_env=False) as client:
+            response = await client.get(f"{url}/health")
+    except Exception:
+        # Any transport failure (DNS, connect, timeout) means the gateway
+        # cannot be verified healthy. The registry treats a raising probe
+        # the same way; returning UNHEALTHY here keeps it explicit.
         return ProbeResult.UNHEALTHY
+    if response.status_code != 200:
+        return ProbeResult.UNHEALTHY
+    try:
+        body = response.json()
+    except ValueError:
+        # 200 with a non-JSON body: the process answers; liveness only.
+        return ProbeResult.HEALTHY
+    if isinstance(body, dict) and "status" in body:
+        return ProbeResult.HEALTHY if body["status"] == "healthy" else ProbeResult.UNHEALTHY
+    return ProbeResult.HEALTHY
 
 
 def build_supervisor(registry: Any, max_collaboration_rounds: int = 3) -> SelfHealingSupervisor:
@@ -132,11 +165,12 @@ def build_supervisor(registry: Any, max_collaboration_rounds: int = 3) -> SelfHe
     async def repair_ai_universe() -> bool:
         """Degrade gracefully: the deterministic fallback keeps deliberations working.
 
-        Verification note (TASK-COR-014): with no provider configured the probe reports
-        UNCONFIGURED, so the supervisor never reaches this repair for an absent provider —
-        it records a standing configuration notice instead of escalating. This repair runs
-        only for a configured-but-unhealthy provider, and it still never claims success:
-        the fallback is graceful degradation, not a repaired provider.
+        Verification note (TASK-COR-014, updated TASK-CTX-002): the probe
+        reports UNCONFIGURED only for an unparseable URL now — with no env
+        URL set it probes the fleet-default Inference gateway instead — so
+        this repair runs for a genuinely unreachable provider, never for an
+        absent configuration. It still never claims success: the fallback is
+        graceful degradation, not a repaired provider.
         """
         from cortex_api.friday_router import _get_orchestrator
 

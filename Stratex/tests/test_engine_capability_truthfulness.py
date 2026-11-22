@@ -44,9 +44,9 @@ def _hb(tmp_path, monkeypatch, **overrides):
         "last_strategy_evaluation": datetime.datetime.utcnow().isoformat() + "Z",
     }
     hb.update(overrides)
-    f = tmp_path / "testnet_heartbeat.json"
+    f = tmp_path / "heartbeat.json"
     f.write_text(json.dumps(hb))
-    monkeypatch.setenv("TESTNET_HEARTBEAT_FILE", str(f))
+    monkeypatch.setenv("STRATEX_HEARTBEAT_FILE", str(f))
     # The paper runner is a separate process and would mask assertions here.
     monkeypatch.setattr(
         paper_runner_supervisor,

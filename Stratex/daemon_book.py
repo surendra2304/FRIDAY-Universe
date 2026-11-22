@@ -71,6 +71,19 @@ def _state_candidates(filename: str, env_var: str) -> list[str]:
     return candidates
 
 
+def daemon_heartbeat_candidates() -> list[str]:
+    """Candidate paths for state/daemon_heartbeat.json, in priority order.
+
+    TASK-REL-071: the dashboard and the detailed-health feed pillar both
+    resolve the daemon heartbeat through this one convention (env
+    STRATEX_DAEMON_HEARTBEAT_FILE, then cwd/state, then this module's
+    state/), so the writer in autonomy/run_daemon.py and every reader
+    always agree on where the live heartbeat lives. The retired
+    testnet_heartbeat.json is not a candidate here.
+    """
+    return _state_candidates("daemon_heartbeat.json", "STRATEX_DAEMON_HEARTBEAT_FILE")
+
+
 def read_daemon_heartbeat(
     max_age_seconds: int = HEARTBEAT_MAX_AGE_SECONDS,
 ) -> tuple[dict[str, Any], float] | None:

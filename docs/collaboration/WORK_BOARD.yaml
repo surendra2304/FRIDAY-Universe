@@ -14202,22 +14202,24 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Implement receipts + deadline classes; live-probe both prompt classes; file the numbers.
   - id: TASK-CTX-002
     title: 'Cortex: fix or remove the dead ai-universe health probe (INFERENCE_BASE_URL / AI_UNIVERSE_BASE_URL unset in production) + file 48h fires-vs-messages evidence'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_9
-    branch: null
-    pr: null
+    branch: muse9/task-ctx-002
+    pr: 1379
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T14:46:00+05:30'
+    updated_at: '2026-11-22T18:44:56+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-CTX-002-DEAD-PROBE.md
     acceptance:
     - 'probe_ai_universe either checks the real fleet endpoints (Inference answers on 8001) and returns truthful results, or is removed; 48h of live logs show fires vs Telegram messages at the designed ratio with no suppressed-noise streaks; evidence filed.'
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research (absorbs pool-7 item x): the PR #1054 dedupe fix is proven live (71 fires, 1 message) but the underlying probe is always False because its env URLs are unset in production - suppressed noise, not health. Assigned to Muse 9 (Cortex context from ORCH-011/REL-004).'
+    - 'Implemented + in review, 2026-11-22 ~18:45 IST: probe now GETs {base}/health (precedence INFERENCE_BASE_URL > AI_UNIVERSE_BASE_URL > fleet default http://10.0.0.121:8001, Inference Server 1, 5s timeout, trust_env False); tri-state kept. 48h live evidence (Cortex.service journal Nov 20 18:31 - Nov 22 ~18:00 IST, 1,858 lines): 5 ai_universe lines, all the standing-configuration notice, one per process start; 0 Telegram lines; ~5,760 fires derived from the 30s tick. Live target verified from Server 2: GET http://10.0.0.121:8001/health 200. Tests: 23/23 COR-014 + 2/2 F1.2 probe tests; 19 tier-1 failures pre-existing (identical set on base); ruff clean. Evidence: docs/collaboration/TASK-CTX-002-DEAD-PROBE.md. Work PR #1379, work commit 1a415fc7, base main c373615.'
     blockers: []
-    next_action: Fix or remove the probe; collect the 48h evidence; file it.
+    next_action: Awaiting Muse's review/merge of PR #1379.
   - id: TASK-STR-HLT-001
     title: 'Stratex /health capability text: remove the stale OANDA reference, state Binance Futures demo + Pepperstone-pending truthfully'
     status: IN_REVIEW
@@ -14293,22 +14295,23 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Verify or enable the loop with the cage, run one cycle, ship the blocked-agent tool, file evidence.
   - id: TASK-MEM-015
     title: 'Memora: persist the viking context layer to Oracle ADB or mark it explicitly ephemeral in API responses + promotion audit trail with undo'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_10
-    branch: null
-    pr: null
+    branch: muse10/task-mem-015-viking-persistence-audit
+    pr: 1385
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T14:46:00+05:30'
+    updated_at: '2026-11-22T19:58:40+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'No agent can mistake the viking layer for durable memory: it is either ADB-backed across restarts (proven by a restart write/read probe) or every response labels it ephemeral. Every promotion (agent-judged and auto) writes an audit record (who/what/when) reversible by one call; probe evidence filed.'
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research: repo docs record the viking:// layer is an in-process store, empty after restart - a silent data-loss path for every agent; the owner-designed promotion system (locked 2026-11-18) has no audit trail or undo. Assigned to Muse 10 (holds MEM-014; claims after it).'
+    - 'IMPLEMENTED 2026-11-22 (Muse 10, PR #1385): POST /v1/promotion/revert (one-call undo, audit-driven) + durability label on every /v1/context/* response; live ADB write/read probe passed (test file in context_snapshots row, node_count 27->29); 31 targeted tests passed, full suite 800 passed / 60 failed with identical 60 on pristine main (A/B, zero regressions); evidence doc docs/collaboration/TASK-MEM-015-VIKING-PERSISTENCE-AUDIT.md. Open: live restart probe (G1, needs Muse clearance), dual-copy revert (G2), namespace grants on revert (G3).'
     blockers: []
-    next_action: Implement persistence-or-labelling + the audit trail, probe across a restart, file evidence.
+    next_action: Muse review/merge; then live restart write/read probe with clearance (G1).
   - id: TASK-FUT-017
     title: 'Futuris: standing per-cycle accuracy scoring (every forecast scored when its horizon passes, rolling hit-rate on her status surface) + explicit fit-cost cap'
     status: IN_REVIEW
@@ -14362,20 +14365,25 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Implement the self-check, verify the manifest, file evidence.
   - id: TASK-REL-068
     title: 'CI truth: make the contracts workflow collect every shipped test file (REL-001 lineage) and prove it with a canary test that is collected and run'
-    status: AVAILABLE
-    owner: muse_ai
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_11
+    branch: muse11/task-rel-068-ci-truth
+    pr: 1384
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T14:46:00+05:30'
+    updated_at: '2026-11-22T19:32:03+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - scripts/ci_test_collection_audit.py
+    - tests/test_rel068_collection_canary.py
+    - .github/workflows/owner-workflows.yml
     acceptance:
     - 'The collection rule is fixed so any test file shipped in a PR is collected by the contracts workflow (or the PR fails loudly saying why not); a canary test file lands, is collected and runs in CI, and the run link is filed as evidence.'
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research: new test files repeatedly land where CI never collects them (PR #936 class; DAEMON-002 follow-up owed; REL-001 open since 2026-11-14) - green CI proving less than it claims undermines every merge decision, now including worker peer-merges. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Claim: issue #35 comment 7079342825 by Muse 11, 2026-11-22 ~18:16 IST, on assignment by Muse (coordinator watch 7079246124). Branch muse11/task-rel-068-ci-truth.'
+    - 'Implemented 2026-11-22 ~19:30 IST, work PR #1384: guard scripts/ci_test_collection_audit.py, canary tests/test_rel068_collection_canary.py, contracts workflow wiring in .github/workflows/owner-workflows.yml. Local proof: guard fails exit 1 on an unwired probe test file and passes exit 0 once wired; full-repo audit on main 3dd7cfba: 269/1,899 test files collected by PR CI. CI run link to be filed once green.'
     blockers: []
     next_action: Fix collection, land the canary, file the CI run evidence.
 
@@ -14420,6 +14428,37 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Coordinator, from the 2026-11-22 worker-system research: the fleet-layout/monorepo step-6 exit-134 SIGABRT failed on board-only diffs at least 6 times (PRs #1186, #1240, #1263, #1330, #1348, #1350) and went green on re-run every time - each occurrence costs a full diagnosis cycle across the team. Unassigned - the coordinator watch assigns it to the next free worker.'
     blockers: []
     next_action: Reproduce from CI logs, identify the root cause, fix or isolate it, file the evidence.
+
+  - id: TASK-REL-071
+    title: 'Stratex health path: retire the legacy testnet heartbeat + surface daemon evaluation age, live-probe the health path, file evidence'
+    status: IN_REVIEW
+    owner: muse_2
+    branch: muse2/task-rel-071-stratex-health-path
+    pr: 1383
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T19:30:00+05:30'
+    files:
+    - Stratex/dashboard.py
+    - Stratex/api/health.py
+    - Stratex/api/friday_supervision.py
+    - Stratex/daemon_book.py
+    - Stratex/tests/test_rel_071_stratex_health_path.py
+    - Stratex/tests/test_daemon_heartbeat_health.py
+    - Stratex/tests/test_engine_capability_truthfulness.py
+    - Stratex/tests/test_render_deployment_and_supervisor.py
+    - Stratex/tests/test_critical_remediation.py
+    - .github/workflows/owner-workflows.yml
+    - docs/collaboration/TASK-REL-071-STRATEX-HEALTH-PATH.md
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Live Stratex /health and /api/v1/health/detailed read the daemon heartbeat (state/daemon_heartbeat.json), never the retired testnet heartbeat; the daemon evaluation age (seconds) is surfaced in /health, the feed pillar and the supervision payload; regression coverage runs in CI; evidence filed.'
+    evidence:
+    - 'Claim: issue #35 comment 7079835965 by Muse 2 before any editing. Base: main 3dd7cfba (board blob 2f13afe4aac127fb2f9ca6972a07506b884e0860, 14,462 lines, no TASK-REL-071 record - created in this PR). Assignment: coordinator watch comment 7079741096 (pool 9, P1, 2026-11-22 ~18:50 IST), direct follow-on to TASK-STR-HLT-001.'
+    - 'Implementation: PR #1383 (Muse 2, 2026-11-22). Work commit f823252f: daemon_book daemon_heartbeat_candidates; dashboard get_engine_health_data + snapshot + _health_payload (evaluation age surfaced); api/health feed pillar re-based on the daemon heartbeat; friday_supervision last_analysis_age_sec; strategy-metrics panel + strategy matrix heartbeat reads retired; new regression file Stratex/tests/test_rel_071_stratex_health_path.py added to the Owner Workflow Contracts Stratex list; fixtures in four test files updated (env var rename). Board record rides in the follow-up commit on this branch. Live probe/deploy owed after merge + clearance; /api/v1/health/detailed not probed live (X-API-Key required, no credentials touched).'
+    blockers: []
+    next_action: Awaiting Muse review/merge of PR #1383; live probe/deploy only after merge + clearance.
 
 task_id_warnings:
   - id: TASK-REL-061

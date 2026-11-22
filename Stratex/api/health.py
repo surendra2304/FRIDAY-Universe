@@ -133,13 +133,29 @@ def _measure_exchange_connectivity() -> tuple[dict, str]:
 
 
 def _measure_feed_freshness() -> tuple[dict, str]:
-    """Derives feed age from the engine heartbeat, the only real evidence on disk."""
-    hb_file = (
-        os.getenv("TESTNET_HEARTBEAT_FILE")
-        or ("testnet_heartbeat.json" if os.path.exists("testnet_heartbeat.json") else "heartbeat.json")
+    """Derives feed age from the daemon heartbeat, the only real evidence on disk.
+
+    TASK-REL-071: the retired testnet engine's heartbeat
+    (testnet_heartbeat.json, frozen 2026-11-14) is no longer read here.
+    The multi-venue daemon's state/daemon_heartbeat.json is the feed
+    evidence now: its last_strategy_evaluation is stamped at scan-cycle
+    boundaries where an evaluation — and therefore a market-data fetch —
+    just completed, so its age bounds feed staleness. The legacy
+    last_market_update / last_candle_close keys are still honoured when a
+    heartbeat file carries them.
+    """
+    from daemon_book import daemon_heartbeat_candidates
+
+    daemon_candidates = daemon_heartbeat_candidates()
+    hb_file = os.getenv("STRATEX_HEARTBEAT_FILE") or next(
+        (c for c in daemon_candidates if os.path.exists(c)), None
     )
+    if hb_file is None and os.path.exists("heartbeat.json"):
+        hb_file = "heartbeat.json"
+    if hb_file is None:
+        hb_file = daemon_candidates[0]
     if not os.path.exists(hb_file):
-        return {"feed_status": "UNAVAILABLE", "reason": "HEARTBEAT_FILE_MISSING", "heartbeat_file": hb_file}, "UNAVAILABLE"
+        return {"feed_status": "UNAVAILABLE", "reason": "HEARTBEAT_FILE_MISSING", "heartbeat_file": hb_file, "heartbeat_source": "daemon_heartbeat"}, "UNAVAILABLE"
     try:
         import json
         with open(hb_file, "r", encoding="utf-8") as fh:
@@ -147,10 +163,15 @@ def _measure_feed_freshness() -> tuple[dict, str]:
     except Exception as exc:
         return {"feed_status": "UNAVAILABLE", "reason": f"HEARTBEAT_UNREADABLE:{type(exc).__name__}"}, "UNAVAILABLE"
 
-    out: dict = {"feed_status": "UNVERIFIED", "heartbeat_file": hb_file}
+    out: dict = {"feed_status": "UNVERIFIED", "heartbeat_file": hb_file, "heartbeat_source": "daemon_heartbeat"}
+    try:
+        out["heartbeat_age_sec"] = round(time.time() - os.path.getmtime(hb_file), 1)
+    except OSError:
+        out["heartbeat_age_sec"] = None
     ages = []
     for src_key, out_key in (("last_market_update", "last_market_update_age_sec"),
-                             ("last_candle_close", "last_candle_close_age_sec")):
+                             ("last_candle_close", "last_candle_close_age_sec"),
+                             ("last_strategy_evaluation", "last_strategy_evaluation_age_sec")):
         raw = hb.get(src_key)
         if not raw:
             out[out_key] = None

@@ -30,29 +30,21 @@ from dashboard import (
 )
 
 
-def _stale_testnet_hb(tmp_path, monkeypatch):
-    """The production condition: a testnet heartbeat frozen on 2026-11-02."""
-    hb = {
-        "status": "STOPPED",
-        "worker_alive": False,
-        "binance_connected": True,
-        "websocket_connected": True,
-        "pid": os.getpid(),
-        "timestamp": "2026-11-02T06:19:25Z",
-        "strategies": ["bb_reversion", "supertrend"],
-        "timeframes": ["15m", "1h", "4h"],
-        "last_strategy_evaluation": "2026-11-02T06:15:22Z",
-    }
-    f = tmp_path / "testnet_heartbeat.json"
-    f.write_text(json.dumps(hb))
-    monkeypatch.setenv("TESTNET_HEARTBEAT_FILE", str(f))
+def _futures_no_paper(monkeypatch):
+    """FUTURES mode with the paper runner stubbed stopped.
+
+    TASK-REL-071: the frozen testnet-heartbeat fixture this file used to
+    set up (_stale_testnet_hb) is gone — the health path no longer reads
+    testnet_heartbeat.json at all, so there is nothing to freeze. The
+    daemon-heartbeat fixture below is now the only heartbeat the tests
+    stage; this helper keeps just the mode + paper stubs the tests need.
+    """
     monkeypatch.setattr(
         paper_runner_supervisor,
         "get_status",
         lambda: {"paper_runner_status": "STOPPED", "alive": False},
     )
     monkeypatch.setattr(config, "TRADING_MODE", "FUTURES")
-    return f
 
 
 def _daemon_hb(tmp_path, monkeypatch, age_seconds=0, **overrides):
@@ -85,7 +77,7 @@ def _daemon_hb(tmp_path, monkeypatch, age_seconds=0, **overrides):
 
 class TestMultiVenueDaemonSnapshot:
     def test_live_daemon_makes_engine_online_with_its_real_state(self, tmp_path, monkeypatch):
-        _stale_testnet_hb(tmp_path, monkeypatch)
+        _futures_no_paper(monkeypatch)
         _daemon_hb(tmp_path, monkeypatch)
 
         data = get_engine_health_data()
@@ -110,7 +102,7 @@ class TestMultiVenueDaemonSnapshot:
         assert payload["engine_source"] == "multi_venue_daemon"
 
     def test_stale_daemon_heartbeat_does_not_resurrect_the_engine(self, tmp_path, monkeypatch):
-        _stale_testnet_hb(tmp_path, monkeypatch)
+        _futures_no_paper(monkeypatch)
         _daemon_hb(tmp_path, monkeypatch, age_seconds=3600)
 
         data = get_engine_health_data()
@@ -120,7 +112,7 @@ class TestMultiVenueDaemonSnapshot:
         assert data.get("engine_source") is None
 
     def test_dead_daemon_pid_does_not_count_as_alive(self, tmp_path, monkeypatch):
-        _stale_testnet_hb(tmp_path, monkeypatch)
+        _futures_no_paper(monkeypatch)
         # A pid above the Linux pid_max ceiling cannot be a live process.
         _daemon_hb(tmp_path, monkeypatch, pid=99_999_999)
 
@@ -130,7 +122,7 @@ class TestMultiVenueDaemonSnapshot:
         assert data.get("engine_source") is None
 
     def test_stopped_daemon_heartbeat_is_not_a_live_engine(self, tmp_path, monkeypatch):
-        _stale_testnet_hb(tmp_path, monkeypatch)
+        _futures_no_paper(monkeypatch)
         _daemon_hb(tmp_path, monkeypatch, status="STOPPED")
 
         data = get_engine_health_data()
@@ -138,8 +130,11 @@ class TestMultiVenueDaemonSnapshot:
         assert data["healthy"] is False
         assert data.get("engine_source") is None
 
-    def test_missing_testnet_heartbeat_still_consults_the_daemon(self, tmp_path, monkeypatch):
-        monkeypatch.setenv("TESTNET_HEARTBEAT_FILE", str(tmp_path / "absent.json"))
+    def test_missing_primary_heartbeat_still_consults_the_daemon(self, tmp_path, monkeypatch):
+        # TASK-REL-071: the explicit override points at a missing file, so
+        # the top-level heartbeat read is empty — the gated daemon snapshot
+        # must still rescue the engine.
+        monkeypatch.setenv("STRATEX_HEARTBEAT_FILE", str(tmp_path / "absent.json"))
         monkeypatch.setattr(
             paper_runner_supervisor,
             "get_status",
@@ -158,7 +153,7 @@ class TestMultiVenueDaemonSnapshot:
         # has been deleted: a fresh cloud_portfolio_state.json must NOT
         # make the engine healthy. That file belongs to a retired engine
         # and its figures must never be served as the live book.
-        _stale_testnet_hb(tmp_path, monkeypatch)
+        _futures_no_paper(monkeypatch)
         monkeypatch.setenv("STRATEX_DAEMON_HEARTBEAT_FILE", str(tmp_path / "absent_daemon.json"))
         state_dir = tmp_path / "state"
         state_dir.mkdir()
