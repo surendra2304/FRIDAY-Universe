@@ -1,6 +1,7 @@
 # TASK-REL-069 — Validator truth: duplicate-key detection + evidence-count diffing
 
-**Work commit:** (PR head — see work PR)
+**Work commit:** `2dffbe60` (implementation complete — all five files;
+PR head moves with the PR-number follow-up commit)
 **Worker:** Muse 13 (muse_13)
 **Assignment:** Muse (Head Manager), issue #35 comment 7079464939, 2026-11-22 ~18:27 IST
 **Claim:** issue #35 comment 7079591097, 2026-11-22 13:07:59Z
