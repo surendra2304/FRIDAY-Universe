@@ -1060,7 +1060,7 @@ def _multi_venue_daemon_snapshot(max_age_seconds: int = 600):
 
     Stratex-Daemon.service (autonomy/run_daemon.py) is the component that
     actually evaluates strategies and executes in FUTURES mode: Binance
-    Futures testnet + OANDA practice. It rewrites state/daemon_heartbeat.json
+    Futures demo (Pepperstone pending-approval). It rewrites state/daemon_heartbeat.json
     every scan cycle, so a fresh heartbeat with status RUNNING and a live pid
     is direct evidence of a working engine (TASK-REL-003).
 
@@ -1095,7 +1095,7 @@ def _multi_venue_daemon_snapshot(max_age_seconds: int = 600):
         "daemon_updated_at": hb.get("timestamp"),
         "open_positions": hb.get("open_positions"),
         "unrealized_pnl": unrealized,
-        "environment": "multi_venue_testnet_practice",
+        "environment": "binance_futures_demo",
         "daemon_last_evaluation": hb.get("last_strategy_evaluation"),
         "daemon_scan_count": hb.get("scan_count"),
     }
@@ -1107,8 +1107,8 @@ def _daemon_capability_warnings(snapshot):
         return []
     if snapshot.get("engine_source") == "multi_venue_daemon":
         return [
-            "DEMO_ENVIRONMENT: execution venues are Binance Futures testnet "
-            "and OANDA practice"
+            "DEMO_ENVIRONMENT: execution venue is Binance Futures demo; "
+            "Pepperstone pending-approval"
         ]
     return ["DEMO_ENVIRONMENT: execution venue is ctrader demo"]
 

@@ -4,7 +4,7 @@ autonomy/run_daemon.py — Autonomous 24/7 Stratex Production Daemon Runner.
 Orchestrates:
 1. Real-time bidirectional Telegram polling listener with Gemini AI chat.
 2. 24/7 Multi-asset multi-timeframe quantitative scanning loop with strategy execution.
-3. Execution on Binance Futures (Crypto) & OANDA (Forex/Indices/Commodities).
+3. Execution on Binance Futures demo (Crypto); Pepperstone pending-approval.
 """
 from __future__ import annotations
 
@@ -4058,7 +4058,7 @@ def _startup_pair_messages(risk) -> tuple:
     """
     online = (
         "🚀 <b>Stratex Online — Multi-Venue</b>\n\n"
-        "• Venues: Binance Futures (Crypto) + OANDA (Forex/Indices/Commodities)\n"
+        "• Venues: Binance Futures demo (Crypto); Pepperstone pending-approval\n"
         "• Balance: Real-time from venues\n"
         "• SL/TP: Native on orders\n"
         "• Strategies: 6 active (Trend, Mean Reversion, VWAP, Scalping, Pairs, ADX)\n"
