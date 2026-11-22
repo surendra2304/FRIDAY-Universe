@@ -25,7 +25,11 @@ from futuris.core.enums import EvidenceClass
 from futuris.infra.config import settings
 from futuris.infra.events import event_emitter
 from futuris.infra.logging import get_logger
-from futuris.infra.metrics import DEGRADED_SUBSYSTEMS, SELF_HEALING_ACTIONS_TOTAL
+from futuris.infra.metrics import (
+    DEGRADED_SUBSYSTEMS,
+    FORECAST_ROLLING_HIT_RATE,
+    SELF_HEALING_ACTIONS_TOTAL,
+)
 from futuris.infra.resilience import CircuitState, peer_circuits
 from futuris.storage.db import async_session_factory, engine, ensure_storage_directories
 
@@ -313,6 +317,81 @@ class SelfHealingSupervisor:
             data={"route_count": len(routes)},
         )
 
+    async def check_accuracy(self) -> SubsystemCheck:
+        """Report the rolling forecast hit-rate (TASK-FUT-017).
+
+        The standing per-cycle scoring this task adds scores every
+        matured forecast into ``forecast_scores``; this check reads the
+        rolling 30-day interval hit-rate back off that store (bounded
+        to the newest 1000 rows) and puts it on the status surface,
+        next to the other subsystem checks. Thin data is ``unknown``
+        with the count attached -- a forecast record too small to judge
+        is not a failure, and a hit-rate is never reported from it. A
+        database that cannot be read is ``unknown`` too, for the same
+        reason the other storage checks are: the accuracy picture is
+        missing, not measured-bad. The last cycle's scoring summary
+        rides along when the scheduler is running in this process.
+        """
+        from futuris.services.forecast_tracker import (
+            ROLLING_HIT_RATE_WINDOW_DAYS,
+            ForecastTracker,
+        )
+
+        data: dict[str, Any] = {"window_days": ROLLING_HIT_RATE_WINDOW_DAYS}
+        try:
+            from futuris.api import app as app_module
+
+            scheduler = getattr(app_module, "_running_scheduler", None)
+            if scheduler is not None and getattr(
+                scheduler, "last_cycle_scoring", None
+            ):
+                data["last_cycle_scoring"] = scheduler.last_cycle_scoring
+        except Exception:
+            pass
+        try:
+            # Resolved at call time (not imported at module load): the
+            # test suite swaps the process-wide factory per test, and a
+            # stale import-time binding would read the wrong database.
+            from futuris.storage import db as storage_db
+
+            async with storage_db.async_session_factory() as session:
+                tracker = ForecastTracker(session)
+                hit_rate = await tracker.rolling_hit_rate()
+        except Exception as exc:
+            return SubsystemCheck(
+                name="forecast_accuracy",
+                state="unknown",
+                detail=f"could not read scored forecasts: {type(exc).__name__}: {exc}",
+                evidence_class=EvidenceClass.LIVE.value,
+                data=data,
+            )
+        data.update(hit_rate)
+        if hit_rate["status"] != "measured" or hit_rate["hit_rate"] is None:
+            return SubsystemCheck(
+                name="forecast_accuracy",
+                state="unknown",
+                detail=(
+                    f"insufficient_data: {hit_rate['n_in_window']} scored in the "
+                    f"last {hit_rate['window_days']} days "
+                    f"(need {hit_rate['min_samples']}); "
+                    f"{hit_rate['n_scored_total']} scored in total"
+                ),
+                evidence_class=EvidenceClass.LIVE.value,
+                data=data,
+            )
+        FORECAST_ROLLING_HIT_RATE.set(hit_rate["hit_rate"])
+        return SubsystemCheck(
+            name="forecast_accuracy",
+            state="ok",
+            detail=(
+                f"rolling {hit_rate['window_days']}d hit-rate "
+                f"{hit_rate['hit_rate']:.3f} over {hit_rate['n_in_window']} scored "
+                f"forecasts ({hit_rate['n_scored_total']} scored in total)"
+            ),
+            evidence_class=EvidenceClass.LIVE.value,
+            data=data,
+        )
+
     # ── healing ────────────────────────────────────────────────────────────
 
     async def status_tables_ok(self) -> list[SubsystemCheck]:
@@ -459,6 +538,10 @@ class SelfHealingSupervisor:
         await run_timed("database", self.check_database())
         await run_timed("schema", self.check_tables())
         await run_timed("evidence_integrity", self.check_integrity())
+        # TASK-FUT-017: the rolling hit-rate is the accuracy half of the
+        # status surface; it reads the bounded tracker store under the
+        # same budget as every other check.
+        await run_timed("forecast_accuracy", self.check_accuracy())
         # The scheduler and peer-circuit checks are in-memory and fast.
         checks.append(self.check_scheduler())
         checks.append(self.check_peers())

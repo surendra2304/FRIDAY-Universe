@@ -35,6 +35,7 @@ from futuris.infra.cpu import (
 )
 from futuris.infra.logging import get_logger
 from futuris.models.base import ModelPrediction
+from futuris.models.fit_cost import final_fit_within_budget, resolve_fit_memory_budget
 from futuris.models.registry import model_registry
 from futuris.models.routing import ModelRouter, SeriesMetadata
 from futuris.models.selection import select_best_adapter
@@ -82,6 +83,9 @@ class ModelingInput:
     horizon: timedelta
     capacity_threshold: float
     model_budget_seconds: float | None = None
+    # TASK-FUT-017: pre-fit memory cap for this forecast's fits (MB).
+    # None resolves to FUTURIS_FIT_MEMORY_BUDGET_MB inside selection.
+    memory_budget_mb: float | None = None
 
 
 @dataclass
@@ -278,11 +282,40 @@ class ModelingStage:
             step_minutes=step_minutes,
             budget_seconds=inp.model_budget_seconds,
             cpu_saturated=cpu_saturated,
+            memory_budget_mb=inp.memory_budget_mb,
         )
         best_adapter = selection.adapter
         best_score = selection.score
         is_fallback = selection.is_fallback
 
+        # TASK-FUT-017: the winner's full-data refit is a second fit, on
+        # more rows than the backtest train split -- check its estimate
+        # against the same budget before starting it. When it does not
+        # fit, refit the naive baseline instead (its incremental memory
+        # over the already-loaded frame is about one series copy) and
+        # say so in the metadata and the model version: a capped
+        # forecast must never look like the winner's forecast.
+        fit_budget_mb = resolve_fit_memory_budget(inp.memory_budget_mb)
+        final_fit_capped = False
+        final_fit_estimate_mb: float | None = None
+        within_budget, final_fit_estimate_mb = final_fit_within_budget(
+            best_adapter.name,
+            len(y_series),
+            x_df.shape[1],
+            fit_budget_mb,
+            n_exog=x_df.shape[1],
+        )
+        if not within_budget:
+            final_fit_capped = True
+            logger.warning(
+                "modeling_final_fit_cost_capped",
+                adapter=best_adapter.name,
+                estimate_mb=final_fit_estimate_mb,
+                budget_mb=fit_budget_mb,
+                fallback_adapter="naive",
+            )
+            best_adapter = model_registry.get_adapter("naive")
+            best_score = selection.score  # backtest score stays the winner's
         best_adapter.fit(x_df, y_series, as_of=inp.as_of)
         final_prediction = best_adapter.predict(
             horizon=horizon_steps,
@@ -293,7 +326,16 @@ class ModelingStage:
         model_version_str = model_registry.get_version_string(best_adapter)
         if is_fallback:
             model_version_str = f"{model_version_str}:fallback_after_candidate_failures"
+        if final_fit_capped:
+            model_version_str = f"{model_version_str}:final_fit_cost_capped"
 
+        selection_metadata = selection.metadata()
+        # TASK-FUT-017: the final-refit cap decision rides with the
+        # selection metadata into Forecast.model_metadata.
+        selection_metadata["final_fit_estimate_mb"] = final_fit_estimate_mb
+        selection_metadata["final_fit_cost_capped"] = final_fit_capped
+        if final_fit_capped:
+            selection_metadata["final_fit_fallback_adapter"] = "naive"
         return ModelingOutput(
             prediction=final_prediction,
             model_version=model_version_str,
@@ -304,7 +346,7 @@ class ModelingStage:
             horizon=inp.horizon,
             as_of=inp.as_of,
             target=inp.target,
-            selection_metadata=selection.metadata(),
+            selection_metadata=selection_metadata,
         )
 
 

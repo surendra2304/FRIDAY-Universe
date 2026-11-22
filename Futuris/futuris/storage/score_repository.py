@@ -90,3 +90,23 @@ class ForecastScoreRepository:
         stmt = stmt.order_by(ForecastScoreModel.scored_at.asc()).limit(limit)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def list_recent_scores(self, *, limit: int = 1000) -> list[ForecastScoreModel]:
+        """Newest score rows first, bounded (TASK-FUT-017 status surface).
+
+        The rolling hit-rate reads the newest slice of the store, never
+        the whole table: the status endpoint is polled constantly and
+        must not scan a table that grows with every scored forecast.
+        """
+        stmt = (
+            select(ForecastScoreModel)
+            .order_by(ForecastScoreModel.scored_at.desc())
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def count_scores(self) -> int:
+        """Total score rows in the store."""
+        stmt = select(func.count(ForecastScoreModel.score_id))
+        return int((await self.session.execute(stmt)).scalar_one())

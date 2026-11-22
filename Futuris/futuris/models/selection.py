@@ -32,6 +32,7 @@ from futuris.infra.logging import get_logger
 from futuris.infra.metrics import MODEL_SELECTION_DEGRADED_TOTAL
 from futuris.models.adapters import STATSFORECAST_AVAILABLE, StatsForecastUnavailableError
 from futuris.models.base import ModelAdapter
+from futuris.models.fit_cost import resolve_fit_memory_budget, shortlist_candidates
 from futuris.models.registry import model_registry
 
 logger = get_logger("futuris.models.selection")
@@ -57,6 +58,11 @@ class SelectionOutcome:
     degraded_reason: str | None = None
     elapsed_seconds: float = 0.0
     is_fallback: bool = False
+    # TASK-FUT-017: the pre-fit memory estimate + shortlist decision, so a
+    # capped selection says what it cost and what it dropped.
+    fit_cost_estimates_mb: dict[str, float] = field(default_factory=dict)
+    fit_cost_budget_mb: float | None = None
+    fit_cost_capped: bool = False
 
     def metadata(self) -> dict[str, object]:
         """Provenance fragment to merge into ``Forecast.model_metadata``."""
@@ -66,6 +72,10 @@ class SelectionOutcome:
             "selection_degraded": self.degraded,
             "selection_elapsed_seconds": round(self.elapsed_seconds, 3),
         }
+        if self.fit_cost_budget_mb is not None:
+            meta["fit_memory_budget_mb"] = self.fit_cost_budget_mb
+            meta["fit_memory_estimates_mb"] = dict(self.fit_cost_estimates_mb)
+            meta["fit_cost_capped"] = self.fit_cost_capped
         if self.skipped:
             meta["candidates_skipped"] = sorted(self.skipped)
             meta["degraded_reason"] = self.degraded_reason
@@ -87,11 +97,20 @@ def select_best_adapter(
     step_minutes: int,
     budget_seconds: float | None = None,
     cpu_saturated: bool = False,
+    memory_budget_mb: float | None = None,
 ) -> SelectionOutcome:
     """Backtest ``candidates`` and return the best adapter within the budget.
 
     Never returns ``None``: when every candidate fails, the naive baseline is
     used and the outcome says so.
+
+    TASK-FUT-017: ``memory_budget_mb`` is the pre-fit memory cap for this
+    selection (default: ``FUTURIS_FIT_MEMORY_BUDGET_MB``). Candidates are
+    shortlisted against it *before* any fit starts, so an expensive fit
+    that cannot be afforded is never started -- the 512M MemoryMax is the
+    backstop, not the control. Dropped candidates are recorded as skipped
+    with reason ``fit_cost_cap`` and the estimates ride in the outcome
+    metadata.
     """
     if not STATSFORECAST_AVAILABLE:
         # TASK-FUT-002: every candidate is a statsforecast adapter, so when
@@ -107,6 +126,30 @@ def select_best_adapter(
         )
     started = time.monotonic()
     deadline = None if budget_seconds is None else started + max(0.0, budget_seconds)
+    # TASK-FUT-017: shortlist against the fit-cost budget before any fit.
+    # Only AutoARIMA consumes exogenous regressors, so only its estimate
+    # counts the exogenous width; every other adapter fits the value
+    # series alone.
+    fit_budget_mb = resolve_fit_memory_budget(memory_budget_mb)
+    shortlist = shortlist_candidates(
+        list(candidates),
+        n_rows=len(y_train),
+        n_features=x_train.shape[1],
+        budget_mb=fit_budget_mb,
+        n_exog=x_train.shape[1],
+    )
+    candidates = shortlist.kept
+    skipped: list[str] = list(shortlist.dropped)
+    degraded_reason: str | None = "fit_cost_cap" if shortlist.dropped else None
+    if shortlist.dropped:
+        logger.warning(
+            "model_selection_fit_cost_capped",
+            reason="fit_cost_cap",
+            dropped=sorted(shortlist.dropped),
+            kept=shortlist.kept,
+            budget_mb=fit_budget_mb,
+            estimates_mb=shortlist.estimates_mb,
+        )
     # When the request cannot afford the full search, evaluate the cheap
     # candidates first so a tight deadline still yields a backtested choice
     # instead of one arbitrary expensive fit.
@@ -116,8 +159,6 @@ def select_best_adapter(
         ]
     scores: dict[str, float] = {}
     failed: dict[str, str] = {}
-    skipped: list[str] = []
-    degraded_reason: str | None = None
     best_adapter: ModelAdapter | None = None
     best_score = float("inf")
 
@@ -179,4 +220,7 @@ def select_best_adapter(
         degraded_reason=degraded_reason,
         elapsed_seconds=time.monotonic() - started,
         is_fallback=is_fallback,
+        fit_cost_estimates_mb=dict(shortlist.estimates_mb),
+        fit_cost_budget_mb=fit_budget_mb,
+        fit_cost_capped=shortlist.capped,
     )
