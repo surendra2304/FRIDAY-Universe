@@ -122,8 +122,10 @@ Server 2.**
 
 AWS:
 
-- **FRIDAY-Universe-1** (Sydney) — Stratex works here.
-- **FRIDAY-Universe-2** (Sydney) — VyralX works here.
+- **Stratex Server** (AWS, Sydney; instance FRIDAY-Universe-1) —
+  Stratex works here. (Renamed by Surendra, 2026-11-22.)
+- **VyralX Server** (AWS, Sydney; instance FRIDAY-Universe-2) —
+  VyralX works here. (Renamed by Surendra, 2026-11-22.)
 - A third box, for FRIDAY, depends on a pending AWS vCPU quota case;
   if it does not land, FRIDAY stays on Oracle Server 1.
 
