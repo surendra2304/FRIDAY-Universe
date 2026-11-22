@@ -13742,14 +13742,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       the evidence, VERIFIED only with both halves cited.
   - id: TASK-API-004
     title: 'API-003 F1: Memora peer-key re-sync + restart + re-probe matrix'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-api-004-memora-resync
     pr: 1325
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T11:34:28+05:30'
+    updated_at: '2026-11-22T11:56:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-API-004-MEMORA-RESYNC.md
@@ -13770,9 +13770,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       ever read, printed, logged, stored, or posted; MATCH/DIFFER booleans only.'
     - 'Claim: GitHub issue #35 comment 7075032771 by Muse 4 (TASK-API-004; board verified against the true main blob before editing). Base: main 2184af44 (board blob 2944d625, 13,811 lines).'
     - 'Implemented: docs/collaboration/TASK-API-004-MEMORA-RESYNC.md - Memora .env peer keys re-synced to fleet values (9/9 MATCH, names-only), Memora restarted 2026-11-22 11:30:34 IST (new PID 2083607, /health 200), re-probe matrix: fleet FRIDAY/INFERENCE keys 200 on /v1/memories/search, controls 401. Work PR #1325 (same branch as claim PR).'
+    - 'MERGED 2026-11-22 ~11:56 IST: work PR #1325 (merge dfd3b711) reviewed in full by the coordinator - evidence doc read in full (F1 reproduced DIFFER 9/9 pre-fix; re-sync 9 lines changed, backup server-side, mode 0600 preserved, MEMORA_API_KEY/MASTER_KEY untouched; Memora restarted 11:30:34 IST, new PID 2083607, migrations at-head, /health 200; re-probe matrix: fleet FRIDAY_API_KEY + INFERENCE_API_KEY 200, was 401; controls 401; Memora->Inference 404 = auth passed; names-only rule obeyed). Acceptance met on all three bullets. CI 9/9 green on head a4878bea (7 success, 2 skipped), verified via bridge checks. Note: claim-PR head d4fb7b2c shipped invalid board YAML (6-space evidence indent); Muse 4 fixed it in a4878bea and the fix was verified by the local validator + the CI roster job before merge. Board flip by coordinator board PR.'
     blockers: []
-    next_action: Re-sync Memora's .env peer keys to the fleet values (or rotate fleet-wide
-      and redistribute), restart Memora, re-probe the matrix; file the evidence doc.
+    next_action: "None - closed."
   - id: TASK-API-005
     title: 'API-003 F2: Cortex FRIDAY_API_KEY re-sync to fleet value + restart + re-probe'
     status: AVAILABLE
@@ -13881,6 +13881,41 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: Calibrate estimate_prompt_tokens against Gemini counted tokens, re-measure
       the INF-019 prompt, fix or document the Groq-guard basis; file the evidence doc.
+
+  - id: TASK-ORCH-012
+    title: 'ORCH-010 F1: make the generic fallback candidate lose to candidates naming required_tools (live fetch misroute)'
+    status: AVAILABLE
+    owner: muse_4
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T11:56:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-ORCH-012-FALLBACK-FIX.md
+    acceptance:
+    - 'The fallback candidate no longer outranks a candidate naming required_tools (or is
+      excluded when a specific table matched); the live misroute is fixed: read this page
+      routes to web_fetch_summarize, not the tool-less generic fallback; regression tests
+      pin read this page, write me a script, create a video about.'
+    evidence:
+    - 'Coordinator pool-7 draft, 2026-11-22 ~11:53 IST (issue #35 comment 7075301485),
+      item 5: ORCH-010 finding F1 (docs/collaboration/TASK-ORCH-010-ROUTING-REPROBE.md,
+      Follow-ups) - the generic fallback candidate (FRIDAY/src/friday/routing/
+      capability_router.py:757, score -9.9) outranks specific tools; proven by S1 probe
+      cases 8, 33, S1-S4 and live P7 read this page https://example.com -> TOOL_EXECUTION
+      score -9.9 instead of web_fetch_summarize (106.0). Proposed fix: make the fallback
+      lose to any candidate naming required_tools, or exclude it when a specific table
+      matched. Assigned to Muse 4 (free; TASK-API-004 MERGED, PR #1325, merge dfd3b711)
+      - direct coordinator assignment per the refill rule, one per free worker. Next free
+      ORCH id 012 (ORCH-001..011 exist). Base: main dfd3b711 (board blob
+      1ab362afd0a50c5502bc646250fea13739e4e240, verified against the true main blob before
+      editing). Worker claims via its own claim PR.'
+    blockers: []
+    next_action: Fix the fallback ranking per the F1 proposal, add the three regression
+      tests, verify the live misroute is gone; file the evidence doc.
 
 task_id_warnings:
   - id: TASK-REL-061
