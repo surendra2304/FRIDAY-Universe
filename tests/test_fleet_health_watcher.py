@@ -143,6 +143,26 @@ class TestDispatchAlerts:
         )
         assert "X" in capsys.readouterr().out  # alert logged even when the command fails
 
+    def test_alert_text_reaches_command_raw_gateway_escapes(self, tmp_path):
+        # TASK-OBS-010: the HTML-escaping lives in the Telegram gateway
+        # (send_message), the single send choke point — the watcher must
+        # pass FLEET_ALERT_TEXT through RAW. Escaping here as well would
+        # double-escape (&amp;lt;) once the gateway escapes. This test
+        # locks the single-escape-point decision.
+        out_file = tmp_path / "alert.txt"
+        state = watcher.WatchState()
+        watcher.dispatch_alerts(
+            [{"alert": "SERVICE_DOWN", "service": "DrillProbe",
+              "detail": "ActiveState=inactive SubState=dead; "
+                        "error=URLError: <urlopen error [Errno 111] Connection refused>",
+              "severity": "critical"}],
+            state, cooldown_s=1800,
+            alert_command=f"sh -c 'echo \"$FLEET_ALERT_TEXT\" > {out_file}'",
+        )
+        text = out_file.read_text(encoding="utf-8").strip()
+        assert "<urlopen error [Errno 111] Connection refused>" in text
+        assert "&lt;" not in text and "&gt;" not in text
+
 
 class TestWatchStatePersistence:
     def test_roundtrip(self, tmp_path):
