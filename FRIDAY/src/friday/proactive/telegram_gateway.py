@@ -31,11 +31,18 @@ Honesty rules (unchanged from every FRIDAY surface):
   only how updates ARRIVE, never how they are handled;
 - never raises into the caller: the loop's failures are logged, the loop
   continues.
+- outbound text is HTML-escaped before sending: the API call uses
+  ``parse_mode=HTML``, so a raw ``<...>`` in the text (a probe error in a
+  watcher alert, an angle bracket in a brain reply) would make Telegram
+  reject the whole message. Escaping in ``send_message`` — the single
+  send choke point — means a stray bracket can never silently lose a
+  message (TASK-OBS-010).
 """
 
 from __future__ import annotations
 
 import hmac
+import html
 import logging
 import os
 import threading
@@ -200,12 +207,27 @@ class TelegramGateway:
             return None
 
     def send_message(self, text: str, chat_id: str | None = None) -> bool:
-        """Send one message (rate-limited, split to Telegram's size limit)."""
+        """Send one message (rate-limited, split to Telegram's size limit).
+
+        The text is HTML-escaped before sending (TASK-OBS-010): the API
+        call uses ``parse_mode=HTML``, and any raw ``<...>`` in the text
+        — a probe error such as ``<urlopen error ...>`` in a watcher
+        alert, an angle bracket in a brain reply — makes Telegram reject
+        the whole message (OBS-008: the first drill attempt returned
+        ``NotifyResult.FAILED`` for exactly this reason). Escaping here,
+        the single send choke point, fixes that class of failure for
+        every sender; callers must NOT escape as well, or the text
+        double-escapes (``&amp;lt;``). ``quote=False`` escapes only
+        ``&``, ``<``, ``>`` — exactly the three Telegram's HTML mode
+        requires — so quotes stay literal. Escaping happens before
+        chunking, so no chunk can ever carry a raw ``<`` or ``>``.
+        """
         _, owner_chat = _env_credentials()
         target = chat_id or owner_chat
         if not target:
             return False
-        chunks = [text[i : i + MAX_MESSAGE_CHARS] for i in range(0, len(text), MAX_MESSAGE_CHARS)] or [""]
+        safe = html.escape(text, quote=False)
+        chunks = [safe[i : i + MAX_MESSAGE_CHARS] for i in range(0, len(safe), MAX_MESSAGE_CHARS)] or [""]
         sent_any = False
         for chunk in chunks:
             # Polite pacing between messages (1/s per chat is Telegram's cap).
