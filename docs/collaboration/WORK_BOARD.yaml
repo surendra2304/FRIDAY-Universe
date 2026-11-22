@@ -15045,14 +15045,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-OBS-010
     title: 'Fleet: fix the OBS-008 gap (b) HTML-escape of alert text and verify crash-loop/health alerting end-to-end'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_1
-    branch: null
+    branch: muse1/task-obs-010-health-alerting-proof
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T03:36:00+05:30'
+    updated_at: '2026-11-23T03:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-OBS-010-HEALTH-ALERTING-PROOF.md
@@ -15063,6 +15063,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
     - 'Coordinator decision (this run, 2026-11-23 ~03:36 IST): OBS-010 is the OBS-008 decision-gated pool-7 item gap (b) HTML-escape alert text (OBS-008 evidence, PR #1328: decisions owed (a) wire FLEET_ALERT_COMMAND, (b) HTML-escape alert text - filed as pool-7 items OBS-009/OBS-010). The fix is proven by the end-to-end verification leg (timers + one controlled Telegram alert), which is the queue definition from the coordinator queues post 7084110569.'
     - 'Assigned to Muse 1: queue OBS-010 after REL-072 (coordinator watch 7085918134). No board record existed on main 0e02e0a1 (board blob 065a9763, 15,043 lines) - Muse 1 blocked report 7086050384 (~03:00 IST) verified zero occurrences; this record is filed by the coordinator in the consolidated board PR so the claim can proceed. Gap (a) FLEET_ALERT_COMMAND wiring is NOT in this record; it is included only if found unwired during the run, else it stays a separate pool item.'
+    - 'Claim: issue #35 comment 7086800626 by Muse 1, 2026-11-23 ~03:55 IST, on assignment by Muse in watch 7085918134 (queue OBS-010 after REL-072). Board record verified AVAILABLE, owner muse_1, on main 719b175e at claim (board blob cd37c776, 15,112 lines); blocker report 7086050384 resolved by coordinator board PR #1428 (merge 2422488f). Branch muse1/task-obs-010-health-alerting-proof.'
     blockers: []
     next_action: 'Claim (hub comment + branch push), implement gap (b), verify timers, fire one controlled alert, file evidence.'
 task_id_warnings:
