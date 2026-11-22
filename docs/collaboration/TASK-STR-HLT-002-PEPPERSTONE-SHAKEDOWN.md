@@ -42,4 +42,65 @@ verified ($10,000 virtual, demo 5376835, no live account).
 
 ## Evidence
 
-- (to be filled with first-hand probe output as each step lands)
+### Probe 1 — Spotware app status check (S1, 2026-11-23 ~01:40 IST)
+
+First-hand, via the bridge (`run_shell`, Server 1); probe script
+`~/workspace/muse4_strhlt002_probe1.py`, output
+`~/workspace/muse4_strhlt002_probe1.json`. Names only — no credential
+value was read, printed, or stored.
+
+- S1 Stratex dir exists; `.env` exists, mode 0600, 7,366 B, 80 env names.
+- **All six `PEPPERSTONE_CTRADER_*` Open API names are MISSING from the
+  S1 `.env`**: `CLIENT_ID`, `CLIENT_SECRET`, `ACCESS_TOKEN`,
+  `REFRESH_TOKEN`, `ACCOUNT_ID`, `ACCOUNT_NUMBER`. Only the read-only
+  `CTRADER_FIX_*` names are present (7 names).
+- `Stratex/scripts/pepperstone_shakedown.py` and
+  `Stratex/exchanges/pepperstone_ctrader_adapter.py` are present on S1.
+- No server-side file records the Spotware app status (the "49885 /
+  Stratex Demo" grep hits on S1 are backtest-result JSON files, not
+  app-status records).
+- `bot.log` has `ctrader_autonomous_engine` bracket-log lines
+  (2026-11-22 ~12:20–12:22 UTC) — engine-side logging only, not a live
+  venue connection and not app-status evidence.
+- Stratex service is `inactive` on S1 (sleeper copy, as expected; the
+  working copy is U1).
+
+### Wait state — filed 2026-11-23 ~01:40 IST
+
+- **The app status cannot be verified as Active from any first-hand
+  source reachable by this worker.** The Spotware developer portal
+  needs the owner's cTrader ID sign-in, which this worker does not
+  have and must not seek; the cTrader Open API needs the client
+  id/secret + access token, none of which exist in the S1 env; no
+  hub/board record since the 2026-11-21 submission states Active.
+- Last recorded state stands: **Submitted, Spotware review pending**
+  (2026-11-21; board evidence, main d769cb7a).
+- **No grant fabricated, no token exchanged, no env wired, no
+  shakedown run.** The gate stays closed.
+- Caveat: the U1 (AWS Sydney) working copy's env was NOT readable —
+  the bridge reaches S1/S2 only. A U1 re-check is owed when U1 becomes
+  reachable; the wait state is filed on the S1 + recorded-state
+  evidence above.
+- Per the assignment, the pre-authorised follow-on **TASK-OBS-009**
+  is taken next (separate claim + branch + PR).
+
+### STR-EXP-007 owed item — U1 trial-3980 confirmation
+
+- Still owed. U1 is not reachable via the bridge (S1/S2 only), so no
+  first-hand U1 read was possible this run. The S1 frozen-copy record
+  (trial 3980 PROVEN, all 8 frozen-bar checks true) was already
+  verified live twice and filed in PR #1381 (merged).
+
+## Steps
+
+1. [x] Claim posted on issue #35 (comment 7084800769); board flipped
+   to CLAIMED in this work PR; work-request schedule cancelled
+   while mid-task per the standing protocol.
+2. [x] Spotware app (ID 49885) status checked first-hand as far as
+   reachable: **not verifiable as Active — wait state filed** (see
+   above). No grant fabricated.
+3. [ ] Re-check on Spotware approval: grant + exchange + wire (U1 + S1
+   sleeper) + full shakedown PASS. This task stays open, blocked on
+   the Spotware review, until then.
+4. [ ] STR-EXP-007 owed item: U1 live-copy confirmation of trial-3980
+   (blocked on U1 reachability).

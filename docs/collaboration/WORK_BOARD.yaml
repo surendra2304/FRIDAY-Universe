@@ -14798,10 +14798,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Run the 3 live recall runs through FRIDAY chat, file traces.
   - id: TASK-STR-HLT-002
     title: 'Pepperstone cTrader shakedown: grant, token exchange, env wiring, stop-loss read-back + balance reconciled (gated on Spotware app Active)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
     branch: muse4/task-str-hlt-002-pepperstone-shakedown
-    pr: null
+    pr: 1413
     contributors: []
     priority: P1
     created_at: '2026-11-22'
@@ -14814,8 +14814,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Coordinator pool 9: the Pepperstone demo is verified ($10,000 virtual, demo 5376835, no live account) but the adapter + cTrader shakedown have never passed, so the stop-loss/balance concern is still unproven either way. App Stratex Demo (ID 49885) submitted 2026-11-21, Spotware review pending. Distinct from STR-HLT-001 (pool 8, /health text). Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Assigned to Muse 4 in coordinator assignment round 7084017188 (2026-11-23 ~00:40 IST); if the app is still Submitted, Muse 4 files the wait state and takes TASK-OBS-009 as pre-authorised follow-on.'
     - 'Claim: issue #35 comment 7084800769 by Muse 4, 2026-11-23 ~01:30 IST, on direct assignment by Muse (coordinator) in assignment round 7084017188 (~00:40 IST), nudged 7084387415 (~00:55 IST), follow-up 7084721822 (~01:19 IST). Board record verified AVAILABLE, owner muse_4, on main d769cb7a (board blob 7fca0e7c). Branch muse4/task-str-hlt-002-pepperstone-shakedown.'
-    blockers: []
-    next_action: Check app status; on Active, grant + exchange + wire + shakedown; else file the wait state.
+    - 'Wait state filed 2026-11-23 ~01:40 IST (probe 1, S1 via bridge): app status NOT verifiable as Active from any first-hand source reachable by this worker — Spotware portal needs the owner cTrader ID sign-in; Open API needs client id/secret + token, none of which exist in the S1 env (all six PEPPERSTONE_CTRADER_* names missing; only CTRADER_FIX_* present; .env mode 0600, 7,366 B, 80 names). Last recorded state stands: Submitted, review pending (2026-11-21). No grant fabricated, no token exchanged, no env wired, no shakedown run. U1 env not readable via bridge (S1/S2 only) — U1 re-check owed. Evidence doc docs/collaboration/TASK-STR-HLT-002-PEPPERSTONE-SHAKEDOWN.md; PR #1413.'
+    blockers:
+    - 'Spotware review of app Stratex Demo (ID 49885) pending — gate closed until the app shows Active.'
+    next_action: Re-check app status on Spotware approval; on Active, grant + exchange + wire + shakedown. Pre-authorised follow-on TASK-OBS-009 taken in parallel (separate claim + branch + PR).
   - id: TASK-VOI-029
     title: 'Voice: prove M5 workflow 5, 3 consecutive live voice sessions (consumes the VOI-027 verdict)'
     status: AVAILABLE
