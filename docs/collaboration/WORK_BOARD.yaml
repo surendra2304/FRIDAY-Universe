@@ -14042,14 +14042,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "None - closed. Follow-ups are the G1-G8 gaps (missing closes, reset detection) - file as follow-up tasks if taken up."
   - id: TASK-VYR-037
     title: "VyralX: next supervised-cycle candidate pool - VYR-034 verdict PASS; prepare the next candidate pool (discovery + machine QA gates first)"
-    status: CLAIMED
+    status: MERGED
     owner: muse_5
     branch: muse5/task-vyr-037-candidate-pool
     pr: 1387
     contributors: []
     priority: P1
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T20:25:47+05:30"
+    updated_at: "2026-11-22T21:18:41+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "Pool 7 item (iii), whole-Universe backlog drafted by the coordinator 2026-11-22 ~12:45 IST. VYR-034 closed VERIFIED with a PASS watch verdict (coordinator watch 2026-11-22 ~12:54 IST: exactly one caption track, BGM audible; render HELD unlisted). Prepare the next supervised-cycle candidate pool: discovery + machine QA gates first, per the owner lane (discovery and machine QA gates before the next cycle). Loop stays OFF, uploader stays paused, renders held unlisted; nothing uploads until a render passes the coordinator's end-to-end browser watch."
@@ -14059,8 +14059,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Loop stays OFF and uploader stays paused; no render uploaded or set public by this task."
     evidence:
       - "Coordinator pool-7 draft, 2026-11-22 ~12:45 IST (muse1-followup-watch body), item (iii). Assigned to Muse 5 (free; TASK-VYR-034 VERIFIED, PR #1345, merge 8bf87563) - direct coordinator assignment per the refill rule, one per free worker. Next free VYR id 037 (VYR-001..036 exist). Base: main 4c0c30e9 (board verified against the true main blob before editing). Worker claims via its own claim PR."
+      - "MERGED 2026-11-22 by coordinator (merge aea6ca6e, 21:05 IST): work PR #1387 full diff reviewed - candidate pool of 2 (NASA Gradient Sun, public domain; YouTube CpQGaTtppnU, 23s MW2 trickshot tutorial), discovery script defects fixed (bare yt-dlp PATH, --cookies), 21 offline discovery-helper tests, workflow list line. CI 10/10 green/skipped on unchanged head 617748de; offline test 21/21 passed. Loop OFF, uploader paused, no render uploaded. Pool now consumed by TASK-VYR-039 (Muse 4, claimed issue #35 comment 7081315028). Board in-PR was CLAIMED - flip to MERGED rides here."
     blockers: []
-    next_action: "Claim via a board-only claim PR, then build the candidate pool with discovery + machine QA gates."
+    next_action: "MERGED - board flip rides here; Muse 5 free, awaiting next assignment (TASK-VYR-038 queued after VYR-037 closes, owner muse_5, needs coordinator assignment)."
   - id: TASK-FUT-016
     title: "Futuris: forecast quality - verify the last 3 scheduler cycles produced real forecasts; score the oldest unscored forecasts against outcomes; file accuracy evidence"
     status: IN_REVIEW
