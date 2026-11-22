@@ -901,3 +901,25 @@ async def cancel_task(
         status="CANCELLED",
         summary=f"Task '{task_id}' has been cancelled.",
     )
+
+
+# --- Fleet task contract (TASK-FRG-002) -------------------------------------
+# The fleet dispatch bus posts every specialist task to POST /v1/task/execute
+# (FRIDAY/apps/core/.../universe_dispatch_bus.py), but Forge only served
+# /api/v1/forge/delegate, so a FRIDAY-chat code task died at the bus with
+# "Action 'build' not found on Forge". This router is a thin adapter over the
+# delegate execution path: the fleet payload maps 1:1 onto TaskEnvelopeModel
+# (the bus's extra `agent` / `timeout_sec` fields are ignored), and
+# delegate_task does the work. Auth is the app's global API-key middleware
+# (same as /delegate); nothing is exempted here.
+task_contract_router = APIRouter(prefix="/v1", tags=["FRIDAY Universe Forge Task Contract"])
+
+
+@task_contract_router.post("/task/execute", response_model=TaskResultModel, status_code=status.HTTP_200_OK)
+async def task_execute(
+    envelope: TaskEnvelopeModel,
+    orchestrator: OrchestratorCore = Depends(get_orchestrator),
+    store: StateStore = Depends(get_state_store),
+) -> TaskResultModel:
+    """Fleet contract entrypoint: execute a task dispatched by FRIDAY."""
+    return await delegate_task(envelope, orchestrator, store)
