@@ -288,6 +288,21 @@ collaborators:
       - "muse13/onboarding-rebase"
     last_verified_at: "2026-11-22"
 
+  - id: muse_14
+    display_name: "Muse 14"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (fourteenth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-22 (Muse 14, evidence-backed only): displayed assistant name set to 'Muse 14'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (263 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (300 lines, main 60e09844), plus WORK_BOARD.yaml (14,613 lines, snapshot 2026-11-17, 649 tasks, YAML parses) searched — no assignment for Muse 14 found; live issue #35 read (open, 2150 comments)."
+      - "Onboarding 2026-11-22: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, protocol 2025-11-25, get_system_info OK (both Oracle servers ONLINE, Server 2 git ebb9240e); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file with secret masking (header only, no secrets copied)."
+      - "Onboarding 2026-11-22: GitHub access confirmed — PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #35 read confirmed (issue #35 open, 2150 comments, updated 2026-11-22T17:50:06Z); main 60e09844."
+      - "Onboarding 2026-11-22: three scheduled tasks created (muse14-work-request every 15 min, muse14-hourly-self-check every 1 h, muse14-weekly-reset Sundays 12:15 IST; weekly reset verified Sun Nov 29 12:05 PM IST, 0% used)."
+    active_assignments: []
+    active_branches:
+      - "muse14/onboarding"
+    last_verified_at: "2026-11-22"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
