@@ -501,10 +501,11 @@ via `root_api_router` and `v1_router`), so the split applies to
   `IntelX/tests/test_healthz_liveness.py`.
 - Stall repair: the 20:16 IST self-check reported this task stalled
   (branch head `1e078f9c`, no checkpoint ~2h). This run resumed with
-  the IntelX slice: 6 commits on `muse8/task-rel-067`
+  the IntelX slice: 6 code/test commits on `muse8/task-rel-067`
   (`617e571d`, `45d257ef`, `881fba2d`, `0afc2ee0`, `dd7df687`,
-  `bd84b644`), branch head now `bd84b644`. Work PR still pending
-  (5 agents remain + §6 Q2/Q3 + criterion 5/6 sweeps + CI wiring).
+  `bd84b644`) plus this evidence-doc update; branch head is the doc
+  commit. Work PR still pending (5 agents remain + §6 Q2/Q3 +
+  criterion 5/6 sweeps + CI wiring).
 
 ## Remaining (next runs)
 
