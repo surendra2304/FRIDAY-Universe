@@ -99,7 +99,8 @@ def _request(content="hello", timeout=10.0):
 
 
 def _big_request():
-    # 30,000 chars // 4 = 7,500 estimated tokens > the 7,000 guard.
+    # 30,000 chars = 11,538 estimated tokens (calibrated, TASK-INF-021) >
+    # the 7,000 guard.
     return _request(content="x" * 30_000)
 
 
@@ -134,16 +135,76 @@ def test_estimate_prompt_tokens_counts_messages_and_system():
         system_instruction="b" * 400,
         model="m",
     )
-    assert estimate_prompt_tokens(req) == 200
+    # 800 chars at the calibrated 2.6 chars/token (800 * 5 // 13).
+    assert estimate_prompt_tokens(req) == 307
 
 
 def test_groq_guard_boundary():
-    # Exactly at the limit (28,000 chars -> 7,000 tokens) is allowed; one
-    # token over is not. The decided rule is prompts OVER 7,000 tokens.
+    # Exactly at the limit (18,200 chars -> 7,000 tokens at the calibrated
+    # 2.6 chars/token, TASK-INF-021) is allowed; one token over is not.
+    # The decided rule is prompts OVER 7,000 tokens.
     assert GROQ_PROMPT_TOKEN_LIMIT == 7000
-    assert not groq_prompt_over_limit(_request(content="x" * 28_000))
-    assert groq_prompt_over_limit(_request(content="x" * 28_004))
+    assert not groq_prompt_over_limit(_request(content="x" * 18_202))
+    assert groq_prompt_over_limit(_request(content="x" * 18_203))
     assert not groq_prompt_over_limit(_request(content="short prompt"))
+
+
+# ---------------------------------------------------------------------------
+# TASK-INF-021 calibration: the estimator tracks Gemini counted tokens
+# ---------------------------------------------------------------------------
+
+_INF019_SNIPPET = (
+    "# module utils.py - helper %d\n"
+    "def add(a, b):\n    \"\"\"Return a + b.\"\"\"\n    return a + b\n\n"
+)
+
+_INF019_HEADER = (
+    "Review the following Python module for bugs and style issues. "
+    "List each finding on its own line; if none, say NO FINDINGS.\n\n"
+)
+
+
+def _inf019_prompt() -> str:
+    # Byte-identical rebuild of the INF-019 probe A prompt (35,214 chars),
+    # the same construction TASK-INF-LLM-003 measured.
+    return _INF019_HEADER + "".join(_INF019_SNIPPET % i for i in range(400))
+
+
+def test_estimate_prompt_tokens_calibrated_to_gemini_inf019():
+    # Gemini counts 13,519 prompt tokens for the INF-019 prompt on every
+    # INF-LLM-003 trial (generate usageMetadata; countTokens agrees).
+    # The calibrated estimator must track that within 1% — the old
+    # chars // 4 gave 8,803, 35% low.
+    req = _request(content=_inf019_prompt())
+    assert estimate_prompt_tokens(req) == pytest.approx(13_519, rel=0.01)
+    assert groq_prompt_over_limit(req)
+
+
+_CODE_FN = (
+    "def process_record(record, seen):\n"
+    "    \"\"\"Validate one record and merge it into the running totals.\"\"\"\n"
+    "    if record.get(\"id\") in seen:\n"
+    "        return None\n"
+    "    seen.add(record[\"id\"])\n"
+    "    total = sum(item[\"value\"] for item in record[\"items\"])\n"
+    "    return {\"id\": record[\"id\"], \"total\": total, \"n\": len(record[\"items\"])}\n\n"
+)
+
+
+def test_groq_guard_blocks_dense_code_prompt_the_old_estimator_passed():
+    # A 27,900-char code prompt: the old chars // 4 estimator read 6,975
+    # tokens and let it through, while Gemini counts ~8,270 true tokens —
+    # over Groq's 8,000 TPM cap (the live gap). The calibrated estimator
+    # reads 10,730 and the guard blocks it.
+    code = "".join(
+        _CODE_FN.replace("process_record", "process_record_%d" % i)
+        for i in range(90)
+    )[:27_854]
+    prompt = "Review the following Python module for bugs.\n\n" + code
+    assert len(prompt) == 27_900
+    assert len(prompt) // 4 <= GROQ_PROMPT_TOKEN_LIMIT  # old estimator: passed
+    assert estimate_prompt_tokens(_request(content=prompt)) == 10_730
+    assert groq_prompt_over_limit(_request(content=prompt))
 
 
 # ---------------------------------------------------------------------------

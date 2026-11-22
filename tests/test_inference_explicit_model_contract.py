@@ -131,8 +131,12 @@ def boundary():
     # and the gateway's GROQ_PROMPT_TOKEN_LIMIT constant (TASK-INF-012).
     # They are extracted as actual source too, so the boundary assertion
     # still fails loudly if any of them changes shape.
-    nodes += actual_nodes('Inference/app/api/v1_core_routes.py', {'_is_custom_model', '_estimate_prompt_tokens', '_estimate_context_tokens', 'MODEL_CONTEXT_WINDOWS', '_CONTEXT_FIT_FLOOR_TOKENS', '_CHARS_PER_TOKEN'})
-    nodes += actual_nodes('Inference/app/providers/gateway.py', {'GROQ_PROMPT_TOKEN_LIMIT'})
+    # TASK-INF-021: the estimators now read the gateway's calibrated
+    # TOKEN_ESTIMATE_NUM / TOKEN_ESTIMATE_DEN (2.6 chars/token) instead of
+    # the removed _CHARS_PER_TOKEN divisor; both constants join the
+    # extraction set in this PR, per the same lesson.
+    nodes += actual_nodes('Inference/app/api/v1_core_routes.py', {'_is_custom_model', '_estimate_prompt_tokens', '_estimate_context_tokens', 'MODEL_CONTEXT_WINDOWS', '_CONTEXT_FIT_FLOOR_TOKENS'})
+    nodes += actual_nodes('Inference/app/providers/gateway.py', {'GROQ_PROMPT_TOKEN_LIMIT', 'TOKEN_ESTIMATE_NUM', 'TOKEN_ESTIMATE_DEN'})
     # TASK-REL-052: the imported names the route code reads, extracted as
     # actual source from their own modules (see the fixture comment above).
     nodes += actual_nodes('Inference/app/providers/custom_endpoints.py', {'PROVIDER_PREFIX', '_NAME_RE', 'CustomEndpoint', '_parse_entry', 'parse_custom_endpoints', '_cache', 'get_custom_endpoints', 'reset_custom_endpoints_cache', 'enabled_custom_endpoints', 'custom_endpoint_by_provider', 'custom_provider_for_model', 'custom_catalog_entries'})
