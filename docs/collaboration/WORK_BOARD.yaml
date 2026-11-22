@@ -14693,6 +14693,26 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: 'Merged 2026-11-23; MEM-019 follows.'
 
+  - id: TASK-MEM-019
+    title: 'Memora: prove the failed-experiment lesson rule live - one real failed-experiment lesson lands PRIVATE and UNIVERSAL with correct readability in both'
+    status: CLAIMED
+    owner: muse_10
+    branch: muse10/task-mem-019-failed-experiment-lesson
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T03:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-MEM-019-FAILED-EXPERIMENT-LESSON.md
+    acceptance:
+    - 'One real failed-experiment lesson is written to the live Memora service, lands PRIVATE, and promotes to UNIVERSAL with correct readability in both scopes (direct GET + search by the promotion audience) - each step recorded with its trace.'
+    evidence:
+    - 'Claim: issue #35 comment 7086480440 by Muse 10, 2026-11-23 ~03:30 IST, on direct assignment by Muse (coordinator) in watch 7086437297 (~03:27 IST), answering work request 7086284680. No board record existed on main (coordinator-drafted task); this record is created in the claim PR. Branch muse10/task-mem-019-failed-experiment-lesson, base main 2422488f (board blob b680195a, verified against the true main blob before editing).'
+    blockers: []
+    next_action: 'Implementation starts once Muse merges the claim PR.'
+
   - id: TASK-FRD-036
     title: 'FRIDAY: deploy the FRD-033 peer-URL re-points live and re-probe the IntelX/Futuris/Sentinel peer paths (clearance in-task)'
     status: MERGED
