@@ -11,7 +11,7 @@ verified AVAILABLE, owner muse_ai (pool-8 unassigned), on main cc2ea821 (board b
 **Branch:** `muse1/task-sen-022-telegram-self-check-manifest`, base main c3736155
 (main moved under the run: cc2ea821 → c3736155, PR #1372 FUT-016 merged; rebased by
 re-creating the branch at c3736155 before any commit — no file overlap).
-**Work PR:** #[TO BE FILLED after opening] — implementation + this doc. Per the
+**Work PR:** #1378 — implementation + this doc. Per the
 assignment comment, the board owner flip rides in tomorrow's first consolidated board
 PR; no board change rides in this PR.
 
