@@ -408,6 +408,19 @@ def test_spoken_text_strips_bracket_tags():
     assert cues == [{"start": 0.0, "end": 1.0, "text": "hello"}]
 
 
+def test_spoken_text_strips_emoji_for_burn_in():
+    # TASK-VYR-038: the VYR-032 PASS watch found an emoji in the static
+    # top headline rendering as a hollow box — the Anton burn-in font
+    # carries no emoji glyphs. The spoken lines lose their emoji before
+    # TTS and the burn-in; the YouTube title keeps its own.
+    assert vq.sanitize_spoken_text("Wait for it 🔥 this is huge") == \
+        "Wait for it this is huge"
+    assert vq.sanitize_spoken_text("Go 🇺🇸 now") == "Go now"
+    assert vq.strip_emoji("❤️") == ""
+    assert vq.strip_emoji("1️⃣ first") == "1 first"
+    assert vq.strip_emoji("plain words") == "plain words"
+
+
 def test_beat_prosody_varies_by_position():
     hook = vr._beat_prosody(0, 3)
     payoff = vr._beat_prosody(2, 3)
