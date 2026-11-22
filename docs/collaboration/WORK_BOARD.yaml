@@ -13969,14 +13969,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-FRD-034
     title: 'API-005 F-API-005-1: FRIDAY Cortex client presents CORTEX_API_KEY, now 403 - set FRIDAY .env FRIDAY_CORTEX_API_KEY to fleet FRIDAY_API_KEY, restart FRIDAY only on coordinator clearance, re-probe'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-frd-034-friday-cortex-key
     pr: 1347
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T13:51:56+05:30'
+    updated_at: '2026-11-22T15:15:46+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-FRD-034-FRIDAY-CORTEX-KEY.md
@@ -13986,8 +13986,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Coordinator pool addition, 2026-11-22 ~12:50 IST: API-005 follow-up F-API-005-1 from the Cortex re-sync evidence (PR #1339, merge 079590b7, Muse 1, section 5). FRIDAY/src/friday/ecosystem/fleet_client.py:267 presents settings cortex_api_key (config.py:402, FRIDAY_CORTEX_API_KEY, falls back to CORTEX_API_KEY at config.py:150) as X-Friday-Api-Key on ask_cortex (:1045), task delegation (:1676) and health-summary monitor (:2064). FRIDAY .env FRIDAY_CORTEX_API_KEY equals the fleet CORTEX_API_KEY value, so after the correct Cortex-side fix every FRIDAY to Cortex ask/delegation call fails 403 - live proof task_a9dccb5dc54d via POST /api/chat ask cortex report operational status (~12:30 IST, success false, http_status 403, task_state REFUSED). Fix: FRIDAY .env FRIDAY_CORTEX_API_KEY to the fleet FRIDAY_API_KEY value + FRIDAY restart. LIVE-RESTART GATE: implement + PR first; restart FRIDAY only after Muse clears deployment on the hub; batch the restart window with FRD-033 if both are ready. Assigned to Muse 1 (free; TASK-API-005 MERGED, PR #1339) - holds the discovery context. Base: main f3dab30e (board blob 27dbed549b31d3aabe077118b56f06524733c119, verified against the true main blob before editing). Worker claims via its own claim PR.'
     - 'Claim: issue #35 comment 7076299903 by Muse 1, 2026-11-22 ~13:32 IST, on direct assignment by Muse (coordinator pool addition ~12:50 IST). Board record verified AVAILABLE, owner muse_1, on current main 12d7c0cc (board blob ae637d70, verified against the git trees API before editing). No prior claim, branch or PR. Branch muse1/task-frd-034-friday-cortex-key.'
     - 'Work PR #1347 MERGED 2026-11-22 13:48 IST (merge 3d03285f; claim+work bundled: claim 953ab327 + evidence doc 012e1b6f). Coordinator review: full diff read, CI 9/9 green on head 012e1b6f, test-merge clean. On-disk .env fix verified MATCH (names-only); FRIDAY restart + live re-probe PENDING coordinator clearance (LIVE-RESTART GATE); batched restart window with FRD-033 proposed.'
+    - 'Re-probe CLOSED by TASK-FRD-035: FRIDAY restarted once in the cleared window (PID 2148997->2180495, 15:00:11 IST, clearance granted in POOL 8 comment 7077110975); ask + delegation re-probes 200 COMPLETED (tasks task_6e55d6d09cfd, task_19447dde4017); /health healthy. Evidence: docs/collaboration/TASK-FRD-035-FRIDAY-CONFIG-TRUTH.md section 4. MERGED flip filed in the FRD-035 work PR #1358 board commit.'
     blockers: []
-    next_action: Set FRIDAY .env FRIDAY_CORTEX_API_KEY to the fleet FRIDAY_API_KEY value; file the evidence doc; restart FRIDAY only after Muse clears deployment on the hub; re-probe FRIDAY to Cortex ask + delegation.
+    next_action: None - closed.
   - id: TASK-REL-067
     title: 'Implement the health-capability contract per REL-004 section 8 - every agent health reports capability state with derived status and 503 on degraded'
     status: CLAIMED
@@ -14145,23 +14146,29 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Implement the scheduling fix, PR it, and file the first-trial evidence or the precise blocker.
   - id: TASK-FRD-035
     title: 'FRIDAY config-truth batch: align FRIDAY_AUTONOMOUS_MODE code default with the live env (G3) + execute the FRD-034 FRIDAY restart under coordinator clearance and re-probe FRIDAY to Cortex'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_1
     branch: muse1/task-frd-035-friday-config-truth
-    pr: null
+    pr: 1358
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T14:57:35+05:30'
+    updated_at: '2026-11-22T15:15:46+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - FRIDAY/src/friday/core/config.py
+    - FRIDAY/tests/test_autonomous_mode.py
+    - FRIDAY/tests/test_fleet_supervision_loop_contracts.py
+    - FRIDAY/tests/test_autonomous_daemon_arm.py
+    - docs/collaboration/TASK-FRD-035-FRIDAY-CONFIG-TRUTH.md
     acceptance:
     - 'Code default for FRIDAY_AUTONOMOUS_MODE matches the live env value (ON) or the code explicitly documents env as the single source of truth, so no restart/redeploy can silently flip autonomy. FRIDAY restarted ONCE in the cleared window (before Muse 6 VOI-027 probes run), FRIDAY to Cortex ask + delegation re-probed at 200, /health 200 after restart.'
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research + ORCH-011 finding G3: autonomy is ON live via env flag + FRD-023 boot-arm while the code default is still OFF - coordinator decision owed; this task executes the decision: ALIGN TO ON (owner standing order: agents autonomous). FRD-034 restart clearance is GRANTED by the coordinator on the hub (2026-11-22 pool-8 post); batch the restart BEFORE the VOI-027 calm-window probes. Assigned to Muse 1 (holds FRD-034 context).'
     - 'Claim: issue #35 comment 7077160541 by Muse 1, 2026-11-22 ~15:00 IST, on direct assignment by Muse (coordinator) in comment 7077110975 (POOL 8). Board record verified AVAILABLE, owner muse_1, on current main c29230b (board blob 6fd9bd49f997f9d48370d92d8ac35e01d00863f7, verified against the true main blob before editing). No prior claim, branch or PR. Restart clearance GRANTED in the pool-8 post; restart FRIDAY once before Muse 6 VOI-027 probes.'
+    - 'Work PR #1358 (head 105359e9, base main 047c99b): config.py autonomous_mode default False->True + new default-ON test + docstring updates in the two autonomy contract suites; evidence doc docs/collaboration/TASK-FRD-035-FRIDAY-CONFIG-TRUTH.md. Restart once in the cleared window (PID 2148997->2180495, 15:00:11 IST); /health healthy; ask + delegation re-probes 200 COMPLETED (tasks task_6e55d6d09cfd, task_19447dde4017). No local pytest (clone blocked by execution-risk check); verification owed from CI.'
     blockers: []
-    next_action: PR the code-default alignment; execute the cleared FRIDAY restart; re-probe FRIDAY to Cortex; file evidence.
+    next_action: 'Muse review: merge work PR #1358; code default deploys via fleet CD on merge; no further live action in this task.'
   - id: TASK-INF-022
     title: 'Inference: per-request routing receipt (task class, model, latency, fallback) on a status endpoint + prompt-size deadline classes from the INF-LLM-003 measurements'
     status: AVAILABLE
