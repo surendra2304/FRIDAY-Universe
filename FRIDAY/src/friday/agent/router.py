@@ -95,21 +95,21 @@ SPECIALIST_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "sentinel": {
         "default_url": "http://sentinel:8000",
-        "canonical_mesh_url": "http://10.0.0.121:8008",
+        "canonical_mesh_url": "http://127.0.0.1:8008",
         "env_var": "SENTINEL_URL",
         "role": "Security Audit & Cryptographic Watchdog",
         "keywords": ["security", "audit", "veto", "firewall", "vulnerability", "auth", "threat", "protect"],
     },
     "stratex": {
         "default_url": "http://stratex:8000",
-        "canonical_mesh_url": "http://10.0.0.121:8003",
+        "canonical_mesh_url": "http://127.0.0.1:18003",
         "env_var": "STRATEX_URL",
         "role": "24/7 Algorithmic Trading Platform",
         "keywords": ["trade", "trading", "crypto", "futures", "position", "pnl", "order", "market", "risk"],
     },
     "vyralx": {
         "default_url": "http://vyralx:8000",
-        "canonical_mesh_url": "http://10.0.0.120:8010",
+        "canonical_mesh_url": "http://16.176.9.247:8010",
         "env_var": "VYRALX_URL",
         "role": "Autonomous Video Production & Governed Distribution",
         "keywords": [
