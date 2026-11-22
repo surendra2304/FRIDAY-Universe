@@ -70,7 +70,7 @@ permissions:
 jobs:
   contracts:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -123,7 +123,14 @@ jobs:
             FRIDAY/tests/test_int016_instant_lane.py \
             FRIDAY/tests/test_frd029_activity_timestamps.py \
             FRIDAY/tests/test_frd030_live_activity_timestamp.py \
-            FRIDAY/tests/test_codex_invariants_and_mesh.py
+            FRIDAY/tests/test_codex_invariants_and_mesh.py \
+            FRIDAY/tests/test_friday_health_contract.py \
+            FRIDAY/tests/test_fleet_probe_labelling.py \
+            FRIDAY/tests/test_fleet_status_truth.py \
+            FRIDAY/tests/test_obs003_health_honesty.py \
+            FRIDAY/tests/test_tier1_resilience_and_contracts.py \
+            FRIDAY/tests/test_container_compatibility.py \
+            FRIDAY/tests/e2e/test_tier1_features.py
       - name: Generated-code ingestion and saved verification status
         env:
           PYTHONPATH: Forge
@@ -169,7 +176,9 @@ jobs:
             Memora/tests/test_hybrid_search.py \
             Memora/tests/test_oracle_vector_tenant_isolation.py \
             Memora/tests/test_cross_tenant_context_isolation.py \
-            Memora/tests/test_memory_access_controller_auth.py
+            Memora/tests/test_memory_access_controller_auth.py \
+            Memora/tests/test_health_observation_metadata.py \
+            Memora/tests/test_health_readiness_truth.py
       - name: Goal-specific code and honest generated-test contracts
         env:
           PYTHONPATH: Inference
@@ -185,6 +194,24 @@ jobs:
             Inference/tests/test_inf015_flash_lite_catalogue.py \
             Inference/tests/test_rel047_gateway_guards.py \
             Inference/tests/test_gemini_token_accounting.py
+      - name: Futuris health-capability contracts (TASK-REL-067)
+        env:
+          PYTHONPATH: Futuris
+        run: |
+          python -m pip install -r Futuris/requirements.txt aiosqlite
+          python -m pytest -q \
+            Futuris/tests/test_futuris_health_contract.py \
+            Futuris/tests/api/test_health.py \
+            Futuris/tests/api/test_hostile_inputs.py
+      - name: IntelX health-capability contracts (TASK-REL-067)
+        env:
+          PYTHONPATH: IntelX
+        run: |
+          python -m pip install -r IntelX/requirements.txt aiosqlite
+          python -m pytest -q \
+            IntelX/tests/test_intelx_health_contract.py \
+            IntelX/tests/test_health.py \
+            IntelX/tests/test_healthz_liveness.py
       - name: IntelX synthesis verification contracts
         env:
           PYTHONPATH: IntelX
@@ -212,6 +239,7 @@ jobs:
             Stratex/tests/test_str_daemon_002_daily_summary_throttle.py \
             Stratex/tests/test_str_daemon_003_startup_pair_throttle.py \
             Stratex/tests/test_str_daemon_004_send_log.py \
+            Stratex/tests/test_engine_capability_truthfulness.py \
             Stratex/tests/test_str_fwd_032_classic_testnet_excision.py \
             Stratex/tests/test_live_trading_guard.py \
             Stratex/tests/test_binance_futures_agent.py \
