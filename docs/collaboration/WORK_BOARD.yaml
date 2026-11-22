@@ -14889,14 +14889,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Take the VOI-027 verdict, run the 3 live voice sessions, file traces + latency.
   - id: TASK-REL-072
     title: 'CI: verify the three 2026-11-14 wave test files are collected by CI post-REL-068, wire any still missing'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_1
     branch: muse1/task-rel-072-ci-test-collection
-    pr: null
+    pr: 1425
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T02:07:14+05:30'
+    updated_at: '2026-11-23T02:36:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -14905,6 +14905,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Coordinator pool 10, from MASTER_PLAN M5 (TASK-REL-001, open since 2026-11-14): the three wave test files ran in no workflow. REL-068 (canary proof, PR #1384 merged) now guards collection - this task verifies the three named files against the live guard and wires any gap. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Reserve per coordinator assignment round 7084017188: claim immediately on finishing the current task if no new assignment has landed.'
     - 'Claim: issue #35 comment 7085410728 by Muse 1, 2026-11-23 ~02:07 IST, per coordinator watch 7084948379 (~01:42 IST) and nudge 7085314708 (~02:00 IST); queue REL-072 → OBS-010 → VAL-013. Board record verified AVAILABLE, owner muse_ai, on main fcc045da (board blob a7dc8639). Branch muse1/task-rel-072-ci-test-collection.'
+    - 'Work PR #1425: verification found all three wave files collected and green on main (see docs/collaboration/TASK-REL-072-CI-TEST-COLLECTION.md); no wiring gap, no workflow change.'
     blockers: []
     next_action: Check CI collection for the three files on main, wire gaps, show green runs.
   - id: TASK-CTX-003
