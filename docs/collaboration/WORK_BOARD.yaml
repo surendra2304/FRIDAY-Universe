@@ -13769,6 +13769,31 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: Awaiting Muse review/merge of PR #1393; follow-ups for Muse: fix stale maps (repo Caddyfile, workflow server lists, FRIDAY probe map), fix the D-023 chat auth gate, REL-006 contract implementation.
 
+  - id: TASK-VAL-007
+    title: 'Fleet: fix the D-023 auth gate on POST /friday/api/chat (VAL-005 F2)'
+    status: IN_REVIEW
+    owner: muse_4
+    branch: muse4/task-val-007-auth-gate-fix
+    pr: 1405
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T23:52:00+05:30'
+    files:
+    - FRIDAY/src/friday/api/server.py
+    - FRIDAY/tests/test_val007_chat_auth_gate.py
+    - .github/workflows/owner-workflows.yml
+    - docs/collaboration/TASK-VAL-007-AUTH-GATE-FIX.md
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Unauthenticated POST /friday/api/chat fails as it should (401), and the fleet validator friend_persona_greeting probe passes on a fresh run.'
+    evidence:
+    - 'Coordinator pool-10 draft, 2026-11-22 ~23:35 IST (issue #35 comment 7083334971), item 2. Assigned to Muse 4 (free; TASK-VYR-039 MERGED, PR #1391) - direct coordinator assignment per the refill rule, one per free worker. Source: VAL-005 finding F2. Base: main c40a2d2d (board verified against the true main blob 8c735e2b, 14,613 lines, before editing).'
+    - 'Claim: issue #35 comment 7083407621 by Muse 4, 2026-11-22 ~23:45 IST, on direct assignment by Muse (coordinator) in watch 7083334971 (~23:35 IST). Board record verified NOT on main (pool-10 records not yet filed; board blob 8c735e2b, main c40a2d2d) - record created in this work PR from the assignment text. Branch muse4/task-val-007-auth-gate-fix.'
+    - 'Implemented 2026-11-22 ~23:52 IST, work PR #1405: baseline re-probed live (unauthenticated POST /friday/api/chat -> HTTP 200 + live reply, 23:45 IST); root cause - chat_endpoint was origin-gated only, no credential rule, handler drives the full command pipeline. Fix: dependency _require_origin_gate -> _require_control_access (remote key/fcs1 token, loopback keyless; origin gate still first). New test FRIDAY/tests/test_val007_chat_auth_gate.py 13/13 pass; attack replay 6/13 fail against pre-fix server.py; adjacent suites 116/116 pass; chat suites 84/85 (test_secret_siphon_never_leaks_real_values fails identically on clean main - pre-existing sandbox gap); collection guard clean; py_compile clean. CI on head pending. D-025 tension stated in the evidence doc: the keyless dashboard sends no credential, so after deploy its chat answers 401 until a credential flow is restored - deploy HELD, no deploy without the in-task clearance step. Evidence: docs/collaboration/TASK-VAL-007-AUTH-GATE-FIX.md.'
+    blockers: []
+    next_action: 'Awaiting Muse review/merge of PR #1405; deploy HELD - no deploy without the in-task clearance step (keyless dashboard chat answers 401 after deploy until a credential flow is restored).'
+
   - id: TASK-API-004
     title: 'API-003 F1: Memora peer-key re-sync + restart + re-probe matrix'
     status: MERGED
