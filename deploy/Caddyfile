@@ -1,3 +1,7 @@
+# TASK-VAL-006: mirrors the deployed /etc/caddy/Caddyfile on Server 1 (verified
+# live 2026-11-22 ~23:45 IST). Keep in sync with the deployed file: S1 =
+# FRIDAY/Inference/Memora/Forge/Sentinel (+ Stratex SSH tunnel), S2 =
+# Futuris/IntelX/Cortex/Bridge, AWS U1 = Stratex, AWS = VyralX.
 friday-universe.duckdns.org {
     log {
         output file /var/log/caddy/friday-access.log {
@@ -7,7 +11,16 @@ friday-universe.duckdns.org {
         }
         format json
     }
-    # 1. FRIDAY Orchestrator Command Center
+    handle_path /friday/api/ws/activity {
+        reverse_proxy 127.0.0.1:10000 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+            header_up Connection "Upgrade"
+            header_up Upgrade "websocket"
+        }
+    }
     handle_path /friday* {
         reverse_proxy 127.0.0.1:10000 {
             transport http {
@@ -16,8 +29,6 @@ friday-universe.duckdns.org {
             }
         }
     }
-
-    # 2. Specialist Agent Dedicated Endpoints
     handle_path /inference* {
         reverse_proxy 127.0.0.1:8001 {
             transport http {
@@ -35,7 +46,7 @@ friday-universe.duckdns.org {
         }
     }
     handle_path /stratex* {
-        reverse_proxy 127.0.0.1:8003 {
+        reverse_proxy 127.0.0.1:18003 {
             transport http {
                 keepalive 180s
                 keepalive_idle_conns 50
@@ -43,7 +54,7 @@ friday-universe.duckdns.org {
         }
     }
     handle_path /futuris* {
-        reverse_proxy 127.0.0.1:8004 {
+        reverse_proxy 10.0.0.120:8004 {
             transport http {
                 keepalive 180s
                 keepalive_idle_conns 50
@@ -51,7 +62,7 @@ friday-universe.duckdns.org {
         }
     }
     handle_path /intelx* {
-        reverse_proxy 127.0.0.1:8005 {
+        reverse_proxy 10.0.0.120:8005 {
             transport http {
                 keepalive 180s
                 keepalive_idle_conns 50
@@ -66,8 +77,32 @@ friday-universe.duckdns.org {
             }
         }
     }
+    handle_path /bridge* {
+        reverse_proxy 10.0.0.120:8011 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
+    }
+    handle_path /mcp* {
+        reverse_proxy 10.0.0.120:8011 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
+    }
+    handle_path /messages* {
+        reverse_proxy 10.0.0.120:8011 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
+    }
     handle_path /vyralx* {
-        reverse_proxy 10.0.0.120:8010 {
+        reverse_proxy 16.176.9.247:8010 {
             transport http {
                 keepalive 180s
                 keepalive_idle_conns 50
@@ -75,7 +110,7 @@ friday-universe.duckdns.org {
         }
     }
     handle_path /sentinel* {
-        reverse_proxy 10.0.0.120:8008 {
+        reverse_proxy 127.0.0.1:8008 {
             transport http {
                 keepalive 180s
                 keepalive_idle_conns 50
@@ -90,8 +125,16 @@ friday-universe.duckdns.org {
             }
         }
     }
-
-    # 3. Root URL (Default) -> FRIDAY Command Center
+    handle /privacy-vyralx {
+        root * /srv/friday-static
+        rewrite * /vyralx-privacy-policy.html
+        file_server
+    }
+    handle /pepperstone-auth {
+        root * /srv/friday-static
+        rewrite * /pepperstone-auth.html
+        file_server
+    }
     handle {
         reverse_proxy 127.0.0.1:10000 {
             transport http {
@@ -100,9 +143,7 @@ friday-universe.duckdns.org {
             }
         }
     }
-
     encode zstd gzip
-
     header {
         X-Content-Type-Options nosniff
         X-Frame-Options SAMEORIGIN

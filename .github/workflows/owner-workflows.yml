@@ -119,7 +119,8 @@ jobs:
             FRIDAY/tests/test_pro002_intelx_watch.py \
             FRIDAY/tests/test_int016_instant_lane.py \
             FRIDAY/tests/test_frd029_activity_timestamps.py \
-            FRIDAY/tests/test_frd030_live_activity_timestamp.py
+            FRIDAY/tests/test_frd030_live_activity_timestamp.py \
+            FRIDAY/tests/test_codex_invariants_and_mesh.py
       - name: Generated-code ingestion and saved verification status
         env:
           PYTHONPATH: Forge
