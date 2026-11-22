@@ -14418,6 +14418,37 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: Reproduce from CI logs, identify the root cause, fix or isolate it, file the evidence.
 
+  - id: TASK-REL-071
+    title: 'Stratex health path: retire the legacy testnet heartbeat + surface daemon evaluation age, live-probe the health path, file evidence'
+    status: IN_REVIEW
+    owner: muse_2
+    branch: muse2/task-rel-071-stratex-health-path
+    pr: 1383
+    contributors: []
+    priority: P1
+    created_at: '2026-11-22'
+    updated_at: '2026-11-22T19:30:00+05:30'
+    files:
+    - Stratex/dashboard.py
+    - Stratex/api/health.py
+    - Stratex/api/friday_supervision.py
+    - Stratex/daemon_book.py
+    - Stratex/tests/test_rel_071_stratex_health_path.py
+    - Stratex/tests/test_daemon_heartbeat_health.py
+    - Stratex/tests/test_engine_capability_truthfulness.py
+    - Stratex/tests/test_render_deployment_and_supervisor.py
+    - Stratex/tests/test_critical_remediation.py
+    - .github/workflows/owner-workflows.yml
+    - docs/collaboration/TASK-REL-071-STRATEX-HEALTH-PATH.md
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Live Stratex /health and /api/v1/health/detailed read the daemon heartbeat (state/daemon_heartbeat.json), never the retired testnet heartbeat; the daemon evaluation age (seconds) is surfaced in /health, the feed pillar and the supervision payload; regression coverage runs in CI; evidence filed.'
+    evidence:
+    - 'Claim: issue #35 comment 7079835965 by Muse 2 before any editing. Base: main 3dd7cfba (board blob 2f13afe4aac127fb2f9ca6972a07506b884e0860, 14,462 lines, no TASK-REL-071 record - created in this PR). Assignment: coordinator watch comment 7079741096 (pool 9, P1, 2026-11-22 ~18:50 IST), direct follow-on to TASK-STR-HLT-001.'
+    - 'Implementation: PR #1383 (Muse 2, 2026-11-22). Work commit f823252f: daemon_book daemon_heartbeat_candidates; dashboard get_engine_health_data + snapshot + _health_payload (evaluation age surfaced); api/health feed pillar re-based on the daemon heartbeat; friday_supervision last_analysis_age_sec; strategy-metrics panel + strategy matrix heartbeat reads retired; new regression file Stratex/tests/test_rel_071_stratex_health_path.py added to the Owner Workflow Contracts Stratex list; fixtures in four test files updated (env var rename). Board record rides in the follow-up commit on this branch. Live probe/deploy owed after merge + clearance; /api/v1/health/detailed not probed live (X-API-Key required, no credentials touched).'
+    blockers: []
+    next_action: Awaiting Muse review/merge of PR #1383; live probe/deploy only after merge + clearance.
+
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."

@@ -230,10 +230,19 @@ def _real_trading_data(engine=None) -> dict[str, Any]:
         "at_capacity": False,
         "panic_active": panic_active,
         "last_analysis": None,
+        "last_analysis_age_sec": None,
     }
     global _LAST_MARKET_ANALYSIS
     if _LAST_MARKET_ANALYSIS:
         market_conditions["last_analysis"] = _LAST_MARKET_ANALYSIS.get("analysis_timestamp")
+        # TASK-REL-071: surface the evaluation age (seconds since the last
+        # _ensure_market_analysis refresh completed) next to its timestamp,
+        # so staleness is visible without parsing ISO strings. None while
+        # no refresh has ever published (cold process).
+        market_conditions["last_analysis_age_sec"] = (
+            round(time.time() - _LAST_MARKET_ANALYSIS_TS, 1)
+            if _LAST_MARKET_ANALYSIS_TS else None
+        )
         market_conditions["last_analysis_signals"] = _LAST_MARKET_ANALYSIS.get("signal_count")
         market_conditions["buy_signals"] = _LAST_MARKET_ANALYSIS.get("buy_signals")
         market_conditions["sell_signals"] = _LAST_MARKET_ANALYSIS.get("sell_signals")

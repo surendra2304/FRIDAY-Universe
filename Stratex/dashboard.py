@@ -1088,6 +1088,12 @@ def _multi_venue_daemon_snapshot(max_age_seconds: int = 600):
         unrealized = round(float(unrealized), 2)
     except (TypeError, ValueError):
         unrealized = None
+    # TASK-REL-071: surface the daemon evaluation age (seconds since the
+    # last scan-cycle evaluation) next to its timestamp, so staleness is
+    # visible without parsing ISO strings. None when the heartbeat carries
+    # no evaluation stamp.
+    eval_epoch = daemon_book._parse_iso_epoch(hb.get("last_strategy_evaluation"))
+    eval_age = round(time.time() - eval_epoch, 1) if eval_epoch is not None else None
     return {
         "engine_source": "multi_venue_daemon",
         "daemon_state_age_seconds": round(age, 1),
@@ -1097,6 +1103,7 @@ def _multi_venue_daemon_snapshot(max_age_seconds: int = 600):
         "unrealized_pnl": unrealized,
         "environment": "binance_futures_demo",
         "daemon_last_evaluation": hb.get("last_strategy_evaluation"),
+        "daemon_last_evaluation_age_sec": eval_age,
         "daemon_scan_count": hb.get("scan_count"),
     }
 
@@ -1115,17 +1122,26 @@ def _daemon_capability_warnings(snapshot):
 
 def get_engine_health_data():
     """Reads engine heartbeat and verifies live process state."""
-    env_hb = os.getenv("TESTNET_HEARTBEAT_FILE")
+    # TASK-REL-071: the retired testnet engine's heartbeat
+    # (testnet_heartbeat.json, frozen 2026-11-14, status STOPPED) is no
+    # longer read here. The multi-venue daemon's state/daemon_heartbeat.json
+    # is the only engine heartbeat: an explicit STRATEX_HEARTBEAT_FILE
+    # override wins, then the daemon_heartbeat candidates (same convention
+    # as daemon_book.read_daemon_heartbeat), then the generic heartbeat.json
+    # fallback. The default for a missing file is the first daemon
+    # candidate, so the reason below names the file that is actually absent.
+    daemon_candidates = daemon_book.daemon_heartbeat_candidates()
+    env_hb = os.getenv("STRATEX_HEARTBEAT_FILE")
     if env_hb:
         hb_file = env_hb
-    elif os.path.exists("testnet_heartbeat.json"):
-        hb_file = "testnet_heartbeat.json"
-    elif os.path.exists("heartbeat.json"):
-        hb_file = "heartbeat.json"
     else:
-        hb_file = "testnet_heartbeat.json"
-        
-    # A missing testnet heartbeat is not the whole story: in FUTURES mode the
+        hb_file = next((c for c in daemon_candidates if os.path.exists(c)), None)
+        if hb_file is None and os.path.exists("heartbeat.json"):
+            hb_file = "heartbeat.json"
+        if hb_file is None:
+            hb_file = daemon_candidates[0]
+
+    # A missing daemon heartbeat is not the whole story: in FUTURES mode the
     # multi-venue daemon (consulted below) may be the live engine. Fall
     # through with an empty heartbeat so the daemon snapshot still gets its
     # say instead of declaring OFFLINE from one absent file.
@@ -1140,13 +1156,27 @@ def get_engine_health_data():
 
         hb_ts_str = hb.get("timestamp", "")
         now = datetime.datetime.utcnow()
+        # TASK-REL-071: judge freshness by the WORSE of the content
+        # timestamp and the file mtime. The daemon pulse rewrites the file
+        # every 15s, so the two agree while the daemon lives; a file whose
+        # content claims fresh but whose mtime is old is stale evidence.
+        try:
+            file_age = time.time() - os.path.getmtime(hb_file)
+        except OSError:
+            file_age = 999.0
         if hb_ts_str:
             hb_dt = datetime.datetime.fromisoformat(hb_ts_str.replace("Z", "+00:00")).replace(tzinfo=None)
-            age = (now - hb_dt).total_seconds()
+            age = max((now - hb_dt).total_seconds(), file_age)
         else:
-            age = 999.0
+            age = file_age
             
-        worker_alive = hb.get("worker_alive", False) and hb.get("status") == "RUNNING"
+        # TASK-REL-071: the daemon heartbeat carries no worker_alive key —
+        # its status == "RUNNING" is the alive signal. An explicit
+        # worker_alive key (legacy-format fixtures) still wins.
+        if "worker_alive" in hb:
+            worker_alive = bool(hb.get("worker_alive")) and hb.get("status") == "RUNNING"
+        else:
+            worker_alive = hb.get("status") == "RUNNING"
         pid = hb.get("pid")
         pid_alive = False
         if pid:
@@ -1195,6 +1225,10 @@ def get_engine_health_data():
                 "NO_EXECUTABLE_STRATEGY: governance gate loaded zero validated strategies"
             )
         last_eval = hb.get("last_strategy_evaluation")
+        # TASK-REL-071: hoisted so the age is surfaced in the return dict
+        # below. None when there is no evaluation stamp, or the stamp is
+        # unreadable — never 0.0, which would claim "just evaluated".
+        eval_age = None
         if not last_eval:
             capability_reasons.append("NO_STRATEGY_EVALUATION: engine has never evaluated a strategy")
         else:
@@ -1202,10 +1236,10 @@ def get_engine_health_data():
                 eval_dt = datetime.datetime.fromisoformat(str(last_eval).replace("Z", "+00:00")).replace(tzinfo=None)
                 eval_age = (now - eval_dt).total_seconds()
             except Exception:
-                eval_age = 0.0
+                eval_age = None
                 capability_reasons.append("UNREADABLE_EVALUATION_TIMESTAMP")
             # 15m is generous for any timeframe the engine actually loads.
-            if eval_age > 900:
+            if eval_age is not None and eval_age > 900:
                 capability_reasons.append(
                     f"STALE_STRATEGY_EVALUATION: last evaluation {int(eval_age)}s ago (>900s)"
                 )
@@ -1249,6 +1283,7 @@ def get_engine_health_data():
             "last_market_update": hb.get("last_market_update") or _paper.get("started_at"),
             "last_candle_close": hb.get("last_candle_close"),
             "last_strategy_evaluation": hb.get("last_strategy_evaluation"),
+            "last_strategy_evaluation_age_sec": round(eval_age, 1) if eval_age is not None else None,
             "service_start_time": hb.get("service_start_time") or _paper.get("started_at"),
             "timestamp": hb_ts_str or (datetime.datetime.utcnow().isoformat() + "Z")
         }
@@ -1290,6 +1325,8 @@ def _health_payload(evidence_class):
         "engine_source": engine_data.get("engine_source"),
         "open_positions": engine_data.get("open_positions"),
         "daemon_balance": engine_data.get("daemon_balance"),
+        "daemon_last_evaluation": engine_data.get("daemon_last_evaluation"),
+        "daemon_last_evaluation_age_sec": engine_data.get("daemon_last_evaluation_age_sec"),
         "unrealized_pnl": engine_data.get("unrealized_pnl"),
         "environment": engine_data.get("environment"),
         "mode": getattr(config, "TRADING_MODE", "TESTNET"),
@@ -3593,26 +3630,15 @@ def api_strategy_metrics():
         "swing": ["1h", "4h"]
     }
 
-    # Authoritative activity source: the engine heartbeat reports what the
-    # governance gate ACTUALLY loaded (VALIDATED strategies only). The config
-    # above lists every candidate; a strategy not in the heartbeat is DISABLED.
+    # TASK-REL-071: the retired testnet engine's heartbeat used to report
+    # what the governance gate ACTUALLY loaded (VALIDATED strategies only),
+    # and a strategy not in it was DISABLED. That engine is retired and its
+    # heartbeat file is frozen (2026-11-14); the live daemon heartbeat
+    # carries no strategies list, so there is no live loaded-strategies
+    # source to gate on. Until one exists, every candidate strategy shows
+    # ACTIVE here (hb_strategies None) — the same verdict the frozen file
+    # produced through its 300 s freshness check.
     hb_strategies, hb_timeframes = None, None
-    hb_file = os.getenv("TESTNET_HEARTBEAT_FILE", "testnet_heartbeat.json")
-    if os.path.exists(hb_file):
-        try:
-            with open(hb_file, "r") as f:
-                hb = json.load(f)
-            hb_fresh = False
-            try:
-                hb_ts = datetime.datetime.fromisoformat(hb.get("timestamp", "").replace("Z", "+00:00"))
-                hb_fresh = (datetime.datetime.now(datetime.timezone.utc) - hb_ts).total_seconds() < 300
-            except Exception:
-                pass
-            if hb_fresh and isinstance(hb.get("strategies"), list) and hb["strategies"]:
-                hb_strategies = [s.lower() for s in hb["strategies"]]
-                hb_timeframes = set(hb.get("timeframes") or [])
-        except Exception:
-            pass
 
     # Load scanner stats from portfolio if available
     port_stats = {}
@@ -6599,16 +6625,12 @@ def _get_real_strategy_matrix():
     analytics = telemetry.compute_summary_analytics() or {}
     by_strategy = analytics.get("by_strategy", {}) or {}
 
+    # TASK-REL-071: the retired testnet engine's heartbeat used to override
+    # this list with the strategies it had loaded. That file is frozen
+    # (2026-11-14) and its list overrode config with a dead engine's
+    # strategies; the live daemon heartbeat carries no strategies list, so
+    # the governance config is now the only source.
     active_strategies = list(getattr(config, "ACTIVE_STRATEGIES", {}).keys())
-    hb_file = os.getenv("TESTNET_HEARTBEAT_FILE", "testnet_heartbeat.json")
-    if os.path.exists(hb_file):
-        try:
-            with open(hb_file, "r", encoding="utf-8") as f:
-                hb = json.load(f)
-            if isinstance(hb.get("strategies"), list) and hb["strategies"]:
-                active_strategies = [s.lower() for s in hb["strategies"]]
-        except Exception:
-            pass
 
     all_names = list(dict.fromkeys(active_strategies + list(by_strategy.keys())))
     allocation = round(100.0 / len(all_names), 1) if all_names else 0.0

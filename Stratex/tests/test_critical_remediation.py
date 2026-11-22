@@ -271,7 +271,8 @@ class TestC3HealthReportsMeasuredTruth:
 
     def test_feed_is_unavailable_without_heartbeat_evidence(self, monkeypatch):
         import api.health as h
-        monkeypatch.delenv("TESTNET_HEARTBEAT_FILE", raising=False)
+        monkeypatch.delenv("STRATEX_HEARTBEAT_FILE", raising=False)
+        monkeypatch.delenv("STRATEX_DAEMON_HEARTBEAT_FILE", raising=False)
         data, status = h._measure_feed_freshness()
         assert status == "UNAVAILABLE"
         assert data["feed_status"] == "UNAVAILABLE"
@@ -282,7 +283,7 @@ class TestC3HealthReportsMeasuredTruth:
         hb = self.tmp / "hb.json"
         stale = (datetime.now(timezone.utc) - timedelta(hours=6)).isoformat()
         hb.write_text(json.dumps({"last_market_update": stale}), encoding="utf-8")
-        monkeypatch.setenv("TESTNET_HEARTBEAT_FILE", str(hb))
+        monkeypatch.setenv("STRATEX_HEARTBEAT_FILE", str(hb))
         data, status = h._measure_feed_freshness()
         assert status == "STALE", data
         assert data["feed_status"] == "STALE"
@@ -293,7 +294,7 @@ class TestC3HealthReportsMeasuredTruth:
         hb = self.tmp / "hb.json"
         fresh = datetime.now(timezone.utc).isoformat()
         hb.write_text(json.dumps({"last_market_update": fresh}), encoding="utf-8")
-        monkeypatch.setenv("TESTNET_HEARTBEAT_FILE", str(hb))
+        monkeypatch.setenv("STRATEX_HEARTBEAT_FILE", str(hb))
         data, status = h._measure_feed_freshness()
         assert status == "HEALTHY", data
         assert data["feed_status"] == "REAL_TIME_STREAMING"
@@ -302,7 +303,7 @@ class TestC3HealthReportsMeasuredTruth:
         import api.health as h
         hb = self.tmp / "hb.json"
         hb.write_text(json.dumps({"pid": 1}), encoding="utf-8")
-        monkeypatch.setenv("TESTNET_HEARTBEAT_FILE", str(hb))
+        monkeypatch.setenv("STRATEX_HEARTBEAT_FILE", str(hb))
         data, status = h._measure_feed_freshness()
         assert status == "UNAVAILABLE"
         assert data["reason"] == "NO_TIMESTAMPED_FEED_EVIDENCE"
