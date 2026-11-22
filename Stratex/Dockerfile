@@ -32,7 +32,7 @@ COPY . .
 EXPOSE 8000
 
 # Docker Healthcheck
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 CMD curl -f http://localhost:8000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 CMD curl -f http://localhost:8000/ready || exit 1
 
 # Create dedicated non-root user and ensure ownership of /app
 RUN groupadd -g 1000 appuser && \
