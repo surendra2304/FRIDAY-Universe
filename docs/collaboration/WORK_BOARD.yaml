@@ -14891,23 +14891,28 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Run the rollback drill on the fleet, file evidence.
   - id: TASK-INF-023
     title: 'Fleet: run the backup/restore drill against the live backup and file evidence'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_1
-    branch: null
-    pr: null
+    branch: muse1/task-inf-023-backup-restore-drill
+    pr: 1409
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T00:35:00+05:30'
+    updated_at: '2026-11-23T00:53:34+05:30'
     files:
-    - docs/collaboration/WORK_BOARD.yaml
+      - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/TASK-INF-023-BACKUP-RESTORE-DRILL.md"
     acceptance:
-    - 'A restore drill is executed from a real scheduled backup (SEN-009 backup chain), the restored state is verified against the live state, and the drill is filed with timestamps; no live data is disturbed.'
+      - 'A restore drill is executed from a real scheduled backup (SEN-009 backup chain), the restored state is verified against the live state, and the drill is filed with timestamps; no live data is disturbed.'
+      - 'Gaps filed with file/line.'
+      - 'No live database or config overwritten.'
     evidence:
-    - 'Coordinator pool 10, from MASTER_PLAN (TASK-INF-003, STALE-UNVERIFIED since 2026-11-14): backup/restore tooling merged but no restore-drill evidence exists. The first scheduled backup succeeded 2026-11-18 (SEN-009) - the restore half is still unproven. Unassigned - the coordinator watch assigns it to the next free worker.'
-    - 'Assigned to Muse 1 in coordinator assignment round 7084017188 as a parallel task; SEN-022 stays open, held on REL-070.'
+      - 'Coordinator pool 10, from MASTER_PLAN (TASK-INF-003, STALE-UNVERIFIED since 2026-11-14): backup/restore tooling merged but no restore-drill evidence exists. The first scheduled backup succeeded 2026-11-18 (SEN-009) - the restore half is still unproven. Unassigned - the coordinator watch assigns it to the next free worker.'
+      - 'Assigned to Muse 1 in coordinator assignment round 7084017188 as a parallel task; SEN-022 stays open, held on REL-070.'
+      - "Claim: issue #35 comment 7084090642 by Muse 1, 2026-11-23 00:32 IST. Branch muse1/task-inf-023-backup-restore-drill. Work-request cycle cancelled on claim per task body; hourly self-check and weekly reset stay armed. Weekly usage 20% (reset Nov 28 21:57 IST). Base: main 434eff03 (board verified against the true main blob before editing)."
+      - "Drill run 2026-11-23 ~00:48 IST by Muse 1; evidence doc docs/collaboration/TASK-INF-023-BACKUP-RESTORE-DRILL.md in work PR #1409 (head a262afb4, base main 434eff03). Newest backup chain 2026-11-22 verified end-to-end: 136 table files hash/row-count clean (Server 1: 135 files, 23,695 rows; Server 2 media: 1 file, 36 rows); backup --verify 188 files OK (Server 1), 27 files OK (media); Phase A verify-only 108 match / 28 differ (all live > backup, expected drift) / 0 missing / 0 extra; scratch SQLite load 23,695/23,695 + 36/36 rows, scratch DBs deleted. No live DB/config overwritten; no --apply/--replace. Gaps G1-G6 still present, G7 symptom gone, G8 still blocked, new G10 (S2 checkout stale) + G11 (report truncation) filed with file/line. Board record verified against the true main blob before editing."
     blockers: []
-    next_action: Run the restore drill from a real backup, verify, file evidence.
+    next_action: "Awaiting Muse's review/merge of PR #1409."
   - id: TASK-WF-002
     title: 'Integration: fresh multi-agent trace, one end-to-end task across at least three agents'
     status: AVAILABLE
