@@ -204,10 +204,34 @@ def split_sentences(text: str) -> list[str]:
 _BRACKET_TAG = re.compile(r"\[[^\]\[]{1,40}\]")
 _ANGLE_TAG = re.compile(r"<[^>]{1,40}>")
 
+# Emoji / pictograph codepoints, for text bound for a rasterised surface.
+# Ranges mirror the packaging emoji counter (``\U0001F300-\U0001FAFF``,
+# ``\u2600-\u27BF``, ``\U0001F000-\U0001F0FF``), widened to the whole
+# ``\U0001F000-\U0001FAFF`` block (regional indicators / flags included)
+# plus the symbol block and the invisible joiners — variation selectors,
+# ZWJ and the keycap combiner — so no residue survives the strip.
+_EMOJI_STRIP_RE = re.compile(
+    "[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\uFE00-\uFE0F\u200D\u20E3]"
+)
+
+
+def strip_emoji(text: str) -> str:
+    """Drop emoji / pictograph codepoints from text (TASK-VYR-038).
+
+    The VYR-032 PASS watch found an emoji in the static top headline
+    rendering as a hollow box: the burn-in font (Anton) and the
+    thumbnail font (Montserrat-Black) carry no emoji glyphs, and the U2
+    render host has no emoji font at all (fc-list, 2026-11-23). Emoji
+    stay in the YouTube title/description, where they render natively;
+    they never reach a font that cannot draw them.
+    """
+    return _EMOJI_STRIP_RE.sub("", str(text or ""))
+
 
 def sanitize_spoken_text(text: str) -> str:
     cleaned = _BRACKET_TAG.sub(" ", str(text or ""))
     cleaned = _ANGLE_TAG.sub(" ", cleaned)
+    cleaned = strip_emoji(cleaned)
     return " ".join(cleaned.split())
 
 
