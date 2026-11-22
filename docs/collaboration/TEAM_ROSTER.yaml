@@ -5,14 +5,14 @@ collaboration_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
 authority:
   model: "claude_lead_coordination"
   project_owner_id: "human_surendra"
-  project_owner_display: "Surendra Varma Jalli"
+  project_owner_display: "Surendra"
   final_approval: "Project owner"
   lead_coordinator_id: "muse_ai"
   lead_coordinator_display: "Muse (Head Manager)"
 
 collaborators:
   - id: "human_surendra"
-    display_name: "Surendra Varma Jalli"
+    display_name: "Surendra"
     contributor_type: "human"
     status: "project_owner"
     authority: "Final project decisions, merges and production authorization"
