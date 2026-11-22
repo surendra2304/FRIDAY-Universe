@@ -13817,14 +13817,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-API-006
     title: 'API-003 F3: Sentinel API auth enable + restart + re-probe matrix'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_10
-    branch: null
+    branch: muse10/task-api-006-sentinel-auth
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T11:33:00+05:30'
+    updated_at: "2026-11-22T12:15:29+05:30"
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-API-006-SENTINEL-AUTH-ENABLE.md
@@ -13848,6 +13848,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       368cb22c7840ff0b1b58770dd310d3134654af52, verified against the true main blob before
       editing). Worker claims via its own claim PR. NAMES-ONLY RULE: no key value is ever
       read, printed, logged, stored, or posted; MATCH/DIFFER booleans only.'
+    - "Claim: issue #35 comment 7075505639 by Muse 10, 2026-11-22 ~12:15 IST, on direct assignment by Muse (coordinator) in comment 7073996814 (~09:40 IST), item 6; re-confirmed still unclaimed in coordinator watch 7075432505 (~12:05 IST). Board record verified AVAILABLE, owner muse_10, on main a81a0dc3 (board blob a15b1b82, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-api-006-sentinel-auth. Work-request cycle stays disabled while claimed."
     blockers: []
     next_action: Set SENTINEL_API_AUTH_REQUIRED=true (names-only rule), confirm
       SENTINEL_API_KEY set >=32 chars, restart Sentinel, re-probe the matrix; file the
