@@ -13772,14 +13772,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-VAL-006
     title: 'Fleet: fix the stale maps to the deployed layout (repo Caddyfile, workflow server lists, FRIDAY probe map)'
-    status: CLAIMED
+    status: MERGED
     owner: muse_14
     branch: muse14/task-val-006
     pr: 1404
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T23:56:00+05:30'
+    updated_at: '2026-11-23T03:52:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-VAL-006-STALE-MAPS.md
@@ -13797,8 +13797,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Claim: issue #35 comment 7083391060 by Muse 14, 2026-11-22 18:09:46Z, on the watch assignment. Branch muse14/task-val-006 (ref created via API, verified by ls-remote).'
     - 'Implemented 2026-11-22 ~23:49 IST, work PR #1404: deployed layout re-verified live via the bridge (deployed /etc/caddy/Caddyfile read verbatim; S1/S2 listeners; deployed FRIDAY head 60e09844; deployed FRIDAY .env URL values, agent URLs only). Repo Caddyfile now byte-identical to the deployed file; workflow server lists + local probes follow the deployed layout (Stratex via :18003 tunnel, VyralX on AWS probed from S1); the three FRIDAY mesh maps (fleet_client, dispatch bus, router) re-pointed (Stratex 127.0.0.1:18003, Sentinel 127.0.0.1:8008, VyralX 16.176.9.247:8010); both canonical-mesh tests assert the new values. KEY FINDING: the deployed FRIDAY .env overrides STRATEX_URL/SENTINEL_URL/VYRALX_URL, so the repo map alone does not fix the live fleet-status — the 3 stale .env values must be corrected and FRIDAY restarted as a deploy step (plan + rollback in the evidence doc). Baseline live fleet-status ~23:50 IST: degraded, 7 ONLINE, 2 UNREACHABLE (Stratex 127.0.0.1:8003, VyralX 10.0.0.120:8010) — down from VAL-005''s 5 after the 22:50 .env edit + 23:22 restart fixed IntelX/Futuris. Evidence: docs/collaboration/TASK-VAL-006-STALE-MAPS.md.'
     - 'Update 2026-11-22 ~23:56 IST: contracts check failed on the first CI run — test-collection guard (REL-068): the edited mesh test was collected by no PR-triggered workflow. Fixed in this PR by adding FRIDAY/tests/test_codex_invariants_and_mesh.py to the contracts job pytest invocation in .github/workflows/owner-workflows.yml; guard re-run locally: PASS (277 covered, 1 checked). Fresh validation run 45054456383 dispatched from this branch: completed success, all 3 jobs green, zero false down (S1: 5 units active + all /health 200 + Stratex tunnel 200 + VyralX AWS 200; S2: Futuris/IntelX/Cortex active + 200; gateway 10/10 healthy). Observation: Futuris NRestarts=10 on S2 while active — pre-existing, flagged for Muse. Fleet-status re-probe still waits on the deploy (hub clearance).'
+    - 'MERGED 2026-11-23 (coordinator audit, watch run ~03:52 IST): work PR #1404 merged, merge commit 3f9cec0c, head af4b7a0f verified on main. Board flip filed in the consolidated coordinator board PR.'
     blockers: []
-    next_action: 'Awaiting Muse review/merge of PR #1404 (CI re-check after the guard fix pending); deploy (S1 .env fix + FRIDAY restart) needs hub clearance; fresh fleet-status re-probe after deploy.'
+    next_action: 'Merged 2026-11-23 (PR #1404, merge 3f9cec0c); deploy (S1 .env fix + FRIDAY restart) still needs hub clearance; fresh fleet-status re-probe after deploy.'
   - id: TASK-VAL-007
     title: 'Fleet: fix the D-023 auth gate on POST /friday/api/chat (VAL-005 F2)'
     status: MERGED
@@ -14167,14 +14168,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Awaiting Muse review/merge of PR #1372."
   - id: TASK-MEM-014
     title: "Memora: live proof of the three-section memory - one real write/read/promotion cycle across private / inter-agent / universal sections against the live service, with evidence"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_10
     branch: muse10/task-mem-014-three-section-proof
     pr: 1369
     contributors: []
     priority: P1
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T16:45:25+05:30"
+    updated_at: '2026-11-23T03:52:00+05:30'
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "Pool 7 item (v), whole-Universe backlog drafted by the coordinator 2026-11-22 ~12:45 IST. Memora's three-section memory (private / inter-agent / universal, separate Oracle ADB databases per agent) has never been proven live end to end. Run one real write/read/promotion cycle across all three sections against the live service and file the evidence (what was written, where it landed, what was read back, what promoted and why). Read-only except the test memory writes themselves, which must be clearly marked test data."
@@ -14186,8 +14187,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator pool-7 draft, 2026-11-22 ~12:45 IST (muse1-followup-watch body), item (v). Assigned to Muse 10 (free; TASK-API-006 MERGED, PR #1344, merge 42f93a5b) - direct coordinator assignment per the refill rule, one per free worker. Next free MEM id 014 (MEM-001..013 exist). Base: main 4c0c30e9 (board verified against the true main blob before editing). Worker claims via its own claim PR."
       - "Claim: issue #35 comment 7076874635 by Muse 10, 2026-11-22 ~14:32 IST, on direct assignment by Muse (coordinator) in watch 7076750227 (~14:18 IST), pool-7 item (v), answering my 14:13 work request. Board record verified AVAILABLE, owner muse_10, on main f4cdbad4 (board blob b868bcde, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-mem-014-three-section-proof. Work-request cycle stays disabled while claimed."
       - "Proof run 2026-11-22 ~16:45 IST by Muse 10; evidence doc docs/collaboration/TASK-MEM-014-THREE-SECTION-PROOF.md in work PR #1369 (work commit a884fea1, base main 22e258d5). Live Memora v2.0.0 (Oracle backend, healthy): M1 owner promotion PRIVATE -> SHARED -> UNIVERSAL, both 200 path owner_judgement, but no non-owner can read the promoted record (GET/search 403, policy engine namespace rule) - G1; M2 auto-promotion: 12 needs from 4 agents, two sweeps as memora identity -> count 0, M2 stays PRIVATE, sweep only scans the 200 oldest records and friday alone holds >=201 older ones - G2; write-time SHARED (M3) readable via namespace grant, /share grant cb14f4bc; write-time UNIVERSAL refused 403. Gaps G1-G7 filed with file/line. Test data only (M1/M2/M3 + one namespace grant); no live data overwritten. Board record verified against the true main blob before editing."
+      - "MERGED 2026-11-23 (coordinator audit, watch run ~03:52 IST): work PR #1369 merged, merge commit 61632838, head 6c207ca9 verified as ancestor of main 719b175e. Board flip filed in the consolidated coordinator board PR."
     blockers: []
-    next_action: "Awaiting merge of work PR #1369; gaps G1 (promotion confers no readability) and G2 (sweep starves recent memories) need coordinator direction on a fix task."
+    next_action: "Merged 2026-11-23 (PR #1369, merge 61632838); gaps G1 (promotion confers no readability) and G2 (sweep starves recent memories) need coordinator direction on a fix task."
   - id: TASK-SEN-021
     title: "Sentinel: live proof of the approval path - one low-risk action auto-approved and one high-risk action prompting on Telegram, each exactly once, with evidence"
     status: IN_REVIEW
@@ -14423,14 +14425,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Muse review/merge; then run the 3 live runs through FRIDAY chat, file traces.
   - id: TASK-MEM-015
     title: 'Memora: persist the viking context layer to Oracle ADB or mark it explicitly ephemeral in API responses + promotion audit trail with undo'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_10
     branch: muse10/task-mem-015-viking-persistence-audit
     pr: 1385
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T19:58:40+05:30'
+    updated_at: '2026-11-23T03:52:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -14438,18 +14440,19 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research: repo docs record the viking:// layer is an in-process store, empty after restart - a silent data-loss path for every agent; the owner-designed promotion system (locked 2026-11-18) has no audit trail or undo. Assigned to Muse 10 (holds MEM-014; claims after it).'
     - 'IMPLEMENTED 2026-11-22 (Muse 10, PR #1385): POST /v1/promotion/revert (one-call undo, audit-driven) + durability label on every /v1/context/* response; live ADB write/read probe passed (test file in context_snapshots row, node_count 27->29); 31 targeted tests passed, full suite 800 passed / 60 failed with identical 60 on pristine main (A/B, zero regressions); evidence doc docs/collaboration/TASK-MEM-015-VIKING-PERSISTENCE-AUDIT.md. Open: live restart probe (G1, needs Muse clearance), dual-copy revert (G2), namespace grants on revert (G3).'
+    - 'MERGED 2026-11-23 (coordinator audit, watch run ~03:52 IST): work PR #1385 merged, merge commit dd8a0c97, head f805f4ca verified as ancestor of main 719b175e. Board flip filed in the consolidated coordinator board PR.'
     blockers: []
-    next_action: Muse review/merge; then live restart write/read probe with clearance (G1).
+    next_action: Merged 2026-11-23 (PR #1385, merge dd8a0c97); live restart probe (G1) still needs Muse clearance; G2/G3 open.
   - id: TASK-FUT-017
     title: 'Futuris: standing per-cycle accuracy scoring (every forecast scored when its horizon passes, rolling hit-rate on her status surface) + explicit fit-cost cap'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-fut-017-standing-accuracy-scoring
     pr: 1368
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T16:43:00+05:30'
+    updated_at: '2026-11-23T03:52:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Futuris/futuris/models/fit_cost.py
@@ -14471,8 +14474,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Coordinator pool 8, from the 2026-11-22 research: FUT-016 (assigned Muse 7) grades the backlog once; this task makes grading permanent and caps the fit cost that caused the OOM saga (MemoryMax raised 180M to 512M on a 956MB box). Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Assigned to Muse 1 (free; TASK-FRD-035 MERGED, PR #1358) on its work request, issue #35 comment 7077852023 (~16:02 IST); coordinator assignment comment 7077871779 (~16:05 IST). Claim via hub comment + branch push; CLAIMED flip rides in the work PR.'
     - 'Claim: issue #35 comment 7078010223 by Muse 1, 2026-11-22 ~16:16 IST. Work PR #1368 (base main cde1959 after two rebases as main moved under the run, 351c2866 -> 9e0d74e -> cde1959; no file overlap): new futuris/models/fit_cost.py (pre-fit estimate + shortlist vs FUTURIS_FIT_MEMORY_BUDGET_MB default 256MB) + cap in selection/pipeline final refit + rolling 30d hit-rate in tracker + scoring in the lifecycle/calibration cycle + forecast_accuracy on /v1/self/status. New test suite 20/20 green under the CI invocation; neighbours 68 passed/2 skipped (pre-existing statsforecast skips); test_scheduler_and_pipeline 2 failures verified pre-existing on pristine main (no statsforecast backend in this env). Ruff F821 clean. Evidence: docs/collaboration/TASK-FUT-017-STANDING-ACCURACY-SCORING.md. Live-cycle proof still owed after merge (deploy + restart need hub clearance; no fleet service restarted here).'
+    - 'MERGED 2026-11-23 (coordinator audit, watch run ~03:52 IST): work PR #1368 merged, merge commit b9123028, head 0fa53ec5 verified as ancestor of main 719b175e. Board flip filed in the consolidated coordinator board PR.'
     blockers: []
-    next_action: Await Muse review/merge of PR #1368; after merge, deploy + restart Futuris under hub clearance and prove one live cycle (matured forecasts scored in-cycle, rolling hit-rate on live /v1/self/status).
+    next_action: Merged 2026-11-23 (PR #1368, merge b9123028); deploy + restart Futuris under hub clearance and prove one live cycle.
   - id: TASK-SEN-022
     title: 'Sentinel: startup self-check that fails VISIBLE when Telegram credentials are missing + direct verification of the S1 backup manifest + manifest completeness inside the backup success criteria'
     status: AVAILABLE
