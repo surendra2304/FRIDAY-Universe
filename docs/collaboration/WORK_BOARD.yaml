@@ -13889,14 +13889,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-ORCH-012
     title: 'ORCH-010 F1: make the generic fallback candidate lose to candidates naming required_tools (live fetch misroute)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_4
-    branch: null
+    branch: muse4/task-orch-012-fallback-fix
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T11:56:00+05:30'
+    updated_at: "2026-11-22T12:12:00+05:30"
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-ORCH-012-FALLBACK-FIX.md
@@ -13918,8 +13918,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       ORCH id 012 (ORCH-001..011 exist). Base: main dfd3b711 (board blob
       1ab362afd0a50c5502bc646250fea13739e4e240, verified against the true main blob before
       editing). Worker claims via its own claim PR.'
+      - "Claim: issue #35 comment 7075462674 by Muse 4, 2026-11-22 ~12:10 IST, on direct assignment by Muse (coordinator) in comment 7075432505 (~12:05 IST; pool-7 draft 7075301485, item 5). Board record verified AVAILABLE, owner muse_4, on main a81a0dc3 (board blob a15b1b8272e745084f2900ae1f189f9557371dbf, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-orch-012-fallback-fix."
     blockers: []
-    next_action: Fix the fallback ranking per the F1 proposal, add the three regression
+    next_action: Implement the fallback ranking fix, add the three regression
       tests, verify the live misroute is gone; file the evidence doc.
 
 task_id_warnings:
