@@ -70,10 +70,14 @@ def fake_gateway(monkeypatch):
     return calls
 
 
-# One character over the guard boundary, in the gateway estimator's
-# own units (chars // 4 over system instruction + message contents).
-_OVER_LIMIT_PROMPT = "x" * ((GROQ_PROMPT_TOKEN_LIMIT + 100) * 4)
-_UNDER_LIMIT_PROMPT = "x" * ((GROQ_PROMPT_TOKEN_LIMIT - 100) * 4)
+# Prompt sizes in the gateway estimator's own units (calibrated 2.6
+# chars/token, chars * 5 // 13, TASK-INF-021). The over-limit prompt is
+# 100 tokens over the guard; the under-limit prompt sits 200 tokens
+# below it, so the full request stays under even with the role's
+# registered system instructions (~307 chars for code_generator) added
+# by the unified path before estimating.
+_OVER_LIMIT_PROMPT = "x" * ((GROQ_PROMPT_TOKEN_LIMIT + 100) * 13 // 5)
+_UNDER_LIMIT_PROMPT = "x" * ((GROQ_PROMPT_TOKEN_LIMIT - 200) * 13 // 5)
 
 
 def _request(**overrides) -> UnifiedExecutionRequest:

@@ -51,7 +51,8 @@ def all_providers_available(monkeypatch):
 
 def test_estimate_counts_prompt_plus_reserved_output():
     req = _req("x" * 400, max_tokens=100)
-    assert v1._estimate_context_tokens(req) == 400 // 4 + 100
+    # 400 chars at the calibrated 2.6 chars/token (400 * 5 // 13 = 153).
+    assert v1._estimate_context_tokens(req) == 400 * 5 // 13 + 100
 
 
 def test_estimate_handles_empty_messages():

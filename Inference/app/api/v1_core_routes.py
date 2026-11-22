@@ -41,7 +41,12 @@ from app.memory.base import TaskRecord
 from app.providers.base import ProviderMessage, ProviderRequest
 from app.providers.custom_endpoints import custom_catalog_entries, custom_provider_for_model
 from app.providers.errors import TimeoutError as ProviderTimeoutError
-from app.providers.gateway import GROQ_PROMPT_TOKEN_LIMIT, model_gateway
+from app.providers.gateway import (
+    GROQ_PROMPT_TOKEN_LIMIT,
+    TOKEN_ESTIMATE_DEN,
+    TOKEN_ESTIMATE_NUM,
+    model_gateway,
+)
 from app.providers.model_servability import model_servability_tracker
 from app.providers.quota_ledger import quota_ledger
 from app.providers.unified_manager import (
@@ -1089,10 +1094,10 @@ MODEL_CONTEXT_WINDOWS: dict[str, int] = {
     "nvidia/nemotron-3.5-lightning:free": 131072,
 }
 
-#: Characters-per-token divisor for request-size estimation — the same
-#: coarse heuristic the local provider's usage estimate uses
-#: (app/providers/local.py). It drives routing fit only, never billing.
-_CHARS_PER_TOKEN = 4
+#: Request-size estimation uses the gateway's calibrated estimator
+#: constants (TASK-INF-021: 2.6 chars/token, exact form 5/13), imported
+#: from app.providers.gateway so selection and the guard can never drift
+#: apart (TASK-INF-012). It drives routing fit only, never billing.
 
 #: Fit-filter floor: the context window shared by the catalogue's whole
 #: standard tier. A request estimated at or below this fits every
@@ -1108,21 +1113,22 @@ def _estimate_context_tokens(req: ChatCompletionRequest) -> int:
     enforce the window over prompt + completion together.
     """
     chars = sum(len(msg.content or "") for msg in req.messages)
-    return chars // _CHARS_PER_TOKEN + max(0, int(req.max_tokens or 0))
+    return chars * TOKEN_ESTIMATE_NUM // TOKEN_ESTIMATE_DEN + max(0, int(req.max_tokens or 0))
 
 
 def _estimate_prompt_tokens(req: ChatCompletionRequest) -> int:
     """Estimated PROMPT tokens, mirroring the gateway's own estimator.
 
     TASK-INF-012: the gateway's TASK-REL-047 guard estimates prompt
-    tokens as message characters // 4 (app.providers.gateway.
-    estimate_prompt_tokens) and refuses to run an over-limit prompt on
+    tokens at the calibrated 2.6 chars/token (TASK-INF-021;
+    app.providers.gateway.estimate_prompt_tokens) and refuses to run an
+    over-limit prompt on
     Groq. Selection must estimate identically so it can see the same
     boundary; any drift between the two estimators reopens the gap
     where selection picks a Groq model the gateway will not execute.
     """
     chars = sum(len(msg.content or "") for msg in req.messages)
-    return chars // _CHARS_PER_TOKEN
+    return chars * TOKEN_ESTIMATE_NUM // TOKEN_ESTIMATE_DEN
 
 
 #: Task-type inference hints. Deliberately small and deterministic: the

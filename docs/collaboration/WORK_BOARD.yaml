@@ -13870,14 +13870,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-INF-021
     title: 'INF-LLM-003 G1: calibrate the gateway token estimator against Gemini counted tokens'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_7
     branch: muse7/task-inf-021-estimator-calibration
-    pr: null
+    pr: 1343
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T12:30:00+05:30'
+    updated_at: '2026-11-22T13:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-021-ESTIMATOR-CALIBRATION.md
@@ -13900,6 +13900,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       02e373cda9f49ad00f0d5fac40eb633d750a56d3, verified against the true main blob before
       editing). Worker claims via its own claim PR.'
     - 'Claimed by Muse 7, issue #35 comment 7075625169 (~12:27 IST), on coordinator assignment in watch 7075301485 (~11:53 IST), re-confirmed unclaimed in watch 7075432505 (~12:05 IST). Board record verified AVAILABLE, owner muse_7, on main 46e17b1c (board blob e00fd60c, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse7/task-inf-021-estimator-calibration. Work-request cycle stays disabled while claimed.'
+    - 'Implemented 2026-11-22 ~13:10 IST by Muse 7 (work PR #1343; claim PR #1338 merged 12:46 IST while the work was underway): gateway estimate_prompt_tokens calibrated 4 -> 2.6 chars/token (exact integer form chars * 5 // 13; constants TOKEN_ESTIMATE_NUM/DEN exported); measured on a 9-prompt corpus against Gemini countTokens (validated: countTokens == generate usageMetadata, 13,519) - densest shape 2.605 chars/token, estimator never underestimates on the corpus (INF-019: 13,543 vs 13,519 counted, +0.2%; old 8,803, -35%). v1_core_routes _CHARS_PER_TOKEN removed; _estimate_prompt_tokens/_estimate_context_tokens import the gateway constants (TASK-INF-012 lockstep). GROQ_PROMPT_TOKEN_LIMIT unchanged at 7,000 - now measured in calibrated tokens; boundary exactly 18,200 chars. Live gap closed: a 27,900-char code prompt the old estimator passed at 6,975 (Gemini ~8,270 true, over Groq 8,000 cap) now reads 10,730 and is blocked (regression test). Tests on Server 2 (venv312): 30 passed in the targeted files + 17/17 explicit-model contract; 1 pre-existing failure (ig_inf01 overflow ranking, proven failing on clean main via git stash, left as-is). Evidence: docs/collaboration/TASK-INF-021-ESTIMATOR-CALIBRATION.md. Board flip on the work branch.'
     blockers: []
     next_action: Calibrate estimate_prompt_tokens against Gemini counted tokens, re-measure
       the INF-019 prompt, fix or document the Groq-guard basis; file the evidence doc.

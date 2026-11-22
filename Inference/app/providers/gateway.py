@@ -82,17 +82,41 @@ def provider_has_credentials(prov_name: str) -> bool:
 GROQ_PROMPT_TOKEN_LIMIT = 7000
 
 
-def estimate_prompt_tokens(request: ProviderRequest) -> int:
-    """Estimate a request's prompt size in tokens (chars // 4).
+#: TASK-INF-021: calibrated chars-per-token for the prompt estimator.
+#: The old chars // 4 understated Gemini's counted prompt tokens by up to
+#: 54% (INF-019 prompt: 8,803 estimated vs 13,519 counted on every
+#: INF-LLM-003 trial). Measured on a 9-prompt corpus against Gemini
+#: countTokens (validated: countTokens == generate usageMetadata,
+#: 13,519), the densest shape is 2.605 chars/token, so the estimator
+#: uses 2.6 chars/token — exact integer form 5/13 — and never
+#: underestimates on the measured corpus (worst case INF-019: +0.2%).
+#: Prose-like shapes overestimate (up to +125% on repeated prose):
+#: safe direction for the Groq guard, which now admits at most 18,200
+#: chars (7,000 true tokens) with the designed 1,000-token headroom
+#: under Groq's 8,000 TPM cap. Prompts denser than 2.6 chars/token
+#: remain possible (e.g. minified/encoded blobs); the guard is a screen,
+#: not a guarantee — see
+#: docs/collaboration/TASK-INF-021-ESTIMATOR-CALIBRATION.md.
+#: v1_core_routes imports these constants so selection and the guard can
+#: never drift apart (TASK-INF-012).
+TOKEN_ESTIMATE_NUM = 5
+TOKEN_ESTIMATE_DEN = 13
 
-    The same estimator the provider adapters use for their own token
-    accounting (total_chars // 4 over message contents), plus the system
-    instruction, which the provider also counts against the request.
+
+def estimate_prompt_tokens(request: ProviderRequest) -> int:
+    """Estimate a request's prompt size in tokens (calibrated, TASK-INF-021).
+
+    The estimator tracks Gemini's counted prompt tokens: total characters
+    over message contents plus the system instruction, which the provider
+    also counts against the request, at 2.6 chars/token (exact integer
+    form chars * 5 // 13). The provider adapters keep their own coarse
+    chars // 4 usage heuristic for cost accounting; only this gateway
+    estimator drives the Groq guard and the unified steering.
     """
     chars = len(request.system_instruction or "")
     for msg in request.messages:
         chars += len(msg.content or "")
-    return max(1, chars // 4)
+    return max(1, chars * TOKEN_ESTIMATE_NUM // TOKEN_ESTIMATE_DEN)
 
 
 def groq_prompt_over_limit(request: ProviderRequest) -> bool:
