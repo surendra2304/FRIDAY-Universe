@@ -88,7 +88,7 @@ from friday.autonomous.self_repair import (
     SelfRepairGate,
 )
 from friday_deep.observability.metrics import DEFAULT as default_metrics
-from friday_deep.health import build as build_health_report
+from friday_deep.health import Health, build as build_health_report
 
 # Production observability fix (ZAI Agent 2, 2026-11-12): uvicorn starts
 # this module directly, and setup_logging() was only ever called on the CLI
@@ -1273,6 +1273,88 @@ class AndroidActionRequest(BaseModel):
     params: dict[str, Any] = {}
 
 
+# ---------------------------------------------------------------------------
+# TASK-REL-067 — FRIDAY /health capability contract (REL-004 §2.2/§3).
+#
+# /health answers "what can this agent actually do right now?" as a
+# capability report: capabilities + dependencies in the closed vocabulary
+# ok/degraded/unavailable/unknown, top-level status derived (never a
+# constant), HTTP 200 iff ok else 503. /ready keeps its own routing gate
+# and behaviour; it shares the database + disk probes below instead of
+# re-probing (REL-004 §2.5). No secret or raw exception text ever lands in
+# a payload: failure classes are exception type names only.
+# ---------------------------------------------------------------------------
+
+
+def _capability_entry(state: str, evidence: str, detail: str | None = None) -> dict[str, Any]:
+    """One §2.2 capability/dependency entry (state + evidence + checked_at)."""
+    entry: dict[str, Any] = {
+        "state": state,
+        "evidence": evidence,
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if detail is not None:
+        entry["detail"] = detail
+    return entry
+
+
+def _probe_memory_database() -> tuple[str, str, str | None]:
+    """Probe the configured memory backend exactly as /ready does.
+
+    Returns (db_status, database_backend, database_error_or_None) where
+    db_status is "healthy" (sqlite) / "connected" (oracle) on success and
+    "unavailable" otherwise. database_error is the exception type name
+    only, or "NoOracleDSN" when no DSN is configured — never raw
+    exception text.
+    """
+    settings_obj = get_settings()
+    memory_backend = (getattr(settings_obj, "memory_backend", "oracle") or "oracle").strip().lower()
+    dsn = getattr(settings_obj, "oracle_dsn", None)
+    if memory_backend == "sqlite":
+        try:
+            db_path = getattr(settings_obj, "sqlite_db_path", None) or ":memory:"
+            conn = connect_sqlite(db_path)
+            try:
+                conn.execute("SELECT 1")
+            finally:
+                conn.close()
+            return "healthy", "sqlite", None
+        except Exception as exc:
+            return "unavailable", "sqlite", type(exc).__name__
+    backend = "oracle" if dsn else "unconfigured"
+    if not dsn:
+        return "unavailable", backend, "NoOracleDSN"
+    try:
+        from sqlalchemy import text
+
+        from friday.core.oracle import get_engine
+
+        engine = get_engine(dsn)
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1 FROM DUAL"))
+        return "connected", backend, None
+    except Exception as exc:
+        return "unavailable", backend, type(exc).__name__
+
+
+def _probe_disk() -> tuple[float | None, str, bool]:
+    """Disk probe exactly as /ready does: (free_mb_or_None, label, low).
+
+    label is "healthy", "low_disk_space: N.NMB" or "unknown: <ExcType>".
+    A probe exception never fails readiness on its own (as /ready today).
+    """
+    try:
+        import shutil
+
+        total, used, free = shutil.disk_usage(".")
+        free_mb = free / (1024 * 1024)
+        if free_mb < 50.0:
+            return free_mb, f"low_disk_space: {round(free_mb, 1)}MB", True
+        return free_mb, "healthy", False
+    except Exception as exc:
+        return None, f"unknown: {type(exc).__name__}", False
+
+
 def _peers_mesh_state() -> str:
     """Truthful mesh-connectivity claim for the health payload (TASK-OBS-003).
 
@@ -1297,23 +1379,158 @@ def _peers_mesh_state() -> str:
 
 @app.api_route("/api/health", methods=["GET", "HEAD"])
 @app.api_route("/health", methods=["GET", "HEAD"])
-async def health_check() -> dict[str, Any]:
-    """Expose system health report verified across all subsystems."""
+async def health_check() -> JSONResponse:
+    """Expose FRIDAY's capability report (TASK-REL-067, REL-004 §2.2/§3).
+
+    The report's import checks become capabilities.orchestration (evidence:
+    import/liveness only — that is all they prove); the memory backend,
+    database, disk and environment are probed live, exactly as /ready
+    probes them. peer_mesh is optional: its provenance is the observed
+    in-process mesh outcomes (REL-004 §6 Q1), never a live peer probe.
+    Top-level status is derived per §2.2 rule 1 (ok iff every required
+    capability/dependency is ok, else degraded) and HTTP follows it
+    (200 iff ok, else 503). Existing fields (overall, checks, peers_mesh,
+    service, agent, version) are kept unchanged.
+    """
     rep = build_health_report(["friday", "friday_deep"])
     data = rep.as_dict()
     # TASK-OBS-003: `status` must be the report's own computed verdict. This
     # handler previously overwrote it with the constant "healthy", so a
     # degraded import check still surfaced as healthy to every consumer that
     # reads `status` (including FRIDAY's own fleet classifier vocabulary).
-    data["status"] = rep.overall.value
+    # REL-067: the contract vocabulary is ok/degraded/unavailable, derived
+    # from the capabilities below — never the report's "healthy" string.
+    failed_checks = [c.name for c in rep.checks if c.state is not Health.HEALTHY]
+    if rep.overall is Health.HEALTHY:
+        orchestration = _capability_entry(
+            "ok", "import checks ok: friday, friday_deep"
+        )
+    elif rep.overall is Health.DEGRADED:
+        orchestration = _capability_entry(
+            "degraded",
+            "import check failed: " + ", ".join(failed_checks),
+            "IMPORT_CHECK_FAILED",
+        )
+    else:  # FAILED — unreachable via build() today, but never report ok.
+        orchestration = _capability_entry(
+            "unavailable",
+            "import check failed: " + ", ".join(failed_checks),
+            "IMPORT_CHECK_FAILED",
+        )
+
+    db_status, db_backend, db_error = _probe_memory_database()
+    db_evidence = (
+        "Oracle SELECT 1 FROM DUAL"
+        if db_backend == "oracle"
+        else "SQLite SELECT 1"
+        if db_backend == "sqlite"
+        else "no Oracle DSN configured"
+    )
+    if db_status in ("connected", "healthy"):
+        memory_backend = _capability_entry("ok", db_evidence)
+        database = _capability_entry("ok", db_evidence)
+    elif db_backend == "unconfigured":
+        memory_backend = _capability_entry(
+            "unavailable", db_evidence, "DATABASE_UNCONFIGURED"
+        )
+        database = _capability_entry(
+            "unavailable", db_evidence, "DATABASE_UNCONFIGURED"
+        )
+    else:
+        memory_backend = _capability_entry(
+            "unavailable",
+            f"{db_evidence} failed ({db_error})",
+            "DATABASE_UNREACHABLE",
+        )
+        database = _capability_entry(
+            "unavailable",
+            f"{db_evidence} failed ({db_error})",
+            "DATABASE_UNREACHABLE",
+        )
+
+    mesh_state = _peers_mesh_state()
+    if mesh_state == "connected":
+        peer_mesh = _capability_entry(
+            "ok", "mesh observed COMPLETED/SUCCESS peer outcomes in-process"
+        )
+    elif mesh_state == "configured_unverified":
+        peer_mesh = _capability_entry(
+            "unknown",
+            "mesh configured; no completed peer outcome observed in-process",
+            "CONFIG_UNVERIFIED",
+        )
+    else:  # "unavailable" — the mesh cannot even be inspected.
+        peer_mesh = _capability_entry(
+            "unknown",
+            "mesh status not inspectable in-process",
+            "MESH_UNAVAILABLE",
+        )
+
+    free_mb, disk_label, disk_low = _probe_disk()
+    if disk_low:
+        disk = _capability_entry(
+            "unavailable",
+            f"{round(free_mb, 1)} MB free (< 50 MB required)",
+            "LOW_DISK_SPACE",
+        )
+    elif disk_label == "healthy":
+        disk = _capability_entry("ok", f"{round(free_mb, 1)} MB free")
+    else:  # probe exception — "unknown: <ExcType>".
+        disk = _capability_entry(
+            "unknown", f"disk probe failed ({disk_label})", "DISK_PROBE_FAILED"
+        )
+
+    env_rep = validate_runtime_environment(fail_fast=False)
+    if env_rep["valid"]:
+        environment = _capability_entry("ok", "runtime environment valid")
+    else:
+        environment = _capability_entry(
+            "degraded",
+            f"runtime environment invalid ({len(env_rep['issues'])} issues)",
+            "ENVIRONMENT_INVALID",
+        )
+
+    capabilities = {
+        "orchestration": orchestration,
+        "memory_backend": memory_backend,
+        # Optional: unknown/degraded here never changes the top-level status
+        # (§2.4), but it is always listed with its true state.
+        "peer_mesh": peer_mesh,
+    }
+    dependencies = {
+        "database": database,
+        "disk": disk,
+        # Required so /health never contradicts /ready (§2.5): an invalid
+        # runtime environment makes /ready 503, so it must degrade /health.
+        "environment": environment,
+    }
+    required_not_ok = [
+        entry
+        for entry in (
+            orchestration,
+            memory_backend,
+            database,
+            disk,
+            environment,
+        )
+        if entry["state"] != "ok"
+    ]
+    status = "ok" if not required_not_ok else "degraded"
+    data["status"] = status
+    # The response now carries capability states, so its evidence class is
+    # capability_report (§2.2 rule 3). The friday_deep Report itself is
+    # unchanged: it genuinely proves liveness only and keeps process_liveness.
+    data["evidence_class"] = "capability_report"
+    data["capabilities"] = capabilities
+    data["dependencies"] = dependencies
     # `service` is the TECHNICAL service id the Tier-1 contract tests pin;
     # the owner-facing name lives in `agent`/`canonical_name` ("FRIDAY").
     data["service"] = "friday_core"
     data["agent"] = "FRIDAY"
     data["canonical_name"] = "FRIDAY"
     data["version"] = "2.0.0"
-    data["peers_mesh"] = _peers_mesh_state()
-    return data
+    data["peers_mesh"] = mesh_state
+    return JSONResponse(status_code=200 if status == "ok" else 503, content=data)
 
 
 @app.api_route("/ready", methods=["GET", "HEAD"])
@@ -1343,66 +1560,29 @@ async def readiness_check() -> JSONResponse:
         "mesh": "configured",
     }
 
-    settings_obj = get_settings()
-    memory_backend = (getattr(settings_obj, "memory_backend", "oracle") or "oracle").strip().lower()
-    dsn = getattr(settings_obj, "oracle_dsn", None)
-    if memory_backend == "sqlite":
-        # The configured store IS the SQLite file: prove it answers.
-        status["database_backend"] = "sqlite"
-        db_status = "unavailable"
-        try:
-            db_path = getattr(settings_obj, "sqlite_db_path", None) or ":memory:"
-            conn = connect_sqlite(db_path)
-            try:
-                conn.execute("SELECT 1")
-            finally:
-                conn.close()
-            db_status = "healthy"
-        except Exception as exc:
-            # Contract (tier1 + e2e F7.B2, pinned 2026-11-12): the probe
-            # reports the store as NOT REACHABLE ("unavailable") — the
-            # failure CLASS is recorded separately in database_error for the
-            # operator. Never embed the raw exception string here: k8s/compose
-            # probes and fleet watchers compare this field literally.
-            db_status = "unavailable"
-            status["database_error"] = type(exc).__name__
-    else:
-        backend = "oracle" if dsn else "unconfigured"
-        status["database_backend"] = backend
-
-        db_status = "unavailable"
-        if dsn:
-            try:
-                from sqlalchemy import text
-
-                from friday.core.oracle import get_engine
-
-                engine = get_engine(dsn)
-                with engine.connect() as conn:
-                    conn.execute(text("SELECT 1 FROM DUAL"))
-                db_status = "connected"
-            except Exception as exc:
-                status["database_error"] = type(exc).__name__
-        else:
-            status["database_error"] = "NoOracleDSN"
+    # TASK-REL-067: /ready shares the database probe with /health instead of
+    # re-probing (REL-004 §2.5). Behaviour is unchanged: the probe reports
+    # the store as NOT REACHABLE ("unavailable") and the failure CLASS is
+    # recorded separately in database_error for the operator. Never embed
+    # the raw exception string here: k8s/compose probes and fleet watchers
+    # compare this field literally (tier1 + e2e F7.B2, pinned 2026-11-12).
+    db_status, db_backend, db_error = _probe_memory_database()
+    status["database_backend"] = db_backend
+    if db_error is not None:
+        status["database_error"] = db_error
     status["database"] = db_status
     if db_status not in ("connected", "healthy"):
         status["ready"] = False
         status["status"] = "not_ready"
 
-    try:
-        import shutil
-        total, used, free = shutil.disk_usage(".")
-        free_mb = free / (1024 * 1024)
+    # TASK-REL-067: /ready shares the disk probe with /health (REL-004 §2.5).
+    free_mb, disk_label, disk_low = _probe_disk()
+    if free_mb is not None:
         status["disk_free_mb"] = round(free_mb, 1)
-        if free_mb < 50.0:
-            status["ready"] = False
-            status["status"] = "not_ready"
-            status["disk"] = f"low_disk_space: {round(free_mb, 1)}MB"
-        else:
-            status["disk"] = "healthy"
-    except Exception as exc:
-        status["disk"] = f"unknown: {type(exc).__name__}"
+    status["disk"] = disk_label
+    if disk_low:
+        status["ready"] = False
+        status["status"] = "not_ready"
 
     env_rep = validate_runtime_environment(fail_fast=False)
     if not env_rep["valid"]:
