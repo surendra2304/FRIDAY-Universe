@@ -3,9 +3,9 @@
 **Task:** Implement the health-capability contract per REL-004 section 8
 (design: `docs/collaboration/TASK-REL-004-HEALTH-CONTRACT.md`, Muse 9).
 **Branch:** `muse8/task-rel-067`. **Status:** Stratex + FRIDAY classifier +
-FRIDAY /health slices implemented on the branch; 8 agents' `/health`
-remain. **Work PR not opened yet** — this document grows with the work
-and is filed with the work PR.
+FRIDAY /health + Memora /health slices implemented on the branch; 7
+agents' `/health` remain. **Work PR not opened yet** — this document
+grows with the work and is filed with the work PR.
 
 ## Done this run (2026-11-22 ~15:00 IST, hourly self-check)
 
@@ -240,16 +240,83 @@ already exists in its `/health` body; the work is a derivation, not a probe).
   confirmation is folded into the post-merge probe (a 404 on port 10000
   is expected).
 
+## Done this run (2026-11-22 ~17:30 IST hourly self-check) — Memora /health (§5)
+
+Memora was the smallest change in the fleet (design §5): every contract
+field was already probed; the work is a mapping, a relabel, and one new
+dependency surface.
+
+- `Memora/apps/api/routers/health.py` (commit `b4657f13`) — `health_check()`
+  now returns the §2.2 report alongside every pre-existing field (kept
+  byte-identical in meaning): `capabilities.memory_store` (required; live
+  `SELECT 1`, `unavailable` + `DATABASE_UNREACHABLE` on failure),
+  `capabilities.event_store` (required; oracle backend, `unavailable` +
+  `EVENT_STORE_UNAVAILABLE` otherwise), `capabilities.vector_search`
+  (required; the active vector adapter's readiness — Oracle 23ai adapter on
+  the Oracle backend — `unavailable` + `VECTOR_STORE_NOT_INITIALIZED` /
+  `VECTOR_STORE_UNAVAILABLE`), `dependencies.database` (same live `SELECT 1`),
+  `dependencies.vector_store` (same readiness), `dependencies.circuit_breakers`
+  (required; surfaced from `/ready`'s `circuit_registry.healthy()` — `ok`
+  when no breaker is open, `degraded` + `CIRCUIT_BREAKER_OPEN` naming the
+  open breakers otherwise). Top-level `status` is derived (`ok` iff all six
+  required entries are `ok`, else `degraded`) and the value moves from
+  `"healthy"` to `"ok"` — the contract's closed vocabulary (§2.2); HTTP is
+  unchanged (200 iff ok, else 503, as this handler already did).
+  `evidence_class` is now `capability_report` (was `process_liveness`).
+  Only the exception class name is recorded on DB failure, never message
+  text (§2.2 rule 8). `/ready` is untouched in behaviour (its
+  `evidence_class` stays `readiness_probe`: it reports readiness, not a
+  capability verdict).
+- Behaviour change to record: an open circuit breaker now degrades
+  `/health` (503) where it previously did not — `/health` did not look at
+  breakers at all. That is the contract (§2.2 rule 1: every required
+  dependency must be `ok`), and `/ready` already reported the same state.
+- `Memora/Dockerfile` (commit `ce87b373`) — HEALTHCHECK moved from `/health`
+  to `/ready` (design §2.5/§7, mirroring the Stratex slice). `deploy/Caddyfile`
+  sets no `health_uri` on the Memora block, so Caddy does not actively probe
+  Memora health; no Caddy change needed.
+- Tests (commits `f63b7f34`, `ac901fab`) —
+  `Memora/tests/test_health_readiness_truth.py`: the vector-availability test
+  now expects `"ok"` (was `"healthy"`) and pins the circuit registry healthy
+  so it measures the vector leg only; 4 new tests pin the capability report
+  (all-ok shape, no `detail` on ok entries, legacy fields kept), the
+  `not_initialized` detail code, DB failure as `unavailable` with no raw
+  exception text in the payload, and an open breaker degrading with the
+  breaker named. `Memora/tests/test_health_observation_metadata.py`: the
+  evidence-class assertion is now exactly `"capability_report"`.
+- **§6 Q5 resolved from source:** `Memora/storage/relational/session.py`
+  `get_db()` (line 650) raises `HTTPException(status_code=503, ...)` when
+  `storage_ready()` is false, so a failed DB-session dependency answers an
+  honest 503 and the `/health` handler body never runs — not a 500, not a
+  200 with a stale body. Pinned by `test_get_db_rejects_unready_storage_with_503`
+  (commit `f63b7f34`).
+- Verification status (same limits as the earlier slices): no local pytest /
+  import / build was run (execution-risk notice on the local clone stands);
+  edits verified by re-reading the changed regions + `py_compile` + AST
+  parse of all three Python files + byte-verified upload (returned blob shas
+  equal the local git blob hashes). **CI on the work PR is the gate.**
+- CI wiring owed at work-PR time: neither Memora test file is in any
+  workflow's explicit file list today (checked 2026-11-22 on current main:
+  the friday-universe-ci.yml Memora vector job lists 11 files + the viking
+  suite; the health tests are not among them). They join the work-PR wiring
+  list, now 6 files: `Stratex/tests/test_engine_capability_truthfulness.py`,
+  `FRIDAY/tests/test_fleet_probe_labelling.py`,
+  `FRIDAY/tests/test_fleet_status_truth.py`,
+  `FRIDAY/tests/test_friday_health_contract.py`,
+  `Memora/tests/test_health_readiness_truth.py`,
+  `Memora/tests/test_health_observation_metadata.py`.
+
 ## Remaining (next runs)
 
-1. The other eight agents' `/health` mappings per design §5 (Memora,
-   Futuris, IntelX, Forge, Sentinel, Cortex, VyralX, Inference).
+1. The other seven agents' `/health` mappings per design §5 (Futuris,
+   IntelX, Forge, Sentinel, Cortex, VyralX, Inference).
 2. §6 open questions still to resolve from source/live probe while implementing:
    Forge's three `/health`s (confirm by live probe which handler answers each path); Stratex master-control
-   `/health` mount; Memora `/health` dependency-failure mode; Futuris `verify_schema()` liveness.
+   `/health` mount; Futuris `verify_schema()` liveness. (Memora `/health`
+   dependency-failure mode resolved this run: 503 via `get_db()`, see above.)
 3. Criterion 5 sweep: no secret in any health payload (Futuris `/ready`
    and Cortex raw exception text are named in the design §2.2 rule 8).
 4. Criterion 6: all ten `/ready` behaviours unchanged; Caddy/Docker
    probes confirmed on `/ready` per agent before its `/health` flips.
 
-— Muse 8, TASK-REL-067, 2026-11-22 ~16:30 IST
+— Muse 8, TASK-REL-067, 2026-11-22 ~17:30 IST
