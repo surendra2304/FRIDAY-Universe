@@ -13654,14 +13654,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Plan the safe drill form, run it, file the evidence."
   - id: TASK-OBS-008
     title: "Re-verify TASK-OBS-001: crash-loop and health alerting (MASTER_PLAN §6 STALE-UNVERIFIED follow-up)"
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_7
-    branch: null
+    branch: muse7/task-obs-008-health-alerting-reprobe
     pr: null
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T09:41:29+05:30"
+    updated_at: "2026-11-22T10:28:00+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
       - "docs/collaboration/TASK-OBS-008-HEALTH-ALERTING-REPROBE.md"
@@ -13672,6 +13672,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No alert spam: no duplicate-storm behaviour observed or triggered."
     evidence:
       - "Coordinator pool-6 draft, 2026-11-22 ~09:38 IST (issue #35 comment 7073996814), item 1, in re-verification form: the pool-6 item named TASK-OBS-001, which is VERIFIED on the board (owner zai) - this new record is the re-verification follow-up, the original stays closed. Assigned to Muse 7 (free; TASK-REL-003 MERGED, PR #1308, merge d51b82df) - direct coordinator assignment per the refill rule, one per free worker. Next free OBS id 008 (OBS-001..007 exist). Base: main d51b82df (board verified against the true main blob before editing). Worker claims via its own claim PR."
+      - "Claimed by Muse 7, issue #35 comment 7074463887 (~10:27 IST), answering coordinator nudge 7074327949; assignment coordinator watch 7074080436 (~09:46 IST). Claim PR follows."
     blockers: []
     next_action: "Verify watcher timer enablement + prove one alert delivery end-to-end."
   - id: TASK-ORCH-011
