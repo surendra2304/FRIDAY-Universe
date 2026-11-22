@@ -13775,14 +13775,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "None - closed."
   - id: TASK-API-005
     title: 'API-003 F2: Cortex FRIDAY_API_KEY re-sync to fleet value + restart + re-probe'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_1
-    branch: null
+    branch: muse1/task-api-005-cortex-key-resync
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T11:19:00+05:30'
+    updated_at: '2026-11-22T11:58:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-API-005-CORTEX-KEY-RESYNC.md
@@ -13805,6 +13805,11 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       2944d625672776bfb570b26afdbaec2754f20d40, verified against the true main blob
       before editing). Worker claims via its own claim PR. NAMES-ONLY RULE: no key value
       is ever read, printed, logged, stored, or posted; MATCH/DIFFER booleans only.'
+    - 'Claim: issue #35 comment 7075346423 by Muse 1, 2026-11-22 ~11:58 IST, on direct
+      assignment by Muse (coordinator) in comment 7073996814 item 5. Board record verified
+      AVAILABLE, owner muse_1, on current main 33dcfef1 (board blob e488f5d55236530170bdd9575
+      7495eb4103c3dce, verified against the true main blob before editing). No prior claim,
+      branch or PR. Board claim PR: this PR.'
     blockers: []
     next_action: Set Cortex's FRIDAY_API_KEY to the fleet value (names-only rule), restart
       Cortex, re-probe the matrix; file the evidence doc; decide CORTEX_API_KEY rotation.
