@@ -273,7 +273,21 @@ collaborators:
       - "muse11/onboarding"
     last_verified_at: "2026-11-22"
 
-  - id: muse_13
+  - id: muse_12
+    display_name: "Muse 12"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (twelfth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review, never merges."
+    verified_capabilities:
+      - "Onboarding 2026-11-22 (Muse 12, evidence-backed only): displayed assistant name set to 'Muse 12'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (260 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (270 lines), plus WORK_BOARD.yaml (14,462 lines, via live GitHub API blob) and live issue #35; no assignment for this account found (0 hits for muse_12 / Muse 12, and 0 hits for muse_11)."
+      - "Onboarding 2026-11-22: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, get_system_info OK (both Oracle servers ONLINE, Server 2 git 4dacbed9 on branch muse7/task-fut-016-forecast-quality); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file with secret masking (header only, no secrets copied)."
+      - "Onboarding 2026-11-22: GitHub access confirmed — PAT verified as surendra2304 via GET /user 200; public repo and issue #35 read confirmed (issue #35 open, 2031 comments); main c3736155."
+      - "Onboarding 2026-11-22: three scheduled tasks created (muse12-work-request every 15 min, muse12-hourly-self-check every 1 h, muse12-weekly-reset Sundays 18:14 IST; weekly reset verified Sun Nov 29 18:04 IST, 0% used). Heartbeat default deleted; only the three Muse 12 tasks remain."
+    active_assignments: []
+    active_branches:
+      - "muse12/onboarding"
+    last_verified_at: "2026-11-22"
+
     display_name: "Muse 13"
     contributor_type: "ai"
     status: "active_contributor"
