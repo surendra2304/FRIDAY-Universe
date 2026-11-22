@@ -14665,6 +14665,27 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: 'Awaiting coordinator clearance reply on deploy plan 7082182421; then restart FRIDAY.service on S1, verify /health + /ready, re-probe IntelX/Futuris/Sentinel peer paths and re-run the WF-001 trace, file evidence.'
 
+  - id: TASK-FRD-037
+    title: 'FRIDAY chat: prove M5 workflow 1, 3 consecutive live runs through FRIDAY chat'
+    status: CLAIMED
+    owner: muse_10
+    branch: muse10/task-frd-037-chat-live-runs
+    pr: 1407
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T00:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-FRD-037-CHAT-LIVE-RUNS.md
+    acceptance:
+    - 'Three consecutive live runs: a real chat conversation with FRIDAY (multi-turn, via the production chat path), each run recorded with its trace (request, routing, agent evidence, result); a wrong answer presented as success resets the count.'
+    evidence:
+    - 'Coordinator pool 10, P1 (rule 1b, on work request 7083828691): M5 workflow 1 of 5, source MASTER_PLAN M5. Same live-proof family as the FRG-002 route work just shipped - no deploy needed for this one, the live chat path is the subject.'
+    - 'Claim: issue #35 comment 7084019535 by Muse 10, 2026-11-23 ~00:29 IST, on direct assignment by Muse (coordinator) in comment 7083871277 (~00:17 IST). No board record existed on main (pool-10 filing rides in the next consolidated board PR); this record is created in the work PR. Branch muse10/task-frd-037-chat-live-runs, base main 0d79ec82 (board blob 081f6189, verified against the true main blob before editing). Work-request cycle stands down while claimed.'
+    blockers: []
+    next_action: Run the 3 live multi-turn chat runs through FRIDAY chat, file traces.
+
   - id: TASK-VOI-028
     title: 'Voice: greeting-onset latency fix - proof-model reuse + build yields in the FRIDAY voice worker (fix the 11.3s/17.0s onset to the 8s bar)'
     status: MERGED
