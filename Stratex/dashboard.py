@@ -1273,8 +1273,11 @@ def get_engine_health_data():
             **_paper,
             "pid": pid or _paper.get("pid"),
             "pid_alive": pid_alive or paper_alive,
-            "binance_connected": hb.get("binance_connected", True),
-            "websocket_connected": hb.get("websocket_connected", True),
+            # TASK-REL-067: no default True. A heartbeat that omits a flag
+            # leaves it unknown (None); the capability report says so
+            # instead of claiming connectivity it never observed.
+            "binance_connected": hb.get("binance_connected"),
+            "websocket_connected": hb.get("websocket_connected"),
             "active_strategy": hb.get("strategy", "none"),
             "strategies": hb.get("strategies", []),
             "timeframes": hb.get("timeframes", []),
@@ -1306,11 +1309,204 @@ def get_engine_health_data():
             "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
         }
 
+def _conn_state(value):
+    """Render a market-data flag honestly (TASK-REL-067).
+
+    True -> OK, False -> ERROR, None (the heartbeat omitted it) -> UNKNOWN.
+    An omitted flag is unknown, never silently OK and never an error.
+    """
+    if value is True:
+        return "OK"
+    if value is None:
+        return "UNKNOWN"
+    return "ERROR"
+
+
+def _probe_stratex_database():
+    """Live Oracle probe for the /health database dependency (REL-004 §2.2).
+
+    Verbatim the probe /ready already performs: backend from the configured
+    URL, status "connected" only after a real SELECT 1 FROM DUAL. Returns
+    (db_backend, db_status); never raises and never includes a secret —
+    only the backend name and the connected/unavailable verdict.
+    """
+    db_backend = "unconfigured"
+    db_status = "unavailable"
+    try:
+        import config as cfg
+        import os as _os
+        db_url = (
+            _os.getenv("STRATEX_DATABASE_URL")
+            or _os.getenv("DATABASE_URL")
+            or getattr(cfg, "DATABASE_URL", "")
+            or getattr(cfg, "DB_URL", "")
+        )
+        if db_url and isinstance(db_url, str):
+            if db_url.lower().startswith(("oracle", "oracledb")):
+                db_backend = "oracle"
+
+                from sqlalchemy import create_engine, text
+                from sqlalchemy.pool import NullPool
+
+                probe_url = db_url
+                if probe_url.startswith("oracle+oracledb_async://"):
+                    probe_url = "oracle+oracledb://" + probe_url[len("oracle+oracledb_async://"):]
+                engine = create_engine(probe_url, poolclass=NullPool, pool_pre_ping=True)
+                try:
+                    with engine.connect() as conn:
+                        conn.execute(text("SELECT 1 FROM DUAL"))
+                    db_status = "connected"
+                finally:
+                    engine.dispose()
+    except Exception:
+        db_status = "unavailable"
+    return db_backend, db_status
+
+
+def _stratex_capability_report(engine_data, now_iso):
+    """Derive the REL-004 §2.2 capability report for Stratex (TASK-REL-067).
+
+    Every capability is a fresh observed fact, never configuration alone:
+    trading_engine from heartbeat freshness + worker/PID liveness (the
+    `healthy` verdict already folds in the PAPER-mode and FUTURES-daemon
+    alternate witnesses); trading_capable from engine health + executable
+    strategies + evaluation freshness + panic/kill-switch state;
+    market_data from the heartbeat's connectivity flags (unknown when the
+    heartbeat omits them — never defaulted True); database from a live
+    Oracle SELECT 1. Returns (capabilities, dependencies, derived_status,
+    db_backend, db_status). No secret or raw exception text is ever placed
+    in a detail: reason codes are stable uppercase strings.
+    """
+    checked_at = now_iso
+
+    def _entry(state, evidence, detail=None):
+        entry = {"state": state, "evidence": evidence, "checked_at": checked_at}
+        if detail:
+            entry["detail"] = detail
+        return entry
+
+    healthy = bool(engine_data.get("healthy", False))
+    heartbeat_age = engine_data.get("heartbeat_age_seconds")
+    pid_alive = bool(engine_data.get("pid_alive", False))
+    if healthy:
+        if engine_data.get("engine_source") == "multi_venue_daemon":
+            engine_evidence = "multi-venue daemon heartbeat fresh, pid alive"
+        elif heartbeat_age is not None and pid_alive:
+            engine_evidence = f"heartbeat age {heartbeat_age}s, pid alive"
+        elif heartbeat_age is not None:
+            engine_evidence = f"heartbeat age {heartbeat_age}s"
+        else:
+            engine_evidence = "engine healthy"
+        engine_entry = _entry("ok", engine_evidence)
+    else:
+        reason = engine_data.get("reason") or ""
+        if reason == "HEARTBEAT_FILE_MISSING":
+            engine_detail = "HEARTBEAT_FILE_MISSING"
+        elif isinstance(reason, str) and reason.startswith("READ_ERROR"):
+            # The stored reason carries raw exception text; never surface it.
+            engine_detail = "ENGINE_PROBE_FAILED"
+        else:
+            engine_detail = "ENGINE_OFFLINE"
+        age_txt = (
+            f"heartbeat age {heartbeat_age}s"
+            if heartbeat_age is not None
+            else "no heartbeat"
+        )
+        engine_entry = _entry(
+            "unavailable",
+            f"engine {str(engine_data.get('engine_status', 'OFFLINE')).lower()}, {age_txt}",
+            engine_detail,
+        )
+
+    try:
+        from panic_state import is_kill_switch_locked, is_panic_active
+        panic = is_panic_active()
+        locked = is_kill_switch_locked()
+    except Exception:
+        panic = False
+        locked = False
+    reasons = list(engine_data.get("capability_reasons") or [])
+    trading_capable = bool(engine_data.get("trading_capable", False))
+    if panic:
+        trading_capable = False
+        reasons.append("PANIC_ACTIVE: panic kill switch is active")
+    elif locked:
+        trading_capable = False
+        reasons.append("KILL_SWITCH_LOCKED: kill switch is locked")
+    if trading_capable:
+        capable_entry = _entry(
+            "ok",
+            "engine healthy, executable strategies loaded, evaluation fresh",
+        )
+    else:
+        if reasons:
+            capable_detail = str(reasons[0]).split(":")[0].strip() or "TRADING_NOT_CAPABLE"
+        elif not healthy:
+            capable_detail = engine_entry.get("detail") or "ENGINE_OFFLINE"
+        else:
+            capable_detail = "TRADING_NOT_CAPABLE"
+        capable_entry = _entry(
+            "unavailable",
+            "; ".join(str(r) for r in reasons) if reasons else "engine cannot trade",
+            capable_detail,
+        )
+
+    binance = engine_data.get("binance_connected")
+    websocket = engine_data.get("websocket_connected")
+    if binance is True and websocket is True:
+        market_entry = _entry("ok", "binance connected, websocket connected")
+    elif binance is None or websocket is None:
+        market_entry = _entry(
+            "unknown",
+            "heartbeat omits market-data flags",
+            "MARKET_DATA_NOT_REPORTED",
+        )
+    else:
+        market_entry = _entry(
+            "unavailable",
+            f"binance_connected={binance}, websocket_connected={websocket}",
+            "MARKET_DATA_DISCONNECTED",
+        )
+
+    db_backend, db_status = _probe_stratex_database()
+    if db_status == "connected":
+        db_entry = _entry("ok", "Oracle SELECT 1 FROM DUAL succeeded")
+    elif db_backend == "unconfigured":
+        db_entry = _entry(
+            "unavailable",
+            "no database URL configured",
+            "DATABASE_UNCONFIGURED",
+        )
+    else:
+        db_entry = _entry(
+            "unavailable",
+            f"database {db_status} (backend {db_backend})",
+            "DATABASE_UNREACHABLE",
+        )
+
+    capabilities = {
+        "trading_engine": engine_entry,
+        "trading_capable": capable_entry,
+        "market_data": market_entry,
+    }
+    dependencies = {"database": db_entry}
+    required_ok = all(
+        entry["state"] == "ok"
+        for entry in (engine_entry, capable_entry, market_entry, db_entry)
+    )
+    return capabilities, dependencies, ("ok" if required_ok else "degraded"), db_backend, db_status
+
+
 def _health_payload(evidence_class):
     engine_data = get_engine_health_data()
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+    # TASK-REL-067: status is derived from the capability report, never
+    # constant. All pre-existing fields are kept byte-for-byte in meaning.
+    capabilities, dependencies, derived_status, db_backend, db_status = (
+        _stratex_capability_report(engine_data, now_iso)
+    )
     return {
-        "status": "ok",
+        "status": derived_status,
         "service": "stratex",
         "version": getattr(config, "VERSION", "2.2.0"),
         "dashboard": "online",
@@ -1330,6 +1526,10 @@ def _health_payload(evidence_class):
         "unrealized_pnl": engine_data.get("unrealized_pnl"),
         "environment": engine_data.get("environment"),
         "mode": getattr(config, "TRADING_MODE", "TESTNET"),
+        "capabilities": capabilities,
+        "dependencies": dependencies,
+        "database": db_status,
+        "database_backend": db_backend,
         "evidence_class": evidence_class,
         "observed_at": now_iso,
         "timestamp": now_iso,
@@ -1339,8 +1539,14 @@ def _health_payload(evidence_class):
 @app.route('/health')
 @app.route('/api/health')
 def health_liveness():
-    """Render liveness: confirms this HTTP process answered, not engine readiness."""
-    return jsonify(_health_payload("process_liveness")), 200
+    """Capability report (REL-004 §2.2, TASK-REL-067): what Stratex can do now.
+
+    HTTP follows the derived status: 200 iff ok, else 503. A 503 means
+    "degraded", not "dead" — the process is answering. Routing and
+    liveness gates must use /ready, not /health.
+    """
+    payload = _health_payload("capability_report")
+    return jsonify(payload), 200 if payload["status"] == "ok" else 503
 
 
 def _json_safe(obj):
@@ -1379,41 +1585,14 @@ def health_readiness():
 
         payload["panic_active"] = panic
         payload["kill_switch_locked"] = locked
-        # Database backend and connectivity from the configured store. The URL is read
-        # from the process environment because config exposes operational constants only.
-        # Oracle Autonomous Database is the only supported production backend.
-        db_backend = "unconfigured"
-        db_status = "unavailable"
-        try:
-            import config as cfg
-            import os as _os
-            db_url = (
-                _os.getenv("STRATEX_DATABASE_URL")
-                or _os.getenv("DATABASE_URL")
-                or getattr(cfg, "DATABASE_URL", "")
-                or getattr(cfg, "DB_URL", "")
-            )
-            if db_url and isinstance(db_url, str):
-                if db_url.lower().startswith(("oracle", "oracledb")):
-                    db_backend = "oracle"
-
-                    from sqlalchemy import create_engine, text
-                    from sqlalchemy.pool import NullPool
-
-                    probe_url = db_url
-                    if probe_url.startswith("oracle+oracledb_async://"):
-                        probe_url = "oracle+oracledb://" + probe_url[len("oracle+oracledb_async://"):]
-                    engine = create_engine(probe_url, poolclass=NullPool, pool_pre_ping=True)
-                    try:
-                        with engine.connect() as conn:
-                            conn.execute(text("SELECT 1 FROM DUAL"))
-                        db_status = "connected"
-                    finally:
-                        engine.dispose()
-        except Exception:
-            db_status = "unavailable"
-        payload["database"] = db_status
-        payload["database_backend"] = db_backend
+        # Database backend and connectivity come from the same live probe
+        # _health_payload already ran (REL-004 §2.5: /ready consumes the
+        # capability checks instead of re-probing). The values are identical
+        # to the inline probe that used to run here; the ready gate below,
+        # the production gate, the payload fields and the HTTP codes are
+        # unchanged.
+        db_backend = payload.get("database_backend", "unconfigured")
+        db_status = payload.get("database", "unavailable")
 
         ready = (
             payload["engine_healthy"]
@@ -1905,8 +2084,8 @@ def get_status():
 
     engine_data = get_engine_health_data()
     components["engine"] = "OK" if engine_data["healthy"] else "ERROR"
-    components["binance"] = "OK" if engine_data.get("binance_connected") else "ERROR"
-    components["data"] = "OK" if engine_data.get("websocket_connected") else "ERROR"
+    components["binance"] = _conn_state(engine_data.get("binance_connected"))
+    components["data"] = _conn_state(engine_data.get("websocket_connected"))
     components["execution"] = "OK" if engine_data["healthy"] else "ERROR"
     # The strategy component must reflect whether the engine can actually
     # generate a signal. Reporting "OK" while zero validated strategies are
@@ -4181,8 +4360,8 @@ def api_system_health():
         "health": {
             "overall": "HEALTHY" if engine_data["healthy"] else "DEGRADED",
             "engine": "OK" if engine_data["healthy"] else "ERROR",
-            "binance": "OK" if engine_data.get("binance_connected") else "ERROR",
-            "websocket": "OK" if engine_data.get("websocket_connected") else "ERROR",
+            "binance": _conn_state(engine_data.get("binance_connected")),
+            "websocket": _conn_state(engine_data.get("websocket_connected")),
             "execution": "OK" if engine_data["healthy"] else "ERROR",
             "strategy": "OK" if engine_data["healthy"] else "ERROR",
             "last_heartbeat": engine_data.get("heartbeat_age_seconds", 0)
