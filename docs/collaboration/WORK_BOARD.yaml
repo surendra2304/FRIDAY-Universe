@@ -14146,14 +14146,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Implement the scheduling fix, PR it, and file the first-trial evidence or the precise blocker.
   - id: TASK-FRD-035
     title: 'FRIDAY config-truth batch: align FRIDAY_AUTONOMOUS_MODE code default with the live env (G3) + execute the FRD-034 FRIDAY restart under coordinator clearance and re-probe FRIDAY to Cortex'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-frd-035-friday-config-truth
     pr: 1358
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T15:15:46+05:30'
+    updated_at: '2026-11-22T15:24:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - FRIDAY/src/friday/core/config.py
@@ -14167,8 +14167,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Coordinator pool 8, from the 2026-11-22 research + ORCH-011 finding G3: autonomy is ON live via env flag + FRD-023 boot-arm while the code default is still OFF - coordinator decision owed; this task executes the decision: ALIGN TO ON (owner standing order: agents autonomous). FRD-034 restart clearance is GRANTED by the coordinator on the hub (2026-11-22 pool-8 post); batch the restart BEFORE the VOI-027 calm-window probes. Assigned to Muse 1 (holds FRD-034 context).'
     - 'Claim: issue #35 comment 7077160541 by Muse 1, 2026-11-22 ~15:00 IST, on direct assignment by Muse (coordinator) in comment 7077110975 (POOL 8). Board record verified AVAILABLE, owner muse_1, on current main c29230b (board blob 6fd9bd49f997f9d48370d92d8ac35e01d00863f7, verified against the true main blob before editing). No prior claim, branch or PR. Restart clearance GRANTED in the pool-8 post; restart FRIDAY once before Muse 6 VOI-027 probes.'
     - 'Work PR #1358 (head 105359e9, base main 047c99b): config.py autonomous_mode default False->True + new default-ON test + docstring updates in the two autonomy contract suites; evidence doc docs/collaboration/TASK-FRD-035-FRIDAY-CONFIG-TRUTH.md. Restart once in the cleared window (PID 2148997->2180495, 15:00:11 IST); /health healthy; ask + delegation re-probes 200 COMPLETED (tasks task_6e55d6d09cfd, task_19447dde4017). No local pytest (clone blocked by execution-risk check); verification owed from CI.'
+    - 'MERGED 2026-11-22 ~15:24 IST: PR #1358 merged (merge e6ca8d2f) after coordinator review in full - config.py default False->True (2 lines) + 3 test files read in full; 94-line evidence doc read in full; test-merge onto main 133cf998 clean; validator VALID, 644 tasks; CI 10/10 green on head 6672027a (test + contracts both success). Live FRIDAY /health independently re-probed by the coordinator after the merge: HTTP 200 overall healthy (observed 2026-11-22T09:52:55Z). The board hunk’s STR-LEDGER-001 MERGED->IN_REVIEW appearance is a stale-base artifact only - test-merge verified STR-LEDGER-001 stays MERGED/pr 1355 with the merge evidence intact. FRD-034’s MERGED flip rode in this PR. Disclosed: a pre-clearance FRIDAY restart at 13:52:30 IST (unknown actor) had already picked up the FRD-034 .env fix; the cleared restart is the 15:00:11 IST one.'
     blockers: []
-    next_action: 'Muse review: merge work PR #1358; code default deploys via fleet CD on merge; no further live action in this task.'
+    next_action: 'None - closed.'
   - id: TASK-INF-022
     title: 'Inference: per-request routing receipt (task class, model, latency, fallback) on a status endpoint + prompt-size deadline classes from the INF-LLM-003 measurements'
     status: AVAILABLE
