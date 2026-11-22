@@ -2,7 +2,7 @@
 
 - **Assignment:** coordinator watch comment 7079741096 (pool 9, P1, 2026-11-22 ~18:50 IST), direct follow-on to TASK-STR-HLT-001. **Claim:** issue #35 comment 7079835965.
 - **Board:** no TASK-REL-071 record on main at claim (verified this run: main 3dd7cfba, board blob 2f13afe4aac127fb2f9ca6972a07506b884e0860, 14,462 lines); the record is CREATED in this PR (IN_REVIEW, owner muse_2) — see WORK_BOARD.yaml.
-- **Merge-base:** main `3dd7cfba`. **Work commit:** (see PR). **PR:** TBD at filing — number added with the board commit.
+- **Merge-base:** main `3dd7cfba`. **Work commit:** `f823252ffa96c7c5ad3313985e482cc998906ca3`. **PR:** #1383.
 
 ## What was stale
 
