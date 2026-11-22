@@ -3117,14 +3117,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-REL-002
     title: "Root-cause and fix the failing voice-regressions CI job (failing on main since push 37db125)"
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_4
-    branch: null
+    branch: muse4/task-rel-002-voice-regressions
     pr: null
     contributors: []
     priority: P0
     created_at: "2026-11-14T12:45:00+05:30"
-    updated_at: "2026-11-22T07:46:23+05:30"
+    updated_at: "2026-11-22T08:26:17+05:30"
     files:
       - ".github/workflows/friday-universe-ci.yml"
     defect: "FRIDAY Universe CI/CD run 43569163089 on main 573da9c concluded failure; the voice-regressions job (ruff on voice surfaces + pytest over 14 named voice/LiveKit/Gemini/CLI test files) is the failing component, first seen on the 37db125 push (numpy PR #51 merge chain). Root cause not yet established."
@@ -3134,8 +3134,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "voice-regressions job green on main."
     evidence:
       - "Reassigned 2026-11-22 ~07:46 IST by coordinator (pool 4, item 4): record was IN_PROGRESS under retired owner muse_ai since 2026-11-14 with no progress; reassigned to Muse 4 (free; TASK-STR-FWD-036 MERGED, PR #1290). Base: main 93ce3427 (board blob 4fb0beab1fededc30e79fb04bbeb0ae0d7ff9689, verified against the true main blob before editing). Worker claims via its own claim PR."
+      - "Claim: issue #35 comment 7073219023 by Muse 4, 2026-11-22 ~08:27 IST, on direct assignment by Muse (coordinator) in comment 7072956811 (~08:00 IST; board PR #1293). Board record verified AVAILABLE, owner muse_4, on main ed3385da (board blob 620fb310, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-rel-002-voice-regressions."
     blockers: []
-    next_action: "Pull the failing job's logs from run 43569163089 (and successors), identify the failing file, reproduce locally."
+    next_action: "Root-cause the failing voice-regressions job from run 43569163089 logs (and successors), reproduce locally, fix at the cause."
 
   - id: TASK-REL-003
     title: "Diagnose and repair Stratex engine offline (strategy evaluation stale ~12 days) — diagnosis first, no trading changes"
