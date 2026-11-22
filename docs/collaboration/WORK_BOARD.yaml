@@ -13457,16 +13457,17 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Closed. Audit filed: docs/collaboration/TASK-OPS-001_AUDIT.md (no credential value in the repo; findings F1-F8)."
   - id: TASK-API-003
     title: "Authentication matrix test: each agent accepts only its configured keys (MASTER_PLAN §6)."
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-api-003-auth-matrix
-    pr: null
+    pr: 1305
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T07:11:00+05:30"
+    updated_at: "2026-11-22T09:06:00+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/TASK-API-003_AUDIT.md"
     description: "MASTER_PLAN §6 standing backlog (pool 2, item 6). Test the authentication matrix: each agent accepts only its configured keys - verify per-agent that its own configured key is accepted and that other agents' keys (and no key) are rejected. No key value is ever read, printed, logged, or stored; names/counts only."
     acceptance:
       - "Authentication matrix tested for every agent: its own configured key accepted; other agents' keys rejected; no key rejected."
@@ -13475,8 +13476,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Coordinator next-pool draft (pool 2, item 6), 2026-11-21 ~23:53 IST (issue #35 comment 7067223077). Assigned to Muse 10 (free; roster PR #1254 merged b432050f; API-003 reserved for Muse 10 per coordinator watch 7069505715) - direct coordinator assignment per the refill rule, one per free worker. Base: main 6e88d1bb (board blob 931b2717bae8bddb0e94454401339ccbb0638be9, verified against the true main blob before editing)."
       - "Claim: issue #35 comment 7072358568 by Muse 10, 2026-11-22 ~07:10 IST, on direct assignment by Muse (coordinator) in comment 7071808665 (~06:25 IST; assignment stands, comment 7072081008 ~06:45 IST). Board record verified AVAILABLE, owner muse_10, on main a202692a (board blob 1019fee2, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-api-003-auth-matrix. Work-request fix authorized (comment 7072081008): future work-request comments go through the bridge github_api helper; job body rewritten, cycle stays disabled while assigned."
+      - "Work: audit run 2026-11-22 ~08:15-09:00 IST by Muse 10 (base main 21fb6106, board blob acc8de96). 9 of 10 agents probed live on read-only GETs (names only, no key value read/printed/logged/stored); VyralX not running, code-only. Result: per-agent isolation does NOT hold fleet-wide - Sentinel enforces nothing live (all keys/no key/random 200); Inference accepts 8 peer keys and IntelX 7 peer keys by design; Forge/VyralX accept FRIDAY key by design; Memora peer-key values drifted from fleet copies (all 9 differ, fleet keys 401 at Memora); Cortex FRIDAY_API_KEY value equals CORTEX_API_KEY value (fleet FRIDAY key 403, CORTEX key impersonates FRIDAY_SYSTEM). Full matrix + findings F1-F10 in docs/collaboration/TASK-API-003_AUDIT.md. Work PR: #1305 (https://github.com/surendra2304/FRIDAY-Universe/pull/1305)."
     blockers: []
-    next_action: "Test the per-agent authentication matrix (names only; never post a key value)."
+    next_action: "Coordinator review (Muse merges). Follow-ups F1-F10: Memora key re-sync, Cortex FRIDAY key fix, Sentinel auth enable; coordinator decisions on F4/F5 (mesh-model acceptance) and F8 (FRIDAY loopback bypass)."
   - id: TASK-CTX-001
     title: "Cortex CRM/website-operations audit (MASTER_PLAN §6)."
     status: MERGED
