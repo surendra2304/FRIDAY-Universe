@@ -1801,7 +1801,7 @@ async def run_agent_task(
 
 @app.get("/api/agents/status")
 async def get_agents_status() -> dict[str, Any]:
-    """Return a fresh peer endpoint reachability snapshot, not task-level verification."""
+    """Return a fresh peer capability snapshot from each agent's /health (pre-contract peers: reachability only), not task-level verification."""
     # TASK-REL-007D: respect the 4s probe cache (the background supervision
     # loop force-refreshes it continuously) — force-refreshing here made
     # every console poll re-probe all nine agents and flapped the UI's
@@ -1819,12 +1819,12 @@ async def get_agents_status() -> dict[str, Any]:
     overall_ok = all_agents_reported and status_counts["ONLINE"] == expected_agents
     return {
         "status": "ok" if overall_ok else "degraded",
-        "scope": "peer_endpoint_reachability_only",
+        "scope": "health_capability_report",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "agent_count": len(statuses),
         "status_counts": status_counts,
         "agents": [s.__dict__ for s in statuses],
-        "note": "HTTP health responses do not verify agent task execution, data persistence, or event delivery.",
+        "note": "Capability reports from /health do not verify agent task execution, data persistence, or event delivery.",
     }
 
 
@@ -1857,7 +1857,7 @@ async def get_agents_supervision() -> dict[str, Any]:
     )
     return {
         "status": "ok" if overall_ok else "degraded",
-        "scope": "peer_endpoint_reachability_only",
+        "scope": "health_capability_report",
         "checked_at": completed,
         "snapshot_age_seconds": age_seconds,
         "interval_seconds": FLEET_SUPERVISION_INTERVAL_SECONDS,
@@ -1866,7 +1866,7 @@ async def get_agents_supervision() -> dict[str, Any]:
         "status_counts": status_counts,
         "agents": agents,
         "memora_event_consumer": dict(memora_event_state),
-        "note": "HTTP health responses do not verify agent task execution, data persistence, or event delivery.",
+        "note": "Capability reports from /health do not verify agent task execution, data persistence, or event delivery.",
     }
 
 
