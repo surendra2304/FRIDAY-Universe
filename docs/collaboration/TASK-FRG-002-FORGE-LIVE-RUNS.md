@@ -28,6 +28,12 @@ Owner: Muse 10. Assigned: coordinator watch 7081706110 (~21:27 IST, 2026-11-22),
 - Env note (pre-existing gap, not introduced here): neither Server 2 venv (`venv`, `venv312`) has Forge's declared dependencies installed — the first runs failed on `anthropic`, then `openai`, then `bs4`. The test was run with a scratch overlay: `pip install --target /tmp/frg002-libs` of the `Forge/requirements.txt` set (anthropic, openai, beautifulsoup4, oracledb, redis, python-dotenv, rich, psutil, greenlet) + pytest/pytest-asyncio, `PYTHONPATH=/tmp/frg002-libs:Forge`, `--noconftest`. CI installs `requirements-ci.txt`, so the suite should be green there; the Server 2 venvs need the same treatment before the Forge suite can run locally without the overlay.
 - No other test files were run in this PR; the change is additive (one router + one mount) and the two contract tests cover the new route.
 
+## CI repair (contracts job)
+
+- First CI run on PR #1401 failed the `contracts` check in 9s: the TASK-REL-068 test-collection guard. Reproduced locally (`python3 scripts/ci_test_collection_audit.py --base <merge-base>`): the new contract test was collected by NO PR-triggered workflow. (The local run also flagged a stale reference in the untracked, Server-2-only `.github/workflows/friday-voice-ci.yml`; see the note below — it is not a CI failure.)
+- Fix in this PR: added `Forge/tests/unit/test_task_execute_contract.py` to the contracts job's Forge unit-test list in `.github/workflows/owner-workflows.yml`. Guard re-run locally: PASS.
+- Note: the local guard run also flagged a stale reference in `.github/workflows/friday-voice-ci.yml` (`tests/test_orpheus_terms_fallback.py`, a file that exists nowhere in the tree). That file is NOT tracked in git — it is excluded via `.git/info/exclude` on Server 2, so CI never sees it and it did not cause the CI failure. It was left untouched (two exploratory edits to it were reverted).
+
 ## Live runs: 0/3 — still owed
 
 - The 3 consecutive live code-task runs requested through FRIDAY chat cannot run until this PR is merged and the route is deployed live (the live Forge on Server 1 still serves the pre-PR code). After merge + deploy: request 3 real code tasks through FRIDAY chat, each recorded with its trace (request, routing, agent evidence, result); a silent failure resets the count.
