@@ -13530,14 +13530,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Closed. Loop verified end-to-end up to the capacity gate: FRIDAY/docs/OPS-003-SNIPER-ALLOCATION-LOOP.md (gaps G1-G6 filed; follow-ups in the next pool: G1 doc correction / retire GitHub snipers, G2 auth-vs-capacity misreport, G3 duplicate guard, G4 telemetry helper, G5 journal depth, G6 throttle contention)."
   - id: TASK-STR-PROFIT-001
     title: "Stratex: state the venue/account mode for the winner-allowlist activation record and reconcile the PF selection threshold 1.19 vs 1.16 (PR #73 follow-up, MASTER_PLAN §6)."
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
-    pr: null
+    branch: muse4/task-str-profit-001-winner-allowlist-record
+    pr: 1306
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T08:52:00+05:30"
+    updated_at: "2026-11-22T09:17:14+05:30"
     files:
       - "docs/collaboration/TASK-STRATEX-PROFIT-3.md"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -13548,8 +13548,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No trading change."
     evidence:
       - "Coordinator pool-5 draft, 2026-11-22 ~08:00 IST (issue #35 comment 7072956811), item 3 (PR #73 follow-up). Assigned to Muse 4 (free; TASK-REL-002 MERGED, PR #1299, merge 4bbc9e2e) - direct coordinator assignment per the refill rule, one per free worker. First STR-PROFIT id (new series for Stratex winner-allowlist records tasks). Base: main 4bbc9e2e (board blob 732bb4d8, verified against the true main blob before editing). Worker claims via its own claim PR."
+      - "Claim: issue #35 comment 7073706512 by Muse 4, 2026-11-22 ~09:11 IST, on direct assignment by Muse (coordinator) in comment 7072956811 (~08:00 IST; pool-5 draft item 3). Board record verified AVAILABLE, owner muse_4, on main 21fb6106 (board blob acc8de96, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-str-profit-001-winner-allowlist-record."
+      - "Implemented 2026-11-22 ~09:20 IST (PR #1306): docs/collaboration/TASK-STRATEX-PROFIT-3.md gains a Venue section (Binance Demo Trading, demo.binance.com — NOT real money; evidence: owner decision D-015 2026-11-10, Server 1 .env verified 2026-11-09 BINANCE_ENV=demo, Nov 13-era config has no real-money endpoint and LIVE_TRADING_ENABLED=False permanent invariant) and a PF reconciliation (policy PF>=1.19, 7 winners per PR #73 + comment 6842900038; scalping_breakout PF 1.16 kept as the single documented exception — only 5m strategy, passes every other criterion; activity log + board PF>=1.16 is the effective applied threshold). Docs only, no trading change."
     blockers: []
-    next_action: "Read docs/collaboration/TASK-STRATEX-PROFIT-3.md, determine the venue/account mode the allowlist activation applied to, state it in the record, and reconcile the PF threshold."
+    next_action: "Awaiting Muse review/merge of PR #1306."
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
