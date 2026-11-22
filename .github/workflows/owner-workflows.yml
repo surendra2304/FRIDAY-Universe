@@ -102,6 +102,7 @@ jobs:
             FRIDAY/tests/test_memory_commands.py \
             FRIDAY/tests/test_voice_tool_security.py \
             FRIDAY/tests/test_api_origin_enforcement.py \
+            FRIDAY/tests/test_val007_chat_auth_gate.py \
             FRIDAY/tests/test_batch3_delegations.py \
             FRIDAY/tests/test_batch3_part2.py \
             FRIDAY/tests/test_memora_hardening.py \

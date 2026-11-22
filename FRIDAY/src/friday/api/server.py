@@ -4882,12 +4882,26 @@ def _memory_consolidation_intent(cmd: str) -> bool:
 
 
 @app.post("/api/chat")
-async def chat_endpoint(req: ChatRequest, _: None = Depends(_require_origin_gate)) -> dict[str, Any]:
+async def chat_endpoint(req: ChatRequest, _: None = Depends(_require_control_access)) -> dict[str, Any]:
     """Compatibility endpoint for chat/command execution.
 
-    Owner decision (2026-11-10 IST): the chat surface is public and keyless —
-    origin-gated only (see ``_require_origin_gate``). Raw control endpoints
-    (``/api/command`` and friends) keep the full key gate.
+    Owner decision (2026-11-10 IST) made the chat surface public and keyless —
+    origin-gated only (see ``_require_origin_gate``). That left the hole VAL-005
+    finding F2 records: any unauthenticated remote client could drive the full
+    command pipeline by sending the gateway's own ``Origin`` (or none at all),
+    because an ``Origin`` header is client-controlled and ``/api/chat`` had no
+    credential rule behind it. TASK-VAL-007 (2026-11-22) restores the D-023
+    gate here: remote callers must present the control API key
+    (``x-friday-api-key`` or ``Authorization: Bearer``) or a valid fcs1 control
+    token, exactly as the other control endpoints do; loopback callers stay
+    keyless (the owner on the box). The origin gate still runs first, inside
+    ``_require_control_access`` — defence in depth, unchanged.
+
+    Deploy consequence (clearance-gated, NOT deployed by this task): the
+    keyless dashboard (D-025) sends no credential, so after deploy its chat
+    answers 401 until a credential flow is restored in the dashboard
+    (paste-once key -> auto-refreshing fcs1 session, the D-023 design).
+    Do not deploy this change without that clearance.
 
     QA-loop upgrade (2026-11-13): when the brain cannot reach its LLM it still
     composes an honest, readable reply — but the command layer mapped that to
