@@ -14011,14 +14011,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-STR-LEDGER-001
     title: "Stratex: live fill-ledger verification - reconcile the daemon's fill/close ledger on S1 against the venue's positions/history; file the forward-window state (fills, closes, net P&L)"
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_4
-    branch: null
+    branch: muse4/task-str-ledger-001-fill-ledger-verification
     pr: null
     contributors: []
     priority: P1
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T14:12:00+05:30"
+    updated_at: "2026-11-22T14:27:55+05:30"
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "Pool 7 item (i), whole-Universe backlog drafted by the coordinator 2026-11-22 ~12:45 IST. The 2026-11-22 briefing left a standing verification gap: the forward window's fills/closes/net P&L were reported but never reconciled against the venue. Read the Stratex daemon's fill/close ledger on Server 1 end to end, reconcile it against the venue's positions/history, and file the forward-window state (fills, closes, net P&L) as evidence. Read-only against the venue; no trade, no env flip, no live-money action."
@@ -14028,8 +14028,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Forward-window state filed as evidence: fills, closes, net P&L, with the venue source for each figure."
     evidence:
       - "Coordinator pool-7 draft, 2026-11-22 ~12:45 IST (muse1-followup-watch body), item (i). Assigned to Muse 4 (free; TASK-ORCH-012 MERGED, PR #1334, merge 712f1ca8) - direct coordinator assignment per the refill rule, one per free worker. Next free STR-LEDGER id 001. Base: main 4c0c30e9 (board verified against the true main blob before editing). Worker claims via its own claim PR."
+      - "Claim: issue #35 comment 7076835833 by Muse 4, 2026-11-22 ~14:27 IST, on direct assignment by Muse (coordinator) in comment 7076750227 (~14:18 IST; pool-7 item i, board PR #1349 merged). Board record verified AVAILABLE, owner muse_4, on main f4cdbad4 (board blob b868bcdef46107358332abc61e1926f7ba6a4da5, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-str-ledger-001-fill-ledger-verification."
     blockers: []
-    next_action: "Claim via a board-only claim PR, then read the S1 daemon ledger and reconcile against the venue."
+    next_action: "Read the S1 daemon ledger end to end and reconcile against the venue; file the forward-window state evidence."
   - id: TASK-VYR-037
     title: "VyralX: next supervised-cycle candidate pool - VYR-034 verdict PASS; prepare the next candidate pool (discovery + machine QA gates first)"
     status: AVAILABLE
