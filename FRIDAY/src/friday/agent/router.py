@@ -67,7 +67,7 @@ SPECIALIST_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "futuris": {
         "default_url": "http://futuris:8000",
-        "canonical_mesh_url": "http://10.0.0.121:8004",
+        "canonical_mesh_url": "http://10.0.0.120:8004",
         "env_var": "FUTURIS_URL",
         "role": "Predictive Modeling & Forecasting",
         "keywords": ["forecast", "predict", "probability", "brier", "likelihood", "future_trend", "odds"],
@@ -81,7 +81,7 @@ SPECIALIST_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "intelx": {
         "default_url": "http://intelx:8000",
-        "canonical_mesh_url": "http://10.0.0.121:8005",
+        "canonical_mesh_url": "http://10.0.0.120:8005",
         "env_var": "INTELX_URL",
         "role": "Search & Live OSINT Intelligence",
         "keywords": ["search", "research", "intel", "news", "osint", "investigate", "macro", "sources"],
@@ -95,7 +95,7 @@ SPECIALIST_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "sentinel": {
         "default_url": "http://sentinel:8000",
-        "canonical_mesh_url": "http://10.0.0.120:8008",
+        "canonical_mesh_url": "http://10.0.0.121:8008",
         "env_var": "SENTINEL_URL",
         "role": "Security Audit & Cryptographic Watchdog",
         "keywords": ["security", "audit", "veto", "firewall", "vulnerability", "auth", "threat", "protect"],

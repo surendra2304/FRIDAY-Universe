@@ -68,10 +68,16 @@ def test_specialist_router_canonical_mesh_in_production():
             "FRIDAY_CORTEX_URL": "",
             "FORGE_URL": "",
             "FRIDAY_FORGE_URL": "",
+            "INTELX_URL": "",
+            "FRIDAY_INTELX_URL": "",
+            "FUTURIS_URL": "",
+            "FRIDAY_FUTURIS_URL": "",
         }):
             assert router.get_agent_url("inference") == "http://10.0.0.121:8001"
             assert router.get_agent_url("vyralx") == "http://10.0.0.120:8010"
-            assert router.get_agent_url("sentinel") == "http://10.0.0.120:8008"
+            assert router.get_agent_url("sentinel") == "http://10.0.0.121:8008"
+            assert router.get_agent_url("intelx") == "http://10.0.0.120:8005"
+            assert router.get_agent_url("futuris") == "http://10.0.0.120:8004"
             assert router.get_agent_url("cortex") == "http://10.0.0.120:8009"
             assert router.get_agent_url("forge") == "http://10.0.0.121:8006"
 
@@ -86,11 +92,20 @@ def test_fleet_client_canonical_mesh_in_production():
             "STRATEX_URL": "",
             "FRIDAY_VYRALX_URL": "",
             "VYRALX_URL": "",
+            "FRIDAY_INTELX_URL": "",
+            "INTELX_URL": "",
+            "FRIDAY_FUTURIS_URL": "",
+            "FUTURIS_URL": "",
+            "FRIDAY_SENTINEL_URL": "",
+            "SENTINEL_URL": "",
         }):
             client = FleetClient()
             assert client.inference_url == "http://10.0.0.121:8001"
             assert client.stratex_url == "http://10.0.0.121:8003"
             assert client.vyralx_url == "http://10.0.0.120:8010"
+            assert client.intelx_url == "http://10.0.0.120:8005"
+            assert client.futuris_url == "http://10.0.0.120:8004"
+            assert client.sentinel_url == "http://10.0.0.121:8008"
 
 
 def test_oracle_dsn_normalization():

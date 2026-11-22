@@ -113,14 +113,18 @@ def _probe_failure(exc: BaseException) -> tuple[str, str]:
     return "DEGRADED", f"probe failed ({_error_text(exc)})"
 
 
+# Post-6/4-migration layout (TASK-REL-062, MERGED): S1 = 10.0.0.121
+# (inference, memora, stratex, forge, sentinel), S2 = 10.0.0.120
+# (intelx, futuris, cortex). TASK-FRD-033 re-pointed the three
+# entries the migration moved; the rest were verified correct.
 CANONICAL_INTERNAL_MESH_URLS: dict[str, str] = {
     "inference": "http://10.0.0.121:8001",
     "memora": "http://10.0.0.121:8002",
     "stratex": "http://10.0.0.121:8003",
-    "futuris": "http://10.0.0.121:8004",
-    "intelx": "http://10.0.0.121:8005",
+    "futuris": "http://10.0.0.120:8004",
+    "intelx": "http://10.0.0.120:8005",
     "forge": "http://10.0.0.121:8006",
-    "sentinel": "http://10.0.0.120:8008",
+    "sentinel": "http://10.0.0.121:8008",
     "cortex": "http://10.0.0.120:8009",
     "vyralx": "http://10.0.0.120:8010",
 }
