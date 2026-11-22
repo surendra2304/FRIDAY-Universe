@@ -3094,14 +3094,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Post-merge: deploy via Fleet CD if not already deployed, production-probe in the target environment, and flip to VERIFIED only with recorded production evidence."
   - id: TASK-REL-001
     title: "Wire all merged waves' tests into CI (Forge reliability, Memora durability, intent-tier test files currently run by no workflow)"
-    status: IN_PROGRESS
-    owner: muse_ai
+    status: AVAILABLE
+    owner: muse_8
     branch: null
     pr: null
     contributors: []
     priority: P0
     created_at: "2026-11-14T12:45:00+05:30"
-    updated_at: "2026-11-14T12:45:00+05:30"
+    updated_at: "2026-11-22T07:46:23+05:30"
     files:
       - ".github/workflows/friday-universe-ci.yml"
       - ".github/workflows/owner-workflows.yml"
@@ -3109,20 +3109,21 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     acceptance:
       - "Each named test file is executed by a CI job on PRs and on main pushes."
       - "CI output shows the files collected and passing (or a recorded, root-caused failure tracked separately — never silently skipped)."
-    evidence: []
+    evidence:
+      - "Reassigned 2026-11-22 ~07:46 IST by coordinator (pool 4, item 3): record was IN_PROGRESS under retired owner muse_ai since 2026-11-14 with no progress; reassigned to Muse 8 (free; TASK-STR-DAEMON-005 MERGED, PR #1288). Base: main 93ce3427 (board blob 4fb0beab1fededc30e79fb04bbeb0ae0d7ff9689, verified against the true main blob before editing). Worker claims via its own claim PR."
     blockers: []
     next_action: "Add the files to the appropriate jobs' explicit test lists; verify in the PR's own CI run."
 
   - id: TASK-REL-002
     title: "Root-cause and fix the failing voice-regressions CI job (failing on main since push 37db125)"
-    status: IN_PROGRESS
-    owner: muse_ai
+    status: AVAILABLE
+    owner: muse_4
     branch: null
     pr: null
     contributors: []
     priority: P0
     created_at: "2026-11-14T12:45:00+05:30"
-    updated_at: "2026-11-14T12:45:00+05:30"
+    updated_at: "2026-11-22T07:46:23+05:30"
     files:
       - ".github/workflows/friday-universe-ci.yml"
     defect: "FRIDAY Universe CI/CD run 43569163089 on main 573da9c concluded failure; the voice-regressions job (ruff on voice surfaces + pytest over 14 named voice/LiveKit/Gemini/CLI test files) is the failing component, first seen on the 37db125 push (numpy PR #51 merge chain). Root cause not yet established."
@@ -3130,7 +3131,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Failing test(s)/lint identified from CI logs and reproduced locally."
       - "Root cause fixed (code or test defect fixed at the cause; no assertion weakened, no test skipped to force green)."
       - "voice-regressions job green on main."
-    evidence: []
+    evidence:
+      - "Reassigned 2026-11-22 ~07:46 IST by coordinator (pool 4, item 4): record was IN_PROGRESS under retired owner muse_ai since 2026-11-14 with no progress; reassigned to Muse 4 (free; TASK-STR-FWD-036 MERGED, PR #1290). Base: main 93ce3427 (board blob 4fb0beab1fededc30e79fb04bbeb0ae0d7ff9689, verified against the true main blob before editing). Worker claims via its own claim PR."
     blockers: []
     next_action: "Pull the failing job's logs from run 43569163089 (and successors), identify the failing file, reproduce locally."
 
@@ -12823,14 +12825,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "MERGED. No deploy in this task; the label fix ships with the next Stratex deploy."
   - id: TASK-STR-FWD-036
     title: "Stratex: FWD-032 follow-up - retarget the deleted OMS intent-mismatch test; remove spot-testnet remnants (config_template.py, hub spot_testnet probe, testnet_engine)."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-str-fwd-036-oms-retarget-testnet-removal
     pr: 1290
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T07:47:00+05:30"
+    updated_at: "2026-11-22T07:46:23+05:30"
     files:
       - "Stratex/config_template.py"
       - "Stratex/exchanges/unified_portfolio_hub.py"
@@ -12847,8 +12849,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator pool-3 draft, 2026-11-22 ~05:38 IST (issue #35 comment 7071343939), item 5. FWD-032 merge evidence (PR #1173, merge 66012b5c) lists the nits. Assigned to Muse 4 (free; TASK-VYR-035 MERGED, PR #1285, merge cd74648e) - direct coordinator assignment per the refill rule, one per free worker. Base: main cd74648e (board blob 584c710cade4711c50943848dabbabbdce268c75, verified against the true main blob before editing)."
       - "Claim: issue #35 comment 7072556716 by Muse 4, 2026-11-22 ~07:26 IST, on direct assignment by Muse (coordinator) in comment 7072277612 (~07:05 IST; pool-3 draft 7071343939, item 5). Board record verified AVAILABLE, owner muse_4, on main 254c2df1 (board blob 7f9a2b01d2d23c1f39b166c5a7156171389f1ee4, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-str-fwd-036-oms-retarget-testnet-removal."
       - "Progress 2026-11-22 ~07:47 IST: implemented on branch muse4/task-str-fwd-036-oms-retarget-testnet-removal (PR #1290 carries the claim + implementation). (1) OMS test retargeted: test_adapter_refuses_mismatched_intent_environment restored in Stratex/tests/test_binance_futures_oms_adapter.py — same name/assertions, but the legacy binance_testnet intent is now built via object.__new__ (TradeIntent rejects binance_testnet at construction since FWD-032); adapter still refuses with 'does not match Binance environment' before any client call. (2) config_template.py repointed to Demo Trading (demo-api.binance.com, wss://demo-api.binance.com/ws-api/v3, demo key placeholders, portal demo.binance.com). (3) Hub spot_testnet probe removed from unified_portfolio_hub.py (docstring + comment corrected — the docstring claim of no retired endpoint was false while the probe lived). (4) testnet_engine/service.py auth-failure message no longer names testnet.binance.vision; the retired engine itself stays preserved per RETIRE-001. (5) FWD-032 repo-wide scan extended to the retired spot host. Verification (local, venv pytest 9.2.0): both affected suites 27 passed, 1 failed — test_async_pipeline_defaults_to_demo_fapi fails identically on clean main (httpx InvalidURL in AsyncMarketDataEngine construction; pre-existing env failure, proven via stash, untouched by this diff). Non-vacuity: extended scan fails on the pre-change tree naming exactly the 5 remnant lines, passes after. Grep evidence: no Stratex .py file names testnet.binance.vision; only the adapter refusal message names a retired host (testnet.binancefuture.com, contains 'retired'). Observed, out of scope: 'spot_testnet'/'binance_spot_testnet' mode labels remain in execution.py ledger venues, telegram_bot.py display map, test_stratex_oms.py test name — labels, not venue resolution; historical docs (AUDIT_PHASE0-2.md, FUTURES_MIGRATION_PLAN.md) still name the host as history; AGENTS.md Stratex caveat still says testnet-only (stale, pre-retirement). No live path, no deploy, no service touched."
+      - "MERGED 2026-11-22 ~07:46 IST: PR #1290 merged 93ce3427 (coordinator review: full 6-file diff reviewed; CI 10/10 green incl. contracts success; local pytest both affected suites 27 passed + 1 pre-existing failure test_async_pipeline_defaults_to_demo_fapi, proven failing identically on clean main 254c2df1; test-merge onto main 5c702165 clean, validator VALID). Board verified on main 93ce3427."
     blockers: []
-    next_action: "Awaiting Muse review/merge of PR #1290. No deploy in this task."
+    next_action: "MERGED. No deploy in this task."
   - id: TASK-VOI-026
     title: "Voice: greeting-onset diagnosis - FRIDAY's greeting misses the 8s bar even on a calm box (11.3s/17.0s observed), a load-independent defect separate from the fixed send-cadence collapse; find the cause in the voice path and fix it, or file the precise blocker with evidence."
     status: MERGED
@@ -13245,14 +13248,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-STR-DAEMON-005
     title: "Stratex: add the DAEMON-002 and DAEMON-004 test files to the contracts Stratex workflow list (DAEMON-002 follow-up)."
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_8
     branch: muse8/task-str-daemon-005
     pr: 1288
     contributors: []
     priority: P2
     created_at: "2026-11-22"
-    updated_at: "2026-11-22T07:24:00+05:30"
+    updated_at: "2026-11-22T07:46:23+05:30"
     files:
       - ".github/workflows/owner-workflows.yml"
       - "docs/collaboration/WORK_BOARD.yaml"
@@ -13265,8 +13268,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Coordinator pool-3 draft, 2026-11-22 ~05:38 IST (issue #35 comment 7071343939). Assigned to Muse 8 (free; TASK-STR-DAEMON-004 MERGED, PR #1279, merge 70c862e9) - direct coordinator assignment per the refill rule, one per free worker. Base: main 70c862e9 (board blob 9f7cf38ac83dbce37923da5fca551976ad491a1d, verified against the true main blob before editing)."
       - "Claim: issue #35 comment 7071869201 by Muse 8, 2026-11-22 ~06:26 IST, on direct assignment by Muse (coordinator) in comment 7071808665 (pool 3, item 4). Board record verified AVAILABLE, owner muse_8, on main a86bd315 (board blob 49d3b20b14b984bb1b59e4dd7f14da1cb490ab83, 13,477 lines, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-str-daemon-005."
       - "Work PR #1288 opened 2026-11-22 ~07:23 IST: .github/workflows/owner-workflows.yml +2 lines (both test files added to contracts Stratex list, next to test_str_daemon_003). Branch muse8/task-str-daemon-005, head 95904093, merge-base exactly main a86bd315, mergeable true. Local: 19/19 passed (5 + 14) with the CI install set incl. python-dotenv (workflow line 72). CI on PR #1288 in progress at posting."
+      - "MERGED 2026-11-22 ~07:46 IST: work PR #1288 merged 5c702165 (coordinator review: true diff exactly +2 lines in owner-workflows.yml; CI 9/9 green incl. contracts success; test-merge onto main 254c2df1 clean, only the +2 lines); board PR #1289 merged 573c8f9a (IN_REVIEW flip, CI 9/9, validator VALID). Board verified on main 93ce3427."
     blockers: []
-    next_action: "Awaiting Muse review/merge of work PR #1288; verify CI collects and passes both test files, then record MERGED."
+    next_action: "MERGED. No deploy in this task; the contracts list change takes effect on the next CI run."
   - id: TASK-VYR-001
     title: "VyralX: daemon/autopilot audit and wall-clock budget (MASTER_PLAN §6)."
     status: MERGED
