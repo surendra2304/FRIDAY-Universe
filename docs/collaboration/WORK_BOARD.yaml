@@ -14295,22 +14295,23 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Verify or enable the loop with the cage, run one cycle, ship the blocked-agent tool, file evidence.
   - id: TASK-MEM-015
     title: 'Memora: persist the viking context layer to Oracle ADB or mark it explicitly ephemeral in API responses + promotion audit trail with undo'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_10
-    branch: null
-    pr: null
+    branch: muse10/task-mem-015-viking-persistence-audit
+    pr: 1385
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T14:46:00+05:30'
+    updated_at: '2026-11-22T19:58:40+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'No agent can mistake the viking layer for durable memory: it is either ADB-backed across restarts (proven by a restart write/read probe) or every response labels it ephemeral. Every promotion (agent-judged and auto) writes an audit record (who/what/when) reversible by one call; probe evidence filed.'
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research: repo docs record the viking:// layer is an in-process store, empty after restart - a silent data-loss path for every agent; the owner-designed promotion system (locked 2026-11-18) has no audit trail or undo. Assigned to Muse 10 (holds MEM-014; claims after it).'
+    - 'IMPLEMENTED 2026-11-22 (Muse 10, PR #1385): POST /v1/promotion/revert (one-call undo, audit-driven) + durability label on every /v1/context/* response; live ADB write/read probe passed (test file in context_snapshots row, node_count 27->29); 31 targeted tests passed, full suite 800 passed / 60 failed with identical 60 on pristine main (A/B, zero regressions); evidence doc docs/collaboration/TASK-MEM-015-VIKING-PERSISTENCE-AUDIT.md. Open: live restart probe (G1, needs Muse clearance), dual-copy revert (G2), namespace grants on revert (G3).'
     blockers: []
-    next_action: Implement persistence-or-labelling + the audit trail, probe across a restart, file evidence.
+    next_action: Muse review/merge; then live restart write/read probe with clearance (G1).
   - id: TASK-FUT-017
     title: 'Futuris: standing per-cycle accuracy scoring (every forecast scored when its horizon passes, rolling hit-rate on her status surface) + explicit fit-cost cap'
     status: IN_REVIEW

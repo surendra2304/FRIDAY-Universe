@@ -34,7 +34,11 @@ This module completes both paths on the existing primitives:
     required and every promotion carries its evidence.
   * Promotion is monotonic (never demotes), idempotent (re-promoting to the
     current tier is a no-op that writes no second audit row), and refuses
-    archived/deleted records.
+    archived/deleted records. The one audited exception is
+    ``MemoryPromotionService.revert_scope`` (TASK-MEM-015): it demotes a
+    memory exactly one rung, back to the ``from_scope`` of its latest
+    promotion audit row, and writes a ``MEMORY_SCOPE_DEMOTED`` row pointing
+    at the promotion it undoes.
 
 Thresholds for (C) are module constants, deliberately conservative:
 
@@ -68,6 +72,7 @@ from storage.relational.models import (
     LifecycleState,
     MemoryRecord,
     MemoryScopeType,
+    MemorySharedAgent,
     normalize_agent_name,
 )
 
@@ -76,6 +81,7 @@ logger = logging.getLogger(__name__)
 #: AuditLog action names written by this module.
 ACTION_NEED = "MEMORY_NEED_RECORDED"
 ACTION_PROMOTED = "MEMORY_SCOPE_PROMOTED"
+ACTION_DEMOTED = "MEMORY_SCOPE_DEMOTED"
 
 #: Promotion provenance paths recorded in audit details / copy provenance.
 PATH_OWNER = "owner_judgement"
@@ -247,6 +253,149 @@ class MemoryPromotionService:
             db.rollback()
             raise
         return result
+
+    # ------------------------------------------------------------ undo (D)
+    @classmethod
+    def revert_scope(
+        cls,
+        db: Session,
+        *,
+        actor_name: str,
+        memory_id: str,
+        reason: str = "",
+        tenant_id: Optional[str] = "default",
+    ) -> Dict[str, Any]:
+        """Revert the latest promotion of one memory by exactly one rung.
+
+        TASK-MEM-015: promotion is monotonic through ``promote_scope`` (a
+        demotion target is refused there), but every promotion must be
+        reversible by one call. The revert reads the latest
+        ``MEMORY_SCOPE_PROMOTED`` audit row — the audit trail is the source
+        of truth for what the previous rung was — demotes the record to that
+        ``from_scope``, removes only the allow-list rows that promotion
+        granted, and writes a ``MEMORY_SCOPE_DEMOTED`` audit row pointing at
+        the promotion it undoes. Only the owning agent (or the Memora
+        service identity) may revert, the same actors allowed to promote.
+
+        Refusals (all honest, no silent partial undo):
+        * no promotion on record -> not found;
+        * the latest promotion was already reverted -> ``already_reverted``
+          no-op, idempotent;
+        * the latest promotion created a UNIVERSAL dual copy of a
+          failed-experiment lesson -> refused: the copy is a separate record
+          and must be dealt with on its own;
+        * the record's scope has moved since that promotion (promoted again
+          or changed out of band) -> refused, so a revert never skips a rung.
+        """
+        actor = _resolve_actor(db, actor_name, tenant_id)
+        record = _resolve_record(db, memory_id, actor.tenant_id)
+        owner = normalize_agent_name(record.owner_agent)
+        caller = normalize_agent_name(actor.name)
+        if caller != SERVICE_AGENT and caller != owner:
+            raise PromotionPermissionError(
+                f"'{actor.name}' does not own memory '{memory_id}'; "
+                "only the owning agent may revert its scope"
+            )
+
+        promotion = (
+            db.query(AuditLog)
+            .filter(
+                AuditLog.tenant_id == record.tenant_id,
+                AuditLog.memory_id == record.id,
+                AuditLog.action == ACTION_PROMOTED,
+            )
+            .order_by(AuditLog.timestamp.desc(), AuditLog.id.desc())
+            .first()
+        )
+        if promotion is None:
+            raise PromotionError(f"memory '{memory_id}' has no promotion to revert")
+
+        already = (
+            db.query(AuditLog)
+            .filter(
+                AuditLog.tenant_id == record.tenant_id,
+                AuditLog.memory_id == record.id,
+                AuditLog.action == ACTION_DEMOTED,
+            )
+            .order_by(AuditLog.timestamp.desc(), AuditLog.id.desc())
+            .first()
+        )
+        if already is not None:
+            details = already.details if isinstance(already.details, dict) else {}
+            if details.get("reverts_audit_id") == promotion.id:
+                return {
+                    "status": "already_reverted",
+                    "memory_id": record.id,
+                    "owner_agent": owner,
+                    "scope": (record.scope or MemoryScopeType.PRIVATE).value,
+                    "path": details.get("path", ""),
+                    "reverts_audit_id": promotion.id,
+                }
+
+        details = promotion.details if isinstance(promotion.details, dict) else {}
+        if details.get("failed_experiment_dual"):
+            raise PromotionPermissionError(
+                "this promotion created a separate UNIVERSAL copy of a "
+                "failed-experiment lesson; revert the copy itself instead of "
+                "demoting the original, which never moved"
+            )
+        try:
+            from_scope = MemoryScopeType(str(details.get("from_scope", "")).strip().upper())
+            to_scope = MemoryScopeType(str(details.get("to_scope", "")).strip().upper())
+        except ValueError:
+            raise PromotionError(
+                f"promotion audit {promotion.id} carries an unreadable scope; "
+                "refusing to revert"
+            )
+        current = record.scope or MemoryScopeType.PRIVATE
+        if current != to_scope:
+            raise PromotionPermissionError(
+                f"memory '{memory_id}' is {current.value}, not {to_scope.value}; "
+                "its scope moved after the promotion, so the revert would skip a rung"
+            )
+
+        try:
+            granted = [
+                normalize_agent_name(name)
+                for name in (details.get("shared_with") or [])
+            ]
+            if granted:
+                db.query(MemorySharedAgent).filter(
+                    MemorySharedAgent.memory_id == record.id,
+                    MemorySharedAgent.agent_name.in_(granted),
+                ).delete(synchronize_session=False)
+            record.scope = from_scope
+            db.flush()
+            _audit(
+                db,
+                actor_id=actor.id,
+                memory_id=record.id,
+                tenant_id=record.tenant_id,
+                action=ACTION_DEMOTED,
+                details={
+                    "from_scope": to_scope.value,
+                    "to_scope": from_scope.value,
+                    "reverted_by": caller,
+                    "reverts_audit_id": promotion.id,
+                    "path": details.get("path", ""),
+                    "reason": reason[:512],
+                    "shared_with_revoked": granted,
+                },
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        return {
+            "status": "reverted",
+            "memory_id": record.id,
+            "owner_agent": owner,
+            "scope": from_scope.value,
+            "from_scope": to_scope.value,
+            "to_scope": from_scope.value,
+            "path": details.get("path", ""),
+            "reverts_audit_id": promotion.id,
+        }
 
     # ------------------------------------------------------- need recording
     @classmethod
@@ -569,6 +718,7 @@ class MemoryPromotionService:
 
 __all__ = [
     "ACTION_NEED",
+    "ACTION_DEMOTED",
     "ACTION_PROMOTED",
     "DEFAULT_WINDOW_DAYS",
     "MemoryPromotionService",

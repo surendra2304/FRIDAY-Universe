@@ -260,3 +260,70 @@ def test_api_routes_restore_content_after_service_rebuild(client, monkeypatch):
         assert search["hits"][0]["uri"] == MEMORA_URI
     finally:
         context_db_module._service._default = original_default
+
+
+# ------------------------------------------------------------------ TASK-MEM-015
+LABEL_URI = "viking://user/memora/memories/fact/durable-label-note.md"
+LABEL_CONTENT = (
+    "# Durable label note\n\n"
+    "Every context response says whether this layer is snapshot-backed "
+    "or process-local, so no agent can mistake it for durable memory.\n"
+)
+
+
+def test_context_responses_carry_durability_label(sqlite_factory):
+    """TASK-MEM-015: every context response labels its durability."""
+    service = make_service(sqlite_factory)
+    written = service.write(LABEL_URI, LABEL_CONTENT, tags=("fact",))
+    assert written["durability"]["enabled"] is True
+    assert written["durability"]["state"] == "saved"
+    assert written["durability"]["backend"] == "relational"
+    read = service.read(LABEL_URI, "L2")
+    assert read["durability"]["enabled"] is True
+    assert read["durability"]["state"] == "saved"
+    remembered = service.remember(
+        "decision", "label check", "Labelling",
+        "Every response says durable or ephemeral.")
+    assert remembered["durability"]["enabled"] is True
+    stats = service.stats()
+    assert stats["durability"]["enabled"] is True
+    assert stats["durability"]["state"] == "saved"
+    # Fresh counts, not the restore-time receipt: the label's file count is
+    # the live count.
+    assert stats["durability"]["files"] == stats["files"]
+
+
+def test_in_memory_service_labels_responses_ephemeral():
+    """TASK-MEM-015: a context database with no store says ephemeral."""
+    service = MemoraContextService(user="memora")
+    written = service.write(LABEL_URI, LABEL_CONTENT, tags=("fact",))
+    assert written["durability"] == {
+        "enabled": False,
+        "state": "ephemeral",
+        "backend": None,
+        "note": "in-memory only; content is lost on restart",
+    }
+    assert service.read(LABEL_URI, "L2")["durability"]["state"] == "ephemeral"
+    assert service.stats()["durability"]["state"] == "ephemeral"
+
+
+def test_api_context_responses_carry_durability_label(client):
+    """TASK-MEM-015: the real /v1/context surface labels every response."""
+    write = client.post("/v1/context/write", json={
+        "uri": LABEL_URI, "content": LABEL_CONTENT, "tags": ["fact"],
+    })
+    assert write.status_code == 200, write.text
+    assert write.json()["durability"]["enabled"] is True
+    assert write.json()["durability"]["state"] == "saved"
+
+    stats = client.get("/v1/context/stats").json()
+    assert stats["durability"]["enabled"] is True
+    assert stats["durability"]["files"] == stats["files"]
+
+    read = client.get("/v1/context/read", params={"uri": LABEL_URI, "level": "L2"}).json()
+    assert read["durability"]["enabled"] is True
+
+    search = client.get("/v1/context/search", params={
+        "query": "snapshot-backed or process-local", "level": "L1"}).json()
+    assert search["durability"]["enabled"] is True
+    assert search["hits"]
