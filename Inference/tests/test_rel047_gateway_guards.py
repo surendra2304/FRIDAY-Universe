@@ -35,6 +35,7 @@ from app.providers.gateway import (
     groq_prompt_over_limit,
     nvidia_rung_enabled,
 )
+from app.providers.model_servability import model_servability_tracker
 
 
 class _Limiter:
@@ -329,3 +330,51 @@ def test_stream_refuses_guarded_providers(monkeypatch):
 
     with pytest.raises(ProviderUnconfiguredError, match="disabled by configuration"):
         asyncio.run(_first_chunk("nvidia", _request()))
+
+
+# ---------------------------------------------------------------------------
+# TASK-INF-026: ladder-rung outcomes feed the servability tracker
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture()
+def _clean_servability():
+    model_servability_tracker.reset()
+    yield
+    model_servability_tracker.reset()
+
+
+def test_ladder_openrouter_rung_serve_is_recorded(monkeypatch, _clean_servability):
+    """A model that serves as the OpenRouter dynamic rung is recorded as a
+    serve, while the requested model (which the route layer owns) is left
+    untouched — one execution is never counted twice."""
+    calls = []
+    _wire_providers(monkeypatch, calls, fail={"groq"})
+    gateway = _gateway({"groq": KeyPool("groq", ["k1"])})
+
+    resp = asyncio.run(gateway.execute("groq", _request()))
+    assert resp.content == "answer from openrouter"
+    assert calls == ["groq", "openrouter"]
+
+    view = model_servability_tracker.selection_view("test/free-model")
+    assert view["attempts"] == 1
+    assert view["serves"] == 1
+    assert model_servability_tracker.selection_view("some-model")["attempts"] == 0
+
+
+def test_ladder_rung_failures_are_recorded_per_model(monkeypatch, _clean_servability):
+    """When the OpenRouter rung and the waterfall's OpenRouter rung fail and
+    the Gemini waterfall rung serves, each rung model carries its own
+    outcome — the failure that used to be invisible to the tracker
+    (TASK-INF-026: the Gemini-rung 503s behind the 2026-11-23 synthesis
+    failures left no trace)."""
+    calls = []
+    _wire_providers(monkeypatch, calls, fail={"groq", "openrouter"})
+    gateway = _gateway({"groq": KeyPool("groq", ["k1"])})
+
+    resp = asyncio.run(gateway.execute("groq", _request()))
+    assert resp.content == "answer from gemini"
+
+    assert model_servability_tracker.selection_view("test/free-model")["misses"] == 1
+    assert model_servability_tracker.selection_view("gemini-flash-latest")["serves"] == 1
+    assert model_servability_tracker.selection_view("some-model")["attempts"] == 0
