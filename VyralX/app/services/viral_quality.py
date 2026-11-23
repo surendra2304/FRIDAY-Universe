@@ -951,51 +951,46 @@ def arc_gate(arc: EventArc | None) -> tuple[bool, str]:
 
 # --------------------------------------------------------------------------- #
 # TASK-VYR-045: caption-track gate (renders 823/841/861 class)
-# --------------------------------------------------------------------------- #
-# A render carries exactly one caption track: the ASS track the pipeline
-# burns in the lower third. Renders 823/841/861 shipped DOUBLED — the
-# source footage own burned-in captions plus our ASS track, ~1s out of
-# sync — because the only guard was the pre-render vision gate
-# (TASK-VYR-032, any-beat). This is the post-render machine gate: it
-# inspects caption-like detections sampled from the RENDERED output and
-# rejects the render when they form more than one track.
 #
-# A "track" is a set of detections that belong to one caption layer:
-#   * same vertical band — centre-y within _CAPTION_BAND_TOL. Our ASS
-#     captions live in the lower third; a source own captions sit in a
-#     different band; and
-#   * within one band, detections whose time windows overlap by more than
-#     half while carrying different text are a second, out-of-sync track
-#     stacked on the first (the 823/841/861 signature).
+# The sampler inspects caption-like detections sampled from the RENDERED
+# output and rejects the render when they form more than one track.
+#
+# A "track" is counted by simultaneity, not by vertical band: the count
+# is the largest number of DISTINCT caption texts visible at any one
+# moment. Sweep the timeline; at each interval between detection
+# boundaries, count the distinct (normalised) texts active there.
+#
+# Band-counting was the first version and it false-rejected a good
+# render: on the real Nov 21 render the vision model read phrase 1 at
+# the bottom ("TODAY WE'RE GONNA FIND OUT", 0-1.5s) and phrase 2's
+# fragment in the middle ("WHEN ONE LEGENDARY", 1.5-3.0s) — two bands
+# for one track, because the model's zone for a single caption line is
+# unstable over time. Sequential phrases in different bands are one
+# track; two lines on screen at the same moment with different words
+# are two (the 823/841/861 class, including the out-of-sync same-band
+# case, where the two tracks overlap in time). The same words in two
+# bands at once count once — the model duplicate-reads one visual
+# line that way, and the sampler's prune step already drops
+# same-frame substring duplicates.
 # Sampling density is the caller job: sample at least every 0.5s, or
 # word-by-word captions flash between samples and the gate under-counts
 # (the same miss that let 861 through the VYR-032 vision gate).
-
-_CAPTION_BAND_TOL = 0.08
-_CAPTION_TIME_OVERLAP = 0.5
+# Detections need non-zero windows (the sampler emits >= 0.5s cells);
+# a zero-length detection covers no interval and is invisible here.
 
 
 def _norm_caption_text(text: str) -> str:
     return " ".join((text or "").lower().split())
 
 
-def _caption_windows_overlap(a_start: float, a_end: float,
-                             b_start: float, b_end: float) -> bool:
-    overlap = min(a_end, b_end) - max(a_start, b_start)
-    if overlap <= 0:
-        return False
-    shorter = min(a_end - a_start, b_end - b_start)
-    return shorter > 0 and overlap >= _CAPTION_TIME_OVERLAP * shorter
-
-
 def count_caption_tracks(detections: list[dict[str, Any]]) -> int:
     """Count distinct caption tracks among sampled output-frame detections.
 
     Each detection is ``{"y": centre-y 0..1, "start": s, "end": s,
-    "text": str}``. Detections in different vertical bands are different
-    tracks; within one band, overlapping windows with different text are
-    a second out-of-sync track. Sequential captions and re-detections of
-    the same words count once.
+    "text": str}``. Returns the largest number of distinct caption
+    texts visible at any one moment (see the block comment above).
+    Sequential captions and re-detections of the same words count
+    once; two different lines on screen together count two.
     """
     cleaned: list[dict[str, Any]] = []
     for d in detections or []:
@@ -1004,39 +999,18 @@ def count_caption_tracks(detections: list[dict[str, Any]]) -> int:
             continue
         start = float(d.get("start", 0.0) or 0.0)
         end = float(d.get("end", start) or start)
-        cleaned.append({"y": float(d.get("y", 0.5) or 0.5),
-                        "start": start, "end": max(end, start),
-                        "text": text})
+        cleaned.append({"start": start, "end": max(end, start), "text": text})
     if not cleaned:
         return 0
-    cleaned.sort(key=lambda d: d["y"])
-    bands: list[list[dict[str, Any]]] = []
-    for d in cleaned:
-        if bands and abs(d["y"] - bands[-1][0]["y"]) <= _CAPTION_BAND_TOL:
-            bands[-1].append(d)
-        else:
-            bands.append([d])
-    total = 0
-    for band in bands:
-        band.sort(key=lambda d: (d["start"], d["end"]))
-        tracks: list[dict[str, Any]] = []
-        for d in band:
-            conflict = any(
-                t["text"] != d["text"]
-                and _caption_windows_overlap(
-                    d["start"], d["end"], t["start"], t["end"])
-                for t in tracks
-            )
-            if conflict:
-                tracks.append(dict(d))
-            elif tracks:
-                same = next((t for t in tracks if t["text"] == d["text"]), None)
-                target = same if same is not None else tracks[-1]
-                target["end"] = max(target["end"], d["end"])
-            else:
-                tracks.append(dict(d))
-        total += len(tracks)
-    return total
+    points = sorted({d["start"] for d in cleaned} | {d["end"] for d in cleaned})
+    worst = 0
+    for a, b in zip(points, points[1:]):
+        if b <= a:
+            continue
+        mid = (a + b) / 2.0
+        active = {d["text"] for d in cleaned if d["start"] <= mid < d["end"]}
+        worst = max(worst, len(active))
+    return worst
 
 
 def caption_track_gate(detections: list[dict[str, Any]]) -> tuple[bool, str]:

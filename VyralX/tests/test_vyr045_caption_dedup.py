@@ -82,3 +82,23 @@ def test_empty_text_detections_ignored():
     dets = [_det(0.85, 0.0, 1.0, "hello"),
             _det(0.50, 0.0, 1.0, "   ")]
     assert vq.count_caption_tracks(dets) == 1
+
+
+def test_sequential_phrases_in_different_bands_count_once():
+    # Live shape from the real Nov 21 render: the vision model read
+    # phrase 1 at the bottom and phrase 2's fragment in the middle —
+    # two bands, one track, sequential in time. Band-counting
+    # false-rejected this render; simultaneity passes it.
+    dets = [_det(0.85, 0.0, 1.5, "TODAY WE'RE GONNA FIND OUT"),
+            _det(0.50, 1.5, 3.0, "WHEN ONE LEGENDARY")]
+    assert vq.count_caption_tracks(dets) == 1
+    assert vq.caption_track_gate(dets) == (True, "single_caption_track")
+
+
+def test_same_words_in_two_bands_at_once_count_once():
+    # One visual line duplicate-read in two bands at the same moment
+    # (the model does this) is one track, not two.
+    dets = [_det(0.85, 0.0, 1.0, "hello world"),
+            _det(0.50, 0.0, 1.0, "hello world")]
+    assert vq.count_caption_tracks(dets) == 1
+    assert vq.caption_track_gate(dets) == (True, "single_caption_track")

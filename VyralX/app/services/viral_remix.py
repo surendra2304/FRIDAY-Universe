@@ -57,7 +57,13 @@ from app.services.source_analysis import (
     download_audio_only,
     probe_media,
 )
-from app.services.scene_analysis import analyze_scene, describe_scene, record_visual_defects, scene_text
+from app.services.scene_analysis import (
+    analyze_scene,
+    describe_scene,
+    record_visual_defects,
+    sample_render_caption_detections,
+    scene_text,
+)
 log = logging.getLogger("vyralx.viral_remix")
 
 # One voice for the whole channel: the first four uploads all use Guy, so a
@@ -1793,6 +1799,30 @@ def existing_upload_titles(db: Session) -> set[str]:
 # --------------------------------------------------------------------------- #
 # orchestration
 # --------------------------------------------------------------------------- #
+def check_render_caption_tracks(
+    render_path: Path,
+    duration: float,
+    *,
+    sampler=None,
+) -> tuple[bool, str, list[dict[str, Any]] | None]:
+    """TASK-VYR-045 post-render gate: sample the finished render and count caption tracks.
+
+    Returns ``(passed, reason, detections)`` — ``detections`` is
+    ``None`` when the measurement itself failed. A ``False`` return
+    means the render must not reach the publish queue: the caller
+    returns SKIPPED with the reason (``multiple_caption_tracks:<n>``
+    for the 823/841/861 class, ``no_caption_track_visible`` when the
+    ASS burn is missing, ``caption_gate_unmeasured`` when the sampler
+    could not measure). ``sampler`` is a seam for tests.
+    """
+    sample = sampler or sample_render_caption_detections
+    detections = sample(render_path, duration)
+    if detections is None:
+        return False, "caption_gate_unmeasured", None
+    ok, reason = viral_quality.caption_track_gate(detections)
+    return ok, reason, detections
+
+
 def produce_viral_short(
     candidate: Any,
     db: Session,
@@ -2071,6 +2101,32 @@ def produce_viral_short(
         source_path, render_path, tracks, cues, category, probe.has_audio,
         music_bed_path=bed_path,
     )
+    if gates_on:
+        # TASK-VYR-045: post-render caption-track gate. The render is on
+        # disk; sample its frames densely (>= every 0.5s) and count the
+        # caption tracks. A doubled render (823/841/861 class) never
+        # reaches the publish queue — the candidate is skipped with the
+        # exact reason and the autopilot's reject ledger keeps it out
+        # of future pools.
+        cap_ok, cap_reason, cap_dets = check_render_caption_tracks(
+            render_path, tracks["total_seconds"]
+        )
+        if not cap_ok:
+            log.info(
+                "Rejecting render %s: caption gate %s",
+                project_key, cap_reason,
+            )
+            return {
+                "status": "SKIPPED",
+                "reason": cap_reason,
+                "video_id": candidate.video_id,
+                "caption_tracks": (
+                    viral_quality.count_caption_tracks(cap_dets)
+                    if cap_dets is not None else None
+                ),
+                "render": str(render_path),
+            }
+
     mode = "commentary"
 
     thumbnail_path = settings.render_dir / f"{project_key}-thumb.jpg"
