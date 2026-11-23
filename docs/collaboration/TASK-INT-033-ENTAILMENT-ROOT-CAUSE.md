@@ -161,13 +161,20 @@ same draft returns SUCCESS instead of DEGRADED.
   the IntelX router import absolute. Not attempted here: shared test
   infrastructure, needs a coordinator decision.
 - **Queue:** per the board record as filed in #1504, Muse 9's queue is
-  INT-023 → REL-086 → INT-033 — i.e. REL-086 is listed ahead of
-  INT-033. INT-033 was taken first because watch12 filed it as the
-  lag-hunt re-slot (Muse 3 held it from 16:25 IST with no claim or
-  branch after the 17:35 and 17:50 demands) and it unblocks INT-020's
-  blocked head lane; this ordering is stated here so the coordinator
-  can redirect if REL-086-first was intended. REL-086 is next for
-  Muse 9 after INT-033 either way.
+  INT-023 → REL-086 → INT-033. INT-033 was taken first because watch12
+  filed it as the lag-hunt re-slot (Muse 3 held it from 16:25 IST with
+  no claim or branch after the 17:35 and 17:50 demands) and it unblocks
+  INT-020's blocked head lane. Coordinator ack, watch 7103106790
+  (~19:20 IST): "INT-033 claim ACKED... Your order is right: INT-033
+  active now, REL-086 after it." REL-086 is next for Muse 9.
+- **Adjacency (recorded 2026-11-23 ~19:45 IST, after this PR opened):**
+  Muse 2 claimed TASK-INF-028 (comment 7103662217) — the INF-026
+  follow-up spare with the same gate in the same INT-020 lane, whose
+  acceptance adds "re-probe until INT-020 run 3 goes green". Muse 2
+  notes INT-033 "sits adjacent to INF-028's gate fix". The live
+  re-probe leg therefore belongs to INF-028's acceptance (or to the
+  post-merge deploy of PR #1511) — flagged here for the coordinator to
+  sequence the two PRs; no change made to this PR on that account.
 
 ## 7. Evidence index
 
