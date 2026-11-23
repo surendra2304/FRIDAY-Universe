@@ -18,7 +18,7 @@
   filing; this PR flips the record AVAILABLE -> IN_REVIEW with the same
   owner value. If #1517 lands first, this PR's board hunk needs a rebase
   (same record, same owner line).
-- Work PR: (to be filled on open) — this doc + board flip only. No code
+- Work PR: #1519 (https://github.com/surendra2304/FRIDAY-Universe/pull/1519) — this doc + board flip only. No code
   change: there is no render to verify yet, so nothing to fix.
 
 ## Assignment (verbatim scope)
