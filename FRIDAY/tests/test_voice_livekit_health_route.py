@@ -31,19 +31,29 @@ from aiohttp import web
 from friday.voice import livekit_worker as worker
 
 
-async def _get(app: web.Application, path: str) -> tuple[int, str]:
-    """Serve ``app`` on an ephemeral loopback port; GET ``path`` once."""
+async def _fetch_many(
+    app: web.Application, paths: list[str]
+) -> dict[str, tuple[int, str]]:
+    """Serve ``app`` once on an ephemeral loopback port; GET each path.
+
+    One server + one event loop for all paths: an aiohttp Application binds
+    to the loop that first serves it, so separate ``asyncio.run`` calls on
+    the same app raise "initialized with different loop".
+    """
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, "127.0.0.1", 0)
     await site.start()
     port = runner.addresses[0][1]
+    results: dict[str, tuple[int, str]] = {}
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"http://127.0.0.1:{port}{path}") as resp:
-                return resp.status, await resp.text()
+            for path in paths:
+                async with session.get(f"http://127.0.0.1:{port}{path}") as resp:
+                    results[path] = (resp.status, await resp.text())
     finally:
         await runner.cleanup()
+    return results
 
 
 def _health_resources(app: web.Application, path: str) -> list:
@@ -61,12 +71,10 @@ def test_add_health_alias_registers_health() -> None:
     assert worker._add_health_alias(app) is True
     assert len(_health_resources(app, "/health")) == 1
 
-    status, body = asyncio.run(_get(app, "/health"))
-    assert (status, body) == (200, "OK")
-    status, body = asyncio.run(_get(app, "/"))
-    assert (status, body) == (200, "OK")
-    status, _ = asyncio.run(_get(app, "/nope"))
-    assert status == 404
+    results = asyncio.run(_fetch_many(app, ["/health", "/", "/nope"]))
+    assert results["/health"] == (200, "OK")
+    assert results["/"] == (200, "OK")
+    assert results["/nope"][0] == 404
 
 
 def test_add_health_alias_reuses_the_root_handler() -> None:
