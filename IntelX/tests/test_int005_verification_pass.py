@@ -95,6 +95,115 @@ def test_support_rejects_bruker_style_claim():
     assert not ok
 
 
+# ── TASK-INT-033 regression tests ───────────────────────────────────────────
+# Live root cause (run lr_6d6a7103193348adb29bd4e8, query "latest AI model
+# releases", 2026-11-23): the served qwen draft degraded on
+# synthesis_entailment_unverified although every quote was verbatim and
+# every claim was supported. Three tokenisation defects in
+# statement_support, each pinned below with the live shape. The U+2011
+# in the fixtures is the non-breaking hyphen exactly as the source page
+# serves it.
+
+def test_support_accepts_sentence_final_entity():
+    # Defect 1: the statement-final entity carried its sentence period
+    # ("Google."), and the source — concatenated table cells — contains
+    # no literal "Google." substring. The period is punctuation, not
+    # part of the entity.
+    source_text = (
+        "AI Model Release Calendar: Latest AI Model Releases by Date. "
+        "Nov. 23, 2026GLM-5.4Z.aiGeneral / Reasoning / Coding"
+        "Nov. 18, 2026Gemini 4 NeonGoogleGeneral / Reasoning / Coding"
+    )
+    ok, reason = statement_support(
+        "The latest AI model releases include Gemini 4 Neon from Google.",
+        source_text)
+    assert ok, reason
+
+
+def test_support_accepts_unicode_hyphen_entity():
+    # Defect 2: the source spells the model name with a non-breaking
+    # hyphen (U+2011) while the model writes an ASCII hyphen. The two
+    # spellings are the same entity.
+    source_text = (
+        "AI Model Release Calendar: November 2026 releases. "
+        "Nov. 17, 2026GPT‑6.2 AstraOpenAIGeneral / Reasoning / Coding. "
+        "The calendar lists models released in November 2026."
+    )
+    ok, reason = statement_support(
+        "OpenAI released GPT-6.2 Astra on November 17, 2026.", source_text)
+    assert ok, reason
+
+
+def test_support_accepts_glued_table_coverage():
+    # Defect 3: the coverage leg required exact token-vocabulary
+    # membership, but the source text is concatenated table cells, so
+    # the vocabulary holds glued tokens ("AstraOpenAI") that never equal
+    # the statement's clean words ("astra"). Containment is the check.
+    source_text = (
+        "AI Model Release Calendar: November 2026. "
+        "Nov. 17, 2026GPT‑6.2 AstraOpenAIGeneral / Reasoning / Coding"
+        "Nov. 17, 2026GPT‑6.2 SolOpenAIGeneral / Reasoning / Coding. "
+        "Models released in November 2026."
+    )
+    ok, reason = statement_support(
+        "OpenAI released GPT-6.2 Astra and GPT-6.2 Sol on November 17, 2026.",
+        source_text)
+    assert ok, reason
+
+
+# The exact draft the live gateway served in probe B (2026-11-23 ~19:12
+# IST) and the verbatim quotes it carried, against a source document
+# shaped like the live calendar page. On the pre-fix screen this draft
+# degrades with synthesis_entailment_unverified (findings 0 and 2); with
+# the fix it returns SUCCESS.
+_LIVE_CALENDAR_TEXT = (
+    "AI Model Release Calendar: Latest AI Model Releases by Date. "
+    "This page lists the latest AI model releases in November 2026, "
+    "including the models released this month. "
+    "Nov. 23, 2026GLM-5.4Z.aiGeneral / Reasoning / Coding"
+    "Nov. 18, 2026Ideogram 4.6Ideogram AIImage"
+    "Nov. 18, 2026Gemini 4 NeonGoogleGeneral / Reasoning / Coding "
+    "Nov. 9, 2026Claude Fable 5.2AnthropicGeneral / Reasoning / Coding"
+    "Nov. 9, 2026Claude Mythos 5.2AnthropicGeneral / Reasoning / Cybersecurity "
+    "Nov. 17, 2026GPT‑6.2 AstraOpenAIGeneral / Reasoning / Coding"
+    "Nov. 17, 2026GPT‑6.2 SolOpenAIGeneral / Reasoning / Coding"
+)
+_LIVE_CALENDAR_DOC = {"source_id": "cal1", "title": "AI Model Release Calendar",
+                      "url": "https://www.scriptbyai.com/ai-model-release-calendar/",
+                      "text": _LIVE_CALENDAR_TEXT}
+_LIVE_DRAFT_STATEMENTS = [
+    ("The latest AI model releases in November 2026 include GLM-5.4 "
+     "from Z.ai and Gemini 4 Neon from Google.",
+     "Nov. 23, 2026GLM-5.4Z.aiGeneral / Reasoning / Coding"
+     "Nov. 18, 2026Ideogram 4.6Ideogram AIImage"
+     "Nov. 18, 2026Gemini 4 NeonGoogleGeneral / Reasoning / Coding"),
+    ("Anthropic released Claude Fable 5.2 and Claude Mythos 5.2 "
+     "on November 9, 2026.",
+     "Nov. 9, 2026Claude Fable 5.2AnthropicGeneral / Reasoning / Coding"
+     "Nov. 9, 2026Claude Mythos 5.2AnthropicGeneral / Reasoning / Cybersecurity"),
+    ("OpenAI released GPT-6.2 Astra and GPT-6.2 Sol on November 17, 2026.",
+     "Nov. 17, 2026GPT‑6.2 AstraOpenAIGeneral / Reasoning / Coding"
+     "Nov. 17, 2026GPT‑6.2 SolOpenAIGeneral / Reasoning / Coding"),
+]
+
+
+async def test_synthesis_accepts_captured_live_draft():
+    draft = GroundedDraft(
+        findings=[GroundedFinding(statement=s, source_id="cal1", quote=q)
+                  for s, q in _LIVE_DRAFT_STATEMENTS],
+        insufficient_evidence=False,
+    )
+    result = await synthesize_grounded(
+        "What are the latest AI model releases?",
+        [_LIVE_CALENDAR_DOC],
+        gateway=_StubGateway(draft),
+    )
+    assert result["status"] == "SUCCESS", result.get("error")
+    assert result["semantic_entailment_verified"] is True
+    assert len(result["findings"]) == 3
+    assert all(f["entailment_verified"] is True for f in result["findings"])
+
+
 # ── synthesize_grounded gate tests ──────────────────────────────────────────
 
 class _CapturingGateway:

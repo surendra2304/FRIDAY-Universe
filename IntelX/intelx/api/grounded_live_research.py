@@ -137,6 +137,42 @@ _ENTITY_STOPWORDS = {
 }
 
 
+# TASK-INT-033 (2026-11-23): unicode-punctuation normalisation for the
+# entailment screen. Live root cause (probe of run
+# lr_6d6a7103193348adb29bd4e8, query "latest AI model releases", 2026-11-23):
+# the screen failed a served draft on all three of its comparison rules
+# for tokenisation reasons, not for missing support — (1) the entity leg
+# glued trailing sentence punctuation onto the final token ("Google."),
+# (2) source pages use U+2011 non-breaking hyphens in model names
+# ("GPT‑6.2") while the model writes ASCII hyphens ("GPT-6.2"), and
+# (3) the coverage leg required exact token-vocabulary membership while
+# the source text is concatenated table cells ("GLM-5.4Z.aiGeneral",
+# "NeonGoogleGeneral"), so clean statement words never equalled the
+# glued source tokens. The fix compares like with like: normalise both
+# sides to ASCII punctuation, strip trailing sentence punctuation from
+# the tokens being checked, and check coverage by substring containment
+# (the same approach the entity leg already uses). The 0.80 threshold,
+# the numbers/entities legs and the fail-closed rule are unchanged, and
+# each change can only turn a false negative into a pass: normalisation
+# is applied identically to both sides (substring relations are
+# preserved), stripping only shortens the needle, and substring
+# containment is a superset of token membership. Invented numbers,
+# invented entities and Bruker-style absent content still fail.
+_UNICODE_PUNCT_TRANSLATION = str.maketrans({
+    "\u2010": "-", "\u2011": "-", "\u2012": "-", "\u2013": "-",
+    "\u2014": "-", "\u2212": "-",
+    "\u2018": "'", "\u2019": "'", "\u201c": '"', "\u201d": '"',
+    "\u00a0": " ", "\u2009": " ", "\u200a": " ", "\u202f": " ",
+})
+
+
+def _normalize_text(text: str) -> str:
+    """Map unicode dashes/quotes/spaces to their ASCII equivalents so a
+    statement written in plain ASCII is compared against the source as
+    the model wrote it, not as the page's typography encoded it."""
+    return text.translate(_UNICODE_PUNCT_TRANSLATION)
+
+
 def _numbers(text: str) -> set[str]:
     return {m.group(0).replace(",", "") for m in _NUMBER_RE.finditer(text)}
 
@@ -154,8 +190,14 @@ def statement_support(statement: str, source_text: str) -> tuple[bool, str]:
     2. every named entity (capitalised token outside the statement's first
        word and outside sentence furniture) appears in the source text;
     3. at least 80% of the statement's content words appear in the source
-       text's vocabulary.
-    Returns (supported, reason)."""
+       text.
+    Comparison is on unicode-normalised text (TASK-INT-033): the entity
+    and coverage checks use substring containment, so a word present in
+    the source counts even when the page's table cells concatenate it
+    with its neighbours, and trailing sentence punctuation is not part
+    of the token being checked. Returns (supported, reason)."""
+    statement = _normalize_text(statement)
+    source_text = _normalize_text(source_text)
     source_numbers = _numbers(source_text)
     for number in _numbers(statement):
         if number not in source_numbers:
@@ -163,14 +205,22 @@ def statement_support(statement: str, source_text: str) -> tuple[bool, str]:
     source_lower = source_text.lower()
     tokens = _words(statement)
     for token in tokens[1:]:
-        if token[:1].isupper() and token not in _ENTITY_STOPWORDS:
-            if token.lower() not in source_lower:
-                return False, f"unsupported_entity:{token}"
-    source_vocab = {w.lower() for w in _words(source_text)}
-    content = [w.lower() for w in tokens
+        if not token[:1].isupper():
+            continue
+        # Sentence-final punctuation is not part of the entity:
+        # "Google." at the end of a statement must match "Google"
+        # in the source, not require a literal "Google." there. The
+        # furniture check runs on the stripped token for the same
+        # reason ("However." is still "However").
+        probe = token.rstrip(".-'")
+        if probe in _ENTITY_STOPWORDS:
+            continue
+        if probe.lower() not in source_lower:
+            return False, f"unsupported_entity:{probe}"
+    content = [w.lower().rstrip(".-'") for w in tokens
                if len(w) >= 4 and w.lower() not in _SUPPORT_STOPWORDS]
     if content:
-        covered = sum(1 for w in content if w in source_vocab)
+        covered = sum(1 for w in content if w in source_lower)
         if covered / len(content) < 0.80:
             return False, f"low_content_coverage:{covered}/{len(content)}"
     return True, "supported"

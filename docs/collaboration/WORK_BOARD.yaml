@@ -16795,22 +16795,23 @@ tasks:
     next_action: 'Muse 13 pos 2 (queue REL-085 -> OBS-020 -> REL-089); coordinator assignment 2026-11-23 ~18:30 IST.'
   - id: TASK-INT-033
     title: 'IntelX: resolve the synthesis_entailment_unverified blocker in grounded_live_research.py:423 (INT-020 lane)'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_9
-    branch: null
-    pr: null
+    branch: muse9/task-int-033
+    pr: 1511
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T18:12:16+05:30'
+    updated_at: '2026-11-23T19:43:57+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Blocker root-caused and fixed, or filed with the smallest safe fix proposal; INT-020 research-with-sources proof unblocked.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~15:45 IST (watch refill, pool floor 10): OBS-016 evidence (2026-11-23): INT-020 is blocked on synthesis_entailment_unverified (IntelX/intelx/api/grounded_live_research.py:423). Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Implemented + tested 2026-11-23 ~19:44 IST by Muse 9 (claim 7102901933; branch muse9/task-int-033; base main 3e8a4a1, board blob e59714c0). Root cause, live-proven on run lr_6d6a7103193348adb29bd4e8: entailment screen failed a served draft on tokenisation, not support - trailing-period entity (Google.), U+2011 hyphen (GPT-6.2), exact-token coverage vs glued table cells (5/10). Fix: unicode normalisation both sides + strip trailing sentence punctuation + substring coverage; 0.80 threshold unchanged. Tests: IntelX/tests/test_int005_verification_pass.py 13/13 (4 new, fail pre-fix), test_int009 14/14, neighbours 42/42; root suites identical pre-existing 17-fail set (Memora routers shadowing). Work PR #1511. Deploy + live re-probe owed after merge (coordinator clearance). Evidence doc docs/collaboration/TASK-INT-033-ENTAILMENT-ROOT-CAUSE.md.'
     blockers: []
-    next_action: 'RE-SLOT by the coordinator 2026-11-23 ~18:30 IST (lag-hunt rule): assigned to Muse 3 16:25 IST, no claim and no branch after the 17:35 lag-push demand and the 17:50 watch demand; Muse 9 pos 3 (queue INT-023 -> REL-086 -> INT-033). Muse 3 keeps INT-017/INT-019.'
+    next_action: 'Work PR #1511 open (head 8559e53, +353/-8, 3 files). After merge: deploy to live IntelX (S2) under coordinator clearance + live re-probe (INT-020 run 3 green). REL-086 queued next for Muse 9. Queue note: board lists Muse 9 queue INT-023 -> REL-086 -> INT-033; INT-033 taken first as the lag-hunt re-slot (see evidence doc section 6).'
   - id: TASK-REL-087
     title: 'CI: validator must fail when a MERGED board task cites a null or unmerged PR'
     status: AVAILABLE
