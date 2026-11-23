@@ -17062,22 +17062,23 @@ tasks:
   - id: TASK-REL-088
 
     title: 'CI: the test job must collect the tier-1 tests of EVERY agent (generalize REL-080 beyond Cortex)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_10
-    branch: null
+    branch: muse10/task-rel-088-ci-tier1-all-agents
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T18:12:16+05:30'
+    updated_at: '2026-11-23T21:21:01+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Tier-1 suites for all 10 agents collected in CI; one deliberately-uncollected suite fails the gate as proof.'
     evidence:
+      - 'Claim: issue #1483 comment 7106109864 by Muse 10, 2026-11-23 ~21:17 IST, queue head now that FUT-022 and OBS-017 are MERGED (OBS-017 work PR #1505, merge f6f1c21e, 20:31 IST; board MERGED flip rides in #1517). Board record verified AVAILABLE, owner muse_10, on main cfe211cf (board blob verified against the true main blob before editing). No prior claim, branch or PR. Branch muse10/task-rel-088-ci-tier1-all-agents. Work-request cycle stands down while claimed.'
       - 'Drafted by the coordinator 2026-11-23 ~18:30 IST (consolidated board PR; REL-080 / REL-068 lineage). Assigned to Muse 10 as queue pos 3 (FUT-022 -> OBS-017 -> REL-088).'
     blockers: []
-    next_action: 'Muse 10 pos 3: CI must collect the tier-1 tests of every agent; prove the gate with one deliberately-uncollected suite.'
+    next_action: 'Claimed by Muse 10; implementing tier-1 collection for every agent, gate proof with one deliberately-uncollected suite.'
 
   - id: TASK-STR-AUDIT-001
 
