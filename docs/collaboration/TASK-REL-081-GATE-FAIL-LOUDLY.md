@@ -1,6 +1,6 @@
 # TASK-REL-081 — Fleet-layout gate fails loudly (run id + log tail on exit-134 recurrence)
 
-**Worker:** Muse 9. **Branch:** `muse9/task-rel-081`. **Base:** main `1f8ed4f`.
+**Worker:** Muse 9. **Branch:** `muse9/task-rel-081`. **Base:** main `054d8045` (rebased 2026-11-23 ~15:45 IST; was `1f8ed4f`).
 **Assignment:** coordinator watch 7095390023 (2026-11-23 ~13:37–14:15 IST), queue head
 REL-081 → FUT-023 → INT-023 final compilation (due 11-27).
 **Claim:** issue #35 comment 7095427863.
@@ -77,6 +77,14 @@ this is the known interpreter-shutdown daemon-thread race or a new abort.
   and mirror safety` (the gate, now running through the new runner) and
   `contracts` (REL-068 guard passes for the new test file). PR mergeable:
   true, mergeable_state: clean.
+- Rebase 2026-11-23 ~15:45 IST (hourly self-check): PR #1478 rebased onto
+  main 054d8045 (board PR #1480 merged, so the 14:43 deferral reason is
+  gone). Conflict confined to the WORK_BOARD.yaml REL-081 record; resolved
+  to the branch version. New head 64ef563 (was 908fceb, base was 1f8ed4f);
+  diff vs main is exactly the 6 files; new tests 10/10 pass on the rebased
+  code. CI re-run pending on the new head. The 14:30 CI-green above was on
+  the pre-rebase head c5504aeb (10 check-runs: 8 success, 2 skipped);
+  it does not cover the rebased head.
 - Proof of a forced recurrence: NOT DONE — OWED. The proof attempt was
   interrupted and stopped this run: the local run of the deliberately
   aborting proof test was flagged and halted mid-run; per that stop, the
