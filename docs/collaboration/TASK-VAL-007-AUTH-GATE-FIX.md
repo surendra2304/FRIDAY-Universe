@@ -111,12 +111,13 @@ Local pytest (vyr035-venv, pytest 9.2.0), repo at branch head:
 ## 6. States
 
 - implemented: YES
-- tested: YES locally (above); CI on the PR is the remaining verification
-- merged: NO (PR open, awaiting Muse)
-- deployed: NO — HELD, clearance required (see §3)
-- production-verified: NO — the live acceptance (unauthenticated re-probe
-  returns 401; fleet validator `friend_persona_greeting` passes on a fresh
-  run) can only be measured after deploy, on a fresh validation run
+- tested: YES locally (above) + live 401/200/200 (see §9)
+- merged: YES (PR #1405, merge e4c78c04)
+- deployed: YES — live since the 10:38:50 IST FRIDAY restart; verified live
+  this run (§9) on coordinator clearance 7092750477 (owner decision ~11:17 IST)
+- production-verified: YES for the gate behaviour (live 401/200/200);
+  fleet validator `friend_persona_greeting` re-probe still pending its next
+  fresh run
 
 ## 7. Files
 
@@ -135,3 +136,43 @@ Local pytest (vyr035-venv, pytest 9.2.0), repo at branch head:
   deploy is a separate decision (clearance step).
 - No change to any other endpoint's gate, and no change to the validator
   probe itself.
+
+## 9. Deploy + live verification (2026-11-23 ~11:30 IST, Muse 4)
+
+- **Clearance:** coordinator comment 7092750477 (owner decision ~11:17 IST)
+  — "deploy VAL-007 (merged via PR #1405) to the fleet per the dashboard
+  credential-flow restoration plan. The worker holding the deploy: proceed,
+  then report deploy + live verification on this hub. Owner has approved;
+  no further clearance needed."
+- **Deployed state found live:** S1 checkout `main` @ `705ab92d` (tracked
+  clean; untracked scratch/state only); VAL-007 merge `e4c78c04` is an
+  ancestor; deployed `FRIDAY/src/friday/api/server.py:5065` carries
+  `chat_endpoint(... Depends(_require_control_access))`. FRIDAY `active`,
+  MainPID 2788773, in active state since 10:38:50 IST; `/friday/health`
+  200, overall healthy.
+- **Live verification (this run, S1 bridge probes):**
+  - Unauthenticated remote POST `https://friday-universe.duckdns.org/friday/api/chat`
+    (gateway Origin, no credential) → **401**
+    `{"error":"HTTP_401","message":"A valid FRIDAY control API key is required.",...}`.
+  - Authenticated remote POST (deployed control key, used in-process only,
+    never printed or logged) → **200**, live reply.
+  - Loopback POST `http://127.0.0.1:10000/api/chat` (no key) → **200**,
+    live reply (loopback keyless path intact).
+- **Honest timing note:** the gate went live with the FRIDAY (re)start at
+  10:38:50 IST — before the 11:17 IST owner decision and this clearance.
+  The clearance ratifies the deployed state; this run verified it live
+  rather than re-deploying. No restart was performed by this deploy (the
+  running process already served the fixed code; a restart would have
+  re-loaded the same checkout).
+- **Consequence, stated plainly:** the keyless dashboard chat now answers
+  401, exactly as §3 warned. The dashboard credential-flow restoration is
+  separate work and is NOT done by this deploy — no dashboard
+  credential-flow plan or task exists on the board as of this run.
+- **Acceptance:** "Unauthenticated POST /friday/api/chat fails as it
+  should (401)" — MET live. "Fleet validator `friend_persona_greeting`
+  probe passes on a fresh run" — PENDING the validator's next fresh run
+  (not run by this deploy).
+- **G4 note:** S1 `git fetch` remains blocked (root-owned `.git/objects`,
+  OBS-013 G4); no fetch was needed for this deploy because the checkout
+  already contained the fix. S1 is at 705ab92d, behind current main
+  136533e5; bringing it to current main still awaits the G4 direction.
