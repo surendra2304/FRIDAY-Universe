@@ -284,17 +284,73 @@ uniform; gateway 8/10 (Futuris/IntelX pre-existing 503/closed). No
 rollback executed; no receipt written (receipts dir still absent on
 both servers).
 
+## Live-leg attempt 2 — G4 repaired, CD re-sync FAILED on S2; leg ABORTED (2026-11-23 ~12:25 IST, Muse 4)
+
+- **Clearance:** coordinator watch 7092909496 (run 11:17–11:55 IST) —
+  "Muse 4 — G4 CLEARANCE GRANTED: the S1 `.git/objects` ownership
+  repair is authorised as a fleet mutation, scoped exactly: restore
+  ubuntu ownership under S1 `/opt/friday_universe/.git/objects` only
+  (the root-owned fan-out dirs + pack from the OBS-009 drill window),
+  re-verify `git fetch origin main` succeeds on S1, then re-run the
+  live rollback leg under the original conditional clearance
+  (preconditions re-verified live on the then-current main, abort +
+  report on ANY failure). S2 is already on main."
+- **G4 repair — DONE:** `sudo chown -R ubuntu:ubuntu
+  /opt/friday_universe/.git/objects` on S1, rc=0 (passwordless sudo;
+  bridge user ubuntu). Non-ubuntu entries: 94 → 0 (user and group).
+  `git fetch origin main` rc=0 afterwards (was rc=128, "insufficient
+  permission for adding an object to repository database
+  .git/objects"); `git fsck` rc=0. S2's fetch already worked (rc=0,
+  tested this run) — its 13 root-owned entries (same pack-1716efea)
+  are a latent risk only, left untouched (out of the granted scope).
+- **Preconditions re-verified (main `136533e5`):** S1 `main` @
+  `705ab92d`, tracked clean; S2 `main` @ `ff84c7ff`, tracked clean;
+  gateway `/health` 8/10 in two samples (`/friday/health` 200;
+  Futuris + IntelX 503, pre-existing); hub re-read — no
+  fleet-touching work in flight. Rollback target `9597c7c9` (first
+  parent of `136533e5`; diff board-only).
+- **CD re-sync — FAILED on S2:** Fleet CD run 45122467146
+  (workflow_dispatch, ref `main`, head `136533e5`): "Analyze Changed
+  Agents" success; "Deploy Core Fleet (Server 1)" success; "Deploy
+  Specialist Fleet (Server 2)" FAILURE at step "Update Changed Agents
+  on Server 2". **Probable cause — S2 post-deploy health gate on
+  pre-existing degradation (NOT proven from the job log):** the gate
+  is the S2 script's last step (fetch, merge, restarts precede it)
+  and probes `127.0.0.1:8004` (Futuris) + `:8005` (IntelX) `/health`,
+  both 503 before the deploy and still 503 after the restarts (live:
+  Cortex `:8009` 200; all three loaded+active, NRestarts 0). The
+  same failure recurred on the later push CD run 45124516836 (head
+  `ca2c586f`, also failure) while push CDs that skip the S2 job
+  succeed — consistent with the gate, not the checkout. The job log
+  itself could NOT be read: the logs endpoint redirects to an Azure
+  blob URL, which raised approval 9fcd7226 (requested 11:48 IST;
+  still pending at last check) — not retried.
+- **Leg ABORTED per the clearance:** no rollback dry-run, no live
+  rollback, no receipts, no CD forward for the leg. No live
+  rollback/restart/deploy by this run beyond the CD runs themselves.
+- **Fleet end state (verified live):** SAFE but not uniform; main has
+  moved on (`23324fdd`, later `f4386589` at filing time). S1 `main` @
+  `d7d534cd`, tracked clean; all S1 agents loaded+active, NRestarts
+  0; local `/health` 200 (FRIDAY/Inference/Memora/Forge/Sentinel). S2
+  `main` @ `ca2c586f`, tracked clean; Cortex/IntelX/Futuris
+  loaded+active, NRestarts 0; local Cortex 200, Futuris/IntelX 503
+  (pre-existing). Gateway `/health` 8/10, same as the pre-leg
+  baseline — no new degradation. Fixed rollback script (`sha256
+  23e1946c…`) deployed on both servers.
+- **Direction requested (hub status 7093788546):** (1) disposition
+  the S2 health-gate failure (gate vs known-degraded Futuris/IntelX);
+  (2) whether the leg re-runs on the new main once dispositioned
+  (fresh preconditions + new rollback target); (3) whether S2's
+  `.git/objects` latent risk gets the same repair.
+
 ## States
 
-- implemented: YES (fix + tests + this doc; live-leg attempt filed)
+- implemented: YES (fix + tests + this doc; two live-leg attempts filed)
 - tested: YES (guard suite 13/13, A/B harness, live dry-run 3×/server;
-  live leg NOT executed — aborted on G4)
-- merged: YES (work PR #1455, merge `705ab92d`, 2026-11-23 ~10:38 IST;
-  board record still IN_REVIEW on main — MERGED flip rides in the
-  coordinator's consolidated board PR)
-- deployed: PARTIAL (fixed script on S1 via CD; S2 still runs the old
-  script — parked branch predates the merge; S2 now on main, awaiting
-  the re-sync CD)
+  live leg NOT executed — aborted twice: G4, then S2 CD health gate)
+- merged: YES (G3 fix PR #1455, merge `705ab92d`; live-leg evidence PR
+  #1459 merged 11:42 IST; board record MERGED on main)
+- deployed: PARTIAL (fixed script on both servers; fleet not uniform)
 - production-verified: PARTIAL (determinism + gate proven live in
-  dry-run; live rollback leg unproven — blocked on G4, re-run owed after
-  the repair + re-sync)
+  dry-run; live rollback leg still unproven — re-run owed after the S2
+  health-gate disposition + fresh preconditions on the new main)
