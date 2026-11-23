@@ -216,8 +216,89 @@ the last):
   re-anchored them to the same :15/:45 marks — calibration sweep
   exception + vyralx "Session is already flushing" at 17:15:43
   (§2.1); the jobs need session isolation or serialization.
+- **Correction from the 17:38–17:48 IST follow-up verification (§6):
+  the second half is NOT met.** The 17:45 scoring pass logged
+  considered 8 / scored 8 / `n_scored_total` 374, but the store still
+  shows 366 scores and the same 8 forecasts unscored — the drain did
+  not persist. And the 17:15 telemetry cycle produced zero stored
+  telemetry forecasts despite reporting success. See §6.
 
-## 5. Files changed
+## 6. Follow-up verification — hourly self-check 2026-11-23 17:38–17:48 IST
+
+Verified first-hand this run (bridge `run_shell`, Server 2; read-only
+store queries through the service's own repository layer, SELECTs only).
+Service still MainPID 609831, active, no restart since 16:15:17 IST.
+
+### 6.1 Cycle 17:15 telemetry — completed with success, stored ZERO rows (NEW GAP)
+
+- `forecast_refresh_job` started 17:15:33, `executed successfully`
+  17:27:38 IST (~12 min; CPU worker PID 610988 fitted ARIMA models,
+  repeated `SingularMatrixWarning: The design matrix is rank-deficient`
+  from statsforecast).
+- Store (read-only, probed ~17:47 IST): **zero telemetry forecasts
+  created from the 17:15 cycle.** All 8 telemetry targets' latest
+  `as_of` is still 09:31:18 UTC (15:01 IST cycle); only 3 forecasts
+  created since 11:15 UTC — the provider rows at 11:45:33–43 UTC
+  (17:15 cycle). `created_at >= 11:15 UTC` count = 3, all provider.
+- One `domain_event_emitted event_type=forecast_updated` fired at
+  17:26:11 for forecast_id `823e8307-978a-42d7-87d8-c26ff8e34d2e` —
+  **that forecast_id does not exist in the `forecasts` table**
+  (SELECT by id returns NONE). The refresh emitted a forecast-updated
+  event for a forecast that was never persisted.
+- Verdict: the 17:15 telemetry cycle is a **silent zero** — worse than
+  the 16:01 kill, which at least raised a visible exception. Two
+  consecutive telemetry cycles (16:01, 17:15) produced no telemetry
+  forecasts. Root cause not proven in this task; the emitted-but-
+  unstored forecast points at the persist step of the telemetry
+  refresh (or the shared-session contention in §2.1) rather than at
+  the model fit, which ran. Follow-up for the coordinator's pool.
+
+### 6.2 The 17:45 scoring pass — logged success, did NOT persist (DRAIN FAILED)
+
+- 17:45:33 jobs all fired: lifecycle sweep executed successfully;
+  calibration sweep **completed** 17:45:37 (recovered from its 17:15
+  exception; brier 0.0648, ece 0.161, `n_resolved_outcomes` 374,
+  `is_calibrated: False`).
+- Scoring job: `forecast_scoring_job_completed` 17:45:37 with
+  `considered: 8, scored: 8, n_scored_total: 374, hit_rate: 0.893048`,
+  and APScheduler `executed successfully` — no exception, no error,
+  no rollback line anywhere in the journal 17:45:33–17:48:00.
+- **Store disagrees (probed twice, ~17:46:51 and ~17:47:23 IST):**
+  `count_scores()` still **366**; `list_unscored_resolved()` still
+  **8 rows** — the SAME 8 forecasts resolved 17:15:43 (as_of
+  2026-11-22 11:42 UTC; ids `c5bb7d75…`, `480bbf69…`, `6afb70fe…`,
+  `5d08464f…`, `070e3d1d…`, `40b50750…`, `09e3ea3b…`, `0a4a5939…`,
+  the same 8 that failed calibration resolution at 17:15:43 with
+  `Session is already flushing`); latest score row is still the
+  UNRATE score of 17:15:43.95. **The 8 scores the job claims do not
+  exist in the store.**
+- The journal's `n_scored_total: 374` is therefore in-memory arithmetic
+  from a session whose writes never landed (or were rolled back by a
+  concurrent job on the shared session) — the scoring loop's own
+  metrics can no longer be trusted at face value; only the store
+  counts. The 17:15:43 first scoring run (considered 0, scored 0,
+  n=365) matched the store then, so the store is the ground truth
+  and the 17:45 run is the one that diverged.
+- Verdict: **the 8-score tail was NOT drained.** Acceptance second
+  half is NOT MET as of 17:47 IST. The next scoring pass is 18:15:33
+  (jobs re-anchor to :15/:45 after the restart; the 18:15 hourly
+  cycle follows). Do not force a manual score run — that is a live
+  write outside a verification task's scope. Follow-up for the
+  coordinator's pool: scoring persistence / session isolation (same
+  root-cause family as §2.1).
+- Minor, noted: `stratex_risk_regime_broadcast_failed error=All
+  connection attempts failed` at 17:45:37 (unrelated to scoring).
+
+### 6.3 Updated accuracy evidence
+
+- Rolling 30-day hit-rate from the **store**: **0.893151 over 366
+  scored forecasts** (latest score 17:15:43.95 UTC). The journal's
+  0.893048 / 374 at 17:45:37 is NOT backed by the store and must not
+  be cited as the measured rate.
+- The §3 caveat stands unchanged (one synthetic series, wide
+  intervals, 45 distinct predictions).
+
+## 7. Files changed
 
 - `docs/collaboration/TASK-FUT-023-CYCLES-AND-ACCURACY.md` (this file)
 - `docs/collaboration/WORK_BOARD.yaml` (FUT-023: branch set, claim
