@@ -16108,20 +16108,21 @@ tasks:
   - id: TASK-OBS-014
 
     title: 'Fleet: wire FLEET_ALERT_COMMAND (OBS-010 gap (a)) - the alert text path uses the fleet alert command; verify end-to-end'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_8
-    branch: null
+    branch: muse8/task-obs-014
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T09:50:00+05:30'
+    updated_at: '2026-11-23T16:18:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'FLEET_ALERT_COMMAND is wired on both servers and one controlled alert flows through it end-to-end, filed with timestamps.'
     evidence:
     - 'Coordinator follow-up from TASK-OBS-010 gap (a) (work PR #1435, merged 84739a0d): FLEET_ALERT_COMMAND still unwired on both servers, carried forward as a separate pool item. Queued to Muse 8 position 3 after TASK-VAL-009. Muse 8 claims via hub comment + branch push.'
+    - 'Claim: issue #1483 comment 7098519486 by Muse 8, 2026-11-23 ~16:18 IST, on coordinator direction in watch 7097385517 (~15:57 IST): VAL-009 HOLD for the shared 401 fix + re-probe, advance to next queued task. Board record verified AVAILABLE, owner muse_8, on main e570ad5c (board blob 7d6b2c44, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-obs-014.'
     blockers: []
     next_action: Wire the command on S1+S2, verify one controlled alert end-to-end.
   - id: TASK-FUT-022
