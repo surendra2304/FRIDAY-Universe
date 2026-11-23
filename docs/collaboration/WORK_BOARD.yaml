@@ -16580,14 +16580,14 @@ tasks:
   - id: TASK-REL-085
 
     title: 'CI: roster-validator / fleet-layout / monorepo-policy failures must print the failing check + offending lines into the check-run summary'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_13
     branch: muse13/task-rel-085-ci-failure-summary
     pr: 1498
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T18:36:00+05:30'
+    updated_at: '2026-11-23T21:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-REL-085-CI-FAILURE-SUMMARY.md
@@ -16601,8 +16601,9 @@ tasks:
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~13:05 IST (queue refill for Muse 13, pos 3): the #1377/#1378 failures produce empty summaries + sign-in-gated logs; unblocks Muse 12 / Muse 1.'
     - 'Claimed by Muse 13 on issue #1483 comment 7100564367, 2026-11-23 ~17:40 IST, under the blocked-head rule (VOI-030 waits on the calm-window voice call). New wrapper scripts/ci_failure_summary.py + tests scripts/tests/test_ci_failure_summary.py; 4 validator steps in 3 workflows wired through it. Local verification: 20/20 wrapper tests pass; real validators pass/fail through the wrapper with exit codes preserved and offending lines in the summary. Evidence: docs/collaboration/TASK-REL-085-CI-FAILURE-SUMMARY.md.'
+    - 'Merged 2026-11-23 19:59:48 IST as PR #1498 (merge c71a1179) by surendra2304; CI green verified first-hand by Muse 13 at 19:36 IST; wrapper scripts/ci_failure_summary.py + tests + 4 validator steps wired in 3 workflows.'
     blockers: []
-    next_action: 'Rebased onto main 237667b6 per coordinator hold (watch 7101875764); CI re-running; awaiting coordinator merge.'
+    next_action: 'Merged 2026-11-23 as PR #1498; no further action.'
   - id: TASK-VYR-044
 
     title: 'VyralX: run the machine-QA gates (caption-track count, BGM presence, watermark, loudness) over the held-render pool and file the pass/fail table per render'
@@ -16702,14 +16703,14 @@ tasks:
   - id: TASK-FRD-038
 
     title: 'FRIDAY web-chat 401 root-cause: diagnose and fix the /web-chat 401 blocking MEM-017 and FRD-037 live runs'
-    status: AVAILABLE
-    owner: muse_4
-    branch: null
+    status: CLAIMED
+    owner: muse_11
+    branch: muse11/task-frd-038-webchat-401
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T20:40:43+05:30'
+    updated_at: '2026-11-23T21:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16717,9 +16718,9 @@ tasks:
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~14:50 IST (watch refill, pool floor 10): the 401 blocks MEM-017 (Muse 11, run 2 failed 13:23 IST, report 7094815896), FRD-037 (Muse 10, IN_REVIEW) and a Muse 7 regression confirm; the coordinator 401 investigation is still owed. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Claim: issue #1483 comment 7100136187 by Muse 11, 2026-11-23 ~17:19 IST, on coordinator assignment in watch 7098694215 (~16:25 IST), blocked-head rule. Board record verified AVAILABLE, owner muse_ai, on main 958cc133 (board blob f2cef67c). Branch muse11/task-frd-038-webchat-401.'
-    - 'Re-slotted by the coordinator 2026-11-23 ~20:40 IST (watch14): Muse 11 held the task ~3h with no diagnosis checkpoint (branch still at claim commit 20e4e989; Muse 11 self-flagged for re-slot in hub 7104639350). Reassigned to Muse 4 (free after STR-043 merged); Muse 11 takes TASK-FRD-040 as its new head.'
+    - 'Re-slot to Muse 4 WITHDRAWN by the coordinator 2026-11-23 ~21:05 IST (hub 7105311681): Muse 11 had found the root cause (hub 7104768135, checkpoint 1 committed 53b3e7ff); FRD-038 stays with Muse 11.'
     blockers: []
-    next_action: 'Muse 4 claims via hub comment + branch push and diagnoses the /web-chat 401; MEM-017/MEM-024 stay queued behind this fix.'
+    next_action: 'Diagnose the 401 live, fix, re-run MEM-017 live runs, file evidence.'
   - id: TASK-REL-086
 
     title: 'CI: the test job must print the failing test name plus log tail into the check-run summary on failure'
@@ -16928,13 +16929,13 @@ tasks:
 
     title: 'FRIDAY: website fixes re-check — the 4 website fixes verified live on the SERVED page (not just in code)'
     status: AVAILABLE
-    owner: muse_11
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T20:40:43+05:30'
+    updated_at: '2026-11-23T21:15:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
