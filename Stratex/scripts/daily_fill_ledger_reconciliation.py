@@ -347,16 +347,89 @@ def _find_fill(
     return best[1] if best else None
 
 
+def _order_vwap(fills: List[Dict[str, Any]]) -> float:
+    qty = sum(_finite(f.get("qty")) for f in fills)
+    if qty == 0:
+        return 0.0
+    return sum(_finite(f.get("price")) * _finite(f.get("qty")) for f in fills) / qty
+
+
+def _find_order(
+    row: Dict[str, Any],
+    groups: List[Dict[str, Any]],
+    price: float,
+    ts_epoch: float,
+    is_entry: bool,
+) -> Optional[Dict[str, Any]]:
+    """Order-level fallback: a venue order whose fills were SPLIT.
+
+    A close executed as several fills (e.g. the NEAR +20.58 close: 2
+    fills; the SUI -3.38 close: 5 fills) matches no single fill on qty,
+    so per-fill matching misses it and the close is then double-counted
+    as a missing close (STR-044 proof run, 2026-11-23: residual -17.15
+    was exactly those two rows). Match the order aggregate instead:
+    total qty, VWAP, and at least one fill within the time window.
+    """
+    qty = _finite(row.get("qty"))
+    best = None
+    for group in groups:
+        fills = group.get("fills") or []
+        if not fills:
+            continue
+        if not _side_ok(
+            str(row.get("side") or ""), str(group.get("side") or ""), is_entry
+        ):
+            continue
+        if abs(_finite(group.get("qty")) - qty) > max(
+            QTY_TOL_FLOOR, QTY_TOL_FRAC * qty
+        ):
+            continue
+        if abs(_order_vwap(fills) - price) > max(1e-9, PRICE_TOL_FRAC * abs(price)):
+            continue
+        dt_ms = min(
+            abs(int(f.get("time") or 0) - int(ts_epoch * 1000)) for f in fills
+        )
+        if dt_ms > TIME_TOL_MS:
+            continue
+        score = dt_ms + abs(_order_vwap(fills) - price) * 1000.0
+        if best is None or score < best[0]:
+            best = (score, group)
+    return best[1] if best else None
+
+
 def match_ledger_rows(
     rows: List[Dict[str, Any]],
     trades_by_symbol: Dict[str, List[Dict[str, Any]]],
 ) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
     """Match every binance_futures ledger row against venue fills.
 
-    Returns (per-row results, class counts). ``used`` marks the venue
-    fill ids consumed, so a fill can only explain one ledger row.
+    Two passes per side: an exact single-fill match first, then an
+    order-level match for split fills (see _find_order). Returns
+    (per-row results, class counts). ``used`` marks the venue fill ids
+    consumed, so a fill can only explain one ledger row; matching an
+    order consumes all of its fills.
     """
     used: Dict[Tuple[str, str], int] = {}
+    used_groups: set = set()
+    # Order groups per symbol, built once from the same fills.
+    groups_by_symbol: Dict[str, List[Dict[str, Any]]] = {}
+    for symbol, trades in trades_by_symbol.items():
+        groups: Dict[str, Dict[str, Any]] = {}
+        for trade in trades:
+            key = str(trade.get("orderId"))
+            group = groups.setdefault(
+                key,
+                {"symbol": symbol, "order_id": key,
+                 "side": str(trade.get("side") or ""), "fills": [],
+                 "qty": 0.0, "realized_pnl": 0.0},
+            )
+            group["fills"].append(trade)
+            group["qty"] = round(group["qty"] + _finite(trade.get("qty")), 8)
+            group["realized_pnl"] = round(
+                group["realized_pnl"] + _finite(trade.get("realizedPnl")), 4
+            )
+        groups_by_symbol[symbol] = list(groups.values())
+
     results: List[Dict[str, Any]] = []
     for row in rows:
         if str(row.get("venue") or "") != "binance_futures":
@@ -370,27 +443,73 @@ def match_ledger_rows(
         ]
         entry = None
         exit_fill = None
+        entry_mode = None
+        exit_mode = None
+        entry_order_id = None
+        exit_order_id = None
         if row.get("entry_time"):
             entry = _find_fill(
                 row, candidates, _finite(row.get("entry_price")),
                 _finite(row.get("entry_time")), True,
             )
+            if entry is not None:
+                entry_mode = "fill"
+                entry_order_id = str(entry.get("orderId"))
         if row.get("exit_time"):
             exit_fill = _find_fill(
                 row, candidates, _finite(row.get("exit_price")),
                 _finite(row.get("exit_time")), False,
             )
+            if exit_fill is not None:
+                exit_mode = "fill"
+                exit_order_id = str(exit_fill.get("orderId"))
         if entry is not None and entry is exit_fill:
             exit_fill = None
-        if entry is not None:
-            used[(symbol, str(entry.get("id")))] = 1
-        if exit_fill is not None:
-            used[(symbol, str(exit_fill.get("id")))] = 1
-        if entry is not None and exit_fill is not None:
+            exit_mode = None
+            exit_order_id = None
+        # Order-level fallback for whichever side is still unmatched.
+        # A group is available only when NONE of its fills is already
+        # used: a partially-consumed group cannot explain a whole row.
+        def _available_groups():
+            return [
+                g
+                for g in groups_by_symbol.get(symbol, [])
+                if (symbol, str(g.get("order_id"))) not in used_groups
+                and all(
+                    used.get((symbol, str(f.get("id"))), 0) == 0
+                    for f in (g.get("fills") or [])
+                )
+            ]
+
+        entry_fills: List[Dict[str, Any]] = [entry] if entry is not None else []
+        exit_fills: List[Dict[str, Any]] = [exit_fill] if exit_fill is not None else []
+        if entry is None and row.get("entry_time"):
+            group = _find_order(
+                row, _available_groups(), _finite(row.get("entry_price")),
+                _finite(row.get("entry_time")), True,
+            )
+            if group is not None:
+                entry_fills = list(group.get("fills") or [])
+                entry_mode = "order"
+                entry_order_id = str(group.get("order_id"))
+                used_groups.add((symbol, str(group.get("order_id"))))
+        if exit_fill is None and row.get("exit_time"):
+            group = _find_order(
+                row, _available_groups(), _finite(row.get("exit_price")),
+                _finite(row.get("exit_time")), False,
+            )
+            if group is not None:
+                exit_fills = list(group.get("fills") or [])
+                exit_mode = "order"
+                exit_order_id = str(group.get("order_id"))
+                used_groups.add((symbol, str(group.get("order_id"))))
+        for fill in entry_fills + exit_fills:
+            used[(symbol, str(fill.get("id")))] = 1
+        if entry_fills and exit_fills:
             cls = "BOTH"
-        elif entry is not None:
+        elif entry_fills:
             cls = "ENTRY_ONLY"
-        elif exit_fill is not None:
+        elif exit_fills:
             cls = "EXIT_ONLY"
         else:
             cls = "NO_MATCH"
@@ -408,11 +527,23 @@ def match_ledger_rows(
                 "recorded_at": row.get("recorded_at"),
                 "net_pnl": _finite(row.get("net_pnl")),
                 "class": cls,
-                "entry_fill_id": str(entry.get("id")) if entry else None,
-                "exit_fill_id": str(exit_fill.get("id")) if exit_fill else None,
+                "entry_fill_ids": [
+                    str(f.get("id")) for f in entry_fills
+                ],
+                "exit_fill_ids": [
+                    str(f.get("id")) for f in exit_fills
+                ],
+                "entry_fill_id": str(entry_fills[0].get("id")) if entry_fills else None,
+                "exit_fill_id": str(exit_fills[0].get("id")) if exit_fills else None,
+                "entry_match_mode": entry_mode,
+                "exit_match_mode": exit_mode,
+                "entry_order_id": entry_order_id,
+                "exit_order_id": exit_order_id,
                 "exit_realized_pnl": (
-                    _finite(exit_fill.get("realizedPnl"))
-                    if exit_fill is not None
+                    round(
+                        sum(_finite(f.get("realizedPnl")) for f in exit_fills), 4
+                    )
+                    if exit_fills
                     else None
                 ),
                 "order_id_on_venue": oid_match,
@@ -889,9 +1020,6 @@ def run(
         for r in ledger_rows
         if _finite(r.get("exit_time"), 0.0) >= GLOBAL_FORWARD_START
     ]
-    ledger_window_fees = round(
-        sum(_finite(r.get("fees")) for r in ledger_window_rows), 4
-    )
 
     # Previous report (if any) tells us which resets were already filed.
     prev_path = out_dir / f"daily_{date_str}.json"
@@ -928,8 +1056,16 @@ def run(
             reader = DemoFuturesReader(env_file or default_env_file(state_dir))
             account = reader.account()
             open_positions = reader.open_positions()
+            # Venue reads cover binance_futures rows only: an oanda row's
+            # symbol (e.g. USDJPY) is not a Binance symbol and userTrades
+            # answers 400 for it.
             symbols = sorted(
-                {str(r.get("symbol") or "") for r in ledger_rows} - {""}
+                {
+                    str(r.get("symbol") or "")
+                    for r in ledger_rows
+                    if str(r.get("venue") or "") == "binance_futures"
+                }
+                - {""}
             )
             for symbol in symbols:
                 try:
@@ -952,9 +1088,10 @@ def run(
     match_results, match_counts = match_ledger_rows(ledger_rows, trades_by_symbol)
     used_fill_ids: Dict[Tuple[str, str], int] = {}
     for res in match_results:
-        for fill_id in (res.get("entry_fill_id"), res.get("exit_fill_id")):
-            if fill_id is not None:
-                used_fill_ids[(res["symbol"], str(fill_id))] = 1
+        for fill_id in (res.get("entry_fill_ids") or []) + (
+            res.get("exit_fill_ids") or []
+        ):
+            used_fill_ids[(res["symbol"], str(fill_id))] = 1
     groups = group_venue_orders(trades_by_symbol, orders_by_symbol)
     missing_closes, unmatched_zero = find_missing_closes(groups, used_fill_ids)
 
@@ -971,9 +1108,21 @@ def run(
     baseline_equity = 5000.0
     if account is not None:
         baseline_equity = _finite(account.get("totalMarginBalance")) or 5000.0
+    # The identity is binance-scoped: the venue is Binance demo, and the
+    # oanda leg reconciles separately (LEDGER-001 section 7) — an oanda
+    # row inside the window net would bias the residual by its net.
+    binance_window_rows = [
+        r
+        for r in ledger_window_rows
+        if str(r.get("venue") or "") == "binance_futures"
+    ]
     window_identity = reconcile_window(
-        ledger_window_net=ledger_summary["window_net_pnl"],
-        ledger_window_fees=ledger_window_fees,
+        ledger_window_net=round(
+            sum(_finite(r.get("net_pnl")) for r in binance_window_rows), 4
+        ),
+        ledger_window_fees=round(
+            sum(_finite(r.get("fees")) for r in binance_window_rows), 4
+        ),
         venue_realized=venue_realized,
         missing_closes_realized=round(
             sum(
