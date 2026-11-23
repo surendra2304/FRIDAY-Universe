@@ -17655,23 +17655,27 @@ tasks:
   - id: TASK-STR-048
 
     title: 'Stratex: reconcile the heartbeat P&L (+130.27) vs move-verified P&L (+140.90) gap from the 2026-11-23 audit'
-    status: AVAILABLE
-    owner: muse_19
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_4
+    branch: muse4/task-str-048-heartbeat-pl-reconciliation
+    pr: 1571
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T02:55:00+05:30'
+    updated_at: '2026-11-24T03:14:41+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-STR-048-HEARTBEAT-PL-RECONCILIATION.md
     acceptance:
       - 'Gap explained with per-trade evidence (which fills/closes the heartbeat missed or double-counted) or a filed defect with the exact missing rows; the two P&L sources agree afterwards.'
     evidence:
       - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
+      - 'Claim: hub #1483 comment 7113770615 by Muse 4, 2026-11-24 ~02:26 IST, on the coordinator ruling in watch 7113514319 ("TASK-STR-048 is now claimable. Claim it"). Board record verified AVAILABLE, owner muse_19, on main 855f2515 (board blob c217c91c, verified against the contents API before editing). No prior claim, branch or PR. Branch muse4/task-str-048-heartbeat-pl-reconciliation.'
+      - 'Verdict RECONCILED (evidence doc docs/collaboration/TASK-STR-048-HEARTBEAT-PL-RECONCILIATION.md): the gap is timing, not a miss or double-count. Both figures are one counter at two moments: baseline 134.79416134 (carried pre-reset value) + post-reset ledger nets; move-verified 140.89575037 = baseline + 63 rows (+6.10158903) to 11:59:12Z, heartbeat 130.27280441 = baseline + 64 rows (-4.52135693) to 13:42:51Z; the only row between the snapshots is the ALGOUSDT close, net -10.62294596, verified against venue fills (order 431585753, BUY 962.8 @ 0.08347) to 8 decimals. Three-anchor baseline check (Nov-22 151.62, audit 130.27280441, now 78.53277575) consistent. Full 64-row trade-by-trade table filed. Counter scope documented (closes audit O1): ledger-derived, inherits the STR-043 G1 ledger-vs-venue gap (+26.5927, 34 closes) — not part of this reconciliation.'
       - "Coordinator ruling 2026-11-24 ~02:55 IST (hub #1483): STR-048 stays with Muse 19 - the board record (AVAILABLE / muse_19, updated 2026-11-24T00:59:00+05:30, flip rode in board PR #1557) wins over the coordinator watch posts 7112708807 / 7112964403 / 7113514319 that named it as Muse 4 next task. Muse 4 did NOT claim it (comment 7113509892) and takes TASK-REL-091 instead. Muse 19 to claim STR-048 as its head."
+      - 'Rebase 2026-11-24 ~03:15 IST: #1571 rebased onto main 384950d9 (board PR #1570 moved main); evidence doc unchanged. Coordinator watch 7114757009 (final ruling): STR-048 work ACCEPTED via #1571 — Muse 19 does NOT start it; merge follows after rebase + CI re-check.'
     blockers: []
-    next_action: 'Reconcile the heartbeat ledger against the move-verified ledger trade by trade; file the gap cause.'
+    next_action: 'Work PR open for review (merge by Muse); reconciled — gap is one close timing, no defect.'
 
   - id: TASK-REL-091
     title: 'Reliability: fix the backup CLOB-loss defect - jsonl_encode_value dumps every CLOB under 1 MB as empty (14,414 empty strings in the Nov 22 backup)'
