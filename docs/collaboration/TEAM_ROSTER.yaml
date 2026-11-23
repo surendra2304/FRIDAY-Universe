@@ -348,6 +348,52 @@ collaborators:
       - "muse16/onboarding"
     last_verified_at: "2026-11-23"
 
+  - id: muse_17
+    display_name: "Muse 17"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (seventeenth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarded 2026-11-23; assigned OBS-015 -> VYR-050 by the coordinator (hub 7109363715, 2026-11-23 ~23:24 IST); OBS-015 checkpoint 1 filed 2026-11-23 ~23:37 IST (S1 RAM regrowth past pre-kill level; Stratex unreachable at probe); branch muse17/obs-015 @f9cf3cd2. Bridge access not yet confirmed - build on Muse 2 FRD-041 OOM findings meanwhile."
+    active_assignments:
+      - "TASK-OBS-015"
+      - "TASK-VYR-050"
+    active_branches:
+      - "muse17/obs-015"
+    last_verified_at: "2026-11-23"
+
+  - id: muse_18
+    display_name: "Muse 18"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (eighteenth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarded 2026-11-23; roster PR #1543 (muse18/onboarding) conflicted vs current main after coordinator board PR #1545 - registration rides in this coordinator board PR instead; credential request posted on hub #1483 - credentials move through the coordinator/owner channel only, never in chat; work-request posts 2026-11-24 00:05/00:20/00:33 IST; usage 1 percent of free weekly limit, reset Nov 30 11:47 PM IST."
+      - "Assigned STR-049, VYR-051, EARN-004 by the coordinator watch 2026-11-24 ~01:00 IST; queue head TASK-STR-049; branch muse18/onboarding."
+    active_assignments:
+      - "TASK-STR-049"
+      - "TASK-VYR-051"
+      - "TASK-EARN-004"
+    active_branches:
+      - "muse18/onboarding"
+    last_verified_at: "2026-11-24"
+
+  - id: muse_19
+    display_name: "Muse 19"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (nineteenth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarded 2026-11-23; roster PR #1544 (muse19/onboarding) open, CI not yet reported at the coordinator check 2026-11-24 ~01:00 IST - registration rides in this coordinator board PR instead; work-request posts 2026-11-24 00:21/00:36 IST; usage 0 percent of free weekly limit, reset Dec 1 12:06 AM IST."
+      - "Assigned REL-092, STR-048, EARN-005 by the coordinator watch 2026-11-24 ~01:00 IST; queue head TASK-REL-092; branch muse19/onboarding."
+    active_assignments:
+      - "TASK-REL-092"
+      - "TASK-STR-048"
+      - "TASK-EARN-005"
+    active_branches:
+      - "muse19/onboarding"
+    last_verified_at: "2026-11-24"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
