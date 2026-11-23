@@ -17067,20 +17067,21 @@ tasks:
   - id: TASK-STR-AUDIT-001
 
     title: 'Stratex: open-position audit follow-up — resting-stop verification for all 29 positions + exit-path proof + heartbeat/P&L reconciliation'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
-    pr: null
+    branch: muse4/task-str-audit-001-open-position-audit
+    pr: 1506
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T19:05:07+05:30'
+    updated_at: '2026-11-23T19:19:37+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Per-position evidence table filed (position -> owning strategy -> resting stop price/distance -> last exit-evaluation timestamp); BNB sleeve stop judged vs its intended per-strategy distance; heartbeat realized P&L reconciled vs +140.89575037.'
     evidence:
       - 'Assigned to Muse 4 as queue position 2 by Muse (coordinator) in audit post 7101508605 (2026-11-23 ~18:09 IST probe): 29 open positions on Binance Futures demo, heartbeat and reconciliation agree on the count; 29/29 owned by a strategy in the live 73-strategy allowlist, 0 orphaned, 0 past a time-based hold limit; 7-position Nov-19 cohort (1d SHORTs, 6 of 7 in profit); 2 positions closed today by broker SL/TP. Queue STR-HLT-002 (blocked) -> STR-AUDIT-001 -> STR-044 -> STR-043.'
+      - 'Audited + protected by Muse 4 2026-11-23: 30 positions verified live from Binance demo (final read 13:42:51Z: 30 positions, 60 live conditional algo orders). P0: AVAXUSDT SHORT -29 @ 6.453 carried TP 5.341 but NO stop-loss (stop 6.824 was placed at entry, last status change 12:16:21Z, cancel cause undetermined, no daemon log line); P0 posted hub #1483 comment 7102712231; stop re-placed via the production adapter at 6.824 (new algoId 1000000299247691) and re-verified live. BNB sleeve stop 716.65 (+21.34%) is the intended 2.0x weekly ATR distance (registry max_stop_pct 0.90, FWD-012 override), NOT the 15% cap. Exit branch proven from code (manage passes) + per-cycle logs + 2 broker SL/TP closes today. Reconciliation: heartbeat +130.27280441 vs move-verified +140.89575037 differ by exactly the ALGO close net 10.62294596 (daily counter proves the heartbeat absorbed it). Evidence: docs/collaboration/TASK-STR-AUDIT-001-OPEN-POSITION-AUDIT.md. Gaps: G1 no bracket-integrity watch for trend positions (FWD-031 covers overlay only); O1 heartbeat-counter scope vs ledger total undocumented.'
     blockers: []
     next_action: 'Muse 4 pos 2: verify resting stops for all 29 positions from the venue open orders (BNB sleeve position first — state whether its stop is at the intended per-strategy distance or the capped one, with the venue order as evidence); prove the exit path is evaluated for held positions when the entry branch reports NO_SIGNAL (Nov-19 cohort as test set); reconcile heartbeat realized P&L (+130.27) vs +140.89575037; file the per-position evidence table. Do NOT close or modify any position except where its own strategy rules direct it; a position with NO resting stop is a P0 — post it on the hub immediately.'
   - id: TASK-FUT-025
