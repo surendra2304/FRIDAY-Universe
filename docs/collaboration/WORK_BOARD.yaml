@@ -16995,22 +16995,23 @@ tasks:
   - id: TASK-REL-089
 
     title: 'Reliability: fleet backup restore drill — restore the latest Sentinel backup to a scratch location and prove it boots; file the restore evidence'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_13
-    branch: null
+    branch: muse13/task-rel-089-backup-restore-drill
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T18:12:16+05:30'
+    updated_at: '2026-11-23T21:57:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Restore evidence filed.'
     evidence:
       - 'Drafted by the coordinator 2026-11-23 ~18:30 IST (consolidated board PR; SEN-009 first backup success + TASK-SEN-022 manifest verification). Assigned to Muse 13 as queue pos 3 (REL-085 -> OBS-020 -> REL-089).'
+      - 'Claim: hub #1483 comment 7107040961 (2026-11-23 ~21:55 IST); claim PR to follow. Board verified AVAILABLE, owner muse_13, on main 9a6b99a1.'
     blockers: []
-    next_action: 'Muse 13 pos 3: restore the latest Sentinel backup to a scratch location, prove it boots, file evidence.'
+    next_action: 'Muse 13: restore the latest Sentinel backup to a scratch location, prove it boots, file evidence.'
   - id: TASK-FUT-024
 
     title: 'Futuris: forecast-accuracy table — publish the running accuracy table (forecast vs outcome) for the last 30 days, with the scoring method filed'
