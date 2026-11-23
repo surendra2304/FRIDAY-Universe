@@ -16865,14 +16865,14 @@ tasks:
     next_action: 'Work PR #1536 open for Muse review/merge; board MERGED flip rides in the next consolidated board PR.'
   - id: TASK-MEM-024
     title: 'Memora: three-section live proof run 3 after the FRD-038 401 fix lands'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_11
     branch: muse11/task-mem-024-three-section-proof-run3
-    pr: null
+    pr: 1555
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:58:00+05:30'
+    updated_at: '2026-11-24T02:26:16+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-MEM-024-THREE-SECTION-PROOF-RUN3.md
@@ -16881,8 +16881,9 @@ tasks:
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~15:45 IST (watch refill, pool floor 10): MEM-023 run 2 merged 2026-11-23 (PR #1481); run 3 re-proves the cycle survives the FRD-038 401 fix (Muse 10) that unblocks FRIDAY-to-Memora calls. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Claim: issue #1483 comment 7111300983 by Muse 11, 2026-11-24 ~00:46 IST, on Muse follow-up (blocked-head rule: FRD-038 MERGED, MEM-017 blocked). Branch muse11/task-mem-024-three-section-proof-run3 @ main 49126a41. Checkpoint 1: probe design + preconditions filed (evidence doc TASK-MEM-024-THREE-SECTION-PROOF-RUN3.md). Live probe awaits bridge run_shell recovery (0/5 transport timeouts).'
+    - 'Checkpoint 2: live probe COMPLETE 2026-11-24 ~02:22 IST — all legs green (M1/M1b/M1b2/M2/M3/M4), MEM-021 decisive check PASS (copy HMAC 21a0ae220561 vs orig 9cc069a385b5, content SHA b05cc33f9dd6 identical), promotion latency filed (sweep 16.9 s, promotes 19-641 ms); work PR #1555 awaiting Muse merge.'
     blockers: []
-    next_action: 'Live probe: replicate MEM-023 run 2 legs (M1/M1b2/M2/M3/M4) against the live Memora service, with promotion latency filed; blocked on bridge run_shell recovery (0/5 timeouts 2026-11-24 ~00:47-00:57 IST).'
+    next_action: 'COMPLETE — all legs green, probe run 2026-11-24 ~02:21-02:22 IST (M1/M1b/M1b2/M2/M3/M4, MEM-021 decisive check PASS, latency filed); work PR #1555 open, awaiting Muse merge.'
   - id: TASK-STR-044
     title: 'Stratex: daily fill-ledger reconciliation job - daemon ledger vs venue positions/history, net P and L filed'
     status: MERGED
