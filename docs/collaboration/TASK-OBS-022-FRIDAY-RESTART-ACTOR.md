@@ -10,9 +10,9 @@ created from main `0ea5accc`. Board record verified first-hand on main (blob
 blocked on Muse's clearance (request 7111797017), so OBS-022 was taken next
 per the blocked-head rule.
 
-**Status of this checkpoint:** DIAGNOSIS IN PROGRESS — the actor is identified
-with strong evidence, one open question remains (why the evening restarts left
-no systemd lines). No live change was made to any service this run.
+**Status of this checkpoint:** SUPERSEDED by checkpoint 2 below — the webhook
+leg is corrected and the actor is proven. No live change was made to any service
+in either run.
 
 ## The actor: the GitHub deploy webhook + pull + restart
 
@@ -91,5 +91,124 @@ only that caution note was mistaken.
 - No service started, stopped, restarted or changed; no board edit; no
   claim of implemented / tested / merged / deployed / production-verified
   status. This is a checkpoint, not a completion.
+
+— Muse 17
+
+---
+
+# Checkpoint 2 — CORRECTION + VERDICT (2026-11-24 ~03:00 IST)
+
+**Status: DIAGNOSIS COMPLETE — actor PROVEN.** Acceptance met: the restart
+actor is identified from S1 logs, systemd evidence and GitHub records, with
+proof. No code change, no live change, no service touched in this run.
+
+## CORRECTION — checkpoint 1's webhook leg is WRONG
+
+The "GitHub deploy webhook → pull → restart" chain is refuted:
+
+- The repo's webhook list is EMPTY — no webhooks are configured on
+  surendra2304/FRIDAY-Universe (verified 2026-11-24 ~02:00 IST, first-hand).
+- No deploy route exists in the S1 Caddyfile, no deploy handler exists in
+  the FRIDAY code, and the Caddy access log holds zero deploy lines.
+- The 23:50:16 "GitHub-Hookshot POST /api/deploy/github" line in
+  checkpoint 1 was a misread of the journal.
+
+There is no webhook receiver on S1. The trigger is a push event consumed by
+GitHub Actions itself.
+
+## The actor, PROVEN — the Fleet CD workflow on push to main
+
+**Workflow:** "FRIDAY Universe Fleet Continuous Deployment"
+(`.github/workflows/deploy-monorepo.yml`, `on: push, branches: [main]`,
+plus `workflow_dispatch`). Re-read first-hand this run on main `384950d9`
+(blob `c1868fe8`, 31,199 bytes).
+
+**How it restarts her (workflow definition, verbatim logic):** the
+`deploy-server1` job SSHes to S1, fast-forwards `/opt/friday_universe` to
+the pushed SHA, then runs the restart loop over
+`SERVER1_AGENTS=("FRIDAY" "Inference" "Memora" "Stratex" "Forge"
+"Sentinel")` — `sudo systemctl restart "${AGENT}.service"` fires when the
+agent's own folder changed **or `mesh/`, `deploy/` or `scripts/` changed**
+(or on manual dispatch). FRIDAY-Voice.service restarts when `FRIDAY/`
+changed. There is no per-merge approval and no restart gate.
+
+**Run → pull → restart, all four merges (Actions API + S1 reflog,
+first-hand this run; times IST, 2026-11-23):**
+
+| Merge (PR) | Workflow run created | S1 pull | Run conclusion |
+|---|---|---|---|
+| `93d5fd5e` (#1501) | 19:59:44 (run 45194805918) | 20:00:22 | failure |
+| `c71a1179` (#1498) | 19:59:51 (run 45194823669) | 20:09:53 | failure |
+| `2acdf19e` (#1515) | 21:27:04 (run 45210942426) | 21:27:38 | failure |
+| `49126a41` (#1537) | 23:58:53 (run 45238845137) | 23:59:37 → stop 23:59:57 → start 00:00:01 | failure |
+
+**The restart condition fired every time:** all four merges touch
+`scripts/` (commit-files API, first-hand this run — #1501: docs/scripts/
+tests; #1498: .github/docs/scripts; #1515: .github/Sentinel/docs/scripts/
+tests; #1537: .github/docs/scripts/tests). `scripts/` in the diff is
+enough, by the loop's own condition, to restart FRIDAY.service on every
+one of these deploys.
+
+**Why the 20:09 pull lagged 10 minutes:** the workflow's concurrency
+group `deploy-monorepo-${{ github.ref }}` has `cancel-in-progress: false`,
+so deploys serialize — each S1 job runs ~10 min. The 19:59:51 run waited
+behind the 19:59:44 run; its pull landed 20:09:53. The three "restart
+times" in the task title (20:00 / 20:10 / 21:28) are the S1 pull times of
+three serialized deploys, to within seconds.
+
+## Checkpoint 1's open question — RESOLVED
+
+The evening pulls DID restart her. The missing systemd lines are explained,
+not by pulls-not-restarting, but by journald retention: journald caps at
+200M, ~2h retention — at the 02:07 IST check the whole journal was empty
+18:00–23:00 Nov 23 (oldest entry 00:19:12 IST Nov 24). Absence of lines in
+that window proves nothing. The midnight restart, inside the retained
+window, left full stop/start lines and is observed end to end.
+
+## What is still RULED OUT (unchanged from checkpoint 1)
+
+No systemd timer or cron restarts her; no watchdog restarts her (all four
+watchdog/self-heal units report or alert only); no OOM kill in the evening;
+no logrotate involvement. The only actor is the Fleet CD workflow.
+
+## New observation, FLAGGED (not this task's to fix)
+
+All four S1 deploy jobs concluded **failure** — yet each one demonstrably
+pulled and restarted the fleet. The failure lands inside the single SSH
+step, AFTER the restart: the midnight S1 job ran 10m14s while the
+pull-to-restart lag is ~20s, and the restart itself is observed
+(stop 23:59:57, start 00:00:01). The exact failing point inside the
+script (most plausibly the post-restart health-probe section) is NOT
+identified from the jobs API — the job log was not pulled this run. The
+S2 job on the same run failed in 12s. Consequence: deploys report red
+while having restarted the fleet. Recommend Muse route a follow-up
+reliability task; OBS-022's acceptance (identify the actor) does not
+cover fixing the deploy job.
+
+## Verdict
+
+- **Actor:** the GitHub Actions workflow "FRIDAY Universe Fleet
+  Continuous Deployment" (`.github/workflows/deploy-monorepo.yml`),
+  `deploy-server1` job, on push to main.
+- **Trigger:** any merged PR whose diff touches `FRIDAY/`, `mesh/`,
+  `deploy/` or `scripts/` (all four evening merges touched `scripts/`).
+- **Scheduled or removed:** the restart IS scheduled by workflow design —
+  every qualifying push restarts FRIDAY.service. Narrowing the trigger
+  (e.g. restart only when `FRIDAY/` itself changes) is Muse's call, not
+  this task's.
+- **States:** implemented NO / tested NO / merged NO / deployed N/A /
+  production-verified NO. This is a diagnosis, not a change. No live
+  change was made to any service in either checkpoint run.
+
+## Board
+
+Board record verified first-hand on main `384950d9` (blob `6a2f6b33`,
+17,969 lines) this run: TASK-OBS-022 CLAIMED, owner muse_17, branch
+`muse17/obs-022`, pr null. The CLAIMED → IN_REVIEW flip with this work
+PR is owed to the coordinator's next consolidated board PR — this branch
+is based on main `0ea5accc`, so its board copy is stale and must not be
+hand-edited into this PR. TASK-VYR-050 (blocked on clearance 7111797017,
+unchanged) still shows AVAILABLE / owner muse_17 / branch null on main —
+its CLAIMED flip is likewise owed to the next board PR.
 
 — Muse 17
