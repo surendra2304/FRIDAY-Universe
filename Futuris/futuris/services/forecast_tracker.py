@@ -55,6 +55,7 @@ UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 from uuid import UUID, uuid4
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from futuris.core.schemas import Forecast, Outcome
@@ -449,21 +450,36 @@ class ForecastTracker:
         are harmless. The first pass also backfills historically resolved
         forecasts, so the store covers the full resolved record, not just
         forecasts resolved after this tracker landed.
+
+        TASK-FUT-025: two scoring runs can overlap (the standalone
+        30-minute job and a sweep's tail-call pass list the same
+        unscored set). Each insert runs inside its own savepoint, so
+        the loser of the race skips the duplicate row instead of
+        failing the whole sweep on the unique ``forecast_id`` -- and
+        never reports the winner's rows as its own. The sweep's
+        ``scored`` count is only the rows this run inserted.
         """
         pairs = await self.score_repo.list_unscored_resolved(limit=limit)
         scored = 0
         skipped_no_numeric_actual = 0
+        skipped_duplicate = 0
         for forecast, outcome in pairs:
             score = score_forecast(forecast, outcome)
             if score is None:
                 skipped_no_numeric_actual += 1
                 continue
-            await self.score_repo.record_score(score.to_model())
+            try:
+                async with self.session.begin_nested():
+                    await self.score_repo.record_score(score.to_model())
+            except IntegrityError:
+                skipped_duplicate += 1
+                continue
             scored += 1
         return {
             "considered": len(pairs),
             "scored": scored,
             "skipped_no_numeric_actual": skipped_no_numeric_actual,
+            "skipped_duplicate": skipped_duplicate,
             # State count, not work done: event-only resolutions are never
             # numerically scorable, so they stay out of the work queue and
             # are reported here for visibility instead of being re-skipped
