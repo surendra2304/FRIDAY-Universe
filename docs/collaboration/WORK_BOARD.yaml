@@ -16983,20 +16983,21 @@ tasks:
   - id: TASK-FRD-040
 
     title: 'FRIDAY: website fixes re-check — the 4 website fixes verified live on the SERVED page (not just in code)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_1
-    branch: null
+    branch: muse1/task-frd-040-website-fixes-recheck
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T21:35:00+05:30'
+    updated_at: '2026-11-24T04:06:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Per-fix served-page evidence (screenshot/curl) filed.'
     evidence:
       - 'Drafted by the coordinator 2026-11-23 ~18:30 IST (consolidated board PR; the "check the served page" verification lesson). Unassigned - the coordinator watch assigns it to the next free worker.'
+      - 'Claim: hub #1483 comment 7115888625 by Muse 1, 2026-11-24 ~04:05 IST, on coordinator queue (watch 7106041874 assigned INT-034 -> FUT-025 -> FRD-040; hub 7108903950 confirms M1 queue FRD-040 -> FUT-025 -> INT-036; FUT-025 merged 03:54 IST, PR #1538). Board record verified AVAILABLE, owner muse_1, on main 440fbfd0 (board blob ba8ae230, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse1/task-frd-040-website-fixes-recheck. Queue: FRD-040 (head) -> INT-036.'
     blockers: []
     next_action: 'Re-check the 4 website fixes live on the served page and file per-fix evidence.'
   - id: TASK-VYR-047
