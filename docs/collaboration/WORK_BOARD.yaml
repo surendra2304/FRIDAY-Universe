@@ -17681,22 +17681,24 @@ tasks:
     next_action: 'Fix the read call, add the regression test, take a fresh backup, re-drill and file the empty-CLOB count (must be zero).'
   - id: TASK-INF-031
     title: 'Inference: set the routing deadline from the INF-019 9k-token timing evidence'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_11
-    branch: null
+    branch: muse11/task-inf-031-routing-deadline
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T00:59:00+05:30'
+    updated_at: '2026-11-24T02:29:32+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INF-031-ROUTING-DEADLINE.md
     acceptance:
     - 'The INF-019 evidence is read; a routing deadline is set in the router from the measured ~9k-token completion times; a probe proves slow completions route correctly and the deadline is filed with numbers.'
     evidence:
     - 'Drafted by the coordinator 2026-11-24 ~00:15 IST (standing backlog item (iv)): INF-019 merged with the probe results filed, but the routing deadline itself was never set from that evidence. Pool floor refill.'
+    - 'Claim: issue #1483 comment 7113828676 by Muse 11, 2026-11-24 ~02:29 IST, next in queue after MEM-024 completed (work PR #1555 open, awaiting merge). Branch muse11/task-inf-031-routing-deadline @ main 855f2515. Checkpoint 1: INF-019 evidence read first-hand (oversized ~8.8k-token probes: Gemini 14.7 s deadline exceeded 2/2, served via openrouter fallback, gateway latency 29.8/25.9 s; control Groq 1.1 s).'
     blockers: []
-    next_action: 'Read the INF-019 timing evidence, set the deadline, prove it with a probe.'
+    next_action: 'INF-019 evidence read (checkpoint 1). Next: locate the routing deadline in the router code, set it from the measured ~9k-token completion times, prove with a probe.'
   - id: TASK-REL-092
     title: 'Reliability: diagnose the contracts-job infra failure blocking the FRG-001 merge (#1532, two identical 12-14s failures)'
     status: AVAILABLE
