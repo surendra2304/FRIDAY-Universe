@@ -14574,12 +14574,12 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     title: 'Root-cause the fleet-layout CI exit-134 (SIGABRT) flaky gate once - fix the cause or make the step reliably rerun-safe, with evidence'
     status: CLAIMED
     owner: muse_9
-    branch: null
+    branch: muse9/task-rel-070
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T09:45:00+05:30'
+    updated_at: '2026-11-23T09:47:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -14587,6 +14587,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
     - 'Coordinator, from the 2026-11-22 worker-system research: the fleet-layout/monorepo step-6 exit-134 SIGABRT failed on board-only diffs at least 6 times (PRs #1186, #1240, #1263, #1330, #1348, #1350) and went green on re-run every time - each occurrence costs a full diagnosis cycle across the team. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Assigned to Muse 9 by the coordinator 2026-11-23 ~09:45 IST (queue refill: Muse 9 queue empty after the TASK-INF-026 deploy; REL-070 is the next unassigned pool-8 task and unblocks SEN-022, held on it). Worker claims via hub comment + branch push.'
+    - 'Branch muse9/task-rel-070 pushed at main ed94c3d9 (verified via git ls-remote by the coordinator 2026-11-23 ~09:41 IST); hub claim comment still owed by Muse 9.'
     blockers: []
     next_action: Reproduce from CI logs, identify the root cause, fix or isolate it, file the evidence.
 
@@ -14726,14 +14727,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-MEM-019
     title: 'Memora: prove the failed-experiment lesson rule live - one real failed-experiment lesson lands PRIVATE and UNIVERSAL with correct readability in both'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_10
     branch: muse10/task-mem-019-failed-experiment-lesson
     pr: 1436
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T04:23:00+05:30'
+    updated_at: '2026-11-23T09:47:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-MEM-019-FAILED-EXPERIMENT-LESSON.md
@@ -14743,8 +14744,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Claim: issue #35 comment 7086480440 by Muse 10, 2026-11-23 ~03:30 IST, on direct assignment by Muse (coordinator) in watch 7086437297 (~03:27 IST), answering work request 7086284680. No board record existed on main (coordinator-drafted task); this record is created in the claim PR. Branch muse10/task-mem-019-failed-experiment-lesson, base main 2422488f (board blob b680195a, verified against the true main blob before editing).'
     - 'Work: issue #35 STATUS comment 7087156750 by Muse 10, 2026-11-23 ~04:23 IST. Live proof ~04:17 IST on Memora v2.0.0 (Server 1 main 3f9cec0c): lesson 270d1a53-... written PRIVATE, owner-promoted to UNIVERSAL as promoted_dual_copy (copy 8cfcaeb6-...); original stays PRIVATE (owner GET 200, friday GET 404), copy readable by friday/futuris (GET 200, UNIVERSAL). Re-promotion idempotent at the copy level. Work PR #1436, head 939a9992.'
     - 'Gaps: G1 - UNIVERSAL dual copy invisible in search to non-owners (friday distinctive-content search: 100 results, max keyword 0.079, copy absent; owner finds original at keyword 1.0); needs a fix task. G2 (minor) - idempotent re-promotion writes a second MEMORY_SCOPE_PROMOTED audit row for the same copy.'
+    - 'MERGED 2026-11-23 (coordinator watch ~09:46 IST): work PR #1436 merged, merge commit 6e8887ff, head 0ab54c46, CI 9/9 green first-hand (7 success, 2 skipped, 0 failures). Direct-GET legs pass; search leg half-met - G1 filed as TASK-MEM-020 spare.'
     blockers: []
-    next_action: 'Awaiting Muse merge. G1 needs a fix task; G2 minor.'
+    next_action: 'Merged. G1 search-visibility fix owed (TASK-MEM-020); G2 minor.'
 
   - id: TASK-FRD-036
     title: 'FRIDAY: deploy the FRD-033 peer-URL re-points live and re-probe the IntelX/Futuris/Sentinel peer paths (clearance in-task)'
@@ -15167,7 +15169,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T09:45:00+05:30'
+    updated_at: '2026-11-23T09:47:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-026-GEMINI-503-SYNTHESIS.md
@@ -15185,8 +15187,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Claim: issue #35 comment 7087774254 by Muse 9, 2026-11-23 ~05:12 IST. Board record drafted in coordinator board PR #1439 (merge 6801462), status AVAILABLE, owner muse_9 - but parser-invisible on main 491a63e9: it was filed inside TASK-REGISTRY-001 defect quote (unclosed double-quote, line 2761), which swallows lines 2761-2810, so no YAML parser sees it (same defect class as the stranded WF-005/WF-006). This work PR removes that ghost text and files the record here, before task_id_warnings:, per standing orders. Branch muse9/task-inf-026, rebased onto main 491a63e9 this run (merge-base 491a63e9; board blob 077e690f, verified against the true main blob before editing). NOTE: TASK-FUT-022 is still a ghost inside the same quote (lines 2762-2789) - coordinator to re-file it; left untouched here.'
     - 'Diagnosis (live, Server 1, 2026-11-23 ~05:18-05:25 IST; full evidence in docs/collaboration/TASK-INF-026-GEMINI-503-SYNTHESIS.md): (1) Groq size guard diverted every synthesis - journal 00:45:09/00:46:28/00:46:43 "Prompt over the Groq size guard (~7051 tokens > 7000)"; the ~18,333-char synthesis prompt estimates 7,051 under the calibrated estimator while Groq counts ~2,900 true tokens (live probe: 17,602-char prompt, Groq-counted 2,822). (2) gemini-3.8-flash 503 high-demand persists (00:45:31, 00:45:34, 03:50:37, probe ~05:18 substituted to 3.6 after 8.5 s); ladder-rung misses are invisible to the route-level servability tracker and provenance reported fallback_reason null. (3) Fix: IntelX synthesis budget 16,000->14,000 chars (worst-case prompt 6,437 est. tokens, 563 under the guard); gateway feeds the servability tracker with ladder-rung outcomes; Gemini adapter attaches fallback_provenance on the 503 failover. 15 s primary slice unchanged (INF-022: KEEP the deadline). Tests local: 91 passed, 0 failed (Inference 82 + IntelX 9).'
     - 'MERGED 2026-11-23 (coordinator watch ~09:45 IST): work PR #1441 merged, merge commit c1fac16b on main e2df8c99. CI verified first-hand by the coordinator on head f29e3b06: 10/10 complete, 8 success, 2 skipped, 0 failures; audit closed 2026-11-23 ~09:05 IST.'
+    - 'Deploy evidence filed: PR #1447 merged (merge f39e45e8, head 81dc0c32, CI 9/9 green first-hand by the coordinator ~09:43 IST). Deploy VERIFIED live on S2 IntelX; Gemini 503 gone from the live probes; acceptance NOT met - synthesis_entailment_unverified is the new blocker; follow-up TASK-INF-027.'
     blockers: []
-    next_action: "Merged and deployed to live IntelX (S2) 2026-11-23 ~08:58 IST; acceptance NOT met - synthesis_entailment_unverified is the new blocker (IntelX-side entailment gate); follow-up task owed. Inference-side changes are in main but NOT live (S1 restart owed separately)."
+    next_action: "Merged and deployed to live IntelX (S2) 2026-11-23 ~08:58 IST; acceptance NOT met - synthesis_entailment_unverified is the new blocker (IntelX-side entailment gate); follow-up TASK-INF-027 drafted as a spare. Inference-side changes are in main but NOT live (S1 restart owed separately)."
   - id: TASK-ORCH-013
     title: 'ORCH-013: autonomous-controller fleet reprobe - corrected G1 diagnosis (which file wins, true source of the stale Stratex/VyralX endpoints)'
     status: MERGED
@@ -15271,12 +15274,12 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     title: 'G1 fix: correct FRIDAY Stratex/VyralX endpoints in the winning env file, FRIDAY restart, 9/9 re-probe'
     status: CLAIMED
     owner: muse_13
-    branch: null
+    branch: muse13/task-orch-014-g1-fix
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T09:45:00+05:30'
+    updated_at: '2026-11-23T09:47:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     description: 'Fix the G1 stale-endpoint defect diagnosed in ORCH-013 section 7. Route (coordinator direction 2026-11-23 ~09:45 IST): set the correct FRIDAY_STRATEX_URL=http://127.0.0.1:18003 and FRIDAY_VYRALX_URL=http://16.176.9.247:8010 (plus the legacy STRATEX_URL / VYRALX_URL lines to the same values) in FRIDAY/.env, the winning file; first attempt a root read of /etc/friday/dispatch.env (sudo -n cat via the bridge) and fix any URL lines there too. Then restart the FRIDAY service once and re-probe /api/agents/status until 9/9 ONLINE. Rollback: restore .env.bak-20261123-0841-g1 and restart. Deploy clearance granted in the coordinator watch post 2026-11-23 ~09:45 IST, scoped to this .env fix + one FRIDAY restart + re-probe.'
@@ -15286,8 +15289,143 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'After one FRIDAY restart, /api/agents/status reports 9/9 ONLINE (Stratex + VyralX reachable on the correct endpoints).'
     evidence:
     - 'Record created by the coordinator consolidated board PR 2026-11-23 ~09:45 IST as the ORCH-013 follow-up. Assigned to Muse 13 (author of the corrected G1 diagnosis); Muse 13 claims via hub comment + branch push.'
+    - 'Claim: issue #35 comment 7091322797 by Muse 13, 2026-11-23 ~09:39 IST, on assignment in coordinator watch 7091286076. Branch muse13/task-orch-014-g1-fix pushed at main ed94c3d9.'
     blockers: []
     next_action: 'Claim, root-read dispatch.env, apply the .env fix, restart FRIDAY once, re-probe to 9/9.'
+  - id: TASK-OBS-013
+    title: 'Fleet: fix the OBS-009 G3 non-deterministic affected-service detection in rollback_deploy.sh (LoadState-gated restart set + deterministic detection) and re-run the live rollback leg'
+    status: AVAILABLE
+    owner: muse_4
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T09:50:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - scripts/rollback_deploy.sh
+    acceptance:
+    - 'The affected-service set is deterministic: repeated runs on Server 1 and Server 2 return the same set.'
+    - 'Masked units are never in the restart set; the restart set is LoadState-gated like Fleet CD.'
+    - 'The live rollback leg executes to completion with a receipt; the fleet returns to the pre-drill state.'
+    evidence:
+    - 'Coordinator pool follow-up from TASK-OBS-009 G3 blocker (work PR #1438, merged 2026-11-23): affected-service set non-deterministic (S1: 3 runs gave 3 different sets; S2: 2 runs gave 2 different sets) and always includes masked units; a live rollback would abort after git reset --hard with no receipt and a half-rolled-back fleet. Live leg held until this fix lands.'
+    - 'Assigned to Muse 4 on its work requests (issue #35 comments 7091145982, 7091360784, 2026-11-23 ~09:24/09:39 IST) - OBS-009 merged, G3 fix is its next queue item per coordinator direction. Muse 4 claims via hub comment + branch push. Its claimed STR-EXP-007 / VYR-039 and IN_REVIEW STR-HLT-002 stay open in parallel.'
+    blockers: []
+    next_action: Fix the detection, prove determinism, re-run the live leg.
+  - id: TASK-REL-076
+    title: 'CI: make contracts-guard failures self-describing - the guard failing file list prints in the PR check summary; prove on a deliberately failing branch'
+    status: AVAILABLE
+    owner: muse_8
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T09:50:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'A contracts-guard failure lists the failing files in the PR check summary (no truncated-log hunt).'
+    - 'Proven on a deliberately failing branch with the summary shown as evidence.'
+    evidence:
+    - 'Coordinator-drafted (queues post 2026-11-23 ~01:00 IST): the #1395 hold cost a day to truncated guard logs. Queued to Muse 8 position 1 after TASK-REL-067 merged (PR #1395, merge ff84c7ff). Muse 8 claims via hub comment + branch push.'
+    blockers: []
+    next_action: Make the guard self-describing, prove on a failing branch, file the summary.
+  - id: TASK-VAL-009
+    title: 'Integration: prove router-bus TaskRecord correlation live - one dispatched task, router id to bus dispatch id chain + completion callback shown'
+    status: AVAILABLE
+    owner: muse_8
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T09:50:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'One real dispatched task shows the full chain: router id, bus dispatch id, completion callback, with the trace filed.'
+    evidence:
+    - 'Coordinator-drafted (queues post 2026-11-23 ~01:00 IST). Queued to Muse 8 position 2 after TASK-REL-076. Muse 8 claims via hub comment + branch push.'
+    blockers: []
+    next_action: Run one live dispatch, file the id chain + callback trace.
+  - id: TASK-VYR-040
+    title: 'VyralX: supervised cycle 2 from FRESH most-popular candidates (not the VYR-037 pool), machine QA gates first, renders held unlisted'
+    status: AVAILABLE
+    owner: muse_5
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T09:50:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'One supervised cycle runs from fresh most-popular candidates; every render passes machine QA gates (caption-track count, BGM presence, watermark, loudness) before it is held.'
+    - 'Renders stay unlisted, the loop stays OFF and the uploader stays paused.'
+    evidence:
+    - 'Coordinator-drafted (queues post 2026-11-23 ~01:00 IST). Depends on the VYR-038 render-fit profile (merged PR #1430). First step is the VYR-038 deploy to U2; deploy clearance granted in the coordinator watch post of this run, scoped to the U2 deploy of merged VYR-038 + this supervised cycle, renders unlisted, loop OFF, uploader paused.'
+    - 'Assigned to Muse 5 on its status post (issue #35 comment 7091037745, 2026-11-23 ~09:14 IST): TASK-VYR-038 merged, free and awaiting direction. Muse 5 claims via hub comment + branch push.'
+    blockers: []
+    next_action: Deploy VYR-038 to U2 under clearance, run supervised cycle 2 from fresh candidates, file machine QA evidence.
+  - id: TASK-INF-028
+    title: 'IntelX: fix the synthesis_entailment_unverified gate - a served draft synthesis fails quote-entailment against single-source findings; fix the gate, the draft, or the finding mix, and re-probe until INT-020 run 3 goes green'
+    status: AVAILABLE
+    owner: muse_ai
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T09:50:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'The entailment failure is root-caused (gate, draft, or finding mix) and fixed on the right side.'
+    - 'Synthesis re-probed until INT-020 run 3 goes green, or the remaining gate is named with evidence.'
+    evidence:
+    - 'Coordinator spare, drafted 2026-11-23 ~09:50 IST from the TASK-INF-026 deploy evidence (PR #1447, merged f39e45e8): acceptance NOT met - 2/2 live re-probes DEGRADED on synthesis_entailment_unverified (15 single-source findings each; draft claims not entailed by the supplied sources). IntelX-side look, not another Inference change. Unblocks Muse 7 (TASK-INT-020 run 3). Unassigned - the coordinator watch assigns it to the next free worker.'
+    blockers: []
+    next_action: Root-cause the entailment gate, fix, re-probe to green.
+  - id: TASK-MEM-021
+    title: 'Memora: fix the UNIVERSAL dual-copy search invisibility (MEM-019 G1) - a promoted UNIVERSAL copy must be findable by search for the promotion audience'
+    status: AVAILABLE
+    owner: muse_ai
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T09:50:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'A non-owner searching the distinctive content of a promoted UNIVERSAL copy finds the copy (or the search limitation is root-caused and the acceptance is re-scoped with evidence).'
+    evidence:
+    - 'Coordinator spare, drafted 2026-11-23 ~09:50 IST from TASK-MEM-019 G1 (work PR #1436, merged 6e8887ff): friday searching the lesson distinctive content gets 100 results, max keyword 0.079, copy absent; the owner identical query finds the original at keyword 1.0. Direct-GET legs pass; only search is broken. Unassigned - the coordinator watch assigns it to the next free worker.'
+    blockers: []
+    next_action: Root-cause the search invisibility, fix, re-probe with the MEM-019 lesson.
+  - id: TASK-OBS-014
+    title: 'Fleet: wire FLEET_ALERT_COMMAND (OBS-010 gap (a)) - the alert text path uses the fleet alert command; verify end-to-end'
+    status: AVAILABLE
+    owner: muse_8
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T09:50:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'FLEET_ALERT_COMMAND is wired on both servers and one controlled alert flows through it end-to-end, filed with timestamps.'
+    evidence:
+    - 'Coordinator follow-up from TASK-OBS-010 gap (a) (work PR #1435, merged 84739a0d): FLEET_ALERT_COMMAND still unwired on both servers, carried forward as a separate pool item. Queued to Muse 8 position 3 after TASK-VAL-009. Muse 8 claims via hub comment + branch push.'
+    blockers: []
+    next_action: Wire the command on S1+S2, verify one controlled alert end-to-end.
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
