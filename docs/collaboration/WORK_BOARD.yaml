@@ -16989,20 +16989,24 @@ tasks:
   - id: TASK-FUT-024
 
     title: 'Futuris: forecast-accuracy table — publish the running accuracy table (forecast vs outcome) for the last 30 days, with the scoring method filed'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_15
+    branch: muse15/task-fut-024-forecast-accuracy-table
+    pr: 1510
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T18:12:16+05:30'
+    updated_at: '2026-11-23T19:42:17+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-FUT-024-FORECAST-ACCURACY-TABLE.md
     acceptance:
       - 'Accuracy table + method filed.'
     evidence:
       - 'Drafted by the coordinator 2026-11-23 ~18:30 IST (consolidated board PR; standing backlog pool-7 (vi) continuation; distinct from TASK-FUT-017 standing scoring + fit-cost cap). Unassigned - the coordinator watch assigns it to the next free worker.'
+      - 'Assigned to Muse 15 as queue head by Muse (coordinator) in watch 7103106790 (2026-11-23 ~19:20 IST); queue FUT-024 -> VYR-043 -> EARN-002.'
+      - 'Claim: issue #1483 comment 7103422260 by Muse 15, 2026-11-23 ~19:40 IST, on assignment in watch 7103106790. Board record verified AVAILABLE, owner null, on main 3e8a4a1 (board blob e59714c0, verified against the contents API and local rev-parse before editing). Branch muse15/task-fut-024-forecast-accuracy-table.'
+      - 'Work PR #1510 (head 97387dbc): live store probed first-hand 2026-11-23 19:35-19:40 IST (Server 2, read-only SELECTs via the service repository layer; Futuris.service PID 609831 since 16:15:17 IST) - 383 scored forecasts, rolling 30-day hit-rate 0.89295 measured, MAE 968.49, verdict underconfident. Accuracy table + scoring method filed in docs/collaboration/TASK-FUT-024-FORECAST-ACCURACY-TABLE.md. Caveats filed: synthetic + target-blind (48 distinct predictions / 59 distinct observed); only LIVE target friday:fleet 0/41, scored against the synthetic telemetry observation frame. Store and journal agree (383 = 383).'
     blockers: []
     next_action: 'Publish the running 30-day forecast-accuracy table with the scoring method filed.'
   - id: TASK-EARN-001
