@@ -1550,6 +1550,29 @@ def produce_framed_short(
             + "; ".join(binding_problems)
         )
 
+    if gates_on:
+        # TASK-VYR-045: post-render caption-track gate, same as the
+        # commentary path — a doubled render never reaches the publish
+        # queue.
+        cap_ok, cap_reason, cap_dets = vr.check_render_caption_tracks(
+            render_path, excerpt_seconds
+        )
+        if not cap_ok:
+            log.info(
+                "Rejecting render %s: caption gate %s",
+                project_key, cap_reason,
+            )
+            return {
+                "status": "SKIPPED",
+                "reason": cap_reason,
+                "video_id": candidate.video_id,
+                "caption_tracks": (
+                    vq.count_caption_tracks(cap_dets)
+                    if cap_dets is not None else None
+                ),
+                "render": str(render_path),
+            }
+
     thumbnail_path = settings.render_dir / f"{project_key}-thumb.jpg"
     try:
         from app.services.thumbnail_designer import generate_genre_thumbnail
