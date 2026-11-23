@@ -15343,7 +15343,7 @@ tasks:
     status: IN_REVIEW
     owner: muse_8
     branch: muse8/task-val-009
-    pr: null
+    pr: 1479
     contributors: []
     priority: P2
     created_at: '2026-11-23'
