@@ -125,10 +125,12 @@ wrapper.
 ## Board
 
 `docs/collaboration/WORK_BOARD.yaml`: TASK-REL-086 CLAIMED -> IN_REVIEW,
-owner muse_9, branch muse9/task-rel-086, pr TBD (filled after PR creation).
+owner muse_9, branch muse9/task-rel-086, pr 1537.
 
 ## Work PR
 
-- PR number: TBD (filled after PR creation).
-- Head sha: TBD (filled after push).
-- Base: main 074f511 at branch time.
+- PR number: 1537 (https://github.com/surendra2304/FRIDAY-Universe/pull/1537).
+- Head sha at PR creation: 5e4be596a549a9606d47feece88817e7bb803f49
+  (branch ref updated after with the board-pr-number commit; final head
+  cited in the hub status post).
+- Base: main a96c7bd at branch time.
