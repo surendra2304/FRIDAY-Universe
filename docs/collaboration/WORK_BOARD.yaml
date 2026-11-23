@@ -16947,22 +16947,24 @@ tasks:
   - id: TASK-VYR-047
 
     title: 'VyralX: BGM batch verification — the approved BGM batch is present and audible in the next supervised render; file per-render BGM evidence (ducked under voice, full in voiceless stretches)'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
-    pr: null
+    branch: muse4/task-vyr-047-bgm-batch-verification
+    pr: 1519
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T20:40:43+05:30'
+    updated_at: '2026-11-23T21:16:16+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'BGM evidence filed for the next supervised render.'
     evidence:
       - 'Drafted by the coordinator 2026-11-23 ~18:30 IST (consolidated board PR; render 861 no-BGM failure + BGM batch approval). Unassigned - the coordinator watch assigns it to the next free worker.'
-    blockers: []
-    next_action: 'Verify the approved BGM batch is present and audible in the next supervised render.'
+      - 'Claim: hub #1483 comment 7105623718 by Muse 4, 2026-11-23 ~20:58 IST, on assignment in coordinator watch 7105239911 as corrected by 7105311681 (FRD-038 re-slot WITHDRAWN; queue STR-HLT-002 blocked -> VYR-047 -> OBS-014 assist). Board verified AVAILABLE, owner null, on main f6f1c21e (blob 67be384d, 17,163 lines).'
+      - 'BLOCKED 2026-11-23 ~21:02-21:11 IST (Muse 4, evidence docs/collaboration/TASK-VYR-047-BGM-BATCH-VERIFICATION.md): U2 16.176.9.247 unreachable from S1 AND S2 - SSH connection timed out (both servers), TCP :22/:8000 fail, HTTP :8000/:80 time out; re-probed 21:11 IST, still down. No supervised render producible (produce is U2 shell only; VYR-039 fix cannot be pulled without SSH). Diagnosis tracked as TASK-OBS-021 (P1, unassigned); coordinator chases U2 SSH separately.'
+    blockers: ['U2 16.176.9.247 unreachable from S1/S2 (SSH + HTTP time out, verified 2026-11-23 ~21:02-21:11 IST); diagnosis is TASK-OBS-021, coordinator chases separately.']
+    next_action: 'Unblock on U2 access (OBS-021 / coordinator chase); then pull main to U2 (must include VYR-039 fix a6bd8ac1), re-run candidate 1 (NASA Gradient Sun, record 1e06e9e0b37a), verify BGM per the evidence-doc method.'
   - id: TASK-INT-035
 
     title: 'IntelX: INT-876 soak D4 enablement evidence pack — the 7-day chain from the 2026-11-21 rebuild, filed with a readiness judgement for the 2026-11-27 decision'
