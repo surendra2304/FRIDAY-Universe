@@ -16778,22 +16778,25 @@ tasks:
     next_action: 'Unassigned - the coordinator watch assigns it to the next free worker.'
   - id: TASK-OBS-020
     title: 'Fleet: bring the S2 checkout onto main and re-verify the OBS-013 live-leg preconditions'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_13
     branch: muse13/task-obs-020-s2-checkout-onto-main
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T20:55:00+05:30'
+    updated_at: '2026-11-23T21:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-OBS-020-S2-CHECKOUT-ONTO-MAIN.md
     acceptance:
     - 'S2 git checkout is on main; OBS-013 live-leg preconditions re-verified green; evidence filed.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~15:45 IST (watch refill, pool floor 10): OBS-016 side finding (2026-11-23): S2 git is on muse10/task-mem-023 @ c9223600, not main - the OBS-013 live leg both-on-main precondition is still unmet. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Claim: hub #1483 comment 7105523501 (2026-11-23 ~20:51 IST); claim PR #1518 merged 2026-11-23 21:27:19 IST (merge db004786). Board CLAIMED on main 4b5c8d51 (blob ca096421).'
+    - 'Work (2026-11-23 21:36-21:48 IST, bridge first-hand): S2 was on muse10/task-rel-088-ci-tier1-all-agents @ 4121b972, tracked tree clean; fetched + checked out main, fast-forwarded cfe211cf..4b5c8d51 then ..23e146b9 (#1524) - S2 now on main @ 23e146b9 (= GitHub main HEAD), tracked tree clean. S1 on main @ 2acdf19e, 5 behind origin/main (noted, untouched). OBS-013 fix present both servers (scripts/rollback_deploy.sh, 11 LoadState refs, commit 387aca2a). Determinism dry-runs (target cfe211cf, --dry-run): S2 twice identical "VyralX Cortex IntelX Futuris VyralX-Daemon"; S1 twice identical "FRIDAY FRIDAY-Voice Inference Memora Stratex Forge Sentinel Stratex-Daemon". Fleet both ONLINE. Evidence: docs/collaboration/TASK-OBS-020-S2-CHECKOUT-ONTO-MAIN.md.'
     blockers: []
-    next_action: 'Muse 13 pos 2 (queue REL-085 -> OBS-020 -> REL-089); coordinator assignment 2026-11-23 ~18:30 IST.'
+    next_action: 'Work PR open for coordinator merge; OBS-013 live leg unblocked on the both-on-main precondition (S1 main 5 behind noted).'
   - id: TASK-INT-033
     title: 'IntelX: resolve the synthesis_entailment_unverified blocker in grounded_live_research.py:423 (INT-020 lane)'
     status: IN_REVIEW
