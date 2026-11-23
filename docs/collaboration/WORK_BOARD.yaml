@@ -16048,14 +16048,14 @@ tasks:
   - id: TASK-VYR-040
 
     title: 'VyralX: supervised cycle 2 from FRESH most-popular candidates (not the VYR-037 pool), machine QA gates first, renders held unlisted'
-    status: CLAIMED
+    status: CLOSED
     owner: muse_5
     branch: muse5/task-vyr-040-supervised-cycle-2
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T09:50:00+05:30'
+    updated_at: '2026-11-23T23:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16065,6 +16065,7 @@ tasks:
     - 'Coordinator-drafted (queues post 2026-11-23 ~01:00 IST). Depends on the VYR-038 render-fit profile (merged PR #1430). First step is the VYR-038 deploy to U2; deploy clearance granted in the coordinator watch post of this run, scoped to the U2 deploy of merged VYR-038 + this supervised cycle, renders unlisted, loop OFF, uploader paused.'
     - 'Assigned to Muse 5 on its status post (issue #35 comment 7091037745, 2026-11-23 ~09:14 IST): TASK-VYR-038 merged, free and awaiting direction. Muse 5 claims via hub comment + branch push.'
     - 'Claim: issue #35 comment 7091877503 by Muse 5, 2026-11-23 ~10:18 IST. Branch muse5/task-vyr-040-supervised-cycle-2 verified at fde0591b via ls-remote this run; board flip AVAILABLE->CLAIMED in coordinator board PR 2026-11-23 ~14:50 IST.'
+    - 'CLOSED (hub 7108903950): M5 verdict (hub 7107720364, verified first-hand): sole candidate 1sYGq2no4Tk SKIPPED (watermark_visible, ForXJoy), pool empty, manifest 11, rejection in rejected_sources.json (50 to 51). No render from this task.'
     blockers: []
     next_action: Deploy VYR-038 to U2 under clearance, run supervised cycle 2 from fresh candidates, file machine QA evidence.
   - id: TASK-INF-028
@@ -16441,14 +16442,14 @@ tasks:
   - id: TASK-REL-083
 
     title: 'Triage + disposition dependabot PRs #1417-#1421'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_8
     branch: muse8/task-rel-083
     pr: 1531
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T22:20:52+05:30'
+    updated_at: '2026-11-23T23:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16457,6 +16458,7 @@ tasks:
     - 'Drafted by the coordinator 2026-11-23 ~11:47 IST (pool refill, floor 10): dependabot PRs #1417-#1421 open and untriaged. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Claim: issue #1483 comment 7106283490 by Muse 8, 2026-11-23 ~21:23 IST, on queue assignment (coordinator queues; watch 7093557479 + correction 7105311681 section 4: OBS-014 live leg assigned to Muse 4 assist after VYR-047; blocked-head rule). Board record verified AVAILABLE, owner muse_8, on main cfe211cf (board blob 3c239170, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-rel-083.'
     - 'Triage complete 2026-11-23 ~22:16 IST: all five PRs open, mergeable clean vs main 23afe6ba, CI green on heads (0 failed, 0 pending), diffs pure version pins. Disposition: all five MERGE. Evidence doc docs/collaboration/TASK-REL-083-DEPENDABOT-TRIAGE.md. Caveats: #1418 script path runs only in quarter months; #1419/#1421 share Sentinel/pyproject.toml, merge sequentially.'
+    - 'MERGED via PR 1531 (merge 074f5116); Dependabot triage merged by the coordinator (hub 7108157938); all five dependabot PRs 1417-1421 triaged MERGE by M8. Board flip rides in the consolidated board PR (hub 7108903950).'
     blockers: []
     next_action: 'Triage done — all five MERGE recommended. Awaiting coordinator / owner merge call on #1417-#1421 (sequential for #1419/#1421); then board REL-083 -> MERGED.'
   - id: TASK-MEM-022
@@ -16507,14 +16509,14 @@ tasks:
   - id: TASK-INT-031
 
     title: 'IntelX: verify the digest pipeline batches non-instant alerts correctly from live records'
-    status: CLAIMED
+    status: MERGED
     owner: muse_7
     branch: muse7/task-int-031-digest-pipeline
-    pr: null
+    pr: 1509
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T19:05:07+05:30'
+    updated_at: '2026-11-23T23:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16522,6 +16524,7 @@ tasks:
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~11:47 IST (pool refill, floor 10): INT-876 soak runs separately; this task verifies the digest batching leg from live records. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Claim: issue #1483 comment 7101918141 by Muse 7, 2026-11-23 ~18:30 IST, on coordinator direction in push 7100469274 (~17:40 IST), under the blocked-head rule (INT-020 stays blocked head). Board record verified AVAILABLE, owner null, on main 237667b6 (blob cdd2358f). Branch muse7/task-int-031-digest-pipeline created from main 237667b6. Verification leg done 2026-11-23 ~18:25 IST (status 7102042958): 0 dropped, 0 sent instantly, 0 duplicates delivered; evidence doc + work PR owed.'
+    - 'MERGED via PR 1509 (merge e3c4b5f2); CI 9/9 green on the merged head, verified first-hand by the coordinator (hub 7107607002). Board flip rides in the consolidated board PR (hub 7108903950).'
     blockers: []
     next_action: 'Muse 7 work-now task (queue INT-020 blocked -> INT-031 -> REL-087); file the evidence doc + work PR.'
   - id: TASK-INT-032
@@ -16713,14 +16716,14 @@ tasks:
   - id: TASK-FRD-038
 
     title: 'FRIDAY web-chat 401 root-cause: diagnose and fix the /web-chat 401 blocking MEM-017 and FRD-037 live runs'
-    status: CLAIMED
-    owner: muse_14
+    status: IN_REVIEW
+    owner: muse_11
     branch: muse11/task-frd-038-webchat-401
-    pr: null
+    pr: 1535
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T22:40:00+05:30'
+    updated_at: '2026-11-23T23:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16730,6 +16733,7 @@ tasks:
     - 'Claim: issue #1483 comment 7100136187 by Muse 11, 2026-11-23 ~17:19 IST, on coordinator assignment in watch 7098694215 (~16:25 IST), blocked-head rule. Board record verified AVAILABLE, owner muse_ai, on main 958cc133 (board blob f2cef67c). Branch muse11/task-frd-038-webchat-401.'
     - 'Re-slot to Muse 4 WITHDRAWN by the coordinator 2026-11-23 ~21:05 IST (hub 7105311681): Muse 11 had found the root cause (hub 7104768135, checkpoint 1 committed 53b3e7ff); FRD-038 stays with Muse 11.'
     - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Board flip for the re-slot announced on hub comment 7107607002 (21:37 watch): owner muse_11 -> muse_14. Muse 14 starts from Muse 11 checkpoint 1, branch muse11/task-frd-038-webchat-401 @53b3e7ff (20:25 IST); checkpoint 2 is the first step."
+    - 'Adjudication (hub 7108903950): M11 shipped ckpt 2 as work PR 1535 (head 124b97cd, CI 9/9 green) after the 21:37 re-slot decision; the re-slot premise is overtaken by live code. FRD-038 returns to M11; M14 head becomes WF-002. Merge of 1535 owed next run after full-diff review.'
     blockers: []
     next_action: 'Diagnose the 401 live, fix, re-run MEM-017 live runs, file evidence.'
   - id: TASK-REL-086
@@ -16814,32 +16818,33 @@ tasks:
     next_action: 'Work PR open for coordinator merge; OBS-013 live leg unblocked on the both-on-main precondition (S1 main 5 behind noted).'
   - id: TASK-INT-033
     title: 'IntelX: resolve the synthesis_entailment_unverified blocker in grounded_live_research.py:423 (INT-020 lane)'
-    status: AVAILABLE
+    status: MERGED
     owner: muse_9
-    branch: null
-    pr: null
+    branch: muse9/task-int-033
+    pr: 1511
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T18:12:16+05:30'
+    updated_at: '2026-11-23T23:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Blocker root-caused and fixed, or filed with the smallest safe fix proposal; INT-020 research-with-sources proof unblocked.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~15:45 IST (watch refill, pool floor 10): OBS-016 evidence (2026-11-23): INT-020 is blocked on synthesis_entailment_unverified (IntelX/intelx/api/grounded_live_research.py:423). Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'MERGED via PR 1511 (merge cfe211cf); CI 10/10 green on the merged head, verified first-hand by the coordinator (hub 7107607002). Board flip rides in the consolidated board PR (hub 7108903950).'
     blockers: []
     next_action: 'RE-SLOT by the coordinator 2026-11-23 ~18:30 IST (lag-hunt rule): assigned to Muse 3 16:25 IST, no claim and no branch after the 17:35 lag-push demand and the 17:50 watch demand; Muse 9 pos 3 (queue INT-023 -> REL-086 -> INT-033). Muse 3 keeps INT-017/INT-019.'
   - id: TASK-REL-087
     title: 'CI: validator must fail when a MERGED board task cites a null or unmerged PR'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_7
     branch: muse7/task-rel-087-validator-merged-pr
     pr: 1536
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T22:42:00+05:30'
+    updated_at: '2026-11-23T23:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-REL-087-CI-VALIDATOR-MERGED-PR.md
@@ -16849,6 +16854,7 @@ tasks:
     - 'Drafted by the coordinator 2026-11-23 ~15:45 IST (watch refill, pool floor 10): REL-069 lineage (validator evidence integrity): duplicate-key detection and evidence-count diffing are Pool 8 work; the MERGED-pr citation is the adjacent integrity hole. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Claim: issue #1483 comment 7106524829 by Muse 7, 2026-11-23 ~21:36 IST, on coordinator direction in watch 7106041874 (advance to REL-087 per queue; INT-031 merged, INT-020 stays blocked head). Board record verified AVAILABLE, owner muse_7, on main db004786 (board blob cffa4d32). Branch muse7/task-rel-087-validator-merged-pr created from main db004786.'
     - 'Work: validator check + cases F-H + CI wiring implemented; work PR #1536 open (head d55ef3f5, 4 files); evidence doc docs/collaboration/TASK-REL-087-CI-VALIDATOR-MERGED-PR.md; all 8 validator tests pass locally (scratch tree from main 074f5116).'
+    - 'MERGED via PR 1536 (merge 13cdf268); Merged by the coordinator this run; CI 9/9 green/skipped on head 31a07e12, diff reviewed against the true base blob (hub 7108903950). Board flip rides in the consolidated board PR (hub 7108903950).'
     blockers: []
     next_action: 'Work PR #1536 open for Muse review/merge; board MERGED flip rides in the next consolidated board PR.'
   - id: TASK-MEM-024
@@ -16912,14 +16918,14 @@ tasks:
   - id: TASK-INT-034
 
     title: 'IntelX: digest-pipeline proof — the non-instant alerts from the last 7 days were batched (not dropped); file the batch evidence'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-int-034-digest-pipeline-proof
     pr: 1530
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T22:03:45+05:30'
+    updated_at: '2026-11-23T23:10:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-INT-034-DIGEST-PIPELINE-PROOF.md
@@ -16929,6 +16935,7 @@ tasks:
       - 'Drafted by the coordinator 2026-11-23 ~18:30 IST (consolidated board PR; TASK-INT-031 follow-up). Unassigned - the coordinator watch assigns it to the next free worker.'
       - 'Claim: hub #1483 comment 7106321457 by Muse 1, 2026-11-23 ~21:25 IST, on direct assignment by Muse (coordinator watch 7106041874, ~21:14 IST). Board record verified AVAILABLE, owner null, on main cfe211cf (board blob 3c239170, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse1/task-int-034-digest-pipeline-proof. Queue: INT-034 (head) -> FUT-025 -> FRD-040.'
       - 'Work: evidence doc docs/collaboration/TASK-INT-034-DIGEST-PIPELINE-PROOF.md (verification 2026-11-23 ~21:30 IST, live records both servers); work PR 1530; STATUS comment 7107323060. Verdict: 4/4 non-instant alerts batched, 0 dropped, 0 instant, 0 duplicates; no new alert since 2026-11-20 19:16 IST.'
+      - 'MERGED via PR 1530 (merge 6173be34); Acceptance met: 4/4 non-instant alerts batched, 0 dropped, 0 instant, 0 duplicates. Board flip rides in the consolidated board PR (hub 7108903950).'
     blockers: []
     next_action: 'Prove the digest pipeline batched (not dropped) the last 7 days of non-instant alerts.'
   - id: TASK-MEM-025
@@ -17189,19 +17196,20 @@ tasks:
   - id: TASK-FRG-020
     title: 'Forge: confirm + ship the missing LiveKit probe-caller tool Muse 13 named, or file the pointer if it exists'
     status: AVAILABLE
-    owner: null
+    owner: muse_13
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T19:40:00+05:30'
+    updated_at: '2026-11-23T23:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Probe-caller tool shipped with live proof, or the existing pointer filed with evidence.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~19:20 IST (consolidated board PR watch13; standing backlog pool-7 (viii) continuation; Muse 6 blocked-tool candidate from FRG-001). Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Assigned M13 queue position 3 (hub 7108903950): the live probe caller FRG-001 needs.'
     blockers: []
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-OBS-021
@@ -17319,13 +17327,13 @@ tasks:
 
     title: 'FRIDAY: root-cause her 2026-11-23 08:03 IST OOM kill on S1 and ship a memory guard so she warns before she dies'
     status: AVAILABLE
-    owner: muse_11
+    owner: muse_2
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T22:40:00+05:30'
+    updated_at: '2026-11-23T23:10:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17333,19 +17341,20 @@ tasks:
     evidence:
       - 'Drafted by the coordinator push 2026-11-23 ~21:35 IST (owner order: no worker under 30 percent burn - bigger multi-hour tasks, queues at depth 3, pool floor 10).'
       - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Queue top-up after FRD-038 moved to Muse 14: owner null -> muse_11."
+      - 'Assigned M2 queue head (hub 7108903950): M2 queue empty after the 1534 re-slot; FRIDAY OOM-kill root cause.'
     blockers: []
     next_action: 'Start from the 2026-11-23 08:03:47 IST OOM record on S1: which process grew, why, and what guard prevents a silent repeat.'
   - id: TASK-INF-030
 
     title: 'Inference: wire the APInex gateway (key already in S2 CREDENTIALS.md) as a free fallback provider behind the router, with a failover proof'
     status: AVAILABLE
-    owner: muse_11
+    owner: muse_2
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T22:40:00+05:30'
+    updated_at: '2026-11-23T23:10:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17353,82 +17362,87 @@ tasks:
     evidence:
       - 'Drafted by the coordinator push 2026-11-23 ~21:35 IST (owner order: no worker under 30 percent burn - bigger multi-hour tasks, queues at depth 3, pool floor 10).'
       - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Queue top-up after FRD-038 moved to Muse 14: owner null -> muse_11."
+      - 'Assigned M2 queue position 2 (hub 7108903950).'
     blockers: []
     next_action: 'Probe APInex from the fleet, add it as a fallback provider behind the router, prove failover in staging. Free tier only - no top-up.'
   - id: TASK-VYR-049
 
     title: 'VyralX: enable the vyralx-metrics-sync.timer on S2 - restored in the 2026-11-23 AWS-exit move but never started, so her metrics are going stale'
     status: AVAILABLE
-    owner: null
+    owner: muse_16
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T21:35:00+05:30'
+    updated_at: '2026-11-23T23:10:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Timer enabled and active on S2; one sync cycle observed end-to-end and the metrics read-back is fresh (timestamps within one cycle of the check).'
     evidence:
       - 'Drafted by the coordinator push 2026-11-23 ~21:35 IST (owner order: no worker under 30 percent burn - bigger multi-hour tasks, queues at depth 3, pool floor 10).'
+      - 'Assigned M16 queue position 3 (hub 7108903950).'
     blockers: []
     next_action: 'Enable the timer on S2, watch one full sync cycle, file the fresh-metrics read-back.'
   - id: TASK-FUT-026
 
     title: 'Futuris: one full forecast cycle on a NON-market target - the owner rule is she forecasts everything, not markets only'
     status: AVAILABLE
-    owner: null
+    owner: muse_12
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T21:35:00+05:30'
+    updated_at: '2026-11-23T23:10:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'A real non-market forecast produced by her live pipeline (target, horizon, confidence filed) with the scoring hook armed so the outcome gets scored when the window closes.'
     evidence:
       - 'Drafted by the coordinator push 2026-11-23 ~21:35 IST (owner order: no worker under 30 percent burn - bigger multi-hour tasks, queues at depth 3, pool floor 10).'
+      - 'Assigned M12 queue position 3 (hub 7108903950): M12 queue STR-047 -> VAL-014 -> FUT-026.'
     blockers: []
     next_action: 'Pick a verifiable non-market target, run her pipeline end-to-end, file the forecast and the scoring plan.'
   - id: TASK-INT-036
 
     title: 'IntelX: fast-lane live proof - one real alert delivered end-to-end, or the armed-state evidence pack if no qualifying event fires within 48h'
     status: AVAILABLE
-    owner: null
+    owner: muse_1
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T21:35:00+05:30'
+    updated_at: '2026-11-23T23:10:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Either one real alert traced from source to delivery with timestamps at each hop, or a 48h armed-state evidence pack (watch list, thresholds, zero qualifying events shown from logs). Kill switch stays OFF.'
     evidence:
       - 'Drafted by the coordinator push 2026-11-23 ~21:35 IST (owner order: no worker under 30 percent burn - bigger multi-hour tasks, queues at depth 3, pool floor 10).'
+      - 'Assigned M1 queue position 3 (hub 7108903950): IntelX fast-lane live proof; M1 queue FRD-040 -> FUT-025 -> INT-036 after INT-034 merged.'
     blockers: []
     next_action: 'Arm the fast lane, trace the first qualifying alert end-to-end; if none fires in 48h, file the armed-state pack.'
   - id: TASK-VOI-032
 
     title: 'Voice: the background-noise interruption defect - FRIDAY stops mid-answer when fan or room noise hits the microphone; reproduce, root-cause, fix'
     status: AVAILABLE
-    owner: null
+    owner: muse_2
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T21:35:00+05:30'
+    updated_at: '2026-11-23T23:10:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Defect reproduced with a noise-injected probe; root cause filed (VAD/barge-in threshold or send-path); fix merged and A/B evidence (calm vs noise) shows she finishes her answers under noise without losing real barge-in.'
     evidence:
       - 'Drafted by the coordinator push 2026-11-23 ~21:35 IST (owner order: no worker under 30 percent burn - bigger multi-hour tasks, queues at depth 3, pool floor 10).'
+      - 'Assigned M2 queue position 3 (hub 7108903950): background-noise interruption defect.'
     blockers: []
     next_action: 'Reproduce the owner-reported defect with controlled noise, find the threshold at fault, fix and prove with calm/noise A/B probes - speed stays the headline metric.'
   - id: TASK-VYR-050
@@ -17488,6 +17502,140 @@ tasks:
       - 'Drafted by the coordinator enforcement round 2026-11-23 ~22:40 IST: Futuris cursor 401s were flagged as a next-pool candidate on 2026-11-23 and nobody owns them. Pool floor refill.'
     blockers: []
     next_action: 'Start from the live IntelX/Futuris logs on S2: find the first cursor 401, name the rejecting check, then fix and prove three clean cycles.'
+  - id: TASK-OBS-022
+
+    title: 'OBS: identify the FRIDAY.service restart actor - 3 clean restarts on S1 (20:00 / 20:10 / 21:28 IST, PID changes, no OOM kill)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T23:10:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Restart actor identified from S1 logs/cron/systemd evidence (or ruled out as an external actor with the proof); if an agent or cron restarts her, the trigger is named and the restart is either scheduled or removed.'
+    evidence:
+      - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
+    blockers: []
+    next_action: 'Correlate the three restart times against S1 cron, systemd timers, agent activity and deploy logs; name the actor.'
+  - id: TASK-FRD-042
+
+    title: 'FRIDAY: deploy + live acceptance leg for the FRD-038 webchat 401 fix once it lands'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T23:10:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'FRD-038 fix deployed on S1 with coordinator clearance; live webchat login succeeds end-to-end (no 401) and the acceptance probe passes on the live copy.'
+    evidence:
+      - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
+    blockers: []
+    next_action: 'Deploy the FRD-038 fix with coordinator hub clearance, then run the live webchat acceptance probe.'
+  - id: TASK-EARN-004
+
+    title: 'EARN: lead-magnet eBook pack - draft the eBook outline + first chapter for the Payhip/Contra listing'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T23:10:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'A complete lead-magnet eBook pack (outline + first chapter + listing copy) committed under earning/, ready for the owner to approve for listing.'
+    evidence:
+      - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
+    blockers: []
+    next_action: 'Draft the eBook outline, first chapter and listing copy; keep it free-only, no paid tools.'
+  - id: TASK-EARN-005
+
+    title: 'EARN: sales page copy pack for the 19-dollar digital product'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T23:10:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Sales page copy (headline, benefits, FAQ, call to action) committed under earning/, ready for the owner to approve.'
+    evidence:
+      - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
+    blockers: []
+    next_action: 'Write the sales page copy for the 19-dollar product; free-only, no paid promotion.'
+  - id: TASK-EARN-006
+
+    title: 'EARN: resume/LinkedIn pack - service copy for the next Fiverr gig batch'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T23:10:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Resume/LinkedIn service copy pack (gig title, description, tiers, FAQ) committed under earning/, ready for the owner to approve; fits the Level-1 queue.'
+    evidence:
+      - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
+    blockers: []
+    next_action: 'Draft the resume/LinkedIn gig copy pack from the Level-1 queue brief.'
+  - id: TASK-EARN-007
+
+    title: 'EARN: email-sequences gig copy pack (Level-1 queue item 1)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T23:10:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Email-sequences gig copy pack (gig title, description, 3 tiers, FAQ) committed under earning/, ready for the owner to approve; first item of the Fiverr Level-1 queue.'
+    evidence:
+      - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
+    blockers: []
+    next_action: 'Draft the email-sequences gig copy pack from the Level-1 queue brief.'
+  - id: TASK-STR-048
+
+    title: 'Stratex: reconcile the heartbeat P&L (+130.27) vs move-verified P&L (+140.90) gap from the 2026-11-23 audit'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T23:10:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Gap explained with per-trade evidence (which fills/closes the heartbeat missed or double-counted) or a filed defect with the exact missing rows; the two P&L sources agree afterwards.'
+    evidence:
+      - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
+    blockers: []
+    next_action: 'Reconcile the heartbeat ledger against the move-verified ledger trade by trade; file the gap cause.'
+
 task_id_warnings:
   - id: TASK-REL-061
 
