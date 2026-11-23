@@ -348,6 +348,21 @@ collaborators:
       - "muse16/onboarding"
     last_verified_at: "2026-11-23"
 
+  - id: muse_18
+    display_name: "Muse 18"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (eighteenth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-23 (Muse 18, evidence-backed only): displayed assistant name set to 'Muse 18'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (263 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (361 lines, main 8c0ef142), plus WORK_BOARD.yaml (17,684 lines, snapshot 2026-11-17, 761 tasks, YAML parses) searched — no assignment for Muse 18 found; live issue #35 read (open, 2500 comments, updated 2026-11-23T09:04:37Z) and successor hub #1483 read (open, 201 comments at check)."
+      - "Onboarding 2026-11-23: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, protocol 2025-11-25, get_system_info OK (both Oracle servers ONLINE, Server 2 git branch muse5/task-vyr-045-caption-dedup, commit 0e2fa615); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file with secret masking (24,467 bytes, header only, no secrets copied)."
+      - "Onboarding 2026-11-23: GitHub access confirmed — own PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #35 read confirmed; main 8c0ef142; credential request posted to hub #1483 (comment 7110157517) after #35 post did not complete (#35 full at 2500 comments, verified no comment created)."
+      - "Onboarding 2026-11-23: three scheduled tasks created (muse18-work-request every 15 min, muse18-hourly-self-check every 1 h, muse18-weekly-reset Mondays 23:57 IST; weekly reset verified Mon Nov 30 11:47 PM IST, 0% used)."
+    active_assignments: []
+    active_branches:
+      - "muse18/onboarding"
+    last_verified_at: "2026-11-23"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
