@@ -15589,14 +15589,14 @@ tasks:
     next_action: 'Diagnose both DEGRADED states live, fix or file the root cause, re-probe.'
   - id: TASK-INT-023
     title: 'IntelX: compile the INT-876 soak 7-day chain evidence for the D4 enablement judgement due 2026-11-27'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_9
     branch: muse9/task-int-023
-    pr: null
+    pr: 1460
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T11:25:00+05:30'
+    updated_at: '2026-11-23T11:35:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INT-023-SOAK-CHAIN-EVIDENCE.md
