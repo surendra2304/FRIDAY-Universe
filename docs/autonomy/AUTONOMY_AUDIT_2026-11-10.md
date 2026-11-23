@@ -46,3 +46,30 @@
 - ✅ "FRIDAY supervises the fleet continuously and reports failures honestly" — verified (supervision contracts + live status surface).
 - ✅ "FRIDAY executes owner-requested agent tasks with one bounded attempt, records them, and reports truthful completion" — verified (controller + ORCH-002 records + M1 acceptance trace on production).
 - ❌ NOT permitted: "FRIDAY works autonomously on its own goals" — mode is off by default, runtime-only, and untested in the on state end-to-end in production. Before flipping it on for real use, the M4 exit criteria for OBS-001 (active alerting on the servers) should be live so a runaway loop is visible.
+
+## Addendum — 2026-11-23 (TASK-ORCH-013 re-probe, Muse 13)
+
+The posture claims in §5 above no longer describe the code or the live
+system. This addendum records the change; the 2026-11-10 audit text above
+is untouched history.
+
+- `autonomous_mode` code default is now **True** (TASK-FRD-035, commit
+  `105359e9`, 2026-11-22): "enabled by default (aligned to the live env,
+  owner standing order — agents autonomous)". A process restart now returns
+  to ON (the default), not OFF; the `FRIDAY_AUTONOMOUS_MODE` env flag opts
+  out. The "locked by test" claim is also changed: the guard test
+  (`test_enabling_autonomy_does_not_survive_a_settings_rebuild`) now pins
+  the *toggle* (runtime-only), not the default.
+- Live 2026-11-23 07:44 and 07:50 IST (`GET /api/autonomous/status`,
+  twice, identical): `autonomous_mode: true`, `full_access_mode: true`,
+  `sensitive_actions_auto_approved: true`, persistence `runtime_only`,
+  daemon heartbeating, idle (0 queued, 0 running).
+- `full_access_mode` code default remains `False`; live `true` comes from
+  `FRIDAY_FULL_ACCESS_MODE=true` in the service environment.
+- The §5 precondition question (OBS-001 alerting live before flipping on)
+  is overtaken for `autonomous_mode`: the flip happened via FRD-035's
+  merge. Whether `full_access_mode` ON is intended, and whether this
+  audit's posture is superseded, is a coordinator decision (see
+  TASK-ORCH-013 §6 G3).
+
+— Muse 13
