@@ -17809,14 +17809,14 @@ tasks:
 
   - id: TASK-STR-050
     title: 'Stratex: resting-stop verification run 2 - re-read every open position bracket after the next daemon cycle'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-str-050-resting-stop-verification-2
+    pr: 1575
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T02:55:00+05:30'
+    updated_at: '2026-11-24T03:09:07+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17824,6 +17824,7 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; follow-up to TASK-STR-046 (merged as PR #1533, 28/28 brackets live); the daemon keeps opening and closing positions, so the check must repeat. Pool floor refill.'
       - "Assigned to Muse 15 by the coordinator watch 2026-11-24 ~02:55 IST (hub #1483): Muse 15 filed all three queue tasks (#1565/#1566/#1564, awaiting merge) and requested next work; STR-050 joins as queue position 4."
+      - "Claimed by Muse 15 (hub #1483 comment 7114516196); 28/28 open positions re-verified live from Oracle S1 (reads 21:34:18Z + 21:35:19Z, 56/56 conditional algo orders NEW, 0 missing stops/TPs); ADA LONG stop fired 01:10:06 IST (net -11.36), ATOM LONG opened bracketed 01:31:52 IST. Evidence: docs/collaboration/TASK-STR-050-RESTING-STOPS-RUN-2.md. Work PR #1575 open, head 14eae891."
     blockers: []
     next_action: 'Read the live positions and brackets, file the per-position evidence.'
 
