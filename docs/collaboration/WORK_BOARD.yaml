@@ -15664,24 +15664,26 @@ tasks:
   - id: TASK-WF-002
 
     title: 'Integration: fresh multi-agent trace, one end-to-end task across at least three agents'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_14
-    branch: null
+    branch: muse14/task-wf-002-e2e-trace
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T10:10:00+05:30'
+    updated_at: '2026-11-23T18:05:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-WF-002-CODE-LEVEL-TRACE.md
     acceptance:
     - 'One fresh end-to-end task runs across at least three agents with a recorded trace (request, routing, each agent evidence, result) and no silent failure; the trace is filed in ACTIVITY_LOG/handoff records.'
     evidence:
     - 'Coordinator pool 10, from MASTER_PLAN M1 gate (TASK-WF-001, STALE-UNVERIFIED since 2026-11-14): the 2026-11-10 trace recorded 3 completed / 1 failed (Futuris 501) and the owner browser closure never happened. A fresh trace is an input to the M5 exit. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Reserve per coordinator assignment round 7084017188: claim immediately on finishing the current task if no new assignment has landed.'
     - 'Assigned to Muse 14 by the coordinator, hub post 7091751044, 2026-11-23 10:09 IST, queue position 3 after SEN-022 (VAL-012 head blocked). Claim via hub comment + branch push once SEN-022 is in flight.'
+    - 'Claim recorded in this board record by Muse 14, 2026-11-23 ~18:05 IST, per coordinator watch 7100338636 (~17:28 IST, confirmed in push 7100469274 ~17:40 IST): code-level trace leg now, live leg waits for the FRD-038 401 fix (Muse 11). No hub comment posted from this run (local files only; hub comment + PR filing are a separate step after review). Branch muse14/task-wf-002-e2e-trace, base main 7345f64a. Code-level leg filed: docs/collaboration/TASK-WF-002-CODE-LEVEL-TRACE.md. Verdict (code-level only): Memora leg fully wired, blocked only by the 401 FRD-038 owns (mechanism pinned: bus sends x-api-key only, Memora resolves the expected key by X-Agent-Name, dependencies.py:356); Futuris leg CANNOT complete via the bus (/v1/task/execute is a 501 refusal stub for every real action, Futuris/futuris/api/app.py:356-357; real forecast API unreachable from the fixed bus action path); IntelX leg fully wired, no code-level blocker. Silent-failure risks S1-S8 named with file/line (S1 callback/receipt vs store divergence, S2 accepted parking lot, S3 in-memory store, S4 unlinked router/bus records, S5 routing never learns, S6 stale Futuris circuit, S7 200-running filed as accepted, S8 no accepted-task deadline). Also found: universe_orchestrator and agent_runtime /v1/agent/* are NOT mounted in the live server.py — no live aggregator exists; the live leg must assemble the briefing from the three receipts + store report.'
     blockers: []
-    next_action: Run one fresh multi-agent task, record the full trace, file it.
+    next_action: 'Live leg, once the FRD-038 401 fix lands: (1) re-run the VAL-009 Memora recall and confirm completed receipt AND completed store record; (2) Futuris: wire a real handler behind /v1/task/execute first (or explicitly record a bypass to POST /v1/forecast) and reset the Futuris circuit before re-probing; (3) IntelX research_live via the bus with timeout_sec >= 115, confirm durable_run + run_id retrievable via research_recall; (4) assemble the briefing from the three receipts + store report, checking receipts AND records for every leg; (5) leave no leg at dispatched and no circuit open. See TASK-WF-002-CODE-LEVEL-TRACE.md live-leg remainder.'
   - id: TASK-VAL-010
 
     title: 'FRIDAY: run one long multi-step task against the action limit live; file where the limit binds, or proof it completes within limits'
