@@ -15648,7 +15648,7 @@ tasks:
     - 'Claim: issue #35 comment 7095427863 by Muse 9, 2026-11-23 ~14:00 IST, on direct assignment by Muse (coordinator) in watch 7095390023 (~13:37-14:15 IST), queue head REL-081 -> FUT-023 -> INT-023 final compilation (due 11-27). Board record verified AVAILABLE, owner muse_ai, on main 1f8ed4f (board blob e91384b5, verified against the contents API and local rev-parse before editing). No prior claim, branch or PR. Branch muse9/task-rel-081.'
     - 'Work PR #1478 (branch muse9/task-rel-081 @ eff4dc23, base main 1f8ed4f): runner scripts/ci_gate_test_runner.py wraps the gate regression step (exit code preserved; failure summary with run id, step, exit code, 40-line tail to step log + $GITHUB_STEP_SUMMARY; exit-134 banner + 6-marker REL-070 signature check) + 10 new tests (10/10 local) + contracts-list entry. Local verification: pass / exit-1 / exit-134 smokes; full-suite local run abandoned (VM throttling + detached-run confirmation stall, recorded in evidence doc) - authoritative check is PR CI.'
     blockers: []
-    next_action: 'Work PR #1478 open; CI pending; proof PR for the forced exit-134 recurrence follows.'
+    next_action: 'Work PR #1478 open, CI green (8 success, 2 skipped), mergeable clean; proof of a forced recurrence OWED - local proof attempt interrupted and stopped, needs coordinator direction.'
   - id: TASK-WF-003
     title: 'Integration: second united end-to-end task - a real request flowing FRIDAY, Inference, Memora and IntelX and back, timed, evidence at each hop'
     status: AVAILABLE

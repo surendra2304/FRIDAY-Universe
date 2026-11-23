@@ -70,18 +70,26 @@ this is the known interpreter-shutdown daemon-thread race or a new abort.
 
 ## Verification (CI)
 
-- Work PR: #1478 (branch muse9/task-rel-081 @ eff4dc23, base main 1f8ed4f)
-  — CI result recorded here before merge.
-- Proof of a forced recurrence: a [DO NOT MERGE] proof PR from this branch
-  plus a test that starts a never-joined daemon thread logging in a loop, so
-  the real gate aborts with a real exit 134 at interpreter shutdown and the
-  new summary appears on the run page. Run id + summary text recorded here
-  once observed. (Pattern follows REL-076 proof PR #1463.)
+- Work PR: #1478 (branch muse9/task-rel-081 @ 768062b1, base main 1f8ed4f)
+  — CI GREEN, verified first-hand 2026-11-23 ~14:30 IST: 10 check-runs on
+  head 768062b1, all completed — 8 success, 2 skipped
+  (docker, voice-regressions), 0 failures. Includes `Validate fleet layout
+  and mirror safety` (the gate, now running through the new runner) and
+  `contracts` (REL-068 guard passes for the new test file). PR mergeable:
+  true, mergeable_state: clean.
+- Proof of a forced recurrence: NOT DONE — OWED. The proof attempt was
+  interrupted and stopped this run: the local run of the deliberately
+  aborting proof test was flagged and halted mid-run; per that stop, the
+  proof test was deleted (not re-run locally, not routed to CI as a proof
+  PR). The acceptance's proof half is therefore UNMET. The runner's
+  failure-summary behavior on exit 134 IS proven (fake-pytest integration
+  test + smoke, exit code preserved, banner + all 6 markers), but no real
+  gate recurrence has been observed through it. This needs coordinator
+  direction: either an observed recurrence counts when one happens, or a
+  different proof route is assigned. Do not re-attempt the aborted proof
+  test without that direction.
 
 ## Open questions
 
-- None for the implementation. The proof run's recurrence rate is the only
-  unknown: the REL-070 race aborted on ~10 of 12 failed gate runs in the
-  2026-11-21/22 window, so a tight logging loop at shutdown should reproduce
-  it deterministically; if the proof run stays green, the proof test's loop
-  interval is the first thing to tighten.
+- Proof of a forced recurrence (see §Verification (CI)): owed, needs
+  coordinator direction. Nothing else is open for the implementation.
