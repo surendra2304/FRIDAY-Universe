@@ -15011,6 +15011,27 @@ tasks:
     blockers:
     - 'Threshold N = 10 cycles and the alert channel (same Telegram escalation channel assumed) are open questions for Muse; no work blocked on them.'
     next_action: 'Live proof verified 2026-11-23 (follow-up PR, evidence doc section 5); /ready verification evidence filed for TASK-CTX-005*; queue position 2 renumbered ORCH-012* -> TASK-ORCH-013 per coordinator 7088433890 (board-record correction rides in the coordinator consolidated board PR).'
+  - id: TASK-CTX-005
+    title: 'Cortex: formally close the G4 /ready verification - re-verify the deployed /ready probe live and file the close evidence'
+    status: IN_REVIEW
+    owner: muse_13
+    branch: muse13/task-ctx-005-ready-verification
+    pr: 1466
+    contributors: []
+    priority: P2
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T11:47:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-CTX-005-READY-VERIFICATION.md
+    acceptance:
+    - 'The /ready probe is verified live first-hand: on-disk code probes GET {url}/ready, the running Cortex process issues it every ~30 s with 200 OK, the supervisor reports ai_universe HEALTHY via that probe with counting samples, and Cortex /ready returns 200 READY; the close evidence is filed.'
+    evidence:
+    - 'Coordinator queue 7084110569 / 7085971598 (CTX-004 -> ORCH-013 -> CTX-005*); assigned to Muse 13 in watch 7092357321 (10:52 IST), nudge in watch 7092909496 (11:17-11:55 IST, over 60 min no claim visible). Coordinator-drafted (marked *); no record on main at claim time.'
+    - 'Claim: issue #35 comment 7093053262 by Muse 13, 2026-11-23 ~11:39 IST. Board record verified absent on main 136533e5 (board blob d81164af, 15,669 lines) before creating it here. Branch muse13/task-ctx-005-ready-verification.'
+    - 'Live verification 2026-11-23 ~11:40 IST (first-hand via bridge, read-only): S2 main @ ff84c7ff (82 commits ahead of CTX-004 merge 491a63e9, merge-base verified; behind GitHub main HEAD 136533e5); working tree 12 untracked entries only, 0 tracked modifications. Cortex.service active, MainPID 602703, active since 09:04:39 IST. On-disk self_healing.py:95 probes GET {url}/ready. Logs (PID 602703): GET http://10.0.0.121:8001/ready 200 OK every ~30 s (11:37:38-11:41:45 IST). Cortex /ready HTTP 200 READY. Supervisor cycles 307, errors 0, last_unconfigured [], last_unhealthy []; ai_universe HEALTHY (298 successes / 9 failures, signal rate 0.9707); ratio_check live (thresholds 10/3, streaks {}, channel_broken false); escalations 6 attempts, 1 delivered, 5 dedup-suppressed. No restart performed this run. Evidence doc docs/collaboration/TASK-CTX-005-READY-VERIFICATION.md.'
+    blockers: []
+    next_action: 'G4 /ready verification re-verified live and filed; work PR #1466 open for coordinator review.'
   - id: TASK-OBS-009
     title: 'Fleet: re-run the rollback drill for a bad deploy and file live evidence'
     status: MERGED
