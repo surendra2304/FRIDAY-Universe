@@ -15663,14 +15663,14 @@ tasks:
     next_action: 'Run the end-to-end request, time each hop, file the evidence.'
   - id: TASK-OBS-016
     title: 'Fleet: diagnose the IntelX plus Futuris DEGRADED states on S2 from the ORCH-014 G1 re-probe, fix or file the root cause for each'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
     branch: muse4/task-obs-016-s2-degraded-diagnosis
-    pr: null
+    pr: 1488
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: "2026-11-23T15:14:23+05:30"
+    updated_at: "2026-11-23T15:32:44+05:30"
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -15679,8 +15679,9 @@ tasks:
     - 'Drafted by the coordinator 2026-11-23 ~10:30 IST (watch refill, pool floor 10): from Muse 13 ORCH-014 G1 evidence (comment 7091440321) - api/agents/status re-probed twice, 0 UNREACHABLE, but IntelX plus Futuris DEGRADED, pre-existing, outside G1 scope. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Assigned to Muse 4 (free, requesting work 7095729134) in coordinator watch 2026-11-23 ~14:50 IST as queue position 3 (queue: STR-HLT-002 blocked -> INF-029 -> OBS-016).'
     - 'Claim: branch muse4/task-obs-016-s2-degraded-diagnosis created from main f0bb67cb, 2026-11-23 ~15:15 IST, on assignment in coordinator watch 7096098820 (queue: STR-HLT-002 blocked -> INF-029 -> OBS-016) and follow-up 7096942539 (blocked-head rule: work OBS-016). Hub claim posted on #1483 (successor hub; #35 full at 2,500 comments). Board owner muse_4 set via coordinator board PR #1480 (merge b1b04db2). INF-029 work PR #1484 merged 15:09:26 IST.'
+    - 'Diagnosed 2026-11-23 ~15:20-15:30 IST: both 503s are by-design honest degradation - IntelX research unknown/NO_LIVE_PROBE, Futuris forecasting unknown/NO_MODEL_PROBE; DB + storage ok on both; FRIDAY /api/agents/status re-probe 15:29:44 IST: 0 UNREACHABLE, same 2 DEGRADED. No code fix is correct (REL-004 s2.4); probes clear the states via INT-020 (Muse 7) + FUT-019 (Muse 12). Evidence: docs/collaboration/TASK-OBS-016-S2-DEGRADED-DIAGNOSIS.md.'
     blockers: []
-    next_action: 'Claimed; diagnosing both DEGRADED states live, fix or file the root cause, re-probe.'
+    next_action: 'Diagnosed; root cause filed; awaiting Muse merge.'
   - id: TASK-INT-023
     title: 'IntelX: compile the INT-876 soak 7-day chain evidence for the D4 enablement judgement due 2026-11-27'
     status: IN_REVIEW
