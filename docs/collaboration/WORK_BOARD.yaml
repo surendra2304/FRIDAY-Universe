@@ -17086,12 +17086,12 @@ tasks:
     title: 'Futuris: forecast-accuracy table — publish the running accuracy table (forecast vs outcome) for the last 30 days, with the scoring method filed'
     status: IN_REVIEW
     owner: muse_15
-    branch: muse15/task-fut-024-forecast-accuracy-table
-    pr: 1565
+    branch: muse15/task-fut-024-forecast-accuracy-table-r2
+    pr: 1579
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T02:55:00+05:30'
+    updated_at: '2026-11-24T04:15:57+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
