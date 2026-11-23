@@ -17699,22 +17699,25 @@ tasks:
     next_action: 'Read the INF-019 timing evidence, set the deadline, prove it with a probe.'
   - id: TASK-REL-092
     title: 'Reliability: diagnose the contracts-job infra failure blocking the FRG-001 merge (#1532, two identical 12-14s failures)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_19
     branch: muse19/task-rel-092
     pr: 1560
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T00:59:00+05:30'
+    updated_at: '2026-11-24T01:40:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-REL-092-CONTRACTS-DIAGNOSIS.md
     acceptance:
     - 'Root cause filed with evidence (infra vs test vs runner); either a fix is merged or a precise rerun/skip decision is filed; #1532 unblocked or its exact blocker named.'
     evidence:
     - 'Drafted by the coordinator 2026-11-24 ~00:15 IST: #1532 (FRG-001, Muse 6) is held only on the contracts-job infra failure - two identical 12-14s failures, no code fix owed. Diagnosis owed, not a worker code change. Pool floor refill.'
+    - 'Diagnosis filed by Muse 19 2026-11-24 ~01:40 IST (PR #1560, doc docs/collaboration/TASK-REL-092-CONTRACTS-DIAGNOSIS.md): #1532 contracts job failed twice identically (run 45221742711 attempts 1+2, 14s + 12s) at the REL-068 guard step, exit 1 — new file Forge/tests/test_frg001_cage.py is collected by NO PR-triggered workflow (independent re-check of the guard rules over the #1532 tree: 1942 test files, 314 covered, 0 stale). NOT infra: a one-line fix is owed on #1532 (add the file to a workflow pytest invocation or to EXCLUDED), then re-run contracts.'
+    - '#1548 folded in: failed run 45244786899 (head 5695b36e) step 6 pytest failed ~20s in; the only commit to the passing head 7e8be4e2 touches FRIDAY/tests/test_frd041_memory_guard.py, which step 6 never loads — so the step-6 input was identical: transient/environmental, not a code defect. Current head fully green (contracts run 45246078490 success); no fix owed. Exact failing test unrecoverable here: job-log download stalls in this environment and annotations carry only exit code 1.'
     blockers: []
-    next_action: 'Reproduce the contracts-job failure, name the failing layer, file the diagnosis and the unblock path.'
+    next_action: 'Coordinator / Muse 6: apply the one-line fix on #1532 (add Forge/tests/test_frg001_cage.py to a workflow pytest invocation or to EXCLUDED) and re-run the contracts job; #1548 already green on head 7e8be4e2, no action.'
   - id: TASK-VYR-051
     title: 'VyralX: prepare the next supervised-cycle candidate pool from most-popular-video discovery plus machine QA gates'
     status: AVAILABLE
