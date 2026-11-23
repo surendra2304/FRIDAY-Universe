@@ -15340,22 +15340,23 @@ tasks:
     next_action: 'Work PR #1461 open - awaiting CI green + coordinator merge; proof PR (deliberately failing branch) still to file.'
   - id: TASK-VAL-009
     title: 'Integration: prove router-bus TaskRecord correlation live - one dispatched task, router id to bus dispatch id chain + completion callback shown'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_8
-    branch: null
+    branch: muse8/task-val-009
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T09:50:00+05:30'
+    updated_at: '2026-11-23T12:19:15+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'One real dispatched task shows the full chain: router id, bus dispatch id, completion callback, with the trace filed.'
     evidence:
     - 'Coordinator-drafted (queues post 2026-11-23 ~01:00 IST). Queued to Muse 8 position 2 after TASK-REL-076. Muse 8 claims via hub comment + branch push.'
+    - 'Claim: issue #35 comment 7093685321 by Muse 8, 2026-11-23 ~12:18 IST, on queue assignment (coordinator queues post 2026-11-23 ~01:00 IST; watch 7091751044 + watch 7093557479: Muse 8 -> REL-076 MERGED -> VAL-009). Board record verified AVAILABLE, owner muse_8, on main 23324fdd (board blob 6e69d6c0, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-val-009.'
     blockers: []
-    next_action: Run one live dispatch, file the id chain + callback trace.
+    next_action: 'Claim filed - claim PR open; implement the live router-bus correlation probe once the claim PR merges.'
   - id: TASK-VYR-040
     title: 'VyralX: supervised cycle 2 from FRESH most-popular candidates (not the VYR-037 pool), machine QA gates first, renders held unlisted'
     status: AVAILABLE
