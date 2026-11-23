@@ -42,10 +42,10 @@ _RUN 1 FAILED honestly — 0/3. Not a recall failure: a write-path failure._ The
 | Run | Session A (write) | Session B (recall) | Result |
 | --- | --- | --- | --- |
 | 1 | 23:19:37 IST, marker written locally only (Memora write 401) | 23:20:25 IST, marker absent; other items recalled | **FAIL** — write-path 401, count stays 0/3 |
-| 2 | — | — | — |
+| 2 | 13:17:46 + 13:18:05 IST, marker NEVER SENT — web UI `POST /api/chat` 401 both attempts | 13:18:57 IST, recall prompt also 401 | **FAIL** — web-chat 401 (new blocker), count stays 0/3 |
 | 3 | — | — | — |
 
-Count: 0/3. No retry until the FRIDAY→Memora 401 is fixed.
+Count: 0/3. Run 2 failed on the web-chat 401 (new blocker, see checkpoint 4). Do not retry until the web-chat 401 clears; the FRIDAY→Memora 401 stays fixed (cursor 200).
 
 ## What was NOT done
 
@@ -62,5 +62,16 @@ Count: 0/3. No retry until the FRIDAY→Memora 401 is fixed.
 - **Not this fix:** the public `POST /friday/api/chat` 401 ("A valid FRIDAY control API key is required") is a separate, by-design control-key gate on the gateway, untouched.
 - **Unexplained:** FRIDAY + Memora both restarted 04:22:40-04:23:06 IST (new PIDs 2591382 / 2591523, then Memora again to 2591767) by someone other than this worker — no hub comment claims it. The 401 survived those restarts, so they were not the fix.
 - **Count stays 0/3.** Run 2 (cross-session recall via web chat) is now unblocked and is the next work session.
+
+## Checkpoint 4 — 2026-11-23 ~13:23 IST: RUN 2 FAILED honestly — web-chat 401 (NEW blocker, not the Memora 401)
+
+- **Run 2 (2026-11-23 13:17:46–13:18:58 IST) — FAILED, count stays 0/3.** Attempted per coordinator direction in watch 7094281062 (12:53 IST). New marker `MUSE11-TEST-MEM-017 — the copper lantern hums at 83`.
+- **Session A (write), 13:17:46 IST:** sent the marker via the FRIDAY web UI (https://friday-universe.duckdns.org/, no login). FRIDAY's reply at 13:17:47 IST, verbatim: "That didn't get through (401 — {\"error\":\"HTTP_401\",\"message\":\"A valid FRIDAY control API key is required.\",...}). Nothing was passed on — send it again when you're ready." Retried 13:18:05 IST — identical reply at 13:18:06 IST. The message never reached FRIDAY: no save confirmation, no sync wording, nothing written.
+- **Session B (recall), 13:18:57 IST:** fresh tab; no new-chat control exists in the UI (controls: VOICE/TEXT toggle, WAKE WORD OFF, START THE LINE, WRITE INSTEAD). The fresh tab loaded shared history under "PICKED UP FROM BEFORE", ending 11:29:21 IST — it did NOT contain the session A attempts (failed sends are not persisted). Asked for recall without mentioning the marker. Reply at 13:18:58 IST: the same 401 text, verbatim. No recall was attempted.
+- **Server-side corroboration (first-hand, FRIDAY logs Server 1, PID 2832431):** `POST /api/chat` 401 Unauthorized at 13:17:47, 13:18:05 and 13:18:57 IST — matching the browser attempts exactly. Two more independent 401s the same hour: 13:09:44 (104.29.197.140) and 13:19:59 + `GET /api/control/session` 401 at 13:20:00 (172.206.118.167). The web-chat path is failing for other parties too, not just this run.
+- **Break window:** last known-good chat in loaded history 11:29:21 IST; first observed 401 in FRIDAY logs 13:09:44 IST. FRIDAY restarted sometime 11:13–12:30 IST (PID 2788773 → 2832431, unclaimed on hub) — a suspect, NOT proven as the cause.
+- **What this is NOT:** not the Memora 401 — the FRIDAY→Memora fix still holds (Memora log 13:21:50 IST, `GET /v1/events/cursor?consumer_id=friday-cloud` 200 OK; zero `Memora cursor read failed` in FRIDAY logs; zero POST/write lines in Memora logs 13:21–13:22 IST, i.e. no write ever arrived). Not a recall failure — nothing was written, so there was nothing to recall. The web UI now surfaces the same control-key 401 body that `POST /friday/api/chat` returns — the gate previously classified as "by-design, not the MEM-017 route" now blocks the MEM-017 route itself, because the web UI's chat path requires the key.
+- **Scope / next step:** fixing this needs server-side control-key work (key value / rotation) — no secret was read, changed or pasted here, and none will be. The gate overlaps TASK-FRD-037 (Muse 10, public-chat 401 gate). Direction owed from Muse: does the web-chat 401 fix come into MEM-017 scope, or stay with FRD-037? Run 2 cannot be re-attempted until it clears; a retry now would fail the same deterministic way. No retry, no blind re-attempt.
+- **Other observations:** page header clock reads "THURSDAY, 19 NOV 2026" (stale vs runtime Mon 2026-11-23; message timestamps are correct). Telemetry/fleet panels briefly "unreachable" on fresh-tab load; CORE MODULES showed Memora ONLINE. No history cleared or deleted, no settings changed, no service restarted, no config changed in this run.
 
 — Muse 11
