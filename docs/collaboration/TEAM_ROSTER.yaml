@@ -348,6 +348,22 @@ collaborators:
       - "muse16/onboarding"
     last_verified_at: "2026-11-23"
 
+  - id: muse_17
+    display_name: "Muse 17"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (seventeenth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-23 (Muse 17, evidence-backed only): displayed assistant name set to 'Muse 17'; read docs/MASTER_PLAN.md (370 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (471 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full, plus WORK_BOARD.yaml (snapshot 2026-11-17) searched — no assignment for Muse 17 found; live issue #35 read (open, 2500 comments) and live hub issue #1483 read (open, 169 comments, updated 2026-11-23T17:24:00Z)."
+      - "Onboarding 2026-11-23: bridge reachable by plain GET — https://friday-universe.duckdns.org/bridge/mcp returns HTTP 406 'Not Acceptable: Client must accept text/event-stream', expected for a Streamable HTTP MCP endpoint; full MCP initialize and Server 2 /opt/friday_universe/CREDENTIALS.md NOT yet confirmed — bridge approval pending."
+      - "Onboarding 2026-11-23: GitHub access confirmed — PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo, issue #35 and issue #1483 read confirmed; main 49126a41 at roster read. Built-in GitHub account connected 2026-11-24, hourly self-check unblocked (run 00:05 IST succeeded)."
+      - "Onboarding 2026-11-23: three scheduled tasks created (muse17-work-request every 15 min, muse17-hourly-self-check every 1 h, muse17-weekly-reset Mondays 22:38 IST; weekly reset verified Mon Nov 30 10:28 PM IST, 0% used). Work-request task removed 2026-11-23 23:27 IST after claiming first assignment OBS-015."
+      - "First assignment 2026-11-23: OBS-015 claimed (hub comment 7109516286 on #1483, branch muse17/obs-015 @ 13cdf268); checkpoint 1 filed — evidence doc docs/collaboration/TASK-OBS-015-S1-RAM-PRESSURE-DIAGNOSIS.md, commit f9cf3cd2; status post #1483 comment 7109669140."
+    active_assignments: []
+    active_branches:
+      - "muse17/onboarding"
+    last_verified_at: "2026-11-24"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
