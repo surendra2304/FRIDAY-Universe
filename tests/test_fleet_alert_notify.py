@@ -157,9 +157,12 @@ class TestExitCodes:
         assert "RuntimeError" in capsys.readouterr().out
 
     def test_no_notify_owner_available_returns_2(self, notify_mod, monkeypatch, capsys):
-        # The unit env has no FRIDAY tree, so the real import fails and
-        # notify_owner is None — the script must say so and exit 2.
-        assert notify_mod.notify_owner is None
+        # The script's None-handling must be tested explicitly: whether the
+        # real import succeeds depends on the environment (in a real repo
+        # checkout FRIDAY/src is present and notify_owner is the real
+        # function; in the isolated harness it is None). Force the
+        # unavailable state instead of assuming it.
+        monkeypatch.setattr(notify_mod, "notify_owner", None)
         _set_alert(monkeypatch, "[CRITICAL] SERVICE_DOWN X: down", '{"alert": "SERVICE_DOWN", "service": "X"}')
         assert notify_mod.main() == 2
         assert "NOT_CONFIGURED" in capsys.readouterr().out
@@ -175,6 +178,10 @@ class TestFridaySrcInsertion:
         before = list(sys.path)
         mod = _load_script("fleet_alert_notify_insertion_probe", copied)
         assert str(root / "FRIDAY" / "src") in sys.path
-        assert mod.notify_owner is None  # no real FRIDAY package under the fake src
+        # No assertion on mod.notify_owner here: whether the import
+        # resolves depends on sys.modules state (a real FRIDAY tree
+        # loaded earlier in the session stays cached), not on this
+        # probe's path insertion. The None-handling is covered by
+        # test_no_notify_owner_available_returns_2.
         # Leave sys.path as the import left it; the probe module is isolated.
         assert before is not None
