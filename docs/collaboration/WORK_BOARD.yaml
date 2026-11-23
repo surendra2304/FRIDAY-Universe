@@ -2758,27 +2758,7 @@ tasks:
       - "docs/collaboration/TEAM_ROSTER.yaml"
       - "docs/collaboration/FILE_OWNERSHIP.yaml"
       - "docs/handoff.md"
-    defect: "Two registry defects on main HEAD (993a6d6): (1) merge commit 2d5e2a6 committed unresolved conflict markers into docs/collaboration/ACTIVITY_LOG.md lines 569-613 (Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry). (2) WORK_BOARD.yaml carried a DUPLICATE top-level '(TASK-REL-017: IntelX threat-intel honesty — fabricators admit no source, simulations labelled, real engines mounted)
-  - id: TASK-FUT-022
-    title: 'Futuris: diagnose the 401 storm (consumer_id=futuris-cloud-v1, every ~15s) and fix it or prove it benign'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
-    contributors: []
-    priority: P1
-    created_at: '2026-11-23'
-    updated_at: '2026-11-23T05:15:00+05:30'
-    files:
-    - docs/collaboration/WORK_BOARD.yaml
-    acceptance:
-    - 'Cause of the Futuris 401s (consumer_id=futuris-cloud-v1, ~every 15s) diagnosed live and fixed, or proven benign with evidence; the 401 rate after the fix is filed.'
-    evidence:
-    - 'Drafted by the coordinator 2026-11-23 ~05:15 IST from the VAL-006 evidence flag (Futuris NRestarts=10 on S2 while active, flagged 2026-11-22 ~23:56 IST) and the Muse 11 MEM-017 401-fix note in watch 7087520785. Pool spare; unassigned.'
-    blockers: []
-    next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
-
-task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale IN_PROGRESS copies of TASK-WF-005 and TASK-WF-006, silently dropped by every YAML parser (shadowed by the real warnings section at line 2428) while the live DEPLOYED/VERIFIED records existed under tasks:."
+    defect: "Two registry defects on main HEAD (993a6d6): (1) merge commit 2d5e2a6 committed unresolved conflict markers into docs/collaboration/ACTIVITY_LOG.md lines 569-613 (Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry). (2) WORK_BOARD.yaml carried a DUPLICATE top-level '(TASK-REL-017: IntelX threat-intel honesty — fabricators admit no source, simulations labelled, real engines mounted)"
     acceptance:
       - "All three ACTIVITY_LOG conflict markers removed; BOTH sides retained (append-only log; no entries deleted); chronological order preserved (2026-11-12 Arena entries before the 2026-11-13 01:20 IST ZAI Agent 2 TG409 entry)."
       - "Inline repair note recorded at the ACTIVITY_LOG repair site."
@@ -14506,19 +14486,20 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
   - id: TASK-SEN-022
     title: 'Sentinel: startup self-check that fails VISIBLE when Telegram credentials are missing + direct verification of the S1 backup manifest + manifest completeness inside the backup success criteria'
     status: AVAILABLE
-    owner: muse_ai
+    owner: muse_14
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T14:46:00+05:30'
+    updated_at: '2026-11-23T10:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'On boot Sentinel verifies her Telegram credentials and logs a loud failure (or readiness) - the 2026-11-15 silent-failure class cannot recur unnoticed; the S1 backup manifest complete=true is verified directly once and completeness becomes part of the scheduled backup success check.'
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research: the 2026-11-15 drill reached nobody because the process env held no Telegram variables; the S1 manifest complete=true was never directly verified from the coordinator side (recorded gap). Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Assigned to Muse 14 by the coordinator, hub post 7091751044, 2026-11-23 10:09 IST: VAL-012 queue head blocked (no board record; execution-risk hold), VAL-006 merged; queue VAL-012 blocked -> SEN-022 -> WF-002. Claim via hub comment + branch push.'
     blockers: []
     next_action: Implement the self-check, verify the manifest, file evidence.
   - id: TASK-REL-068
@@ -15073,13 +15054,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
   - id: TASK-WF-002
     title: 'Integration: fresh multi-agent trace, one end-to-end task across at least three agents'
     status: AVAILABLE
-    owner: muse_ai
+    owner: muse_14
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T00:35:00+05:30'
+    updated_at: '2026-11-23T10:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -15087,6 +15068,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
     - 'Coordinator pool 10, from MASTER_PLAN M1 gate (TASK-WF-001, STALE-UNVERIFIED since 2026-11-14): the 2026-11-10 trace recorded 3 completed / 1 failed (Futuris 501) and the owner browser closure never happened. A fresh trace is an input to the M5 exit. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Reserve per coordinator assignment round 7084017188: claim immediately on finishing the current task if no new assignment has landed.'
+    - 'Assigned to Muse 14 by the coordinator, hub post 7091751044, 2026-11-23 10:09 IST, queue position 3 after SEN-022 (VAL-012 head blocked). Claim via hub comment + branch push once SEN-022 is in flight.'
     blockers: []
     next_action: Run one fresh multi-agent task, record the full trace, file it.
   - id: TASK-VAL-010
@@ -15427,6 +15409,26 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Coordinator follow-up from TASK-OBS-010 gap (a) (work PR #1435, merged 84739a0d): FLEET_ALERT_COMMAND still unwired on both servers, carried forward as a separate pool item. Queued to Muse 8 position 3 after TASK-VAL-009. Muse 8 claims via hub comment + branch push.'
     blockers: []
     next_action: Wire the command on S1+S2, verify one controlled alert end-to-end.
+  - id: TASK-FUT-022
+    title: 'Futuris: diagnose the 401 storm (consumer_id=futuris-cloud-v1, every ~15s) and fix it or prove it benign'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T10:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Cause of the Futuris 401s (consumer_id=futuris-cloud-v1, ~every 15s) diagnosed live and fixed, or proven benign with evidence; the 401 rate after the fix is filed.'
+    evidence:
+    - 'Drafted by the coordinator 2026-11-23 ~05:15 IST from the VAL-006 evidence flag (Futuris NRestarts=10 on S2 while active, flagged 2026-11-22 ~23:56 IST) and the Muse 11 MEM-017 401-fix note in watch 7087520785. Pool spare; unassigned.'
+    - 'Re-filed as a real record by the coordinator board PR 2026-11-23 ~10:10 IST (hub post 7091751044): the record was parser-invisible inside the TASK-REGISTRY-001 defect quote (unclosed double-quote, old lines 2761-2781); ghost text removed, defect string closed, record filed here before task_id_warnings:.'
+    blockers: []
+    next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
+
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
