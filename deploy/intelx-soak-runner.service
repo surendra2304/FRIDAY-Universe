@@ -1,0 +1,28 @@
+[Unit]
+Description=IntelX INT-876 soak runner: one grounded live-research run + day record (TASK-INT-032)
+# One run per day, triggered by intelx-soak-runner.timer at 09:30 IST.
+# NOTE (TASK-INT-032): Type=oneshot — between timer runs `systemctl status`
+# shows this unit as "inactive (dead)". That is its NORMAL resting state, not
+# an outage. Judge soak liveness by the TIMER
+# (systemctl is-active intelx-soak-runner.timer) and the day record:
+# /var/lib/friday-universe/intelx-soak/YYYY-MM-DD.json (one file per day).
+# The runner refuses a second run for the same date, so the 09:30 silent run
+# can never be duplicated by a late timer catch-up or a manual re-run.
+Documentation=https://github.com/surendra2304/FRIDAY-Universe
+After=network-online.target IntelX.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/friday_universe
+# Fleet key for the local IntelX call (FRIDAY_API_KEY). The key is read from
+# the IntelX service environment and is never printed or logged by the
+# runner. INSTALL CHECK: confirm /opt/friday_universe/IntelX/.env carries
+# FRIDAY_API_KEY (the same file IntelX.service reads) before enabling the
+# timer; if the deploy uses a different env file, change this line to match.
+EnvironmentFile=/opt/friday_universe/IntelX/.env
+ExecStart=/opt/friday_universe/venv/bin/python IntelX/scripts/run_int876_soak.py
+User=ubuntu
+Nice=5
+# Day records live in /var/lib so they survive package-style repo updates.
+StateDirectory=friday-universe
