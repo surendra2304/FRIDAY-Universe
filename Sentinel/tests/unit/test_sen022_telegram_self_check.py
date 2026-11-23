@@ -9,6 +9,8 @@ this file covers only the endpoint wiring, which needs the full app.
 """
 from __future__ import annotations
 
+import sys
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -20,6 +22,35 @@ from sentinel.gatekeeper import approval_dispatcher as dispatch_mod
 TOKEN = "TELEGRAM_BOT_TOKEN"
 CHAT = "TELEGRAM_CHAT_ID"
 
+def _dispatch_modules():
+    """Every live copy of approval_dispatcher (see tests/repo_isolation.py).
+
+    The monorepo suite imports ``sentinel`` through more than one sys.path
+    spelling, so the module object captured at collection time can differ
+    from the one check_telegram_channel's lazy import finds in sys.modules
+    at call time — and the stale cache lives on the live copy, not the
+    captured one (CI 2026-11-23: the captured copy's __file__ carried a
+    ``tests/../`` spelling while the live copy's was the clean Sentinel/
+    path, and only the live copy's _FILE_ENV_CACHE was populated). Reset
+    and patch every copy: the production check reads whichever sys.modules
+    holds when it runs.
+    """
+    mods = {dispatch_mod}
+    live = sys.modules.get("sentinel.gatekeeper.approval_dispatcher")
+    if live is not None:
+        mods.add(live)
+    return mods
+
+
+def _reset_file_env_cache():
+    for _mod in _dispatch_modules():
+        _mod._FILE_ENV_CACHE = None
+
+
+def _patch_env_file_candidates(monkeypatch, env_file):
+    for _mod in _dispatch_modules():
+        monkeypatch.setattr(_mod, "_env_file_candidates", lambda: [env_file])
+
 
 @pytest.fixture()
 def no_telegram(monkeypatch, tmp_path):
@@ -30,14 +61,14 @@ def no_telegram(monkeypatch, tmp_path):
                  "SENTINEL_TELEGRAM_CHAT_ID", "SENTINEL_ENV_FILE"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("SENTINEL_ENV_FILE", str(env_file))
-    monkeypatch.setattr(dispatch_mod, "_env_file_candidates", lambda: [env_file])
-    dispatch_mod._FILE_ENV_CACHE = None
+    _patch_env_file_candidates(monkeypatch, env_file)
+    _reset_file_env_cache()
     # No lifespan runs under ASGITransport: make sure no stale boot
     # verdict leaks in from another test.
     if hasattr(app.state, "telegram_channel_ready"):
         delattr(app.state, "telegram_channel_ready")
     yield
-    dispatch_mod._FILE_ENV_CACHE = None
+    _reset_file_env_cache()
     if hasattr(app.state, "telegram_channel_ready"):
         delattr(app.state, "telegram_channel_ready")
 
@@ -67,8 +98,8 @@ async def test_production_ready_reports_channel_when_configured(
     env_file.write_text(
         f"{TOKEN}=tok-test-value\n{CHAT}=chat-test-value\n", encoding="utf-8")
     monkeypatch.setenv("SENTINEL_ENV_FILE", str(env_file))
-    monkeypatch.setattr(dispatch_mod, "_env_file_candidates", lambda: [env_file])
-    dispatch_mod._FILE_ENV_CACHE = None
+    _patch_env_file_candidates(monkeypatch, env_file)
+    _reset_file_env_cache()
     monkeypatch.setattr(api_main.settings, "environment", EnvironmentType.PRODUCTION)
     async with _client() as c:
         body = (await c.get("/ready")).json()

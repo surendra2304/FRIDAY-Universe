@@ -11,6 +11,7 @@ Sentinel/tests/unit/test_sen022_telegram_self_check.py.
 from __future__ import annotations
 
 import logging
+import sys
 
 import pytest
 from sentinel.config.telegram_self_check import (
@@ -28,6 +29,35 @@ ENV_FILE = "SENTINEL_ENV_FILE"
 FAKE_TOKEN = "tok-TEST-VALUE-12345"
 FAKE_CHAT = "chat-TEST-VALUE-67890"
 
+def _dispatch_modules():
+    """Every live copy of approval_dispatcher (see tests/repo_isolation.py).
+
+    The monorepo suite imports ``sentinel`` through more than one sys.path
+    spelling, so the module object captured at collection time can differ
+    from the one check_telegram_channel's lazy import finds in sys.modules
+    at call time — and the stale cache lives on the live copy, not the
+    captured one (CI 2026-11-23: the captured copy's __file__ carried a
+    ``tests/../`` spelling while the live copy's was the clean Sentinel/
+    path, and only the live copy's _FILE_ENV_CACHE was populated). Reset
+    and patch every copy: the production check reads whichever sys.modules
+    holds when it runs.
+    """
+    mods = {dispatch_mod}
+    live = sys.modules.get("sentinel.gatekeeper.approval_dispatcher")
+    if live is not None:
+        mods.add(live)
+    return mods
+
+
+def _reset_file_env_cache():
+    for _mod in _dispatch_modules():
+        _mod._FILE_ENV_CACHE = None
+
+
+def _patch_env_file_candidates(monkeypatch, env_file):
+    for _mod in _dispatch_modules():
+        monkeypatch.setattr(_mod, "_env_file_candidates", lambda: [env_file])
+
 
 @pytest.fixture()
 def isolated(monkeypatch, tmp_path):
@@ -43,10 +73,10 @@ def isolated(monkeypatch, tmp_path):
                  "SENTINEL_TELEGRAM_CHAT_ID", DISCORD, ENV_FILE):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv(ENV_FILE, str(env_file))
-    monkeypatch.setattr(dispatch_mod, "_env_file_candidates", lambda: [env_file])
-    dispatch_mod._FILE_ENV_CACHE = None
+    _patch_env_file_candidates(monkeypatch, env_file)
+    _reset_file_env_cache()
     yield env_file
-    dispatch_mod._FILE_ENV_CACHE = None
+    _reset_file_env_cache()
 
 
 def _set_env(monkeypatch, **values):
@@ -110,30 +140,7 @@ def test_both_present_via_env_file(monkeypatch, tmp_path, caplog):
                  "SENTINEL_TELEGRAM_CHAT_ID"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv(ENV_FILE, str(env_file))
-    dispatch_mod._FILE_ENV_CACHE = None
-    # TEMP-DIAG (TASK-SEN-022 re-check): this test fails in the full
-    # tests/ suite but passes standalone. Dump the resolution state
-    # (keys only, never values) so the next CI run shows which link
-    # breaks. Remove once the cause is known.
-    import os as _os
-    import sys as _sys
-    _live = _sys.modules.get("sentinel.gatekeeper.approval_dispatcher")
-    print("SEN022-DIAG dispatch_mod file:", dispatch_mod.__file__)
-    print("SEN022-DIAG live module is dispatch_mod:", _live is dispatch_mod)
-    print("SEN022-DIAG live module file:", getattr(_live, "__file__", None))
-    print("SEN022-DIAG SENTINEL_ENV_FILE:", _os.environ.get(ENV_FILE))
-    print("SEN022-DIAG candidates fn:",
-          getattr(dispatch_mod._env_file_candidates, "__name__", "?"))
-    print("SEN022-DIAG candidates:",
-          [str(p) for p in dispatch_mod._env_file_candidates()])
-    print("SEN022-DIAG dispatch cache after reset:",
-          dispatch_mod._FILE_ENV_CACHE)
-    print("SEN022-DIAG live cache:",
-          None if _live is None or _live._FILE_ENV_CACHE is None
-          else sorted(_live._FILE_ENV_CACHE.keys()))
-    print("SEN022-DIAG live candidates fn:",
-          getattr(_live._env_file_candidates, "__name__", "?")
-          if _live is not None else None)
+    _reset_file_env_cache()
     try:
         with caplog.at_level(logging.INFO, logger="sentinel.config.telegram_self_check"):
             report = verify_telegram_channel_at_startup()
@@ -141,7 +148,7 @@ def test_both_present_via_env_file(monkeypatch, tmp_path, caplog):
         assert "Telegram channel READY" in caplog.text
         assert FAKE_TOKEN not in caplog.text
     finally:
-        dispatch_mod._FILE_ENV_CACHE = None
+        _reset_file_env_cache()
 
 
 def test_discord_does_not_rescue_telegram(isolated, monkeypatch, caplog):

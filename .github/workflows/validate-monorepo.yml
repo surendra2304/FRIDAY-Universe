@@ -41,10 +41,15 @@ jobs:
         # exit code, log tail; exit 134 gets the REL-070 signature check)
         # to the step log and $GITHUB_STEP_SUMMARY. The exit code is
         # preserved, so the gate still fails exactly as before.
-        # TASK-SEN-022: the Sentinel-native /ready unit test also runs
-        # here (its file is outside tests/, so the contracts guard
-        # needs it named in a PR-triggered workflow).
-        run: python scripts/ci_gate_test_runner.py -- python -m pytest -q tests Sentinel/tests/unit/test_sen022_telegram_self_check.py
+        run: python scripts/ci_gate_test_runner.py
+
+      - name: Run Sentinel SEN-022 /ready unit tests
+        # TASK-SEN-022: the /ready wiring test lives outside tests/, so
+        # it runs as its own invocation (the contracts guard only
+        # credits test files named in a PR-triggered workflow pytest
+        # invocation).
+        run: |
+          python -m pytest -q Sentinel/tests/unit/test_sen022_telegram_self_check.py
 
       - name: Compile shared coordinator and its integrated call sites
         run: python -m compileall -q mesh Forge/app/verification/engine.py Futuris/futuris/core/pipeline.py Sentinel/sentinel/core/orchestrator/executor.py
