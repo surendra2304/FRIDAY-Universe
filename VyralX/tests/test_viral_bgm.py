@@ -120,6 +120,7 @@ def test_prepare_music_bed_labels_phonk_and_falls_back(tmp_path, monkeypatch):
     )
     assert path == destination and destination.is_file()
     assert label == "growth:Drift Edit:phonk"
+    assert viral_bgm.is_real_track_label(label) is True
 
     empty = _settings(tmp_path / "other")
     monkeypatch.setattr(
@@ -131,4 +132,16 @@ def test_prepare_music_bed_labels_phonk_and_falls_back(tmp_path, monkeypatch):
         category="SPORTS", settings=empty,
     )
     assert label2 == "synth_fallback"
+    assert viral_bgm.is_real_track_label(label2) is False
     assert path2.is_file()
+
+
+def test_is_real_track_label_gates_on_library_tracks_only():
+    # TASK-VYR-038: the per-job gate field must be True only for a real
+    # library track — never for the synth fallback, and never for the
+    # empty label (no bed prepared).
+    assert viral_bgm.is_real_track_label("growth:Drift Edit:phonk") is True
+    assert viral_bgm.is_real_track_label("growth:Chart Hit") is True
+    assert viral_bgm.is_real_track_label("monetisation:Library Track") is True
+    assert viral_bgm.is_real_track_label("synth_fallback") is False
+    assert viral_bgm.is_real_track_label("") is False

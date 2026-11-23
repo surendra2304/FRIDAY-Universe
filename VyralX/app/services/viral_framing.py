@@ -1510,7 +1510,7 @@ def produce_framed_short(
     bed_path: Path | None = None
     bgm_source = ""
     if bool(getattr(settings, "viral_music_bed_enabled", True)):
-        from app.services.viral_bgm import prepare_music_bed
+        from app.services.viral_bgm import is_real_track_label, prepare_music_bed
 
         bed_path, bgm_source = prepare_music_bed(
             voice_dir / f"{project_key}-bed.wav",
@@ -1673,6 +1673,10 @@ def produce_framed_short(
             "tail_trim": tail_trim_reason,
             "hold_for_review": hold_for_review,
             "bgm_source": bgm_source,
+            # TASK-VYR-038: the per-job gate field — True only when the bed
+            # is a real library track, so a supervised cycle can gate on
+            # it without string-matching the label.
+            "bgm_real_track": is_real_track_label(bgm_source),
             "excerpt": {"start": excerpt_start, "seconds": excerpt_seconds},
             "series": category,
             "render_duration_seconds": round(float(render_probe.duration or 0.0), 3),
@@ -1722,6 +1726,7 @@ def produce_framed_short(
         "tail_trim": tail_trim_reason,
         "hold_for_review": hold_for_review,
         "bgm_source": bgm_source,
+        "bgm_real_track": is_real_track_label(bgm_source),
         "excerpt": {"start": excerpt_start, "seconds": excerpt_seconds},
         "series": category,
     }

@@ -14384,20 +14384,21 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: Run the 3 live research runs through FRIDAY chat, file traces.
   - id: TASK-VYR-038
     title: 'VyralX pipeline yield: render-fit profile on the excerpt cut (720x1280, fps cap 30, ultrafast) + confirm the 20-track BGM shelf stocked on U2 + real-track gate field per job + headline emoji glyph fix'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_5
-    branch: null
-    pr: null
+    branch: muse5/task-vyr-038-pipeline-yield
+    pr: 1430
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T14:46:00+05:30'
+    updated_at: '2026-11-23T03:39:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Excerpt cut uses the render-fit profile and the cycle-1 timeout class is gone in a supervised cycle; U2 BGM shelf contents listed as evidence with real-track (not synth_fallback) reported per job; headline emoji renders as a glyph, not a hollow box, in the next render.'
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research + the VYR-034 PASS watch (hub 7075907547): cycle 1 produced zero renders from encode timeouts at the excerpt cut; cycle 2 renders all used synth_fallback BGM with no stocking confirmation for the owner-approved 20-track batch; the PASS render headline emoji rendered as a hollow box. Assigned to Muse 5 (holds VYR-037; claims after it). Loop stays OFF, uploader paused, renders held unlisted.'
+    - 'Claimed by Muse 5 (hub 7084681956, ~01:15 IST 2026-11-23); work PR #1430 (branch muse5/task-vyr-038-pipeline-yield): real-track gate field per job + headline emoji strip + U2 BGM shelf evidence (25 tracks, 5 catalogued phonk + 20 bare, 0 orphans); excerpt profile verified in code (VYR-023) and on U2 03378ba4; supervised-cycle proof still owed.'
     blockers: []
     next_action: Apply the cut profile, verify the BGM shelf on U2, add the gate field, fix the glyph, file evidence from a supervised cycle.
   - id: TASK-FRG-001

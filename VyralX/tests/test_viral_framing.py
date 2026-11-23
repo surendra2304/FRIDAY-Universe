@@ -368,6 +368,24 @@ def test_write_ass_without_framing_cues_is_byte_identical(tmp_path):
     assert text.startswith(viral_remix._ASS_HEADER)
 
 
+def test_write_ass_strips_emoji_from_burned_captions(tmp_path):
+    # TASK-VYR-038: the VYR-032 PASS watch found an emoji in the static
+    # top headline rendering as a hollow box — the Anton style carries
+    # no emoji glyphs and the U2 host has no emoji font at all. No
+    # emoji may reach the .ass, from any cue source.
+    cues = [
+        {"start": 0.0, "end": 2.0, "text": "wait for it 🔥", "framing": True},
+        {"start": 1.0, "end": 3.0, "text": "the source speaks 🇺🇸", "speech": True},
+    ]
+    ass_path = viral_remix._write_ass(cues, tmp_path / "caps.ass")
+    text = ass_path.read_text(encoding="utf-8")
+    assert "🔥" not in text and "🇺🇸" not in text
+    # "WAIT" is a highlight word, so the .ass wraps it in colour tags —
+    # the words are present, just not as one plain substring.
+    assert "WAIT" in text and "FOR IT" in text
+    assert "THE SOURCE SPEAKS" in text
+
+
 # --- (2)+(3) grounding: invented objects, promised actions, bait ---- #
 _PARK_TRANSCRIPT = (
     "people say my wife is on the wrong side it is my safe side rule "
@@ -1227,6 +1245,117 @@ def test_framed_path_skips_a_captioned_source_before_editorial(monkeypatch, tmp_
     assert result["reason"] == "source_captioned"
     assert result["visual_defects"] == ["source_captioned"]
     assert editorial_calls == []  # rejected before any editorial/render work
+
+
+def test_produce_framed_short_records_bgm_real_track(monkeypatch, tmp_path):
+    # TASK-VYR-038: the render job's options and the result must carry
+    # the per-job gate field — True for a real library track, False
+    # for the synth fallback — so a supervised cycle can gate on it
+    # without string-matching the label. The hook's emoji is stripped
+    # by the same run (sanitised before TTS and the burn-in).
+    from types import SimpleNamespace
+
+    from app.models import RenderJob
+    # thumbnail_designer imports cv2 at module level, but this test stubs
+    # its only used function (generate_genre_thumbnail) and never touches
+    # cv2 — stub the module so the import works where opencv is absent (CI).
+    import sys
+    from unittest.mock import MagicMock
+    sys.modules.setdefault("cv2", MagicMock())
+    from app.services import scene_analysis, thumbnail_designer, viral_bgm
+    from app.services import viral_remix as vr
+
+    settings = SimpleNamespace(
+        prepare_directories=lambda: None,
+        render_dir=tmp_path / "renders",
+        media_dir=tmp_path / "media",
+        ffmpeg_bin="ffmpeg",
+        viral_quality_gates_enabled=False,
+        viral_max_source_seconds=58.0,
+        viral_music_bed_enabled=True,
+        crosspost_export_enabled=False,
+    )
+    monkeypatch.setattr(viral_framing, "get_settings", lambda: settings)
+    monkeypatch.setattr(vr, "download_audio_only",
+                        lambda video_id, dest: tmp_path / "probe.webm")
+    monkeypatch.setattr(vr, "detect_speech", lambda path: SimpleNamespace(
+        has_speech=True,
+        cues=[{"start": 0.0, "end": 2.0, "text": "hello world"}],
+        text="hello world",
+    ))
+    monkeypatch.setattr(vr, "download_source_video",
+                        lambda video_id, dest: tmp_path / "source.mp4")
+
+    def _probe(path):
+        name = str(path)
+        duration = 2.0 if ("hook" in name or "payoff" in name) else 30.0
+        return SimpleNamespace(duration=duration, width=1080, height=1920,
+                                has_audio=True)
+
+    monkeypatch.setattr(vr, "probe_media", _probe)
+    monkeypatch.setattr(viral_framing, "_cut_excerpt",
+                        lambda *a, **k: tmp_path / "excerpt.mp4")
+    monkeypatch.setattr(scene_analysis, "describe_scene", lambda *a, **k: "")
+    monkeypatch.setattr(viral_framing, "generate_framing", lambda *a, **k: {
+        "title": "Test Title 🔥 #Shorts",
+        "hook": "Wait for it 🔥",
+        "payoff": "That was wild",
+        "description": "A test description.",
+    })
+    monkeypatch.setattr(vr, "synthesize_commentary",
+                        lambda text, voice, dest: (dest, []))
+    monkeypatch.setattr(vr, "existing_upload_titles", lambda db: set())
+    monkeypatch.setattr(viral_framing, "render_framed",
+                        lambda *a, **k: tmp_path / "render.mp4")
+    monkeypatch.setattr(thumbnail_designer, "generate_genre_thumbnail",
+                        lambda *a, **k: tmp_path / "thumb.jpg")
+
+    class FakeSession:
+        def __init__(self):
+            self.added = []
+            self._next_id = 1
+
+        def add(self, obj):
+            if getattr(obj, "id", None) is None:
+                obj.id = self._next_id
+                self._next_id += 1
+            self.added.append(obj)
+
+        def flush(self):
+            pass
+
+        def commit(self):
+            pass
+
+    candidate = SimpleNamespace(
+        video_id="dQw4w9WgXcQ", title="Source Title", channel="TestChannel",
+        duration=30.0, category="SPORTS", license="", view_count=100,
+        hook="WAIT FOR IT",
+    )
+
+    def _run(label):
+        monkeypatch.setattr(
+            viral_bgm, "prepare_music_bed",
+            lambda dest, seconds, category="": (dest, label),
+        )
+        db = FakeSession()
+        result = viral_framing.produce_framed_short(candidate, db, publish=False)
+        jobs = [obj for obj in db.added if isinstance(obj, RenderJob)]
+        assert len(jobs) == 1
+        return result, json.loads(jobs[0].options_json)
+
+    result, options = _run("growth:Drift Edit:phonk")
+    assert result["status"] == "RENDERED"
+    assert result["bgm_source"] == "growth:Drift Edit:phonk"
+    assert result["bgm_real_track"] is True
+    assert options["bgm_real_track"] is True
+    assert result["narration"] == "Wait for it That was wild"
+
+    result, options = _run("synth_fallback")
+    assert result["status"] == "RENDERED"
+    assert result["bgm_source"] == "synth_fallback"
+    assert result["bgm_real_track"] is False
+    assert options["bgm_real_track"] is False
 
 
 # --- TASK-VYR-026: vision rate-limit hardening ------------------------ #

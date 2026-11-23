@@ -242,7 +242,8 @@ jobs:
             VyralX/tests/test_vyr001_autopilot_cycle_budget.py \
             VyralX/tests/test_vyr035_mpt_cycle_deadline.py \
             VyralX/tests/test_vyr036_autonomous_loop_budget.py \
-            VyralX/tests/test_path_c_lane_retired.py VyralX/tests/test_ig3_vyr10_scene_assembly_eval.py VyralX/tests/test_vyr037_discovery_helpers.py VyralX/tests/test_vyr039_remix_music_bed.py
+            VyralX/tests/test_path_c_lane_retired.py VyralX/tests/test_ig3_vyr10_scene_assembly_eval.py VyralX/tests/test_vyr037_discovery_helpers.py VyralX/tests/test_vyr039_remix_music_bed.py \
+            VyralX/tests/test_viral_bgm.py
       - name: Compile fresh research and deployed voice wiring
         run: >-
           python -m compileall -q IntelX/intelx/api/router.py

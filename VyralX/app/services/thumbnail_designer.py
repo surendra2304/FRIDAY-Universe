@@ -21,6 +21,7 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFont
 
 from app.config import get_settings
 from app.services.video_styler import get_genre_profile
+from app.services.viral_quality import strip_emoji
 
 log = logging.getLogger("vyralx.thumbnail_designer")
 
@@ -196,6 +197,11 @@ def generate_genre_thumbnail(
     draw.text((bx, by), badge_text, fill=(*profile.badge_color, 255), font=badge_font)
 
     # 6. Auto-fitting Headline Typography (Multi-line, Auto-wrapping, Zero-clipping)
+    # TASK-VYR-038: strip emoji before measuring/drawing — the headline
+    # font (Montserrat-Black/Anton) carries no emoji glyphs, so one here
+    # renders as a hollow box (VYR-032 PASS watch). The title keeps its
+    # emoji in the YouTube metadata, where it renders natively.
+    headline = strip_emoji(headline)
     words = headline.strip().split()
     max_w = width - 130  # 65px margin on each side
     fitted_lines = [headline]

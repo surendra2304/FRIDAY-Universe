@@ -1370,7 +1370,14 @@ def _write_ass(cues: list[dict[str, Any]], ass_path: Path) -> Path:
     """
     events: list[str] = []
     for cue_index, cue in enumerate(cues):
-        text = " ".join(str(cue.get("text") or "").split()).upper()
+        # TASK-VYR-038: strip emoji at the burn-in boundary — the Anton
+        # style carries no emoji glyphs, so one in a cue renders as a
+        # hollow box (VYR-032 PASS watch, static top headline). The
+        # spoken lines are already sanitised upstream; this covers any
+        # cue source, including transcript cues.
+        text = " ".join(
+            viral_quality.strip_emoji(str(cue.get("text") or "")).split()
+        ).upper()
         if not text:
             continue
         start = float(cue["start"])
@@ -2053,7 +2060,7 @@ def produce_viral_short(
         # TASK-VYR-019: the bed comes from the BGM policy (chart track
         # while growing, YouTube-library track once monetised, synth
         # bed as the labelled fallback) — never silence.
-        from app.services.viral_bgm import prepare_music_bed
+        from app.services.viral_bgm import is_real_track_label, prepare_music_bed
 
         bed_path, bgm_source = prepare_music_bed(
             settings.media_dir / "voiceovers" / f"{project_key}-bed.wav",
@@ -2189,6 +2196,10 @@ def produce_viral_short(
             "hook_repaired": hook_repaired,
             "hold_for_review": hold_for_review,
             "bgm_source": bgm_source,
+            # TASK-VYR-038: the per-job gate field — True only when the bed
+            # is a real library track, so a supervised cycle can gate on
+            # it without string-matching the label.
+            "bgm_real_track": is_real_track_label(bgm_source),
         }),
         completed_at=utcnow(),
     )
@@ -2233,6 +2244,7 @@ def produce_viral_short(
         "hook_repaired": hook_repaired,
         "hold_for_review": hold_for_review,
         "bgm_source": bgm_source,
+        "bgm_real_track": is_real_track_label(bgm_source),
     }
     # TASK-VYR-014: cross-post release bundle (render copy + per-platform
     # captions for Instagram Reels / TikTok / Facebook Reels, built from the
