@@ -17,11 +17,19 @@ Cases:
   E. Evidence-count diff, in-process: a parse whose per-record evidence
      count differs from the raw text fails even with duplicate-key
      detection bypassed (defence in depth).
+  F. MERGED-with-null-pr (TASK-REL-087): flipping the TASK-REL-087 record
+     to MERGED while its ``pr`` stays null fails, exit 1.
+  G. MERGED-with-unmerged-pr (TASK-REL-087): flipping it to MERGED citing
+     PR 999999, with a merged-PR list built from every PR the live board
+     cites, fails -- the cited PR is not in the merged set.
+  H. Positive control: the same flip citing PR 1372 (in the merged-PR
+     list) passes, exit 0.
 """
 
 from __future__ import annotations
 
 import importlib.util
+import re
 import shutil
 import subprocess
 import sys
@@ -62,14 +70,78 @@ def build_tree(tmp: Path) -> Path:
     return tmp
 
 
-def run_validator(tree: Path) -> subprocess.CompletedProcess:
+def run_validator(tree: Path, args: tuple[str, ...] = ()) -> subprocess.CompletedProcess:
     return subprocess.run(
-        [sys.executable, "scripts/validate_collaboration.py"],
+        [sys.executable, "scripts/validate_collaboration.py", *args],
         cwd=tree,
         capture_output=True,
         text=True,
         timeout=300,
     )
+
+
+def set_rel087_merged(board_path: Path, pr: str | None) -> None:
+    """Flip the TASK-REL-087 record to MERGED with the given ``pr`` line.
+
+    Anchored on the record's own segment so edits to other records do not
+    move it. The status and ``pr`` lines are replaced whatever they
+    currently say -- the fixture must not assume CLAIMED/null: the very
+    PR under test already flips this record to IN_REVIEW/pr 1536, and
+    the test suite runs against that checkout in CI (the original
+    CLAIMED-anchored version failed there with "REL-087 status line not
+    found"). ``pr=None`` forces ``pr: null`` (case F); otherwise the
+    record cites that PR number (cases G/H). The record was created
+    2026-11-23, so the REL-087 rule applies to it either way.
+    """
+    text = board_path.read_text(encoding="utf-8")
+    start = text.index("  - id: TASK-REL-087\n")
+    next_record = text.find("\n  - id: ", start + 1)
+    end = len(text) if next_record == -1 else next_record + 1
+    segment = text[start:end]
+    status_match = re.search(r"^    status: \w+\n", segment, re.M)
+    assert status_match is not None, "REL-087 status line not found"
+    segment = (
+        segment[: status_match.start()]
+        + "    status: MERGED\n"
+        + segment[status_match.end() :]
+    )
+    pr_match = re.search(r"^    pr: .*\n", segment, re.M)
+    assert pr_match is not None, "REL-087 pr line not found"
+    new_pr = "null" if pr is None else pr
+    segment = (
+        segment[: pr_match.start()]
+        + f"    pr: {new_pr}\n"
+        + segment[pr_match.end() :]
+    )
+    board_path.write_text(text[:start] + segment + text[end:], encoding="utf-8")
+
+
+def live_merged_prs(tree: Path) -> set[int]:
+    """Every PR number the live board's in-scope post-merge records cite.
+
+    Reuses the validator's own scope rule, so the fixture set is exactly
+    "the PRs the board already treats as merged" -- the only bad citation
+    in cases G/H is the injected one.
+    """
+    module = load_validator_module(tree)
+    board = yaml.safe_load((tree / "docs/collaboration/WORK_BOARD.yaml").read_text(encoding="utf-8"))
+    cited: set[int] = set()
+    for task in board.get("tasks", []):
+        if not isinstance(task, dict):
+            continue
+        if task.get("status") not in module.POST_MERGE_STATES:
+            continue
+        created = module._record_date(task.get("created_at"))
+        updated = module._record_date(task.get("updated_at"))
+        in_scope = (
+            created is not None and created >= module.MERGED_PR_RULE_EFFECTIVE
+        ) or (updated is not None and updated >= module.MERGED_PR_RULE_EFFECTIVE)
+        if not in_scope:
+            continue
+        pr = task.get("pr")
+        if isinstance(pr, int) and not isinstance(pr, bool) and pr > 0:
+            cited.add(pr)
+    return cited
 
 
 def inject_duplicate_evidence_key(board_path: Path) -> None:
@@ -187,6 +259,45 @@ def case_e_evidence_count_diff() -> None:
         raise AssertionError("evidence-count diff missed the mismatch")
 
 
+def case_f_merged_null_pr() -> None:
+    with tempfile.TemporaryDirectory(prefix="rel087-null-pr-") as tmp:
+        tree = build_tree(Path(tmp))
+        set_rel087_merged(tree / "docs/collaboration/WORK_BOARD.yaml", None)
+        result = run_validator(tree)
+    assert result.returncode == 1, f"MERGED-with-null-pr must FAIL:\n{result.stdout}"
+    assert "TASK-REL-087" in result.stderr and "null/invalid pr citation" in result.stderr, result.stderr
+    print("F. MERGED-with-null-pr -> INVALID (exit 1):", result.stderr.strip().split(": ", 1)[-1][:120])
+
+
+def case_g_merged_unmerged_pr() -> None:
+    with tempfile.TemporaryDirectory(prefix="rel087-unmerged-pr-") as tmp:
+        tree = build_tree(Path(tmp))
+        merged = live_merged_prs(tree)  # pristine board, before the mutation
+        assert 999999 not in merged
+        set_rel087_merged(tree / "docs/collaboration/WORK_BOARD.yaml", "999999")
+        prs_file = tree / "merged_prs.txt"
+        prs_file.write_text("\n".join(str(n) for n in sorted(merged)) + "\n", encoding="utf-8")
+        result = run_validator(tree, ("--merged-prs", "merged_prs.txt"))
+    assert result.returncode == 1, f"MERGED-with-unmerged-pr must FAIL:\n{result.stdout}"
+    assert "TASK-REL-087" in result.stderr and "not in the merged-PR list" in result.stderr, result.stderr
+    print("G. MERGED citing unmerged PR 999999 -> INVALID (exit 1):", result.stderr.strip().split(": ", 1)[-1][:120])
+
+
+def case_h_merged_cited_pr_ok() -> None:
+    with tempfile.TemporaryDirectory(prefix="rel087-merged-pr-ok-") as tmp:
+        tree = build_tree(Path(tmp))
+        merged = live_merged_prs(tree)  # pristine board, before the mutation
+        assert 1372 in merged
+        set_rel087_merged(tree / "docs/collaboration/WORK_BOARD.yaml", "1372")
+        prs_file = tree / "merged_prs.txt"
+        prs_file.write_text("\n".join(str(n) for n in sorted(merged)) + "\n", encoding="utf-8")
+        result = run_validator(tree, ("--merged-prs", "merged_prs.txt"))
+    assert result.returncode == 0, f"MERGED citing a merged PR must be VALID:\n{result.stderr}"
+    assert "COLLABORATION REGISTRY VALID" in result.stdout
+    assert "verified against" in result.stdout and "merged PRs" in result.stdout, result.stdout
+    print("H. MERGED citing merged PR 1372 -> VALID (exit 0)")
+
+
 def main() -> int:
     cases = (
         case_a_pristine,
@@ -194,6 +305,9 @@ def main() -> int:
         case_c_duplicate_roster_key,
         case_d_duplicate_ownership_key,
         case_e_evidence_count_diff,
+        case_f_merged_null_pr,
+        case_g_merged_unmerged_pr,
+        case_h_merged_cited_pr_ok,
     )
     for case in cases:
         case()
