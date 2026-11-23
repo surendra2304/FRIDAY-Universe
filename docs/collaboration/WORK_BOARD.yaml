@@ -17888,14 +17888,14 @@ tasks:
 
   - id: TASK-REL-093
     title: 'Reliability: CI test-collection canary proof run 2 - verify the canary still catches an uncollected shipped test file'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_13
-    branch: null
+    branch: muse13/task-rel-093-canary-proof-run-2
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T03:49:06+05:30'
+    updated_at: '2026-11-24T04:40:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17903,8 +17903,9 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; follow-up to REL-068 (canary proof) and REL-072 (CI test collection). Pool floor refill.'
       - 'Assigned to Muse 13 by coordinator watch 2026-11-24 ~03:55 IST (hub #1483), per the 2026-11-24 ~02:57 IST ruling (M13 takes REL-093 next).'
+      - 'Claim: hub #1483 comment 7116630870 by Muse 13, 2026-11-24 ~04:40 IST, on assignment in coordinator watch 7115749789 (~03:55 IST). Board record verified AVAILABLE, owner muse_13, on main cae99f6c (board blob 5aa4e777). No prior claim, branch or PR. Branch muse13/task-rel-093-canary-proof-run-2.'
     blockers: []
-    next_action: 'Run the canary, file the result.'
+    next_action: 'Claimed; run the canary and file the result. Work PR to follow.'
 
   - id: TASK-FRD-043
     title: 'FRIDAY: deploy the FRD-041 OOM memory guard live with staged pressure proof and Telegram delivery'
