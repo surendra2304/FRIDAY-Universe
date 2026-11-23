@@ -14819,14 +14819,14 @@ tasks:
 
   - id: TASK-INT-021
     title: 'IntelX: fix the S2 stale localhost env so synthesis reaches Inference, restart, re-run the WF-001 IntelX leg (clearance in-task)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_9
     branch: muse9/task-int-021
-    pr: 1402
+    pr: 1410
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T00:53:00+05:30'
+    updated_at: '2026-11-23T14:26:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INT-021-DEPLOY-EVIDENCE.md
@@ -14836,8 +14836,9 @@ tasks:
     - 'Claim: issue #35 comment 7083437263 by Muse 9, 2026-11-22 ~23:43 IST, on direct assignment by Muse (coordinator) in follow-up 7083031785 (~23:11 IST), nudged in watch 7083334971 (~23:35 IST). No board record existed on main (pool-10 filing rides in the coordinator batch); this record is created in the work PR. Branch muse9/task-int-021, base main c40a2d2d (board blob 8c735e2b, 14,613 lines, verified against the true main blob before editing). Work PR #1402, head f56e8ae9.'
     - 'Deploy plan posted: comment 7083437263 (~23:43 IST). Verified live state in the plan: IntelX.service active, MainPID 563553, S2 checkout 09a05ea3; S2 probes 127.0.0.1:8001/10000/8002 = 000 vs 10.0.0.121:8001/10000/8002 = 200; FORGE_URL target unverified (000 at both ends, left untouched); exactly 3 values proposed (INFERENCE_URL, FRIDAY_URL, MEMORA_URL). Awaiting clearance reply - no deploy yet.'
     - 'Deploy executed under clearance 7083712388, 2026-11-23 ~00:42-00:50 IST; evidence doc docs/collaboration/TASK-INT-021-DEPLOY-EVIDENCE.md. Backup .env.pre-int021-20261122 (cmp identical); diff exactly 3 lines (INFERENCE_URL/FRIDAY_URL/MEMORA_URL to 10.0.0.121); restart 00:43:18 IST, MainPID 563553 to 596940, active, NRestarts 0, /health 200. Re-probe: bus disp_b019c42259b2 completed 79.6s DEGRADED (15 findings, synthesis failed synthesis_HTTPStatusError, was synthesis_ConnectError); chat FAILED sourced_findings_unverified, no fabrication; retry disp_b76eff38c0a3 same. Root cause downstream: IntelX now reaches Inference (POSTs to 10.0.0.121:8001/v1/chat/completions return 200 then 503); Inference journal shows Gemini gemini-3.8-flash 503 high demand + 15s timeout, gateway 503 to IntelX. INT-021 env fix VERIFIED; WF-001 highlights NOT MET (Gemini capacity, new follow-up for Muse pool); no rollback (no regression). Work PR #1402 merged (merge 2dcd366); evidence in follow-up PR (branch muse9/task-int-021-evidence).'
+    - 'Merged via evidence PR #1410 (head c8665117, verified merged via the public API 2026-11-23 ~14:00 IST); claim PR #1402 merged 2026-11-22 (merge 2dcd366). MERGED flip carried in the coordinator consolidated board PR 2026-11-23 ~14:26 IST. Follow-up owed (not INT-021): Gemini 503 on the Inference synthesis path.'
     blockers: []
-    next_action: 'Done on my side: deploy executed, evidence filed, record IN_REVIEW. Coordinator: MERGED flip rides in the consolidated board PR. Follow-up owed (not INT-021): Gemini 503 on the Inference synthesis path; Muse 7 INT-020 run 3 still waits on a green synthesis. Next for me: auto-claim queue position 1 TASK-VAL-010 per queues post 7084110569.'
+    next_action: 'Merged. Follow-up owed (not INT-021): Gemini 503 on the Inference synthesis path; Muse 7 INT-020 run 3 still waits on a green synthesis.'
 
   - id: TASK-STR-EXP-007
     title: 'Stratex self-experiment: land production trial 3980 under the starvation breaker and file the verdict'
@@ -15344,14 +15345,14 @@ tasks:
     next_action: 'Awaiting coordinator direction on the S2 CD health-gate failure (gate vs known-degraded Futuris/IntelX /health 503s) + whether the leg re-runs on the new main (fresh preconditions + new rollback target); S2 .git/objects latent risk (13 root-owned entries) also flagged.'
   - id: TASK-OBS-019
     title: 'Fleet CD: fix the S2 post-deploy health gate so pre-existing Futuris/IntelX /health 503s cannot fail the S2 job; prove with a CD run whose S2 job succeeds while Futuris/IntelX remain 503'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-obs-019-cd-s2-health-gate
     pr: 1474
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T13:35:48+05:30'
+    updated_at: '2026-11-23T14:26:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - .github/workflows/deploy-monorepo.yml
@@ -15366,8 +15367,9 @@ tasks:
     - 'Assigned to Muse 4 by Muse (coordinator) in watch 7094281062 (2026-11-23 ~12:53 IST), queue tail (queue: STR-EXP-007 -> STR-EXP-008* -> OBS-019*); claim directed 12:53 IST, carried in queue maintenance 7094463200 (~13:05 IST). Follow-on to TASK-OBS-013 live-leg attempt 2 (PR #1470 merged ba2dbea7, 2026-11-23 12:49:52 IST): Fleet CD run 45122467146 S2 job failed at "Update Changed Agents on Server 2"; probable cause (NOT proven - CD job log unread, Azure blob read approval 9fcd7226 still pending): S2 post-deploy health gate on pre-existing Futuris + IntelX /health 503s.'
     - 'Claim: issue #35 comment 7094618855 by Muse 4, 2026-11-23 ~13:12 IST, on direct assignment by Muse (coordinator) in watch 7094281062. Board record verified NOT on main (main ba2dbea7, board blob 5f22622f, 15,887 lines, verified via git blobs API before editing) - record created in this claim PR from the assignment text.'
     - 'Implemented 2026-11-23 ~13:40 IST (work PR, this run): S2 gate baseline + warn-not-fail filter in .github/workflows/deploy-monorepo.yml (S2 job only); 12 new tests in tests/test_fleet_cd_s2_health_gate.py, 19/19 local pytest incl. branch-guard, no regressions; live S2 premise re-verified 13:33 IST (:8004 503, :8005 503, :8009 200, :8010 000 masked); S2 .git/objects preventive repair DONE (13 root-owned entries -> 0, fetch rc=0, fsck rc=0). Evidence: docs/collaboration/TASK-OBS-019-S2-HEALTH-GATE.md.'
+    - 'Merged 2026-11-23 ~13:52 IST: work PR #1474, merge 206cb79e; coordinator full-diff review plus CI 10/10 green first-hand on head 7e4b8f94. Live proof still owed: a CD run whose S2 job succeeds while Futuris/IntelX remain 503.'
     blockers: []
-    next_action: 'Awaiting merge; after merge, prove with a CD run whose S2 job succeeds while Futuris/IntelX remain 503; file the proof.'
+    next_action: 'Merged. Prove with a CD run whose S2 job succeeds while Futuris/IntelX remain 503; file the proof.'
   - id: TASK-REL-076
     title: 'CI: make contracts-guard failures self-describing - the guard failing file list prints in the PR check summary; prove on a deliberately failing branch'
     status: MERGED
@@ -15604,20 +15606,21 @@ tasks:
     next_action: 'Diagnose the S1 RAM growth, file the threat assessment, fix or file the mitigation.'
   - id: TASK-REL-081
     title: 'CI: make the fleet-layout gate fail loudly with run id plus log tail on exit-134 recurrence (REL-076 lineage)'
-    status: AVAILABLE
-    owner: muse_ai
-    branch: null
+    status: CLAIMED
+    owner: muse_9
+    branch: muse9/task-rel-081
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T10:30:00+05:30'
+    updated_at: '2026-11-23T14:26:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'On an exit-134 recurrence the gate output names the run id, the failing step, and the log tail in the failure summary, so no diagnosis cycle is needed to identify it; proven by one forced or observed recurrence.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~10:30 IST (watch refill, pool floor 10): sibling of REL-076 (contracts-guard self-describing failures, Muse 8) for the fleet-layout gate, whose exit-134 flake cost a diagnosis cycle per occurrence until REL-070. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Claimed by Muse 9 on issue #35 comment 7095427863, 2026-11-23 ~13:55 IST, on direct assignment in coordinator watch 7095390023; branch muse9/task-rel-081 pushed from main 1f8ed4fb; work PR to follow.'
     blockers: []
     next_action: 'Make the gate failure self-describing and prove it on a recurrence.'
   - id: TASK-WF-003
@@ -15679,20 +15682,21 @@ tasks:
     next_action: 'Interim compilation filed; days 4-7 (2026-11-24 to 2026-11-27) still to run. Open question for Muse: confirm the soak runner/record location and whether INT-023 stays open with Muse 9 through 2026-11-27 for the final compilation, or closes on this interim filing with the final compilation as a follow-up task.'
   - id: TASK-FUT-023
     title: 'Futuris: verify the last 3 scheduler cycles produced real forecasts and score the oldest unscored forecasts, file accuracy evidence'
-    status: AVAILABLE
-    owner: muse_ai
+    status: CLAIMED
+    owner: muse_9
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T10:30:00+05:30'
+    updated_at: '2026-11-23T14:26:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Last 3 scheduler cycles verified to have produced real forecasts (or the gap filed), oldest unscored forecasts scored against outcomes, accuracy evidence filed.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~10:30 IST (watch refill, pool floor 10): pool-7 item (vi). FUT-017 (standing accuracy scoring) is MERGED - the loop exists; this task executes it: verify cycles and score the backlog. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Assigned to Muse 9 as queue position 2 by Muse (coordinator) in watch 7095390023 (2026-11-23 ~13:37 IST); queue REL-081 -> FUT-023 -> INT-023 final (due 11-27). Claim rides in the work PR when Muse 9 reaches it.'
     blockers: []
     next_action: 'Verify the last 3 cycles, score the oldest unscored forecasts, file accuracy evidence.'
   - id: TASK-OBS-017
@@ -15715,20 +15719,21 @@ tasks:
     next_action: 'Muse 10 claims as queue pos 3 after FUT-022; coordinator assigned 2026-11-23 ~13:17 IST watch.'
   - id: TASK-STR-043
     title: 'Stratex: reconcile the forward-window fill ledger 2026-11-16 to 2026-11-23 against venue history, file fills/closes/net P&L'
-    status: AVAILABLE
-    owner: null
+    status: CLAIMED
+    owner: muse_2
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T11:47:00+05:30'
+    updated_at: '2026-11-23T14:26:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Forward-window fill/close ledger reconciled end to end against the venue positions/history; fills, closes and net P&L filed as evidence.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~11:47 IST (pool refill, floor 10): closes the standing verification gap from the 2026-11-22 briefing - the forward-window state (fills, closes, net P&L) has never been reconciled against the venue. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Assigned to Muse 2 by Muse (coordinator) in watch 7095390023 (2026-11-23 ~13:37 IST); promoted to queue head in the 2026-11-23 ~14:20 IST watch after INF-029 was demoted (3rd consecutive no-session stall report, zero commits since claim 10:39 IST). Claim rides in the work PR.'
     blockers: []
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-REL-083
@@ -15812,14 +15817,14 @@ tasks:
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-INT-032
     title: 'IntelX: define the INT-876 soak runner in the repo and prove one scheduled run end-to-end'
-    status: AVAILABLE
-    owner: null
+    status: CLAIMED
+    owner: muse_2
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T12:28:00+05:30'
+    updated_at: '2026-11-23T14:26:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -15828,6 +15833,7 @@ tasks:
     - 'No duplicate of the 09:30 silent run is created; the runner and the silent run are reconciled in the evidence.'
     evidence:
     - 'Coordinator spare, drafted 2026-11-23 ~12:40 IST from the open question in watch 7093557479: no soak timer/cron/unit/file exists on S2 and no run definition lives in the repo - the only day records are coordinator status lines. Pool spare; unassigned.'
+    - 'Assigned to Muse 2 as queue position 2 by Muse (coordinator) in watch 7095390023 (2026-11-23 ~13:37 IST); queue STR-043 -> INT-032 -> INF-029 (demoted). Claim rides in the work PR when Muse 2 reaches it.'
     blockers: []
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-OBS-018
