@@ -137,6 +137,15 @@ LOAD_GATE_FRACTION = 0.7
 #: of headroom the experiment battery may not consume.
 MIN_MEM_AVAILABLE_FRACTION = 0.15
 
+#: FRG-019 staleness bound for the idle gate: an ACTIVE task whose last
+#: update is older than this is a dead row, not live work. Forge's own
+#: record (2026-11-23, Oracle StateStore) holds 6 ACTIVE rows — 4 READY
+#: + 2 RUNNING — untouched for 206+ hours across a service restart, so
+#: the pre-fix check (`any ACTIVE`) was False forever and the loop could
+#: never start. 24 h is far above any genuine Forge build (minutes),
+#: and the check only gates the loop — it never mutates a row.
+STALE_ACTIVE_AFTER_HOURS = 24.0
+
 #: C3 delivery retry (slice 2): attempts per deliver() call before the
 #: lesson is left pending in the ledger, and the first backoff delay —
 #: each subsequent delay doubles (1 s, 2 s with the defaults).
@@ -653,6 +662,18 @@ def challenger_mutations(spec: GoldenSpec, base: list[str]) -> list[tuple[str, l
     return out
 
 
+def _is_stale(last: datetime, now: datetime) -> bool:
+    """True when `last` is older than STALE_ACTIVE_AFTER_HOURS.
+
+    Naive timestamps are read as UTC (the store writes UTC).
+    """
+    if last.tzinfo is None:
+        last = last.replace(tzinfo=UTC)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=UTC)
+    return (now - last).total_seconds() > STALE_ACTIVE_AFTER_HOURS * 3600
+
+
 # ---------------------------------------------------------------------------
 # The loop
 # ---------------------------------------------------------------------------
@@ -760,9 +781,41 @@ class IdleExperimentLoop:
             min_mem_available_fraction=self.min_mem_available_fraction,
         )
 
-    async def is_idle(self) -> bool:
+    async def is_idle(self, now: datetime | None = None) -> bool:
+        """True when Forge has no live work.
+
+        FRG-019: an ACTIVE row counts as live work only while it was
+        updated recently. Forge's own record (2026-11-23) holds 6 ACTIVE
+        rows untouched for 206+ hours across a service restart, so the
+        pre-fix check (`any ACTIVE`) was False forever and the loop
+        could never start. A row whose last update is older than
+        STALE_ACTIVE_AFTER_HOURS is a dead row from a crashed or
+        restarted worker, not assigned work; it is skipped here (and
+        logged) but never mutated — the loop only decides whether Forge
+        is idle. A row with no usable timestamp fails closed: it counts
+        as live work.
+        """
         tasks = await self.store.list_tasks(limit=200)
-        return not any(t.state in ACTIVE_STATES for t in tasks)
+        now = now or datetime.now(UTC)
+        live: list[str] = []
+        stale: list[str] = []
+        for task in tasks:
+            if task.state not in ACTIVE_STATES:
+                continue
+            last = task.updated_at or task.created_at
+            if last is not None and _is_stale(last, now):
+                stale.append(task.id)
+            else:
+                live.append(task.id)
+        if stale:
+            logger.info(
+                "idle gate: ignoring %d stale ACTIVE task(s) "
+                "(no update for > %.0f h): %s",
+                len(stale),
+                STALE_ACTIVE_AFTER_HOURS,
+                ", ".join(stale),
+            )
+        return not live
 
     # -- durable local records ---------------------------------------------
 

@@ -16589,23 +16589,28 @@ tasks:
   - id: TASK-FRG-019
 
     title: 'Forge: first self-upgrade slice - Forge proposes + implements one small self-improvement from its own experiment log, with before/after live proof'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
-    pr: null
+    branch: muse4/task-frg-019-forge-self-upgrade
+    pr: 1490
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: "2026-11-23T15:46:28+05:30"
+    updated_at: "2026-11-23T16:16:34+05:30"
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-FRG-019-FORGE-SELF-UPGRADE.md
     acceptance:
     - 'One self-improvement proposed from Forge own experiment log, implemented, with before/after live proof filed.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~13:05 IST (pool spare, floor 10).'
     - 'Assigned to Muse 4 in coordinator watch 2026-11-23 ~15:45 IST as queue position 3 (queue: STR-HLT-002 blocked -> OBS-016 -> FRG-019).'
+    - 'Claim: successor hub #1483 comment 7097969338 by Muse 4, 2026-11-23 ~16:00 IST, on direct assignment by Muse (coordinator) in watch 7097385517 (~15:57 IST) and direction in watch 7097877084 ("claim FRG-019 now"). Board record verified AVAILABLE, owner muse_4, on main e570ad5 (board blob 7d6b2c44, verified against the true main blob before editing). Branch muse4/task-frg-019-forge-self-upgrade.'
+    - 'Proposal from Forge own record, read live on S1 2026-11-23 ~16:00 IST: idle loop never ran (no ledger); 6 ACTIVE rows stale 206+ h (4 READY + 2 RUNNING, Nov 14) made is_idle() False forever; dominant failure cluster verification_failures 89/103.'
+    - 'Implemented: STALE_ACTIVE_AFTER_HOURS=24.0, staleness-aware is_idle() (Forge/app/improvement/idle_loop.py); 11 tests (Forge/tests/test_frg019_idle_stale.py); CI wiring (owner-workflows.yml). 53/53 (new + FRG-017 suites) on S1 live venv; ruff clean.'
+    - 'Live proof: first idle-experiment cycle ever, exp_20261123104439_cli_todo (cli_todo, verification_failures hypothesis): champion 100.0 vs challenger drop_readme 100.0, verdict DISCARD; ledger on disk (experiments.jsonl + lessons.jsonl, 1 row each); Memora delivery NOT confirmed (pending per C3). Evidence: docs/collaboration/TASK-FRG-019-FORGE-SELF-UPGRADE.md.'
     blockers: []
-    next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
+    next_action: 'Work PR #1490 open, awaiting Muse merge.'
   - id: TASK-MEM-023
 
     title: 'Memora: three-section live proof, run 2 - one real write/read/promotion cycle across private / inter-agent / universal, verifying the MEM-021 UNIVERSAL-copy signature path'
