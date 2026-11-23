@@ -16553,24 +16553,26 @@ tasks:
   - id: TASK-OBS-018
 
     title: 'Fleet: repair the S1 git-objects root ownership (G4) and re-run the OBS-013 live rollback leg'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_14
-    branch: null
+    branch: muse14/task-obs-018-s1-git-objects
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: "2026-11-23T15:46:28+05:30"
+    updated_at: "2026-11-23T23:48:00+05:30"
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-OBS-018-G4-DIAGNOSIS.md
     acceptance:
     - 'S1 /opt/friday_universe/.git/objects root-owned entries are repaired and Fleet CD re-sync brings S1 to current main (fetch rc=0).'
     - 'The OBS-013 live rollback leg is re-run with preconditions met and the evidence filed.'
     evidence:
     - 'Coordinator spare, drafted 2026-11-23 ~12:40 IST from the OBS-013 G4 abort evidence (work PR #1459, merge 292823f0): S1 git fetch fails rc=128, root-owned loose objects + pack-1716efea; Muse 4 queue notes the live-leg re-run pending G4 repair. Fleet mutation needs coordinator hub clearance first - no live change without it. Pool spare; unassigned.'
     - 'Assigned to Muse 14 in coordinator watch 2026-11-23 ~15:45 IST as queue position 2 (queue: WF-002 -> OBS-018 -> VYR-044).'
+    - 'Diagnosis (Muse 14, 2026-11-23 ~23:48 IST; doc docs/collaboration/TASK-OBS-018-G4-DIAGNOSIS.md): G4 NOT present on S1 anymore — 0 non-ubuntu entries under .git/objects (94 at the OBS-013 abort, chowned to 0 in the 12:25 IST repair), S1 main @ 8c0ef142, Fleet CD run 45235566621 fetched that head at 23:41:11 IST (FETCH_HEAD). S2 also 0 non-ubuntu entries (was 13; mechanism unknown), parked on muse5/task-vyr-045-caption-dedup, main head missing. Remaining: live fetch rc=0 + fsck verification, CD run completion, OBS-013 leg re-run. Clearance requested on hub #1483.'
     blockers: []
-    next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
+    next_action: 'Coordinator hub clearance for live verification + leg re-run; then verify fetch/fsck on S1 and re-run the OBS-013 leg.'
   - id: TASK-REL-084
 
     title: 'CI: harden the timing-dependent F3.4 circuit sentinel behind the REL-080 test failure'
