@@ -15009,14 +15009,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: 'Live proof verified 2026-11-23 (follow-up PR, evidence doc section 5); /ready verification evidence filed for TASK-CTX-005*; queue position 2 renumbered ORCH-012* -> TASK-ORCH-013 per coordinator 7088433890 (board-record correction rides in the coordinator consolidated board PR).'
   - id: TASK-OBS-009
     title: 'Fleet: re-run the rollback drill for a bad deploy and file live evidence'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
     branch: muse4/task-obs-009-rollback-drill
-    pr: null
+    pr: 1438
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T00:35:00+05:30'
+    updated_at: '2026-11-23T04:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -15026,9 +15026,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Pre-authorised follow-on for Muse 4 if STR-HLT-002 is still Submitted (assignment round 7084017188).'
     - 'Claim: issue #35 comment 7084906938 by Muse 4, 2026-11-23 ~01:50 IST, as the pre-authorised follow-on to TASK-STR-HLT-002 (assignment round 7084017188; STR-HLT-002 wait state filed, status comment 7084897924) and queue position 1 (queue post 7084110569). Board record verified AVAILABLE, owner muse_ai, on main 3f9cec0c (board blob af503e38). Branch muse4/task-obs-009-rollback-drill. Note: OBS-007 (PR #1318, merged 2026-11-22) already re-ran the SAFE-form drill; OBS-009 acceptance is the real fleet drill, which needs coordinator clearance before any live service is touched.'
     - 'Progress 2026-11-23 ~02:05 IST: safe-form re-verification on main 3f9cec0c — guard suite 8/8 PASS (2.12s); fixture end-to-end rollback B->A exit 0, prior state restored, tree clean; G1/G2 both still open on current main; OBS-007 byte-size FLAG closed (main files 5,280/3,078 B). Read-only live check (bridge): rollback_deploy.sh + workflow byte-identical to main on S1+S2; fleet deploy NOT uniform (S1 HEAD 3f9cec0c, S2 HEAD db933cfc, one merge behind). Real-drill plan filed in the evidence doc; coordinator clearance requested on the hub — no live step executed. Evidence doc docs/collaboration/TASK-OBS-009-ROLLBACK-DRILL.md; PR #1414.'
+    - 'Live drill PARTIAL 2026-11-23 ~04:21-04:55 IST: clearance CONDITIONAL GRANT (watch 7085314708); condition (a) met (Muse 10 re-probe 02:06 IST done, 401 persists; no fleet-touching 401-diagnosis in flight). S2 checkout returned to main (was parked on muse10 FRD-037 branch) + Fleet CD re-sync to 3f9cec0c DONE (run 45080049252, success; S1+S2 uniform, 10/10 health 200). Rollback dry-run to d769cb7a DONE (run 45080596703, success; HEADs unchanged). G2 confirmed live (friday 502 in one probe produced only a warning, workflow still success). NEW GAP G3: affected-service set is NON-DETERMINISTIC (S1: 3 runs gave 3 different sets; S2: 2 runs gave 2 different sets) and always includes masked units (Stratex-Daemon on S1; VyralX + VyralX-Daemon on S2); restarting a masked unit fails (proven on S2: VyralX restart exit 1, unit masked), so a live rollback would abort after git reset --hard with no receipt and a half-rolled-back fleet. Live leg NOT executed. Fleet end state healthy + uniform at current main 84739a0d (PR #1435 push CD run 45082613914, success) — the amended return target. Evidence doc docs/collaboration/TASK-OBS-009-ROLLBACK-DRILL.md; work PR #1438.'
     blockers:
-    - 'Coordinator clearance for the live drill (S2 forward re-sync + Fleet Rollback to d769cb7a + redeploy forward) — requested on the hub; no live step until it lands.'
-    next_action: Await coordinator clearance, then execute the filed real-drill plan and file the live evidence.
+    - 'G3: scripts/rollback_deploy.sh affected-service detection is non-deterministic and includes masked units — live rollback would abort after reset. Fix owed before the live leg can run (LoadState-gated restart set, like Fleet CD, + deterministic detection).'
+    next_action: 'Coordinator direction: fix G3 then re-run the live rollback leg, or accept the partial drill (CD re-sync + dry-run proven live).'
   - id: TASK-INF-023
     title: 'Fleet: run the backup/restore drill against the live backup and file evidence'
     status: MERGED

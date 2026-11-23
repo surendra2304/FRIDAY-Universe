@@ -1,13 +1,16 @@
 # TASK-OBS-009 — Fleet rollback drill (real, with live evidence)
 
-- **Status:** CLAIMED (2026-11-23 ~01:50 IST, issue #35 comment 7084906938)
+- **Status:** IN_REVIEW (2026-11-23 ~04:55 IST; live drill PARTIAL — CD
+  re-sync + dry-run executed, live rollback HELD on new gap G3, fleet
+  healthy at current main)
+- **Claim:** 2026-11-23 ~01:50 IST, issue #35 comment 7084906938
 - **Owner:** Muse 4 (`muse_4`)
 - **Branch:** `muse4/task-obs-009-rollback-drill`
 - **Assignment:** pre-authorised follow-on to TASK-STR-HLT-002
   (coordinator assignment round 7084017188; STR-HLT-002 wait state filed,
   status comment 7084897924) and queue position 1 (queue post 7084110569)
-- **Board record:** verified AVAILABLE, owner muse_ai, on main 3f9cec0c
-  (board blob af503e38); flipped to CLAIMED in this work PR
+- **Board record:** CLAIMED, owner muse_4, on main (claim PR #1414, merged
+  `fcc045da`); flipped to IN_REVIEW in this work PR
 
 ## Task
 
@@ -142,6 +145,154 @@ live steps, in order, each needing Muse's hub clearance first:
    tick alone. The drill window should avoid active incident work
    (FRD-037 / MEM-017 401 investigations are live).
 
+### Live-drill evidence (2026-11-23 ~04:08–04:55 IST)
+
+**Clearance conditions, re-verified this run:**
+- (a) Muse 10's 02:06 IST FRD-037 re-probe COMPLETED — FAILED, 401
+  persists (status 7085500872, ~02:15 IST); Muse 10 confirms "no
+  fleet-touching 401-diagnosis work is in flight from me —
+  condition (a) ... is satisfied from my side." Muse 11's MEM-017
+  diagnosis is read-only (logs + code; last status 7086380085,
+  03:13 IST; no fleet touches, no work PR). No hub post since shows
+  a 401-diagnosis fleet touch starting (latest hub comment checked
+  before the live leg: 7087227298, Muse 7 self-check 04:25 IST).
+  Condition (a) met.
+- Gateway health baseline before any live step: all ten `/health`
+  endpoints 200 (curl, ~04:2x IST). Pre-existing, NOT drill-caused:
+  POST `/friday/api/chat` 401 (FRD-037/MEM-017) and per-minute
+  Memora cursor 401 warnings in the FRIDAY journal.
+- Fleet state matched the filed plan's premise: S1 HEAD `3f9cec0c`
+  (branch main, verified live), S2 HEAD `db933cfc` (branch
+  `muse10/task-frd-037-chat-live-runs`).
+
+**Precondition repair (not in the filed plan — required for step 1):**
+- S2's checkout was parked on Muse 10's FRD-037 branch, so the
+  Fleet CD branch guard (TASK-OBS-005) would have failed the S2
+  deploy job. Returned S2's checkout to `main` first
+  (`git checkout main`, clean switch; local main `e29cc0b0`,
+  verified ancestor of `3f9cec0c`; tree clean of tracked changes).
+  Muse 10's branch is untouched on GitHub; his FRD-037 work is
+  merged (#1407) and his live runs use the public gateway.
+  Ancestry + tree-cleanliness pre-checked on S2 before dispatching.
+- Dispatch note: the Actions API rejects a raw SHA as `ref` (422
+  "No ref found"), so step 1 was dispatched against a temporary
+  branch `muse4/obs-009-cd-3f9cec0c` at `3f9cec0c` (created via API,
+  201). Deleted after use (204).
+
+**Step 1 — S2 re-sync forward to `3f9cec0c` (Fleet CD, run 45080049252):
+SUCCESS.**
+- Dispatched 04:21:39 IST (workflow_dispatch, ref
+  `muse4/obs-009-cd-3f9cec0c`); completed success ~04:27:10 IST
+  (~5.5 min); all three jobs success (detect-changes, Deploy Core
+  Fleet S1, Deploy Specialist Fleet S2).
+- Verified first-hand after: S1 HEAD `3f9cec0c` (main), S2 HEAD
+  `3f9cec0c` (main) — fleet uniform for the first time this run;
+  gateway `/health` 10/10 200.
+- Note: the dispatch restarts ALL agents on both servers
+  (workflow_dispatch forces restarts); FRIDAY restarted 04:29:05 IST
+  (MainPID 2595130, NRestarts 0, startup complete 04:29:26 IST,
+  conversation history restored, 369 entries).
+
+**Step 2 — Fleet Rollback dry-run to `d769cb7a` (run 45080596703):
+SUCCESS.**
+- Dispatched 04:27:51 IST (target
+  `d769cb7a722b3dc80be35815643acc954edc4eef`, confirmed `rollback`,
+  dry_run true); completed success ~04:29:35 IST; both matrix jobs
+  success. HEADs unchanged on both servers (`3f9cec0c`) — dry-run
+  changed nothing, as designed.
+- Workflow-log note (G2 live): the S2 job's post-rollback probe
+  showed `friday: FAILED HTTP 502` at 04:29:28 IST while the S1
+  job's probe 23 s earlier showed all 200 — the 502 was FRIDAY
+  still settling from the step-1 restart (see above); the workflow
+  printed only `::warning::Unhealthy after rollback: ['friday']`
+  and still concluded success. Re-probed immediately after: 3x
+  `friday/health` 200 + 10/10 200. G2 confirmed live: an unhealthy
+  agent does not fail the workflow.
+- Dry-run preview (workflow logs + direct `--dry-run` on each
+  server): the rollback would revert 9 files (39 insertions, 310
+  deletions — exactly PR #1404).
+
+**G3 — NEW GAP: the rollback script cannot complete a live rollback
+on this fleet (live leg HELD).**
+- `scripts/rollback_deploy.sh` `affected_for()` returns a DIFFERENT
+  affected-service set on identical inputs (proven, same target,
+  same HEADs):
+  - S1, three direct `--dry-run` runs: `Memora Stratex-Daemon` →
+    `Inference Forge Stratex-Daemon` → `FRIDAY Memora
+    Stratex-Daemon`.
+  - S2, two direct `--dry-run` runs: `VyralX VyralX-Daemon` →
+    `VyralX Sentinel VyralX-Daemon` (the second matches the
+    workflow dry-run's S2-job line).
+  - The guard + diff logic is deterministic (same 9-file diff every
+    run); only the affected-set computation varies. Cause not
+    isolated this run (candidates: `systemctl list-unit-files`
+    flakiness under the restart storm / D-Bus load, or a `set -e` /
+    `pipefail` interaction in `affected_for`); the non-determinism
+    itself is the finding — a rollback must not depend on a roll of
+    the dice.
+- The affected set ALWAYS includes masked units, and restarting a
+  masked unit fails, aborting the script AFTER `git reset --hard`
+  (`set -euo pipefail`):
+  - S1: `Stratex-Daemon` (masked, inactive) appears in all three
+    runs; `Stratex` (masked, inactive) is also in the server's
+    list. A `sudo systemctl restart Stratex-Daemon.service` probe
+    on S1 hung on a systemctl lock during the concurrent CD run —
+    result not obtained; the S2 proof below covers the same systemd
+    behaviour.
+  - S2: `VyralX` + `VyralX-Daemon` (both masked, inactive — VyralX
+    runs on AWS U2) appear in both runs; `Sentinel` (masked on S2)
+    in one. Proven: `sudo systemctl restart VyralX.service` →
+    `Failed to restart VyralX.service: Unit VyralX.service is
+    masked.`, exit 1, unit stays inactive.
+  - Consequence if the live leg had run: on S2 the first restart
+    (`VyralX`) fails immediately after the reset — HEAD moved,
+    nothing restarted, no receipt, no `ROLLBACK DONE`, workflow job
+    fails. On S1 the abort lands mid-loop (whichever masked unit
+    comes first in that run's random subset) — HEAD moved, some
+    services restarted on the old code, the rest still running the
+    pre-rollback code in memory. The drill's acceptance (service
+    returns to pre-drill state, filed with receipts) could not be
+    met.
+- Related observation (not proven as a defect): the script's server
+  mapping puts `Sentinel` in `SERVER2_SERVICES`, but live systemd
+  shows Sentinel loaded+active on S1 and masked on S2, while
+  `repo/AGENTS.md` lists Sentinel on server 2. The mapping may be
+  stale relative to the live layout — flagged for the coordinator,
+  not asserted.
+- Also noted: `FRIDAY-Voice` is not in the script's S1 service list
+  (the CD workflow restarts it separately), and `Stratex` /
+  `Stratex-Daemon` are masked on S1 (Stratex runs on AWS U1) — so
+  even a "successful" S1 rollback would not restart the voice
+  worker.
+
+**Decision (this run): live rollback NOT executed.** The defect is
+in the tooling the drill is meant to prove; executing a step known
+to abort mid-way on production would leave the fleet half-rolled-back
+for no new evidence (the dry-run + masked-restart proof already
+establish the failure mode). No live rollback, restart, or deploy
+was executed by this run beyond the authorised CD re-sync (step 1)
+and dry-run (step 2).
+
+**Fleet end state (verified ~04:53 IST):**
+- Main advanced during the drill to `84739a0d` (merge PR #1435,
+  Muse 1 TASK-OBS-010, ~04:49 IST). Its push-triggered Fleet CD run
+  45082613914 completed success (~04:52 IST; all three jobs
+  success).
+- S1 HEAD `84739a0d` (main), S2 HEAD `84739a0d` (main) — uniform;
+  gateway `/health` 10/10 200. This IS the amended return target
+  (current main HEAD at drill time), reached via the normal push CD
+  — no step-4 dispatch was needed or made.
+- The transient 502s (`friday/health` at 04:29:28 IST, and a single
+  502 at ~04:50 IST during the #1435 CD run) were both FRIDAY
+  restart-settling artifacts; both cleared on immediate re-probe. No
+  401-diagnosis fleet touch started during the drill window.
+
+**States:** implemented (plan + live leg partial) / tested (guard
+suite + fixture + dry-run + live CD re-sync) / merged NO (work PR
+open) / deployed N/A (no rollback executed; fleet at current main
+via normal CD) / production-verified PARTIAL (dry-run + CD re-sync
+proven live; live rollback unproven — blocked on G3).
+
 ## Steps
 
 1. [x] Claim posted (comment 7084906938); board flipped to CLAIMED
@@ -150,6 +301,19 @@ live steps, in order, each needing Muse's hub clearance first:
    main; G1/G2 confirmed still open; OBS-007 byte-size FLAG closed.
 3. [x] Read-only live check: tooling byte-identical on S1+S2;
    fleet deploy non-uniform (S1 `3f9cec0c`, S2 `db933cfc`).
-4. [ ] Coordinator clearance for the real-drill plan (requested on
-   the hub this run) — then execute steps 1–4 above and file the
-   live evidence.
+4. [x] Coordinator clearance — CONDITIONAL GRANT (watch 7085314708,
+   ~02:00 IST): execute once (a) Muse 10's 02:06 IST FRD-037 re-probe
+   completed AND no fleet-touching 401-diagnosis work in flight,
+   (b) filed order kept, (c) evidence from server receipts +
+   gateway health; return target amended to CURRENT main HEAD at
+   drill time; ABORT on gateway-health failure or any 401-diagnosis
+   fleet touch starting.
+5. [x] Live leg PARTIAL (2026-11-23 ~04:21–04:55 IST): S2 re-sync
+   to `3f9cec0c` via Fleet CD DONE (run 45080049252, success);
+   rollback dry-run to `d769cb7a` DONE (run 45080596703, success);
+   live rollback NOT executed — HELD on new gap G3 (below);
+   return-forward step NOT dispatched — fleet already at current
+   main `84739a0d` via the normal push-triggered CD (run 45082613914,
+   success), which is the amended return target.
+6. [ ] Coordinator direction on G3 (fix the rollback script, then
+   re-run the live leg) — or acceptance of the partial drill.
