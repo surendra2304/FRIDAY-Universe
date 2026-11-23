@@ -46,16 +46,27 @@ Run locally this run (scratch tree, pytest 9.2.0 venv): **19 passed** — 12 new
 
 ## States
 
-- **implemented:** YES (this run)
-- **tested:** YES — 19/19 local pytest; CI on the work PR to be verified on its final head (Muse merges only)
-- **merged:** NO — work PR open, awaiting Muse
-- **deployed:** NO — the fix reaches the fleet via Fleet CD after merge
-- **production-verified:** NO — proof requires a CD run whose S2 job succeeds while Futuris/IntelX remain 503; that run can only happen after the merge (a push triggers CD). The proof run is the acceptance criterion, not this PR.
+- **implemented:** YES (2026-11-23 ~13:40 IST)
+- **tested:** YES — 19/19 local pytest; CI 10/10 green on the work PR head 7e4b8f94 (verified first-hand by Muse)
+- **merged:** YES — work PR #1474, merge 206cb79e, 2026-11-23 ~13:52 IST
+- **deployed:** YES — Fleet CD run 45138070415 deployed 206cb79e to both servers (S1 + S2 jobs success); S2 HEAD verified live as 206cb79e
+- **production-verified:** YES — CD run 45138070415 S2 job succeeded while Futuris :8004 / IntelX :8005 remained 503 (re-verified live ~14:00 IST); the 503s themselves unchanged
+
+## Proof (post-merge CD run, 2026-11-23 ~13:52-14:00 IST)
+
+- **Work PR #1474 MERGED** by Muse (coordinator) 2026-11-23 ~13:52 IST, merge `206cb79e` (CI 10/10 green first-hand on head `7e4b8f94`; full-diff review in coordinator watch 7095390023). Main then advanced to `1f8ed4fb` via board PR #1473.
+- **Fleet CD run 45138070415** (push, head `206cb79e` — the OBS-019 merge; https://github.com/surendra2304/FRIDAY-Universe/actions/runs/45138070415, started 13:52:16 IST):
+  - Analyze Changed Agents — completed success
+  - Deploy Core Fleet (Server 1) — completed success
+  - Deploy Specialist Fleet (Server 2) — completed **success** (~13:58:53 IST, polled live this run)
+- **Premise re-verified live from S2 via the bridge immediately after the S2 job completed** (~14:00 IST, read-only probe): Futuris `:8004` -> **503**, IntelX `:8005` -> **503**, Cortex `:8009` -> **200**; S2 checkout HEAD `206cb79e` on branch `main` — the merged fix is what deployed.
+- **Acceptance met:** the S2 job succeeded while Futuris/IntelX remained 503, and the 503s themselves were NOT changed (still 503 after the deploy). The gate's warn-not-fail filter did its job; no healthy->unhealthy regression was hidden (Cortex stayed 200).
+- Note: a second CD run 45138160767 (push, head `1f8ed4fb`, the board-PR merge) was pending at proof time; it is NOT part of this proof — the `206cb79e` run is the proof run.
 
 ## Open / owed
 
 1. **IntelX 12:00:36 IST restart — still NOT confirmable.** The CD job log is unread: approval `9fcd7226` (read `productionresultssa14.blob.core.windows.net`) is **still pending** — verified this run via the permissions list (approval_id `9fcd7226-8fbb-44a6-8038-050a411b5d28`, requested 2026-11-23T06:18:17Z, scope "Muse4 Work Request"). Surendra was asked to decide 12:12 IST. Not guessing: the question stays open until the log is read. The OBS-019 probable-cause statement above therefore stays "probable, NOT proven" — the fix is correct on the live-measured premise (503s pre-existing, gate fails on any non-2xx) regardless of the log.
-2. **Post-merge CD proof run** — after Muse merges, the next push-triggered CD run is the proof: S2 job must succeed while Futuris :8004 / IntelX :8005 remain 503. To be watched and filed by the hourly self-check / work-request loop.
+2. **Post-merge CD proof run — DONE, filed above.** Fleet CD run 45138070415 (head 206cb79e): S2 job success while Futuris :8004 / IntelX :8005 remained 503 (re-verified live ~14:00 IST). Proof PR: this PR.
 3. **S1 gate note (not changed):** Server 1's gate has the same unconditional shape; its agents are currently healthy, so it is out of scope. If a pre-existing S1 503 ever appears, the same baseline+filter treatment applies there.
 4. **Work-request schedule:** NOT cancelled this run. Body step 2 says cancel while mid-task, but the settled rule (MEMORY.md) is DO NOT cancel while the OBS-013 live leg awaits fresh clearance — the loop is the watcher for that clearance, and the main agent re-armed it at 13:14 IST after the OBS-019 claim. The OBS-013 live leg still awaits fresh clearance (not granted). Main agent to decide if this changes.
 
