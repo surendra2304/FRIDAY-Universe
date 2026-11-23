@@ -25,6 +25,19 @@ TASK-FUT-023 section 6:
   the other 5 still at 17:15-cycle `as_of`. Third consecutive cycle
   with missing telemetry rows for those targets.
 
+The claim run's live probe (~23:03 IST, first-hand via the bridge,
+read-only store queries) corroborates the same failure mode on the
+current cycle, with fresh ids: 44x "Session is already flushing"
+since 17:00 IST; the 22:15 cycle reproduced it live (vyralx refresh
+failed, 8 calibration resolves failed for 8b9d47cd, 4eec647d,
+6835c65e, 1a30c711, d88a0c40, be6095c6, 936e872d, 325cded5, and the
+calibration job RAISED on a 'prepared' session state, where Muse 9's
+report had only warnings). Store at probe time: 411 scores, 419
+outcomes, 8 unscored-resolved-numeric -- exactly those 8 ids. The
+board-named b5c0a661 + f8921fe7 had already recovered by then
+(outcome YES / score YES), so verification must target the current
+failing set, not the named ids.
+
 FUT-023 section 6 had already established the same family:
 
 - 17:45 scoring pass logged considered 8 / scored 8 /
@@ -179,10 +192,14 @@ execution-risk rule) -- the tests are verified by CI on the PR.
 
 ## 5. State
 
-- IMPLEMENTED in PR #1538 (claim + work on one branch, head TBD after
-  push; board CLAIMED -> IN_REVIEW, pr 1538).
-- TESTED: pending CI on the PR head (must be fully green before
-  merge-readiness is flagged).
+- IMPLEMENTED in PR #1538 (claim + work on one branch; work commit
+  faaf6f77, merge-main commit 881c6cb7 onto main 49126a41; board
+  CLAIMED -> IN_REVIEW, pr 1538).
+- TESTED: CI 10/10 green on head 881c6cb7 (8 success, 2 skipped, 0
+  failed, verified via the check-runs API -- including the `test`
+  job, which runs the new isolation tests). A doc-only follow-up
+  commit updates this section with the final head; CI is re-verified
+  on that head before merge-readiness is flagged.
 - MERGED / DEPLOYED / PRODUCTION-VERIFIED: not yet. The live
   Futuris service on Server 2 still runs the old shared-session
   code until this PR is merged AND deployed; a live re-probe of the
