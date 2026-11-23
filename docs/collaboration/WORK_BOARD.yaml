@@ -15317,6 +15317,34 @@ tasks:
     - 'MERGED: work PR #1449, merge 9597c7c9, 2026-11-23 ~10:49 IST (CI 9/9 green; coordinator full-diff review). G1 fix live: dispatch.env root read rc=0, FRIDAY/.env 4 lines, one FRIDAY restart, /api/agents/status 0 UNREACHABLE on re-probe. Board flip rides in the coordinator consolidated board PR.'
     blockers: []
     next_action: 'Merge call with the coordinator; MERGED flip rides in the coordinator consolidated board PR.'
+  - id: TASK-OBS-011
+    title: 'Fleet: add GET /health to the LiveKit voice worker (livekit_worker.py) — GET :8081/health is 404 — and verify it live'
+    status: IN_REVIEW
+    owner: muse_13
+    branch: muse13/task-obs-011-livekit-health-route
+    pr: 1475
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T13:52:00+05:30'
+    files:
+    - FRIDAY/src/friday/voice/livekit_worker.py
+    - FRIDAY/tests/test_voice_livekit_health_route.py
+    - docs/collaboration/TASK-OBS-011-LIVEKIT-HEALTH-ROUTE.md
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'GET http://127.0.0.1:8081/health returns 200 with the same body as GET / (the SDK liveness probe), on the live S1 worker.'
+    - 'GET / and GET /worker on :8081 are unchanged; voice diagnostics green; a test voice session connects.'
+    - 'New tests pass (FRIDAY/tests/test_voice_livekit_health_route.py).'
+    evidence:
+    - 'Assigned to Muse 13 in coordinator watch 7094281062 (2026-11-23 ~12:53 IST): CLAIM TASK-OBS-011* NOW — add a /health route to livekit_worker.py (GET :8081/health is 404) and verify it live. Queue after: VOI-030 -> REL-085*.'
+    - 'Board verification (first-hand): no TASK-OBS-011 record existed on main ba2dbea7 (board blob 5f22622f, 2,275,077 bytes, 612 task records, zero occurrences); new draft, board record rides in the work PR per coordinator direction.'
+    - 'Claim: issue #35 comment 7094568374 by Muse 13, 2026-11-23 ~13:09 IST. Branch muse13/task-obs-011-livekit-health-route from main ba2dbea7.'
+    - 'Baseline (first-hand, S1, ~13:12 IST): FRIDAY-Voice.service PID 2823815, active since 11:44:35 IST, listens 0.0.0.0:8081; GET / -> 200 OK, GET /health -> 404 Not Found (aiohttp/3.14.5).'
+    - 'Root cause (first-hand, SDK source on S1): livekit-agents 1.8.12 serves its health check only at GET / (worker.py:698-699) with no public route hook; a worker_started listener is too late (router freezes on startup — RuntimeError reproduced). Fix aliases the exact / handler onto /health in _HealthAliasHttpServer.start(), before the runner starts.'
+    - 'Work PR #1475 (head 84c72968): livekit_worker.py +64 (alias helper + subclass + import-time install); new test file 6 tests — 6 passed in 2.18s on the production dependency versions (local venv) and 6 passed in 21.31s on S1 (venv312 scratch copy); evidence doc filed. Live verification OWED: deploy + one FRIDAY-Voice restart on S1 with coordinator clearance; rollback is a plain restart (change is additive).'
+    blockers: []
+    next_action: 'Merge call with the coordinator; live verification (deploy + FRIDAY-Voice restart + :8081/health re-probe) after merge, per coordinator clearance.'
   - id: TASK-OBS-013
     title: 'Fleet: fix the OBS-009 G3 non-deterministic affected-service detection in rollback_deploy.sh (LoadState-gated restart set + deterministic detection) and re-run the live rollback leg'
     status: MERGED
