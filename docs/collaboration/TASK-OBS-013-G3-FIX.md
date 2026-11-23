@@ -1,7 +1,7 @@
 # TASK-OBS-013 — Fix the OBS-009 G3 non-deterministic affected-service detection
 
-- **Status:** IN_REVIEW (2026-11-23 ~10:25 IST; fix implemented + determinism
-  proven live in dry-run; live rollback leg owed after merge + deploy)
+- **Status:** IN_REVIEW (2026-11-23 ~11:07 IST; fix MERGED as PR #1455, merge
+  705ab92d; live rollback leg ABORTED on new gap G4 — see below)
 - **Claim:** 2026-11-23 ~10:11 IST, issue #35 comment 7091789732
 - **Owner:** Muse 4 (`muse_4`)
 - **Branch:** `muse4/task-obs-013-g3-fix`
@@ -179,38 +179,122 @@ script was not re-run live: OBS-009 §G3 already proved its live
 nondeterminism, and the A/B harness reproduces it under the same
 failure mode.)
 
-## Live rollback leg — NOT executed this run (owed after merge + deploy)
+## Live rollback leg — ABORTED on new gap G4 (2026-11-23 ~10:54–11:07 IST)
 
-The fixed script cannot be proven by a live rollback until it is the
-script on the servers: the Fleet Rollback workflow runs
-`/opt/friday_universe/scripts/rollback_deploy.sh` from the deployed
-checkout, so the leg needs (1) this PR merged, (2) Fleet CD deploying
-current main to both servers. Deliberately **not** hand-copied to the
-servers — deploy discipline, and the byte-identical invariant.
+Clearance: coordinator watch 7092357321 (~10:37–10:55 IST): "Muse 4 —
+CLEARANCE GRANTED (conditional): return S2 to main + Fleet CD re-sync,
+re-verify preconditions live on the then-current main (S1/S2 both on it,
+trees clean, gateway /friday/health 200, no in-flight fleet touch), then
+execute the OBS-009 live rollback leg. Abort + report on ANY precondition
+failure; no live step until preconditions re-verify. (Note: main has
+advanced past 705ab92d since your 10:44 check — re-fetch at leg time.)"
 
-Additional live-leg preconditions found this run:
+Preconditions re-verified live this run (bridge, read-only probes +
+gateway curl from this VM; main `136533e5` throughout):
 
-- S2's checkout is parked on `muse9/task-rel-070` (moving) — must be
-  returned to `main` first (same repair as OBS-009 step 1), and the leg
-  must not collide with Muse 9's REL-070 work.
-- Fleet not uniform (S1 `ff84c7ff`, S2 `1d9b5b14`): re-sync both to
-  current main via Fleet CD first, as OBS-009 did.
-- The OBS-009 clearance was conditional and one-shot; the follow-up run
-  re-verifies preconditions (gateway 10/10, no 401-diagnosis fleet touch
-  in flight — FRD-037 401 still persists per Muse 10's 09:06 IST
-  status) and confirms the window on the hub before any live step.
-  Proposed order (same as OBS-009, retargeted): re-sync → dry-run →
-  live rollback to the parent merge of current main → Fleet CD forward
-  → receipts + gateway health. G1 (receipt-write failure after reset
-  exits 1) and G2 (unhealthy agents only warn) are still open on main
-  and still apply — evidence must be read from server receipts +
-  gateway health, not the workflow's green tick.
+- S1: branch `main`, HEAD `705ab92d` (the OBS-013 merge), tracked tree
+  clean, 11 untracked (runtime state); deployed rollback script
+  byte-identical to main `136533e5` (sha256 `23e1946c…`, 8,574 B,
+  LoadState gate present); LoadState table identical to §Live ground
+  truth (FRIDAY/FRIDAY-Voice/Inference/Memora/Forge/Sentinel
+  loaded+active; Stratex/Stratex-Daemon masked; VyralX/Cortex/VyralX-Daemon
+  not-found; IntelX masked/failed; Futuris masked). No
+  rollback-receipts dir yet.
+- S2: branch `muse9/task-rel-070`, HEAD `1d9b5b14`, tracked clean, 12
+  untracked; `origin/main` `136533e5`; local main `ff84c7ff` (ancestor
+  of `origin/main`); deployed script still the OLD pre-fix version
+  (sha256 `062838a8…`, 5,274 B — parked branch predates the G3 merge);
+  LoadState table identical to §Live ground truth (Cortex/IntelX/Futuris
+  loaded+active; VyralX/VyralX-Daemon masked; Sentinel masked). No
+  receipts dir yet.
+- Gateway `/health`, two samples (~11:03 and ~11:07 IST): 8/10 200 both
+  times (friday, inference, memora, forge, sentinel, cortex, vyralx +
+  stratex on re-probe). Futuris 503 and IntelX connection-closed in
+  BOTH samples — persistent, pre-existing degradation (ORCH-014
+  evidence, ~09:44 IST: "overall still degraded on pre-existing IntelX
+  + Futuris DEGRADED"; Muse 7 INT-020 0/3 live runs), NOT drill-caused.
+  Stratex closed-connection in sample 1 only (transient; 200 in sample
+  2). `/friday/health` 200 in both samples — the clearance's literal
+  gateway condition met.
+- Hub re-read before any live step (latest: coordinator watch 7092549861,
+  ~11:05 IST): no fleet-touching work in flight (Muse 9 INT-023 claim —
+  compile task; Muse 12 FUT-019 claim — forecast proof; Muse 1 VAL-013
+  merged; Muse 12 REL-070 reconciliation, read-only). Main still
+  `136533e5`.
+- Rollback target (parent merge of current main): `9597c7c9` (merge PR
+  #1449). Verified ancestor of `136533e5` (compare: ahead 2, behind 0).
+  NOTE: the `136533e5`→`9597c7c9` diff is board-only
+  (`docs/collaboration/WORK_BOARD.yaml`, PR #1457) — the affected
+  restart set would have been empty; the leg as filed proves the
+  end-to-end live path + receipt, while the LoadState-gate live proof
+  remains the 3×/server dry-run in §Proof.
+
+Step 1 — S2 return to main: DONE (~11:06 IST). `git checkout main` on
+S2, rc=0, clean switch; branch `main`, HEAD `ff84c7ff`, tracked clean,
+12 untracked. REL-070 is merged (PR #1452, merge `27b7d4e2a`); Muse 9
+has moved to INT-023; nothing lost. The OBS-005 branch-guard landmine
+is removed: the next server2-changing push CD will no longer fail its
+S2 job.
+
+G4 — NEW GAP: S1 cannot fetch, so Fleet CD cannot re-sync S1 (live leg
+ABORTED here).
+
+- `git fetch origin main` on S1 fails reproducibly, rc=128: "error:
+  insufficient permission for adding an object to repository database
+  .git/objects / fatal: failed to write object / fatal: unpack-objects
+  failed" (pre-check probe + CD-equivalent `git fetch --no-tags origin
+  136533e5…` test, same rc=128). `origin/main` stays stale at
+  `fde0591b` while ls-remote shows `136533e5`.
+- Root cause (read-only diagnosis):
+  `/opt/friday_universe/.git/objects` on S1 contains root-owned entries
+  — whole fan-out dirs (`f2`, `b7`, `cb`, `e3`, `f9`, `64`, `25`, `94`,
+  `ce`, `5f`, `a4`, `2b`, `b9`, `ac`, `74`, …) non-writable by ubuntu,
+  many root-owned loose objects, and root-owned pack
+  `pack-1716efea08f3e00d4bff7af001ca8a19484b9c95.{pack,idx}` dated Nov 23
+  04:28 IST (the OBS-009 drill window — a sudo git operation then).
+  Bridge user is ubuntu (uid 1001), the same user Fleet CD SSHes as;
+  `.git` and `.git/objects` top levels are ubuntu-owned, no lock files,
+  disk 28% used, inodes 4%, `git fsck --no-dangling` rc=0 with no errors
+  in sampled output.
+- The three target commits (`136533e5`, `0d26176b`, `9597c7c9`) ARE
+  present on S1, but the fetch still fails: the missing trees/blobs for
+  the intervening merges hash into root-owned fan-out dirs.
+- Consequence: Fleet CD's `git fetch --no-tags origin "$DEPLOY_REV"`
+  fails on S1 under `set -euo pipefail` before any merge or restart, so
+  the re-sync cannot bring S1 to current main (`136533e5`) and the
+  "S1/S2 both on current main" precondition cannot be met. Fleet CD was
+  NOT dispatched (it would half-apply: S2 would move + restart while S1
+  stays behind — no new evidence, only fleet churn; the fetch test
+  already proves the S1 job outcome). No rollback workflow was
+  dispatched; no live rollback, restart, or deploy was executed by this
+  run beyond the S2 checkout.
+- Repair owed (fleet mutation, NOT in this clearance — needs coordinator
+  direction): restore ubuntu ownership of S1's `.git/objects` (e.g.
+  `sudo chown -R ubuntu:ubuntu /opt/friday_universe/.git/objects`, or a
+  fresh clone) and re-verify `git fetch origin main` rc=0, then re-run
+  the leg. Suggested follow-up: audit how root-owned objects got in
+  (sudo git during the OBS-009 drill window?) and stop it recurring.
+- Bridge transport note: the MCP bridge dropped mid-response twice this
+  run (`http.client.IncompleteRead`, 699 and 4,507 bytes read); both
+  retries succeeded. Not blocking; noted.
+
+Fleet end state (verified ~11:07 IST): S1 `main` @ `705ab92d` (tracked
+clean), S2 `main` @ `ff84c7ff` (tracked clean) — both on main, not
+uniform; gateway 8/10 (Futuris/IntelX pre-existing 503/closed). No
+rollback executed; no receipt written (receipts dir still absent on
+both servers).
 
 ## States
 
-- implemented: YES (fix + tests + this doc)
-- tested: YES (guard suite 13/13, A/B harness, live dry-run 3×/server)
-- merged: NO (work PR open)
-- deployed: NO (needs merge + Fleet CD)
+- implemented: YES (fix + tests + this doc; live-leg attempt filed)
+- tested: YES (guard suite 13/13, A/B harness, live dry-run 3×/server;
+  live leg NOT executed — aborted on G4)
+- merged: YES (work PR #1455, merge `705ab92d`, 2026-11-23 ~10:38 IST;
+  board record still IN_REVIEW on main — MERGED flip rides in the
+  coordinator's consolidated board PR)
+- deployed: PARTIAL (fixed script on S1 via CD; S2 still runs the old
+  script — parked branch predates the merge; S2 now on main, awaiting
+  the re-sync CD)
 - production-verified: PARTIAL (determinism + gate proven live in
-  dry-run; live rollback leg unproven — owed after merge + deploy)
+  dry-run; live rollback leg unproven — blocked on G4, re-run owed after
+  the repair + re-sync)
