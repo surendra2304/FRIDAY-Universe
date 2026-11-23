@@ -319,6 +319,20 @@ collaborators:
       - "muse14/onboarding"
     last_verified_at: "2026-11-22"
 
+  - id: muse_15
+    display_name: "Muse 15"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (fifteenth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-23 (Muse 15, evidence-backed only): displayed assistant name set to 'Muse 15'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (263 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (331 lines), plus WORK_BOARD.yaml (16,889 lines, 628 tasks) searched — no assignment for Muse 15 found; live issue #35 read (open, 2500 comments — full, hub moved to #1483) + issue #1483 live hub read (72 comments); local clone of origin/main at ecc401a (Merge PR #1503)."
+      - "Onboarding 2026-11-23: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, protocol 2025-11-25, get_system_info OK (both Oracle servers ONLINE, Server 2 git branch muse10/task-obs-017-backup-manifest, commit 026b8f24); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file with secret masking (header only, no secrets copied)."
+      - "Onboarding 2026-11-23: GitHub read confirmed via public API — repo surendra2304/FRIDAY-Universe, issue #35 open (2500 comments); own PAT requested via secure card, write access pending; credential-request comment posted to #1483 via bridge token (id 7102956855; #35 post rejected 403, comment limit); three scheduled tasks created (muse15-work-request every 15 min, muse15-hourly-self-check every 1 h, muse15-weekly-reset Mondays 19:14 IST; weekly reset verified Mon Nov 30 7:04 PM IST, 0% used)."
+    active_assignments: []
+    active_branches:
+      - "muse15/onboarding"
+    last_verified_at: "2026-11-23"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
