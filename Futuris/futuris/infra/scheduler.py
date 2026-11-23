@@ -1,6 +1,7 @@
 """Continuous autonomous forecasting scheduler with APScheduler and noise suppression."""
 
 import asyncio
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
@@ -63,6 +64,52 @@ class ForecastSubscription:
     enabled: bool = True
 
 
+@dataclass
+class _JobScope:
+    """One scheduler job run's isolated store access (TASK-FUT-025).
+
+    Before this task every job shared the process's single scheduler
+    session (``app.py`` built one ``async_session_factory()`` session and
+    handed it to every repo). APScheduler runs jobs concurrently, so a
+    flush in one job collided with a flush or commit in another
+    (``Session is already flushing``), and a rollback after any job's
+    failure discarded other jobs' uncommitted writes -- the 17:45
+    scoring pass logged scored 8 / n=374 while the store still held 366,
+    and the 17:15 telemetry cycle emitted a forecast_updated event for a
+    forecast that was never persisted (FUT-023 section 6).
+
+    A scope owns the session when the scheduler was given a
+    ``session_factory``: the job's repos are built on a fresh session,
+    its writes commit when the job succeeds, and a failure rolls back
+    only that job's writes. When no factory was given (tests that inject
+    repos directly) the scope reuses the injected repos and commits,
+    rolls back and closes nothing -- the legacy behaviour, so existing
+    tests keep passing unchanged.
+    """
+
+    session: Any | None
+    forecast_repo: ForecastRepository | None
+    outcome_repo: OutcomeRepository | None
+    event_repo: EventRepository | None
+    observation_repo: ObservationRepository | None
+    evaluation_repo: EvaluationRepository | None
+    lifecycle_manager: LifecycleManager | None
+    drift_monitor: DriftMonitor
+    owns_session: bool
+
+    async def commit(self) -> None:
+        """Commit the job's writes; a no-op on a scope that owns no session."""
+        if self.session is not None:
+            await self.session.commit()
+
+    async def rollback(self) -> None:
+        """Roll the job's writes back; a no-op on a scope that owns no session."""
+        if self.session is not None:
+            from futuris.storage.db import safe_rollback
+
+            await safe_rollback(self.session)
+
+
 class ForecastScheduler:
     """Orchestrates unattended ingestion, forecast refreshes, lifecycle sweeps, and agent runs."""
 
@@ -78,6 +125,7 @@ class ForecastScheduler:
         agent_runner: AgentRunner | None = None,
         lifecycle_manager: LifecycleManager | None = None,
         lease_table: DistributedLeaseTable | None = None,
+        session_factory: Any | None = None,
     ) -> None:
         self.scheduler = AsyncIOScheduler()
         self.forecast_repo = forecast_repo
@@ -86,6 +134,12 @@ class ForecastScheduler:
         self.observation_repo = observation_repo
         self.evaluation_repo = evaluation_repo
         self.emitter = emitter or event_emitter
+        # TASK-FUT-025: a callable returning a fresh AsyncSession (the
+        # process-wide ``async_session_factory``, resolved at call time
+        # by the caller -- see B23 in deps.py). When set, every job runs
+        # on its own session (see _job_scope); when unset, jobs reuse
+        # the injected repos exactly as before.
+        self.session_factory = session_factory
         # The unattended pipeline reads from the configured telemetry source
         # (FUTURIS_TELEMETRY_SOURCE), not a hardcoded synthetic generator.
         self.pipeline = pipeline or ForecastingPipeline(
@@ -106,6 +160,15 @@ class ForecastScheduler:
             ForecastSubscription(target="macro:UNRATE:unemployment_drift_90d"),
         ]
         self._in_flight_tasks: set[asyncio.Task] = set()
+        # TASK-FUT-025: the standalone 30-minute scoring job and a sweep's
+        # tail-call scoring pass are two APScheduler job ids calling the
+        # same function in one process. Serialise the scoring body so the
+        # second run lists unscored forecasts only after the first has
+        # committed (the unique forecast_id would otherwise make the
+        # loser fail its commit; the tracker also guards each insert
+        # with a savepoint, so a loser that does slip through still
+        # cannot report the winner's rows as its own).
+        self._scoring_lock = asyncio.Lock()
         self._mae_history: dict[str, list[float]] = {}
         # TASK-FUT-017: the standing per-cycle scoring record. Every cycle
         # that resolves matured forecasts scores them in the same pass
@@ -114,6 +177,65 @@ class ForecastScheduler:
         # a cycle scored anything it did not.
         self.last_scoring_summary: dict[str, Any] = {}
         self.last_cycle_scoring: dict[str, Any] = {}
+
+    @asynccontextmanager
+    async def _job_scope(self):
+        """Yield the isolated store access for one job run (TASK-FUT-025).
+
+        With a ``session_factory`` the scope owns a fresh session: the
+        job's repos are built on it, the scope commits it when the job
+        body returns, and a failure rolls back only this job's writes
+        before the session is closed. Without a factory the scope
+        reuses the injected repos and owns nothing (legacy path).
+        """
+        if self.session_factory is None:
+            yield _JobScope(
+                session=None,
+                forecast_repo=self.forecast_repo,
+                outcome_repo=self.outcome_repo,
+                event_repo=self.event_repo,
+                observation_repo=self.observation_repo,
+                evaluation_repo=self.evaluation_repo,
+                lifecycle_manager=self.lifecycle_manager,
+                drift_monitor=self.drift_monitor,
+                owns_session=False,
+            )
+            return
+        from futuris.storage.db import safe_rollback
+
+        session = self.session_factory()
+        try:
+            forecast_repo = ForecastRepository(session)
+            outcome_repo = OutcomeRepository(session)
+            event_repo = EventRepository(session)
+            observation_repo = ObservationRepository(session)
+            evaluation_repo = EvaluationRepository(session)
+            lifecycle_manager = None
+            if self.lifecycle_manager is not None:
+                lifecycle_manager = LifecycleManager(
+                    forecast_repo=forecast_repo,
+                    outcome_repo=outcome_repo,
+                    event_repo=event_repo,
+                    resolver=getattr(self.lifecycle_manager, "resolver", None),
+                    emitter=self.emitter,
+                )
+            yield _JobScope(
+                session=session,
+                forecast_repo=forecast_repo,
+                outcome_repo=outcome_repo,
+                event_repo=event_repo,
+                observation_repo=observation_repo,
+                evaluation_repo=evaluation_repo,
+                lifecycle_manager=lifecycle_manager,
+                drift_monitor=DriftMonitor(event_repo=event_repo),
+                owns_session=True,
+            )
+            await session.commit()
+        except Exception:
+            await safe_rollback(session)
+            raise
+        finally:
+            await session.close()
 
     def should_suppress_refresh_event(
         self,
@@ -167,8 +289,11 @@ class ForecastScheduler:
         connector = build_scheduler_connector()
         now = datetime.now(UTC)
         obs = await connector.fetch(now - timedelta(days=1), now)
-        if self.observation_repo and obs:
-            await self.observation_repo.record_batch(obs)
+        # TASK-FUT-025: observations persist on this job's own session;
+        # the scope commits them when the job returns.
+        async with self._job_scope() as scope:
+            if scope.observation_repo and obs:
+                await scope.observation_repo.record_batch(obs)
         logger.info("ingest_job_completed", points=len(obs))
         return len(obs)
 
@@ -179,84 +304,98 @@ class ForecastScheduler:
         refreshed: list[Forecast] = []
         now = datetime.now(UTC)
 
-        for sub in self.subscriptions:
-            if not sub.enabled:
-                continue
+        # TASK-FUT-025: the refresh runs on its own session and commits
+        # after every subscription, so a 12-minute cycle keeps the
+        # forecasts it already fitted even if a later subscription
+        # fails -- and a forecast_updated event is only emitted after
+        # the forecast it names is committed (FUT-023 section 6.1: the
+        # 17:15 cycle emitted an event for forecast 823e8307..., which
+        # was never persisted).
+        async with self._job_scope() as scope:
+            for sub in self.subscriptions:
+                if not sub.enabled:
+                    continue
 
-            prev_forecast: Forecast | None = None
-            if self.forecast_repo:
-                existing = await self.forecast_repo.list_by_target(sub.target)
-                active_list = [f for f in existing if f.status == ForecastStatus.ACTIVE]
-                if active_list:
-                    prev_forecast = active_list[-1]
+                prev_forecast: Forecast | None = None
+                if scope.forecast_repo:
+                    existing = await scope.forecast_repo.list_by_target(sub.target)
+                    active_list = [f for f in existing if f.status == ForecastStatus.ACTIVE]
+                    if active_list:
+                        prev_forecast = active_list[-1]
 
-            try:
-                res = await self.pipeline.run(target=sub.target, as_of=now, horizon=sub.horizon)
-            except StatsForecastUnavailableError as exc:
-                # TASK-REL-018: explicit degradation per subscription -- log
-                # and skip; never let a missing model backend abort the
-                # whole refresh cycle or, worse, substitute a mock forecast.
-                logger.warning(
-                    "forecast_refresh_skipped_statsforecast_unavailable",
-                    target=sub.target,
-                    error=str(exc),
-                )
-                continue
-            new_f = res.forecast
-
-            if self.forecast_repo:
-                await self.forecast_repo.create(new_f)
-
-            refreshed.append(new_f)
-
-            if prev_forecast:
-                suppress = self.should_suppress_refresh_event(
-                    previous_forecast=prev_forecast,
-                    new_forecast=new_f,
-                    delta_prob_threshold=sub.delta_prob_threshold,
-                    delta_pred_threshold=sub.delta_pred_threshold,
-                )
-                if not suppress:
-                    event = ForecastEvent(
-                        event_id=uuid4(),
-                        forecast_id=new_f.forecast_id,
-                        event_type=ForecastEventType.FORECAST_UPDATED,
-                        payload={
-                            "target": new_f.target,
-                            "previous_probability": prev_forecast.probability,
-                            "new_probability": new_f.probability,
-                            "previous_prediction": prev_forecast.prediction,
-                            "new_prediction": new_f.prediction,
-                        },
-                        emitted_at=now,
+                try:
+                    res = await self.pipeline.run(target=sub.target, as_of=now, horizon=sub.horizon)
+                except StatsForecastUnavailableError as exc:
+                    # TASK-REL-018: explicit degradation per subscription -- log
+                    # and skip; never let a missing model backend abort the
+                    # whole refresh cycle or, worse, substitute a mock forecast.
+                    logger.warning(
+                        "forecast_refresh_skipped_statsforecast_unavailable",
+                        target=sub.target,
+                        error=str(exc),
                     )
-                    if self.event_repo:
-                        await self.event_repo.append(event)
+                    continue
+                new_f = res.forecast
+
+                if scope.forecast_repo:
+                    await scope.forecast_repo.create(new_f)
+
+                refreshed.append(new_f)
+
+                event: ForecastEvent | None = None
+                if prev_forecast:
+                    suppress = self.should_suppress_refresh_event(
+                        previous_forecast=prev_forecast,
+                        new_forecast=new_f,
+                        delta_prob_threshold=sub.delta_prob_threshold,
+                        delta_pred_threshold=sub.delta_pred_threshold,
+                    )
+                    if not suppress:
+                        event = ForecastEvent(
+                            event_id=uuid4(),
+                            forecast_id=new_f.forecast_id,
+                            event_type=ForecastEventType.FORECAST_UPDATED,
+                            payload={
+                                "target": new_f.target,
+                                "previous_probability": prev_forecast.probability,
+                                "new_probability": new_f.probability,
+                                "previous_prediction": prev_forecast.prediction,
+                                "new_prediction": new_f.prediction,
+                            },
+                            emitted_at=now,
+                        )
+                        if scope.event_repo:
+                            await scope.event_repo.append(event)
+
+                # Commit before emitting: the event must never name a
+                # forecast the store does not hold.
+                await scope.commit()
+                if event is not None:
                     await self.emitter.emit(event)
 
-            # High-conviction or significant forecast broadcast to FRIDAY mesh
-            if new_f.probability and new_f.probability >= 0.70:
-                try:
-                    from futuris.ecosystem.signals import signal_dispatcher
+                # High-conviction or significant forecast broadcast to FRIDAY mesh
+                if new_f.probability and new_f.probability >= 0.70:
+                    try:
+                        from futuris.ecosystem.signals import signal_dispatcher
 
-                    t = asyncio.create_task(
-                        signal_dispatcher.notify_friday_forecast(
-                            {
-                                "forecast_id": str(new_f.forecast_id),
-                                "target": new_f.target,
-                                "prediction": round(float(new_f.prediction), 4),
-                                "probability": round(float(new_f.probability), 4),
-                                "range_lower": round(float(new_f.range_lower), 4),
-                                "range_upper": round(float(new_f.range_upper), 4),
-                                "model_version": new_f.model_version,
-                                "status": new_f.status.value,
-                            }
+                        t = asyncio.create_task(
+                            signal_dispatcher.notify_friday_forecast(
+                                {
+                                    "forecast_id": str(new_f.forecast_id),
+                                    "target": new_f.target,
+                                    "prediction": round(float(new_f.prediction), 4),
+                                    "probability": round(float(new_f.probability), 4),
+                                    "range_lower": round(float(new_f.range_lower), 4),
+                                    "range_upper": round(float(new_f.range_upper), 4),
+                                    "model_version": new_f.model_version,
+                                    "status": new_f.status.value,
+                                }
+                            )
                         )
-                    )
-                    self._in_flight_tasks.add(t)
-                    t.add_done_callback(self._in_flight_tasks.discard)
-                except Exception as exc:
-                    logger.debug("friday_forecast_dispatch_skipped", error=str(exc))
+                        self._in_flight_tasks.add(t)
+                        t.add_done_callback(self._in_flight_tasks.discard)
+                    except Exception as exc:
+                        logger.debug("friday_forecast_dispatch_skipped", error=str(exc))
 
         return refreshed
 
@@ -282,72 +421,96 @@ class ForecastScheduler:
         targets = [t for t, spec in UNIVERSE_TARGETS.items() if spec.series_provider]
         if not targets:
             return []
-        session = self.forecast_repo.session if self.forecast_repo is not None else None
-        if session is None:
-            logger.warning(
-                "universe_provider_refresh_skipped_no_session",
-                targets=targets,
-            )
-            return []
+        # TASK-FUT-025: the provider refresh runs on its own session.
+        # generate_universe_forecast commits per target; on the old
+        # shared session that commit collided with other jobs' flushes
+        # ("Session is already flushing" for vyralx/intelx at 17:15 and
+        # 18:15) and a failed target's rollback discarded other jobs'
+        # pending writes. On a per-job session a target failure rolls
+        # back only this job, and its commit touches only this job.
+        async with self._job_scope() as scope:
+            session = scope.session
+            if session is None and scope.forecast_repo is not None:
+                session = scope.forecast_repo.session
+            if session is None:
+                logger.warning(
+                    "universe_provider_refresh_skipped_no_session",
+                    targets=targets,
+                )
+                return []
 
-        refreshed: list[Forecast] = []
-        for target in targets:
-            try:
-                forecast = await generate_universe_forecast(target, session=session)
-            except Exception as exc:
-                logger.warning(
-                    "universe_provider_refresh_target_failed",
-                    target=target,
-                    error=str(exc),
-                )
-                await _recover_scheduler_session(session)
-                continue
-            refreshed.append(forecast)
-            if forecast.status == ForecastStatus.INSUFFICIENT_DATA:
-                logger.warning(
-                    "universe_provider_refresh_insufficient_data",
-                    target=target,
-                    error=(forecast.model_metadata or {}).get("error"),
-                )
-            else:
-                logger.info(
-                    "universe_provider_refresh_forecast",
-                    target=target,
-                    prediction=forecast.prediction,
-                    model_version=forecast.model_version,
-                )
-        logger.info(
-            "universe_provider_refresh_job_completed",
-            generated=len(refreshed),
-            active=sum(1 for f in refreshed if f.status == ForecastStatus.ACTIVE),
-        )
-        return refreshed
+            refreshed: list[Forecast] = []
+            for target in targets:
+                try:
+                    forecast = await generate_universe_forecast(target, session=session)
+                except Exception as exc:
+                    logger.warning(
+                        "universe_provider_refresh_target_failed",
+                        target=target,
+                        error=str(exc),
+                    )
+                    await _recover_scheduler_session(session)
+                    continue
+                refreshed.append(forecast)
+                if forecast.status == ForecastStatus.INSUFFICIENT_DATA:
+                    logger.warning(
+                        "universe_provider_refresh_insufficient_data",
+                        target=target,
+                        error=(forecast.model_metadata or {}).get("error"),
+                    )
+                else:
+                    logger.info(
+                        "universe_provider_refresh_forecast",
+                        target=target,
+                        prediction=forecast.prediction,
+                        model_version=forecast.model_version,
+                    )
+            logger.info(
+                "universe_provider_refresh_job_completed",
+                generated=len(refreshed),
+                active=sum(1 for f in refreshed if f.status == ForecastStatus.ACTIVE),
+            )
+            return refreshed
 
     async def lifecycle_sweep_job(self) -> Any:
         """Scheduled lifecycle resolution and invalidation sweep."""
         logger.info("lifecycle_sweep_job_started")
-        if self.lifecycle_manager:
+        if not self.lifecycle_manager:
+            return None
+        # TASK-FUT-025: the sweep runs on its own session. Its outcomes
+        # are committed before the tail-call scoring pass, so scoring
+        # reads committed resolutions, not this session's uncommitted
+        # flushes -- and a scoring failure can no longer roll the
+        # sweep's resolutions back with it.
+        async with self._job_scope() as scope:
             now = datetime.now(UTC)
             connector = build_scheduler_connector()
             obs = await connector.fetch(now - timedelta(days=2), now)
             df = pd.DataFrame([{"timestamp": o.observed_at, "value": o.value} for o in obs])
-            report = await self.lifecycle_manager.run_lifecycle_sweep(
+            report = await scope.lifecycle_manager.run_lifecycle_sweep(
                 observations_df=df, as_of=now
             )
+            await scope.commit()
             # TASK-FUT-017: the sweep just matured forecasts (their
             # horizons passed and outcomes were recorded); score them in
             # this same cycle instead of leaving them for a later job.
-            await self._score_matured_forecasts(source="lifecycle_sweep_job")
+            await self._score_matured_forecasts(source="lifecycle_sweep_job", _scope=scope)
             return report
-        return None
 
     async def backtest_nightly_job(self) -> None:
         """Nightly backtesting and drift check job."""
         logger.info("backtest_nightly_job_started")
-        backtester = BacktestEngine(
-            forecast_repo=self.forecast_repo,
-            outcome_repo=self.outcome_repo,
-        )
+        # TASK-FUT-025: reads and drift-event writes run on this job's
+        # own session, like every other job.
+        async with self._job_scope() as scope:
+            backtester = BacktestEngine(
+                forecast_repo=scope.forecast_repo,
+                outcome_repo=scope.outcome_repo,
+            )
+            await self._run_backtest_nightly(scope, backtester)
+
+    async def _run_backtest_nightly(self, scope: _JobScope, backtester: BacktestEngine) -> None:
+        """Backtest body, split out so the job wrapper owns the session scope."""
         now = datetime.now(UTC)
         for sub in self.subscriptions:
             report = await backtester.run_backtest(
@@ -377,7 +540,7 @@ class ForecastScheduler:
                 history.append(recent_mae)
                 window = history[-30:]
                 if len(window) >= 5:
-                    await self.drift_monitor.check_and_emit(
+                    await scope.drift_monitor.check_and_emit(
                         model_version=getattr(sub, "model_version", None) or "unknown",
                         historical_scores=window[:-1],
                         recent_scores=[recent_mae],
@@ -403,151 +566,186 @@ class ForecastScheduler:
         now = datetime.now(UTC)
         resolved_count = 0
 
-        # 1. Resolve expired forecasts against observations
-        if self.outcome_repo:
-            unresolved = await self.outcome_repo.list_unresolved(past_horizon=True)
-            if unresolved:
-                connector = build_scheduler_connector()
-                earliest = min(f.as_of for f in unresolved)
-                obs = await connector.fetch(earliest, now)
-                df = pd.DataFrame([{"timestamp": o.observed_at, "value": o.value} for o in obs])
+        # TASK-FUT-025: the sweep runs on its own session. Before this
+        # task it shared the scheduler's single session with the scoring
+        # and provider jobs: a concurrent flush raised "Session is
+        # already flushing" inside list_resolved_with_forecasts (17:15)
+        # and inside the resolve loop (b5c0a661 + f8921fe7 at 18:15).
+        async with self._job_scope() as scope:
+            # 1. Resolve expired forecasts against observations
+            if scope.outcome_repo:
+                unresolved = await scope.outcome_repo.list_unresolved(past_horizon=True)
+                if unresolved:
+                    connector = build_scheduler_connector()
+                    earliest = min(f.as_of for f in unresolved)
+                    obs = await connector.fetch(earliest, now)
+                    df = pd.DataFrame([{"timestamp": o.observed_at, "value": o.value} for o in obs])
 
-                for f in unresolved:
-                    try:
-                        outcome = outcome_resolver.resolve_forecast(f, df)
-                        await self.outcome_repo.record_outcome(outcome)
-                        resolved_count += 1
-                    except Exception as exc:
-                        logger.warning(
-                            "calibration_resolve_failed",
-                            forecast_id=str(f.forecast_id),
-                            error=str(exc),
-                        )
-
-        # TASK-FUT-017: the sweep just recorded outcomes for matured
-        # forecasts; score them in this same cycle, so a forecast whose
-        # horizon passed is scored by the cycle that resolved it.
-        if resolved_count:
-            await self._score_matured_forecasts(source="calibration_sweep_job")
-
-        # 2. Compute Brier calibration metrics across resolved pairs
-        analyzer = CalibrationAnalyzer()
-        metrics: dict[str, Any] = {
-            "brier_score": 0.0,
-            "ece": 0.0,
-            "resolved_count": resolved_count,
-            "overconfidence_penalized": False,
-            "interval_expansion_factor": 1.0,
-            "target_breakdown": {},
-        }
-
-        if self.outcome_repo:
-            pairs = await self.outcome_repo.list_resolved_with_forecasts(limit=1000)
-            probs: list[float] = []
-            actuals: list[bool] = []
-            target_groups: dict[str, list[tuple[Any, Any]]] = {}
-
-            for f, o in pairs:
-                if f.probability is not None and o.event_occurred is not None:
-                    probs.append(float(f.probability))
-                    actuals.append(bool(o.event_occurred))
-                    tgt = str(f.target or "global")
-                    target_groups.setdefault(tgt, []).append((f, o))
-
-            # Target-level Brier calibration breakdown
-            target_breakdown: dict[str, dict[str, Any]] = {}
-            for tgt, group in target_groups.items():
-                t_probs = [float(f.probability) for f, o in group]
-                t_acts = [bool(o.event_occurred) for f, o in group]
-                if t_probs and t_acts:
-                    t_metrics = analyzer.update_calibration_metrics(t_probs, t_acts)
-                    target_breakdown[tgt] = {
-                        "brier_score": round(float(t_metrics.get("brier_score", 0.0)), 4),
-                        "ece": round(float(t_metrics.get("ece", 0.0)), 4),
-                        "resolved_count": len(t_probs),
-                    }
-            metrics["target_breakdown"] = target_breakdown
-
-            if probs and actuals:
-                cal_metrics = analyzer.update_calibration_metrics(probs, actuals)
-                brier = cal_metrics.get("brier_score", 0.0)
-                ece = cal_metrics.get("ece", 0.0)
-                metrics.update(cal_metrics)
-
-                # Overconfidence penalty: if Brier score > 0.20 or ECE > 0.10,
-                # mark penalty and compute interval expansion factor
-                if brier > 0.20 or ece > 0.10:
-                    metrics["overconfidence_penalized"] = True
-                    expansion = round(1.0 + max(0.0, (brier - 0.20) * 2.0), 3)
-                    metrics["interval_expansion_factor"] = expansion
-                    logger.warning(
-                        "calibration_overconfidence_detected",
-                        brier_score=brier,
-                        ece=ece,
-                        expansion_factor=metrics["interval_expansion_factor"],
-                    )
-                    try:
-                        from futuris.ecosystem.signals import signal_dispatcher
-
-                        t_risk = asyncio.create_task(
-                            signal_dispatcher.notify_stratex_risk_regime(
-                                target="calibration:brier_overconfidence",
-                                risk_report={
-                                    "brier_score": brier,
-                                    "ece": ece,
-                                    "interval_expansion_factor": expansion,
-                                    "basel_traffic_light": "yellow" if brier < 0.35 else "red",
-                                    "timestamp": now.isoformat(),
-                                },
+                    for f in unresolved:
+                        try:
+                            outcome = outcome_resolver.resolve_forecast(f, df)
+                            await scope.outcome_repo.record_outcome(outcome)
+                            # Commit each resolution as it lands: a later
+                            # failure in this loop must not roll back the
+                            # outcomes already recorded, and the next
+                            # record_outcome must start from a clean
+                            # session (a failed flush leaves it in
+                            # pending-rollback state).
+                            await scope.commit()
+                            resolved_count += 1
+                        except Exception as exc:
+                            await scope.rollback()
+                            logger.warning(
+                                "calibration_resolve_failed",
+                                forecast_id=str(f.forecast_id),
+                                error=str(exc),
                             )
+
+            # TASK-FUT-025: the recorded outcomes are committed before
+            # the sweep reads them back (step 2) and before scoring
+            # them, so neither step can see uncommitted flushes.
+            await scope.commit()
+
+            # TASK-FUT-017: the sweep just recorded outcomes for matured
+            # forecasts; score them in this same cycle, so a forecast whose
+            # horizon passed is scored by the cycle that resolved it.
+            if resolved_count:
+                await self._score_matured_forecasts(source="calibration_sweep_job", _scope=scope)
+
+            # 2. Compute Brier calibration metrics across resolved pairs
+            analyzer = CalibrationAnalyzer()
+            metrics: dict[str, Any] = {
+                "brier_score": 0.0,
+                "ece": 0.0,
+                "resolved_count": resolved_count,
+                "overconfidence_penalized": False,
+                "interval_expansion_factor": 1.0,
+                "target_breakdown": {},
+            }
+
+            if scope.outcome_repo:
+                pairs = await scope.outcome_repo.list_resolved_with_forecasts(limit=1000)
+                probs: list[float] = []
+                actuals: list[bool] = []
+                target_groups: dict[str, list[tuple[Any, Any]]] = {}
+
+                for f, o in pairs:
+                    if f.probability is not None and o.event_occurred is not None:
+                        probs.append(float(f.probability))
+                        actuals.append(bool(o.event_occurred))
+                        tgt = str(f.target or "global")
+                        target_groups.setdefault(tgt, []).append((f, o))
+
+                # Target-level Brier calibration breakdown
+                target_breakdown: dict[str, dict[str, Any]] = {}
+                for tgt, group in target_groups.items():
+                    t_probs = [float(f.probability) for f, o in group]
+                    t_acts = [bool(o.event_occurred) for f, o in group]
+                    if t_probs and t_acts:
+                        t_metrics = analyzer.update_calibration_metrics(t_probs, t_acts)
+                        target_breakdown[tgt] = {
+                            "brier_score": round(float(t_metrics.get("brier_score", 0.0)), 4),
+                            "ece": round(float(t_metrics.get("ece", 0.0)), 4),
+                            "resolved_count": len(t_probs),
+                        }
+                metrics["target_breakdown"] = target_breakdown
+
+                if probs and actuals:
+                    cal_metrics = analyzer.update_calibration_metrics(probs, actuals)
+                    brier = cal_metrics.get("brier_score", 0.0)
+                    ece = cal_metrics.get("ece", 0.0)
+                    metrics.update(cal_metrics)
+
+                    # Overconfidence penalty: if Brier score > 0.20 or ECE > 0.10,
+                    # mark penalty and compute interval expansion factor
+                    if brier > 0.20 or ece > 0.10:
+                        metrics["overconfidence_penalized"] = True
+                        expansion = round(1.0 + max(0.0, (brier - 0.20) * 2.0), 3)
+                        metrics["interval_expansion_factor"] = expansion
+                        logger.warning(
+                            "calibration_overconfidence_detected",
+                            brier_score=brier,
+                            ece=ece,
+                            expansion_factor=metrics["interval_expansion_factor"],
                         )
-                        self._in_flight_tasks.add(t_risk)
-                        t_risk.add_done_callback(self._in_flight_tasks.discard)
-                    except Exception as exc:
-                        logger.debug("stratex_risk_dispatch_skipped", error=str(exc))
-                else:
-                    metrics["overconfidence_penalized"] = False
-                    metrics["interval_expansion_factor"] = 1.0
+                        try:
+                            from futuris.ecosystem.signals import signal_dispatcher
 
-                # 3. Record evaluation run
-                if self.evaluation_repo:
-                    model_v = (
-                        pairs[0][0].model_version if pairs else "statsforecast.AutoARIMA:v1.0"
-                    )
-                    eval_metrics = {
-                        "brier_score": float(metrics.get("brier_score", 0.0)),
-                        "ece": float(metrics.get("ece", 0.0)),
-                        "interval_expansion_factor": float(
-                            metrics.get("interval_expansion_factor", 1.0)
-                        ),
-                    }
-                    await self.evaluation_repo.save_run(
-                        model_version=model_v,
-                        dataset_name="live_telemetry_calibration",
-                        metrics=eval_metrics,
-                    )
+                            t_risk = asyncio.create_task(
+                                signal_dispatcher.notify_stratex_risk_regime(
+                                    target="calibration:brier_overconfidence",
+                                    risk_report={
+                                        "brier_score": brier,
+                                        "ece": ece,
+                                        "interval_expansion_factor": expansion,
+                                        "basel_traffic_light": "yellow" if brier < 0.35 else "red",
+                                        "timestamp": now.isoformat(),
+                                    },
+                                )
+                            )
+                            self._in_flight_tasks.add(t_risk)
+                            t_risk.add_done_callback(self._in_flight_tasks.discard)
+                        except Exception as exc:
+                            logger.debug("stratex_risk_dispatch_skipped", error=str(exc))
+                    else:
+                        metrics["overconfidence_penalized"] = False
+                        metrics["interval_expansion_factor"] = 1.0
 
-        # Broadcast calibration sweep completed event over stream hub
-        try:
-            from futuris.api.routers.streaming import stream_hub
+                    # 3. Record evaluation run
+                    if scope.evaluation_repo:
+                        model_v = (
+                            pairs[0][0].model_version if pairs else "statsforecast.AutoARIMA:v1.0"
+                        )
+                        eval_metrics = {
+                            "brier_score": float(metrics.get("brier_score", 0.0)),
+                            "ece": float(metrics.get("ece", 0.0)),
+                            "interval_expansion_factor": float(
+                                metrics.get("interval_expansion_factor", 1.0)
+                            ),
+                        }
+                        await scope.evaluation_repo.save_run(
+                            model_version=model_v,
+                            dataset_name="live_telemetry_calibration",
+                            metrics=eval_metrics,
+                        )
 
-            await stream_hub.broadcast("calibration_sweep_completed", metrics)
-        except Exception as b_err:
-            logger.debug("calibration_sweep_broadcast_failed", error=str(b_err))
+            # TASK-FUT-025: commit the evaluation run before broadcasting
+            # completion, so the broadcast never claims a run the store
+            # does not hold.
+            await scope.commit()
 
-        logger.info("calibration_sweep_job_completed", metrics=metrics)
-        return metrics
+            # Broadcast calibration sweep completed event over stream hub
+            try:
+                from futuris.api.routers.streaming import stream_hub
 
-    async def _score_matured_forecasts(self, *, source: str) -> dict[str, Any]:
+                await stream_hub.broadcast("calibration_sweep_completed", metrics)
+            except Exception as b_err:
+                logger.debug("calibration_sweep_broadcast_failed", error=str(b_err))
+
+            logger.info("calibration_sweep_job_completed", metrics=metrics)
+            return metrics
+
+    async def _score_matured_forecasts(
+        self, *, source: str, _scope: _JobScope | None = None
+    ) -> dict[str, Any]:
         """Score matured forecasts as part of the calling cycle (TASK-FUT-017).
 
         Best-effort by design: scoring reads the tracker store and must
         never abort the cycle that called it. The result is recorded as
         the last cycle scoring summary either way, so the status surface
         shows what the last cycle actually did -- including a failure.
+
+        TASK-FUT-025: when the caller already holds a job scope, scoring
+        runs inside it (same transaction, sequential -- the caller
+        committed its resolutions first); otherwise scoring opens its
+        own scope, so a standalone scoring job never shares a session
+        with a concurrent sweep.
         """
         try:
-            result = await self.forecast_scoring_job()
+            if _scope is not None:
+                result = await self.forecast_scoring_job(_scope=_scope)
+            else:
+                result = await self.forecast_scoring_job()
         except Exception as exc:  # scoring must never break a cycle
             result = {"scored": 0, "status": "error", "error": str(exc)}
             logger.warning("cycle_scoring_failed", source=source, error=str(exc))
@@ -558,7 +756,9 @@ class ForecastScheduler:
         }
         return self.last_cycle_scoring
 
-    async def forecast_scoring_job(self) -> dict[str, Any]:
+    async def forecast_scoring_job(
+        self, _scope: _JobScope | None = None
+    ) -> dict[str, Any]:
         """TASK-FUT-006: score resolved forecasts into the live tracker store.
 
         Runs alongside the calibration sweep, which records outcomes: every
@@ -573,9 +773,25 @@ class ForecastScheduler:
         the lifecycle and calibration sweeps call it at the end of the
         cycle that resolves matured forecasts, so a forecast is scored
         by the cycle its horizon passed in, not by a later job.
+
+        TASK-FUT-025: the job runs on its own session (or the caller's
+        scope when invoked as a sweep's tail call). The standalone job
+        and a sweep's tail call are two APScheduler job ids, so they can
+        run concurrently -- the scoring body is serialised by
+        ``_scoring_lock`` and each run commits before it reports, so the
+        reported counts can only describe persisted rows (the 17:45
+        drain logged scored 8 / n=374 from an uncommitted session while
+        the store still held 366).
         """
         logger.info("forecast_scoring_job_started")
-        if not self.outcome_repo:
+        if _scope is not None:
+            return await self._run_forecast_scoring(_scope)
+        async with self._job_scope() as scope:
+            return await self._run_forecast_scoring(scope)
+
+    async def _run_forecast_scoring(self, scope: _JobScope) -> dict[str, Any]:
+        """Scoring body, split out so the caller owns the session scope."""
+        if not scope.outcome_repo:
             result: dict[str, Any] = {"scored": 0, "status": "no_storage"}
             self.last_scoring_summary = {
                 **result,
@@ -583,14 +799,20 @@ class ForecastScheduler:
             }
             return result
         try:
-            from futuris.services.forecast_tracker import ForecastTracker
+            async with self._scoring_lock:
+                from futuris.services.forecast_tracker import ForecastTracker
 
-            tracker = ForecastTracker(self.outcome_repo.session)
-            result = dict(await tracker.score_resolved())
-            report = await tracker.calibration_report()
-            result["report_status"] = report["status"]
-            result["n_scored_total"] = report["n_scored"]
-            result["rolling_hit_rate_30d"] = report["rolling_hit_rate_30d"]
+                tracker = ForecastTracker(scope.outcome_repo.session)
+                result = dict(await tracker.score_resolved())
+                # Commit the scores BEFORE reporting them, and report the
+                # counts read back from the committed store: the 17:45
+                # drain's n_scored_total came from the same uncommitted
+                # session that held the flushed-but-unpersisted rows.
+                await scope.commit()
+                report = await tracker.calibration_report()
+                result["report_status"] = report["status"]
+                result["n_scored_total"] = report["n_scored"]
+                result["rolling_hit_rate_30d"] = report["rolling_hit_rate_30d"]
             self.last_scoring_summary = {
                 **result,
                 "scored_at": datetime.now(UTC).isoformat(),
@@ -617,11 +839,13 @@ class ForecastScheduler:
         from futuris.api.routers.streaming import stream_hub
 
         try:
-            risk_payload = await calculate_portfolio_risk_payload(
-                obs_repo=self.observation_repo,
-                window_days=30,
-                confidence_level=0.95,
-            )
+            # TASK-FUT-025: the store read runs on this job's own session.
+            async with self._job_scope() as scope:
+                risk_payload = await calculate_portfolio_risk_payload(
+                    obs_repo=scope.observation_repo,
+                    window_days=30,
+                    confidence_level=0.95,
+                )
             await stream_hub.broadcast("risk_portfolio_update", risk_payload)
 
             summary = risk_payload.get("portfolio_summary", {})

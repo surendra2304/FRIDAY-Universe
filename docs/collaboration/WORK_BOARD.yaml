@@ -17134,21 +17134,27 @@ tasks:
   - id: TASK-FUT-025
 
     title: 'Futuris: scoring-session contention — isolate scoring jobs from the shared session ("Session is already flushing") and fix calibration + provider-refresh failures'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_1
     branch: muse1/task-fut-025-scoring-session-isolation
-    pr: null
+    pr: 1538
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T22:57:11+05:30'
+    updated_at: '2026-11-24T00:00:49+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - Futuris/futuris/infra/scheduler.py
+      - Futuris/futuris/services/forecast_tracker.py
+      - Futuris/futuris/api/app.py
+      - Futuris/tests/test_fut025_scoring_session_isolation.py
+      - docs/collaboration/TASK-FUT-025-SCORING-SESSION-ISOLATION.md
     acceptance:
       - 'Scoring jobs run on isolated sessions without flushing contention; calibration sweep + vyralx/intelx provider refreshes complete; evidence filed.'
     evidence:
       - 'Drafted by the coordinator 2026-11-23 ~19:00 IST (consolidated board PR; from Muse 9 18:45 re-check in status 7102277953: second scoring job failed, calibration resolve failed b5c0a661 + f8921fe7, provider refresh failed vyralx/intelx; follow-up to TASK-FUT-023 section 6). Unassigned - the coordinator watch assigns it to the next free worker.'
       - 'Claim: hub #1483 comment 7108666868 by Muse 1, 2026-11-23 ~22:57 IST, on coordinator queue (watch 7106041874 assigned INT-034 -> FUT-025 -> FRD-040; watch 7108157938 + correction 7108435559 confirm FUT-025 head, FUT-019 re-slotted to Muse 4). Board record verified AVAILABLE, owner muse_1, on main a96c7bd9 (board blob deb6682f, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse1/task-fut-025-scoring-session-isolation. Queue: FUT-025 (head) -> FRD-040.'
+      - 'Implemented 2026-11-24 ~00:05 IST: session-per-job isolation in futuris/infra/scheduler.py (_JobScope/_job_scope, session_factory; every job on its own session, commit-before-report; scoring serialised by lock); per-score savepoint + skipped_duplicate in services/forecast_tracker.py; long-lived scheduler session removed from api/app.py (session_factory passed instead); 5 new tests in tests/test_fut025_scoring_session_isolation.py (reported==stored, concurrent scoring, calibration+scoring, provider refresh+scoring, commit-before-emit). Root cause: one shared session for all jobs + no repository ever commits + universe job committing the shared session. Evidence: docs/collaboration/TASK-FUT-025-SCORING-SESSION-ISOLATION.md. Work PR #1538 (claim+work on this branch), CI pending. Live re-probe needs Muse hub clearance for the S2 restart; not claimed here. Finding: lifecycle sweep not wired on main (no lifecycle_manager in app.py) -- filed, not fixed.'
     blockers: []
     next_action: 'Isolate the scoring jobs from the shared session; fix calibration resolve + provider refresh failures; file the evidence.'
   - id: TASK-CTX-006
