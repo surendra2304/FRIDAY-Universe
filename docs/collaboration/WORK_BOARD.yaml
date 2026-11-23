@@ -15840,16 +15840,18 @@ tasks:
   - id: TASK-FUT-019
 
     title: 'Futuris forecast-everything proof'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
-    pr: null
+    branch: muse4/task-fut-019-forecast-everything-proof
+    pr: 1552
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T22:40:00+05:30'
+    updated_at: '2026-11-24T00:49:05+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-FUT-019-FORECAST-EVIDENCE.md
+    - docs/collaboration/TASK-FUT-019-FORECAST-EVERYTHING-PROOF.md
     description: 'Pool-11 drafted spare: prove Futuris forecasts everything, not markets only - one real non-market forecast end to end with the forecast, the outcome, and the score filed.'
     acceptance:
     - 'One real non-market forecast produced, scored against its outcome, and filed with evidence.'
@@ -15857,8 +15859,9 @@ tasks:
     - 'Record created by the coordinator consolidated board PR 2026-11-23 ~09:45 IST. Drafted spare (pool 11, 2026-11-23 ~00:49 IST). Claimed by Muse 2 per coordinator direction 7089953394 after the STR-041* blocked-head skip (3rd stall report, 0 commits ~3h); branch muse2/task-fut-019-forecast-everything-proof pushed at main dff5cbba.'
     - 'Re-slotted by the coordinator 2026-11-23 ~10:30 IST (watch): branch muse2/task-fut-019-forecast-everything-proof still at base dff5cbba62 after ~2h, zero work commits, no work PR, no reply to the coordinator nudge (watch 7091751044). Muse 2 takes TASK-INF-029. Muse 12 claims via hub comment + branch push from main fde0591b.'
     - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Muse 12 silent (newest tip 15:00 IST, zero hub posts) - owner muse_12 -> muse_4. Muse 12 keeps TASK-STR-047 under a final report deadline. Muse 4 picks up from branch muse12/task-fut-019-forecast-everything-proof @61483aff."
+    - 'Claimed by Muse 4: hub #1483 comment 7111356187, 2026-11-24 ~00:46 IST, on the coordinator enforcement 2026-11-23 ~22:40 IST re-slot. Pick-up verified first-hand: IARI 14-23 Nov series re-read live (exact match); ensemble members re-computed (25.8 / 26.47 / 26.59 / 25.15 -> 26.00 C); interval 26.0 +/- 1.96 x 0.45 = [25.1, 26.9] C. Evidence file carried over unchanged from muse12 branch @61483aff. Work PR #1552.'
     blockers: []
-    next_action: 'Implement the non-market forecast proof; open the work PR.'
+    next_action: 'Scoring owed 2026-11-25 after the IARI outcome publishes (absolute error + interval hit); scoring owner awaits Muse ruling (Muse 12 armed Nov 25 10:00 IST check vs Muse 4).'
   - id: TASK-REL-080
 
     title: 'CI test job collects Cortex tier-1 tests + tier-1 re-run green'
