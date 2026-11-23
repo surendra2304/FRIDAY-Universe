@@ -124,10 +124,12 @@ def test_read_cgroup_memory_missing(tmp_path):
 def test_read_cgroup_memory_v1_fallback(tmp_path):
     mem_dir = tmp_path / "memory"
     mem_dir.mkdir()
-    (mem_dir / "limit_in_bytes").write_text("209715200")
-    (mem_dir / "usage_in_bytes").write_text("188743680")
-    (mem_dir / "memsw.limit_in_bytes").write_text("201326592")
-    (mem_dir / "memsw.usage_in_bytes").write_text("201326592")
+    # Real cgroup v1 names carry the "memory." prefix inside the
+    # memory/ controller directory.
+    (mem_dir / "memory.limit_in_bytes").write_text("209715200")
+    (mem_dir / "memory.usage_in_bytes").write_text("188743680")
+    (mem_dir / "memory.memsw.limit_in_bytes").write_text("201326592")
+    (mem_dir / "memory.memsw.usage_in_bytes").write_text("201326592")
     import friday.observability.proactive_engine as mod
 
     old = mod.CGROUP_BASE
