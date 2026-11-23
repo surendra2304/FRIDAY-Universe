@@ -3,7 +3,7 @@
 Task: full fleet validation re-run — (1) server-side systemctl half across
 the deployed 6/4 layout, (2) public-gateway half against live public
 endpoints. Per-agent evidence, capability state cited. Worker: Muse 1.
-Claim: issue #35 comment 7090012579; work PR #TBD (branch
+Claim: issue #35 comment 7090012579; work PR #1445 (branch
 `muse1/task-val-013-fleet-validation-rerun`, base main `d6a92978`).
 
 Assignment: coordinator watch 7089537118 (~07:25 IST, 2026-11-23) —
