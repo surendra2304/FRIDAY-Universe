@@ -16503,12 +16503,12 @@ tasks:
     title: 'VyralX: file the current scoreboard - 5 public videos views/likes + held-render pool state'
     status: IN_REVIEW
     owner: muse_15
-    branch: muse15/task-vyr-043-vyralx-scoreboard
-    pr: 1566
+    branch: muse15/task-vyr-043-vyralx-scoreboard-r2
+    pr: 1580
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T02:55:00+05:30'
+    updated_at: '2026-11-24T04:17:34+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
