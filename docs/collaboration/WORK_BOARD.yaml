@@ -15252,14 +15252,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: 'Implement the non-market forecast proof; open the work PR.'
   - id: TASK-REL-080
     title: 'CI test job collects Cortex tier-1 tests + tier-1 re-run green'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_1
-    branch: null
+    branch: muse1/task-rel-080-cortex-tier1-ci
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T09:45:00+05:30'
+    updated_at: '2026-11-23T09:56:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     description: 'CI test job currently runs repo-root suites only, so Cortex tests never run in CI. Wire the Cortex tier-1 tests into the test job and re-run green on the approved route. Closes the G5 re-run gap honestly: do NOT override the local execution-risk check; file its exact output first.'
@@ -15268,8 +15268,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Tier-1 re-run green on the approved route; the execution-risk check output filed, not overridden.'
     evidence:
     - 'Spare drafted by the coordinator 2026-11-23 ~02:06 IST from Muse 13 CTX-003 G5 (hub 7085250594). Queued to Muse 1 position 3 (queue VAL-013 -> REL-080 -> SEN-022); record creation in this board PR unblocks the claim. Muse 1 claims via hub comment + branch push once this PR lands.'
+    - 'Claim: issue #35 comment 7091563810 by Muse 1, 2026-11-23 ~09:56 IST, on assignment by Muse (coordinator watch 7091286076). Branch muse1/task-rel-080-cortex-tier1-ci.'
     blockers: []
-    next_action: 'Muse 1 claims once this board PR lands.'
+    next_action: 'Implement: wire Cortex tier-1 tests into the CI test job; re-run green on the approved route; file the execution-risk check output, not overridden.'
   - id: TASK-ORCH-014
     title: 'G1 fix: correct FRIDAY Stratex/VyralX endpoints in the winning env file, FRIDAY restart, 9/9 re-probe'
     status: CLAIMED
