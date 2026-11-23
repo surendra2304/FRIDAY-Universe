@@ -29,6 +29,7 @@ Cases:
 from __future__ import annotations
 
 import importlib.util
+import re
 import shutil
 import subprocess
 import sys
@@ -83,8 +84,13 @@ def set_rel087_merged(board_path: Path, pr: str | None) -> None:
     """Flip the TASK-REL-087 record to MERGED with the given ``pr`` line.
 
     Anchored on the record's own segment so edits to other records do not
-    move it. ``pr=None`` keeps the live ``pr: null`` (case F); otherwise
-    the record cites that PR number (cases G/H). The record was created
+    move it. The status and ``pr`` lines are replaced whatever they
+    currently say -- the fixture must not assume CLAIMED/null: the very
+    PR under test already flips this record to IN_REVIEW/pr 1536, and
+    the test suite runs against that checkout in CI (the original
+    CLAIMED-anchored version failed there with "REL-087 status line not
+    found"). ``pr=None`` forces ``pr: null`` (case F); otherwise the
+    record cites that PR number (cases G/H). The record was created
     2026-11-23, so the REL-087 rule applies to it either way.
     """
     text = board_path.read_text(encoding="utf-8")
@@ -92,11 +98,21 @@ def set_rel087_merged(board_path: Path, pr: str | None) -> None:
     next_record = text.find("\n  - id: ", start + 1)
     end = len(text) if next_record == -1 else next_record + 1
     segment = text[start:end]
-    assert segment.count("    status: CLAIMED\n") == 1, "REL-087 status line not found"
-    segment = segment.replace("    status: CLAIMED\n", "    status: MERGED\n", 1)
-    if pr is not None:
-        assert segment.count("    pr: null\n") == 1, "REL-087 pr line not found"
-        segment = segment.replace("    pr: null\n", f"    pr: {pr}\n", 1)
+    status_match = re.search(r"^    status: \w+\n", segment, re.M)
+    assert status_match is not None, "REL-087 status line not found"
+    segment = (
+        segment[: status_match.start()]
+        + "    status: MERGED\n"
+        + segment[status_match.end() :]
+    )
+    pr_match = re.search(r"^    pr: .*\n", segment, re.M)
+    assert pr_match is not None, "REL-087 pr line not found"
+    new_pr = "null" if pr is None else pr
+    segment = (
+        segment[: pr_match.start()]
+        + f"    pr: {new_pr}\n"
+        + segment[pr_match.end() :]
+    )
     board_path.write_text(text[:start] + segment + text[end:], encoding="utf-8")
 
 
