@@ -236,7 +236,13 @@ async def test_f3_circuit_breaker_trips_to_open_after_threshold():
 @pytest.mark.asyncio
 async def test_f3_peer_transport_exponential_backoff(monkeypatch):
     """F3.4: PeerTransport applies exponential backoff on retries."""
-    transport = PeerTransport(name="sentinel_f3_4", base_url="http://sentinel.local")
+    # Distinct peer name from the unit file's F3.4: both tier-1 files
+    # run in one pytest process and share peer_transport._CIRCUITS, so
+    # the unit file's F3.4 (3 ConnectErrors) leaves circuit
+    # peer_sentinel_f3_4 OPEN and this test would fast-fail before any
+    # retry/sleep (delays == []). A separate name gives this test its
+    # own fresh circuit, so it honestly exercises the backoff path.
+    transport = PeerTransport(name="sentinel_f3_4_e2e", base_url="http://sentinel.local")
     client = get_shared_client()
 
     delays = []

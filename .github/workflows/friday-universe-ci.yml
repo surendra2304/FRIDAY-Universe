@@ -94,6 +94,28 @@ jobs:
           .venv-vector-ci/bin/python -m pytest -q \
             tests/test_viking_context_durability.py
 
+      # TASK-REL-080: Cortex tier-1 tests (CTX-003 G5 re-run). The test job
+      # ran repo-root suites only, so Cortex tests never ran in CI. The two
+      # tier-1 files run in their own venv from Cortex/requirements.txt
+      # (same pattern as the Memora vector step above); Cortex conftest.py
+      # sets the test JWT secret and workspace paths, so no fleet secrets
+      # are needed. Five deselects are pre-existing failures proven on
+      # current main — see docs/collaboration/TASK-REL-080-CORTEX-TIER1-CI.md:
+      # F16.3/F16.4 in both files (README/.env.example lack POSTGRES_DSN)
+      # and F8.3 in tests/e2e (stale pre-COR-005 assertion).
+      - name: Run Cortex tier-1 tests
+        working-directory: Cortex
+        run: |
+          python3 -m venv .venv-cortex-ci
+          .venv-cortex-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio pyyaml aiosqlite
+          .venv-cortex-ci/bin/python -m pytest -q \
+            tests/unit/test_e2e_tier1.py tests/e2e/test_e2e_tier1.py \
+            --deselect tests/unit/test_e2e_tier1.py::test_f16_readme_contains_env_vars_table \
+            --deselect tests/unit/test_e2e_tier1.py::test_f16_env_example_contains_all_core_settings \
+            --deselect tests/e2e/test_e2e_tier1.py::test_f16_readme_contains_env_vars_table \
+            --deselect tests/e2e/test_e2e_tier1.py::test_f16_env_example_contains_all_core_settings \
+            --deselect tests/e2e/test_e2e_tier1.py::test_f8_post_plan_valid_payload
+
       - name: Start API server and run HTTP tests
         run: |
           PYTHONPATH=FRIDAY/apps/core/src:Inference/app:Inference:Memora:Stratex:Forge/app/services:Sentinel/app/services:IntelX/intelx/services:Futuris/futuris/core:VyralX/app/services \
