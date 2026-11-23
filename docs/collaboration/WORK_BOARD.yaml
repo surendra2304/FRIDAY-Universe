@@ -17332,14 +17332,14 @@ tasks:
   - id: TASK-FRD-041
 
     title: 'FRIDAY: root-cause her 2026-11-23 08:03 IST OOM kill on S1 and ship a memory guard so she warns before she dies'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_2
-    branch: null
+    branch: muse2/task-frd-041-friday-oom-memory-guard
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T23:10:00+05:30'
+    updated_at: '2026-11-24T00:32:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17348,8 +17348,11 @@ tasks:
       - 'Drafted by the coordinator push 2026-11-23 ~21:35 IST (owner order: no worker under 30 percent burn - bigger multi-hour tasks, queues at depth 3, pool floor 10).'
       - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Queue top-up after FRD-038 moved to Muse 14: owner null -> muse_11."
       - 'Assigned M2 queue head (hub 7108903950): M2 queue empty after the 1534 re-slot; FRIDAY OOM-kill root cause.'
+      - 'Root cause (2026-11-24, S1 read-only probes): cgroup kill — FRIDAY.service MemoryMax=200M + MemorySwapMax=192M; 2026-11-23 08:03:47 IST kernel OOM-killed python pid 2704298 (anon-rss 160488kB) in /system.slice/FRIDAY.service on a swap-in fault; cgroup at 100% (failcnt 7492923); same signature 2026-11-22 11:15 IST. The old ram_critical watch fired 07:59:54 at 91.4% system RAM but measures the wrong metric and its queued warning died with the process.'
+      - 'Guard implemented in the work PR: cgroup-aware watch in ProactiveEngine (warn 75%, critical 90% + direct Telegram, recover <60%); regression tests FRIDAY/tests/test_frd041_memory_guard.py; evidence doc docs/collaboration/TASK-FRD-041-OOM-MEMORY-GUARD.md.'
+      - 'Still owed after merge: staged memory-pressure proof + Telegram delivery on the live copy with coordinator clearance; deploy with the next FRIDAY deploy.'
     blockers: []
-    next_action: 'Start from the 2026-11-23 08:03:47 IST OOM record on S1: which process grew, why, and what guard prevents a silent repeat.'
+    next_action: 'Review the work PR; staged live proof + deploy need coordinator clearance.'
   - id: TASK-INF-030
 
     title: 'Inference: wire the APInex gateway (key already in S2 CREDENTIALS.md) as a free fallback provider behind the router, with a failover proof'

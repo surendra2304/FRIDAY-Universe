@@ -133,6 +133,7 @@ jobs:
             FRIDAY/tests/test_obs003_health_honesty.py \
             FRIDAY/tests/test_tier1_resilience_and_contracts.py \
             FRIDAY/tests/test_container_compatibility.py \
+            FRIDAY/tests/test_frd041_memory_guard.py \
             FRIDAY/tests/e2e/test_tier1_features.py
       - name: Generated-code ingestion and saved verification status
         env:
