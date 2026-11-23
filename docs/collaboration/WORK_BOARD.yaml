@@ -17699,10 +17699,10 @@ tasks:
     next_action: 'Read the INF-019 timing evidence, set the deadline, prove it with a probe.'
   - id: TASK-REL-092
     title: 'Reliability: diagnose the contracts-job infra failure blocking the FRG-001 merge (#1532, two identical 12-14s failures)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_19
-    branch: null
-    pr: null
+    branch: muse19/task-rel-092
+    pr: 1560
     contributors: []
     priority: P1
     created_at: '2026-11-24'
