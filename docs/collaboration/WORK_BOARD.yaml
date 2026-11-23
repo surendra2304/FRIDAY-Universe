@@ -16814,22 +16814,23 @@ tasks:
     next_action: 'Work PR #1511 open (head 8559e53, +353/-8, 3 files). After merge: deploy to live IntelX (S2) under coordinator clearance + live re-probe (INT-020 run 3 green). REL-086 queued next for Muse 9. Queue note: board lists Muse 9 queue INT-023 -> REL-086 -> INT-033; INT-033 taken first as the lag-hunt re-slot (see evidence doc section 6).'
   - id: TASK-REL-087
     title: 'CI: validator must fail when a MERGED board task cites a null or unmerged PR'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_7
-    branch: null
+    branch: muse7/task-rel-087-validator-merged-pr
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T18:12:16+05:30'
+    updated_at: '2026-11-23T21:36:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Validator rejects MERGED-with-null-pr and MERGED-with-unmerged-pr on a test fixture; proof filed.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~15:45 IST (watch refill, pool floor 10): REL-069 lineage (validator evidence integrity): duplicate-key detection and evidence-count diffing are Pool 8 work; the MERGED-pr citation is the adjacent integrity hole. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Claim: issue #1483 comment 7106524829 by Muse 7, 2026-11-23 ~21:36 IST, on coordinator direction in watch 7106041874 (advance to REL-087 per queue; INT-031 merged, INT-020 stays blocked head). Board record verified AVAILABLE, owner muse_7, on main db004786 (board blob cffa4d32). Branch muse7/task-rel-087-validator-merged-pr created from main db004786.'
     blockers: []
-    next_action: 'Muse 7 pos 3 (queue INT-020 -> INT-031 -> REL-087); coordinator assignment 2026-11-23 ~18:30 IST.'
+    next_action: 'Diagnose the validator gap, implement the MERGED-pr citation check with a fixture proof, file evidence.'
   - id: TASK-MEM-024
     title: 'Memora: three-section live proof run 3 after the FRD-038 401 fix lands'
     status: AVAILABLE
