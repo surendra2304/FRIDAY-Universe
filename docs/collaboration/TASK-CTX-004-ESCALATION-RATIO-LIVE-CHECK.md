@@ -147,8 +147,47 @@ First implementation chunk, on branch
   the modified module (14 direct + 4 with a fake-httpx stand-in); the 6
   self-model/self-modification tests need other modules this change does not
   touch and are left to repo CI. Full-suite proof rides on PR CI.
-- Live proof: still blocked on a coordinator-cleared deploy + restart (the
-  deploy decision rides with Muse 11's MEM-017 fix). No live fault staged.
+- Live proof: verified live 2026-11-23 ~06:41 IST — see §5. No live fault staged.
+
+## 5. Live proof (2026-11-23 ~06:41 IST, hourly self-check run, first-hand via bridge)
+
+The deploy + restart the live proof needed had already happened by the time
+this run checked — no hub post records who performed it, and no restart was
+performed by this run.
+
+- **Deploy:** S2 checkout is `main` @ `491a63e9` (the CTX-004 merge commit).
+  Reflog: checkout moved from `muse10/task-frd-037-chat-live-runs` to `main`,
+  then fast-forwards to `491a63e9`. The CTX-004 code and the /ready probe are
+  on disk on S2.
+- **Restart:** `Cortex.service` restarted 05:25:17 IST (Main PID **599993**),
+  ~42 s after PR #1437 merged 05:24:35 IST. `systemctl show` first-hand.
+- **Supervisor state at ~06:41 IST** (`GET /v1/friday/self_healing`,
+  observed 01:10:55Z): background running, **cycles 148**, errors 0,
+  `last_unconfigured: []`, `last_unhealthy: []`; escalation attempts 0,
+  delivered 0.
+- **`ratio_check` live in the response** — the check reports the healthy
+  state it was designed to report: `threshold_cycles` 10,
+  `delivery_gap_threshold` 3, `unconfigured_streaks` {}, signal rate
+  database/schema/redis/agents 1.0 (148 samples), `ai_universe` 0.9932
+  (147/148 — one failed sample in 148), ingestion/tools `null` (0 samples,
+  no probe — the no-signal signature, expected), `consecutive_failed_deliveries`
+  0, `channel_broken` false, `last_alert` null. **Streak 0, signal present.**
+- **G4 /ready:** on-disk `self_healing.py:95` probes `GET {url}/ready`
+  (line 109 accepts status `"healthy"`/`"ready"`); `/ready` returns HTTP 200
+  `READY`; the supervisor's `last_probes` show `ai_universe` HEALTHY via
+  that probe. The /ready verification now has its live evidence; formal
+  close sits with TASK-CTX-005* per coordinator direction 7088433890.
+- **Counterfactual stands:** the pre-restart 1,878-cycle UNCONFIGURED run
+  (§0) is what this check would have caught — streak >= 10 with no signal.
+- **Coordinator restart direction 7088433890 (~06:10 IST)** granted a restart
+  of "S2 Cortex service ONLY (PID 584499)". That PID is two restarts old
+  (584499 → 598506 at 03:57:30 IST → 599993 at 05:25:17 IST). A fresh
+  restart now would reset the 148-cycle healthy baseline that IS this
+  live-proof evidence, and cannot add anything: the granted restart's
+  intended end state (supervisor resumed, /health 200, healthy probes) is
+  already the live state. No restart performed this run; the direction is
+  reported as satisfied in substance, with the deploy it presupposed
+  already done.
 
 ## Files
 
