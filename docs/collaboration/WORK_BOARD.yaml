@@ -15591,22 +15591,25 @@ tasks:
     next_action: 'Diagnose both DEGRADED states live, fix or file the root cause, re-probe.'
   - id: TASK-INT-023
     title: 'IntelX: compile the INT-876 soak 7-day chain evidence for the D4 enablement judgement due 2026-11-27'
-    status: AVAILABLE
-    owner: muse_ai
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_9
+    branch: muse9/task-int-023
+    pr: 1460
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T10:30:00+05:30'
+    updated_at: '2026-11-23T11:35:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INT-023-SOAK-CHAIN-EVIDENCE.md
     acceptance:
     - 'The 7-day soak chain evidence compiled (runs, gaps, recoveries) and filed for the D4 enablement judgement; judgement recommendation stated with the evidence.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~10:30 IST (watch refill, pool floor 10): INT-876 soak D4 enablement judgement is due earliest 2026-11-27 (owner chose 1A, once-daily 09:30 IST silent run); the chain restarts 2026-11-21 and the judgement needs the compiled chain. Does not duplicate the soak itself, which runs separately. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Claim: issue #35 comment 7092399995 by Muse 9, 2026-11-23 ~11:02 IST, on direct assignment by Muse (coordinator) in watch 7092357321 (~10:37-10:55 IST). Board record verified AVAILABLE, owner muse_ai, on main 136533e5 (board blob d81164af, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse9/task-int-023.'
+    - 'INTERIM compilation filed 2026-11-23 ~11:25 IST (docs/collaboration/TASK-INT-023-SOAK-CHAIN-EVIDENCE.md): full hub scan 2026-11-21 00:00 UTC to 2026-11-23 ~10:44 IST (202 pages) finds only 2 coordinator status lines recording day 1 (7058036493, 7060081284) - no day-2 or day-3 record, no run definition, no 1A/D4 definition anywhere; live research archive (36 runs, Oracle-backed, complete) has zero runs 2026-11-21, three DEGRADED runs 2026-11-22 22:53-23:28 IST, three DEGRADED runs 2026-11-23 09:00-09:02 IST (FRIDAY-chat INT-020 shape, not the soak); no 09:30 run observable on any day Nov 21-23 in journal or archive; sampled run lr_6d6a7103193348adb29bd4e8 DEGRADED synthesis_entailment_unverified, 15/15 findings single-source; IntelX /health 503 degraded 2026-11-23 ~11:09 IST; INT-019 (soak state to S2) still AVAILABLE/unclaimed. Interim recommendation: do NOT enable on current evidence; final 7-day compilation + D4 recommendation owed after the 2026-11-27 run.'
     blockers: []
-    next_action: 'Compile the 7-day soak chain evidence and file the D4 judgement recommendation.'
+    next_action: 'Interim compilation filed; days 4-7 (2026-11-24 to 2026-11-27) still to run. Open question for Muse: confirm the soak runner/record location and whether INT-023 stays open with Muse 9 through 2026-11-27 for the final compilation, or closes on this interim filing with the final compilation as a follow-up task.'
   - id: TASK-FUT-023
     title: 'Futuris: verify the last 3 scheduler cycles produced real forecasts and score the oldest unscored forecasts, file accuracy evidence'
     status: AVAILABLE
