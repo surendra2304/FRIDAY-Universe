@@ -7,7 +7,7 @@ import time
 import pytest
 
 import app.providers
-from app.core.config import settings
+from app.core.config import Settings, settings
 from app.providers.base import ProviderMessage, ProviderRequest
 from app.providers.gateway import KeyPool, ModelGateway, ProviderRateLimiter
 
@@ -168,3 +168,19 @@ async def test_local_fallback_deadline_bounds_limiter_wait(monkeypatch):
     assert provider_calls == 0
     assert elapsed < 0.5
     assert limiter._sem._value == 1
+
+
+def test_routing_deadline_defaults_are_the_inf029_measured_decision():
+    """TASK-INF-029: the routing deadline defaults are the measured decision.
+
+    Gemini completion on the ~13.5k-token INF-019 probe shape, n=5 fresh
+    direct trials (median 42.0 s, p95 >= 150 s right-censored, 2/5 inside
+    the 15 s slice; combined n=8 with INF-LLM-003: median 54.66 s, 3/8
+    inside): no sane primary-slice deadline covers that tail, so the
+    deadline stays at a 60 s budget with a 15 s primary slice and the
+    fallback ladder serves the request end-to-end (18.34 s gateway path).
+    """
+    assert Settings.model_fields["REQUEST_TIMEOUT"].default == 60.0
+    assert Settings.model_fields["PRIMARY_ATTEMPT_FRACTION"].default == 0.6
+    assert Settings.model_fields["PRIMARY_ATTEMPT_MAX_SECONDS"].default == 15.0
+    assert min(60.0 * 0.6, 15.0) == 15.0

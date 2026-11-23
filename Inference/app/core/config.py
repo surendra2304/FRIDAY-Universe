@@ -466,7 +466,8 @@ from typing import Anyfrom pydantic import AliasChoices, Field, field_validato
             "latencies. A non-streaming primary silent for this long is degraded for this fleet's "
             "purposes, so the ladder gets the remaining budget instead. Small explicit budgets are "
             "unaffected (the fraction governs below the cap). Raise this if a deployment's primaries "
-            "legitimately take longer than this to produce one non-streamed completion."
+            "legitimately take longer than this to produce one non-streamed completion."
+            "TASK-INF-029 (2026-11-23) measured Gemini completion on the ~13.5k-token INF-019 probe shape at n=5 fresh (median 42.0 s, p95 >=150 s right-censored, 2/5 inside this 15 s slice; combined n=8 with INF-LLM-003: median 54.66 s, 3/8 inside) and kept this cap: no sane primary-slice deadline covers that tail, and the fallback ladder serves the same request end-to-end in 18.34 s."
         ),
     )
 

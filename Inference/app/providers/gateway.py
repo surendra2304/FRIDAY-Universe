@@ -133,13 +133,15 @@ def groq_prompt_over_limit(request: ProviderRequest) -> bool:
 #: oversized-prompt line, and the INF-019 shape (13,543 calibrated
 #: tokens) sits well above it. "short" prompts keep the tight default
 #: budget and the 15 s primary slice; "large" prompts are the class
-#: INF-LLM-003 measured Gemini missing on (2/2 gateway trials cut at
-#: 14.7 s; direct completions 6.4 s / 67.3 s / 99.3 s / >150 s), so a
+#: INF-LLM-003 + TASK-INF-029 measured Gemini missing on (4/4 gateway
+#: trials cut at the slice, 14.7-15.0 s; direct completions at n=5 fresh:
+#: 5.4 s / 14.3 s / 42.0 s / 74.8 s / >150 s, median 42.0 s, p95 >=150 s;
+#: combined n=8 with INF-LLM-003: median 54.7 s, 3/8 inside 15 s), so a
 #: large Gemini primary is routed directly to the proven fallback
 #: instead of burning the primary slice on an attempt that misses.
 #: The budget itself is UNCHANGED for both classes (INF-LLM-003
-#: recommendation: KEEP the deadline -- no sane primary-slice deadline
-#: covers that tail).
+#: recommendation, confirmed by TASK-INF-029 at n=5: KEEP the deadline --
+#: no sane primary-slice deadline covers that tail).
 LARGE_PROMPT_TOKEN_THRESHOLD = GROQ_PROMPT_TOKEN_LIMIT
 
 
@@ -731,15 +733,16 @@ class ModelGateway:
 
         # TASK-INF-022: large prompts go directly to the proven fallback
         # when Gemini is the requested primary and the caller set no
-        # explicit timeout. INF-LLM-003 measured this shape (13,519
-        # Gemini tokens): the Gemini primary was cut at the 15 s slice
-        # on 3/3 gateway trials (14.7 s each) and direct completions
-        # took 6.4 s / 67.3 s / 99.3 s / >150 s -- no sane primary-slice
-        # deadline covers that tail, and the fallback ladder already
-        # serves a correct answer end-to-end (21.39 s gateway path,
-        # via OpenRouter). Attempting the primary first only burns
-        # 14.7 s of the budget on a miss. An explicit caller timeout
-        # opts out: the caller asked to wait for Gemini.
+        # explicit timeout. INF-LLM-003 + TASK-INF-029 measured this shape
+        # (13,519 Gemini tokens): the Gemini primary was cut at the 15 s
+        # slice on 4/4 gateway trials (14.7-15.0 s) and direct completions
+        # at n=5 fresh took 5.4 s / 14.3 s / 42.0 s / 74.8 s / >150 s
+        # (median 42.0 s, p95 >=150 s) -- no sane primary-slice deadline
+        # covers that tail, and the fallback ladder already serves a
+        # correct answer end-to-end (18.34 s gateway path, via OpenRouter).
+        # Attempting the primary first only burns 15.0 s of the budget on
+        # a miss. An explicit caller timeout opts out: the caller asked
+        # to wait for Gemini.
         if (
             prov_name == "gemini"
             and prompt_deadline_class(request) == "large"
@@ -748,7 +751,7 @@ class ModelGateway:
             direct_skip = TemporaryUnavailableError(
                 f"Prompt estimated at {estimate_prompt_tokens(request)} tokens is in the "
                 "large deadline class (over 7,000); the Gemini primary misses the 15 s "
-                "slice on this shape (INF-LLM-003: 3/3 gateway trials cut at 14.7 s), so "
+                "slice on this shape (INF-LLM-003 + TASK-INF-029: 4/4 gateway trials cut at the slice, 14.7-15.0 s), so "
                 "routing directly to the fallback ladder without a primary attempt.",
                 provider=prov_name,
                 model=request.model,

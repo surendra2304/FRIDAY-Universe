@@ -15521,23 +15521,30 @@ tasks:
 
   - id: TASK-INF-029
     title: 'Inference: measure Gemini completion time on ~9k-token prompts and set the routing deadline from that evidence'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
+    branch: muse4/task-inf-029-gemini-9k-deadline
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T10:30:00+05:30'
+    updated_at: '2026-11-23T14:55:04+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INF-029-GEMINI-9K-DEADLINE.md
+    - Inference/app/core/config.py
+    - Inference/app/providers/gateway.py
+    - Inference/tests/test_provider_gateway_deadlines.py
     acceptance:
     - 'Gemini completion times measured on ~9k-token prompts (n>=5, median + p95 filed); routing deadline set in code or config from the measured numbers, with the before and after deadline filed.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~10:30 IST (watch refill, pool floor 10): pool-7 item (iv), INF-019 follow-up - INF-019 is MERGED, the measurement itself was never filed. Assigned to Muse 2: FUT-019 re-slotted to Muse 12 after 2h with zero commits and no reply to the coordinator nudge.'
     - 'Re-slotted by the coordinator 2026-11-23 ~14:50 IST (watch): Muse 2 filed 3 consecutive no-session self-checks, zero commits since claim 10:39 IST, no reply to the STR-043 assignment (watch 7095661567). INF-029 reassigned to Muse 4 (free, requesting work 7095729134) as queue position 2 after blocked STR-HLT-002. Muse 2 queue now STR-043 -> INT-032 -> INF-028.'
+    - 'Claim: branch muse4/task-inf-029-gemini-9k-deadline created from main c97dacff, 2026-11-23 ~14:44 IST, on assignment in coordinator watch 7096098820 (re-slot from Muse 2). Hub claim comment NOT posted - issue #35 hit 2,500 comments and GitHub refuses new comments (403). Board owner flip to muse_4 landed via coordinator board PR #1480 (merge b1b04db2).'
+    - 'Measured 2026-11-23 ~14:47-14:51 IST (this run): direct Gemini n=5 fresh on the INF-019 probe shape (35,214 chars, 13,543 calibrated tokens): 5.42 / 14.27 / 42.00 / 74.76 s served, 1 timeout >150 s (censored); median 42.00 s, p95 150.13 s nearest-rank (true p95 >=150 s), 2/5 inside the 15 s slice; combined n=8 with INF-LLM-003: median 54.66 s, 3/8 inside. Compressed prompt served in 23.52 s. Gateway path 18.34 s, Gemini cut at 15.0 s (4th occurrence), fallback served via OpenRouter nemotron. Evidence: docs/collaboration/TASK-INF-029-GEMINI-9K-DEADLINE.md.'
+    - 'Deadline set from the numbers: KEEP - REQUEST_TIMEOUT 60.0, PRIMARY_ATTEMPT_FRACTION 0.6, PRIMARY_ATTEMPT_MAX_SECONDS 15.0 (primary slice 15.0 s), before = after; decision cited in the PRIMARY_ATTEMPT_MAX_SECONDS field description and pinned by a new test in Inference/tests/test_provider_gateway_deadlines.py.'
     blockers: []
-    next_action: 'Muse 4 claims via hub comment + branch push, then: measure Gemini completion on ~9k-token prompts, file the numbers, set the routing deadline from them.'
+    next_action: 'Work PR open; awaiting Muse merge.'
   - id: TASK-FRG-018
     title: 'Forge: build a task-execute dispatch endpoint so other agents can send Forge work, live-proven by one real dispatched task'
     status: AVAILABLE
