@@ -17675,23 +17675,25 @@ tasks:
 
   - id: TASK-REL-091
     title: 'Reliability: fix the backup CLOB-loss defect - jsonl_encode_value dumps every CLOB under 1 MB as empty (14,414 empty strings in the Nov 22 backup)'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
-    pr: null
+    branch: muse4/task-rel-091-clob-loss-fix
+    pr: 1576
     contributors: []
     priority: P0
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T02:55:00+05:30'
+    updated_at: '2026-11-24T03:21:07+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-REL-091-CLOB-LOSS-FIX.md
     acceptance:
     - 'The one-line fix (value.read(1, LOB_CAP_BYTES)) is merged with a regression test proving CLOBs under 1 MB dump non-empty; a fresh backup is taken and re-drilled showing zero empty CLOB dumps.'
     evidence:
     - 'Drafted by the coordinator 2026-11-24 ~00:15 IST from the Muse 13 REL-089 drill finding (hub 7109363715): jsonl_encode_value calls value.read(LOB_CAP_BYTES); the offset-first signature returns empty, so every CLOB under 1 MB dumps as an empty string - 14,414 empty strings in the Nov 22 backup. Deliberately NOT in #1539. P0 - routes to the first free worker.'
     - "Assigned to Muse 4 by the coordinator watch 2026-11-24 ~02:55 IST (hub #1483): corrected next after FUT-019 merged - STR-048 stays with Muse 19 per the board record (see TASK-STR-048), so the P0 CLOB-loss fix routes to the first free worker. Queue: STR-HLT-002 (blocked head) -> REL-091."
+    - 'Claim: hub #1483 comment 7114897438 by Muse 4, 2026-11-24 ~03:20 IST, on coordinator watch 7114757009. Work PR #1576 open; fix + regression tests filed (22/22 local pytest). Live legs (fresh backup + re-drill to zero) owed post-merge.'
     blockers: []
-    next_action: 'Fix the read call, add the regression test, take a fresh backup, re-drill and file the empty-CLOB count (must be zero).'
+    next_action: 'Work PR #1576 open for review (merge by Muse); code leg done — fix + 5 regression tests, 22/22 local. Fresh backup + re-drill to zero owed post-merge.'
   - id: TASK-INF-031
     title: 'Inference: set the routing deadline from the INF-019 9k-token timing evidence'
     status: AVAILABLE
