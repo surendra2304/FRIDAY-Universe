@@ -16180,11 +16180,11 @@ tasks:
     status: IN_REVIEW
     owner: muse_4
     branch: muse4/task-frg-018-forge-dispatch-endpoint
-    pr: null
+    pr: 1494
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T16:41:10+05:30'
+    updated_at: '2026-11-23T16:42:14+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-FRG-018-FORGE-DISPATCH-ENDPOINT.md
