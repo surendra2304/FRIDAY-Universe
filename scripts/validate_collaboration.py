@@ -12,10 +12,22 @@ Strictness notes (TASK-REL-069):
   the parsed board are diffed against the raw-text counts taken from the
   node tree. A parse that silently drops an evidence block fails even if
   the duplicate-key scan were ever bypassed.
+- (TASK-REL-087) A task in a post-merge state (MERGED, DEPLOYED,
+  VERIFIED) must cite the PR that merged it. A MERGED record with
+  ``pr: null`` -- or citing a PR that never merged -- used to pass VALID:
+  a board PR could flip a task to MERGED with no merged PR behind it and
+  CI stayed green. Records created or updated on/after 2026-11-23 (when
+  the PR-citation convention starts) are enforced; the 95 MERGED and 80
+  DEPLOYED/VERIFIED records that predate it with ``pr: null`` are
+  grandfathered while untouched. The "cited PR actually merged" half
+  needs a merged-PR list (``--merged-prs`` file, one number per line);
+  without it only the null/invalid-citation half is checked.
 """
 
 from __future__ import annotations
 
+import argparse
+import datetime
 import sys
 from pathlib import Path
 from typing import Any
@@ -63,6 +75,13 @@ CANONICAL_AGENTS = (
     "Futuris",
     "VyralX",
 )
+# TASK-REL-087: post-merge states must cite the PR that merged them.
+POST_MERGE_STATES = {"MERGED", "DEPLOYED", "VERIFIED"}
+# First date the PR-citation convention applies. Records created or
+# updated on/after this date must cite a merged PR; earlier records with
+# pr: null are grandfathered (95 MERGED + 80 DEPLOYED/VERIFIED on the
+# 2026-11-23 board predate the convention).
+MERGED_PR_RULE_EFFECTIVE = "2026-11-23"
 
 
 class RegistryValidationError(Exception):
@@ -192,12 +211,106 @@ def check_board_evidence_counts(board_path: Path, board: dict[str, Any]) -> None
         )
 
 
+def _record_date(value: Any) -> str | None:
+    """Normalise a board ``created_at``/``updated_at`` value to YYYY-MM-DD.
+
+    PyYAML parses ``2026-11-23`` as a date and ``2026-11-23T21:36:00+05:30``
+    as a datetime; both (and plain strings) reduce to their first ten
+    characters. Anything else (including a missing value) is not a date.
+    """
+    if isinstance(value, (datetime.date, datetime.datetime)):
+        return value.isoformat()[:10]
+    if isinstance(value, str) and len(value) >= 10:
+        return value[:10]
+    return None
+
+
+def check_board_merged_pr_citations(
+    board: dict[str, Any], merged_prs: set[int] | None = None
+) -> None:
+    """Fail when a post-merge task does not cite a merged PR (TASK-REL-087).
+
+    Two defect classes, both of which previously passed VALID:
+    - MERGED/DEPLOYED/VERIFIED with ``pr: null`` (or a non-integer, or a
+      non-positive number): no merged PR behind the flip at all.
+    - citing a PR number that is not in ``merged_prs`` (when the merged-PR
+      list is supplied): the cited PR is open, closed-unmerged, or does
+      not exist. Without the list this half cannot be checked offline and
+      is skipped; the null-citation half always applies.
+
+    Only records created or updated on/after MERGED_PR_RULE_EFFECTIVE are
+    enforced. Earlier records predate the PR-citation convention and are
+    grandfathered while untouched -- touching one (which bumps its
+    ``updated_at``) brings it under the rule, and the fix is a one-line
+    ``pr`` citation.
+    """
+    tasks = board.get("tasks")
+    if not isinstance(tasks, list):
+        return
+    errors: list[str] = []
+    for task in tasks:
+        if not isinstance(task, dict):
+            continue
+        status = task.get("status")
+        if status not in POST_MERGE_STATES:
+            continue
+        created = _record_date(task.get("created_at"))
+        updated = _record_date(task.get("updated_at"))
+        in_scope = (
+            created is not None and created >= MERGED_PR_RULE_EFFECTIVE
+        ) or (updated is not None and updated >= MERGED_PR_RULE_EFFECTIVE)
+        if not in_scope:
+            continue
+        task_id = task.get("id")
+        pr = task.get("pr")
+        if isinstance(pr, bool) or not isinstance(pr, int) or pr <= 0:
+            errors.append(
+                f"{task_id}: status {status} with null/invalid pr citation "
+                "(must cite the merged PR number)"
+            )
+            continue
+        if merged_prs is not None and pr not in merged_prs:
+            errors.append(
+                f"{task_id}: cites PR #{pr} which is not in the merged-PR list"
+            )
+    if errors:
+        raise RegistryValidationError(
+            "WORK_BOARD.yaml: post-merge tasks without a merged PR citation: "
+            + "; ".join(errors)
+        )
+
+
+def load_merged_prs(path: Path) -> set[int]:
+    """Load a merged-PR list: one PR number per line, blanks ignored."""
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except FileNotFoundError as exc:
+        raise RegistryValidationError(f"Merged-PR list not found: {path}") from exc
+    numbers: set[int] = set()
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        try:
+            numbers.add(int(line))
+        except ValueError as exc:
+            raise RegistryValidationError(
+                f"Merged-PR list {path}: not a PR number: {line!r}"
+            ) from exc
+    if not numbers:
+        raise RegistryValidationError(
+            f"Merged-PR list {path} is empty; cannot verify PR citations "
+            "against an empty merged set (refusing to fail every citation)"
+        )
+    return numbers
+
+
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise RegistryValidationError(message)
 
 
-def validate_registry() -> list[str]:
+def validate_registry(merged_prs: set[int] | None = None) -> list[str]:
     errors: list[str] = []
 
     for relative in REQUIRED_FILES:
@@ -265,6 +378,7 @@ def validate_registry() -> list[str]:
             "WORK_BOARD.yaml: task IDs must be unique")
 
     check_board_evidence_counts(COLLAB / "WORK_BOARD.yaml", board)
+    check_board_merged_pr_citations(board, merged_prs)
 
     claims = ownership.get("claims")
     require(isinstance(claims, list), "FILE_OWNERSHIP.yaml: claims must be a list")
@@ -324,9 +438,28 @@ def validate_registry() -> list[str]:
     return errors
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Validate the FRIDAY Universe collaboration registry."
+    )
+    parser.add_argument(
+        "--merged-prs",
+        type=Path,
+        default=None,
+        help="File with one merged PR number per line; when given, a "
+        "post-merge task must cite a PR in this list (TASK-REL-087). "
+        "Without it only the null/invalid-citation half is checked.",
+    )
+    args = parser.parse_args(argv)
+    merged_prs: set[int] | None = None
+    if args.merged_prs is not None:
+        try:
+            merged_prs = load_merged_prs(args.merged_prs)
+        except RegistryValidationError as exc:
+            print(f"COLLABORATION REGISTRY INVALID: {exc}", file=sys.stderr)
+            return 1
     try:
-        validate_registry()
+        validate_registry(merged_prs)
     except RegistryValidationError as exc:
         print(f"COLLABORATION REGISTRY INVALID: {exc}", file=sys.stderr)
         return 1
@@ -337,6 +470,15 @@ def main() -> int:
     print(f"File claims: {len(load_yaml(COLLAB / 'FILE_OWNERSHIP.yaml')['claims'])}")
     print(f"File conflicts: {len(load_yaml(COLLAB / 'FILE_OWNERSHIP.yaml').get('conflicts_to_resolve', []))}")
     print("Strict YAML checks: no duplicate keys; per-task evidence counts match raw text")
+    print(
+        "Post-merge PR citations: MERGED/DEPLOYED/VERIFIED records created or "
+        f"updated on/after {MERGED_PR_RULE_EFFECTIVE} cite a merged PR"
+        + (
+            f" (verified against {len(merged_prs)} merged PRs)"
+            if merged_prs is not None
+            else " (no merged-PR list supplied; open/unmerged citations not checked)"
+        )
+    )
     return 0
 
 
