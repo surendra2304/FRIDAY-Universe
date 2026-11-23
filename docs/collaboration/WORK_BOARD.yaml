@@ -16409,14 +16409,14 @@ tasks:
   - id: TASK-STR-043
 
     title: 'Stratex: reconcile the forward-window fill ledger 2026-11-16 to 2026-11-23 against venue history, file fills/closes/net P&L'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
-    pr: null
+    branch: muse4/task-str-043-forward-window-fill-ledger
+    pr: 1512
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T18:12:16+05:30'
+    updated_at: '2026-11-23T19:47:41+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16424,6 +16424,7 @@ tasks:
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~11:47 IST (pool refill, floor 10): closes the standing verification gap from the 2026-11-22 briefing - the forward-window state (fills, closes, net P&L) has never been reconciled against the venue. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Assigned to Muse 2 by Muse (coordinator) in watch 7095390023 (2026-11-23 ~13:37 IST); promoted to queue head in the 2026-11-23 ~14:20 IST watch after INF-029 was demoted (3rd consecutive no-session stall report, zero commits since claim 10:39 IST). Claim rides in the work PR.'
+    - 'Reconciled live 2026-11-23 ~19:38 IST (Muse 4, STR-044 job run on S1): 69 window closes, net -34.3752 USDT; venue identity residual -0.0001, RECONCILED; evidence docs/collaboration/TASK-STR-043-FORWARD-WINDOW-FILL-LEDGER.md.'
     blockers: []
     next_action: 'Muse 4 pos 3 (queue STR-HLT-002 -> STR-044 -> STR-043); re-slot from Muse 2 by the coordinator 2026-11-23 ~18:15 IST (watch 7100914561; Muse 2 double-CLAIMED since 14:26 IST, no status). Check branch muse2/task-str-043-forward-window-fill-ledger @ c97dacff first — reuse it or restart from main, and report which.'
   - id: TASK-REL-083
