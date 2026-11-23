@@ -509,6 +509,71 @@ button {
   margin: 2px 0 4px;
 }
 
+/* TASK-FRD-038 checkpoint 2: the paste-once owner key gate (D-023).
+   Sits above the composer when a chat call answers 401. */
+.control-gate {
+  border: 1px solid var(--hair-soft);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin: 4px 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.control-gate-text {
+  color: var(--faint);
+  font-size: 13.5px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.control-gate-row {
+  display: flex;
+  gap: 8px;
+}
+
+.control-gate-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 1px solid var(--hair-soft);
+  border-radius: 999px;
+  padding: 9px 14px;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.control-gate-input:focus {
+  border-color: rgba(148, 163, 255, 0.6);
+}
+
+.control-gate-button {
+  border: 1px solid var(--hair-soft);
+  border-radius: 999px;
+  padding: 9px 16px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.control-gate-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.control-gate-error {
+  color: #f0a3a3;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
 .bubble {
   max-width: min(78%, 560px);
   padding: 11px 15px 8px;

@@ -20,6 +20,19 @@
      WS   /api/ws/activity                   live activity frames
    ================================================================ */
 
+/* TASK-FRD-038 checkpoint 2: the D-023 credential flow. Chat (and the
+   thread restore) present the fcs1 control session when this browser
+   holds the owner key; without a key they go out unauthenticated, so
+   loopback callers keep working keyless and a remote 401 surfaces as
+   a ControlAuthError the UI answers with the key gate. */
+import {
+  CONTROL_SESSION_HEADER,
+  ControlAuthError,
+  controlAuthHeaders,
+  hasStoredControlKey,
+  refreshControlSession,
+} from "./controlSession.ts";
+
 export interface FleetAgent {
   id: string;
   name: string;
@@ -193,22 +206,57 @@ export function apiBase(): string {
   return window.location.origin;
 }
 
-export async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${apiBase()}${path}`, {
-    cache: "no-store",
-    ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
-  });
-  if (!res.ok) {
-    let detail = "";
-    try {
-      detail = (await res.text()).slice(0, 200);
-    } catch {
-      /* an unreadable body still leaves the status line */
-    }
-    throw new Error(`${res.status} ${res.statusText}${detail ? ` — ${detail}` : ""}`);
+async function throwForBadResponse(res: Response): Promise<never> {
+  let detail = "";
+  try {
+    detail = (await res.text()).slice(0, 200);
+  } catch {
+    /* an unreadable body still leaves the status line */
   }
-  return (await res.json()) as T;
+  throw new Error(`${res.status} ${res.statusText}${detail ? ` — ${detail}` : ""}`);
+}
+
+export async function requestJson<T>(path: string, init?: RequestInit, opts?: { auth?: boolean }): Promise<T> {
+  const baseHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...((init?.headers as Record<string, string> | undefined) ?? {}),
+  };
+  const call = (headers: Record<string, string>) =>
+    fetch(`${apiBase()}${path}`, {
+      cache: "no-store",
+      ...init,
+      headers,
+    });
+  if (!opts?.auth) {
+    const res = await call(baseHeaders);
+    if (!res.ok) await throwForBadResponse(res);
+    return (await res.json()) as T;
+  }
+  /* Authenticated call (TASK-FRD-038): attach the fcs1 session when
+     this browser holds the owner key; without a key the request goes
+     out bare, exactly as before. */
+  const first = await call({ ...baseHeaders, ...(await controlAuthHeaders()) });
+  if (first.ok) return (await first.json()) as T;
+  if (first.status !== 401) await throwForBadResponse(first);
+  if (!hasStoredControlKey()) {
+    throw new ControlAuthError(
+      "control-auth-required",
+      "FRIDAY needs the owner key in this browser before it can answer — paste it once and the chat reconnects.",
+    );
+  }
+  /* One refresh-and-retry: the cached token may predate a key rotation
+     or a server restart. A second 401 means the stored key itself is
+     refused, not a stale token. */
+  const fresh = await refreshControlSession();
+  const retry = await call({ ...baseHeaders, [CONTROL_SESSION_HEADER]: fresh.token });
+  if (retry.ok) return (await retry.json()) as T;
+  if (retry.status === 401) {
+    throw new ControlAuthError(
+      "control-key-rejected",
+      "The stored owner key was rejected — it may have rotated on the server. Paste the current key.",
+    );
+  }
+  return throwForBadResponse(retry);
 }
 
 /* ---------------------------------------------------------------- calls */
@@ -218,21 +266,27 @@ export const CHAT_CEILING_MS = 300_000;
 
 export async function sendChat(message: string): Promise<ChatReply> {
   const controller = new AbortController();
-  const timer = window.setTimeout(() => controller.abort(), CHAT_CEILING_MS);
+  const timer = setTimeout(() => controller.abort(), CHAT_CEILING_MS);
   try {
-    return await requestJson<ChatReply>("/api/chat", {
-      method: "POST",
-      body: JSON.stringify({ message }),
-      signal: controller.signal,
-    });
+    return await requestJson<ChatReply>(
+      "/api/chat",
+      {
+        method: "POST",
+        body: JSON.stringify({ message }),
+        signal: controller.signal,
+      },
+      { auth: true },
+    );
   } finally {
-    window.clearTimeout(timer);
+    clearTimeout(timer);
   }
 }
 
 export async function fetchHistory(limit: number): Promise<HistoryEntry[]> {
   const page = await requestJson<{ entries?: HistoryEntry[] }>(
     `/api/v1/conversation/history?limit=${limit}`,
+    undefined,
+    { auth: true },
   );
   return Array.isArray(page?.entries) ? page.entries : [];
 }
