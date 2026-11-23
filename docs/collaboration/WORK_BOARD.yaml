@@ -17169,20 +17169,21 @@ tasks:
     next_action: 'Isolate the scoring jobs from the shared session; fix calibration resolve + provider refresh failures; file the evidence.'
   - id: TASK-CTX-006
     title: 'Cortex: post-#1054 escalation ratio, run 2 - fires vs messages actually sent over the last 48h of live logs, ratio evidence filed'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_7
-    branch: null
+    branch: muse7/task-ctx-006-escalation-ratio
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T21:35:00+05:30'
+    updated_at: '2026-11-24T01:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Fires-vs-messages ratio over the last 48h of live logs filed as evidence.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~19:20 IST (consolidated board PR watch13; standing backlog pool-7 (x) continuation, run 2). Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Claim: issue #1483 comment 7111858956 by Muse 7, 2026-11-24 ~01:10 IST, on coordinator follow-up (act now; blocked-head skip: INT-020 blocked, INT-032 in review). Board record verified AVAILABLE, owner muse_7, on main 0ea5accc (board blob ff45b1f5). Branch muse7/task-ctx-006-escalation-ratio created from main 0ea5accc.'
     blockers: []
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-EARN-003
