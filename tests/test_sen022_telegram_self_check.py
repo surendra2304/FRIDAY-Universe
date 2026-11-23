@@ -111,6 +111,29 @@ def test_both_present_via_env_file(monkeypatch, tmp_path, caplog):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv(ENV_FILE, str(env_file))
     dispatch_mod._FILE_ENV_CACHE = None
+    # TEMP-DIAG (TASK-SEN-022 re-check): this test fails in the full
+    # tests/ suite but passes standalone. Dump the resolution state
+    # (keys only, never values) so the next CI run shows which link
+    # breaks. Remove once the cause is known.
+    import os as _os
+    import sys as _sys
+    _live = _sys.modules.get("sentinel.gatekeeper.approval_dispatcher")
+    print("SEN022-DIAG dispatch_mod file:", dispatch_mod.__file__)
+    print("SEN022-DIAG live module is dispatch_mod:", _live is dispatch_mod)
+    print("SEN022-DIAG live module file:", getattr(_live, "__file__", None))
+    print("SEN022-DIAG SENTINEL_ENV_FILE:", _os.environ.get(ENV_FILE))
+    print("SEN022-DIAG candidates fn:",
+          getattr(dispatch_mod._env_file_candidates, "__name__", "?"))
+    print("SEN022-DIAG candidates:",
+          [str(p) for p in dispatch_mod._env_file_candidates()])
+    print("SEN022-DIAG dispatch cache after reset:",
+          dispatch_mod._FILE_ENV_CACHE)
+    print("SEN022-DIAG live cache:",
+          None if _live is None or _live._FILE_ENV_CACHE is None
+          else sorted(_live._FILE_ENV_CACHE.keys()))
+    print("SEN022-DIAG live candidates fn:",
+          getattr(_live._env_file_candidates, "__name__", "?")
+          if _live is not None else None)
     try:
         with caplog.at_level(logging.INFO, logger="sentinel.config.telegram_self_check"):
             report = verify_telegram_channel_at_startup()
