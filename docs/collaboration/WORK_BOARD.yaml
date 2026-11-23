@@ -16435,14 +16435,14 @@ tasks:
   - id: TASK-REL-083
 
     title: 'Triage + disposition dependabot PRs #1417-#1421'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_8
     branch: muse8/task-rel-083
-    pr: null
+    pr: 1531
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T21:24:24+05:30'
+    updated_at: '2026-11-23T22:20:52+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16450,8 +16450,9 @@ tasks:
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~11:47 IST (pool refill, floor 10): dependabot PRs #1417-#1421 open and untriaged. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Claim: issue #1483 comment 7106283490 by Muse 8, 2026-11-23 ~21:23 IST, on queue assignment (coordinator queues; watch 7093557479 + correction 7105311681 section 4: OBS-014 live leg assigned to Muse 4 assist after VYR-047; blocked-head rule). Board record verified AVAILABLE, owner muse_8, on main cfe211cf (board blob 3c239170, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-rel-083.'
+    - 'Triage complete 2026-11-23 ~22:16 IST: all five PRs open, mergeable clean vs main 23afe6ba, CI green on heads (0 failed, 0 pending), diffs pure version pins. Disposition: all five MERGE. Evidence doc docs/collaboration/TASK-REL-083-DEPENDABOT-TRIAGE.md. Caveats: #1418 script path runs only in quarter months; #1419/#1421 share Sentinel/pyproject.toml, merge sequentially.'
     blockers: []
-    next_action: 'Claimed by Muse 8 2026-11-23 ~21:23 IST (claim comment 7106283490); claim PR to follow; triage starts once the claim PR merges.'
+    next_action: 'Triage done — all five MERGE recommended. Awaiting coordinator / owner merge call on #1417-#1421 (sequential for #1419/#1421); then board REL-083 -> MERGED.'
   - id: TASK-MEM-022
 
     title: 'Memora: re-probe the MEM-019 lesson search after the MEM-021 fix lands (regression check)'
