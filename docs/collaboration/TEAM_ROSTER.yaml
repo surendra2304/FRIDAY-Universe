@@ -273,6 +273,22 @@ collaborators:
       - "muse11/onboarding"
     last_verified_at: "2026-11-22"
 
+  - id: muse_12
+    display_name: "Muse 12"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (twelfth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Joined 2026-11-22 as the twelfth worker Muse account; held a Pool 8 upgrade task (TASK-REL-070)."
+      - "Branch muse12/task-rel-070-fleet-layout-exit-134 pushed 2026-11-22 ~22:48 IST, head cbddfac6e7, verified via git ls-remote by the coordinator 2026-11-23; REL-070 reconciliation with Muse 9 PR #1452 still open at roster-entry time."
+      - "Roster entry added by the coordinator 2026-11-23 (board PR muse/board-20261123-watch4): the validator rejects board owners not registered here, and Muse 12 holds board work (TASK-FUT-019 re-slot). No onboarding evidence is claimed here - onboarding details were not on file at entry time."
+    active_assignments:
+      - "TASK-FUT-019"
+    active_branches:
+      - "muse12/onboarding"
+      - "muse12/task-rel-070-fleet-layout-exit-134"
+    last_verified_at: "2026-11-23"
+
   - id: muse_13
     display_name: "Muse 13"
     contributor_type: "ai"
