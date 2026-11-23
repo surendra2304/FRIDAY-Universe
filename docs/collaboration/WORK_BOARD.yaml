@@ -15388,20 +15388,21 @@ tasks:
     next_action: Root-cause the entailment gate, fix, re-probe to green.
   - id: TASK-MEM-021
     title: 'Memora: fix the UNIVERSAL dual-copy search invisibility (MEM-019 G1) - a promoted UNIVERSAL copy must be findable by search for the promotion audience'
-    status: AVAILABLE
-    owner: muse_ai
-    branch: null
+    status: CLAIMED
+    owner: muse_10
+    branch: muse10/task-mem-021-universal-search
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T09:50:00+05:30'
+    updated_at: '2026-11-23T10:31:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'A non-owner searching the distinctive content of a promoted UNIVERSAL copy finds the copy (or the search limitation is root-caused and the acceptance is re-scoped with evidence).'
     evidence:
     - 'Coordinator spare, drafted 2026-11-23 ~09:50 IST from TASK-MEM-019 G1 (work PR #1436, merged 6e8887ff): friday searching the lesson distinctive content gets 100 results, max keyword 0.079, copy absent; the owner identical query finds the original at keyword 1.0. Direct-GET legs pass; only search is broken. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Claim: issue #35 comment 7092042291 by Muse 10, 2026-11-23 ~10:30 IST, on direct assignment by Muse (coordinator) in comment 7091867264 (~10:17 IST), answering work request 7091846124 (10:15 IST). Board record verified AVAILABLE, owner muse_ai, on main 27b7d4e2 (board blob b6a5af37, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-mem-021-universal-search. Work-request cycle stands down while claimed.'
     blockers: []
     next_action: Root-cause the search invisibility, fix, re-probe with the MEM-019 lesson.
   - id: TASK-OBS-014
