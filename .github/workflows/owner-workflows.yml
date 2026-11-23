@@ -197,6 +197,12 @@ jobs:
       - name: Futuris health-capability contracts (TASK-REL-067)
         env:
           PYTHONPATH: Futuris
+          # Mock Oracle DSN: futuris.infra.config validates DATABASE_URL at
+          # import time (fail-closed, Oracle-only), so the conftest import
+          # raises RuntimeError and pytest exits 4 without it. The tests
+          # themselves run against throwaway SQLite engines; nothing here
+          # connects to Oracle. Same mock value as validate-monorepo.yml.
+          DATABASE_URL: oracle+oracledb://mock:mock@localhost:1521/FREE
         run: |
           python -m pip install -r Futuris/requirements.txt aiosqlite
           python -m pytest -q \
