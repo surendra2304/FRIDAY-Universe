@@ -11,6 +11,9 @@ post-creation owner promotion) and (C) did not exist (no need recording, no
 repeated-need detection, no auto-promotion). These tests pin the completed
 behaviour of ``core.memory.promotion`` and its ``/v1/promotion`` router.
 """
+import hashlib
+from datetime import datetime, timezone
+
 import pytest
 
 from core.identity.service import IdentityService
@@ -19,6 +22,11 @@ from core.memory.promotion import (
     ACTION_PROMOTED,
     MemoryPromotionService,
     PromotionPermissionError,
+)
+from core.memory.search_service import _passes_retrieval_filters
+from core.security.provenance import (
+    compute_memory_signature,
+    verify_memory_signature,
 )
 from storage.relational.access_scope import record_is_visible, shared_membership
 from storage.relational.models import (
@@ -199,6 +207,91 @@ def test_failed_experiment_lesson_stays_private_and_goes_universal(mesh):
         if (r.provenance or {}).get("promoted_from_memory_id") == record.id
     ]
     assert len(copies) == 1
+
+
+def _signed_lesson(db, ns, owner):
+    """A failed-experiment lesson signed the way the write path signs it."""
+    text = "sleeve shock with 3% stop failed: PF 0.92 over 400 trades"
+    record = _private_memory(
+        db, ns, owner,
+        text=text,
+        content_hash=hashlib.sha256(text.strip().encode("utf-8")).hexdigest(),
+        provenance={"failed_experiment": True, "experiment_outcome": "failed"},
+    )
+    record.provenance = {
+        **record.provenance,
+        "hmac_signature": compute_memory_signature(record_or_dict={
+            "id": record.id,
+            "tenant_id": record.tenant_id,
+            "owner_id": record.owner_id,
+            "content_hash": record.content_hash,
+            "memory_type": record.memory_type.value,
+        }),
+        "signature_version": "v1",
+    }
+    db.commit()
+    assert verify_memory_signature(record) is True
+    return record
+
+
+def test_universal_copy_signature_verifies_and_passes_search_gate(mesh):
+    """TASK-MEM-021: the dual copy must verify and pass the search gate.
+
+    Before the fix the copy inherited the original's hmac_signature
+    (computed over the original's id), so verification failed and search's
+    Safety Invariant 2 leg discarded the copy for every actor — the
+    MEM-019 lesson was invisible to search for owner and non-owners
+    alike even though direct GET returned it.
+    """
+    db, agents, ns = mesh
+    record = _signed_lesson(db, ns, agents["stratex"])
+    result = MemoryPromotionService.promote_scope(
+        db, owner_name="stratex", memory_id=record.id,
+        target_scope="UNIVERSAL", reason="all agents must learn this",
+    )
+    copy = db.query(MemoryRecord).filter(MemoryRecord.id == result["universal_copy_id"]).first()
+    assert copy is not None
+    assert verify_memory_signature(copy) is True
+    assert copy.provenance["hmac_signature"] != record.provenance["hmac_signature"]
+    gate = lambda actor_name: _passes_retrieval_filters(
+        copy, db, actor=agents[actor_name], trust_level=None,
+        include_expired=False, purpose=None, now_utc=datetime.now(timezone.utc),
+    )
+    assert gate("futuris") is True
+    assert gate("sentinel") is True
+
+
+def test_repair_universal_copies_resigns_stale_copy(mesh):
+    """TASK-MEM-021 repair leg: a stale inherited signature is re-signed."""
+    db, agents, ns = mesh
+    record = _signed_lesson(db, ns, agents["stratex"])
+    result = MemoryPromotionService.promote_scope(
+        db, owner_name="stratex", memory_id=record.id,
+        target_scope="UNIVERSAL", reason="all agents must learn this",
+    )
+    copy = db.query(MemoryRecord).filter(MemoryRecord.id == result["universal_copy_id"]).first()
+    # Simulate the pre-fix state: the copy carries the original's signature.
+    copy.provenance = {
+        **copy.provenance,
+        "hmac_signature": record.provenance["hmac_signature"],
+    }
+    db.commit()
+    assert verify_memory_signature(copy) is False
+    # Dry-run first: reports, writes nothing.
+    dry = MemoryPromotionService.repair_universal_copies(db, dry_run=True)
+    assert dry["scanned"] == 1
+    assert dry["would_repair"] == 1
+    assert dry["repaired"] == 0
+    db.refresh(copy)
+    assert verify_memory_signature(copy) is False
+    # Apply: the copy verifies again and nothing is left unrepaired.
+    report = MemoryPromotionService.repair_universal_copies(db, dry_run=False)
+    db.commit()
+    assert report["repaired"] == 1
+    assert report["unverifiable_ids"] == []
+    assert report["unsigned_ids"] == []
+    db.refresh(copy)
+    assert verify_memory_signature(copy) is True
 
 
 # --------------------------------------------------------------------- (C)
