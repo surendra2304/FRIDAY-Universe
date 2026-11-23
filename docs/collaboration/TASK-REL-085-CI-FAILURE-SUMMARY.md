@@ -103,3 +103,8 @@ revert risk there); the WORK_BOARD.yaml hunk was rebuilt from the live main
 blob cdd2358f (723 tasks, 0 duplicate ids) with ONLY the TASK-REL-085 record
 changed (AVAILABLE -> IN_REVIEW, pr 1498); FUT-023 / OBS-017 / FRD-038
 verified preserved on the new blob. CI re-running on the rebased head.
+
+## Rebase note — 2026-11-23 ~19:40 IST (second rebase)
+
+- PR #1498 rebased onto main 3e8a4a14 (merge of consolidated board PR #1504) per coordinator watch 7103106790: the 18:36 rebase onto 237667b6 went stale when #1503 (STR-044) merged after it — the old diff deleted STR-044's merged files and reverted its board record.
+- The 3 workflow files are byte-identical on 237667b6 and 3e8a4a14, so the implementation commit carries over unchanged; only the WORK_BOARD.yaml hunk was rebuilt from the current main blob (736 records, 0 duplicate ids, only REL-085 differs).
