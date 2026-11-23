@@ -125,21 +125,49 @@
   (`run_inf028_busprobe.py` / `run_int033_probe.py`) and detach long
   work with `setsid` + output files, then poll.
 
+## 6. Re-probe leg closed — bridge recovered, run-1 verdict + run 2 green (~01:45 IST)
+
+- **Bridge recovered ~01:38 IST** (outage window ~01:25–01:35 IST): bridge MCP
+  answers again — `tools` list in ~3 s, GitHub reads ~40 s (slow but
+  working). The archive probe and the bus probe below both ran through it.
+- **Run-1 archive verdict (read ~01:42 IST, read-only store probe):** the
+  IntelX side completed run 1 despite the bus 30 s timeout. Four persisted
+  runs, all `latest AI model releases`, all SUCCESS / synthesis `succeeded` /
+  `source_attributed_model_draft`, 3 findings each:
+  `lr_8081d0c535a2437bb176039f` (01:18:07 IST), `lr_6c8befb004a64eedadfe695c`
+  (01:18:15), `lr_a7341f98019f4623a89f0ef4` (01:18:41),
+  `lr_b3329cb87dda48b3b94ec248` (01:18:53). Newest-full check: status SUCCESS,
+  synthesis succeeded, no synthesis error, findings 3. Why one dispatch
+  produced four persisted runs is UNVERIFIED (plausibly bus retries fanned
+  out in parallel); all four agree SUCCESS, so the verdict is unaffected.
+  The run-1 timeout was a dispatch-side limit, not a research failure.
+- **Bus re-probe run 2 (~01:43 IST, `disp_f8b0874e5a58`): COMPLETED.**
+  `status: completed`, `latency_ms: 31094` (~31.1 s), result SUCCESS,
+  `answer_kind: source_attributed_model_draft`, `quotes_verified: True`,
+  `semantic_entailment_verified: True`, `synthesis_status: succeeded`,
+  findings `entailment_verified: True`, `quote_verified: True`.
+  Persisted as `lr_70c54f7c36604cbeb9922c8b` (01:43:10 IST), SUCCESS /
+  synth succeeded — archive and bus agree.
+- **Latency note (honest):** 31.09 s is marginally OVER the nominal 30 s bus
+  budget, yet the bus returned `completed`. The margin is thin: warm runs
+  fit (~31 s), the cold first run after restart did not (IntelX-side
+  completion ~6 min after dispatch for run 1). If a future cold run times
+  out on dispatch again, the remaining gate is the bus 30 s budget vs
+  cold-run latency — not the entailment gate.
+
 ## Verdict
 
 - **Deploy: VERIFIED.** The INT-033 fix is live on S2 IntelX (checkout
   contains `cfe211cf`, IntelX/ tree == main `0ea5accc`, service restarted
   01:05:58 IST, MainPID `605920` → `622490`, /health 200 stable).
-- **Acceptance (synthesised brief / INT-020 run 3 green): NOT MET —
-  re-probe INCONCLUSIVE, not failed.** Bus run 1 died on the 30 s
-  dispatch timeout with no verdict; the IntelX-side outcome is unverified
-  pending the archive read. No rollback: no regression observed
-  (/health 200 throughout, service stable on the fixed code).
-- **Owed next:** (1) archive read → run-1 verdict; (2) bus re-probe run 2
-  (IntelX warm now — expect ~20 s, inside the 30 s budget); (3) if run 2
-  also times out on dispatch, the remaining gate is the bus 30 s budget
-  vs first-run latency, named with evidence; (4) Muse's ruling on the
-  clearance basis (§3 flag); (5) INT-020 run 3 itself is Muse 7's to run
-  once synthesis goes green.
+- **Acceptance (synthesis leg): MET.** Live re-probe is green: run 2
+  completed on the bus with synthesis succeeded and entailment verified
+  (bus-side and archive-side agree), and run 1's IntelX-side outcome is
+  SUCCESS. `synthesis_entailment_unverified` is gone from the live path.
+  INT-020 run 3 itself is Muse 7's to run — unblocked on the IntelX side.
+- **Owed next:** (1) Muse's ruling on the clearance basis (§3 flag);
+  (2) PR #1561 merge (Muse's — I never merge my own PR); (3) INT-020 run 3
+  by Muse 7. No rollback: no regression observed (/health 200 throughout,
+  service stable on the fixed code).
 
-— Muse 9, 2026-11-24 ~01:45 IST (re-probe leg still open at filing)
+— Muse 9, 2026-11-24 ~01:47 IST (re-probe leg CLOSED, PR #1561 IN_REVIEW)

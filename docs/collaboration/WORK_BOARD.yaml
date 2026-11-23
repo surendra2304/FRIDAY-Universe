@@ -16071,14 +16071,14 @@ tasks:
   - id: TASK-INF-028
 
     title: 'IntelX: fix the synthesis_entailment_unverified gate - a served draft synthesis fails quote-entailment against single-source findings; fix the gate, the draft, or the finding mix, and re-probe until INT-020 run 3 goes green'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_9
     branch: muse9/task-inf-028
     pr: 1561
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T01:52:00+05:30'
+    updated_at: '2026-11-24T01:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-028-DEPLOY-EVIDENCE.md
@@ -16090,8 +16090,9 @@ tasks:
     - 'Assigned to Muse 2 in coordinator watch 2026-11-23 ~14:50 IST as queue position 3 (queue: STR-043 -> INT-032 -> INF-028), replacing re-slotted INF-029.'
     - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Board flip for the re-slot announced on hub comment 7107607002 (21:37 watch): owner muse_2 -> muse_9."
     - 'Claim: issue #1483 comment 7111627164 by Muse 9, 2026-11-24 ~00:57 IST, queue head after REL-086 merged (PR #1537, merge 49126a41). Board record verified AVAILABLE, owner muse_9, on main 0ea5acc (board blob ff45b1f5d7fd82b30aacc5ff1564920ceb6eabc6, verified against the true main blob before editing). Branch muse9/task-inf-028 from main 0ea5acc. Duplicate claim comment 7112088422 posted by the main agent ~01:16 IST while this run was in flight; same task and branch. Leg 1 (root-cause + fix) covered by INT-033 (PR #1511, merged cfe211cf): 27/27 IntelX verification tests pass locally. Deployed live 2026-11-24 01:05:58 IST under coordinator watch 7106041874 ("the live re-probe leg is unblocked, proceed"): IntelX.service restarted (MainPID 605920 -> 622490), /health 200. Re-probe run 1 (bus disp_cf7f816b6bd3) FAILED on the 30 s dispatch timeout, not the entailment gate; archive verdict + run 2 owed, blocked on the bridge transport outage. Evidence: docs/collaboration/TASK-INF-028-DEPLOY-EVIDENCE.md. Work PR #1561.'
+    - 'Re-probe GREEN live 2026-11-24 ~01:45 IST (bridge recovered ~01:38 IST after outage ~01:25-01:35 IST): run-1 archive verdict SUCCESS - 4 persisted runs lr_8081d0c535a2437bb176039f / lr_6c8befb004a64eedadfe695c / lr_a7341f98019f4623a89f0ef4 / lr_b3329cb87dda48b3b94ec248 (01:18:07-01:18:53 IST), synthesis succeeded; bus run 2 (disp_f8b0874e5a58) completed in 31.09 s, synthesis succeeded, quotes/semantic entailment verified, persisted lr_70c54f7c36604cbeb9922c8b. synthesis_entailment_unverified gone from the live path - synthesis leg of acceptance MET; INT-020 run 3 is Muse 7''s. Thin-margin note: 31.09 s is marginally over the nominal 30 s bus budget; cold first run took ~6 min IntelX-side. Clearance-basis ruling still owed from Muse (watch 7106041874 vs request 7112104168). Evidence: docs/collaboration/TASK-INF-028-DEPLOY-EVIDENCE.md §6. Work PR #1561.'
     blockers: []
-    next_action: 'Archive verdict for bus run 1 + re-probe run 2 when the bridge recovers; Muse to rule on the deploy-clearance basis (watch 7106041874 vs clearance request 7112104168). Queue: INF-028 -> INT-035 -> STR-045.'
+    next_action: 'PR #1561 merge (Muse); Muse to rule on deploy-clearance basis; INT-020 run 3 by Muse 7. Queue: INF-028 -> INT-035 -> STR-045.'
   - id: TASK-MEM-021
 
     title: 'Memora: fix the UNIVERSAL dual-copy search invisibility (MEM-019 G1) - a promoted UNIVERSAL copy must be findable by search for the promotion audience'
