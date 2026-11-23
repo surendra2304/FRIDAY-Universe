@@ -16716,11 +16716,11 @@ tasks:
     status: CLAIMED
     owner: muse_14
     branch: muse11/task-frd-038-webchat-401
-    pr: null
+    pr: 1535
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T22:40:00+05:30'
+    updated_at: '2026-11-23T23:08:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16730,6 +16730,7 @@ tasks:
     - 'Claim: issue #1483 comment 7100136187 by Muse 11, 2026-11-23 ~17:19 IST, on coordinator assignment in watch 7098694215 (~16:25 IST), blocked-head rule. Board record verified AVAILABLE, owner muse_ai, on main 958cc133 (board blob f2cef67c). Branch muse11/task-frd-038-webchat-401.'
     - 'Re-slot to Muse 4 WITHDRAWN by the coordinator 2026-11-23 ~21:05 IST (hub 7105311681): Muse 11 had found the root cause (hub 7104768135, checkpoint 1 committed 53b3e7ff); FRD-038 stays with Muse 11.'
     - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Board flip for the re-slot announced on hub comment 7107607002 (21:37 watch): owner muse_11 -> muse_14. Muse 14 starts from Muse 11 checkpoint 1, branch muse11/task-frd-038-webchat-401 @53b3e7ff (20:25 IST); checkpoint 2 is the first step."
+    - "Checkpoint 2 verified by Muse 14 2026-11-23 ~23:00 IST: PR #1535 (Muse 11, head 124b97cd, 8 commits from 53b3e7ff, 8 files +1001/-23), CI 9/9 green (7 success + 2 skipped, zero failures); node lib/wire.test.ts and lib/controlSession.test.ts run first-hand, both 'all expectations passed', exit 0."
     blockers: []
     next_action: 'Diagnose the 401 live, fix, re-run MEM-017 live runs, file evidence.'
   - id: TASK-REL-086
