@@ -262,6 +262,37 @@ async def test_f3_peer_transport_exponential_backoff(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_f3_peer_transport_backoff_after_prior_open_circuit(monkeypatch):
+    """F3.4b (REL-084): backoff still runs when a prior test left the peer circuit OPEN.
+
+    Regression for the REL-080 run-4 failure: the unit file's F3.4 trips
+    circuit ``peer_sentinel_f3_4`` OPEN (3 ConnectErrors), and this file
+    runs in the SAME pytest process afterwards. This test deliberately
+    reuses the unit file's peer name ``sentinel_f3_4`` — without the
+    conftest reset it fast-fails at ``circuit.before()`` with zero retry
+    delays (``assert 0 == 2``) whenever the inter-file gap is under the
+    15 s recovery timeout; with the reset it gets a fresh circuit and
+    exercises the backoff path deterministically.
+    """
+    transport = PeerTransport(name="sentinel_f3_4", base_url="http://sentinel.local")
+    client = get_shared_client()
+
+    delays = []
+
+    async def mock_sleep(duration):
+        delays.append(duration)
+
+    monkeypatch.setattr(asyncio, "sleep", mock_sleep)
+
+    with patch.object(client, "request", new_callable=AsyncMock) as mock_req:
+        mock_req.side_effect = httpx.ConnectError("Connection refused")
+        res = await transport.request("GET", "/v1/metrics", retries=2)
+        assert res.ok is False
+        assert len(delays) == 2
+        assert delays[1] > delays[0]
+
+
+@pytest.mark.asyncio
 async def test_f3_peer_transport_fallback_on_open():
     """F3.5: Fast-failure when circuit breaker is open."""
     circuit = get_circuit_for_peer("intelx_f3_5")

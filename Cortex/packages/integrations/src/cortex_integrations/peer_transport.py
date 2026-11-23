@@ -99,6 +99,22 @@ def get_circuit_for_peer(name: str):
         _CIRCUITS[name] = SubsystemCircuit(name=f"peer_{name}", failure_threshold=3, recovery_timeout_seconds=15.0)
     return _CIRCUITS[name]
 
+def reset_peer_circuits() -> None:
+    """Drop every cached peer circuit breaker.
+
+    Test-isolation hook (REL-084): ``_CIRCUITS`` is module-global, so two
+    tests in one pytest process that use the same peer name share one
+    circuit. A test that trips a circuit OPEN (e.g. F3.4's three
+    ConnectErrors) leaves it OPEN for the next test until the 15 s
+    recovery timeout elapses — a timing-dependent failure (REL-080 run 4:
+    ``assert 0 == 2`` on the retry delays). Clearing the registry makes
+    each test start from a fresh circuit, independent of run order and of
+    the wall-clock gap between files. Production code never calls this;
+    it only discards cached breakers, which are recreated lazily with the
+    same thresholds on next use.
+    """
+    _CIRCUITS.clear()
+
 
 class PeerTransport:
     """Small async JSON client with connection pooling, circuit breaker, retry and explicit failure reporting."""

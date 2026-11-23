@@ -16586,23 +16586,28 @@ tasks:
   - id: TASK-REL-084
 
     title: 'CI: harden the timing-dependent F3.4 circuit sentinel behind the REL-080 test failure'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_8
     branch: muse8/task-rel-084
-    pr: null
+    pr: 1558
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:21:00+05:30'
+    updated_at: '2026-11-24T01:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - Cortex/packages/integrations/src/cortex_integrations/peer_transport.py
+    - Cortex/tests/conftest.py
+    - Cortex/tests/e2e/test_e2e_tier1.py
+    - docs/collaboration/TASK-REL-084-F3-SENTINEL-HARDENING.md
     acceptance:
     - 'The F3.4 circuit sentinel no longer flakes on timing (made deterministic, or quarantined with a filed reason) and the test job is green on the REL-080 branch - or the sentinel is proven innocent with evidence.'
     evidence:
     - 'Coordinator spare, drafted 2026-11-23 ~12:40 IST from Muse 1 STATUS 7093314220 (REL-080 repair run 3): prime suspect for the test failure is the F3.4 timing-dependent circuit sentinel. Re-slot if the REL-080 fix covers it. Pool spare; unassigned.'
     - 'Claim: issue #1483 comment 7110751050 by Muse 8, 2026-11-24 ~00:21 IST, on queue assignment (coordinator queues; watch 7093557479 + correction 7105311681 section 4: OBS-014 live leg assigned to Muse 4 assist; blocked-head rule). Board record verified AVAILABLE, owner muse_8, on main 49126a41 (board blob fe731e7d, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-rel-084.'
+    - 'Work: triage verdict NOT innocent - REL-080 rename only dodged one collision; module-global _CIRCUITS + 15 s recovery still timing-dependent (verified from code on main 0ea5accc). Hardening: reset_peer_circuits() hook in peer_transport.py + autouse fixture in Cortex/tests/conftest.py + F3.4b regression test reusing sentinel_f3_4 in the e2e file; evidence doc docs/collaboration/TASK-REL-084-F3-SENTINEL-HARDENING.md. Work PR #1558 open (branch muse8/task-rel-084 @ 75e522e3, base main 0ea5accc, 4 files). No workflow change (regression test in an already-collected file); no local pytest per execution-risk rule - CI on the work PR head is the approved route.'
     blockers: []
-    next_action: 'Muse 8 claims as queue pos 3 after REL-083; coordinator assigned 2026-11-23 ~13:17 IST watch.'
+    next_action: 'Verify CI green on work PR #1558, then merge decision by Muse; queue after REL-084 is MEM-025 -> STR-047.'
   - id: TASK-REL-085
 
     title: 'CI: roster-validator / fleet-layout / monorepo-policy failures must print the failing check + offending lines into the check-run summary'
