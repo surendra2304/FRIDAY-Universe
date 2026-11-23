@@ -114,6 +114,7 @@ Residual honesty: GitHub artifacts expire after 90 days and live in the same Git
 | Coverage | 10 schemas + media schema + `/etc` credential files + systemd units + per-agent `.env` files (this PR) + Stratex state files (PR #326) |
 | Offsite | Encrypted artifact per successful run (§6), live once `BACKUP_ARTIFACT_PASSPHRASE` is created |
 | Schedule verification | A schedule counts as *verified firing* only when an Actions run with `event: schedule` succeeds — the watchdog's first green run after a scheduled slot is the standing proof mechanism; the coordinator records the first scheduled success on the board entry (next_action) |
+| Manifest verification | 2026-11-22 scheduled run 45019170405 verified live (TASK-OBS-017): Server 1 manifest `complete=true` — 10/10 schemas, 135 tables, 23,695 rows, verify 188 ok / 0 failed; Server 2 media manifest `complete=true` — VYRALX_MEDIA, 36 rows, verify 27 ok / 0 failed. Evidence: `docs/collaboration/TASK-OBS-017-BACKUP-MANIFEST.md`. Offsite artifact uploaded (ID 14753072171) — the §6 passphrase evidently now exists. |
 
 ## 8. Documented, not actioned (per brief)
 
