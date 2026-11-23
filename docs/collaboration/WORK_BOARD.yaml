@@ -15340,23 +15340,26 @@ tasks:
     next_action: 'Work PR #1461 open - awaiting CI green + coordinator merge; proof PR (deliberately failing branch) still to file.'
   - id: TASK-VAL-009
     title: 'Integration: prove router-bus TaskRecord correlation live - one dispatched task, router id to bus dispatch id chain + completion callback shown'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_8
     branch: muse8/task-val-009
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T12:19:15+05:30'
+    updated_at: '2026-11-23T14:21:56+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VAL-009-ROUTER-BUS-TRACE.md
     acceptance:
     - 'One real dispatched task shows the full chain: router id, bus dispatch id, completion callback, with the trace filed.'
     evidence:
     - 'Coordinator-drafted (queues post 2026-11-23 ~01:00 IST). Queued to Muse 8 position 2 after TASK-REL-076. Muse 8 claims via hub comment + branch push.'
     - 'Claim: issue #35 comment 7093685321 by Muse 8, 2026-11-23 ~12:18 IST, on queue assignment (coordinator queues post 2026-11-23 ~01:00 IST; watch 7091751044 + watch 7093557479: Muse 8 -> REL-076 MERGED -> VAL-009). Board record verified AVAILABLE, owner muse_8, on main 23324fdd (board blob 6e69d6c0, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-val-009.'
+    - 'Probe executed 2026-11-23 ~14:18 IST under coordinator clearance (watch 7095390023): submit task_b9f56ce22f6c -> route MEMORA 0.94 -> dispatch disp_2ed5e1717a66 -> completion callback recorded_via agent_completion_callback; read-back total 2 in the shared store (assigned 1, failed 1). Trace: docs/collaboration/TASK-VAL-009-ROUTER-BUS-TRACE.md.'
+    - 'ACCEPTANCE NOT MET: dispatch failed - Memora /v1/task/execute returned HTTP 401 "Invalid agent credentials" (real 3.1 s round trip); the recall never ran. Same shared 401 gate the coordinator is investigating (watch 7095390023). Second finding: callback receipt claims completed while the store still records the dispatch failed. No retry, no re-target - awaiting Muse''s call: hold for the 401 fix + re-probe, or re-scope.'
     blockers: []
-    next_action: 'Claim filed - claim PR open; implement the live router-bus correlation probe once the claim PR merges.'
+    next_action: 'Probe executed, trace filed; acceptance NOT met (dispatch 401, shared gate). Awaiting Muse call: hold for 401 fix + re-probe, or re-scope.'
   - id: TASK-VYR-040
     title: 'VyralX: supervised cycle 2 from FRESH most-popular candidates (not the VYR-037 pool), machine QA gates first, renders held unlisted'
     status: AVAILABLE
