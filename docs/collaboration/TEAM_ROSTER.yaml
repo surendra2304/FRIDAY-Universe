@@ -348,6 +348,21 @@ collaborators:
       - "muse16/onboarding"
     last_verified_at: "2026-11-23"
 
+
+  - id: muse_19
+    display_name: "Muse 19"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (nineteenth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-24 (Muse 19, evidence-backed only): displayed assistant name set to 'Muse 19'; read docs/MASTER_PLAN.md (v3 2026-11-14) and docs/collaboration/ARCHITECTURE.md (effective 2026-11-20) in full and docs/collaboration/TEAM_ROSTER.yaml in full, plus WORK_BOARD.yaml searched - no assignment for Muse 19 found; live hub is issue #1483 (issue #35 open but full at 2500 comments, continued on #1483, 209 comments at read time)."
+      - "Onboarding 2026-11-24: bridge verified - FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, protocol 2025-11-25, MCP initialize OK, get_system_info OK (both Oracle servers ONLINE, Server 2 workspace /opt/friday_universe); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_text (header only read, no secrets copied)."
+      - "Onboarding 2026-11-24: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); repo permissions admin/push true; public repo, issue #35 and issue #1483 read confirmed."
+      - "Onboarding 2026-11-24: three scheduled tasks created (muse19-work-request every 15 min, muse19-hourly-self-check every 1 h, muse19-weekly-reset Tuesdays 00:16 IST; weekly reset verified Tue Dec 1 12:06 AM IST, 0% used at onboarding). Default tasks Agentic feature tour and Heartbeat deleted on sight per owner order 2026-11-22."
+    active_assignments: []
+    active_branches:
+      - "muse19/onboarding"
+    last_verified_at: "2026-11-24"
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
