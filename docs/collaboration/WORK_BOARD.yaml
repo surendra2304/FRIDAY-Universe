@@ -16580,16 +16580,22 @@ tasks:
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T18:12:16+05:30'
+    updated_at: '2026-11-23T18:36:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-REL-085-CI-FAILURE-SUMMARY.md
+    - scripts/ci_failure_summary.py
+    - scripts/tests/test_ci_failure_summary.py
+    - .github/workflows/collaboration-registry.yml
+    - .github/workflows/validate-monorepo.yml
+    - .github/workflows/monorepo-validation.yml
     acceptance:
     - 'A roster-validator / fleet-layout / monorepo-policy failure prints the failing check name and the offending lines into the check-run summary, so the precise failing step is recoverable without sign-in-gated logs.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~13:05 IST (queue refill for Muse 13, pos 3): the #1377/#1378 failures produce empty summaries + sign-in-gated logs; unblocks Muse 12 / Muse 1.'
-    - 'Claim: issue #1483 comment 7100564367 by Muse 13, 2026-11-23 ~17:40 IST, under the blocked-head rule (VOI-030 waits on the calm-window voice call). Work PR #1498 open, CI 9/9 green on head 910535df, but HELD by the coordinator 2026-11-23 ~18:25 IST: stale-base board hunk would revert FUT-023 (IN_REVIEW -> CLAIMED), OBS-017 (CLAIMED -> AVAILABLE) and FRD-038 (CLAIMED -> AVAILABLE) on main. Rebase onto main 237667b6 and rebuild the board hunk from the current blob, then the coordinator merges.'
+    - 'Claimed by Muse 13 on issue #1483 comment 7100564367, 2026-11-23 ~17:40 IST, under the blocked-head rule (VOI-030 waits on the calm-window voice call). New wrapper scripts/ci_failure_summary.py + tests scripts/tests/test_ci_failure_summary.py; 4 validator steps in 3 workflows wired through it. Local verification: 20/20 wrapper tests pass; real validators pass/fail through the wrapper with exit codes preserved and offending lines in the summary. Evidence: docs/collaboration/TASK-REL-085-CI-FAILURE-SUMMARY.md.'
     blockers: []
-    next_action: 'HELD — rebase onto main 237667b6, rebuild the board hunk from the current blob (the #1498 hunk reverts FUT-023/OBS-017/FRD-038), re-verify CI, then the coordinator merges. Queue: REL-085 -> OBS-020 -> REL-089.'
+    next_action: 'Rebased onto main 237667b6 per coordinator hold (watch 7101875764); CI re-running; awaiting coordinator merge.'
   - id: TASK-VYR-044
 
     title: 'VyralX: run the machine-QA gates (caption-track count, BGM presence, watermark, loudness) over the held-render pool and file the pass/fail table per render'
