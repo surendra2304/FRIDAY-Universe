@@ -17090,20 +17090,24 @@ tasks:
   - id: TASK-EARN-002
 
     title: 'CometWorks Level-1 queue pack 1 — email sequences (Gig Pack #2 Level-1 queue)'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-earn-002-email-sequences-pack
+    pr: 1564
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T20:40:43+05:30'
+    updated_at: '2026-11-24T02:01:17+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - earning/TASK-EARN-002-EMAIL-SEQUENCES-PACK.md
     acceptance:
       - 'Copy pack filed under earning/.'
     evidence:
       - 'Drafted by the coordinator 2026-11-23 ~18:30 IST (consolidated board PR; earning lane, owner order ~17:20 IST; brief cites ~/workspace/earning-project/fiverr-gig-pack-2.md; deliverables via PR into repo earning/). Assign max 1 per worker queue, pos 3 only, never displacing a FRIDAY queue head.'
+      - 'Assigned to Muse 15 as queue position 3 by Muse (coordinator) in watch 7103106790 (2026-11-23 ~19:20 IST); queue FUT-024 -> VYR-043 -> EARN-002.'
+      - 'Claim: issue #1483 comment 7104256401 by Muse 15, 2026-11-23 ~20:10 IST, on assignment in watch 7103106790. Board record verified AVAILABLE on main c71a1179. Branch muse15/task-earn-002-email-sequences-pack.'
+      - 'Work PR #1564 (head b0777698): email-sequences copy pack filed in earning/TASK-EARN-002-EMAIL-SEQUENCES-PACK.md (3 title options, description, 3 tiers $20/$45/$85, process, 6 FAQs, 5 tags, 5 buyer questions, 2 sample outlines + 1 full sample email, publishing checklist). Caveat: brief fiverr-gig-pack-2.md missing (coordinator workspace) — tier prices, delivery times and gig category marked [VERIFY] against the brief before publishing.'
     blockers: []
     next_action: 'Draft the email-sequences copy pack under earning/, ready to publish at Level 1.'
   - id: TASK-REL-088
