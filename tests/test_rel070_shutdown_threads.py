@@ -19,6 +19,14 @@ The fix has two halves: ``stop_status_summary_keeper()`` in
 in-flight refresh threads) and a ``pytest_sessionfinish`` hook in
 ``tests/conftest.py`` that calls it. These tests cover the first half
 directly; the hook is exercised by every suite run.
+
+Import hygiene matters here: the suite's e2e test imports the Stratex
+dashboard, which starts the keeper on the ``api.friday_supervision`` module
+object already in ``sys.modules``. These tests REUSE that module object and
+stop its keeper first. A purge + re-import would create a second module
+object whose keeper thread no stop call could reach (the first keeper would
+be orphaned and keep the shutdown race alive), so that pattern is
+deliberately not used.
 """
 from __future__ import annotations
 
@@ -35,46 +43,62 @@ KEEPER_NAME = "stratex-status-summary-keeper"
 REFRESH_NAME = "stratex-market-analysis-refresh"
 
 
-def _live_names() -> set[str]:
-    return {t.name for t in threading.enumerate() if t.is_alive()}
+def _count_named(name: str) -> int:
+    return sum(1 for t in threading.enumerate() if t.is_alive() and t.name == name)
+
+
+def _wait_for_name(name: str, timeout: float = 10.0) -> bool:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if _count_named(name) > 0:
+            return True
+        time.sleep(0.05)
+    return False
 
 
 class TestRel070ShutdownThreads:
-    """Import the supervision module the way the dashboard does (Stratex/ first)."""
+    """Use the supervision module object the suite already imported."""
 
     @classmethod
     def setup_class(cls):
-        from repo_isolation import purge_ambiguous_modules
+        sup = sys.modules.get("api.friday_supervision") or sys.modules.get(
+            "Stratex.api.friday_supervision"
+        )
+        if sup is None:
+            from repo_isolation import purge_ambiguous_modules
 
-        purge_ambiguous_modules()
-        stratex_path = os.path.join(REPO_ROOT, "Stratex")
-        if stratex_path in sys.path:
-            sys.path.remove(stratex_path)
-        sys.path.insert(0, stratex_path)
-        import api.friday_supervision as sup
+            purge_ambiguous_modules()
+            stratex_path = os.path.join(REPO_ROOT, "Stratex")
+            if stratex_path in sys.path:
+                sys.path.remove(stratex_path)
+            sys.path.insert(0, stratex_path)
+            import api.friday_supervision as sup
 
         cls.sup = sup
+        # Clean slate: stop any keeper an earlier test started, so each
+        # test below starts from exactly one known keeper.
+        sup.stop_status_summary_keeper(timeout=120)
 
     @classmethod
     def teardown_class(cls):
         # Never leak a keeper into the rest of the suite.
-        cls.sup.stop_status_summary_keeper(timeout=30)
+        cls.sup.stop_status_summary_keeper(timeout=120)
 
     @pytest.fixture(autouse=True)
     def _stop_keeper(self, monkeypatch):
         monkeypatch.setattr(self.sup, "_compute_engine_status_summary", lambda: {})
         monkeypatch.setattr(self.sup, "_STATUS_SUMMARY_KEEPER_INTERVAL_S", 0.05)
         yield
-        self.sup.stop_status_summary_keeper(timeout=30)
+        self.sup.stop_status_summary_keeper(timeout=120)
 
     def test_keeper_stops_and_thread_dies(self):
+        before = _count_named(KEEPER_NAME)
         thread = self.sup.start_status_summary_keeper()
         assert thread is not None
         assert thread.is_alive()
-        assert KEEPER_NAME in _live_names()
         assert self.sup.stop_status_summary_keeper(timeout=10) is True
         assert not thread.is_alive()
-        assert KEEPER_NAME not in _live_names()
+        assert _count_named(KEEPER_NAME) == before
 
     def test_start_after_stop_restarts_keeper(self):
         # Stopping an idle keeper is a no-op success ...
@@ -107,12 +131,12 @@ class TestRel070ShutdownThreads:
         try:
             self.sup._ensure_market_analysis()
             assert started.wait(timeout=10), "refresh thread never started"
-            assert REFRESH_NAME in _live_names()
+            assert _wait_for_name(REFRESH_NAME, timeout=10)
             t0 = time.monotonic()
             assert self.sup.stop_status_summary_keeper(timeout=30) is True
             waited = time.monotonic() - t0
             assert waited >= 1.0, "stop returned without joining the refresh"
-            assert REFRESH_NAME not in _live_names()
+            assert _count_named(REFRESH_NAME) == 0
         finally:
             self.sup._LAST_MARKET_ANALYSIS = saved_analysis
             self.sup._LAST_MARKET_ANALYSIS_TS = saved_ts
@@ -128,6 +152,6 @@ class TestRel070ShutdownThreads:
         self.sup._ANALYSIS_REFRESH_RUNNING = False
         try:
             self.sup._ensure_market_analysis()
-            assert REFRESH_NAME not in _live_names()
+            assert _count_named(REFRESH_NAME) == 0
         finally:
             self.sup._STATUS_SUMMARY_KEEPER_STOP.clear()
