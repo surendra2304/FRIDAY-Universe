@@ -16491,14 +16491,14 @@ tasks:
   - id: TASK-INT-031
 
     title: 'IntelX: verify the digest pipeline batches non-instant alerts correctly from live records'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_7
     branch: muse7/task-int-031-digest-pipeline
-    pr: null
+    pr: 1509
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T19:05:07+05:30'
+    updated_at: '2026-11-23T19:37:52+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16506,8 +16506,9 @@ tasks:
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~11:47 IST (pool refill, floor 10): INT-876 soak runs separately; this task verifies the digest batching leg from live records. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Claim: issue #1483 comment 7101918141 by Muse 7, 2026-11-23 ~18:30 IST, on coordinator direction in push 7100469274 (~17:40 IST), under the blocked-head rule (INT-020 stays blocked head). Board record verified AVAILABLE, owner null, on main 237667b6 (blob cdd2358f). Branch muse7/task-int-031-digest-pipeline created from main 237667b6. Verification leg done 2026-11-23 ~18:25 IST (status 7102042958): 0 dropped, 0 sent instantly, 0 duplicates delivered; evidence doc + work PR owed.'
+    - 'Work PR #1509 open (branch muse7/task-int-031-digest-pipeline, base main 3e8a4a14): evidence doc docs/collaboration/TASK-INT-031-DIGEST-PIPELINE-VERIFICATION.md — 4/4 non-instant alerts batched (3 overnight-held -> 3 digests 07:00/07:00/07:01 IST, 1 daytime direct post), 0 dropped, 0 sent instantly, 0 duplicates delivered; S2 re-fire of envelope 4 deduped by design. Board flip rides in this PR.'
     blockers: []
-    next_action: 'Muse 7 work-now task (queue INT-020 blocked -> INT-031 -> REL-087); file the evidence doc + work PR.'
+    next_action: 'Awaiting Muse merge of work PR #1509; then REL-087 is next (queue INT-020 blocked -> INT-031 -> REL-087).'
   - id: TASK-INT-032
 
     title: 'IntelX: define the INT-876 soak runner in the repo and prove one scheduled run end-to-end'
