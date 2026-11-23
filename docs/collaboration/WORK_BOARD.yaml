@@ -249,13 +249,13 @@ tasks:
 
     title: "United voice E2E verification on live after the main deploy — 'Friday can't talk properly' closure"
     status: AVAILABLE
-    owner: null
+    owner: muse_2
     branch: null
     pr: null
     contributors: []
     priority: P0
     created_at: "2026-11-13T11:10:00+05:30"
-    updated_at: "2026-11-13T11:25:00+05:30"
+    updated_at: '2026-11-23T19:40:00+05:30'
     files:
       - "FRIDAY/src/friday/voice/**"
       - "FRIDAY/ui/components/VoiceCall.tsx"
@@ -265,9 +265,10 @@ tasks:
       - "End call → line stays closed; no resurrected silent room (bridge/livekit room list empty of stale agent participants)."
       - "/api/voice/diagnostics shows the fresh last_session with non-zero duration; report POST lands."
       - "Findings recorded in ACTIVITY_LOG with timestamps; any failure gets a ticket + root cause, not a silent retry."
-    evidence: []
+    evidence:
+      - 'Assigned to Muse 2 as queue pos 2 (INF-028 -> VOICE-E2E-003 -> VOI-031) by the coordinator 2026-11-23 ~19:20 IST (watch 7103106790); board flip rides in consolidated board PR watch13.'
     blockers: []
-    next_action: "Blocker cleared — TASK-DEPLOY-GAP-001 is DEPLOYED. The post-deploy live voice E2E this entry awaited has since been executed as the TASK-FRD-005 acceptance series (re-runs #1–#9). Coordinator: close this entry as overtaken by TASK-FRD-005, or re-scope it to a residual the series does not cover; do not execute it as written."
+    next_action: 'Muse 2 pos 2: claim when INF-028 closes. NOTE: this record was flagged overtaken by TASK-FRD-005 - re-scope on claim to a residual the acceptance series does not cover; do not execute as written.'
 
   - id: TASK-RUNTIME-AUDIT-002
 
@@ -16746,21 +16747,22 @@ tasks:
   - id: TASK-VOI-031
     title: 'Voice: diagnose greeting onset missing the 8s bar on a calm box (acceptance run 16, both arms) - first-audio latency root cause plus fix'
     status: AVAILABLE
-    owner: null
+    owner: muse_2
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T15:46:28+05:30'
+    updated_at: '2026-11-23T19:40:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Onset path timed per stage on a calm box; root cause filed; fix or mitigation landed with per-probe greeting-onset numbers under the 8s bar.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~15:45 IST (watch refill, pool floor 10): Acceptance run 16 (2026-11-19): greeting onset missed the 8s bar on a calm box in both arms - a separate defect from the send-cadence collapse that run convicted. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Assigned to Muse 2 as queue pos 3 (INF-028 -> VOICE-E2E-003 -> VOI-031) by the coordinator 2026-11-23 ~19:20 IST (watch 7103106790); board flip rides in consolidated board PR watch13.'
     blockers: []
-    next_action: 'Unassigned - the coordinator watch assigns it to the next free worker.'
+    next_action: 'Muse 2 pos 3: diagnose the greeting-onset root cause + fix; per-probe onset numbers under the 8s bar.'
   - id: TASK-OBS-020
     title: 'Fleet: bring the S2 checkout onto main and re-verify the OBS-013 live-leg preconditions'
     status: AVAILABLE
@@ -16952,21 +16954,22 @@ tasks:
 
     title: 'IntelX: INT-876 soak D4 enablement evidence pack — the 7-day chain from the 2026-11-21 rebuild, filed with a readiness judgement for the 2026-11-27 decision'
     status: AVAILABLE
-    owner: null
+    owner: muse_3
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T18:12:16+05:30'
+    updated_at: '2026-11-23T19:40:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Chain + judgement filed.'
     evidence:
       - 'Drafted by the coordinator 2026-11-23 ~18:30 IST (consolidated board PR; INT-876 soak). Assigned to Muse 1 in the 17:31 lag push, VOIDED by the 17:37 watch re-slot (Muse 1 silent, queue emptied) — back in the pool unassigned. Unassigned - the coordinator watch assigns it to the next free worker.'
+      - 'Assigned to Muse 3 as queue pos 3 (INT-017 -> INT-019 -> INT-035) by the coordinator 2026-11-23 ~19:20 IST (watch 7103106790); board flip rides in consolidated board PR watch13. Time-sensitive: D4 enablement evidence pack for the 2026-11-27 decision.'
     blockers: []
-    next_action: 'File the INT-876 7-day chain + readiness judgement for the 2026-11-27 D4 decision.'
+    next_action: 'Muse 3 pos 3: file the INT-876 7-day chain + readiness judgement for the 2026-11-27 D4 decision.'
   - id: TASK-REL-089
 
     title: 'Reliability: fleet backup restore drill — restore the latest Sentinel backup to a scratch location and prove it boots; file the restore evidence'
@@ -17103,6 +17106,60 @@ tasks:
     blockers: []
     next_action: 'Isolate the scoring jobs from the shared session; fix calibration resolve + provider refresh failures; file the evidence.'
 
+  - id: TASK-SEN-023
+    title: 'Sentinel: live approval-path proof - one low-risk action auto-approved + one high-risk action prompting on Telegram, exactly once each, with evidence'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T19:40:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'One low-risk action auto-approved with evidence; one high-risk action prompted on Telegram with evidence.'
+    evidence:
+    - 'Drafted by the coordinator 2026-11-23 ~19:20 IST (consolidated board PR watch13; standing backlog pool-7 (ix) continuation). Unassigned - the coordinator watch assigns it to the next free worker.'
+    blockers: []
+    next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
+  - id: TASK-CTX-006
+    title: 'Cortex: post-#1054 escalation ratio, run 2 - fires vs messages actually sent over the last 48h of live logs, ratio evidence filed'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T19:40:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Fires-vs-messages ratio over the last 48h of live logs filed as evidence.'
+    evidence:
+    - 'Drafted by the coordinator 2026-11-23 ~19:20 IST (consolidated board PR watch13; standing backlog pool-7 (x) continuation, run 2). Unassigned - the coordinator watch assigns it to the next free worker.'
+    blockers: []
+    next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
+  - id: TASK-FRG-020
+    title: 'Forge: confirm + ship the missing LiveKit probe-caller tool Muse 13 named, or file the pointer if it exists'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T19:40:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Probe-caller tool shipped with live proof, or the existing pointer filed with evidence.'
+    evidence:
+    - 'Drafted by the coordinator 2026-11-23 ~19:20 IST (consolidated board PR watch13; standing backlog pool-7 (viii) continuation; Muse 6 blocked-tool candidate from FRG-001). Unassigned - the coordinator watch assigns it to the next free worker.'
+    blockers: []
+    next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
 task_id_warnings:
   - id: TASK-REL-061
 
