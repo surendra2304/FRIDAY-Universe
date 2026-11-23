@@ -56,6 +56,8 @@ owner described (private -> inter-agent -> universal) is never skipped.
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
@@ -63,6 +65,11 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy.orm import Session
 
 from core.identity.service import IdentityService
+from core.security.provenance import (
+    SIGNATURE_VERSION,
+    compute_memory_signature,
+    verify_memory_signature,
+)
 from storage.relational.access_scope import (
     SERVICE_AGENT,
     grant_shared_access,
@@ -179,6 +186,86 @@ def _audit(
     db.add(entry)
     db.flush()
     return entry
+
+
+def _memory_type_value(memory_type) -> str:
+    return memory_type.value if hasattr(memory_type, "value") else str(memory_type)
+
+
+def _sign_copy_provenance(copy: MemoryRecord) -> None:
+    """Re-sign a UNIVERSAL copy's provenance under the copy's own id.
+
+    TASK-MEM-021: a dual copy inherits the original's provenance dict
+    verbatim, including the original's ``hmac_signature`` — which is
+    computed over the ORIGINAL's id. ``verify_memory_signature`` on the
+    copy then fails, and search's Safety Invariant 2 leg discards the copy
+    for every actor, so a promoted UNIVERSAL lesson is invisible to
+    search. Re-signing under the copy's id (the write path's own pattern,
+    ``core/memory/pipeline/write_service.py``) restores verifiability.
+    """
+    copy.provenance = {
+        **(copy.provenance if isinstance(copy.provenance, dict) else {}),
+        "hmac_signature": compute_memory_signature(
+            record_or_dict={
+                "id": copy.id,
+                "tenant_id": copy.tenant_id,
+                "owner_id": copy.owner_id,
+                "content_hash": copy.content_hash,
+                "memory_type": _memory_type_value(copy.memory_type),
+            }
+        ),
+        "signature_version": SIGNATURE_VERSION,
+    }
+
+
+def _upsert_copy_embedding(db: Session, copy: MemoryRecord, *, actor_name: str) -> bool:
+    """Best-effort vector upsert for a UNIVERSAL copy (TASK-MEM-021).
+
+    The write path indexes every new record; ``_make_universal_copy``
+    never did, so the copy has no vector row and the semantic leg of
+    search can never surface it. Fail-soft by design: the relational row
+    is authoritative and a vector-store outage must not fail the
+    promotion. Returns True when the upsert was accepted.
+    """
+    try:
+        from storage.vector.embedding import EmbeddingGenerator
+        from storage.vector.oracle_vector_adapter import oracle_vector_adapter
+        from storage.vector.qdrant_adapter import vector_adapter
+
+        dense_embedding = EmbeddingGenerator.generate_embedding(copy.content_text)
+        namespace = getattr(copy, "namespace", None)
+        vec_payload = {
+            "namespace_path": namespace.path if namespace is not None else "",
+            "memory_type": _memory_type_value(copy.memory_type),
+            "owner": copy.owner_agent or actor_name,
+            "user_id": getattr(copy, "user_id", "default_user"),
+            "agent_id": getattr(copy, "agent_id", None) or actor_name,
+            "task_id": getattr(copy, "task_id", None),
+            "trust_level": "verified",
+        }
+        if oracle_vector_adapter.is_oracle_backend():
+            return bool(
+                oracle_vector_adapter.upsert_embedding(
+                    memory_id=copy.id,
+                    vector=dense_embedding,
+                    tenant_id=copy.tenant_id,
+                    payload=vec_payload,
+                    db=db,
+                )
+            )
+        return bool(
+            vector_adapter.upsert_embedding(
+                memory_id=copy.id,
+                vector=dense_embedding,
+                tenant_id=copy.tenant_id,
+                payload=vec_payload,
+            )
+        )
+    except Exception:
+        logger.warning(
+            "UNIVERSAL copy vector upsert failed for memory %s", copy.id, exc_info=True
+        )
+        return False
 
 
 class MemoryPromotionService:
@@ -398,6 +485,86 @@ class MemoryPromotionService:
             "to_scope": from_scope.value,
             "path": details.get("path", ""),
             "reverts_audit_id": promotion.id,
+        }
+
+    # ------------------------------------------------- repair stale copies
+    @classmethod
+    def repair_universal_copies(
+        cls,
+        db: Session,
+        *,
+        dry_run: bool = True,
+        tenant_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Re-sign stale UNIVERSAL dual copies so search can find them.
+
+        TASK-MEM-021 repair leg: every UNIVERSAL record carrying
+        ``promoted_from_memory_id`` in its provenance is a dual copy. A
+        copy whose signature was inherited from its original fails
+        ``verify_memory_signature`` (the payload covers the original's
+        id) and search discards it for every actor. This pass re-signs
+        exactly those copies under their own id and upserts their
+        embedding, so the MEM-019 copy and any other already-created stale
+        copy become searchable without re-promotion. Caller commits.
+
+        Safety, mirroring ``scripts/resign_provenance.py`` (TASK-MEM-010):
+        records whose content hash no longer matches their text
+        (tampered) and records with no signature at all (unsigned) are
+        NEVER force-signed — they are reported by id and left untouched.
+        Dry-run is the default and writes nothing.
+        """
+        query = db.query(MemoryRecord).filter(
+            MemoryRecord.scope == MemoryScopeType.UNIVERSAL
+        )
+        if tenant_id:
+            query = query.filter(MemoryRecord.tenant_id == tenant_id)
+        candidates = [
+            record
+            for record in query.all()
+            if isinstance(record.provenance, dict)
+            and record.provenance.get("promoted_from_memory_id")
+        ]
+        scanned = len(candidates)
+        already_current = 0
+        repaired = 0
+        would_repair = 0
+        unverifiable_ids: List[str] = []
+        unsigned_ids: List[str] = []
+        for candidate in candidates:
+            prov = candidate.provenance if isinstance(candidate.provenance, dict) else {}
+            if not prov.get("hmac_signature"):
+                unsigned_ids.append(candidate.id)
+                continue
+            if verify_memory_signature(candidate):
+                already_current += 1
+                continue
+            # A failing signature is stale (inherited id) or tampered
+            # (content changed under the stored hash). Only the stale
+            # case is safe to re-sign.
+            if candidate.content_text is not None and candidate.content_hash:
+                actual_hash = hashlib.sha256(
+                    str(candidate.content_text).strip().encode("utf-8")
+                ).hexdigest()
+                if not hmac.compare_digest(
+                    actual_hash, str(candidate.content_hash).strip()
+                ):
+                    unverifiable_ids.append(candidate.id)
+                    continue
+            if dry_run:
+                would_repair += 1
+                continue
+            _sign_copy_provenance(candidate)
+            db.flush()
+            _upsert_copy_embedding(db, candidate, actor_name=SERVICE_AGENT)
+            repaired += 1
+        return {
+            "scanned": scanned,
+            "already_current": already_current,
+            "repaired": repaired,
+            "would_repair": would_repair,
+            "unverifiable_ids": unverifiable_ids,
+            "unsigned_ids": unsigned_ids,
+            "dry_run": dry_run,
         }
 
     # ------------------------------------------------------- need recording
@@ -755,6 +922,15 @@ class MemoryPromotionService:
         )
         db.add(copy)
         db.flush()
+        # TASK-MEM-021: the inherited provenance carries the ORIGINAL's
+        # hmac_signature (computed over the original's id), so the copy
+        # fails verification and search discards it for every actor.
+        # Re-sign under the copy's own id, and index the copy in the
+        # vector store — without a vector row the semantic leg can never
+        # surface it either.
+        _sign_copy_provenance(copy)
+        db.flush()
+        _upsert_copy_embedding(db, copy, actor_name=actor_name)
         return copy
 
     @staticmethod
