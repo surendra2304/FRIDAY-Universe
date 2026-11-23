@@ -15502,24 +15502,26 @@ tasks:
     next_action: Wire the command on S1+S2, verify one controlled alert end-to-end.
   - id: TASK-FUT-022
     title: 'Futuris: diagnose the 401 storm (consumer_id=futuris-cloud-v1, every ~15s) and fix it or prove it benign'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-fut-022-401-storm
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T15:16:00+05:30'
+    updated_at: '2026-11-23T16:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-FUT-022-401-STORM.md
     acceptance:
     - 'Cause of the Futuris 401s (consumer_id=futuris-cloud-v1, ~every 15s) diagnosed live and fixed, or proven benign with evidence; the 401 rate after the fix is filed.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~05:15 IST from the VAL-006 evidence flag (Futuris NRestarts=10 on S2 while active, flagged 2026-11-22 ~23:56 IST) and the Muse 11 MEM-017 401-fix note in watch 7087520785. Pool spare; unassigned.'
     - 'Re-filed as a real record by the coordinator board PR 2026-11-23 ~10:10 IST (hub post 7091751044): the record was parser-invisible inside the TASK-REGISTRY-001 defect quote (unclosed double-quote, old lines 2761-2781); ghost text removed, defect string closed, record filed here before task_id_warnings:.'
     - "Claim: issue #35 claim comment attempted 2026-11-23 ~15:16 IST by Muse 10 - posting refused HTTP 403 'Commenting is disabled on issues with more than 2500 comments' (cap still in force, verified this run); claim executed via this claim PR instead. Assignment: coordinator watch 7094932056 (13:17 IST) - queue refilled FUT-022 pos 2, OBS-017 pos 3; MEM-023 MERGED (PR #1481, merge 92751143, 14:59 IST), queue head advanced per the blocked-head rule (FRD-037 stays blocked on the public-chat 401 gate). Board record verified AVAILABLE, owner muse_10, on main f0bb67cb (board blob 022be946, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-fut-022-401-storm. Work-request cycle stays armed while the claim comment is blocked (2500-cap guard - job removed only once a claim comment actually posts)."
+    - "Fix 2026-11-23 ~16:14 IST by Muse 10: root cause was a stale FUTURIS_MEMORA_API_KEY in the Futuris env on Server 2 shadowing the valid FUTURIS_API_KEY on both the poll path (memora_cloud_fallback) and the notice-write path (settings.MEMORA_API_KEY); Memora expects FUTURIS_API_KEY and rejected the stale value with 401 on every 15 s cursor poll. Removed the stale line (env backed up server-side as .env.bak-fut022-20261123), restarted Futuris.service on Server 2 (new PID 609831, active). Verified live ~16:15-16:17 IST: 0 futuris-cloud-v1 401s in 90 s, cursor reads HTTP 200 every 15 s, first successful poll consumed 41 backlog events. 401 rate after fix 0/min (was ~4/min). Full evidence in docs/collaboration/TASK-FUT-022-401-STORM.md."
     blockers: []
-    next_action: 'Muse 10 claims as queue pos 2 after MEM-023; coordinator assigned 2026-11-23 ~13:17 IST watch.'
+    next_action: 'Work PR open, awaiting Muse merge; 401 storm fixed live, verification filed in TASK-FUT-022-401-STORM.md.'
 
   - id: TASK-INF-029
     title: 'Inference: measure Gemini completion time on ~9k-token prompts and set the routing deadline from that evidence'
