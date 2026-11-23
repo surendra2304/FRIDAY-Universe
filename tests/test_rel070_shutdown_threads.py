@@ -1,0 +1,157 @@
+"""TASK-REL-070 regression: Stratex supervision daemon threads must stop cleanly.
+
+Root cause: importing the Stratex dashboard starts an infinite-loop daemon
+keeper thread (``stratex-status-summary-keeper``), and each keeper pass can
+spawn a long-running market-analysis refresh thread
+(``stratex-market-analysis-refresh``) that logs while it runs. If either
+thread is alive when CPython finalizes, the interpreter aborts (``Fatal
+Python error: _enter_buffered_busy: could not acquire lock for
+<_io.BufferedWriter name='<stderr>'> at interpreter shutdown, possibly due
+to daemon threads`` -> SIGABRT -> exit 134) after every test passed. That
+abort failed the fleet-layout gate on board-only diffs 10 times in the
+2026-11-21/22 window (runs 44874617299, 44875277858, 44894544460,
+44934353024, 44967481885, 44994834215, 45008909833, 45048755358,
+45052231024, 45082613824 — all "3723-3728 passed" then ``Aborted (core
+dumped)``), green on re-run every time.
+
+The fix has two halves: ``stop_status_summary_keeper()`` in
+``Stratex/api/friday_supervision.py`` (stop event + join the keeper and any
+in-flight refresh threads) and a ``pytest_sessionfinish`` hook in
+``tests/conftest.py`` that calls it. These tests cover the first half
+directly; the hook is exercised by every suite run.
+
+Import hygiene matters here: the suite's e2e test imports the Stratex
+dashboard, which starts the keeper on the ``api.friday_supervision`` module
+object already in ``sys.modules``. These tests REUSE that module object and
+stop its keeper first. A purge + re-import would create a second module
+object whose keeper thread no stop call could reach (the first keeper would
+be orphaned and keep the shutdown race alive), so that pattern is
+deliberately not used.
+"""
+from __future__ import annotations
+
+import os
+import sys
+import threading
+import time
+
+import pytest
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+KEEPER_NAME = "stratex-status-summary-keeper"
+REFRESH_NAME = "stratex-market-analysis-refresh"
+
+
+def _count_named(name: str) -> int:
+    return sum(1 for t in threading.enumerate() if t.is_alive() and t.name == name)
+
+
+def _wait_for_name(name: str, timeout: float = 10.0) -> bool:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if _count_named(name) > 0:
+            return True
+        time.sleep(0.05)
+    return False
+
+
+class TestRel070ShutdownThreads:
+    """Use the supervision module object the suite already imported."""
+
+    @classmethod
+    def setup_class(cls):
+        sup = sys.modules.get("api.friday_supervision") or sys.modules.get(
+            "Stratex.api.friday_supervision"
+        )
+        if sup is None:
+            from repo_isolation import purge_ambiguous_modules
+
+            purge_ambiguous_modules()
+            stratex_path = os.path.join(REPO_ROOT, "Stratex")
+            if stratex_path in sys.path:
+                sys.path.remove(stratex_path)
+            sys.path.insert(0, stratex_path)
+            import api.friday_supervision as sup
+
+        cls.sup = sup
+        # Clean slate: stop any keeper an earlier test started, so each
+        # test below starts from exactly one known keeper.
+        sup.stop_status_summary_keeper(timeout=120)
+
+    @classmethod
+    def teardown_class(cls):
+        # Never leak a keeper into the rest of the suite.
+        cls.sup.stop_status_summary_keeper(timeout=120)
+
+    @pytest.fixture(autouse=True)
+    def _stop_keeper(self, monkeypatch):
+        monkeypatch.setattr(self.sup, "_compute_engine_status_summary", lambda: {})
+        monkeypatch.setattr(self.sup, "_STATUS_SUMMARY_KEEPER_INTERVAL_S", 0.05)
+        yield
+        self.sup.stop_status_summary_keeper(timeout=120)
+
+    def test_keeper_stops_and_thread_dies(self):
+        before = _count_named(KEEPER_NAME)
+        thread = self.sup.start_status_summary_keeper()
+        assert thread is not None
+        assert thread.is_alive()
+        assert self.sup.stop_status_summary_keeper(timeout=10) is True
+        assert not thread.is_alive()
+        assert _count_named(KEEPER_NAME) == before
+
+    def test_start_after_stop_restarts_keeper(self):
+        # Stopping an idle keeper is a no-op success ...
+        assert self.sup.stop_status_summary_keeper(timeout=10) is True
+        # ... and a later start works again (the stop event is cleared).
+        thread = self.sup.start_status_summary_keeper()
+        assert thread is not None and thread.is_alive()
+        assert self.sup.stop_status_summary_keeper(timeout=10) is True
+        assert not thread.is_alive()
+
+    def test_analysis_refresh_thread_is_joined_on_stop(self, monkeypatch):
+        """A slow in-flight refresh is waited out, not abandoned at exit."""
+        started = threading.Event()
+
+        def _slow_refresh(payload=None):
+            started.set()
+            time.sleep(2.0)
+            return {}
+
+        monkeypatch.setattr(self.sup, "_run_market_analysis", _slow_refresh)
+        monkeypatch.setattr(self.sup, "_safe_engine", lambda: None)
+        # Force a stale snapshot so _ensure_market_analysis spawns a thread.
+        self.sup._STATUS_SUMMARY_KEEPER_STOP.clear()
+        saved_analysis = self.sup._LAST_MARKET_ANALYSIS
+        saved_ts = self.sup._LAST_MARKET_ANALYSIS_TS
+        saved_running = self.sup._ANALYSIS_REFRESH_RUNNING
+        self.sup._LAST_MARKET_ANALYSIS = None
+        self.sup._LAST_MARKET_ANALYSIS_TS = 0.0
+        self.sup._ANALYSIS_REFRESH_RUNNING = False
+        try:
+            self.sup._ensure_market_analysis()
+            assert started.wait(timeout=10), "refresh thread never started"
+            assert _wait_for_name(REFRESH_NAME, timeout=10)
+            t0 = time.monotonic()
+            assert self.sup.stop_status_summary_keeper(timeout=30) is True
+            waited = time.monotonic() - t0
+            assert waited >= 1.0, "stop returned without joining the refresh"
+            assert _count_named(REFRESH_NAME) == 0
+        finally:
+            self.sup._LAST_MARKET_ANALYSIS = saved_analysis
+            self.sup._LAST_MARKET_ANALYSIS_TS = saved_ts
+            self.sup._ANALYSIS_REFRESH_RUNNING = saved_running
+
+    def test_no_refresh_spawned_after_stop(self, monkeypatch):
+        """After a stop, _ensure_market_analysis must not start new work."""
+        monkeypatch.setattr(self.sup, "_run_market_analysis", lambda payload=None: {})
+        monkeypatch.setattr(self.sup, "_safe_engine", lambda: None)
+        self.sup.stop_status_summary_keeper(timeout=10)
+        self.sup._LAST_MARKET_ANALYSIS = None
+        self.sup._LAST_MARKET_ANALYSIS_TS = 0.0
+        self.sup._ANALYSIS_REFRESH_RUNNING = False
+        try:
+            self.sup._ensure_market_analysis()
+            assert _count_named(REFRESH_NAME) == 0
+        finally:
+            self.sup._STATUS_SUMMARY_KEEPER_STOP.clear()
