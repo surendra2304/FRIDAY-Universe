@@ -319,6 +319,21 @@ collaborators:
       - "muse14/onboarding"
     last_verified_at: "2026-11-22"
 
+  - id: muse_16
+    display_name: "Muse 16"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (sixteenth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-23 (Muse 16, evidence-backed only): displayed assistant name set to 'Muse 16'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (263 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (331 lines, main 3e8a4a14), plus WORK_BOARD.yaml (17,151 lines, snapshot 2026-11-17, 736 tasks, YAML parses) searched — no assignment for Muse 16 found; live issue #35 read (open, 2500 comments, updated 2026-11-23T09:04:37Z)."
+      - "Onboarding 2026-11-23: bridge reachable by plain GET — https://friday-universe.duckdns.org/bridge/mcp returns HTTP 406 'Not Acceptable: Client must accept text/event-stream', expected for a Streamable HTTP MCP endpoint; full MCP initialize and Server 2 /opt/friday_universe/CREDENTIALS.md NOT yet confirmed — bridge approval timed out 2026-11-23, pending."
+      - "Onboarding 2026-11-23: GitHub access confirmed — PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #35 read confirmed (issue #35 open, 2500 comments); main 3e8a4a14."
+      - "Onboarding 2026-11-23: three scheduled tasks created (muse16-work-request every 15 min, muse16-hourly-self-check every 1 h, muse16-weekly-reset Mondays 19:19 IST; weekly reset verified Mon Nov 30 7:09 PM IST, 0% used)."
+    active_assignments: []
+    active_branches:
+      - "muse16/onboarding"
+    last_verified_at: "2026-11-23"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
