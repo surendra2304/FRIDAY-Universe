@@ -15840,14 +15840,14 @@ tasks:
   - id: TASK-FUT-019
 
     title: 'Futuris forecast-everything proof'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-fut-019-forecast-everything-proof
     pr: 1552
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:49:05+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-FUT-019-FORECAST-EVIDENCE.md
@@ -15860,6 +15860,7 @@ tasks:
     - 'Re-slotted by the coordinator 2026-11-23 ~10:30 IST (watch): branch muse2/task-fut-019-forecast-everything-proof still at base dff5cbba62 after ~2h, zero work commits, no work PR, no reply to the coordinator nudge (watch 7091751044). Muse 2 takes TASK-INF-029. Muse 12 claims via hub comment + branch push from main fde0591b.'
     - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Muse 12 silent (newest tip 15:00 IST, zero hub posts) - owner muse_12 -> muse_4. Muse 12 keeps TASK-STR-047 under a final report deadline. Muse 4 picks up from branch muse12/task-fut-019-forecast-everything-proof @61483aff."
     - 'Claimed by Muse 4: hub #1483 comment 7111356187, 2026-11-24 ~00:46 IST, on the coordinator enforcement 2026-11-23 ~22:40 IST re-slot. Pick-up verified first-hand: IARI 14-23 Nov series re-read live (exact match); ensemble members re-computed (25.8 / 26.47 / 26.59 / 25.15 -> 26.00 C); interval 26.0 +/- 1.96 x 0.45 = [25.1, 26.9] C. Evidence file carried over unchanged from muse12 branch @61483aff. Work PR #1552.'
+    - "MERGED 2026-11-24 ~02:08 IST: work PR #1552 merged (merge 053d17fe); CI 9/9 first-hand on head fcad6edd (7 success, 2 skipped) per the coordinator 01:57 run; coordinator diff-audit vs true base: 2 new evidence docs plus board hunk, parents 43fa76e4 plus fcad6edd verified against true main. States: implemented/tested/merged YES; production-verified PARTIAL - scoring owed 2026-11-25."
     blockers: []
     next_action: 'Scoring owed 2026-11-25 after the IARI outcome publishes (absolute error + interval hit); scoring owner awaits Muse ruling (Muse 12 armed Nov 25 10:00 IST check vs Muse 4).'
   - id: TASK-REL-080
@@ -16074,14 +16075,14 @@ tasks:
   - id: TASK-INF-028
 
     title: 'IntelX: fix the synthesis_entailment_unverified gate - a served draft synthesis fails quote-entailment against single-source findings; fix the gate, the draft, or the finding mix, and re-probe until INT-020 run 3 goes green'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_9
     branch: muse9/task-inf-028
     pr: 1561
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T01:48:00+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-028-DEPLOY-EVIDENCE.md
@@ -16094,8 +16095,9 @@ tasks:
     - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Board flip for the re-slot announced on hub comment 7107607002 (21:37 watch): owner muse_2 -> muse_9."
     - 'Claim: issue #1483 comment 7111627164 by Muse 9, 2026-11-24 ~00:57 IST, queue head after REL-086 merged (PR #1537, merge 49126a41). Board record verified AVAILABLE, owner muse_9, on main 0ea5acc (board blob ff45b1f5d7fd82b30aacc5ff1564920ceb6eabc6, verified against the true main blob before editing). Branch muse9/task-inf-028 from main 0ea5acc. Duplicate claim comment 7112088422 posted by the main agent ~01:16 IST while this run was in flight; same task and branch. Leg 1 (root-cause + fix) covered by INT-033 (PR #1511, merged cfe211cf): 27/27 IntelX verification tests pass locally. Deployed live 2026-11-24 01:05:58 IST under coordinator watch 7106041874 ("the live re-probe leg is unblocked, proceed"): IntelX.service restarted (MainPID 605920 -> 622490), /health 200. Re-probe run 1 (bus disp_cf7f816b6bd3) FAILED on the 30 s dispatch timeout, not the entailment gate; archive verdict + run 2 owed, blocked on the bridge transport outage. Evidence: docs/collaboration/TASK-INF-028-DEPLOY-EVIDENCE.md. Work PR #1561.'
     - 'Re-probe GREEN live 2026-11-24 ~01:45 IST (bridge recovered ~01:38 IST after outage ~01:25-01:35 IST): run-1 archive verdict SUCCESS - 4 persisted runs lr_8081d0c535a2437bb176039f / lr_6c8befb004a64eedadfe695c / lr_a7341f98019f4623a89f0ef4 / lr_b3329cb87dda48b3b94ec248 (01:18:07-01:18:53 IST), synthesis succeeded; bus run 2 (disp_f8b0874e5a58) completed in 31.09 s, synthesis succeeded, quotes/semantic entailment verified, persisted lr_70c54f7c36604cbeb9922c8b. synthesis_entailment_unverified gone from the live path - synthesis leg of acceptance MET; INT-020 run 3 is Muse 7''s. Thin-margin note: 31.09 s is marginally over the nominal 30 s bus budget; cold first run took ~6 min IntelX-side. Clearance-basis ruling still owed from Muse (watch 7106041874 vs request 7112104168). Evidence: docs/collaboration/TASK-INF-028-DEPLOY-EVIDENCE.md §6. Work PR #1561.'
+    - "MERGED 2026-11-24: work PR #1561 merged (merge 855f2515); CI 9/9 first-hand verified by the coordinator watch on head 757a2f3 (7 success, 2 skipped); diff-audit vs true base: evidence doc plus board hunk, parents 053d17fe plus 757a2f3. Synthesis leg of acceptance MET live (re-probe GREEN ~01:45 IST). Clearance-basis ruling still owed (watch 7106041874 vs request 7112104168)."
     blockers: []
-    next_action: 'PR #1561 merge (Muse); Muse to rule on deploy-clearance basis; INT-020 run 3 by Muse 7. Queue: INF-028 -> INT-035 -> STR-045.'
+    next_action: 'Muse to rule on deploy-clearance basis; INT-020 run 3 by Muse 7. Queue: INF-028 -> INT-035 -> STR-045.'
   - id: TASK-MEM-021
 
     title: 'Memora: fix the UNIVERSAL dual-copy search invisibility (MEM-019 G1) - a promoted UNIVERSAL copy must be findable by search for the promotion audience'
@@ -16226,20 +16228,21 @@ tasks:
   - id: TASK-VAL-014
 
     title: 'Post-REL-070 acceptance: watch the next five board-only PRs for exit-134 recurrence and file pass or fail'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_12
     branch: null
-    pr: null
+    pr: 1551
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T10:30:00+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Five consecutive board-only PRs after the REL-070 merge pass the fleet-layout gate first-try, or each recurrence is measured and filed with its run id and log tail.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~10:30 IST (watch refill, pool floor 10): the post-merge observation leg of TASK-REL-070 (Muse 9, PR #1452). Assigned to Muse 12 as queue position 3 after FUT-019 and OBS-015.'
+    - "Work PR #1551 open, head b602cadc, CI 9/9 green first-hand per Muse 12 (hub #1483 comment 7113018208, 2026-11-24 ~01:53 IST); coordinator first-hand CI read plus diff audit owed before merge."
     blockers: []
     next_action: 'After PR #1452 merges, watch the next five board-only PRs for exit-134 and file the result.'
   - id: TASK-VOI-030
@@ -16266,14 +16269,14 @@ tasks:
   - id: TASK-OBS-015
 
     title: 'Fleet: diagnose S1 RAM pressure (FRIDAY at 92.4 percent RAM) and file whether it threatens voice or Stratex, fix or file the mitigation'
-    status: IN_PROGRESS
+    status: IN_REVIEW
     owner: muse_17
     branch: muse17/obs-015
-    pr: null
+    pr: 1556
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:15:00+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16281,6 +16284,7 @@ tasks:
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~10:30 IST (watch refill, pool floor 10): from Muse 11 self-check 7091847142 (RAM warning 10:02:54 IST, 92.4 percent, 0.86 of 0.93 GB, up from 90.0 percent at 07:00). Assigned to Muse 12 as queue position 2 after FUT-019.'
     - 'Assigned Muse 17 queue head (hub 7109363715, 2026-11-23 ~23:24 IST) after Muse 12 never took it; checkpoint 1 filed 2026-11-23 ~23:37 IST (S1 RAM regrowth past pre-kill level; Stratex unreachable at probe). Branch muse17/obs-015 @f9cf3cd2. Board flip rides in the coordinator consolidated board PR 2026-11-24 ~00:15 IST.'
+    - "Work PR #1556 open, mergeable clean, CI 9/9 per Muse 4 (coordinator watch 7112964403); coordinator first-hand CI read plus diff audit owed before merge."
     blockers: []
     next_action: 'Diagnose the S1 RAM growth, file the threat assessment, fix or file the mitigation.'
   - id: TASK-REL-081
@@ -16497,20 +16501,21 @@ tasks:
   - id: TASK-VYR-043
 
     title: 'VyralX: file the current scoreboard - 5 public videos views/likes + held-render pool state'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-vyr-043-vyralx-scoreboard
+    pr: 1566
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T20:40:43+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Scoreboard filed: current views/likes for each of the 5 public videos + held-render pool state (counts, holds, reasons).'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~11:47 IST (pool refill, floor 10): the 5 public videos sit at 39 views / 8 likes total (last filed) and the held-render pool has never been scored as one board. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - "Work PR #1566 open, head dc5f742c, mergeable true, CI 4 success / 1 skipped / 3 in progress at filing per Muse 15 (hub #1483 comment 7113328352); supersedes auto-closed #1514 (recreate-push auto-close, owner-cleared rebase). Coordinator first-hand CI read plus diff audit owed before merge."
     blockers: []
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-INT-031
@@ -16921,7 +16926,7 @@ tasks:
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T21:58:52+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16929,6 +16934,7 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-23 ~18:30 IST (consolidated board PR; standing backlog pool-7 (iii) continuation). Unassigned - the coordinator watch assigns it to the next free worker.'
       - 'Claim: hub #1483 comment 7107167308 by Muse 16, 2026-11-23 ~21:57 IST, on assignment by Muse (coordinator push 7107020017, ~22:05 IST). Board record verified AVAILABLE, owner muse_16 (pre-assigned), on main 9a6b99a1 (board blob 4bf8a4a4, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse16/task-vyr-046-cycle-3-candidate-pool. Queue: VYR-046 (head) -> VYR-048.'
+      - "Work started 2026-11-24 ~02:05 IST (hub #1483 comment 7113179452) after the coordinator stall demand (comment 7113514319): candidate-pool work underway; work PR plus evidence owed. Stall cleared this run; the re-slot threat is lifted while work evidence lands."
     blockers: []
     next_action: 'Prepare the next supervised-cycle candidate pool from most-popular-video discovery + machine QA gates.'
   - id: TASK-INT-034
@@ -17057,20 +17063,21 @@ tasks:
   - id: TASK-FUT-024
 
     title: 'Futuris: forecast-accuracy table — publish the running accuracy table (forecast vs outcome) for the last 30 days, with the scoring method filed'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-fut-024-forecast-accuracy-table
+    pr: 1565
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T20:40:43+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Accuracy table + method filed.'
     evidence:
       - 'Drafted by the coordinator 2026-11-23 ~18:30 IST (consolidated board PR; standing backlog pool-7 (vi) continuation; distinct from TASK-FUT-017 standing scoring + fit-cost cap). Unassigned - the coordinator watch assigns it to the next free worker.'
+      - "Work PR #1565 open, head c024d3f8, mergeable true, CI 5 success / 2 skipped / 2 in progress at filing per Muse 15 (hub #1483 comment 7113328352); supersedes auto-closed #1510 (recreate-push auto-close, owner-cleared rebase). Coordinator first-hand CI read plus diff audit owed before merge."
     blockers: []
     next_action: 'Publish the running 30-day forecast-accuracy table with the scoring method filed.'
   - id: TASK-EARN-001
@@ -17096,20 +17103,21 @@ tasks:
   - id: TASK-EARN-002
 
     title: 'CometWorks Level-1 queue pack 1 — email sequences (Gig Pack #2 Level-1 queue)'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-earn-002-email-sequences-pack
+    pr: 1564
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T20:40:43+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Copy pack filed under earning/.'
     evidence:
       - 'Drafted by the coordinator 2026-11-23 ~18:30 IST (consolidated board PR; earning lane, owner order ~17:20 IST; brief cites ~/workspace/earning-project/fiverr-gig-pack-2.md; deliverables via PR into repo earning/). Assign max 1 per worker queue, pos 3 only, never displacing a FRIDAY queue head.'
+      - "Work PR #1564 open, head 7ca77c27, CI fully green 7 success / 2 skipped first-hand per Muse 15 (hub #1483 comment 7113328352); coordinator first-hand CI read plus diff audit owed before merge."
     blockers: []
     next_action: 'Draft the email-sequences copy pack under earning/, ready to publish at Level 1.'
   - id: TASK-REL-088
@@ -17348,14 +17356,14 @@ tasks:
   - id: TASK-FRD-041
 
     title: 'FRIDAY: root-cause her 2026-11-23 08:03 IST OOM kill on S1 and ship a memory guard so she warns before she dies'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_2
     branch: null
-    pr: null
+    pr: 1548
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T23:10:00+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17364,6 +17372,7 @@ tasks:
       - 'Drafted by the coordinator push 2026-11-23 ~21:35 IST (owner order: no worker under 30 percent burn - bigger multi-hour tasks, queues at depth 3, pool floor 10).'
       - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Queue top-up after FRD-038 moved to Muse 14: owner null -> muse_11."
       - 'Assigned M2 queue head (hub 7108903950): M2 queue empty after the 1534 re-slot; FRIDAY OOM-kill root cause.'
+      - "Work PR #1548 open, head 7e8be4e2, CI 10/10 green first-hand per Muse 2 (8 success, 2 skipped; contracts job passes on this head), recorded in the coordinator watch 2026-11-24 ~02:12 IST; coordinator first-hand CI read plus diff audit owed before merge."
     blockers: []
     next_action: 'Start from the 2026-11-23 08:03:47 IST OOM record on S1: which process grew, why, and what guard prevents a silent repeat.'
   - id: TASK-INF-030
@@ -17410,14 +17419,14 @@ tasks:
   - id: TASK-FUT-026
 
     title: 'Futuris: one full forecast cycle on a NON-market target - the owner rule is she forecasts everything, not markets only'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_12
     branch: null
-    pr: null
+    pr: 1554
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T23:10:00+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17425,6 +17434,7 @@ tasks:
     evidence:
       - 'Drafted by the coordinator push 2026-11-23 ~21:35 IST (owner order: no worker under 30 percent burn - bigger multi-hour tasks, queues at depth 3, pool floor 10).'
       - 'Assigned M12 queue position 3 (hub 7108903950): M12 queue STR-047 -> VAL-014 -> FUT-026.'
+      - "Work PR #1554 open, head 83f9afb0, CI 9/9 green first-hand per Muse 12 (hub #1483 comment 7113018208); coordinator first-hand CI read plus diff audit owed before merge. Scoring runonce muse12-fut026-score-nov26 armed for Thu Nov 26 10:00 IST."
     blockers: []
     next_action: 'Pick a verifiable non-market target, run her pipeline end-to-end, file the forecast and the scoring plan.'
   - id: TASK-INT-036
@@ -17530,20 +17540,21 @@ tasks:
   - id: TASK-OBS-022
 
     title: 'OBS: identify the FRIDAY.service restart actor - 3 clean restarts on S1 (20:00 / 20:10 / 21:28 IST, PID changes, no OOM kill)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_17
-    branch: null
+    branch: muse17/obs-022
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:59:00+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Restart actor identified from S1 logs/cron/systemd evidence (or ruled out as an external actor with the proof); if an agent or cron restarts her, the trigger is named and the restart is either scheduled or removed.'
     evidence:
       - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
+      - "Claimed by Muse 17, queue head after OBS-015 (hub #1483 comment 7113522418, 2026-11-24 ~02:15 IST): restart actor PROVEN - the GitHub Actions CD workflow on push to main, not a webhook; checkpoint 1 webhook leg corrected. Branch muse17/obs-022 @95faa54b verified via ls-remote. Work PR owed (checkpoint 2 filing)."
     blockers: []
     next_action: 'Correlate the three restart times against S1 cron, systemd timers, agent activity and deploy logs; name the actor.'
   - id: TASK-FRD-042
@@ -17651,32 +17662,34 @@ tasks:
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:59:00+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Gap explained with per-trade evidence (which fills/closes the heartbeat missed or double-counted) or a filed defect with the exact missing rows; the two P&L sources agree afterwards.'
     evidence:
       - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
+      - "Coordinator ruling 2026-11-24 ~02:55 IST (hub #1483): STR-048 stays with Muse 19 - the board record (AVAILABLE / muse_19, updated 2026-11-24T00:59:00+05:30, flip rode in board PR #1557) wins over the coordinator watch posts 7112708807 / 7112964403 / 7113514319 that named it as Muse 4 next task. Muse 4 did NOT claim it (comment 7113509892) and takes TASK-REL-091 instead. Muse 19 to claim STR-048 as its head."
     blockers: []
     next_action: 'Reconcile the heartbeat ledger against the move-verified ledger trade by trade; file the gap cause.'
 
   - id: TASK-REL-091
     title: 'Reliability: fix the backup CLOB-loss defect - jsonl_encode_value dumps every CLOB under 1 MB as empty (14,414 empty strings in the Nov 22 backup)'
     status: AVAILABLE
-    owner: null
+    owner: muse_4
     branch: null
     pr: null
     contributors: []
     priority: P0
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T00:15:00+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'The one-line fix (value.read(1, LOB_CAP_BYTES)) is merged with a regression test proving CLOBs under 1 MB dump non-empty; a fresh backup is taken and re-drilled showing zero empty CLOB dumps.'
     evidence:
     - 'Drafted by the coordinator 2026-11-24 ~00:15 IST from the Muse 13 REL-089 drill finding (hub 7109363715): jsonl_encode_value calls value.read(LOB_CAP_BYTES); the offset-first signature returns empty, so every CLOB under 1 MB dumps as an empty string - 14,414 empty strings in the Nov 22 backup. Deliberately NOT in #1539. P0 - routes to the first free worker.'
+    - "Assigned to Muse 4 by the coordinator watch 2026-11-24 ~02:55 IST (hub #1483): corrected next after FUT-019 merged - STR-048 stays with Muse 19 per the board record (see TASK-STR-048), so the P0 CLOB-loss fix routes to the first free worker. Queue: STR-HLT-002 (blocked head) -> REL-091."
     blockers: []
     next_action: 'Fix the read call, add the regression test, take a fresh backup, re-drill and file the empty-CLOB count (must be zero).'
   - id: TASK-INF-031
@@ -17717,20 +17730,21 @@ tasks:
     next_action: 'Reproduce the contracts-job failure, name the failing layer, file the diagnosis and the unblock path.'
   - id: TASK-VYR-051
     title: 'VyralX: prepare the next supervised-cycle candidate pool from most-popular-video discovery plus machine QA gates'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_18
-    branch: null
+    branch: muse18/task-vyr-051-candidate-pool
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T00:59:00+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'A ranked candidate pool is filed (category, source popularity, caption-track count, BGM presence, watermark, loudness per candidate); all candidates held unlisted; loop stays OFF and uploader stays paused.'
     evidence:
     - 'Drafted by the coordinator 2026-11-24 ~00:15 IST (standing backlog item (iii)): the VYR-034 watch passed and the next supervised cycle needs a fresh candidate pool from most-popular discovery with the machine QA gates applied first. Pool floor refill.'
+    - "Claim: hub #1483 comment 7113525908 by Muse 18, 2026-11-24 ~02:15 IST, on the blocked-head skip from TASK-STR-049 (U1 read path gone - see TASK-STR-049). Branch muse18/task-vyr-051-candidate-pool @15cb373d verified via ls-remote against true main 855f2515."
     blockers: []
     next_action: 'Run most-popular discovery per category, apply the machine QA gates, file the ranked pool.'
   - id: TASK-STR-049
@@ -17742,32 +17756,34 @@ tasks:
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T00:59:00+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'The latest trial judgement is verified from the live counter and filed (trial number, expectancy, profit factor, trade count); if the loop is starved again, the load-gate evidence and the smallest safe fix proposal are filed instead. No env flips without coordinator hub clearance.'
     evidence:
     - 'Drafted by the coordinator 2026-11-24 ~00:15 IST (standing backlog item (xii) run 2): trial 3980 was proven 2026-11-22 (expectancy +2.32 percent, PF 1.26 over 2,208 trades); the judgement stream needs continuous verification as the counter advances. Pool floor refill.'
+    - "Coordinator direction 2026-11-24 ~02:55 IST (hub #1483): the U1 read path is GONE - AWS U1/U2 were deleted 2026-11-23 ~18:09 IST on the owner order; the live trial counter now sits on Oracle S1 (Stratex live there, counter 3987 at the move). Re-probe from S1 via the bridge; do not wait on U1. Muse 18 skipped to TASK-VYR-051 per the blocked-head rule (comment 7113525908)."
     blockers: []
     next_action: 'Read the live trial counter, verify the newest judgement, file it with the numbers.'
 
   - id: TASK-STR-050
     title: 'Stratex: resting-stop verification run 2 - re-read every open position bracket after the next daemon cycle'
     status: AVAILABLE
-    owner: null
+    owner: muse_15
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T00:59:00+05:30'
+    updated_at: '2026-11-24T02:55:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Every open position re-verified with a live SL+TP bracket, or any missing stop flagged with the fix.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; follow-up to TASK-STR-046 (merged as PR #1533, 28/28 brackets live); the daemon keeps opening and closing positions, so the check must repeat. Pool floor refill.'
+      - "Assigned to Muse 15 by the coordinator watch 2026-11-24 ~02:55 IST (hub #1483): Muse 15 filed all three queue tasks (#1565/#1566/#1564, awaiting merge) and requested next work; STR-050 joins as queue position 4."
     blockers: []
     next_action: 'Read the live positions and brackets, file the per-position evidence.'
 
