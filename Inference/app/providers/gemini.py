@@ -308,7 +308,31 @@ class GeminiProvider(BaseLLMProvider):
                         response_schema=request.response_schema,
                         extra_params=request.extra_params,
                     )
-                    return await self.generate(fallback_req)
+                    # TASK-INF-026: the failover is a substitution the caller
+                    # must be told about. Before this, the 3.6 response
+                    # carried no provenance at all, so the gateway reported
+                    # fallback_reason null while the selected flagship had
+                    # not served (measured live 2026-11-23: requested
+                    # gemini-3.8-flash, served gemini-3.6-flash, reason
+                    # null). Attach the adapter-level provenance the unified
+                    # manager reads, so the honest 503/substitution
+                    # disclosure names the cause. The streaming path cannot
+                    # carry this (it yields bare text chunks), so it stays
+                    # log-only there.
+                    fallback_resp = await self.generate(fallback_req)
+                    raw = fallback_resp.raw_response or {}
+                    raw["fallback_provenance"] = {
+                        "requested_provider": "gemini",
+                        "requested_model": model,
+                        "actual_provider": "gemini",
+                        "actual_model": "gemini-3.6-flash",
+                        "fallback_reason": (
+                            f"Gemini model {model} experienced 503 high demand; "
+                            "failing over to gemini-3.6-flash"
+                        ),
+                    }
+                    fallback_resp.raw_response = raw
+                    return fallback_resp
 
                 if response.status_code in (429, 503):
                     if attempt < max_attempts - 1:

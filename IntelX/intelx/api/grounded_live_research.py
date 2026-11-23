@@ -339,13 +339,29 @@ async def synthesize_grounded(query: str, documents: list[dict], gateway: Any = 
     # openai/gpt-oss-120b); the previous 36,000-char budget (~9-10K tokens
     # with the schema/system overhead) exceeded it, so multi-source synthesis
     # calls were rejected (HTTP 413 rate_limit_exceeded) and fell back to
-    # Inference's free-model lottery, which truncates the draft. 16,000 chars
+    # Inference's free-model lottery, which truncates the draft. 14,000 chars
     # total / 6,000 per document keeps the whole request at roughly 4-5K
     # tokens — comfortably under the ceiling — while leaving ample material
     # for the draft contract (at most 3 findings, quotes capped at 500 chars,
     # and quote
     # verification runs against exactly this supplied text).
-    supplied, remaining = {}, 16_000
+    # TASK-INF-026 (2026-11-23): the budget was 16,000 chars until the
+    # calibrated estimator (2.6 chars/token, TASK-INF-021) moved the
+    # gateway's Groq-guard boundary to 18,200 chars. The 16,000-char budget
+    # plus ~2,300 chars of system / schema / JSON overhead is ~18,300 chars,
+    # which the gateway estimates at ~7,051 tokens — 51 over the 7,000-token
+    # Groq guard — so every full-budget synthesis was diverted to the
+    # fallback ladder and then 503'd via Gemini (measured live 2026-11-23,
+    # 3/3 synthesis attempts diverted). The budget is sized to the gateway
+    # ESTIMATOR, not to Groq's true count: the same shape Groq counts at
+    # ~2,900 true tokens (live probe: 17,602-char prompt, Groq-counted
+    # 2,822), because the calibrated estimator overestimates prose ~2.4x
+    # by design (safe direction for a guard). 14,000 chars keeps the
+    # worst-case prompt at ~16,700 chars (system counted twice by the
+    # gateway estimator: instruction + system message, plus the gateway's
+    # JSON-schema suffix) = ~6,440 estimated tokens (measured by the
+    # regression test), ~560 under the guard.
+    supplied, remaining = {}, 14_000
     for document in documents[:5]:
         text = str(document.get("text") or "")[:min(6_000, remaining)]
         source_id = str(document["source_id"])

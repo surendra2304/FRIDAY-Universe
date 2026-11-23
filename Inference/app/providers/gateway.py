@@ -35,6 +35,7 @@ from app.providers.errors import (
 from app.providers.errors import TimeoutError as ProviderTimeoutError
 from app.providers.failover_log import failover_log
 from app.providers.health import provider_health_tracker
+from app.providers.model_servability import model_servability_tracker
 from app.providers.quota_ledger import quota_ledger
 from app.security.prompt_isolation import scrub_credentials
 from app.utils.logger import logger
@@ -189,6 +190,31 @@ def routing_receipts(limit: int = 20) -> list[dict[str, Any]]:
     if limit <= 0:
         return []
     return list(reversed(list(_ROUTING_RECEIPTS)[-limit:]))
+
+
+def _record_ladder_rung_outcome(requested_model: str | None, rung_model: str | None, served: bool) -> None:
+    """Feed the model-servability tracker (TASK-REL-049) with a ladder rung's outcome.
+
+    TASK-INF-026: the route layer records only the model IT attempted, so
+    a model that fails as a fallback-ladder rung was invisible to the
+    tracker — the Gemini-rung 503s behind the 2026-11-23 synthesis
+    failures left no trace, and no quarantine could ever latch from ladder
+    traffic. A rung model that differs from the requested model is recorded
+    here (served / failed); the requested model itself is left to the route
+    layer so one execution is never counted twice. Tracking must never
+    break routing, so failures are swallowed.
+    """
+    try:
+        rung = (rung_model or "").strip().lower()
+        requested = (requested_model or "").strip().lower()
+        if not rung or rung == requested:
+            return
+        if served:
+            model_servability_tracker.record_serve(rung)
+        else:
+            model_servability_tracker.record_outcome(rung, "failed")
+    except Exception:  # noqa: BLE001 - tracking must never break routing
+        pass
 
 
 def routing_receipt_counts() -> dict[str, int]:
@@ -1271,6 +1297,7 @@ class ModelGateway:
 
                 self.health_tracker.record_success("openrouter", resp.latency_seconds)
                 _quota_record("openrouter", dynamic_model, openrouter_key, "success", resp)
+                _record_ladder_rung_outcome(request.model, dynamic_model, served=True)
                 return resp
 
             except Exception as fb_exc:
@@ -1283,6 +1310,7 @@ class ModelGateway:
                     is_429=isinstance(typed_error, RateLimitError),
                     is_503=isinstance(typed_error, TemporaryUnavailableError),
                 )
+                _record_ladder_rung_outcome(request.model, dynamic_model, served=False)
                 _quota_record(
                     "openrouter", dynamic_model or request.model, openrouter_key, _quota_outcome(typed_error)
                 )
@@ -1384,6 +1412,7 @@ class ModelGateway:
                     }
                     self.health_tracker.record_success(sec_name, resp.latency_seconds)
                     _quota_record(sec_name, sec_model, None, "success", resp)
+                    _record_ladder_rung_outcome(request.model, sec_model, served=True)
                     return resp
                 except Exception as sec_exc:
                     _quota_record(
@@ -1392,6 +1421,7 @@ class ModelGateway:
                         None,
                         _quota_outcome(normalize_provider_exception(sec_exc, provider=sec_name, model=sec_model)),
                     )
+                    _record_ladder_rung_outcome(request.model, sec_model, served=False)
                     scrubbed_exc = scrub_credentials(str(sec_exc))
                     logger.warning(
                         "Waterfall fallback provider '%s' failed: %s", sec_name, scrubbed_exc

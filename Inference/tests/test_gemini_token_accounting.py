@@ -48,8 +48,8 @@ EXTRACT_TEXT = " ".join(EXTRACT_WORDS)
 
 
 class _FakeResponse:
-    def __init__(self, payload):
-        self.status_code = 200
+    def __init__(self, payload, status_code=200):
+        self.status_code = status_code
         self._payload = payload
         self.text = json.dumps(payload)
 
@@ -269,3 +269,67 @@ async def test_no_max_tokens_leaves_payload_unchanged(monkeypatch):
 
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))
+
+
+# ---------------------------------------------------------------------------
+# TASK-INF-026: the 503 failover to gemini-3.6-flash carries provenance
+# ---------------------------------------------------------------------------
+
+
+class _FailoverFakeClient:
+    """503s the requested flagship, serves the 3.6 fallback (live shape)."""
+
+    def __init__(self):
+        self.called_models = []
+
+    async def post(self, url, headers=None, json=None, timeout=None):  # noqa: A002 - mirrors httpx
+        model = url.split("/models/")[1].split(":")[0]
+        self.called_models.append(model)
+        if model == "gemini-3.8-flash":
+            return _FakeResponse({"error": {"message": "high demand"}}, status_code=503)
+        body = {
+            "candidates": [
+                {
+                    "content": {"parts": [{"text": "fallback answer"}]},
+                    "finishReason": "STOP",
+                }
+            ],
+            "usageMetadata": {
+                "promptTokenCount": PROMPT_TOKENS,
+                "candidatesTokenCount": 2,
+                "totalTokenCount": PROMPT_TOKENS + 2,
+            },
+        }
+        return _FakeResponse(body)
+
+
+async def test_503_failover_serves_36_with_provenance(monkeypatch):
+    """gemini-3.8-flash 503 -> gemini-3.6-flash serves, and the response
+    discloses the substitution with its cause. Before this fix the
+    provenance block reported fallback_reason null while the selected
+    flagship had not served (measured live 2026-11-23)."""
+    fake = _FailoverFakeClient()
+    _install_fake(monkeypatch, fake)
+
+    resp = await _provider().generate(_request(model="gemini-3.8-flash"))
+
+    assert fake.called_models == ["gemini-3.8-flash", "gemini-3.6-flash"]
+    assert resp.model == "gemini-3.6-flash"
+    assert resp.content == "fallback answer"
+    provenance = (resp.raw_response or {}).get("fallback_provenance") or {}
+    assert provenance.get("requested_model") == "gemini-3.8-flash"
+    assert provenance.get("actual_model") == "gemini-3.6-flash"
+    assert "503" in (provenance.get("fallback_reason") or "")
+
+
+async def test_direct_36_serve_carries_no_failover_provenance(monkeypatch):
+    """A model that serves under its own name must not be labelled a
+    substitution — no provenance is attached when no failover happened."""
+    fake = _FailoverFakeClient()
+    _install_fake(monkeypatch, fake)
+
+    resp = await _provider().generate(_request(model="gemini-3.6-flash"))
+
+    assert fake.called_models == ["gemini-3.6-flash"]
+    assert resp.model == "gemini-3.6-flash"
+    assert (resp.raw_response or {}).get("fallback_provenance") is None

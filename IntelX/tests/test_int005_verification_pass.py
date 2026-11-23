@@ -97,6 +97,65 @@ def test_support_rejects_bruker_style_claim():
 
 # ── synthesize_grounded gate tests ──────────────────────────────────────────
 
+class _CapturingGateway:
+    """Records the messages synthesize_grounded sends; returns a valid draft."""
+
+    def __init__(self, draft):
+        self._draft = draft
+        self.messages = None
+
+    async def complete(self, **kwargs):
+        self.messages = kwargs["messages"]
+        return SimpleNamespace(provider="stub", parsed=self._draft)
+
+
+_SYNTH_SENTENCE = (
+    "The committee reviewed the published evidence and confirmed the "
+    "assessment remains unchanged for the evaluated intake level. "
+)
+
+
+def _long_doc(source_id, chars=6_500):
+    text = (_SYNTH_SENTENCE * 60)[:chars]
+    return {
+        "source_id": source_id,
+        "title": "Assessment of the evaluated intake level for the substance under review",
+        "url": "https://example.org/research/assessment-evaluated-intake-level-substance-review",
+        "text": text,
+    }
+
+
+async def test_synthesis_prompt_stays_under_groq_guard():
+    """TASK-INF-026: the full-budget synthesis prompt must estimate under
+    Inference's 7,000-token Groq guard (calibrated estimator, 2.6
+    chars/token). The 16,000-char budget estimated at ~7,051 tokens and
+    diverted every synthesis to the fallback ladder (live 2026-11-23).
+    The gateway estimator counts the system text twice (instruction +
+    system message) and the gateway appends the JSON-schema suffix to
+    the user message, so both are included here."""
+    import json
+
+    docs = [_long_doc(f"doc{i}") for i in range(1, 6)]
+    statement = _SYNTH_SENTENCE.strip()
+    quote = "The committee reviewed the published evidence and confirmed"
+    gateway = _CapturingGateway(_draft(statement, quote=quote, source_id="doc1"))
+    result = await synthesize_grounded(
+        "What did the committee conclude about the evaluated intake level?",
+        docs,
+        gateway=gateway,
+    )
+    assert result["status"] == "SUCCESS"
+    system_msg, user_msg = gateway.messages[0]["content"], gateway.messages[1]["content"]
+    supplied = json.loads(user_msg)["source_documents"]
+    assert sum(len(d["text"]) for d in supplied) == 14_000  # budget binds
+    suffix = (
+        "Return ONLY the final JSON object matching this schema, without analysis: "
+        + json.dumps(GroundedDraft.model_json_schema())
+    )
+    estimate = (len(system_msg) * 2 + len(user_msg) + len(suffix)) * 5 // 13
+    assert estimate <= 7_000, f"synthesis prompt estimates {estimate} tokens, over the Groq guard"
+
+
 async def test_synthesis_success_marks_entailment_verified():
     result = await synthesize_grounded(
         "What does the WHO say about aspartame?",

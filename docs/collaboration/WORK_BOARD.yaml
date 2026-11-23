@@ -2759,26 +2759,6 @@ tasks:
       - "docs/collaboration/FILE_OWNERSHIP.yaml"
       - "docs/handoff.md"
     defect: "Two registry defects on main HEAD (993a6d6): (1) merge commit 2d5e2a6 committed unresolved conflict markers into docs/collaboration/ACTIVITY_LOG.md lines 569-613 (Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry). (2) WORK_BOARD.yaml carried a DUPLICATE top-level '(TASK-REL-017: IntelX threat-intel honesty — fabricators admit no source, simulations labelled, real engines mounted)
-  - id: TASK-INF-026
-    title: 'Inference: diagnose + fix the Gemini 503 on the synthesis path (gemini-3.8-flash 503 high-demand + 15s timeouts); re-probe synthesis until INT-020 run 3 goes green'
-    status: AVAILABLE
-    owner: muse_9
-    branch: null
-    pr: null
-    contributors: []
-    priority: P1
-    created_at: '2026-11-23'
-    updated_at: '2026-11-23T05:15:00+05:30'
-    files:
-    - docs/collaboration/WORK_BOARD.yaml
-    acceptance:
-    - 'Root cause of the Gemini 503 on the Inference synthesis path diagnosed and fixed (provider ladder / timeout / model pin).'
-    - 'Synthesis re-probed until INT-020 run 3 goes green, or the remaining gate is named with evidence; INT-020 unblocked.'
-    evidence:
-    - 'Drafted by the coordinator 2026-11-23 ~01:30 IST (pool 11) from the #1410 evidence follow-up: Gemini 503 on the Inference synthesis path; queued to Muse 9 position 2 per the pool-11 draft; assigned to Muse 9 this run (watch ~05:15 IST) on its idle/free status 7087416286 after INF-025 merged. Unblocks Muse 7 (TASK-INT-020).'
-    blockers: []
-    next_action: 'Muse 9: claim via hub comment + branch push; fix, re-probe synthesis until INT-020 run 3 goes green.'
-
   - id: TASK-FUT-022
     title: 'Futuris: diagnose the 401 storm (consumer_id=futuris-cloud-v1, every ~15s) and fix it or prove it benign'
     status: AVAILABLE
@@ -15163,6 +15143,35 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Live verification 2026-11-23 ~03:44-03:52 IST, Server 1 deployed checkout 3f9cec0c: FRIDAY voice text-probe pin _PROBE_TEXT_MODEL and FAST_ESCALATION_MODEL both gemini-3.5-flash-lite; Inference catalogue lists gemini-3.5-flash-lite (economy, leads simple-task ranking); Gemini adapter SUPPORTED_MODELS includes it, gemini-2.5-flash-lite removed (INF-017); live completion probe POST /v1/chat/completions model gemini-3.5-flash-lite -> HTTP 200 in 2.36 s, served model gemini-3.5-flash-lite, content PIN-OK. No pin fix needed. Evidence: docs/collaboration/TASK-INF-025-GEMINI-PIN.md.'
     blockers: []
     next_action: 'Merged. Follow-up: Gemini 503 on the Inference synthesis path — now TASK-INF-026, assigned to Muse 9.'
+
+  - id: TASK-INF-026
+    title: 'Inference: diagnose + fix the Gemini 503 on the synthesis path (gemini-3.8-flash 503 high-demand + 15s timeouts); re-probe synthesis until INT-020 run 3 goes green'
+    status: CLAIMED
+    owner: muse_9
+    branch: muse9/task-inf-026
+    pr: 1441
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T05:38:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INF-026-GEMINI-503-SYNTHESIS.md
+    - IntelX/intelx/api/grounded_live_research.py
+    - IntelX/tests/test_int005_verification_pass.py
+    - Inference/app/providers/gateway.py
+    - Inference/app/providers/gemini.py
+    - Inference/tests/test_rel047_gateway_guards.py
+    - Inference/tests/test_gemini_token_accounting.py
+    acceptance:
+    - 'Root cause of the Gemini 503 on the Inference synthesis path diagnosed and fixed (provider ladder / timeout / model pin).'
+    - 'Synthesis re-probed until INT-020 run 3 goes green, or the remaining gate is named with evidence; INT-020 unblocked.'
+    evidence:
+    - 'Drafted by the coordinator 2026-11-23 ~01:30 IST (pool 11) from the #1410 evidence follow-up: Gemini 503 on the Inference synthesis path; queued to Muse 9 position 2 per the pool-11 draft; assigned to Muse 9 this run (watch ~05:15 IST) on its idle/free status 7087416286 after INF-025 merged. Unblocks Muse 7 (TASK-INT-020).'
+    - 'Claim: issue #35 comment 7087774254 by Muse 9, 2026-11-23 ~05:12 IST. Board record drafted in coordinator board PR #1439 (merge 6801462), status AVAILABLE, owner muse_9 - but parser-invisible on main 491a63e9: it was filed inside TASK-REGISTRY-001 defect quote (unclosed double-quote, line 2761), which swallows lines 2761-2810, so no YAML parser sees it (same defect class as the stranded WF-005/WF-006). This work PR removes that ghost text and files the record here, before task_id_warnings:, per standing orders. Branch muse9/task-inf-026, rebased onto main 491a63e9 this run (merge-base 491a63e9; board blob 077e690f, verified against the true main blob before editing). NOTE: TASK-FUT-022 is still a ghost inside the same quote (lines 2762-2789) - coordinator to re-file it; left untouched here.'
+    - 'Diagnosis (live, Server 1, 2026-11-23 ~05:18-05:25 IST; full evidence in docs/collaboration/TASK-INF-026-GEMINI-503-SYNTHESIS.md): (1) Groq size guard diverted every synthesis - journal 00:45:09/00:46:28/00:46:43 "Prompt over the Groq size guard (~7051 tokens > 7000)"; the ~18,333-char synthesis prompt estimates 7,051 under the calibrated estimator while Groq counts ~2,900 true tokens (live probe: 17,602-char prompt, Groq-counted 2,822). (2) gemini-3.8-flash 503 high-demand persists (00:45:31, 00:45:34, 03:50:37, probe ~05:18 substituted to 3.6 after 8.5 s); ladder-rung misses are invisible to the route-level servability tracker and provenance reported fallback_reason null. (3) Fix: IntelX synthesis budget 16,000->14,000 chars (worst-case prompt 6,437 est. tokens, 563 under the guard); gateway feeds the servability tracker with ladder-rung outcomes; Gemini adapter attaches fallback_provenance on the 503 failover. 15 s primary slice unchanged (INF-022: KEEP the deadline). Tests local: 91 passed, 0 failed (Inference 82 + IntelX 9).'
+    blockers: []
+    next_action: 'Open work PR with this record + evidence doc; coordinator merges on green; then request deploy clearance and re-probe synthesis live until INT-020 run 3 goes green.'
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
