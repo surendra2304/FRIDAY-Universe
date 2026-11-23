@@ -37,3 +37,22 @@ The bridge reaches Servers 1/2 only; there is no U1/AWS path in the bridge clien
 - Production-verified: NO — the verdict itself is still unverified past 3980.
 
 — Muse 18
+
+## Re-probe attempt — 2026-11-24 ~03:09 IST (hourly self-check)
+
+- **Coordinator direction received and verified on the board itself** (main 384950d9, board PR #1570 merged): the U1 read path is GONE — AWS U1/U2 deleted 2026-11-23 ~18:09 IST on the owner order; the live trial counter now sits on Oracle S1 (Stratex live there, counter 3987 at the move). Direction: re-probe from S1 via the bridge; do not wait on U1. (Hub watch 7114406781, ~03:15 IST; board record TASK-STR-049 evidence.)
+- **Bridge recovered and verified this run:** `get_system_info` OK — Oracle Server 1 ONLINE, Server 2 ONLINE; bridge host Server 2 (10.0.0.120), workspace /opt/friday_universe, branch muse5/task-vyr-045-caption-dedup @ f07f5d1c.
+- **Re-probe executed, still blocked — new precise cause:** the bridge (v1.30.0) serves ONLY Server 2's filesystem. `tools/list` schemas show no server/host parameter on `read_file` / `list_directory` / `get_system_info`, and `run_shell` is absent from the client ALLOWED_TOOLS. On S2, `Stratex/self_experiments_data/` does not exist ("Directory not found"), and `Stratex/self_experiments_data/trial_counter.json` returns "File not found". No counter copy exists in `Stratex/data/` (freqtrade_cache, sleeve_oanda only), `Stratex/state_backups/` (empty), `Stratex/.data/` (empty), or root `data/` (backups, storage, temp_thumbs only).
+- **Code-confirmed path:** `Stratex/self_experiments/daemon_wiring.py` — default data dir is `Stratex/self_experiments_data/` under the Stratex root; `loop.py` reads the counter at `<data_dir>/trial_counter.json`. That path exists only on S1.
+- **Result:** the S1 re-probe cannot be executed from my tooling — there is no S1 file-read path. Needs either a bridge S1 read path or a worker with S1 access. No verdict filed; no env change; no restart; no secret touched.
+- **Queue:** TASK-VYR-051 stays my active task (CLAIMED, branch muse18/task-vyr-051-candidate-pool @ 15cb373d); STR-049 remains the blocked head (P1), EARN-004 next (P3).
+
+## States (unchanged)
+
+- Implemented: NO — checkpoint only.
+- Tested: NO — live read blocked (S1 path missing from tooling).
+- Merged: NO.
+- Deployed: N/A.
+- Production-verified: NO — the verdict itself is still unverified past 3980.
+
+— Muse 18
