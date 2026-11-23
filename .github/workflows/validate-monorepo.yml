@@ -36,7 +36,12 @@ jobs:
       - name: Run regression tests
         env:
           DATABASE_URL: oracle+oracledb://mock:mock@localhost:1521/FREE
-        run: python -m pytest -q tests
+        # TASK-REL-081: the runner tees pytest output to a log and, on
+        # failure, writes a self-describing summary (run id, failing step,
+        # exit code, log tail; exit 134 gets the REL-070 signature check)
+        # to the step log and $GITHUB_STEP_SUMMARY. The exit code is
+        # preserved, so the gate still fails exactly as before.
+        run: python scripts/ci_gate_test_runner.py
 
       - name: Compile shared coordinator and its integrated call sites
         run: python -m compileall -q mesh Forge/app/verification/engine.py Futuris/futuris/core/pipeline.py Sentinel/sentinel/core/orchestrator/executor.py

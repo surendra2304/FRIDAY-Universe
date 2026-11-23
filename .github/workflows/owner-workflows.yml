@@ -94,6 +94,7 @@ jobs:
             tests/test_live_research_task_contract.py \
             tests/test_safe_fleet_deploy.py \
             tests/test_rel068_collection_canary.py \
+            tests/test_rel081_gate_failure_summary.py \
             FRIDAY/tests/test_four_owner_workflows.py \
             FRIDAY/tests/test_persona_clock_annotations.py \
             FRIDAY/tests/test_intelx_research_dispatch.py \
