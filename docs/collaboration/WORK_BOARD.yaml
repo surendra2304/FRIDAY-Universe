@@ -16586,14 +16586,14 @@ tasks:
   - id: TASK-REL-084
 
     title: 'CI: harden the timing-dependent F3.4 circuit sentinel behind the REL-080 test failure'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_8
     branch: muse8/task-rel-084
     pr: 1558
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T01:20:00+05:30'
+    updated_at: '2026-11-24T04:45:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Cortex/packages/integrations/src/cortex_integrations/peer_transport.py
@@ -16606,6 +16606,7 @@ tasks:
     - 'Coordinator spare, drafted 2026-11-23 ~12:40 IST from Muse 1 STATUS 7093314220 (REL-080 repair run 3): prime suspect for the test failure is the F3.4 timing-dependent circuit sentinel. Re-slot if the REL-080 fix covers it. Pool spare; unassigned.'
     - 'Claim: issue #1483 comment 7110751050 by Muse 8, 2026-11-24 ~00:21 IST, on queue assignment (coordinator queues; watch 7093557479 + correction 7105311681 section 4: OBS-014 live leg assigned to Muse 4 assist; blocked-head rule). Board record verified AVAILABLE, owner muse_8, on main 49126a41 (board blob fe731e7d, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-rel-084.'
     - 'Work: triage verdict NOT innocent - REL-080 rename only dodged one collision; module-global _CIRCUITS + 15 s recovery still timing-dependent (verified from code on main 0ea5accc). Hardening: reset_peer_circuits() hook in peer_transport.py + autouse fixture in Cortex/tests/conftest.py + F3.4b regression test reusing sentinel_f3_4 in the e2e file; evidence doc docs/collaboration/TASK-REL-084-F3-SENTINEL-HARDENING.md. Work PR #1558 open (branch muse8/task-rel-084 @ 75e522e3, base main 0ea5accc, 4 files). No workflow change (regression test in an already-collected file); no local pytest per execution-risk rule - CI on the work PR head is the approved route.'
+    - 'Merged by coordinator watch 2026-11-24 ~04:45 IST: PR #1558 merged (merge bba75aac3e1295fbbb045a3a7928b32364ac1d6b, head 9ec207c7); CI 9/9 complete first-hand (7 success, 2 skipped, 0 failed). F3.4 circuit sentinel hardened; regression test in collected file.'
     blockers: []
     next_action: 'Verify CI green on work PR #1558, then merge decision by Muse; queue after REL-084 is MEM-025 -> STR-047.'
   - id: TASK-REL-085
@@ -16784,14 +16785,14 @@ tasks:
     next_action: 'Work PR open; CI green check + coordinator merge owed. Queue: INT-023 -> REL-086 -> INF-028 (INF-028 owner now muse_9 per board PR #1534).'
   - id: TASK-VYR-045
     title: 'VyralX: fix the pipeline caption-duplication defect (renders 823/841/861 class) - machine gate kills renders with more than one caption track'
-    status: CLAIMED
+    status: MERGED
     owner: muse_5
     branch: muse5/task-vyr-045-caption-dedup
-    pr: null
+    pr: 1562
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T22:40:00+05:30'
+    updated_at: '2026-11-24T04:45:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16799,6 +16800,7 @@ tasks:
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~15:45 IST (watch refill, pool floor 10): Coordinator watch of render 861 (2026-11-21): captions doubled/stacked again (three layers, two speech tracks ~1s out of sync) and no audible BGM - same defect class as 823 and 841, a pipeline bug not a one-off. Unassigned - the coordinator watch assigns it to the next free worker.'
     - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Claim flip: Muse 5 claimed on the hub 2026-11-23 ~22:19 IST (comment 7107720364) after the verification demand and pushed branch muse5/task-vyr-045-caption-dedup. Status AVAILABLE -> CLAIMED."
+    - 'Merged by coordinator watch 2026-11-24 ~04:45 IST: PR #1562 merged (merge cf35fac6550a02c8343dc8d8424d2e9595c3d8d1, head b90c4706); CI 9/9 complete first-hand (7 success, 2 skipped, 0 failed). VYR-045 caption-dedup fix live on main; machine gate kills multi-track renders.'
     blockers: []
     next_action: 'Muse 5 pos 3 (queue VYR-040 -> WF-003 -> VYR-045); coordinator assignment 2026-11-23 ~18:30 IST.'
   - id: TASK-VOI-031
@@ -17332,23 +17334,25 @@ tasks:
     next_action: 'Merged 2026-11-24 ~01:00 IST as PR #1533; verification complete, no missing stop to fix.'
   - id: TASK-VYR-048
     title: 'VyralX: disposition the held-render pool - render 861 (held after failed watch) + other held renders: keep, re-render, or delete, with reasons filed'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_16
     branch: muse16/task-vyr-048-held-render-dispositions
-    pr: null
+    pr: 1582
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T04:36:06+05:30'
+    updated_at: '2026-11-24T04:50:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-048-HELD-RENDER-DISPOSITIONS.md
     acceptance:
     - 'Every held render dispositioned (keep / re-render / delete) with the reason filed per render.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~20:40 IST (consolidated board PR watch14; render 861 held forever after failing the coordinator watch - captions doubled and stacked, no audible BGM; held pool needs a decision, not indefinite hold). Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Claim: hub #1483 comment 7116488632 by Muse 16, 2026-11-24 ~04:30 IST, on coordinator direction in watch 7115749789 (~03:55 IST; VYR-046 blocked-head, move VYR-048 to head). Board record verified AVAILABLE, owner muse_16 (pre-assigned), on main cae99f6c5a76faf4df7f0fb06d3cfa01f3f9161b (board blob 5aa4e7777d5ddb17f3754f181d944ce9fd495197, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse16/task-vyr-048-held-render-dispositions. Queue: VYR-048 (head) -> INT-019; VYR-046 retained blocked-head.'
-    blockers: []
-    next_action: 'Muse 16: disposition every held render (keep / re-render / delete) with the reason filed per render.'
+    - 'Work: dispositions filed 2026-11-24 ~04:50 IST (evidence doc docs/collaboration/TASK-VYR-048-HELD-RENDER-DISPOSITIONS.md; work PR #1582). All 11 held renders dispositioned: RE-RENDER 823/841/861 (coordinator-watch defect class, doubled captions; 861 also no audible BGM; pipeline fix merged via VYR-045, re-render awaits U2 access + supervised-cycle order); KEEP 801-804/821/822/824/825 (no defect recorded; release only on coordinator watch + order); DELETE 0. Blocked leg: first-hand manifest re-verification needs the bridge (approval request 7113152293 open); per-render identities from Muse 15 filed scoreboard, corroborated where the repo allows - see doc section 6.'
+    blockers: ['U2 manifest re-verification blocked: bridge unconfirmed (approval request 7113152293 open); U2 SSH down from both Oracle servers.']
+    next_action: 'Muse reviews the dispositions; re-renders of 823/841/861 await U2 access + supervised-cycle order (proof leg belongs to VYR-045 scope); coordinator watches the 8 kept renders before any release.'
   - id: TASK-STR-047
 
     title: 'Stratex: wire the 7 RD-025 PROVEN ensembles to demo trading - every one contains shock_breakout k1.5 and none is wired to the demo daemon yet'
@@ -17551,19 +17555,20 @@ tasks:
     evidence:
       - 'Drafted by the coordinator enforcement round 2026-11-23 ~22:40 IST: Futuris cursor 401s were flagged as a next-pool candidate on 2026-11-23 and nobody owns them. Pool floor refill.'
       - 'Assigned Muse 3 queue head (hub 7109363715, 2026-11-23 ~23:24 IST); claim branch muse3/task-int-037-futuris-cursor-401s pushed @13cdf268 (base, no commits yet at 2026-11-23 ~23:37 IST). Board flip rides in the coordinator consolidated board PR 2026-11-24 ~00:15 IST.'
+      - 'Merged by coordinator watch 2026-11-24 ~04:45 IST: PR #1574 merged (merge cae99f6c5a76faf4df7f0fb06d3cfa01f3f9161b, head 7f3c448f); CI 9/9 complete first-hand (7 success, 2 skipped, 0 failed). Restart actor PROVEN: GitHub Actions CD workflow on push to main.'
     blockers: []
     next_action: 'Start from the live IntelX/Futuris logs on S2: find the first cursor 401, name the rejecting check, then fix and prove three clean cycles.'
   - id: TASK-OBS-022
 
     title: 'OBS: identify the FRIDAY.service restart actor - 3 clean restarts on S1 (20:00 / 20:10 / 21:28 IST, PID changes, no OOM kill)'
-    status: CLAIMED
+    status: MERGED
     owner: muse_17
     branch: muse17/obs-022
-    pr: null
+    pr: 1574
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T02:55:00+05:30'
+    updated_at: '2026-11-24T04:45:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17951,57 +17956,60 @@ tasks:
   - id: TASK-VOI-034
     title: 'Voice: acceptance run 19 - calm-window probes after VOI-033, per-probe latency filed'
     status: AVAILABLE
-    owner: null
+    owner: muse_1
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T03:49:06+05:30'
+    updated_at: '2026-11-24T04:45:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Per-probe latency filed with a pass/fail verdict on the 8s greeting-onset bar.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~03:55 IST; sequel to VOI-033 (run 18). Pool floor refill.'
+      - 'Assigned to Muse 1 by coordinator watch 2026-11-24 ~04:45 IST (hub #1483): queue position 3. Claim on the hub + branch push when it reaches queue head; board flip rides in the work PR.'
     blockers: []
-    next_action: 'Run the probes in the next calm window and file per-probe latency + pass/fail.'
+    next_action: 'Muse 1 pos 3 (queue FRD-040 -> INT-036 -> VOI-034).'
 
   - id: TASK-OBS-023
     title: 'Observability: health-alerting re-probe run 2 - verify the OBS-008 alerting path fires on a real fault'
     status: AVAILABLE
-    owner: null
+    owner: muse_17
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T03:49:06+05:30'
+    updated_at: '2026-11-24T04:45:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'A real induced fault produces a fleet health alert with the alert text filed; no alert means the gap is named, not assumed.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~03:55 IST; follow-up to OBS-008 (health alerting) and OBS-022 (diagnosis). Pool floor refill.'
+      - 'Assigned to Muse 17 by coordinator watch 2026-11-24 ~04:45 IST (hub #1483): queue position 3. Claim on the hub + branch push when it reaches queue head; board flip rides in the work PR.'
     blockers: []
-    next_action: 'Induce one real fault, capture whether the alerting path fires, file the alert text or the gap.'
+    next_action: 'Muse 8 pos 3 (queue MEM-025 -> STR-047 -> STR-051; REL-084 merged).'
 
   - id: TASK-STR-051
     title: 'Stratex: forward-window fills audit run 2 - reconcile the daemon fill ledger against venue history for the new window'
     status: AVAILABLE
-    owner: null
+    owner: muse_8
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T03:49:06+05:30'
+    updated_at: '2026-11-24T04:45:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Fills, closes and net P&L filed for the new window with venue reconciliation.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~03:55 IST; follow-up to STR-048 (P&L reconciliation) and the fill-ledger verification. Pool floor refill.'
+      - 'Assigned to Muse 8 by coordinator watch 2026-11-24 ~04:45 IST (hub #1483): queue position 3. Claim on the hub + branch push when it reaches queue head; board flip rides in the work PR.'
     blockers: []
     next_action: 'Read the daemon fill/close ledger end-to-end, reconcile against venue positions/history, file the window state.'
 
