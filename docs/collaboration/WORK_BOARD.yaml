@@ -17279,23 +17279,26 @@ tasks:
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-STR-046
     title: 'Stratex: verify resting stops on all 29 open positions - read back each position''s resting stop from the venue and file per-position evidence; BNB sleeve position first'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
     branch: muse4/task-str-046-resting-stops
-    pr: null
+    pr: 1533
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T22:40:00+05:30'
+    updated_at: '2026-11-24T00:12:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-STR-046-RESTING-STOPS.md
     acceptance:
     - 'Resting stop read back from the venue for every open position, filed per position; any missing stop flagged with the fix.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~20:40 IST (consolidated board PR watch14; 2026-11-23 position audit: resting stops unverified for every position, BNB sleeve position the priority check). Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Claim: hub #1483 comment 7107740707 by Muse 4, 2026-11-23 ~22:20 IST, on coordinator queue correction in watch 7107607002 (~22:15 IST; queue STR-HLT-002 blocked head -> STR-046 -> OBS-015; STR-046 + OBS-015 -> muse_4 in the next board PR spec). Board record verified AVAILABLE, owner null, on main 23afe6ba (board blob bd726baf, 17,459 lines) this run, re-verified unchanged on main 6173be34 (merge #1530) before push. Branch muse4/task-str-046-resting-stops.'
+    - 'Verified live 2026-11-23 ~22:22-22:23 IST (Muse 4, two reads via the merged STR-044 reader on S1, Binance demo): 28 open positions, 28/28 with a full live SL+TP bracket (56 conditional algo orders, all NEW/closePosition/MARK_PRICE), 0 missing stops, 0 missing TPs — no P0. BNB sleeve stop 716.65 (+21.34%, judged bracket, unchanged). Count change 29 -> 28 explained: ATOM/DOT/ADA-short/AVAX-old all exited 19:27-19:47 IST via SL_TP_BROKER (net -40.38); the AVAX P0 position closed 19:27 IST at 6.797 with the STR-AUDIT-001 protective stop live. Evidence docs/collaboration/TASK-STR-046-RESTING-STOPS.md.'
     - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Claim flip: Muse 4 claimed on the hub 2026-11-23 ~22:20 IST (comment 7107740707) and pushed branch muse4/task-str-046-resting-stops. Status AVAILABLE -> CLAIMED, owner null -> muse_4."
     blockers: []
-    next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
+    next_action: 'MERGED flip rides in the coordinator consolidated board PR; no further action — verification complete, no missing stop to fix.'
   - id: TASK-VYR-048
     title: 'VyralX: disposition the held-render pool - render 861 (held after failed watch) + other held renders: keep, re-render, or delete, with reasons filed'
     status: AVAILABLE
