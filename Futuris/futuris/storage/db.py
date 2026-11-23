@@ -9,6 +9,7 @@ import asyncio
 from collections.abc import AsyncGenerator
 from pathlib import Path
 
+from sqlalchemy import event as sa_event
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -59,6 +60,31 @@ engine: AsyncEngine = create_async_engine(
     _effective_db_url,
     **engine_kwargs,
 )
+
+
+def install_sqlite_pragmas(target_engine: AsyncEngine) -> None:
+    """Install the WAL / busy-timeout / foreign-key PRAGMAs on a SQLite engine.
+
+    Test support only: the health-contract tests build throwaway SQLite
+    engines that must behave like the old production one — in particular
+    ``PRAGMA foreign_keys=ON``, which makes the flush-ordering contract in
+    ``futuris/storage/models.py`` real instead of decorative. Production is
+    Oracle-only; this installs nothing on the Oracle engine, and is defined
+    here (not in the test conftest) because the health-contract tests import
+    it from this module — TASK-TRUST-001 repair: the Oracle-only persistence
+    sweep removed it from here and left those tests with a dead import.
+    """
+
+    @sa_event.listens_for(target_engine.sync_engine, "connect")
+    def _sqlite_pragmas(dbapi_connection: object, _record: object) -> None:
+        cursor = dbapi_connection.cursor()  # type: ignore[attr-defined]
+        try:
+            cursor.execute("PRAGMA journal_mode=WAL;")
+            cursor.execute("PRAGMA synchronous=NORMAL;")
+            cursor.execute("PRAGMA busy_timeout=30000;")
+            cursor.execute("PRAGMA foreign_keys=ON;")
+        finally:
+            cursor.close()
 
 
 async def checkpoint_and_close_db() -> None:
@@ -126,12 +152,16 @@ async def verify_schema() -> dict[str, object]:
         async with engine.connect() as conn:
             present = await conn.run_sync(_present)
     except Exception as exc:  # noqa: BLE001 - reported, not raised
+        # The full message stays server-side (log only): a payload must never
+        # carry raw exception text, which can contain a DSN fragment (§2.2
+        # rule 8 / criterion 5). The payload keeps the stable type name.
+        logger.warning("schema_verify_failed", error=f"{type(exc).__name__}: {exc}")
         return {
             "ready": False,
             "expected": len(expected),
             "present": 0,
             "missing": sorted(expected),
-            "error": f"{type(exc).__name__}: {exc}",
+            "error": type(exc).__name__,
         }
 
     missing = sorted(expected - present)

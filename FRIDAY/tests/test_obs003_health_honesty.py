@@ -16,6 +16,9 @@ These tests pin the honest contract:
 - `status` is the report's computed overall verdict, never a constant.
 - `peers_mesh` is "connected" only when this process has actually recorded
   a completed mesh outcome; otherwise it says what is true instead.
+- TASK-REL-067 (REL-004 §2.2/§3): `status` now uses the contract
+  vocabulary ok/degraded (never "healthy"), and HTTP is 200 iff ok else
+  503. `overall` keeps the report's own "healthy"/"degraded" values.
 """
 
 from unittest.mock import patch
@@ -47,12 +50,16 @@ def test_health_status_follows_the_report_verdict() -> None:
         "friday.api.server.build_health_report",
         return_value=_report(Health.DEGRADED),
     ):
-        data = client.get("/health").json()
+        resp = client.get("/health")
+    assert resp.status_code == 503
+    data = resp.json()
     assert data["overall"] == "degraded"
     assert data["status"] == "degraded", (
         "status must be the report's verdict; a constant 'healthy' here is "
         "the fabrication TASK-OBS-003 removed"
     )
+    assert data["capabilities"]["orchestration"]["state"] == "degraded"
+    assert data["capabilities"]["orchestration"]["detail"] == "IMPORT_CHECK_FAILED"
 
 
 def test_health_status_healthy_when_report_healthy() -> None:
@@ -61,8 +68,10 @@ def test_health_status_healthy_when_report_healthy() -> None:
         "friday.api.server.build_health_report",
         return_value=_report(Health.HEALTHY),
     ):
-        data = client.get("/health").json()
-    assert data["status"] == "healthy"
+        resp = client.get("/health")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "ok"
     assert data["service"] == "friday_core"
 
 

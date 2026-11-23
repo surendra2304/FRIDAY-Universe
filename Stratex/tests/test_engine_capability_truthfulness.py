@@ -125,11 +125,66 @@ class TestReadinessGateRefusesInertEngine:
         assert readiness.status_code == 200
         assert readiness.get_json()["status"] == "ready"
 
-    def test_liveness_still_passes_for_an_inert_engine(self, tmp_path, monkeypatch, client):
-        """Render must not kill-loop a process that is up; /health stays 200."""
+    def test_health_reports_degraded_for_an_inert_engine(self, tmp_path, monkeypatch, client):
+        """REL-004 §2.2 / TASK-REL-067: an inert engine is degraded, not ok.
+
+        /health is the capability report now: a live process that cannot
+        trade answers 503 with status degraded. The routing/liveness gate
+        is /ready — a 503 here must not kill-loop a process that is up.
+        """
         _hb(tmp_path, monkeypatch, strategies=[], last_strategy_evaluation=None)
 
-        assert client.get("/health").status_code == 200
+        res = client.get("/health")
+
+        assert res.status_code == 503
+        body = res.get_json()
+        assert body["status"] == "degraded"
+        assert body["evidence_class"] == "capability_report"
+        assert body["capabilities"]["trading_capable"]["state"] == "unavailable"
+        assert body["capabilities"]["trading_capable"]["detail"] == "NO_EXECUTABLE_STRATEGY"
+        assert body["engine_healthy"] is True  # liveness honestly still true
+
+    def test_health_reports_stale_evaluation_when_engine_offline(self, tmp_path, monkeypatch, client):
+        """TASK-REL-003 condition (TASK-REL-067 criterion 2, code half):
+        engine offline with a stale evaluation must answer degraded/503
+        with trading_capable unavailable and STALE_STRATEGY_EVALUATION."""
+        monkeypatch.setattr(config, "TRADING_MODE", "TESTNET")
+        stale = datetime.datetime.utcnow() - datetime.timedelta(days=12)
+        _hb(
+            tmp_path,
+            monkeypatch,
+            timestamp=(datetime.datetime.utcnow() - datetime.timedelta(days=12)).isoformat() + "Z",
+            last_strategy_evaluation=stale.isoformat() + "Z",
+        )
+
+        res = client.get("/health")
+
+        assert res.status_code == 503
+        body = res.get_json()
+        assert body["status"] == "degraded"
+        assert body["engine"] == "offline"
+        assert body["capabilities"]["trading_engine"]["state"] == "unavailable"
+        assert body["capabilities"]["trading_capable"]["state"] == "unavailable"
+        assert body["capabilities"]["trading_capable"]["detail"] == "STALE_STRATEGY_EVALUATION"
+
+    def test_health_reports_ok_for_a_capable_engine(self, tmp_path, monkeypatch, client):
+        """A genuinely capable engine with a live database reports ok/200."""
+        import dashboard
+
+        _hb(tmp_path, monkeypatch)
+        monkeypatch.setattr(config, "TRADING_MODE", "TESTNET")
+        monkeypatch.setattr(dashboard, "_probe_stratex_database", lambda: ("oracle", "connected"))
+
+        res = client.get("/health")
+
+        assert res.status_code == 200
+        body = res.get_json()
+        assert body["status"] == "ok"
+        assert body["evidence_class"] == "capability_report"
+        assert body["capabilities"]["trading_engine"]["state"] == "ok"
+        assert body["capabilities"]["trading_capable"]["state"] == "ok"
+        assert body["capabilities"]["market_data"]["state"] == "ok"
+        assert body["dependencies"]["database"]["state"] == "ok"
 
 
 class TestStatusEndpointDoesNotClaimStrategyIsOK:

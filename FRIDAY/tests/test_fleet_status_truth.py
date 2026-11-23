@@ -125,7 +125,7 @@ class TestFleetStatusToolReportsTruth:
         assert "9/9 specialist agents up" in result.content
         assert "task-level verification" in result.content  # scope stated
         assert result.metadata["fleet"]["specialists_up"] == 9
-        assert result.metadata["fleet"]["scope"] == "peer_endpoint_reachability_only"
+        assert result.metadata["fleet"]["scope"] == "health_capability_report"
         assert client.calls == 1
 
     def test_one_down_is_reported_not_hidden(self) -> None:
@@ -181,3 +181,31 @@ class TestFleetFastPath:
             response = agent.process_message("are the agents online?")
         assert "could not probe the fleet" in response.content
         assert response.metadata.get("probe_success") is False
+
+
+class TestFleetStatusContractWording:
+    """REL-067 (REL-004 section 4): degraded peers are named with their
+    failing capability; pre-contract peers are labelled capability-unknown,
+    never ONLINE."""
+
+    def test_degraded_contract_details_are_not_doubled(self) -> None:
+        statuses = [
+            *(_ALL_UP[:2]),
+            _FakeStatus("stratex", "Stratex", "Trading", "DEGRADED", 80,
+                        "http://x/health",
+                        "Stratex DEGRADED: trading_capable unavailable (STALE_STRATEGY_EVALUATION)"),
+            *(_ALL_UP[3:]),
+        ]
+        result = FleetStatusTool(fleet_client=_FakeFleetClient(statuses)).execute(detail="summary")
+        assert "Stratex DEGRADED: trading_capable unavailable (STALE_STRATEGY_EVALUATION)" in result.content
+        assert "Stratex (DEGRADED: Stratex DEGRADED" not in result.content
+        # Forge is REACHABLE (pre-contract), so "the rest report ok" is false.
+        assert "the rest report all required capabilities ok" not in result.content
+        assert "Forge reachable, capability unknown (pre-contract /health)" in result.content
+
+    def test_all_contract_ok_summary_names_no_attention(self) -> None:
+        online = [_FakeStatus(s.id, s.name, s.role, "ONLINE", s.latency_ms, s.endpoint) for s in _ALL_UP]
+        result = FleetStatusTool(fleet_client=_FakeFleetClient(online)).execute(detail="summary")
+        assert "9/9 specialist agents up" in result.content
+        assert "Attention" not in result.content
+        assert "capability unknown" not in result.content

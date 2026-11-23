@@ -33,31 +33,142 @@ from friday.core.resilience import AsyncCircuitBreaker, retry_with_backoff, safe
 
 
 
-def _classify_health_response(response: httpx.Response) -> str:
+# TASK-REL-067: REL-004 section 4 — the classifier reads the section 2.2
+# contract fields first. A peer that sends a `capabilities` block is judged
+# on its capability states, not on its top-level string alone; a peer with no
+# capabilities block is reachability-only and is NEVER ONLINE (ONLINE is
+# earned only by a contract body with all required capabilities ok).
+_CONTRACT_CAPABILITY_STATES = {"ok", "degraded", "unavailable", "unknown"}
+
+
+def _fmt_capability(cap: tuple[str, str, str]) -> str:
+    name, state, detail = cap
+    return f"{name} {state} ({detail})" if detail else f"{name} {state}"
+
+
+def _contract_failings(body: dict) -> list[tuple[str, str, str]] | None:
+    """Non-ok capabilities of a REL-004 section 2.2 body, or None.
+
+    Returns None when the body carries no `capabilities` block (pre-contract
+    peer). Otherwise one (name, state, detail) tuple per capability whose
+    state is not "ok". A malformed capabilities block (not a dict of dicts,
+    or a state outside the closed vocabulary) is treated as no contract body,
+    never a crash.
+    """
+    capabilities = body.get("capabilities")
+    if not isinstance(capabilities, dict):
+        return None
+    failings: list[tuple[str, str, str]] = []
+    for name, cap in capabilities.items():
+        if not isinstance(cap, dict):
+            return None
+        state = cap.get("state")
+        if state not in _CONTRACT_CAPABILITY_STATES:
+            return None
+        if state == "ok":
+            continue
+        detail = cap.get("detail")
+        failings.append(
+            (name, state, detail if isinstance(detail, str) and detail.strip() else "")
+        )
+    return failings
+
+
+def _classify_health_response(response: httpx.Response) -> tuple[str, str]:
+    """Classify one /health response as (status, contract_note).
+
+    status is ONLINE, REACHABLE or DEGRADED (UNREACHABLE is the caller's
+    _probe_failure: no answer at all). contract_note is "" unless the answer
+    must carry contract wording in AgentStatus.details:
+    - contract body, all capabilities ok -> ("ONLINE", "capabilities ok");
+    - contract body, a capability degraded/unavailable -> ("DEGRADED",
+      "<cap> <state> (<REASON>)[; ...]");
+    - contract body, a capability unknown and none worse -> ("REACHABLE",
+      "capability unknown — <cap> unknown (<REASON>)"): an unknown required
+      capability is never silently reported ok, and never called degraded
+      either — the peer answered, its capability state is unknown;
+    - no capabilities block -> ("REACHABLE", "capability unknown — pre-contract /health");
+    - 401/403 -> ("REACHABLE", "capability unknown — auth required");
+    - 204 -> ("REACHABLE", "capability unknown — empty health body").
+    HTTP 503 with a contract body is DEGRADED, not UNREACHABLE: a 503 is an
+    answer, and the body says why. The top-level `status` is trusted for
+    required-ness (the agent derives it); capability states are trusted for
+    naming failures — a degraded capability under an "ok" verdict is still
+    DEGRADED, because the failure evidence is specific.
+    """
     if response.status_code in (401, 403):
-        return "REACHABLE"
-    if response.status_code not in (200, 201, 204):
-        return "DEGRADED"
+        return "REACHABLE", "capability unknown — auth required"
     if response.status_code == 204:
-        return "REACHABLE"
+        return "REACHABLE", "capability unknown — empty health body"
     try:
         body = response.json()
     except (ValueError, json.JSONDecodeError):
         body = None
     if isinstance(body, dict):
+        failings = _contract_failings(body)
+        if failings is not None:
+            top = body.get("status")
+            top_str = top.strip().lower() if isinstance(top, str) else None
+            hard = [c for c in failings if c[1] in {"degraded", "unavailable"}]
+            unknown = [c for c in failings if c[1] == "unknown"]
+            if hard:
+                return "DEGRADED", "; ".join(_fmt_capability(c) for c in failings)
+            if top_str is not None and top_str != "ok":
+                if unknown:
+                    return "DEGRADED", "; ".join(_fmt_capability(c) for c in unknown)
+                return "DEGRADED", f"peer reports status={top_str} (no failing capability named)"
+            if unknown:
+                return (
+                    "REACHABLE",
+                    "capability unknown — " + "; ".join(_fmt_capability(c) for c in unknown),
+                )
+            if response.status_code not in (200, 201, 204):
+                return "DEGRADED", f"HTTP {response.status_code} with ok capability report"
+            return "ONLINE", "capabilities ok"
         for name in ("status", "health", "state"):
             value = body.get(name)
             if isinstance(value, str):
                 normalized = value.strip().lower()
                 if normalized in {"healthy", "ok", "online", "up", "ready"}:
-                    return "ONLINE"
+                    if response.status_code not in (200, 201, 204):
+                        return "DEGRADED", f"HTTP {response.status_code} with {name}={normalized}"
+                    return "REACHABLE", "capability unknown — pre-contract /health"
                 if normalized in {"unhealthy", "degraded", "down", "error", "unavailable", "critical"}:
-                    return "DEGRADED"
+                    return "DEGRADED", f"peer reports {name}={normalized}"
             elif value is True:
-                return "ONLINE"
+                if response.status_code not in (200, 201, 204):
+                    return "DEGRADED", f"HTTP {response.status_code} with {name}=true"
+                return "REACHABLE", "capability unknown — pre-contract /health"
             elif value is False:
-                return "DEGRADED"
-    return "REACHABLE"
+                return "DEGRADED", f"peer reports {name}=false"
+    if response.status_code not in (200, 201, 204):
+        return "DEGRADED", ""
+    return "REACHABLE", "capability unknown — pre-contract /health"
+
+
+def _ok_details(status: str, contract_note: str, latency_ms: int, caveat: str) -> str:
+    """Details for an ONLINE/REACHABLE probe answer.
+
+    Contract peers say what was actually verified ("capabilities ok");
+    pre-contract peers are labelled capability-unknown. The per-probe caveat
+    (what was NOT checked) is kept — it is still true.
+    """
+    if contract_note:
+        return f"{contract_note} ({latency_ms}ms). {caveat}"
+    return f"{status}: HTTP health response received ({latency_ms}ms). {caveat}"
+
+
+def _degraded_details(name: str, contract_note: str, fallback: str) -> str:
+    """Details for a DEGRADED probe answer.
+
+    A contract body names the failing capability and its reason code
+    ("Stratex DEGRADED: trading_capable unavailable
+    (STALE_STRATEGY_EVALUATION)"); anything else keeps the probe's own HTTP
+    wording.
+    """
+    if contract_note:
+        return f"{name} DEGRADED: {contract_note}"
+    return fallback
 
 
 @dataclass
@@ -332,7 +443,14 @@ class FleetClient:
                     self._shared_client = None
         limits = httpx.Limits(max_connections=100, max_keepalive_connections=20, keepalive_expiry=30.0)
         timeout = httpx.Timeout(30.0, connect=5.0, read=30.0, write=10.0)
-        client = httpx.AsyncClient(limits=limits, timeout=timeout, follow_redirects=True)
+        # TASK-REL-067: trust_env=False — the fleet client talks to internal
+        # peers only. It must never route through an egress proxy, and must
+        # never crash parsing proxy env vars: httpx raises InvalidURL on
+        # bracketed-IPv6 NO_PROXY entries (port ':1]'), which broke
+        # TestRenderTool + the tier1 f1 tests the moment CI collected them.
+        client = httpx.AsyncClient(
+            limits=limits, timeout=timeout, follow_redirects=True, trust_env=False
+        )
         self._clients_by_loop[loop] = client
         self._shared_client = client
         return client
@@ -367,12 +485,12 @@ class FleetClient:
             headers = {"Authorization": f"Bearer {self.inference_key}"} if self.inference_key else {}
             r = await client.get(f"{self.inference_url}/health", headers=headers, timeout=8.0)
             lat = int((time.time() - t0) * 1000)
-            status = _classify_health_response(r)
+            status, contract_note = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
                 return AgentStatus(
                     id="inference", name="Inference", role="Cloud AI Gateway", icon="⚡",
                     status=status, latency_ms=lat, endpoint=self.inference_url,
-                    details=f"{status}: HTTP health response received ({lat}ms). Model completion was not checked.",
+                    details=_ok_details(status, contract_note, lat, "Model completion was not checked."),
                     last_checked=datetime.now(timezone.utc).isoformat(),
                 )
         except Exception as e:
@@ -387,7 +505,7 @@ class FleetClient:
         return AgentStatus(
             id="inference", name="Inference", role="Cloud AI Gateway", icon="⚡",
             status="DEGRADED", latency_ms=int((time.time() - t0) * 1000), endpoint=self.inference_url,
-            details=f"Status HTTP {r.status_code}", last_checked=datetime.now(timezone.utc).isoformat(),
+            details=_degraded_details("Inference", contract_note, f"Status HTTP {r.status_code}"), last_checked=datetime.now(timezone.utc).isoformat(),
         )
 
     async def probe_memora(self, client: httpx.AsyncClient) -> AgentStatus:
@@ -398,12 +516,12 @@ class FleetClient:
                 headers["Authorization"] = f"Bearer {self.memora_key}"
             r = await client.get(f"{self.memora_url}/health", headers=headers, timeout=8.0)
             lat = int((time.time() - t0) * 1000)
-            status = _classify_health_response(r)
+            status, contract_note = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
                 return AgentStatus(
                     id="memora", name="Memora", role="Persistent Memory", icon="🧠",
                     status=status, latency_ms=lat, endpoint=self.memora_url,
-                    details=f"{status}: HTTP health response received ({lat}ms). Memory write/read was not checked.",
+                    details=_ok_details(status, contract_note, lat, "Memory write/read was not checked."),
                     last_checked=datetime.now(timezone.utc).isoformat(),
                 )
         except Exception as e:
@@ -418,7 +536,7 @@ class FleetClient:
         return AgentStatus(
             id="memora", name="Memora", role="Persistent Memory", icon="🧠",
             status="DEGRADED", latency_ms=int((time.time() - t0) * 1000), endpoint=self.memora_url,
-            details=f"Health endpoint returned HTTP {r.status_code}; memory access was not verified.",
+            details=_degraded_details("Memora", contract_note, f"Health endpoint returned HTTP {r.status_code}; memory access was not verified."),
             last_checked=datetime.now(timezone.utc).isoformat(),
         )
 
@@ -431,12 +549,12 @@ class FleetClient:
             health_path = os.getenv("FRIDAY_STRATEX_HEALTH_PATH", "/health")
             r = await client.get(f"{self.stratex_url}{health_path}", headers=headers, timeout=8.0)
             lat = int((time.time() - t0) * 1000)
-            status = _classify_health_response(r)
+            status, contract_note = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
                 return AgentStatus(
                     id="stratex", name="Stratex", role="Algorithmic Trading", icon="📈",
                     status=status, latency_ms=lat, endpoint=self.stratex_url,
-                    details=f"{status}: HTTP health response received ({lat}ms). Trading mode and order execution were not checked.",
+                    details=_ok_details(status, contract_note, lat, "Trading mode and order execution were not checked."),
                     last_checked=datetime.now(timezone.utc).isoformat(),
                 )
         except Exception as e:
@@ -451,7 +569,7 @@ class FleetClient:
         return AgentStatus(
             id="stratex", name="Stratex", role="Algorithmic Trading", icon="📈",
             status="DEGRADED", latency_ms=int((time.time() - t0) * 1000), endpoint=self.stratex_url,
-            details=f"Health endpoint returned HTTP {r.status_code}; trading functionality was not verified.",
+            details=_degraded_details("Stratex", contract_note, f"Health endpoint returned HTTP {r.status_code}; trading functionality was not verified."),
             last_checked=datetime.now(timezone.utc).isoformat(),
         )
 
@@ -459,15 +577,20 @@ class FleetClient:
         t0 = time.time()
         try:
             headers = {"Authorization": f"Bearer {self.intelx_key}"} if self.intelx_key else {}
-            health_path = os.getenv("FRIDAY_INTELX_HEALTH_PATH", "/api/v1/healthz")
+            # TASK-REL-067: the fleet reads IntelX's contract /health, not
+            # the liveness-only /healthz (which stays 200/"ok" per INT-012).
+            # Safe pre-deploy: the old /health alias returned the same
+            # liveness body, which the classifier reads as pre-contract
+            # REACHABLE — identical to probing /healthz.
+            health_path = os.getenv("FRIDAY_INTELX_HEALTH_PATH", "/api/v1/health")
             r = await client.get(f"{self.intelx_url}{health_path}", headers=headers, timeout=8.0)
             lat = int((time.time() - t0) * 1000)
-            status = _classify_health_response(r)
+            status, contract_note = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
                 return AgentStatus(
                     id="intelx", name="IntelX", role="Macro Research", icon="🔍",
                     status=status, latency_ms=lat, endpoint=self.intelx_url,
-                    details=f"{status}: HTTP health response received ({lat}ms). Source ingestion and research were not checked.",
+                    details=_ok_details(status, contract_note, lat, "Source ingestion and research were not checked."),
                     last_checked=datetime.now(timezone.utc).isoformat(),
                 )
         except Exception as e:
@@ -482,7 +605,7 @@ class FleetClient:
         return AgentStatus(
             id="intelx", name="IntelX", role="Macro Research", icon="🔍",
             status="DEGRADED", latency_ms=int((time.time() - t0) * 1000), endpoint=self.intelx_url,
-            details=f"Health endpoint returned HTTP {r.status_code}; research functionality was not verified.",
+            details=_degraded_details("IntelX", contract_note, f"Health endpoint returned HTTP {r.status_code}; research functionality was not verified."),
             last_checked=datetime.now(timezone.utc).isoformat(),
         )
 
@@ -492,12 +615,14 @@ class FleetClient:
         try:
             r_loc = await client.get(f"{self.futuris_local_url}/health", timeout=2.5) if self.futuris_local_url else None
             lat_loc = int((time.time() - t0) * 1000)
-            if r_loc is not None and _classify_health_response(r_loc) in {"ONLINE", "REACHABLE"}:
-                local_status = _classify_health_response(r_loc)
+            local_status, local_note = (
+                _classify_health_response(r_loc) if r_loc is not None else ("UNREACHABLE", "")
+            )
+            if local_status in {"ONLINE", "REACHABLE"}:
                 return AgentStatus(
                     id="futuris", name="Futuris", role="Predictive Forecaster", icon="🔮",
                     status=local_status, latency_ms=lat_loc, endpoint=self.futuris_local_url,
-                    details=f"{local_status}: HTTP health response received ({lat_loc}ms). Forecasting was not checked.",
+                    details=_ok_details(local_status, local_note, lat_loc, "Forecasting was not checked."),
                     last_checked=datetime.now(timezone.utc).isoformat(),
                 )
         except Exception:
@@ -512,18 +637,18 @@ class FleetClient:
             # timeout lottery most often; the local attempt stays 2.5s).
             r = await client.get(f"{self.futuris_url}{health_path}", headers=headers, timeout=8.0)
             lat = int((time.time() - t0) * 1000)
-            status = _classify_health_response(r)
+            status, contract_note = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
                 return AgentStatus(
                     id="futuris", name="Futuris", role="Predictive Forecaster", icon="🔮",
                     status=status, latency_ms=lat, endpoint=self.futuris_url,
-                    details=f"{status}: HTTP health response received ({lat}ms). Forecasting was not checked.",
+                    details=_ok_details(status, contract_note, lat, "Forecasting was not checked."),
                     last_checked=datetime.now(timezone.utc).isoformat(),
                 )
             return AgentStatus(
                 id="futuris", name="Futuris", role="Predictive Forecaster", icon="🔮",
                 status="DEGRADED", latency_ms=lat, endpoint=self.futuris_url,
-                details=f"Health endpoint returned HTTP {r.status_code}; forecasting functionality was not verified.",
+                details=_degraded_details("Futuris", contract_note, f"Health endpoint returned HTTP {r.status_code}; forecasting functionality was not verified."),
                 last_checked=datetime.now(timezone.utc).isoformat(),
             )
         except Exception as e:
@@ -543,12 +668,12 @@ class FleetClient:
             health_path = os.getenv("FRIDAY_CORTEX_HEALTH_PATH", "/health")
             r = await client.get(f"{self.cortex_url}{health_path}", headers=headers, timeout=8.0)
             lat = int((time.time() - t0) * 1000)
-            status = _classify_health_response(r)
+            status, contract_note = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
                 return AgentStatus(
                     id="cortex", name="Cortex", role="Web Operations", icon="🌐",
                     status=status, latency_ms=lat, endpoint=self.cortex_url,
-                    details=f"{status}: HTTP health response received ({lat}ms). CRM, outreach, and worker activity were not checked.",
+                    details=_ok_details(status, contract_note, lat, "CRM, outreach, and worker activity were not checked."),
                     last_checked=datetime.now(timezone.utc).isoformat(),
                 )
         except Exception as e:
@@ -563,7 +688,7 @@ class FleetClient:
         return AgentStatus(
             id="cortex", name="Cortex", role="Web Operations", icon="🌐",
             status="DEGRADED", latency_ms=int((time.time() - t0) * 1000), endpoint=self.cortex_url,
-            details=f"Health summary returned HTTP {r.status_code}; Cortex workflows were not verified.",
+            details=_degraded_details("Cortex", contract_note, f"Health summary returned HTTP {r.status_code}; Cortex workflows were not verified."),
             last_checked=datetime.now(timezone.utc).isoformat(),
         )
 
@@ -574,12 +699,12 @@ class FleetClient:
             health_path = os.getenv("FRIDAY_FORGE_HEALTH_PATH", "/health")
             r = await client.get(f"{self.forge_url}{health_path}", headers=headers, timeout=10.0)
             lat = int((time.time() - t0) * 1000)
-            status = _classify_health_response(r)
+            status, contract_note = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
                 return AgentStatus(
                     id="forge", name="Forge", role="Software Engineering", icon="🛠️",
                     status=status, latency_ms=lat, endpoint=self.forge_url,
-                    details=f"{status}: HTTP health response received ({lat}ms). Build execution was not checked.",
+                    details=_ok_details(status, contract_note, lat, "Build execution was not checked."),
                     last_checked=datetime.now(timezone.utc).isoformat(),
                 )
         except Exception as e:
@@ -594,7 +719,7 @@ class FleetClient:
         return AgentStatus(
             id="forge", name="Forge", role="Software Engineering", icon="🛠️",
             status="DEGRADED", latency_ms=int((time.time() - t0) * 1000), endpoint=self.forge_url,
-            details=f"Health endpoint returned HTTP {r.status_code}; build functionality was not verified.",
+            details=_degraded_details("Forge", contract_note, f"Health endpoint returned HTTP {r.status_code}; build functionality was not verified."),
             last_checked=datetime.now(timezone.utc).isoformat(),
         )
 
@@ -605,12 +730,12 @@ class FleetClient:
             health_path = os.getenv("FRIDAY_SENTINEL_HEALTH_PATH", "/health")
             r = await client.get(f"{self.sentinel_url}{health_path}", headers=headers, timeout=10.0)
             lat = int((time.time() - t0) * 1000)
-            status = _classify_health_response(r)
+            status, contract_note = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
                 return AgentStatus(
                     id="sentinel", name="Sentinel", role="Cybersecurity Shield", icon="🛡️",
                     status=status, latency_ms=lat, endpoint=self.sentinel_url,
-                    details=f"{status}: HTTP health response received ({lat}ms). Audit integrity and scanning were not checked.",
+                    details=_ok_details(status, contract_note, lat, "Audit integrity and scanning were not checked."),
                     last_checked=datetime.now(timezone.utc).isoformat(),
                 )
         except Exception as e:
@@ -625,7 +750,7 @@ class FleetClient:
         return AgentStatus(
             id="sentinel", name="Sentinel", role="Cybersecurity Shield", icon="🛡️",
             status="DEGRADED", latency_ms=int((time.time() - t0) * 1000), endpoint=self.sentinel_url,
-            details=f"Health endpoint returned HTTP {r.status_code}; security functionality was not verified.",
+            details=_degraded_details("Sentinel", contract_note, f"Health endpoint returned HTTP {r.status_code}; security functionality was not verified."),
             last_checked=datetime.now(timezone.utc).isoformat(),
         )
 
@@ -653,21 +778,21 @@ class FleetClient:
                 follow_redirects=False,
             )
             latency = int((time.time() - t0) * 1000)
-            status = _classify_health_response(response)
+            status, contract_note = _classify_health_response(response)
             if status in {"ONLINE", "REACHABLE"}:
                 return AgentStatus(
                     id="vyralx", name="VyralX", role="Video Production", icon="🎬",
                     status=status, latency_ms=latency, endpoint=self.vyralx_url,
-                    details=(
-                        f"{status}: VyralX process health responded ({latency}ms). "
-                        "Database readiness, worker heartbeat, rights checks, and publishing were not verified."
+                    details=_ok_details(
+                        status, contract_note, latency,
+                        "VyralX process health responded. Database readiness, worker heartbeat, rights checks, and publishing were not verified.",
                     ),
                     last_checked=datetime.now(timezone.utc).isoformat(),
                 )
             return AgentStatus(
                 id="vyralx", name="VyralX", role="Video Production", icon="🎬",
                 status="DEGRADED", latency_ms=latency, endpoint=self.vyralx_url,
-                details=f"VyralX health endpoint returned HTTP {response.status_code}; task execution was not checked.",
+                details=_degraded_details("VyralX", contract_note, f"VyralX health endpoint returned HTTP {response.status_code}; task execution was not checked."),
                 last_checked=datetime.now(timezone.utc).isoformat(),
             )
         except Exception as exc:
@@ -1546,17 +1671,25 @@ class FleetClient:
         # "All microservices connected and synchronized with FRIDAY Central
         # Core." A status report whose summary contradicts its own table is
         # worse than no summary: the reader trusts the sentence.
+        # TASK-REL-067: ONLINE means "all required capabilities ok" now, so
+        # the middle branches must not read it as "answered": a fleet of
+        # pre-contract peers answers (REACHABLE) while online_count is 0.
+        reachable_count = sum(1 for s in statuses if s.status == "REACHABLE")
+        degraded_count = sum(1 for s in statuses if s.status == "DEGRADED")
+        unreachable_count = sum(1 for s in statuses if s.status == "UNREACHABLE")
+        answered_count = online_count + reachable_count + degraded_count
         if online_count == total_count and total_count:
             lines.append("All microservices connected and synchronized with FRIDAY Central Core.")
-        elif online_count == 0:
+        elif answered_count == 0:
             lines.append(
                 "No peer microservice answered from this machine. Nothing above was reached; the "
                 "statuses are connection attempts, not confirmations."
             )
         else:
             lines.append(
-                f"{online_count} of {total_count} microservices answered. Treat the UNREACHABLE rows "
-                "as unverified, not as healthy."
+                f"{online_count} of {total_count} microservices report all required capabilities ok "
+                f"({reachable_count} reachable with capability unknown, {degraded_count} degraded, "
+                f"{unreachable_count} unreachable). Treat the UNREACHABLE rows as unverified, not as healthy."
             )
 
         return {

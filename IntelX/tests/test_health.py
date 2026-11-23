@@ -140,13 +140,23 @@ async def test_metrics_endpoint(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_health_head_and_alias_endpoints(client: AsyncClient):
-    """Test HEAD and alias routes for healthz and readyz."""
+    """Test HEAD routes for healthz, health and readyz.
+
+    TASK-REL-067: /health is no longer the liveness alias — it is the
+    §2.2 capability report, so in the conftest mock mode it answers
+    503/degraded (research degraded/MOCK_MODE); HEAD mirrors GET.
+    /healthz and /readyz keep their HEAD behaviour.
+    """
     res_head = await client.head("/healthz")
     assert res_head.status_code == 200
 
-    res_alias = await client.get("/health")
-    assert res_alias.status_code == 200
-    assert res_alias.json()["status"] == "ok"
+    res_health = await client.get("/health")
+    assert res_health.status_code == 503
+    assert res_health.json()["status"] == "degraded"
+    assert res_health.json()["evidence_class"] == "capability_report"
+
+    res_health_head = await client.head("/health")
+    assert res_health_head.status_code == 503
 
     res_ready_head = await client.head("/readyz")
     assert res_ready_head.status_code == 200

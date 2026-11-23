@@ -29,15 +29,39 @@ def client() -> TestClient:
 
 
 def test_health_endpoint_contract(client: TestClient) -> None:
-    """Verify /health returns HTTP 200 with service, version, and health status."""
+    """Verify /health returns HTTP 200 with service, version, and health status.
+
+    TASK-REL-067 (REL-004 §2.2/§3): the payload is a capability report —
+    status is the derived contract verdict ("ok"), evidence_class is
+    "capability_report", and every required capability/dependency is "ok"
+    in the hermetic test environment. `overall` keeps the report's own
+    "healthy" value (the friday_deep liveness report is unchanged).
+    """
     response = client.get("/health")
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "healthy"
+    assert data["status"] == "ok"
     assert data["service"] == "friday_core"
     assert data["version"] == "2.0.0"
     assert data["overall"] == "healthy"
+    assert data["evidence_class"] == "capability_report"
     assert "observed_at" in data
+    assert set(data["capabilities"]) == {
+        "orchestration",
+        "memory_backend",
+        "peer_mesh",
+    }
+    assert set(data["dependencies"]) == {"database", "disk", "environment"}
+    for entry in list(data["capabilities"].values()) + list(
+        data["dependencies"].values()
+    ):
+        assert entry["state"] in {"ok", "unknown"}  # peer_mesh may be unknown
+        assert "evidence" in entry and "checked_at" in entry
+    assert data["capabilities"]["orchestration"]["state"] == "ok"
+    assert data["capabilities"]["memory_backend"]["state"] == "ok"
+    assert data["dependencies"]["database"]["state"] == "ok"
+    assert data["dependencies"]["disk"]["state"] == "ok"
+    assert data["dependencies"]["environment"]["state"] == "ok"
     # TASK-OBS-003: peers_mesh is derived from observed mesh outcomes, not
     # hardcoded "connected"; a fresh test process has observed none.
     assert data["peers_mesh"] in {"connected", "configured_unverified", "unavailable"}

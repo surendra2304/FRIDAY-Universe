@@ -408,11 +408,11 @@ def test_f6_05_error_envelope_scrubs_secrets_in_detail(client: TestClient) -> No
 # ==============================================================================
 
 def test_f7_01_get_health_probe_contract(client: TestClient) -> None:
-    """F7.1: Verify GET /health probe contract returns status=healthy, service=friday_core, version=2.0.0."""
+    """F7.1: Verify GET /health probe contract returns status=ok, service=friday_core, version=2.0.0."""
     resp = client.get("/health")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["status"] == "healthy"
+    assert data["status"] == "ok"
     assert data["service"] == "friday_core"
     assert data["version"] == "2.0.0"
     assert "peers_mesh" in data

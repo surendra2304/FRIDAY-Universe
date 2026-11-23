@@ -721,15 +721,25 @@ class AutonomousController:
                 # "responses": 8}: the evidence said the opposite of the truth.
                 responded = [item for item in fleet_statuses if str(item.status).upper() != "UNREACHABLE"]
                 unreachable = [item for item in fleet_statuses if str(item.status).upper() == "UNREACHABLE"]
+                # TASK-REL-067 (REL-004 section 4.5): "responded" must split
+                # into ONLINE / DEGRADED under the contract, not stay a
+                # single bucket. REACHABLE is a pre-contract peer: it
+                # answered, but its capabilities are unknown.
+                online = [item for item in fleet_statuses if str(item.status).upper() == "ONLINE"]
+                degraded = [item for item in fleet_statuses if str(item.status).upper() == "DEGRADED"]
+                reachable = [item for item in fleet_statuses if str(item.status).upper() == "REACHABLE"]
                 checks.append({
                     "name": "peer_health_endpoints",
                     "status": "OBSERVED" if responded else "UNAVAILABLE",
                     "evidence": {
                         "responded": len(responded),
+                        "online": len(online),
+                        "degraded": len(degraded),
+                        "reachable_capability_unknown": len(reachable),
                         "unreachable": len(unreachable),
                         "unreachable_peers": sorted(str(item.id) for item in unreachable),
                         "status_counts": counts,
-                        "scope": "HTTP health/status endpoint responses only; task execution and inter-agent delivery are not verified.",
+                        "scope": "Capability report from each peer's /health where available (pre-contract peers: reachability only); task execution and inter-agent delivery are not verified.",
                     },
                 })
             except Exception as exc:

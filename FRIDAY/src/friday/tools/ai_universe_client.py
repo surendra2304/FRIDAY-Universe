@@ -126,9 +126,15 @@ class AIUniverseClient:
     def get_client(self) -> httpx.AsyncClient:
         """Provide a persistent connection-pooled HTTP client for sub-second communication."""
         if not hasattr(self, "_shared_client") or self._shared_client is None or self._shared_client.is_closed:
+            # TASK-REL-067: trust_env=False — this client talks to the
+            # internal Inference service only; it must never route through
+            # an egress proxy, and must never crash parsing proxy env vars
+            # (httpx raises InvalidURL on bracketed-IPv6 NO_PROXY entries,
+            # port ':1]'; same failure as the fleet shared client).
             self._shared_client = httpx.AsyncClient(
                 timeout=httpx.Timeout(self.timeout, connect=10.0, read=self.timeout, write=10.0),
                 limits=httpx.Limits(max_keepalive_connections=20, max_connections=100, keepalive_expiry=60.0),
+                trust_env=False,
             )
         return self._shared_client
 

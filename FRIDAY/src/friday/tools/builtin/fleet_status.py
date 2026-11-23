@@ -9,8 +9,9 @@ Truthfulness rules (mirrors the /api/agents/status contract):
 - every reported status comes from an actual health probe, never invented;
 - a probe failure is reported as UNREACHABLE with the failure reason — never
   smoothed to "online";
-- the scope is stated explicitly: peer endpoint reachability only, not
-  task-level verification.
+- the scope is stated explicitly: capability report from each agent's
+  /health (pre-contract peers: reachability only), not task-level
+  verification.
 """
 
 from __future__ import annotations
@@ -79,21 +80,45 @@ class FleetStatusTool(BaseTool):
         up = sum(1 for s in statuses if getattr(s, "status", "") in _UP_STATUSES)
         total = _SPECIALIST_COUNT
         # FRIDAY itself is online by construction (it is answering).
+        # TASK-REL-067 (REL-004 section 4): the scope is the capability
+        # report from each agent's /health, not reachability alone.
         summary = (
             f"Fleet status: {up}/{total} specialist agents up "
             f"(+ FRIDAY, who is talking to you right now). "
-            "Scope: peer endpoint reachability, not task-level verification."
+            "Scope: capability report from each agent's /health, "
+            "not task-level verification."
         )
+        unknown = [s.name for s in statuses if getattr(s, "status", "") == "REACHABLE"]
         if detail != "full":
             degraded = [
                 s for s in statuses if getattr(s, "status", "") not in _UP_STATUSES
             ]
             if degraded:
-                names = ", ".join(
-                    f"{s.name} ({s.status}" + (f": {s.details}" if s.details else "") + ")"
-                    for s in degraded
+                parts = []
+                for s in degraded:
+                    # A contract DEGRADED already names the agent and its
+                    # failing capability ("Stratex DEGRADED: trading_capable
+                    # unavailable (STALE_STRATEGY_EVALUATION)"); do not wrap
+                    # it again.
+                    if s.details and s.details.startswith(f"{s.name} DEGRADED:"):
+                        parts.append(s.details)
+                    else:
+                        parts.append(
+                            f"{s.name} ({s.status}" + (f": {s.details}" if s.details else "") + ")"
+                        )
+                summary += f" Attention: {'; '.join(parts)}."
+                rest_online = all(
+                    getattr(s, "status", "") == "ONLINE"
+                    for s in statuses
+                    if getattr(s, "status", "") in _UP_STATUSES
                 )
-                summary += f" Attention: {names}."
+                if rest_online:
+                    summary += " The rest report all required capabilities ok."
+            if unknown:
+                summary += (
+                    f" {', '.join(unknown)} reachable, capability unknown "
+                    "(pre-contract /health)."
+                )
             return summary
 
         lines = [summary, ""]
@@ -119,10 +144,13 @@ class FleetStatusTool(BaseTool):
 
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
                     statuses = pool.submit(
-                        lambda: asyncio.run(client.get_all_statuses())
+                        lambda: asyncio.run(client.get_all_statuses(force_refresh=True))
                     ).result(timeout=self.timeout)
             else:
-                statuses = asyncio.run(client.get_all_statuses())
+                # force_refresh=True: this tool answers with a REAL probe —
+                # cached answers are not truthful here (the contract test
+                # fake enforces it: "fleet answers must be fresh, not cached").
+                statuses = asyncio.run(client.get_all_statuses(force_refresh=True))
         except Exception as exc:
             # Truthful failure: say the probe failed, never invent a status.
             return ToolResult(
@@ -138,7 +166,7 @@ class FleetStatusTool(BaseTool):
             )
 
         report = {
-            "scope": "peer_endpoint_reachability_only",
+            "scope": "health_capability_report",
             "specialists_up": sum(
                 1 for s in statuses if getattr(s, "status", "") in _UP_STATUSES
             ),

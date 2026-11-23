@@ -390,7 +390,7 @@ async def execute_task(body: dict):
             ),
         )
     if action_lower in ("status", "health", "ping", "report", "supervision_status"):
-        health = await health_check()
+        health = await _health_payload()
         storage = health.get("storage") or {}
         task_id = str(body.get("task_id") or f"futuris_status_{int(time.time())}")
         return {
@@ -472,21 +472,92 @@ async def root(request: Request) -> Any:
     }
 
 
-@app.head("/health", include_in_schema=False)
-@app.get("/health", tags=["Health"])
-async def health_check() -> dict[str, Any]:
-    """Health check: process liveness and a measured storage verdict."""
+async def _health_payload() -> dict[str, Any]:
+    """Build the /health capability report (REL-004 §2.2, TASK-REL-067 §5).
+
+    ``storage`` is a live check: ``verify_schema()`` opens a real
+    connection and inspects the live schema on every call (§6 Q6 — no
+    caching), so ``storage`` may report ``ok`` on its basis. ``forecasting``
+    has no model probe anywhere in the surveyed code, so it reports
+    ``unknown`` with detail ``NO_MODEL_PROBE`` until one is built; storage
+    readiness is not forecasting ability and must never be presented as
+    such. ``forecasting`` is required (§3), so the top-level status is
+    ``degraded`` (HTTP 503) until a forecasting probe exists — that is the
+    contract's honest outcome, not a bug.
+    """
     from futuris.storage.db import verify_schema
 
+    observed_at = datetime.now(UTC).isoformat()
     storage = await verify_schema()
+    ready = bool(storage.get("ready"))
+    expected = storage.get("expected") or 0
+    present = storage.get("present") or 0
+    missing = storage.get("missing") or []
+    if ready:
+        storage_cap: dict[str, Any] = {
+            "state": "ok",
+            "evidence": f"live schema inspection: {present}/{expected} required tables present",
+            "checked_at": observed_at,
+        }
+        database_dep: dict[str, Any] = {
+            "state": "ok",
+            "evidence": "live round-trip (schema inspection over a fresh connection) + all required tables present",
+        }
+    else:
+        detail = "DATABASE_UNREACHABLE" if storage.get("error") else "SCHEMA_INCOMPLETE"
+        if detail == "DATABASE_UNREACHABLE":
+            evidence = "live schema inspection failed to connect"
+        else:
+            evidence = (
+                f"live schema inspection: {present}/{expected} required tables present; "
+                f"missing: {', '.join(str(m) for m in missing)}"
+            )
+        storage_cap = {
+            "state": "unavailable",
+            "evidence": evidence,
+            "checked_at": observed_at,
+            "detail": detail,
+        }
+        database_dep = {
+            "state": "unavailable",
+            "evidence": evidence,
+            "detail": detail,
+        }
+    capabilities: dict[str, Any] = {
+        "storage": storage_cap,
+        "forecasting": {
+            "state": "unknown",
+            "evidence": "no forecasting-model probe exists; storage readiness is not forecasting ability",
+            "checked_at": observed_at,
+            "detail": "NO_MODEL_PROBE",
+        },
+    }
+    dependencies: dict[str, Any] = {"database": database_dep}
+    required_ok = all(cap["state"] == "ok" for cap in capabilities.values()) and all(
+        dep["state"] == "ok" for dep in dependencies.values()
+    )
     return {
-        "status": "ok" if storage["ready"] else "degraded",
+        "status": "ok" if required_ok else "degraded",
         "service": "futuris",
-        "evidence_class": "process_liveness",
-        "observed_at": datetime.now(UTC).isoformat(),
+        "agent": "futuris",
+        "evidence_class": "capability_report",
+        "observed_at": observed_at,
         "version": __version__,
+        "capabilities": capabilities,
+        "dependencies": dependencies,
         "storage": storage,
     }
+
+
+@app.head("/health", include_in_schema=False)
+@app.get("/health", tags=["Health"])
+async def health_check() -> JSONResponse:
+    """Health check: capability report — 200 iff ok, else 503 (§2.2 rule 2)."""
+    payload = await _health_payload()
+    return JSONResponse(
+        status_code=200 if payload["status"] == "ok" else 503,
+        content=payload,
+    )
 
 
 @app.head("/ready", include_in_schema=False)
@@ -532,7 +603,7 @@ async def readiness_check() -> JSONResponse:
                 "service": "futuris",
                 "database": "disconnected",
                 "database_backend": str(engine.dialect.name) if hasattr(engine, "dialect") else "unconfigured",
-                "error": f"{type(exc).__name__}: {exc}",
+                "error": type(exc).__name__,
                 "observed_at": datetime.now(UTC).isoformat(),
             },
         )

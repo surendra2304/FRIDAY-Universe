@@ -41,7 +41,13 @@ import sys
 
 # path -> reason. A test file listed here passes the guard, and the reason is
 # printed in CI output. Add entries only for files that cannot run in PR CI.
-EXCLUDED = {}
+EXCLUDED = {
+    "Futuris/scripts/e2e_system_test.py": (
+        "Standalone __main__ E2E harness, 0 pytest tests; runs the full "
+        "pipeline against the configured database engine and needs "
+        "FUTURIS_API_KEY — cannot run in PR CI."
+    ),
+}
 
 REF_RE = re.compile(r"[A-Za-z0-9_./\-\*?\[\]]*test_[A-Za-z0-9_./\-\*?\[\]]*\.py")
 TEST_RE = re.compile(r"(^|/)(test_[^/]*\.py|[^/]*_test\.py)$")

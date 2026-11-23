@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from core.resilience.circuit_breaker import circuit_registry
 from storage.relational.session import get_db, storage_receipt
 from storage.vector.oracle_vector_adapter import oracle_vector_adapter
 from storage.vector.qdrant_adapter import vector_adapter
@@ -31,28 +32,119 @@ def _active_vector_readiness():
         return oracle_vector_adapter.readiness()
     return vector_adapter.readiness()
 
+
+def _capability(state, evidence, detail=None):
+    """One REL-004 §2.2 capability/dependency entry.
+
+    ``state`` is closed-vocabulary (ok / degraded / unavailable / unknown);
+    ``detail`` is a stable machine-readable reason code, present exactly
+    when the state is not ok. ``evidence`` names what was actually checked.
+    """
+    entry = {
+        "state": state,
+        "evidence": evidence,
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if detail is not None:
+        entry["detail"] = detail
+    return entry
+
+
 @router.get("")
 @router.head("")
 def health_check(db: Session = Depends(get_db)):
+    observed_at = datetime.now(timezone.utc).isoformat()
     database = storage_receipt()
     db_status = "healthy"
+    db_error = None
     try:
         db.execute(text("SELECT 1"))
     except Exception as e:
         db_status = f"degraded ({type(e).__name__})"
+        db_error = type(e).__name__
 
     # The durable event feed is the same Oracle schema as the rest of Memora.
     event_store = "oracle_database" if database.get("backend") == "oracle" else "unavailable"
     event_store_ok = event_store == "oracle_database"
 
     vector_store = _active_vector_readiness()
+    vector_ok = bool(vector_store.get("available", False))
+    vector_status = vector_store.get("status", "unknown")
 
-    status_ok = db_status == "healthy" and event_store_ok and vector_store["available"]
+    # Circuit breakers live in /ready already; the contract requires them
+    # in /health too (design §5). An open breaker degrades /health: the
+    # dependency is protected, not serving.
+    circuits_ok = circuit_registry.healthy()
+    open_circuits = sorted(
+        name
+        for name, snap in circuit_registry.snapshot().items()
+        if isinstance(snap, dict) and snap.get("state") == "open"
+    )
+
+    db_ok = db_status == "healthy"
+    vector_detail = None
+    if not vector_ok:
+        vector_detail = (
+            "VECTOR_STORE_NOT_INITIALIZED"
+            if vector_status == "not_initialized"
+            else "VECTOR_STORE_UNAVAILABLE"
+        )
+    vector_evidence = (
+        f"vector backend {vector_store.get('backend', 'unknown')}: {vector_status}"
+    )
+
+    capabilities = {
+        "memory_store": _capability(
+            "ok" if db_ok else "unavailable",
+            "SELECT 1 succeeded" if db_ok else f"SELECT 1 failed ({db_error})",
+            None if db_ok else "DATABASE_UNREACHABLE",
+        ),
+        "event_store": _capability(
+            "ok" if event_store_ok else "unavailable",
+            "oracle backend"
+            if event_store_ok
+            else f"backend {database.get('backend', 'uninitialized')} is not oracle",
+            None if event_store_ok else "EVENT_STORE_UNAVAILABLE",
+        ),
+        "vector_search": _capability(
+            "ok" if vector_ok else "unavailable",
+            vector_evidence,
+            vector_detail,
+        ),
+    }
+    dependencies = {
+        "database": _capability(
+            "ok" if db_ok else "unavailable",
+            "SELECT 1 succeeded" if db_ok else f"SELECT 1 failed ({db_error})",
+            None if db_ok else "DATABASE_UNREACHABLE",
+        ),
+        "vector_store": _capability(
+            "ok" if vector_ok else "unavailable",
+            vector_evidence,
+            vector_detail,
+        ),
+        "circuit_breakers": _capability(
+            "ok" if circuits_ok else "degraded",
+            "no circuit breaker open"
+            if circuits_ok
+            else f"circuit breaker(s) open: {', '.join(open_circuits) if open_circuits else 'unknown'}",
+            None if circuits_ok else "CIRCUIT_BREAKER_OPEN",
+        ),
+    }
+
+    # REL-004 §2.2 rule 1: status is derived — ok iff every required
+    # capability and dependency is ok. All six entries above are required.
+    # The top-level value moves from "healthy" to "ok": the contract's
+    # closed vocabulary (§2.2). HTTP behaviour is unchanged: 200 iff ok,
+    # else 503, as this handler already did.
+    status_ok = db_ok and event_store_ok and vector_ok and circuits_ok
     return JSONResponse(status_code=200 if status_ok else 503, content={
-        "status": "healthy" if status_ok else "degraded",
+        "status": "ok" if status_ok else "degraded",
         "service": "memora",
-        "evidence_class": "process_liveness",
-        "observed_at": datetime.now(timezone.utc).isoformat(),
+        "evidence_class": "capability_report",
+        "observed_at": observed_at,
+        "capabilities": capabilities,
+        "dependencies": dependencies,
         "storage": database.get("backend", "uninitialized"),
         "database": db_status,
         "database_backend": database["backend"],
