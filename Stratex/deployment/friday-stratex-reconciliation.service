@@ -1,0 +1,15 @@
+[Unit]
+Description=Stratex daily fill-ledger reconciliation (TASK-STR-044)
+After=network-online.target Stratex-Daemon.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/opt/friday_universe/Stratex
+Environment="PYTHONPATH=/opt/friday_universe/Stratex:/opt/friday_universe"
+EnvironmentFile=/opt/friday_universe/Stratex/.env
+ExecStart=/opt/friday_universe/venv/bin/python -u scripts/daily_fill_ledger_reconciliation.py --env-file /opt/friday_universe/Stratex/.env
+
+[Install]
+WantedBy=multi-user.target
