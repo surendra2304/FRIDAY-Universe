@@ -77,6 +77,26 @@ merged-PR list of all 462 cited PRs → VALID, exit 0, "verified against
 462 merged PRs". The pristine-board case A (no list) also passes, so
 the new check does not break the live board.
 
+## CI run 1 — failure, diagnosed, fixed (same run)
+
+- The validator step PASSED in real CI (run 45225125378, head 19683358):
+  "COLLABORATION REGISTRY VALID ... verified against 1225 merged PRs" —
+  the new `gh pr list` step and the `--merged-prs` wiring work.
+- The regression-tests step FAILED in case F: `set_rel087_merged`
+  asserted the REL-087 record reads `status: CLAIMED`, but the test
+  suite builds its scratch tree from the PR checkout, where this PR's
+  own board flip already sets REL-087 to IN_REVIEW/pr 1536. The
+  fixture assumed a live-board state the PR itself changes.
+- Fix: `set_rel087_merged` now replaces the status and `pr` lines
+  whatever they currently say (regex-anchored), so the fixture works
+  against both the pristine board and the PR checkout. Re-verified
+  locally in both contexts — all 8 tests pass against the pristine
+  main board AND against the PR-checkout board. No validator change
+  was needed; the defect was test-only.
+- Note for the merge: board PR #1534 merged to main (a96c7bd9) while
+  this PR was open; it did not touch the REL-087 record (verified by
+  segment diff), so the board flip in this PR still applies cleanly.
+
 ## Limits (stated, not hidden)
 
 - The offline validator cannot know a PR's merged state without the
