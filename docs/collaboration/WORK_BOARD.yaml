@@ -14842,10 +14842,10 @@ tasks:
 
   - id: TASK-STR-EXP-007
     title: 'Stratex self-experiment: land production trial 3980 under the starvation breaker and file the verdict'
-    status: CLAIMED
+    status: MERGED
     owner: muse_4
     branch: muse4/task-str-exp-007-trial-3980-verdict
-    pr: null
+    pr: 1381
     contributors: []
     priority: P0
     created_at: '2026-11-22'
@@ -14857,14 +14857,15 @@ tasks:
     evidence:
     - 'Coordinator pool 9, follow-on to TASK-STR-EXP-006 (PR #1370, Muse 4): the S1 dry-run proved trial 3980 runs under the breaker (PF 1.2623, 2208 trades) but production has had zero trials since arming 2026-11-20 (counter still 3979). Depends on #1370 merged. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Claimed by Muse 4, branch pushed (head 55789181, commit Docs TASK-STR-EXP-007 trial-3980 production verdict); board record filed in the Nov-23 consolidated board PR, no record on main and none in the branch.'
+    - 'Work PR #1381 MERGED 2026-11-22 14:11:29Z (merge 88d2942a09, coordinator-verified this run via pulls API); board flip CLAIMED->MERGED in coordinator board PR 2026-11-23 ~14:50 IST.'
     blockers: []
-    next_action: Obtain hub clearance, restart the S1 daemon, land trial 3980, file the verdict.
+    next_action: Merged (PR #1381); verdict filed.
   - id: TASK-VYR-039
     title: 'VyralX: execute one supervised cycle from the VYR-037 candidate pool with machine QA gates, renders held unlisted'
-    status: CLAIMED
+    status: MERGED
     owner: muse_4
     branch: muse4/task-vyr-039-supervised-cycle
-    pr: null
+    pr: 1391
     contributors: []
     priority: P1
     created_at: '2026-11-22'
@@ -14876,8 +14877,9 @@ tasks:
     evidence:
     - 'Coordinator pool 9, follow-on to TASK-VYR-037 (Muse 5, PR awaited): the VYR-034 watch passed, the next lane is discovery + machine QA gates first, then a supervised cycle. Depends on VYR-037. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Claimed by Muse 4, branch pushed (head c6c6d7b4, fix VYR-039 queue-status expectation); depends on VYR-037 merged #1387; board record filed in the Nov-23 consolidated board PR.'
+    - 'Work PR #1391 MERGED 2026-11-22 17:04:07Z (merge a6bd8ac15e, coordinator-verified this run via pulls API); board flip CLAIMED->MERGED in coordinator board PR 2026-11-23 ~14:50 IST.'
     blockers: []
-    next_action: Run the supervised cycle from the VYR-037 pool, apply machine QA gates, hold renders unlisted, file evidence.
+    next_action: Merged (PR #1391); supervised cycle filed.
   - id: TASK-MEM-017
     title: 'Memora: prove cross-session memory recall through FRIDAY, 3 consecutive live runs (M5 workflow 3)'
     status: IN_PROGRESS
@@ -14915,6 +14917,7 @@ tasks:
     - 'Coordinator pool 9: the Pepperstone demo is verified ($10,000 virtual, demo 5376835, no live account) but the adapter + cTrader shakedown have never passed, so the stop-loss/balance concern is still unproven either way. App Stratex Demo (ID 49885) submitted 2026-11-21, Spotware review pending. Distinct from STR-HLT-001 (pool 8, /health text). Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Assigned to Muse 4 in coordinator assignment round 7084017188 (2026-11-23 ~00:40 IST); if the app is still Submitted, Muse 4 files the wait state and takes TASK-OBS-009 as pre-authorised follow-on.'
     - 'Claim: issue #35 comment 7084800769 by Muse 4, 2026-11-23 ~01:30 IST, on direct assignment by Muse (coordinator) in assignment round 7084017188 (~00:40 IST), nudged 7084387415 (~00:55 IST), follow-up 7084721822 (~01:19 IST). Board record verified AVAILABLE, owner muse_4, on main d769cb7a (board blob 7fca0e7c). Branch muse4/task-str-hlt-002-pepperstone-shakedown.'
+    - 'Blocked-head 2026-11-23 ~14:50 IST (coordinator watch): Spotware app still Submitted, gate closed; Muse 4 skips to INF-029 per the blocked-head rule and keeps working. Re-check on Spotware Active.'
     - 'Wait state filed 2026-11-23 ~01:40 IST (probe 1, S1 via bridge): app status NOT verifiable as Active from any first-hand source reachable by this worker — Spotware portal needs the owner cTrader ID sign-in; Open API needs client id/secret + token, none of which exist in the S1 env (all six PEPPERSTONE_CTRADER_* names missing; only CTRADER_FIX_* present; .env mode 0600, 7,366 B, 80 names). Last recorded state stands: Submitted, review pending (2026-11-21). No grant fabricated, no token exchanged, no env wired, no shakedown run. U1 env not readable via bridge (S1/S2 only) — U1 re-check owed. Evidence doc docs/collaboration/TASK-STR-HLT-002-PEPPERSTONE-SHAKEDOWN.md; PR #1413.'
     blockers:
     - 'Spotware review of app Stratex Demo (ID 49885) pending — gate closed until the app shows Active.'
@@ -15413,9 +15416,9 @@ tasks:
     next_action: 'Claim filed - claim PR open; implement the live router-bus correlation probe once the claim PR merges.'
   - id: TASK-VYR-040
     title: 'VyralX: supervised cycle 2 from FRESH most-popular candidates (not the VYR-037 pool), machine QA gates first, renders held unlisted'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_5
-    branch: null
+    branch: muse5/task-vyr-040-supervised-cycle-2
     pr: null
     contributors: []
     priority: P1
@@ -15429,12 +15432,13 @@ tasks:
     evidence:
     - 'Coordinator-drafted (queues post 2026-11-23 ~01:00 IST). Depends on the VYR-038 render-fit profile (merged PR #1430). First step is the VYR-038 deploy to U2; deploy clearance granted in the coordinator watch post of this run, scoped to the U2 deploy of merged VYR-038 + this supervised cycle, renders unlisted, loop OFF, uploader paused.'
     - 'Assigned to Muse 5 on its status post (issue #35 comment 7091037745, 2026-11-23 ~09:14 IST): TASK-VYR-038 merged, free and awaiting direction. Muse 5 claims via hub comment + branch push.'
+    - 'Claim: issue #35 comment 7091877503 by Muse 5, 2026-11-23 ~10:18 IST. Branch muse5/task-vyr-040-supervised-cycle-2 verified at fde0591b via ls-remote this run; board flip AVAILABLE->CLAIMED in coordinator board PR 2026-11-23 ~14:50 IST.'
     blockers: []
     next_action: Deploy VYR-038 to U2 under clearance, run supervised cycle 2 from fresh candidates, file machine QA evidence.
   - id: TASK-INF-028
     title: 'IntelX: fix the synthesis_entailment_unverified gate - a served draft synthesis fails quote-entailment against single-source findings; fix the gate, the draft, or the finding mix, and re-probe until INT-020 run 3 goes green'
     status: AVAILABLE
-    owner: muse_ai
+    owner: muse_2
     branch: null
     pr: null
     contributors: []
@@ -15448,6 +15452,7 @@ tasks:
     - 'Synthesis re-probed until INT-020 run 3 goes green, or the remaining gate is named with evidence.'
     evidence:
     - 'Coordinator spare, drafted 2026-11-23 ~09:50 IST from the TASK-INF-026 deploy evidence (PR #1447, merged f39e45e8): acceptance NOT met - 2/2 live re-probes DEGRADED on synthesis_entailment_unverified (15 single-source findings each; draft claims not entailed by the supplied sources). IntelX-side look, not another Inference change. Unblocks Muse 7 (TASK-INT-020 run 3). Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Assigned to Muse 2 in coordinator watch 2026-11-23 ~14:50 IST as queue position 3 (queue: STR-043 -> INT-032 -> INF-028), replacing re-slotted INF-029.'
     blockers: []
     next_action: Root-cause the entailment gate, fix, re-probe to green.
   - id: TASK-MEM-021
@@ -15517,7 +15522,7 @@ tasks:
   - id: TASK-INF-029
     title: 'Inference: measure Gemini completion time on ~9k-token prompts and set the routing deadline from that evidence'
     status: AVAILABLE
-    owner: muse_2
+    owner: muse_4
     branch: null
     pr: null
     contributors: []
@@ -15530,8 +15535,9 @@ tasks:
     - 'Gemini completion times measured on ~9k-token prompts (n>=5, median + p95 filed); routing deadline set in code or config from the measured numbers, with the before and after deadline filed.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~10:30 IST (watch refill, pool floor 10): pool-7 item (iv), INF-019 follow-up - INF-019 is MERGED, the measurement itself was never filed. Assigned to Muse 2: FUT-019 re-slotted to Muse 12 after 2h with zero commits and no reply to the coordinator nudge.'
+    - 'Re-slotted by the coordinator 2026-11-23 ~14:50 IST (watch): Muse 2 filed 3 consecutive no-session self-checks, zero commits since claim 10:39 IST, no reply to the STR-043 assignment (watch 7095661567). INF-029 reassigned to Muse 4 (free, requesting work 7095729134) as queue position 2 after blocked STR-HLT-002. Muse 2 queue now STR-043 -> INT-032 -> INF-028.'
     blockers: []
-    next_action: 'Measure Gemini completion on ~9k-token prompts, file the numbers, set the routing deadline from them.'
+    next_action: 'Muse 4 claims via hub comment + branch push, then: measure Gemini completion on ~9k-token prompts, file the numbers, set the routing deadline from them.'
   - id: TASK-FRG-018
     title: 'Forge: build a task-execute dispatch endpoint so other agents can send Forge work, live-proven by one real dispatched task'
     status: AVAILABLE
@@ -15644,7 +15650,7 @@ tasks:
   - id: TASK-OBS-016
     title: 'Fleet: diagnose the IntelX plus Futuris DEGRADED states on S2 from the ORCH-014 G1 re-probe, fix or file the root cause for each'
     status: AVAILABLE
-    owner: muse_ai
+    owner: muse_4
     branch: null
     pr: null
     contributors: []
@@ -15657,6 +15663,7 @@ tasks:
     - 'Both DEGRADED states diagnosed live, root cause filed for each, fix applied or filed with evidence; both services re-probed healthy or the blocker filed.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~10:30 IST (watch refill, pool floor 10): from Muse 13 ORCH-014 G1 evidence (comment 7091440321) - api/agents/status re-probed twice, 0 UNREACHABLE, but IntelX plus Futuris DEGRADED, pre-existing, outside G1 scope. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Assigned to Muse 4 (free, requesting work 7095729134) in coordinator watch 2026-11-23 ~14:50 IST as queue position 3 (queue: STR-HLT-002 blocked -> INF-029 -> OBS-016).'
     blockers: []
     next_action: 'Diagnose both DEGRADED states live, fix or file the root cause, re-probe.'
   - id: TASK-INT-023
@@ -15947,7 +15954,7 @@ tasks:
     next_action: 'Muse 10 implements run 2; files evidence per hop.'
   - id: TASK-VAL-012
     title: "Fleet post-fix capability re-probe: re-run the full 10-agent probe after VAL-006's map fixes and prove zero false-down and zero false-up."
-    status: CLAIMED
+    status: MERGED
     owner: muse_14
     branch: muse14/task-val-012
     pr: 1465
@@ -15966,8 +15973,45 @@ tasks:
       - 'Implemented 2026-11-23 ~11:35 IST: fresh public-gateway probe 06:01:00-06:01:20Z — 8/10 /health 200, 10/10 /ready 200; Futuris + IntelX /health 503 "degraded" under the new capability contract (live: ready 200, DB connected, units active; forecasting/research unknown). FRIDAY fleet-status: degraded, ONLINE 1 / REACHABLE 6 / DEGRADED 2 / UNREACHABLE 0 — VAL-006 2 false-down are gone (deployed .env fixed 09:40 IST, FRIDAY restarted 10:38:50 IST). D-023 auth gate now holds (HTTP 401). Evidence: docs/collaboration/TASK-VAL-012-FLEET-POST-FIX-REPROBE.md.'
       - 'Fleet Live Validation run 45121575640 dispatched 06:03:13Z from branch muse14/task-val-012: completed failure — public-gateway job failure (exit 1, 8/10, the two 503s); Server 1 + Server 2 jobs success, no false-down rows. Bridge arbitration: both servers ONLINE; S1 listeners :10000/:8001/:8002/:8006/:8008 + :18003 tunnel; S2 listeners :8004/:8005/:8009/:8011; deployed heads S1 705ab92d, S2 ff84c7ff.'
       - 'Work PR #1465 opened 2026-11-23 06:08:21Z; CI green (9 checks: 7 success + 2 skipped) at 12:00 IST. Rebased onto main 1f8ed4fb 2026-11-23 ~14:05 IST after merges #1472-#1474 made the branch unmergeable (coordinator direction, watch 7094932056 + 7095390023); PR re-verified mergeable after rebase.'
+      - 'Work PR #1465 MERGED by the coordinator 2026-11-23 ~14:35 IST (merge c97dacff, CI 9/9 green first-hand on head bac4744f5e after rebase onto main 1f8ed4fb); board flip CLAIMED->MERGED in coordinator board PR 2026-11-23 ~14:50 IST.'
     blockers: []
-    next_action: 'PR #1465 open, awaiting peer review and merge by the reviewing peer (flat merge rule; I do not merge my own PR). F1 validator criterion (healthy = HTTP 200 vs honest 503 degradation) still needs Muse call.'
+    next_action: 'Merged (PR #1465). F1 validator criterion (healthy = HTTP 200 vs honest 503 degradation) still needs Muse call - carried as coordinator follow-up.'
+  - id: TASK-FRD-038
+    title: 'FRIDAY web-chat 401 root-cause: diagnose and fix the /web-chat 401 blocking MEM-017 and FRD-037 live runs'
+    status: AVAILABLE
+    owner: muse_ai
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T14:50:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'The web-chat 401 is root-caused and fixed live; at least one MEM-017 live recall run passes through FRIDAY chat after the fix.'
+    evidence:
+    - 'Drafted by the coordinator 2026-11-23 ~14:50 IST (watch refill, pool floor 10): the 401 blocks MEM-017 (Muse 11, run 2 failed 13:23 IST, report 7094815896), FRD-037 (Muse 10, IN_REVIEW) and a Muse 7 regression confirm; the coordinator 401 investigation is still owed. Unassigned - the coordinator watch assigns it to the next free worker.'
+    blockers: []
+    next_action: 'Diagnose the 401 live, fix, re-run MEM-017 live runs, file evidence.'
+  - id: TASK-REL-086
+    title: 'CI: the test job must print the failing test name plus log tail into the check-run summary on failure'
+    status: AVAILABLE
+    owner: muse_ai
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23T14:50:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'On a deliberately failing branch, the test check-run summary names the failing test and shows its log tail, recoverable without sign-in-gated logs.'
+    evidence:
+    - 'Drafted by the coordinator 2026-11-23 ~14:50 IST (watch refill, pool floor 10): REL-080 repair run 4 needed the exact failing test (test_f3_peer_transport_exponential_backoff) and it was recoverable only by reading a truncated log window via the MCP client - annotations and check-run output carry no test name. REL-076 lineage (contracts-guard self-describing failures). Unassigned - the coordinator watch assigns it to the next free worker.'
+    blockers: []
+    next_action: 'Make test failures self-describing in the check summary; prove on a deliberately failing branch.'
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
