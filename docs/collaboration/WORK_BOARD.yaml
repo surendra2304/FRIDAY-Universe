@@ -15007,7 +15007,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T05:45:00+05:30'
+    updated_at: '2026-11-23T06:47:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-CTX-004-ESCALATION-RATIO-LIVE-CHECK.md
@@ -15023,10 +15023,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Implementation (04:36 self-check run, ~05:00 IST): streak counter + ratio check in Cortex/packages/core/src/cortex_core/resilience.py (unconfigured_streak_threshold default 10, delivery_gap_threshold default 3; ratio_check in SelfHealingLoop.status() + HealingRun) + new Cortex/tests/unit/test_ctx004_ratio_check.py (10 tests). Deviation from design: ratio alerts deliver via _notify with own once-per-streak sets, NOT via _escalate (its failure-streak suppression would swallow a ratio alert after a failure streak and let a ratio alert suppress a later failure escalation). Local verification: 10/10 new tests green (isolated run, pytest absent in this VM); 18 runnable existing self-healing tests green; 6 self-model/self-modification tests left to PR CI. Branch rebased onto main 84739a0d.'
     - 'Merged 2026-11-23 ~05:40 IST: work PR #1437 merged as 491a63e9 (coordinator full-diff review vs true base blob 84739a0d; CI 9/9 green on head fd965f7b: 7 success, 2 skipped; diff +754/-0 additive). Live proof still owed: coordinator-cleared deploy + restart.'
     - 'Work PR #1437 opened (head eaba4a09, base main 84739a0d): implementation chunk + board record + evidence doc; CI running at open.'
+    - 'Live proof verified 2026-11-23 ~06:41 IST (hourly self-check run, first-hand via bridge): S2 checkout main @ 491a63e9, Cortex.service restarted 05:25:17 IST (PID 599993, ~42 s after PR #1437 merged 05:24:35 IST) - deploy + restart already done, no hub post records the actor; supervisor cycles 148, errors 0, last_unconfigured [], ai_universe HEALTHY 147/148; ratio_check live in GET /v1/friday/self_healing (thresholds 10/3, unconfigured_streaks {}, signal rates 1.0 except ai_universe 0.9932, channel_broken false, last_alert null) - streak 0, signal present. G4 /ready: on-disk probe is GET {url}/ready (self_healing.py:95), /ready 200 READY, ai_universe HEALTHY via the /ready probe. Coordinator restart direction 7088433890 named stale PID 584499 (two restarts old); no fresh restart performed - it would reset the 148-cycle evidence baseline. Evidence doc section 5; follow-up PR (this PR).'
     blockers:
-    - 'Live proof needs a coordinator-cleared deploy + restart (the /ready code is on main, not on the S2 checkout; the deploy decision rides with Muse 11 MEM-017 fix). No live fault will be staged on production to force an alert.'
     - 'Threshold N = 10 cycles and the alert channel (same Telegram escalation channel assumed) are open questions for Muse; no work blocked on them.'
-    next_action: 'Merged 2026-11-23 (PR #1437, 491a63e9); live proof needs coordinator-cleared deploy + restart.'
+    next_action: 'Live proof verified 2026-11-23 (follow-up PR, evidence doc section 5); /ready verification evidence filed for TASK-CTX-005*; queue position 2 renumbered ORCH-012* -> TASK-ORCH-013 per coordinator 7088433890 (board-record correction rides in the coordinator consolidated board PR).'
   - id: TASK-OBS-009
     title: 'Fleet: re-run the rollback drill for a bad deploy and file live evidence'
     status: CLAIMED
