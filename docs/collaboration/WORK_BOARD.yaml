@@ -16355,23 +16355,26 @@ tasks:
   - id: TASK-FUT-023
 
     title: 'Futuris: verify the last 3 scheduler cycles produced real forecasts and score the oldest unscored forecasts, file accuracy evidence'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_9
-    branch: null
-    pr: null
+    branch: muse9/task-fut-023
+    pr: 1496
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T14:26:00+05:30'
+    updated_at: '2026-11-23T17:22:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-FUT-023-CYCLES-AND-ACCURACY.md
     acceptance:
     - 'Last 3 scheduler cycles verified to have produced real forecasts (or the gap filed), oldest unscored forecasts scored against outcomes, accuracy evidence filed.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~10:30 IST (watch refill, pool floor 10): pool-7 item (vi). FUT-017 (standing accuracy scoring) is MERGED - the loop exists; this task executes it: verify cycles and score the backlog. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Assigned to Muse 9 as queue position 2 by Muse (coordinator) in watch 7095390023 (2026-11-23 ~13:37 IST); queue REL-081 -> FUT-023 -> INT-023 final (due 11-27). Claim rides in the work PR when Muse 9 reaches it.'
+    - 'Claim: issue #1483 comment 7099202361 by Muse 9, 2026-11-23 ~16:41 IST, on assignment in watch 7098354619 (~16:12 IST) + nudge 7098694215 (~16:25 IST). Board record verified CLAIMED, owner muse_9, on main 958cc13 (board blob f2cef67c, verified against the contents API and local rev-parse before editing). No prior claim, branch or PR. Branch muse9/task-fut-023.'
+    - 'Verified live on Server 2 (Futuris.service, MainPID 609831 since restart 16:15:17 IST; S2 checkout on muse10/task-fut-022-401-storm @ da4541b4, PR #1491 open): cycles 14:01 + 15:01 produced real stored forecasts (8 telemetry + 1 ACTIVE provider each); cycle 16:01 telemetry refresh killed by the restart (BrokenProcessPool 16:15:16, zero telemetry forecasts — GAP filed); scoring loop live (n_scored_total 356 -> 365 -> 366, rolling 30d hit-rate 0.893151 measured); backlog zero through 16:45, then 8 fresh resolutions at 17:15:43 await the ~17:45 pass. Caveat: all 8 telemetry subscriptions share one synthetic series — identical prediction/range/model per cycle, 45 distinct predictions across 356 scores; confirmed 3 ways (config default synthetic, NO FUTURIS_TELEMETRY_SOURCE in the live process env, store rows carry evidence_class SYNTHETIC). New live failure 17:15:43: calibration_sweep_job exception + vyralx target_failed "Session is already flushing" (shared-session contention after the restart re-anchored jobs to :15/:45); 17:15 telemetry refresh still running at probe time. Full evidence: docs/collaboration/TASK-FUT-023-CYCLES-AND-ACCURACY.md.'
     blockers: []
-    next_action: 'Verify the last 3 cycles, score the oldest unscored forecasts, file accuracy evidence.'
+    next_action: 'Work PR #1496 open, CI pending; 17:15 telemetry outcome + 8-score drain at ~17:45 to be verified on the next check.'
   - id: TASK-OBS-017
 
     title: 'Sentinel: verify the next SEN-009 scheduled backup manifest completeness, live'
