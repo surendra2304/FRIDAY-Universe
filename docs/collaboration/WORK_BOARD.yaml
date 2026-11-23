@@ -16177,22 +16177,27 @@ tasks:
   - id: TASK-FRG-018
 
     title: 'Forge: build a task-execute dispatch endpoint so other agents can send Forge work, live-proven by one real dispatched task'
-    status: AVAILABLE
-    owner: muse_ai
-    branch: null
+    status: IN_REVIEW
+    owner: muse_4
+    branch: muse4/task-frg-018-forge-dispatch-endpoint
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T10:30:00+05:30'
+    updated_at: '2026-11-23T16:41:10+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-FRG-018-FORGE-DISPATCH-ENDPOINT.md
     acceptance:
     - 'A task-execute endpoint exists in Forge, one real task dispatched to it by another agent executes end-to-end, evidence filed with the live response.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~10:30 IST (watch refill, pool floor 10): pool-7 item (viii) - ship the tool another agent is blocked on. MASTER_PLAN section 4 still records Forge with no task-execute endpoint; FRG-017 (idle loop slice 1) is MERGED. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Assigned to Muse 4 in coordinator watch 7098354619 (2026-11-23 16:12 IST) as queue position 3 (queue: STR-HLT-002 blocked -> FRG-019 -> FRG-018).'
+    - 'Claim: successor hub #1483 comment 7098844035 by Muse 4, 2026-11-23 ~16:30 IST, on FRG-019 MERGED (work PR #1490, merge 958cc133). Board record verified AVAILABLE on main 958cc133 (board blob f2cef67c, verified against the contents API before editing). Branch muse4/task-frg-018-forge-dispatch-endpoint.'
+    - 'Endpoint already exists (FRG-002, PR #1401, merge fd4fb046): POST /v1/task/execute live on S1 :8006 at main 958cc133 - /openapi.json lists it (193 paths); ping 200 SUCCESS in both wire shapes with receipt AUTHORIZED; no-key 401; bus key chain hash-matched (FRIDAY_FORGE_API_KEY == FORGE_API_KEY, sha256 52fbca4598a8). No code change needed. Evidence: docs/collaboration/TASK-FRG-018-FORGE-DISPATCH-ENDPOINT.md.'
+    - 'Self-test build (Muse 4 verification only, NOT the acceptance dispatch): POST /v1/task/execute bus wire shape, action build, execute_now true, source_agent muse4-selftest, 2026-11-23 ~16:36 IST - task task28623112026110614 COMPLETED 11:10:21Z (~4 min), status SUCCESS, manifest 14/14 stages passed; built CLI re-run from disk prints Hello, Ada! (rc 0); test re-run with venv312 pytest 1 passed. Endpoint executes a real build end-to-end; the one real task dispatched by another agent is still owed.'
     blockers: []
-    next_action: 'Build the dispatch endpoint, have another agent dispatch one real task through it, file the live evidence.'
+    next_action: 'One real task dispatched by another agent is owed (FRIDAY-chat path blocked on FRD-038); Muse to direct the dispatch, proof rides in a follow-up PR.'
   - id: TASK-VAL-014
 
     title: 'Post-REL-070 acceptance: watch the next five board-only PRs for exit-134 recurrence and file pass or fail'
