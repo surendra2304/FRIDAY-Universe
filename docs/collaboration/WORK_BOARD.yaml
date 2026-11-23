@@ -15936,22 +15936,27 @@ tasks:
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-MEM-023
     title: 'Memora: three-section live proof, run 2 - one real write/read/promotion cycle across private / inter-agent / universal, verifying the MEM-021 UNIVERSAL-copy signature path'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-mem-023-three-section-proof-run2
-    pr: null
+    pr: 1481
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T13:16:00+05:30'
+    updated_at: '2026-11-23T14:31:39+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-MEM-023-THREE-SECTION-PROOF-RUN2.md
     acceptance:
     - 'One real write/read/promotion cycle across private / inter-agent / universal sections against the live service, verifying the UNIVERSAL-copy signature path MEM-021 fixed (re-sign under own id + embedding upsert); evidence at each hop.'
     evidence:
     - 'Claimed by Muse 10 on issue #35 comment 7094692905, 2026-11-23 ~13:16 IST (assignment: coordinator watch 7094281062, 12:53 IST); board record filed in the coordinator consolidated board PR.'
+    - 'Phase 1 ~13:26-13:31 IST: M1 ladder PRIVATE -> SHARED -> UNIVERSAL green (friday/intelx 200 SHARED, futuris 200 UNIVERSAL; search rank 1, keyword 1.0). M1b plain record direct PRIVATE -> UNIVERSAL mutates in place, no dual copy (promotion.py:816-819, correct).'
+    - 'Blocked ~13:32-14:06 IST on a bridge MCP outage (STATUS comment 7095166113); bridge recovered on its own, phase-2 script verified byte-identical on Server 1.'
+    - 'Phase 2 ~14:07-14:08 IST: M1b2 dual copy promoted_dual_copy, copy re-signed (HMAC 40a0513bad85 vs original 959d2c5c5d70), same content SHA a4dcf739489d, searchable rank 2 at 0.89 for friday/sentinel/futuris with no repair (rank 2 expected: phase-1 M1b shares the phrase at 1.0). M2 auto-promotion: 9 needs, sweep count 1, PRIVATE -> SHARED, friday 200 (MEM-014 G2 closed). M3 write-time SHARED green; M4 direct UNIVERSAL write 403. Journal clean, no ERROR/traceback.'
+    - 'Observation O1: futuris-cloud-v1 events cursor polling 401s repeatedly from Server 2 - pre-existing, out of scope, noted for the coordinator.'
     blockers: []
-    next_action: 'Muse 10 implements run 2; files evidence per hop.'
+    next_action: 'Work PR #1481 open, awaiting Muse merge.'
   - id: TASK-VAL-012
     title: "Fleet post-fix capability re-probe: re-run the full 10-agent probe after VAL-006's map fixes and prove zero false-down and zero false-up."
     status: MERGED
