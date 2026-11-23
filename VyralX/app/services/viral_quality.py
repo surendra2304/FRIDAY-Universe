@@ -947,3 +947,109 @@ def arc_gate(arc: EventArc | None) -> tuple[bool, str]:
     if arc.peak_position >= 0.66:
         return True, "late_peak"
     return True, "eventful"
+
+
+# --------------------------------------------------------------------------- #
+# TASK-VYR-045: caption-track gate (renders 823/841/861 class)
+# --------------------------------------------------------------------------- #
+# A render carries exactly one caption track: the ASS track the pipeline
+# burns in the lower third. Renders 823/841/861 shipped DOUBLED — the
+# source footage own burned-in captions plus our ASS track, ~1s out of
+# sync — because the only guard was the pre-render vision gate
+# (TASK-VYR-032, any-beat). This is the post-render machine gate: it
+# inspects caption-like detections sampled from the RENDERED output and
+# rejects the render when they form more than one track.
+#
+# A "track" is a set of detections that belong to one caption layer:
+#   * same vertical band — centre-y within _CAPTION_BAND_TOL. Our ASS
+#     captions live in the lower third; a source own captions sit in a
+#     different band; and
+#   * within one band, detections whose time windows overlap by more than
+#     half while carrying different text are a second, out-of-sync track
+#     stacked on the first (the 823/841/861 signature).
+# Sampling density is the caller job: sample at least every 0.5s, or
+# word-by-word captions flash between samples and the gate under-counts
+# (the same miss that let 861 through the VYR-032 vision gate).
+
+_CAPTION_BAND_TOL = 0.08
+_CAPTION_TIME_OVERLAP = 0.5
+
+
+def _norm_caption_text(text: str) -> str:
+    return " ".join((text or "").lower().split())
+
+
+def _caption_windows_overlap(a_start: float, a_end: float,
+                             b_start: float, b_end: float) -> bool:
+    overlap = min(a_end, b_end) - max(a_start, b_start)
+    if overlap <= 0:
+        return False
+    shorter = min(a_end - a_start, b_end - b_start)
+    return shorter > 0 and overlap >= _CAPTION_TIME_OVERLAP * shorter
+
+
+def count_caption_tracks(detections: list[dict[str, Any]]) -> int:
+    """Count distinct caption tracks among sampled output-frame detections.
+
+    Each detection is ``{"y": centre-y 0..1, "start": s, "end": s,
+    "text": str}``. Detections in different vertical bands are different
+    tracks; within one band, overlapping windows with different text are
+    a second out-of-sync track. Sequential captions and re-detections of
+    the same words count once.
+    """
+    cleaned: list[dict[str, Any]] = []
+    for d in detections or []:
+        text = _norm_caption_text(str(d.get("text") or ""))
+        if not text:
+            continue
+        start = float(d.get("start", 0.0) or 0.0)
+        end = float(d.get("end", start) or start)
+        cleaned.append({"y": float(d.get("y", 0.5) or 0.5),
+                        "start": start, "end": max(end, start),
+                        "text": text})
+    if not cleaned:
+        return 0
+    cleaned.sort(key=lambda d: d["y"])
+    bands: list[list[dict[str, Any]]] = []
+    for d in cleaned:
+        if bands and abs(d["y"] - bands[-1][0]["y"]) <= _CAPTION_BAND_TOL:
+            bands[-1].append(d)
+        else:
+            bands.append([d])
+    total = 0
+    for band in bands:
+        band.sort(key=lambda d: (d["start"], d["end"]))
+        tracks: list[dict[str, Any]] = []
+        for d in band:
+            conflict = any(
+                t["text"] != d["text"]
+                and _caption_windows_overlap(
+                    d["start"], d["end"], t["start"], t["end"])
+                for t in tracks
+            )
+            if conflict:
+                tracks.append(dict(d))
+            elif tracks:
+                same = next((t for t in tracks if t["text"] == d["text"]), None)
+                target = same if same is not None else tracks[-1]
+                target["end"] = max(target["end"], d["end"])
+            else:
+                tracks.append(dict(d))
+        total += len(tracks)
+    return total
+
+
+def caption_track_gate(detections: list[dict[str, Any]]) -> tuple[bool, str]:
+    """Machine QA gate for TASK-VYR-045: pass iff exactly one caption track.
+
+    Returns ``(True, "single_caption_track")`` on pass, else
+    ``(False, reason)`` — ``no_caption_track_visible`` (the ASS burn is
+    missing) or ``multiple_caption_tracks:<n>`` (doubled/stacked, the
+    823/841/861 class — reject the render).
+    """
+    n = count_caption_tracks(detections)
+    if n == 1:
+        return True, "single_caption_track"
+    if n == 0:
+        return False, "no_caption_track_visible"
+    return False, f"multiple_caption_tracks:{n}"
