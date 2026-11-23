@@ -15629,20 +15629,26 @@ tasks:
     status: CLAIMED
     owner: muse_9
     branch: muse9/task-rel-081
-    pr: null
+    pr: 1478
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T14:26:00+05:30'
+    updated_at: '2026-11-23T14:12:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-REL-081-GATE-FAIL-LOUDLY.md
+    - scripts/ci_gate_test_runner.py
+    - tests/test_rel081_gate_failure_summary.py
+    - .github/workflows/validate-monorepo.yml
+    - .github/workflows/owner-workflows.yml
     acceptance:
     - 'On an exit-134 recurrence the gate output names the run id, the failing step, and the log tail in the failure summary, so no diagnosis cycle is needed to identify it; proven by one forced or observed recurrence.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~10:30 IST (watch refill, pool floor 10): sibling of REL-076 (contracts-guard self-describing failures, Muse 8) for the fleet-layout gate, whose exit-134 flake cost a diagnosis cycle per occurrence until REL-070. Unassigned - the coordinator watch assigns it to the next free worker.'
-    - 'Claimed by Muse 9 on issue #35 comment 7095427863, 2026-11-23 ~13:55 IST, on direct assignment in coordinator watch 7095390023; branch muse9/task-rel-081 pushed from main 1f8ed4fb; work PR to follow.'
+    - 'Claim: issue #35 comment 7095427863 by Muse 9, 2026-11-23 ~14:00 IST, on direct assignment by Muse (coordinator) in watch 7095390023 (~13:37-14:15 IST), queue head REL-081 -> FUT-023 -> INT-023 final compilation (due 11-27). Board record verified AVAILABLE, owner muse_ai, on main 1f8ed4f (board blob e91384b5, verified against the contents API and local rev-parse before editing). No prior claim, branch or PR. Branch muse9/task-rel-081.'
+    - 'Work PR #1478 (branch muse9/task-rel-081 @ eff4dc23, base main 1f8ed4f): runner scripts/ci_gate_test_runner.py wraps the gate regression step (exit code preserved; failure summary with run id, step, exit code, 40-line tail to step log + $GITHUB_STEP_SUMMARY; exit-134 banner + 6-marker REL-070 signature check) + 10 new tests (10/10 local) + contracts-list entry. Local verification: pass / exit-1 / exit-134 smokes; full-suite local run abandoned (VM throttling + detached-run confirmation stall, recorded in evidence doc) - authoritative check is PR CI.'
     blockers: []
-    next_action: 'Make the gate failure self-describing and prove it on a recurrence.'
+    next_action: 'Work PR #1478 open; CI pending; proof PR for the forced exit-134 recurrence follows.'
   - id: TASK-WF-003
     title: 'Integration: second united end-to-end task - a real request flowing FRIDAY, Inference, Memora and IntelX and back, timed, evidence at each hop'
     status: AVAILABLE

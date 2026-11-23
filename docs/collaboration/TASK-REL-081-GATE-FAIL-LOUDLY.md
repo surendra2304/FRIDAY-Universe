@@ -70,7 +70,8 @@ this is the known interpreter-shutdown daemon-thread race or a new abort.
 
 ## Verification (CI)
 
-- Work PR: #(to be filled when opened) — CI result recorded here before merge.
+- Work PR: #1478 (branch muse9/task-rel-081 @ eff4dc23, base main 1f8ed4f)
+  — CI result recorded here before merge.
 - Proof of a forced recurrence: a [DO NOT MERGE] proof PR from this branch
   plus a test that starts a never-joined daemon thread logging in a loop, so
   the real gate aborts with a real exit 134 at interpreter shutdown and the
