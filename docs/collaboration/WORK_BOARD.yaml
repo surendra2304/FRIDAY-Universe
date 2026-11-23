@@ -14579,7 +14579,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T10:09:00+05:30'
+    updated_at: '2026-11-23T10:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Stratex/api/friday_supervision.py
@@ -14592,9 +14592,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Coordinator, from the 2026-11-22 worker-system research: the fleet-layout/monorepo step-6 exit-134 SIGABRT failed on board-only diffs at least 6 times (PRs #1186, #1240, #1263, #1330, #1348, #1350) and went green on re-run every time - each occurrence costs a full diagnosis cycle across the team. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Assigned to Muse 9 by the coordinator 2026-11-23 ~09:45 IST (queue refill: Muse 9 queue empty after the TASK-INF-026 deploy; REL-070 is the next unassigned pool-8 task and unblocks SEN-022, held on it). Worker claims via hub comment + branch push.'
     - 'Claim: issue #35 comment 7091373834 by Muse 9, 2026-11-23 ~09:42 IST, on direct assignment by Muse (coordinator) in watch 7091286076 (~09:41 IST). Board record verified CLAIMED, owner muse_9, on main ed94c3d9. Branch muse9/task-rel-070 pushed.'
-    - 'Implementation: work PR #1452 (branch muse9/task-rel-070, base main a65e592e, head c98ed395): root cause identified - CPython shutdown race, Stratex supervision daemon threads logging to stderr at finalization (Fatal Python error _enter_buffered_busy -> SIGABRT -> exit 134 after all tests passed); 10 of 12 failed validate-monorepo runs in the 2026-11-21/22 window share the identical signature. Fix: stop_status_summary_keeper() + pytest_sessionfinish hook + 4 regression tests (4/4 pass locally). Evidence doc docs/collaboration/TASK-REL-070-EXIT-134-ROOT-CAUSE.md. CI on PR #1452 pending at filing; five-consecutive-board-only-PRs acceptance is post-merge observation.'
+    - 'Implementation: work PR #1452 (branch muse9/task-rel-070, base main a65e592e, head 5b9d325b): root cause identified - CPython shutdown race, Stratex supervision daemon threads logging to stderr at finalization (Fatal Python error _enter_buffered_busy -> SIGABRT -> exit 134 after all tests passed); 10 of 12 failed validate-monorepo runs in the 2026-11-21/22 window share the identical signature. Fix: stop_status_summary_keeper() + pytest_sessionfinish hook + 4 regression tests (4/4 pass locally). Evidence doc docs/collaboration/TASK-REL-070-EXIT-134-ROOT-CAUSE.md. CI: first run on head 0147559 failed exit 1 on my own new test (it purged + re-imported the module, orphaning the e2e keeper; fixed in 5b9d325b to reuse the shared module object) - no exit 134 in that run either; re-run on head 5b9d325b GREEN (run 45113784120: 3732 passed, fleet validation passed, no abort). Five-consecutive-board-only-PRs acceptance is post-merge observation.'
     blockers: []
-    next_action: 'CI on work PR #1452 must pass first-try (validates the sessionfinish hook on the real suite); then merge; then watch the next five board-only PRs for exit-134 recurrence.'
+    next_action: 'Board-evidence commit pushed; final head CI must go green, then merge; then watch the next five board-only PRs for exit-134 recurrence.'
 
   - id: TASK-REL-071
     title: 'Stratex health path: retire the legacy testnet heartbeat + surface daemon evaluation age, live-probe the health path, file evidence'
