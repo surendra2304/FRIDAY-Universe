@@ -15311,14 +15311,14 @@ tasks:
     next_action: Merge the fix, deploy via Fleet CD, then re-run the live rollback leg (preconditions + window to be re-confirmed on the hub).
   - id: TASK-REL-076
     title: 'CI: make contracts-guard failures self-describing - the guard failing file list prints in the PR check summary; prove on a deliberately failing branch'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_8
     branch: muse8/task-rel-076
-    pr: null
+    pr: 1461
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T10:21:28+05:30'
+    updated_at: '2026-11-23T11:20:08+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -15327,8 +15327,9 @@ tasks:
     evidence:
     - 'Coordinator-drafted (queues post 2026-11-23 ~01:00 IST): the #1395 hold cost a day to truncated guard logs. Queued to Muse 8 position 1 after TASK-REL-067 merged (PR #1395, merge ff84c7ff). Muse 8 claims via hub comment + branch push.'
     - 'Claim: issue #35 comment 7091913029 by Muse 8, 2026-11-23 10:20 IST, on assignment in the coordinator queues post 2026-11-23 ~01:00 IST, confirmed in coordinator watch 7091751044 (Muse 8 -> REL-076 -> VAL-009 -> OBS-014). Board record verified AVAILABLE, owner muse_8, on main fde0591b (board blob 1df32a8a, verified against the git trees API before editing). No prior claim, branch or PR. Branch muse8/task-rel-076.'
+    - 'Work PR #1461 (branch muse8/task-rel-076 @ 1926e8e6, base main 136533e5): guard writes failing files to $GITHUB_STEP_SUMMARY (+96) + 5 new guard tests; local verification 5/5 pass, end-to-end FAIL summary proven on the real tree. Claim PR #1454 merged 10:49 IST (merge 0d26176b).'
     blockers: []
-    next_action: 'Claimed - implement now: make the guard self-describing, prove on a failing branch, file the summary.'
+    next_action: 'Work PR #1461 open - awaiting CI green + coordinator merge; proof PR (deliberately failing branch) still to file.'
   - id: TASK-VAL-009
     title: 'Integration: prove router-bus TaskRecord correlation live - one dispatched task, router id to bus dispatch id chain + completion callback shown'
     status: AVAILABLE
