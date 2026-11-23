@@ -361,6 +361,48 @@ jobs:
             echo "Changed folders detected: $CHANGED_AGENTS"
             
             SERVER2_AGENTS=("VyralX" "Cortex" "IntelX" "Futuris")
+            # BEGIN PRE-DEPLOY HEALTH BASELINE (TASK-OBS-019)
+            # The post-deploy health gate below fails the job on any agent whose
+            # /health stays non-2xx. Futuris :8004 / IntelX :8005 were already
+            # 503 BEFORE the deploy (pre-existing, not deploy-caused), so the gate
+            # failed Fleet CD run 45122467146 on a healthy deploy. Measure the
+            # baseline BEFORE any restart: an agent already unhealthy pre-deploy
+            # is warn-not-fail post-deploy; only a healthy->unhealthy regression
+            # fails the job. No hard-coded degraded list: the degraded set is
+            # measured fresh on every run, so the gate fails again the moment a
+            # fixed agent regresses. Executed by
+            # tests/test_fleet_cd_s2_health_gate.py — keep the markers.
+            echo "=== Pre-deploy health baseline (TASK-OBS-019) ==="
+            HEALTHY_BEFORE=""
+            BASELINE_TAKEN=""
+            for AGENT in "${SERVER2_AGENTS[@]}"; do
+              PORT=""
+              case "$AGENT" in
+                Futuris) PORT=8004;; IntelX) PORT=8005;; Cortex) PORT=8009;; VyralX) PORT=8010;;
+              esac
+              [ -n "$PORT" ] || continue
+              if [ "$(systemctl show "${AGENT}.service" --property=LoadState --value)" = "masked" ] || [ "$(systemctl show "${AGENT}.service" --property=LoadState --value)" = "not-found" ]; then
+                echo "    $AGENT: skipped — ${AGENT}.service is masked or not-found on this server; no baseline"
+                continue
+              fi
+              # A single probe of a steady-state agent is nearly always right, but a
+              # transient blip must not misclassify a healthy agent as degraded
+              # (that would silently downgrade a real post-deploy regression to a
+              # warning). 3 x 5s bounds the cost at ~20s per agent.
+              OK_BEFORE=""
+              for i in $(seq 1 3); do
+                if curl -sf -m 5 "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then OK_BEFORE=yes; break; fi
+                [ "$i" -lt 3 ] && sleep 5
+              done
+              if [ "$OK_BEFORE" = "yes" ]; then
+                HEALTHY_BEFORE="$HEALTHY_BEFORE $AGENT"
+                echo "    $AGENT: healthy before deploy"
+              else
+                echo "    $AGENT: NOT healthy before deploy (pre-existing degraded — warn-not-fail after deploy)"
+              fi
+            done
+            BASELINE_TAKEN=yes
+            # END PRE-DEPLOY HEALTH BASELINE (TASK-OBS-019)
             for AGENT in "${SERVER2_AGENTS[@]}"; do
               if echo "$CHANGED_AGENTS" | grep -qw "$AGENT" || echo "$CHANGED_AGENTS" | grep -Eqw "mesh|deploy|scripts" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
                 if [ "$(systemctl show "${AGENT}.service" --property=LoadState --value)" = loaded ]; then
@@ -444,6 +486,28 @@ jobs:
               done
               FAILED_HEALTH="$STILL_FAILED"
             fi
+            # BEGIN PRE-EXISTING DEGRADATION FILTER (TASK-OBS-019)
+            # FAILED_HEALTH agents that were ALREADY unhealthy before this deploy
+            # did not regress — the deploy did not break them, so failing the job
+            # on them fails Fleet CD on a healthy deploy (run 45122467146:
+            # pre-existing Futuris :8004 / IntelX :8005 /health 503s). Warn loudly
+            # so the degradation stays visible, but only a healthy->unhealthy
+            # REGRESSION fails the job. Fail-closed: if the baseline never ran
+            # (BASELINE_TAKEN empty), nothing is downgraded. Executed by
+            # tests/test_fleet_cd_s2_health_gate.py — keep the markers.
+            if [ -n "$FAILED_HEALTH" ]; then
+              STILL_FAILED=""
+              for AGENT in $FAILED_HEALTH; do
+                if [ -n "${BASELINE_TAKEN:-}" ] && ! echo " ${HEALTHY_BEFORE:-} " | grep -qw "$AGENT"; then
+                  echo "    ::warning::$AGENT UNHEALTHY after deploy but was already unhealthy BEFORE this deploy (pre-existing degradation, TASK-OBS-019) — not failing the job; fixing the 503 itself is out of scope for this deploy"
+                else
+                  echo "    $AGENT: REGRESSION — healthy before deploy, unhealthy after; failing the job"
+                  STILL_FAILED="$STILL_FAILED $AGENT"
+                fi
+              done
+              FAILED_HEALTH="$STILL_FAILED"
+            fi
+            # END PRE-EXISTING DEGRADATION FILTER (TASK-OBS-019)
             if [ -n "$FAILED_HEALTH" ]; then
               echo "::error::Deploy completed but health gate failed for:$FAILED_HEALTH — run scripts/rollback_deploy.sh <last-good-sha> or the 'Fleet Rollback' workflow"
               exit 1
