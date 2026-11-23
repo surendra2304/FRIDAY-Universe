@@ -472,6 +472,11 @@ def _ensure_market_analysis(engine=None) -> None:
     payload rather than hidden behind a blocked request.
     """
     global _ANALYSIS_REFRESH_RUNNING
+    # TASK-REL-070: no new background work after a stop request (test
+    # harness shutdown) — a refresh spawned here would outlive the session
+    # and trip the interpreter-shutdown abort the stop exists to prevent.
+    if _STATUS_SUMMARY_KEEPER_STOP.is_set():
+        return
     now = time.time()
     if _LAST_MARKET_ANALYSIS is not None and (now - _LAST_MARKET_ANALYSIS_TS) < _MARKET_ANALYSIS_INTERVAL_SEC:
         return
@@ -605,6 +610,17 @@ def _refresh_status_summary() -> None:
 _STATUS_SUMMARY_KEEPER_INTERVAL_S: float = 30.0
 _STATUS_SUMMARY_KEEPER_THREAD: threading.Thread | None = None
 _STATUS_SUMMARY_KEEPER_LOCK = threading.Lock()
+# TASK-REL-070: shutdown signal for the keeper (and for the refresh threads
+# it spawns). The keeper is an infinite-loop daemon thread; a test process
+# that imports the Stratex dashboard starts it at import time, and each
+# keeper pass can spawn a long-running market-analysis refresh thread that
+# keeps logging while it runs. If either thread is alive when CPython
+# finalizes, the interpreter aborts (Fatal Python error:
+# _enter_buffered_busy ... at interpreter shutdown, possibly due to daemon
+# threads -> SIGABRT -> exit 134) after every test passed. Production never
+# sets this event; the root test harness sets it via
+# stop_status_summary_keeper() at session end.
+_STATUS_SUMMARY_KEEPER_STOP = threading.Event()
 
 
 def _keeper_refresh_once() -> bool:
@@ -624,12 +640,14 @@ def _keeper_refresh_once() -> bool:
 
 
 def _status_summary_keeper_loop() -> None:
-    while True:
+    while not _STATUS_SUMMARY_KEEPER_STOP.is_set():
         try:
             _keeper_refresh_once()
         except Exception as exc:  # the keeper must never die silently
             logger.debug(f"[FRIDAY_SUPERVISION] status keeper pass failed: {exc}")
-        time.sleep(_STATUS_SUMMARY_KEEPER_INTERVAL_S)
+        # Wait (not sleep) so a stop request wakes the loop immediately
+        # instead of after a full interval.
+        _STATUS_SUMMARY_KEEPER_STOP.wait(_STATUS_SUMMARY_KEEPER_INTERVAL_S)
 
 
 def start_status_summary_keeper() -> threading.Thread | None:
@@ -644,6 +662,8 @@ def start_status_summary_keeper() -> threading.Thread | None:
     with _STATUS_SUMMARY_KEEPER_LOCK:
         if _STATUS_SUMMARY_KEEPER_THREAD is not None and _STATUS_SUMMARY_KEEPER_THREAD.is_alive():
             return None
+        # A previous stop (test harness shutdown) must not block a restart.
+        _STATUS_SUMMARY_KEEPER_STOP.clear()
         try:
             thread = threading.Thread(
                 target=_status_summary_keeper_loop,
@@ -656,6 +676,56 @@ def start_status_summary_keeper() -> threading.Thread | None:
             return None
         _STATUS_SUMMARY_KEEPER_THREAD = thread
         return thread
+
+
+def stop_status_summary_keeper(timeout: float = 180.0) -> bool:
+    """Stop the snapshot keeper and join every supervision thread it started.
+
+    TASK-REL-070: the keeper loop is infinite and each of its refresh passes
+    can spawn a single-shot ``stratex-market-analysis-refresh`` daemon thread
+    that runs a real ML-ensemble evaluation (24.5 s cold, 69 s under load on
+    Server 1) and logs while it runs. A test process that imports the Stratex
+    dashboard starts the keeper at import time; when the pytest session ends
+    those daemon threads are usually still alive, and CPython finalization
+    then aborts the interpreter (``Fatal Python error: _enter_buffered_busy:
+    could not acquire lock for <_io.BufferedWriter name='<stderr>'> at
+    interpreter shutdown, possibly due to daemon threads`` -> SIGABRT ->
+    exit 134) even though every test passed. That abort failed the
+    fleet-layout gate on board-only diffs 10 times in the
+    2026-11-21/22 window, green on re-run every time.
+
+    This is the shutdown half of the fix: signal the keeper to stop, join
+    it, then join any in-flight analysis/status refresh threads, so no
+    supervision thread is alive when the interpreter finalizes. Production
+    never calls this (the keeper lives for the process lifetime); the root
+    test harness calls it from ``pytest_sessionfinish``. The 180 s default
+    bound exceeds the documented 69 s worst-case refresh. Returns True
+    when no supervision thread is alive afterwards.
+    """
+    global _STATUS_SUMMARY_KEEPER_THREAD
+    _STATUS_SUMMARY_KEEPER_STOP.set()
+    with _STATUS_SUMMARY_KEEPER_LOCK:
+        keeper = _STATUS_SUMMARY_KEEPER_THREAD
+        _STATUS_SUMMARY_KEEPER_THREAD = None
+    if keeper is not None and keeper is not threading.current_thread():
+        keeper.join(timeout=timeout)
+    deadline = time.monotonic() + max(timeout, 0.0)
+    still_alive: list[str] = []
+    for thread in threading.enumerate():
+        if thread is threading.current_thread():
+            continue
+        if thread.name in ("stratex-market-analysis-refresh", "stratex-status-summary-refresh"):
+            remaining = deadline - time.monotonic()
+            if remaining > 0:
+                thread.join(timeout=remaining)
+            if thread.is_alive():
+                still_alive.append(thread.name)
+    if keeper is not None and keeper.is_alive():
+        still_alive.append(keeper.name)
+    if still_alive:
+        logger.debug(f"[FRIDAY_SUPERVISION] supervision threads still alive after stop: {still_alive}")
+        return False
+    return True
 
 
 def _get_engine_status_summary() -> dict[str, Any]:
