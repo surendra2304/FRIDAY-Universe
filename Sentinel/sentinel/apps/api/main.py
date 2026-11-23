@@ -52,6 +52,10 @@ from sentinel.apps.api.src.sentinel_api.security_incident_timeline import router
 from sentinel.apps.api.middleware import APIKeyAuthMiddleware, RequestCapacityMiddleware
 from sentinel.audit.audit_logger import AuditLogger
 from sentinel.config.settings import EnvironmentType, get_settings
+from sentinel.config.telegram_self_check import (
+    check_telegram_channel,
+    verify_telegram_channel_at_startup,
+)
 from sentinel.config.validator import enforce_startup_configuration
 from sentinel.core.auth.capabilities import CapabilityError, CapabilityIssuer
 from sentinel.core.events.bus import event_bus
@@ -144,6 +148,16 @@ _error_counter = 0
 async def lifespan(app: FastAPI):
     # Startup: zero-trust configuration validation
     enforce_startup_configuration(settings, fail_fast=False)
+
+    # TASK-SEN-022: verify the human channel at boot and say so loudly.
+    # The 2026-11-15 class was a Sentinel that booted with no Telegram
+    # credentials and never said so — approval prompts and operations
+    # alerts then reached nobody. The verdict is stashed for /ready; the
+    # check never blocks boot (a Sentinel that cannot page the owner
+    # still has to watch the fleet).
+    telegram_report = verify_telegram_channel_at_startup()
+    app.state.telegram_channel_ready = telegram_report.configured
+    app.state.telegram_channel_missing = list(telegram_report.missing)
 
     # Initialize shared resilient connection-pooled mesh client
     app.state.mesh_client = ResilientMeshClient(timeout=10.0)
@@ -460,6 +474,19 @@ def _storage_is_durable() -> bool:
     return settings.storage_backend.strip().lower() in _DURABLE_STORAGE_BACKENDS
 
 
+def _telegram_channel_ready() -> bool:
+    """Telegram readiness (TASK-SEN-022): the boot-time verdict when the
+    lifespan ran, else a live check through the same resolution the
+    dispatcher uses. Never raises: an uncheckable channel reads as down."""
+    boot = getattr(app.state, "telegram_channel_ready", None)
+    if boot is not None:
+        return bool(boot)
+    try:
+        return check_telegram_channel().configured
+    except Exception:
+        return False
+
+
 @app.api_route("/health", methods=["GET", "HEAD"], tags=["System"])
 async def health_check() -> dict[str, Any]:
     """Report process liveness, chain integrity, and whether the record is durable."""
@@ -537,6 +564,11 @@ async def readiness_check() -> dict[str, Any]:
         # production an in-memory backend means the security record does not
         # survive a redeploy, so readiness must say so instead of reporting READY.
         "audit_durable": durable if is_production else True,
+        # TASK-SEN-022: the human channel gates readiness in production —
+        # a Sentinel that cannot page the owner is degraded, not ready.
+        # Outside production it does not gate (CI/dev run without Telegram
+        # variables by design), mirroring audit_durable above.
+        "telegram_channel": _telegram_channel_ready() if is_production else True,
     }
     ready = all(checks.values())
     if is_production and db_backend != "oracle" and ready:
