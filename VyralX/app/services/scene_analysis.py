@@ -857,6 +857,323 @@ def analyze_scene(source_path: Path | str, duration: float) -> dict[str, Any] | 
     return record
 
 
+# --------------------------------------------------------------------------- #
+# TASK-VYR-045: dense post-render caption sampling
+# --------------------------------------------------------------------------- #
+# The pre-render vision gate (TASK-VYR-032, any-beat) still misses
+# word-by-word caption tracks: the track flashes per word and may be
+# absent from all three sampled stills, which is exactly how render
+# 861 shipped doubled. The post-render gate therefore samples the
+# RENDERED file densely — at least every 0.5s — and asks the vision
+# model what caption text is visible in each frame, with its vertical
+# zone. The detections feed viral_quality.caption_track_gate: exactly
+# one track passes; two or more (the 823/841/861 class) reject the
+# render before it reaches the publish queue.
+#
+# Cost: the provider caps a request at 3 images and the loop budgets
+# ~1,000 tokens per image, so a 20s render costs ~40 frames / ~14
+# requests / ~45k tokens. That is the price of the check — a doubled
+# render the owner rejects costs more. Batch requests are paced and
+# _vision_request's bounded 429 retry still applies, so a starved day
+# degrades to caption_gate_unmeasured instead of a crash.
+
+_CAPTION_SAMPLE_INTERVAL = 0.5
+_CAPTION_FRAMES_PER_REQUEST = 3
+_CAPTION_MAX_FRAMES = 120
+# 65s between batches: one 3-image request costs ~6.5k input tokens
+# against the free tier's 7k tokens/min, so 10s pacing 429s on the
+# second batch of every render (seen live, 2026-11-24). 65s matches
+# the loop's own vision pacing and lets each request's tokens age out
+# of the rolling minute before the next one lands.
+_CAPTION_PACE_SECONDS = 65.0
+_CAPTION_ZONE_Y = {"top": 0.15, "middle": 0.50, "bottom": 0.85}
+
+_CAPTION_DETECTION_PROMPT = (
+    "These frames are sampled from one rendered short vertical video, in order. "
+    "For each frame, list every line of on-screen caption text that transcribes speech — "
+    "words spoken in the video, shown as subtitles. Copy each line exactly as it appears. "
+    "For each line give its vertical position: \"top\" (upper third), \"middle\" (middle third) "
+    "or \"bottom\" (lower third). "
+    "Text that is part of the scene being filmed (signs, jerseys, score bugs, screens, printed words) "
+    "is NOT captions, and neither is a one-off title or name card that does not transcribe speech. "
+    "A watermark, username or channel name stamped on the footage is NOT captions. "
+    "Reply with ONE JSON object and nothing else, in exactly this shape:\n"
+    '{"frames": [{"frame": 0, "captions": [{"text": "exact words", "zone": "bottom"}]}]}\n'
+    "One entry per frame, in order, even when a frame has no captions (empty list). "
+    "Never guess words that are not visible. "
+    "Report each distinct caption ONCE per frame — do not repeat a word or "
+    "phrase that is part of another line you already listed for the same "
+    "frame. If one caption wraps onto two lines, report it as ONE line "
+    "with the full text."
+)
+
+
+def _coerce_caption_detections(
+    payload: dict[str, Any],
+    frame_times: list[float],
+    interval_seconds: float = _CAPTION_SAMPLE_INTERVAL,
+) -> list[dict[str, Any]]:
+    """Vision reply -> caption detections for the VYR-045 gate.
+
+    ``payload`` is the parsed JSON object of one batched detection
+    reply; ``frame_times`` is the list of sample times (seconds) in
+    the same order as the reply's frames. Each caption becomes one
+    detection ``{"y", "start", "end", "text"}`` whose window is the
+    sample cell centred on the frame. Malformed lines are skipped;
+    a frame the reply omits contributes nothing.
+    """
+    detections: list[dict[str, Any]] = []
+    half = max(0.05, float(interval_seconds) / 2.0)
+    for entry in payload.get("frames") or []:
+        if not isinstance(entry, dict):
+            continue
+        index = entry.get("frame")
+        if not isinstance(index, int) or index < 0 or index >= len(frame_times):
+            continue
+        at = float(frame_times[index])
+        for line in entry.get("captions") or []:
+            if not isinstance(line, dict):
+                continue
+            text = str(line.get("text") or "").strip()
+            zone = str(line.get("zone") or "").strip().lower()
+            if not text or zone not in _CAPTION_ZONE_Y:
+                continue
+            detections.append({
+                "y": _CAPTION_ZONE_Y[zone],
+                "start": max(0.0, at - half),
+                "end": at + half,
+                "text": text,
+            })
+    return detections
+
+
+def _is_word_subsequence(short: str, long: str) -> bool:
+    """True when ``short``'s words occur contiguously inside ``long``."""
+    a = short.split()
+    b = long.split()
+    if not a or len(a) >= len(b):
+        return False
+    return any(b[i:i + len(a)] == a for i in range(len(b) - len(a) + 1))
+
+
+def _prune_caption_detections(
+    detections: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Drop duplicate reads of one visual line within a frame.
+
+    The vision model sometimes reports one caption twice in a frame —
+    once as its full text and once as a fragment of it in another
+    zone (a wrapped line, or an emphasised first word read on its
+    own). Within one frame, a line whose words are a contiguous
+    subsequence of a longer line in the same frame is a duplicate
+    read, not a second track, so it is dropped. Lines that merely
+    share a word but differ otherwise are kept — a real doubled track
+    (the 823/841/861 class) shows different wording in the same
+    frame, and an out-of-sync second track differs in other frames
+    anyway.
+    """
+    kept: list[dict[str, Any]] = []
+    for det in detections:
+        text = str(det["text"])
+        centre = (float(det["start"]) + float(det["end"])) / 2.0
+        duplicate = False
+        for other in detections:
+            if other is det:
+                continue
+            other_centre = (float(other["start"]) + float(other["end"])) / 2.0
+            if abs(other_centre - centre) > 1e-6:
+                continue
+            if _is_word_subsequence(text, str(other["text"])):
+                duplicate = True
+                break
+        if not duplicate:
+            kept.append(det)
+    return kept
+
+
+def _segments_from_detections(
+    detections: list[dict[str, Any]],
+    interval_seconds: float,
+) -> list[dict[str, Any]]:
+    """Merge per-frame detections into caption segments per band.
+
+    A caption line stays on screen ~1.6s, so the same text in one
+    band across consecutive frames (allowing one missed frame) is one
+    segment. Segments shorter than 1.0s are stray reads, not caption
+    lines — the model splits or invents a fragment in a single frame
+    (seen on the real Nov 21 render: "WE'RE GONNA FIND" / "OUT WHAT
+    HAPPENS" in the middle band, each in exactly one frame, while the
+    bottom line held steady) — and counting them would false-reject a
+    good render. A real second track (823/841/861 class) is
+    phrase-level, so its segments clear 1.0s. Dropping a short segment
+    can only remove a track, never invent one; a render whose only
+    track is sub-second captions then fails closed as unmeasured /
+    no-caption-track-visible downstream.
+    """
+    by_band: dict[float, list[dict[str, Any]]] = {}
+    for det in detections:
+        by_band.setdefault(float(det["y"]), []).append(det)
+    out: list[dict[str, Any]] = []
+    gap = max(0.05, float(interval_seconds or _CAPTION_SAMPLE_INTERVAL))
+    for y, dets in by_band.items():
+        dets.sort(key=lambda d: (float(d["start"]), float(d["end"])))
+        segment: dict[str, Any] | None = None
+        for det in dets:
+            start = float(det["start"])
+            end = float(det["end"])
+            text = str(det["text"])
+            if (
+                segment is not None
+                and segment["text"] == text
+                and start - float(segment["end"]) <= gap + 1e-6
+            ):
+                segment["end"] = max(float(segment["end"]), end)
+                continue
+            if segment is not None and float(segment["end"]) - float(
+                segment["start"]
+            ) >= 1.0:
+                out.append(segment)
+            segment = {"y": y, "start": start, "end": end, "text": text}
+        if segment is not None and float(segment["end"]) - float(
+            segment["start"]
+        ) >= 1.0:
+            out.append(segment)
+    out.sort(key=lambda d: (float(d["start"]), float(d["y"])))
+    return out
+
+
+def sample_render_caption_detections(
+    render_path: Path | str,
+    duration: float,
+    *,
+    interval_seconds: float = _CAPTION_SAMPLE_INTERVAL,
+    frames_per_request: int = _CAPTION_FRAMES_PER_REQUEST,
+    pace_seconds: float = _CAPTION_PACE_SECONDS,
+    max_frames: int = _CAPTION_MAX_FRAMES,
+    extract_frame=None,
+    vision_request=None,
+) -> list[dict[str, Any]] | None:
+    """Sample a rendered file densely and detect caption text per frame.
+
+    Returns a list of detections (``{"y", "start", "end", "text"}``)
+    for :func:`app.services.viral_quality.caption_track_gate`, or
+    ``None`` when measurement itself failed — no vision key, a frame
+    that would not extract, a vision call that failed, or an unusable
+    reply. ``None`` is fail-closed: the caller must skip the render,
+    never ship it unmeasured. A render with no captions at all returns
+    ``[]`` (the gate then rejects it as ``no_caption_track_visible``).
+
+    ``extract_frame`` and ``vision_request`` are seams for tests; they
+    default to :func:`_extract_frame` and :func:`_vision_request`.
+    """
+    settings = get_settings()
+    request = vision_request or _vision_request
+    if vision_request is None:
+        key = str(getattr(settings, "vision_api_key", "") or "").strip()
+        if not key:
+            log.warning("Caption sampling unavailable: no vision API key configured")
+            return None
+    source = Path(render_path)
+    length = float(duration or 0.0)
+    if not source.is_file() or length <= 0:
+        return None
+    interval = max(0.1, float(interval_seconds or _CAPTION_SAMPLE_INTERVAL))
+    times: list[float] = []
+    at = interval / 2.0
+    while at < length and len(times) < int(max_frames or _CAPTION_MAX_FRAMES):
+        times.append(round(at, 3))
+        at += interval
+    if not times:
+        return None
+    extract = extract_frame or _extract_frame
+    detections: list[dict[str, Any]] = []
+    with tempfile.TemporaryDirectory(prefix="vyralx_caption_") as tmp:
+        frames: list[tuple[int, float, Path]] = []
+        for index, sample_at in enumerate(times):
+            dest = Path(tmp) / f"cap{index:03d}.jpg"
+            if not extract(source, sample_at, dest):
+                log.warning(
+                    "Caption sampling failed: frame at %.2fs did not extract", sample_at
+                )
+                return None
+            frames.append((index, sample_at, dest))
+        per_request = max(1, int(frames_per_request or _CAPTION_FRAMES_PER_REQUEST))
+        for start in range(0, len(frames), per_request):
+            batch = frames[start:start + per_request]
+            if start > 0 and pace_seconds:
+                wait_for_vision_pacing(float(pace_seconds))
+            content: list[dict[str, Any]] = [
+                {"type": "text", "text": _CAPTION_DETECTION_PROMPT}
+            ]
+            for batch_index, (_frame_index, frame_at, dest) in enumerate(batch):
+                content.append(
+                    {"type": "text", "text": f"Frame {batch_index} (t={frame_at:.2f}s):"}
+                )
+                content.append(
+                    {"type": "image_url", "image_url": {"url": _data_url(dest)}}
+                )
+            body = {
+                "model": settings.vision_model,
+                "messages": [{"role": "user", "content": content}],
+                "temperature": 0.1,
+                # 3 frames, several lines each, plus the model's own
+                # framing: 800 truncated real replies mid-object.
+                "max_tokens": 1500,
+            }
+            try:
+                response = request(body, context="caption_detection")
+                response.raise_for_status()
+                payload = response.json()
+                text = str(payload["choices"][0]["message"]["content"] or "").strip()
+            except Exception as exc:  # noqa: BLE001 - None is the designed failure value
+                log.warning(
+                    "Caption sampling failed (%s: %s)", type(exc).__name__, str(exc)[:160]
+                )
+                return None
+            # The model often wraps the JSON in a fenced code block
+            # (```json ... ```), which json.loads rejects outright.
+            stripped = text.strip()
+            if stripped.startswith("```"):
+                lines = stripped.splitlines()
+                if lines and lines[0].startswith("```"):
+                    lines = lines[1:]
+                if lines and lines[-1].strip() == "```":
+                    lines = lines[:-1]
+                stripped = "\n".join(lines).strip()
+            try:
+                parsed = json.loads(stripped)
+            except json.JSONDecodeError:
+                parsed = _balanced_json_object(stripped)
+            if not isinstance(parsed, dict) or not isinstance(parsed.get("frames"), list):
+                # The model sometimes drops the final closer(s) of an
+                # otherwise complete object (seen live: a 3-frame reply
+                # ending "...]}]" with the outer "}" missing). Try
+                # appending the missing closers before giving up.
+                for suffix in ("}", "]}", "}]}"):
+                    try:
+                        repaired = json.loads(stripped + suffix)
+                    except json.JSONDecodeError:
+                        continue
+                    if isinstance(repaired, dict) and isinstance(
+                        repaired.get("frames"), list
+                    ):
+                        parsed = repaired
+                        break
+            if not isinstance(parsed, dict) or not isinstance(parsed.get("frames"), list):
+                log.warning(
+                    "Caption sampling reply was not usable JSON (%d chars): %s",
+                    len(text), text[:500],
+                )
+                return None
+            batch_times = [frame_at for _, frame_at, _ in batch]
+            detections.extend(
+                _coerce_caption_detections(parsed, batch_times, interval)
+            )
+    return _segments_from_detections(
+        _prune_caption_detections(detections), interval
+    )
+
+
 def scene_text(record: dict[str, Any]) -> str:
     """Render the record as the numbered beat lines the editorial expects."""
     lines = []
