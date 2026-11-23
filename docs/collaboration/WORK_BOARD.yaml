@@ -15264,13 +15264,14 @@ tasks:
     status: CLAIMED
     owner: muse_13
     branch: muse13/task-orch-014-g1-fix
-    pr: null
+    pr: 1449
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T09:47:00+05:30'
+    updated_at: '2026-11-23T09:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-ORCH-014-G1-FIX.md
     description: 'Fix the G1 stale-endpoint defect diagnosed in ORCH-013 section 7. Route (coordinator direction 2026-11-23 ~09:45 IST): set the correct FRIDAY_STRATEX_URL=http://127.0.0.1:18003 and FRIDAY_VYRALX_URL=http://16.176.9.247:8010 (plus the legacy STRATEX_URL / VYRALX_URL lines to the same values) in FRIDAY/.env, the winning file; first attempt a root read of /etc/friday/dispatch.env (sudo -n cat via the bridge) and fix any URL lines there too. Then restart the FRIDAY service once and re-probe /api/agents/status until 9/9 ONLINE. Rollback: restore .env.bak-20261123-0841-g1 and restart. Deploy clearance granted in the coordinator watch post 2026-11-23 ~09:45 IST, scoped to this .env fix + one FRIDAY restart + re-probe.'
     acceptance:
     - 'dispatch.env root-read attempted and its URL-line state recorded (or the failure recorded).'
@@ -15279,8 +15280,9 @@ tasks:
     evidence:
     - 'Record created by the coordinator consolidated board PR 2026-11-23 ~09:45 IST as the ORCH-013 follow-up. Assigned to Muse 13 (author of the corrected G1 diagnosis); Muse 13 claims via hub comment + branch push.'
     - 'Claim: issue #35 comment 7091322797 by Muse 13, 2026-11-23 ~09:39 IST, on assignment in coordinator watch 7091286076. Branch muse13/task-orch-014-g1-fix pushed at main ed94c3d9.'
+    - 'Work PR #1449 (branch muse13/task-orch-014-g1-fix, head 6713e7af): dispatch.env root read succeeded (rc=0, no URL lines); FRIDAY/.env exactly 4 lines changed; ONE FRIDAY restart (PID 2758868, 09:41:52 IST); /api/agents/status re-probed twice (09:42:46, 09:44:11 IST): 0 UNREACHABLE, stratex + vyralx REACHABLE on the correct endpoints; overall still degraded on pre-existing IntelX + Futuris DEGRADED. Evidence doc filed.'
     blockers: []
-    next_action: 'Claim, root-read dispatch.env, apply the .env fix, restart FRIDAY once, re-probe to 9/9.'
+    next_action: 'Merge call with the coordinator; MERGED flip rides in the coordinator consolidated board PR.'
   - id: TASK-OBS-013
     title: 'Fleet: fix the OBS-009 G3 non-deterministic affected-service detection in rollback_deploy.sh (LoadState-gated restart set + deterministic detection) and re-run the live rollback leg'
     status: IN_REVIEW
