@@ -17280,14 +17280,14 @@ tasks:
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-STR-046
     title: 'Stratex: verify resting stops on all 29 open positions - read back each position''s resting stop from the venue and file per-position evidence; BNB sleeve position first'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-str-046-resting-stops
     pr: 1533
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:12:00+05:30'
+    updated_at: '2026-11-24T00:59:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-STR-046-RESTING-STOPS.md
@@ -17298,8 +17298,9 @@ tasks:
     - 'Claim: hub #1483 comment 7107740707 by Muse 4, 2026-11-23 ~22:20 IST, on coordinator queue correction in watch 7107607002 (~22:15 IST; queue STR-HLT-002 blocked head -> STR-046 -> OBS-015; STR-046 + OBS-015 -> muse_4 in the next board PR spec). Board record verified AVAILABLE, owner null, on main 23afe6ba (board blob bd726baf, 17,459 lines) this run, re-verified unchanged on main 6173be34 (merge #1530) before push. Branch muse4/task-str-046-resting-stops.'
     - 'Verified live 2026-11-23 ~22:22-22:23 IST (Muse 4, two reads via the merged STR-044 reader on S1, Binance demo): 28 open positions, 28/28 with a full live SL+TP bracket (56 conditional algo orders, all NEW/closePosition/MARK_PRICE), 0 missing stops, 0 missing TPs — no P0. BNB sleeve stop 716.65 (+21.34%, judged bracket, unchanged). Count change 29 -> 28 explained: ATOM/DOT/ADA-short/AVAX-old all exited 19:27-19:47 IST via SL_TP_BROKER (net -40.38); the AVAX P0 position closed 19:27 IST at 6.797 with the STR-AUDIT-001 protective stop live. Evidence docs/collaboration/TASK-STR-046-RESTING-STOPS.md.'
     - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Claim flip: Muse 4 claimed on the hub 2026-11-23 ~22:20 IST (comment 7107740707) and pushed branch muse4/task-str-046-resting-stops. Status AVAILABLE -> CLAIMED, owner null -> muse_4."
+    - 'Merged as PR #1533 (merge commit 0dd136cb2b10506d11a9ad2d790e202c5b74bf2c); CI 9/9 green verified first-hand by the coordinator before merge; audit: head 0cf514b4, 28/28 positions with live SL+TP brackets, evidence doc docs/collaboration/TASK-STR-046-RESTING-STOPS.md.'
     blockers: []
-    next_action: 'MERGED flip rides in the coordinator consolidated board PR; no further action — verification complete, no missing stop to fix.'
+    next_action: 'Merged 2026-11-24 ~01:00 IST as PR #1533; verification complete, no missing stop to fix.'
   - id: TASK-VYR-048
     title: 'VyralX: disposition the held-render pool - render 861 (held after failed watch) + other held renders: keep, re-render, or delete, with reasons filed'
     status: AVAILABLE
@@ -17524,13 +17525,13 @@ tasks:
 
     title: 'OBS: identify the FRIDAY.service restart actor - 3 clean restarts on S1 (20:00 / 20:10 / 21:28 IST, PID changes, no OOM kill)'
     status: AVAILABLE
-    owner: null
+    owner: muse_17
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T23:10:00+05:30'
+    updated_at: '2026-11-24T00:59:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17543,13 +17544,13 @@ tasks:
 
     title: 'FRIDAY: deploy + live acceptance leg for the FRD-038 webchat 401 fix once it lands'
     status: AVAILABLE
-    owner: null
+    owner: muse_5
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T23:10:00+05:30'
+    updated_at: '2026-11-24T00:59:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17562,13 +17563,13 @@ tasks:
 
     title: 'EARN: lead-magnet eBook pack - draft the eBook outline + first chapter for the Payhip/Contra listing'
     status: AVAILABLE
-    owner: null
+    owner: muse_18
     branch: null
     pr: null
     contributors: []
     priority: P3
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T23:10:00+05:30'
+    updated_at: '2026-11-24T00:59:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17581,13 +17582,13 @@ tasks:
 
     title: 'EARN: sales page copy pack for the 19-dollar digital product'
     status: AVAILABLE
-    owner: null
+    owner: muse_19
     branch: null
     pr: null
     contributors: []
     priority: P3
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T23:10:00+05:30'
+    updated_at: '2026-11-24T00:59:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17619,13 +17620,13 @@ tasks:
 
     title: 'EARN: email-sequences gig copy pack (Level-1 queue item 1)'
     status: AVAILABLE
-    owner: null
+    owner: muse_12
     branch: null
     pr: null
     contributors: []
     priority: P3
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T23:10:00+05:30'
+    updated_at: '2026-11-24T00:59:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17638,13 +17639,13 @@ tasks:
 
     title: 'Stratex: reconcile the heartbeat P&L (+130.27) vs move-verified P&L (+140.90) gap from the 2026-11-23 audit'
     status: AVAILABLE
-    owner: null
+    owner: muse_19
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T23:10:00+05:30'
+    updated_at: '2026-11-24T00:59:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17675,13 +17676,13 @@ tasks:
   - id: TASK-INF-031
     title: 'Inference: set the routing deadline from the INF-019 9k-token timing evidence'
     status: AVAILABLE
-    owner: null
+    owner: muse_11
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T00:15:00+05:30'
+    updated_at: '2026-11-24T00:59:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17693,13 +17694,13 @@ tasks:
   - id: TASK-REL-092
     title: 'Reliability: diagnose the contracts-job infra failure blocking the FRG-001 merge (#1532, two identical 12-14s failures)'
     status: AVAILABLE
-    owner: null
+    owner: muse_19
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T00:15:00+05:30'
+    updated_at: '2026-11-24T00:59:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17711,13 +17712,13 @@ tasks:
   - id: TASK-VYR-051
     title: 'VyralX: prepare the next supervised-cycle candidate pool from most-popular-video discovery plus machine QA gates'
     status: AVAILABLE
-    owner: null
+    owner: muse_18
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T00:15:00+05:30'
+    updated_at: '2026-11-24T00:59:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17729,13 +17730,13 @@ tasks:
   - id: TASK-STR-049
     title: 'Stratex: verify the latest self-experiment trial judgement past counter 3980 and file it'
     status: AVAILABLE
-    owner: null
+    owner: muse_18
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T00:15:00+05:30'
+    updated_at: '2026-11-24T00:59:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17744,6 +17745,158 @@ tasks:
     - 'Drafted by the coordinator 2026-11-24 ~00:15 IST (standing backlog item (xii) run 2): trial 3980 was proven 2026-11-22 (expectancy +2.32 percent, PF 1.26 over 2,208 trades); the judgement stream needs continuous verification as the counter advances. Pool floor refill.'
     blockers: []
     next_action: 'Read the live trial counter, verify the newest judgement, file it with the numbers.'
+
+  - id: TASK-STR-050
+    title: 'Stratex: resting-stop verification run 2 - re-read every open position bracket after the next daemon cycle'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T00:59:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Every open position re-verified with a live SL+TP bracket, or any missing stop flagged with the fix.'
+    evidence:
+      - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; follow-up to TASK-STR-046 (merged as PR #1533, 28/28 brackets live); the daemon keeps opening and closing positions, so the check must repeat. Pool floor refill.'
+    blockers: []
+    next_action: 'Read the live positions and brackets, file the per-position evidence.'
+
+  - id: TASK-VOI-033
+    title: 'Voice: acceptance run 18 - calm-window probes after VOI-030 lands, per-probe latency filed'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T00:59:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Per-probe latency filed with a pass/fail verdict on the 8s greeting-onset bar.'
+    evidence:
+      - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; follow-up to VOI-027 (Muse 6, calm-window wait) and VOI-030 (Muse 13, acceptance run 17). Pool floor refill.'
+    blockers: []
+    next_action: 'Run the probes in the next calm window, file per-probe latency and the verdict.'
+
+  - id: TASK-VYR-052
+    title: 'VyralX: supervised cycle 3 execution on the VYR-051 candidate pool once machine QA passes'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T00:59:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Cycle-3 renders filed with machine-QA results; renders held unlisted pending the coordinator watch.'
+    evidence:
+      - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; follow-up to VYR-051 (candidate pool, Muse 18) and VYR-045/046/047. Loop stays OFF, uploader stays paused. Pool floor refill.'
+    blockers: []
+    next_action: 'Run the supervised cycle on the QA-passed pool, file the render evidence.'
+
+  - id: TASK-INF-032
+    title: 'Inference: wire the INF-031 routing deadline into the live routing path and prove it timed'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T00:59:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Deadline live in routing, with timed evidence showing 9k-token prompts complete inside it.'
+    evidence:
+      - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; follow-up to INF-031 (Muse 11, deadline from INF-019 evidence). Pool floor refill.'
+    blockers: []
+    next_action: 'Wire the deadline, run timed 9k-token calls, file the numbers.'
+
+  - id: TASK-MEM-026
+    title: 'Memora: three-section proof run 4 - repeat the write/read/promotion cycle after the next FRIDAY deploy'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T00:59:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'One real cycle with evidence at each section: private, inter-agent, universal.'
+    evidence:
+      - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; follow-up to MEM-024 (Muse 11, run 3) and MEM-025 (Muse 8, auto-promotion run 2). Pool floor refill.'
+    blockers: []
+    next_action: 'Run the cycle against the live service, file the evidence.'
+
+  - id: TASK-REL-093
+    title: 'Reliability: CI test-collection canary proof run 2 - verify the canary still catches an uncollected shipped test file'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T00:59:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Canary proof filed: a deliberately uncollected file caught by CI, or the gap named.'
+    evidence:
+      - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; follow-up to REL-068 (canary proof) and REL-072 (CI test collection). Pool floor refill.'
+    blockers: []
+    next_action: 'Run the canary, file the result.'
+
+  - id: TASK-FRD-043
+    title: 'FRIDAY: deploy the FRD-041 OOM memory guard live with staged pressure proof and Telegram delivery'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T00:59:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Guard live on S1, staged memory-pressure proof and Telegram delivery evidenced.'
+    evidence:
+      - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; the deploy leg Muse 2 named as owed after PR #1548 merges (hub 7111030331). No live change until coordinator clearance is given. Pool floor refill.'
+    blockers: []
+    next_action: 'After PR #1548 merges and clearance, deploy with staged proof, file the evidence.'
+
+  - id: TASK-CTX-007
+    title: 'Cortex: post-#1054 escalation ratio run 3 - fires vs messages actually sent over the last 48h of live logs'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T00:59:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Ratio evidence filed for the last 48h of live logs.'
+    evidence:
+      - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; follow-up to CTX-006 (Muse 7, run 2) and CTX-004 (Muse 13, live proof). Pool floor refill.'
+    blockers: []
+    next_action: 'Read the last 48h of live logs, file fires vs messages sent.'
 
 task_id_warnings:
   - id: TASK-REL-061
