@@ -3,7 +3,9 @@
 import { ArrowUp } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import ShinyText from "../reactbits/ShinyText";
+import { ControlGate } from "../ControlGate";
 import { CHAT_CEILING_MS, clockTime, fetchHistory, sendChat } from "@/lib/wire";
+import { hasStoredControlKey, isControlAuthError, startControlSessionRefresh } from "@/lib/controlSession";
 
 /* ================================================================
    The stream — the written half of the conversation, living
@@ -44,9 +46,19 @@ export function Conversation({
   const [restored, setRestored] = useState(false);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
+  /* TASK-FRD-038: the paste-once key gate, raised when a chat call
+     answers 401 — "required" when this browser holds no key,
+     "rejected" when the stored key was refused. */
+  const [gateReason, setGateReason] = useState<"required" | "rejected" | null>(null);
   const streamRef = useRef<HTMLDivElement | null>(null);
   const localComposerRef = useRef<HTMLTextAreaElement | null>(null);
   const textareaRef = composerRef ?? localComposerRef;
+
+  /* Keep a stored session warm across the visit, so the first send
+     after the 20-minute TTL does not pay a mint round-trip. */
+  useEffect(() => {
+    if (hasStoredControlKey()) void startControlSessionRefresh();
+  }, []);
 
   /* Restore the durable thread once, on mount. */
   useEffect(() => {
@@ -96,6 +108,23 @@ export function Conversation({
     } catch (error) {
       const timedOut = error instanceof DOMException && error.name === "AbortError";
       const reason = error instanceof Error ? error.message : "unknown";
+      /* TASK-FRD-038: a 401 is not a lost link — it is the key gate.
+         Raise the paste-once prompt instead of a generic failure. */
+      if (isControlAuthError(error)) {
+        const rejected = error.code === "control-key-rejected";
+        setGateReason(rejected ? "rejected" : "required");
+        const errorBubble: Bubble = {
+          id: nextId(),
+          role: "friday",
+          error: true,
+          at: Date.now(),
+          text: rejected
+            ? "That key was rejected, so I can't answer from this browser yet. Paste the current key below."
+            : "I need the owner key in this browser before I can answer. Paste it once below.",
+        };
+        setBubbles((current) => [...current, errorBubble].slice(-MAX_BUBBLES));
+        return;
+      }
       const errorBubble: Bubble = {
         id: nextId(),
         role: "friday",
@@ -136,6 +165,8 @@ export function Conversation({
           </p>
         )}
       </div>
+
+      {gateReason && <ControlGate reason={gateReason} onConnected={() => setGateReason(null)} />}
 
       <form
         className="composer"
