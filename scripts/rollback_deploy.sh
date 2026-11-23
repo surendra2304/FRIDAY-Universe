@@ -21,8 +21,15 @@ set -euo pipefail
 
 REPO="${ROLLBACK_REPO_DIR:-/opt/friday_universe}"
 RECEIPTS_DIR="/var/lib/friday-universe/rollback-receipts"
-SERVER1_SERVICES=(FRIDAY Inference Memora Stratex Futuris IntelX Forge Stratex-Daemon)
-SERVER2_SERVICES=(VyralX Sentinel Cortex VyralX-Daemon)
+# TASK-OBS-013: candidate lists mirror the Fleet CD per-server lists
+# (.github/workflows/deploy-monorepo.yml: SERVER1_AGENTS / SERVER2_AGENTS)
+# plus each server's daemon / voice units. The old lists were stale:
+# Futuris/IntelX are Server 2 services (masked on Server 1) and Sentinel
+# is a Server 1 service (loaded+active on Server 1, masked on Server 2)
+# — verified live 2026-11-23. Membership is still LoadState-gated below,
+# so a listed-but-masked unit is never restarted.
+SERVER1_SERVICES=(FRIDAY FRIDAY-Voice Inference Memora Stratex Forge Sentinel Stratex-Daemon)
+SERVER2_SERVICES=(VyralX Cortex IntelX Futuris VyralX-Daemon)
 # Ports for health checks of units that expose one (daemon units have none).
 declare -A PORTS=( [FRIDAY]=10000 [Inference]=8001 [Memora]=8002 [Stratex]=8003
                    [Futuris]=8004 [IntelX]=8005 [Forge]=8006 [Sentinel]=8008
@@ -56,22 +63,89 @@ fi
 
 CHANGED_FOLDERS=$(git diff --name-only "$CURRENT" "$TARGET_RESOLVED" | awk -F/ '{print $1}' | sort -u)
 
+# --- TASK-OBS-013 (G3 fix) ---
+# The affected-service set must be a pure function of (changed folders,
+# each candidate unit's LoadState). The old code tested each candidate with
+# `systemctl list-unit-files | grep -qw` inside a condition: a transient
+# systemctl failure was swallowed (2>/dev/null + grep) and silently dropped
+# the service, so identical inputs returned different restart sets (OBS-009
+# G3, proven live: S1 gave 3 different sets in 3 runs), and masked units
+# passed the existence test, so a restart aborted the script AFTER
+# `git reset --hard` (set -euo pipefail) — a half-rolled-back fleet with no
+# receipt. Fixed: the Fleet CD gate (TASK-OBS-006) — `systemctl show
+# <unit> --property=LoadState --value`, restart only `loaded`; transient
+# read failures are retried, and a unit whose LoadState still cannot be
+# read aborts BEFORE any reset. On a host without a running systemd
+# (fixture / CI), no unit is restartable and the set is empty.
+# systemd's runtime dir; override for tests (same pattern as ROLLBACK_REPO_DIR).
+SYSTEMD_RUN_DIR="${ROLLBACK_SYSTEMD_RUN_DIR:-/run/systemd/system}"
+HAS_SYSTEMD=false
+if command -v systemctl >/dev/null 2>&1 && [ -d "$SYSTEMD_RUN_DIR" ]; then
+  HAS_SYSTEMD=true
+fi
+
+# LoadState of one unit, retried: a transient D-Bus error must not silently
+# drop a service (the G3 failure mode). Prints the state, or returns 1.
+unit_load_state() {
+  local unit="$1" state="" attempt=0
+  while [ $attempt -lt 3 ]; do
+    attempt=$((attempt + 1))
+    state=$(systemctl show "${unit}.service" --property=LoadState --value 2>/dev/null || true)
+    if [ -n "$state" ]; then
+      printf '%s\n' "$state"
+      return 0
+    fi
+    sleep 2
+  done
+  echo "cannot read LoadState of ${unit}.service after 3 attempts" >&2
+  return 1
+}
+
+# Repo folder whose change affects a service: daemons and the voice worker
+# share their parent agent's folder (same rule Fleet CD uses).
+folder_for() {
+  case "$1" in
+    Stratex-Daemon) echo "Stratex" ;;
+    VyralX-Daemon) echo "VyralX" ;;
+    FRIDAY-Voice) echo "FRIDAY" ;;
+    *) echo "$1" ;;
+  esac
+}
+
 affected_for() {
   local -n svc_arr=$1
-  local out=()
+  local out=() svc folder state
   for svc in "${svc_arr[@]}"; do
-    if echo "$CHANGED_FOLDERS" | grep -qw "$svc" || echo "$CHANGED_FOLDERS" | grep -Eqw "mesh|deploy|scripts"; then
-      systemctl list-unit-files 2>/dev/null | grep -qw "${svc}.service" && out+=("$svc")
+    folder=$(folder_for "$svc")
+    if echo "$CHANGED_FOLDERS" | grep -qw "$folder" || echo "$CHANGED_FOLDERS" | grep -Eqw "mesh|deploy|scripts"; then
+      # Fleet CD gate: restart only LoadState=loaded. Masked / not-found
+      # units are never in the restart set.
+      state=""
+      if $HAS_SYSTEMD; then
+        state=$(unit_load_state "$svc") || fail "cannot read LoadState of ${svc}.service — aborting before any reset"
+      fi
+      if [ "$state" = "loaded" ]; then
+        out+=("$svc")
+      fi
     fi
   done
   echo "${out[@]:-}"
 }
 
-if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files 2>/dev/null | grep -qw "VyralX.service"; then
-  FLEET_SERVICES=(SERVER2_SERVICES[@])
-  AFFECTED=$(affected_for SERVER2_SERVICES)
+if $HAS_SYSTEMD; then
+  # Server identity from the VyralX unit's LoadState (one retried, fail-loud
+  # read): VyralX is installed on Server 2 (masked — it runs on AWS U2) and
+  # not installed on Server 1. The old `list-unit-files | grep` probe had
+  # the same G3 lottery — a failed probe misdetected the server.
+  VYRALX_STATE=$(unit_load_state "VyralX") || fail "cannot read LoadState of VyralX.service — aborting before any reset"
+  if [ "$VYRALX_STATE" != "not-found" ]; then
+    AFFECTED=$(affected_for SERVER2_SERVICES)
+  else
+    AFFECTED=$(affected_for SERVER1_SERVICES)
+  fi
 else
-  AFFECTED=$(affected_for SERVER1_SERVICES)
+  # No running systemd: nothing is restartable.
+  AFFECTED=""
 fi
 
 if $DRY_RUN; then

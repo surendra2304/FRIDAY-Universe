@@ -140,3 +140,147 @@ class TestRollbackGuards:
         assert res.returncode == 0
         # dry-run prints the would-restart list and a diffstat
         assert "would restart" in res.stdout
+
+
+# --- TASK-OBS-013 (G3) — deterministic, LoadState-gated affected set ---
+#
+# A fake `systemctl` driven by a LoadState table stands in for the fleet's
+# systemd. It implements only what rollback_deploy.sh calls: `show <unit>
+# --property=LoadState --value` (with an optional fail-first counter to
+# simulate transient D-Bus errors) and `list-unit-files` (kept for the
+# old-code A/B harness; the fixed script never calls it).
+FAKE_SYSTEMCTL = """#!/usr/bin/env bash
+# $FAKE_LOAD_TABLE: lines "UNIT=LoadState"; missing unit -> not-found.
+# $FAKE_SHOW_FAIL_FIRST: fail that many initial `show` calls (exit 1).
+# $FAKE_COUNTER_FILE: per-invocation counter (created on demand).
+table="$FAKE_LOAD_TABLE"
+if [ "$1" = "show" ]; then
+  unit="${2%.service}"
+  n=0
+  if [ -n "${FAKE_COUNTER_FILE:-}" ] && [ -f "$FAKE_COUNTER_FILE" ]; then
+    n=$(wc -l < "$FAKE_COUNTER_FILE")
+  fi
+  if [ -n "${FAKE_COUNTER_FILE:-}" ]; then echo x >> "$FAKE_COUNTER_FILE"; fi
+  if [ "${FAKE_SHOW_FAIL_FIRST:-0}" -gt "$n" ]; then exit 1; fi
+  state=$(grep -E "^${unit}=" "$table" 2>/dev/null | cut -d= -f2)
+  echo "${state:-not-found}"
+  exit 0
+fi
+if [ "$1" = "list-unit-files" ]; then
+  while IFS='=' read -r u s; do
+    [ -n "$u" ] && echo "$u.service enabled enabled"
+  done < "$table"
+  exit 0
+fi
+echo "fake systemctl: unsupported: $*" >&2
+exit 1
+"""
+
+
+def run_rollback_fake(repo, table, *args, fail_first=0):
+    """Run the script with a fake systemctl backed by {unit: LoadState}."""
+    import stat
+    import tempfile
+    bindir = Path(tempfile.mkdtemp(prefix="fakebin-"))
+    fake = bindir / "systemctl"
+    fake.write_text(FAKE_SYSTEMCTL)
+    fake.chmod(0o755)
+    table_file = bindir / "loads.txt"
+    table_file.write_text("".join(f"{u}={s}\n" for u, s in table.items()))
+    counter = bindir / "counter.txt"
+    rundir = bindir / "systemd-run"
+    rundir.mkdir()
+    env = dict(os.environ)
+    env["ROLLBACK_REPO_DIR"] = str(repo)
+    env["PATH"] = f"{bindir}:/usr/bin:/bin"
+    env["FAKE_LOAD_TABLE"] = str(table_file)
+    env["FAKE_COUNTER_FILE"] = str(counter)
+    env["FAKE_SHOW_FAIL_FIRST"] = str(fail_first)
+    env["ROLLBACK_SYSTEMD_RUN_DIR"] = str(rundir)
+    return subprocess.run(["bash", str(SCRIPT), *args],
+                          capture_output=True, text=True, env=env, timeout=60)
+
+
+def commit_folder(repo, folder, name="change"):
+    (repo / folder).mkdir(exist_ok=True)
+    (repo / folder / "app.py").write_text(f"{name}\n")
+    subprocess.run(["git", "-C", str(repo), "add", "-A"],
+                   capture_output=True, check=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", name],
+                   capture_output=True, check=True)
+
+
+def would_restart(res):
+    for line in res.stdout.splitlines():
+        if line.startswith("would restart:"):
+            return line.split(":", 1)[1].strip()
+    return None
+
+
+S1_LOADS = {"FRIDAY": "loaded", "FRIDAY-Voice": "loaded",
+            "Inference": "loaded", "Memora": "loaded",
+            "Stratex": "masked", "Forge": "loaded", "Sentinel": "loaded",
+            "Stratex-Daemon": "masked", "Futuris": "masked",
+            "IntelX": "masked", "Cortex": "not-found", "VyralX": "not-found",
+            "VyralX-Daemon": "not-found"}
+S2_LOADS = {"VyralX": "masked", "Cortex": "loaded", "IntelX": "loaded",
+            "Futuris": "loaded", "VyralX-Daemon": "masked",
+            "Sentinel": "masked", "FRIDAY": "not-found",
+            "Inference": "not-found", "Memora": "not-found",
+            "Stratex": "not-found", "Forge": "not-found",
+            "FRIDAY-Voice": "not-found", "Stratex-Daemon": "not-found"}
+
+
+class TestObs013DeterministicLoadStateGate:
+    def test_s1_masked_units_never_in_restart_set_and_deterministic(self, repo):
+        commit_folder(repo, "FRIDAY")
+        commit_folder(repo, "scripts")
+        sets = set()
+        for _ in range(5):
+            res = run_rollback_fake(repo, S1_LOADS, "HEAD~1", "--dry-run")
+            assert res.returncode == 0, res.stderr
+            sets.add(would_restart(res))
+        assert sets == {"FRIDAY FRIDAY-Voice Inference Memora Forge Sentinel"}
+
+    def test_s2_masked_units_never_in_restart_set(self, repo):
+        commit_folder(repo, "VyralX")
+        commit_folder(repo, "scripts")
+        sets = set()
+        for _ in range(3):
+            res = run_rollback_fake(repo, S2_LOADS, "HEAD~1", "--dry-run")
+            assert res.returncode == 0, res.stderr
+            sets.add(would_restart(res))
+        assert sets == {"Cortex IntelX Futuris"}
+
+    def test_daemon_and_voice_follow_parent_agent_folder(self, repo):
+        # Only Stratex/ changes: Stratex-Daemon restarts (parent folder),
+        # Stratex itself does not (masked) — and FRIDAY-Voice stays out.
+        loads = dict(S1_LOADS)
+        loads["Stratex-Daemon"] = "loaded"
+        commit_folder(repo, "Stratex")
+        res = run_rollback_fake(repo, loads, "HEAD~1", "--dry-run")
+        assert res.returncode == 0, res.stderr
+        assert would_restart(res) == "Stratex-Daemon"
+        # Only FRIDAY/ changes: FRIDAY-Voice restarts with FRIDAY.
+        commit_folder(repo, "FRIDAY")
+        res = run_rollback_fake(repo, S1_LOADS, "HEAD~1", "--dry-run")
+        assert res.returncode == 0, res.stderr
+        assert would_restart(res) == "FRIDAY FRIDAY-Voice"
+
+    def test_transient_show_failure_is_retried_not_dropped(self, repo):
+        commit_folder(repo, "FRIDAY")
+        commit_folder(repo, "scripts")
+        res = run_rollback_fake(repo, S1_LOADS, "HEAD~1", "--dry-run",
+                                fail_first=2)
+        assert res.returncode == 0, res.stderr
+        assert would_restart(res) == "FRIDAY FRIDAY-Voice Inference Memora Forge Sentinel"
+
+    def test_persistent_show_failure_aborts_before_reset(self, repo):
+        commit_folder(repo, "FRIDAY")
+        before = head(repo)
+        res = run_rollback_fake(repo, S1_LOADS, "HEAD~1", "--yes",
+                                fail_first=999)
+        assert res.returncode != 0
+        assert "LoadState" in res.stderr
+        assert head(repo) == before
+        assert "ROLLBACK DONE" not in res.stdout
