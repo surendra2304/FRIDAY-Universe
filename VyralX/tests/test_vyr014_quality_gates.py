@@ -570,6 +570,13 @@ def _wire_common(monkeypatch, tmp_path):
     monkeypatch.setattr(vr, "probe_media", lambda path: SimpleNamespace(
         duration=21.0, width=1080, height=1920, has_audio=True))
     monkeypatch.setattr(vr, "existing_upload_titles", lambda db: set())
+    # VYR-045: the post-render caption gate is a real dependency of
+    # produce_viral_short now. These fixtures mock the pre-render vision
+    # leg (analyze_scene), and CI has no vision key, so the gate would
+    # return unmeasured and fail closed; mock it as a passing
+    # single-track verdict here. Fail-closed unmeasured behaviour stays
+    # covered by test_vyr045_caption_wiring.test_check_unmeasured_is_fail_closed.
+    monkeypatch.setattr(vr, "check_render_caption_tracks", lambda *a, **k: (True, "single_caption_track", [{"y": 0.85, "start": 0.0, "end": 1.0, "text": "hello"}, {"y": 0.85, "start": 1.0, "end": 2.0, "text": "goodbye"}]))
 
 
 def test_produce_skips_static_clip_before_vision(monkeypatch, tmp_path):
