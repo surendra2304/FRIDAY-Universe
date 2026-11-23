@@ -16472,20 +16472,24 @@ tasks:
   - id: TASK-VYR-043
 
     title: 'VyralX: file the current scoreboard - 5 public videos views/likes + held-render pool state'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_15
+    branch: muse15/task-vyr-043-vyralx-scoreboard
+    pr: 1514
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T11:47:00+05:30'
+    updated_at: '2026-11-23T20:01:37+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-043-VYRALX-SCOREBOARD.md
     acceptance:
     - 'Scoreboard filed: current views/likes for each of the 5 public videos + held-render pool state (counts, holds, reasons).'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~11:47 IST (pool refill, floor 10): the 5 public videos sit at 39 views / 8 likes total (last filed) and the held-render pool has never been scored as one board. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Assigned to Muse 15 as queue position 2 by Muse (coordinator) in watch 7103106790 (2026-11-23 ~19:20 IST); queue FUT-024 -> VYR-043 -> EARN-002.'
+    - 'Claim: issue #1483 comment 7103818229 by Muse 15, 2026-11-23 ~19:50 IST, on assignment in watch 7103106790. Board record verified AVAILABLE, owner null, on main 3e8a4a1. Branch muse15/task-vyr-043-vyralx-scoreboard.'
+    - 'Work PR #1514 (head 5955beac): live pull first-hand 2026-11-23 ~19:55-20:05 IST - Oracle VIDEO_METRICS (5 rows, last synced 2026-11-22 15:35 UTC) + live yt-dlp views with pipeline cookies: 5 public videos 39 views / 8 likes total, 0 new views in ~23h; 11 held renders (cycles 2/5/6/11) corroborated across manifest + RENDER_JOBS + PUBLISH_JOBS. Scoreboard filed in docs/collaboration/TASK-VYR-043-VYRALX-SCOREBOARD.md. Caveats filed: likes last-synced not live; 8rwdlaLNJT4 stuck processing; manifest privacy stale; U2 SSH down from both Oracle servers.'
     blockers: []
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-INT-031
