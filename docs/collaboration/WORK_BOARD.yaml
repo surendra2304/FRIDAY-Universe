@@ -15945,6 +15945,29 @@ tasks:
     - 'Claimed by Muse 10 on issue #35 comment 7094692905, 2026-11-23 ~13:16 IST (assignment: coordinator watch 7094281062, 12:53 IST); board record filed in the coordinator consolidated board PR.'
     blockers: []
     next_action: 'Muse 10 implements run 2; files evidence per hop.'
+  - id: TASK-VAL-012
+    title: "Fleet post-fix capability re-probe: re-run the full 10-agent probe after VAL-006's map fixes and prove zero false-down and zero false-up."
+    status: CLAIMED
+    owner: muse_14
+    branch: muse14/task-val-012
+    pr: 1465
+    contributors: []
+    priority: P1
+    created_at: '2026-11-23'
+    updated_at: '2026-11-23'
+    files:
+      - docs/collaboration/TASK-VAL-012-FLEET-POST-FIX-REPROBE.md
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'A fresh Fleet Live Validation run and a fresh FRIDAY fleet-status answer show zero false-down and zero false-up (no agent reported down that is live; no agent reported healthy that is down).'
+    evidence:
+      - 'Assignment by Muse (coordinator): queue post 7084110569 + watch 7084948379 (~01:42 IST, "VAL-006 merged → claim TASK-VAL-012 next") + watch 7085314708 (~02:00 IST, VAL-012 as queue head).'
+      - 'Claim: issue #35 comment 7085474289 by Muse 14, 2026-11-23 02:10 IST. Branch muse14/task-val-012 (ref created via API at main a8c6fea2, verified by ls-remote; rebased onto main ba2dbea7 on 2026-11-23 ~13:00 IST after main advanced past 136533e5). Hold 02:13-11:28 IST on a system safety flag on the git fetch result; lifted by Surendra plain-words go-ahead 11:28 IST ("Yes, go ahead and resume VAL-012"); resume posted on issue #35 (comment 7092910078).'
+      - 'Implemented 2026-11-23 ~11:35 IST: fresh public-gateway probe 06:01:00-06:01:20Z — 8/10 /health 200, 10/10 /ready 200; Futuris + IntelX /health 503 "degraded" under the new capability contract (live: ready 200, DB connected, units active; forecasting/research unknown). FRIDAY fleet-status: degraded, ONLINE 1 / REACHABLE 6 / DEGRADED 2 / UNREACHABLE 0 — VAL-006 2 false-down are gone (deployed .env fixed 09:40 IST, FRIDAY restarted 10:38:50 IST). D-023 auth gate now holds (HTTP 401). Evidence: docs/collaboration/TASK-VAL-012-FLEET-POST-FIX-REPROBE.md.'
+      - 'Fleet Live Validation run 45121575640 dispatched 06:03:13Z from branch muse14/task-val-012: completed failure — public-gateway job failure (exit 1, 8/10, the two 503s); Server 1 + Server 2 jobs success, no false-down rows. Bridge arbitration: both servers ONLINE; S1 listeners :10000/:8001/:8002/:8006/:8008 + :18003 tunnel; S2 listeners :8004/:8005/:8009/:8011; deployed heads S1 705ab92d, S2 ff84c7ff.'
+      - 'Work PR #1465 opened 2026-11-23 06:08:21Z; CI green (9 checks: 7 success + 2 skipped) at 12:00 IST. Rebased onto main 1f8ed4fb 2026-11-23 ~14:05 IST after merges #1472-#1474 made the branch unmergeable (coordinator direction, watch 7094932056 + 7095390023); PR re-verified mergeable after rebase.'
+    blockers: []
+    next_action: 'PR #1465 open, awaiting peer review and merge by the reviewing peer (flat merge rule; I do not merge my own PR). F1 validator criterion (healthy = HTTP 200 vs honest 503 degradation) still needs Muse call.'
 task_id_warnings:
   - id: TASK-REL-061
     title: "Sync ARCHITECTURE.md sections 6 and 9 with the owner's 2026-11-21 polling design: every-minute assignment poll while a worker has no work (claim and cancel on assignment, re-arm when idle), hourly self-check while free usage remains, exhausted means only the next-reset task stays armed; PAT provided via secure credential card, never written into the prompt. PROMPT.md already carries the design; ARCHITECTURE.md still carried the retired ~2-day board-check cadence."
