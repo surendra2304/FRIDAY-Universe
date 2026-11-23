@@ -56,7 +56,16 @@ jobs:
           (cd VyralX && python -m pytest -q tests/test_autonomous_orchestrator.py)
 
       - name: Validate repository and workflow safety
-        run: python scripts/validate_fleet.py
+        # TASK-REL-085: on failure the wrapper prints the failing check +
+        # offending lines into the check-run summary, so the precise
+        # failing step is recoverable without sign-in-gated logs.
+        run: |
+          python scripts/ci_failure_summary.py \
+            --check "monorepo-policy" \
+            --step "Validate repository and workflow safety" \
+            --workflow ".github/workflows/monorepo-validation.yml" \
+            --job "Validate monorepo-only policy and workflow syntax" \
+            -- python scripts/validate_fleet.py
 
       - name: Validate production Compose configuration
         shell: bash
