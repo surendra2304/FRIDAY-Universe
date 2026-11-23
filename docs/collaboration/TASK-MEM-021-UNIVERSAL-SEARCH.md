@@ -1,6 +1,6 @@
 # TASK-MEM-021 — Memora: fix the UNIVERSAL dual-copy search invisibility (MEM-019 G1)
 
-**Worker:** Muse 10 · **Date:** 2026-11-23 · **Branch:** `muse10/task-mem-021-universal-search` · **Work PR:** #1457
+**Worker:** Muse 10 · **Date:** 2026-11-23 · **Branch:** `muse10/task-mem-021-universal-search` · **Work PR:** #1462
 **Board:** TASK-MEM-021 (Memora: fix the UNIVERSAL dual-copy search invisibility — a promoted UNIVERSAL copy must be findable by search for the promotion audience)
 **Assignment:** Muse coordinator watch 7091867264 (10:17 IST), answering work request 7091846124 (10:15 IST). Queue: FRD-037 (blocked head, public-chat 401 gate) → MEM-021; skipping the blocked head per coordinator order.
 
@@ -26,7 +26,7 @@
 - **Fix plan:** (1) `_make_universal_copy`: re-sign the copy's provenance with `sign_memory_provenance` under the copy's own id (after adding the promotion keys), and best-effort upsert its embedding with the write path's payload/adapter pattern (fail-soft, relational row stays authoritative). One fix covers owner + auto-promotion paths (both go through `_apply_promotion` → `_make_universal_copy`). (2) Repair for already-created dual copies: re-sign + embed existing UNIVERSAL records with `promoted_from_memory_id` whose signature fails; run live for the MEM-019 copy (test data, deterministic re-sign), then re-probe. (3) Unit tests in `Memora/tests/test_mem013_memory_promotion.py`: dual copy verifies; dual copy passes retrieval filters; repair re-signs a stale copy. (4) PR #1457 carries the fix; merge + deploy by Muse; re-probe live after deploy.
 - **Open question (noted, not blocking):** `_passes_retrieval_filters` for futuris on the ORIG returns False while friday/sentinel return True — the policy-engine leg distinguishes futuris on the sentinel/private namespace (MEM-014 G1 namespace rule). Pre-existing, separate from MEM-021; the copy fails earlier (HMAC) for all three.
 
-## Implementation (done 2026-11-23 ~11:2x IST, hourly self-check repair of the post-claim stall)
+## Implementation (done 2026-11-23 ~11:20 IST, hourly self-check repair of the post-claim stall)
 
 Note: PR #1457 was the claim vehicle only (board flip AVAILABLE → CLAIMED); it merged 10:49 IST (merge 136533e5). The implementation rides in a new work PR (number below); the branch was fast-forwarded to main 136533e5 first so the board edit applies cleanly.
 
@@ -41,8 +41,10 @@ Note: PR #1457 was the claim vehicle only (board flip AVAILABLE → CLAIMED); it
 
 ## Verification
 
-- Targeted tests run live on Server 1 against this branch: [run output in the STATUS comment on issue #35].
-- CI on the work PR: [pending/ green — see STATUS comment].
+- Targeted tests run live on Server 1 against branch head f0090696 (fresh clone `/tmp/mem021-clone`, server venv pytest 8.4.2, 2026-11-23 ~11:22 IST): `Memora/tests/test_mem013_memory_promotion.py` **14 passed** (12 pre-existing + 2 new MEM-021 tests), 1 warning (unrelated `asyncio_mode` config), 15.69s.
+- Related suites, same run (~11:25 IST): `test_mem016_promotion_readability_sweep.py` + `test_mem015_promotion_revert.py` + `test_cryptographic_provenance.py` + `test_mem010_resign_provenance.py` **34 passed, 0 failed**, 39.69s.
+- CI on work PR #1462: **10/10 green** (8 success, 2 skipped — docker, voice-regressions), mergeable true.
+- Full Memora suite vs pristine main: not re-run this task (MEM-015 established 800 passed / 60 failed identical on pristine main); the targeted + related suites above are the regression signal for this change.
 
 ## Still owed (needs Muse)
 
