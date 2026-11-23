@@ -125,3 +125,27 @@ board blob `5f22622f`, 612 task records, zero occurrences of OBS-011 — new
 draft, per coordinator direction; record rides in the work PR). Status
 IN_REVIEW, owner muse_13, branch
 `muse13/task-obs-011-livekit-health-route`, pr 1475.
+
+## 8. CI — contracts guard failure and fix (2026-11-23 ~15:45 IST)
+
+- **Failure (first-hand, contracts job log):** work PR #1475 head
+  `6d5552d6`, run 45138064532, job 137568999784, step "Guard — every test
+  file shipped in this PR is collected (TASK-REL-068)", 13:52 IST:
+  `FAIL: 1 test file(s) shipped in this PR are collected by NO
+  PR-triggered workflow` — `UNCOLLECTED:
+  FRIDAY/tests/test_voice_livekit_health_route.py`. No stale references
+  (guard: 1,931 test files in repo, 302 covered, 11 PR-triggered
+  workflows scanned). The `test` job never runs `FRIDAY/tests/` and
+  `voice-regressions` runs only `tests/test_runtime_audit_contract.py`,
+  so the new test ran nowhere in PR CI — the exact REL-001 defect class
+  the guard exists to catch. Coordinator watch 7096098820 carried it as
+  held: "failure detail still owed".
+- **Fix (this PR, follow-up commit):** added the file to the `contracts`
+  job's explicit pytest list in `.github/workflows/owner-workflows.yml`
+  (next to `test_voice_tool_security.py`), so the guard collects it and
+  the test actually runs in PR CI. The job already installs
+  `livekit-agents` and `pytest-asyncio`; the test needs only `aiohttp` +
+  `livekit-agents` and uses sync tests with `asyncio.run` internally.
+- **CI re-run owed:** the fix commit re-triggers all checks; a green
+  `contracts` run on the new head is the proof. Live verification (§6)
+  still owed after merge, per coordinator clearance.

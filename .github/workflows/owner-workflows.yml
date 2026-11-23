@@ -103,6 +103,7 @@ jobs:
             FRIDAY/tests/test_batch4_memory_brain.py \
             FRIDAY/tests/test_memory_commands.py \
             FRIDAY/tests/test_voice_tool_security.py \
+            FRIDAY/tests/test_voice_livekit_health_route.py \
             FRIDAY/tests/test_api_origin_enforcement.py \
             FRIDAY/tests/test_val007_chat_auth_gate.py \
             FRIDAY/tests/test_batch3_delegations.py \
@@ -282,3 +283,4 @@ jobs:
         run: >-
           python -m compileall -q IntelX/intelx/api/router.py
           IntelX/intelx/api/live_research_task.py FRIDAY/src/friday/voice
+
