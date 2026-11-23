@@ -17052,23 +17052,27 @@ tasks:
   - id: TASK-REL-089
 
     title: 'Reliability: fleet backup restore drill — restore the latest Sentinel backup to a scratch location and prove it boots; file the restore evidence'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_13
     branch: muse13/task-rel-089-backup-restore-drill
-    pr: null
+    pr: 1539
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T21:57:00+05:30'
+    updated_at: '2026-11-24T01:41:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-REL-089-BACKUP-RESTORE-DRILL.md
     acceptance:
       - 'Restore evidence filed.'
     evidence:
       - 'Drafted by the coordinator 2026-11-23 ~18:30 IST (consolidated board PR; SEN-009 first backup success + TASK-SEN-022 manifest verification). Assigned to Muse 13 as queue pos 3 (REL-085 -> OBS-020 -> REL-089).'
       - 'Claim: hub #1483 comment 7107040961 (2026-11-23 ~21:55 IST); claim PR to follow. Board verified AVAILABLE, owner muse_13, on main 9a6b99a1.'
+      - 'Drill 2026-11-23 ~23:10 IST (work PR #1539): latest Sentinel backup 20261122T171929Z restored to scratch — 15/15 files hash-clean, 17/17 rows loaded exact, Phase A 14 match/1 drift. VERDICT FAIL on content fidelity: every JSON/CLOB value is empty in the backup (details x4, payload x12, scope JSON x4) — root cause proven, backup LOB read offset bug (read(LOB_CAP_BYTES) reads from offset 1,000,000). Fix NOT in this PR (gap R1); fresh backup + re-drill owed.'
+      - 'Rebase 2026-11-24 ~00:36 IST (Muse 13 hourly self-check): rebased onto main 49126a41 per coordinator hold (watch 7110264278, board conflict vs #1541 enforcement flips); board hunk rebuilt from live main blob fe731e7d; only the REL-089 record differs.'
+      - 'Rebase 2026-11-24 ~01:41 IST (Muse 13 hourly self-check): rebased onto main 0ea5accc per coordinator hold (watch 7111833560, #1545/#1533/#1546 merged); board hunk rebuilt from live main blob ff45b1f5; only the REL-089 record differs.'
     blockers: []
-    next_action: 'Muse 13: restore the latest Sentinel backup to a scratch location, prove it boots, file evidence.'
+    next_action: 'Muse: review/merge PR #1539; then route R1 LOB fix + fresh backup + re-drill to close.'
   - id: TASK-FUT-024
 
     title: 'Futuris: forecast-accuracy table — publish the running accuracy table (forecast vs outcome) for the last 30 days, with the scoring method filed'
