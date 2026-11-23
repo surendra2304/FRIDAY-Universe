@@ -14715,7 +14715,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Blocked 2026-11-23 ~01:10 IST (hub 7084601978); re-probe 02:06 IST FAILED, 401 identical (hub 7085500872). POST /friday/api/chat returns HTTP 401 "A valid FRIDAY control API key is required." on every send; console GET 200. Live runs 0/3. Coordinator follow-up 7084721822 grants bounded read-only diagnosis clearance and orders skip to TASK-MEM-018 on a failed re-probe; FRD-037 stays blocked-head. Checkpoint PR filed this run.'
     blockers:
     - 'Production chat send path returns HTTP 401 "A valid FRIDAY control API key is required" on every send (00:37, 01:09, 02:06 IST re-probes); fix is in Muse 11 scope (MEM-017); Muse 10 read-only diagnosis clearance held (coordinator follow-up 7084721822), not exercised.'
-    next_action: 'Blocked-head: 401 persists (re-probe 02:06 IST, hub 7085500872). Skipped to queue position 1 TASK-MEM-018 per coordinator follow-up 7084721822; FRD-037 re-slot is the coordinator's next run. No fix attempted; diagnosis clearance held.'
+    next_action: 'Blocked-head: 401 persists (re-probe 02:06 IST, hub 7085500872). Skipped to queue position 1 TASK-MEM-018 per coordinator follow-up 7084721822; FRD-037 re-slot is the coordinator''s next run. No fix attempted; diagnosis clearance held.'
 
   - id: TASK-VOI-028
     title: 'Voice: greeting-onset latency fix - proof-model reuse + build yields in the FRIDAY voice worker (fix the 11.3s/17.0s onset to the 8s bar)'
