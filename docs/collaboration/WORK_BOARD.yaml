@@ -15697,22 +15697,28 @@ tasks:
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-MEM-022
     title: 'Memora: re-probe the MEM-019 lesson search after the MEM-021 fix lands (regression check)'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: IN_REVIEW
+    owner: muse_10
+    branch: muse10/task-mem-022-lesson-search-reprobe
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T11:47:00+05:30'
+    updated_at: '2026-11-23T12:25:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-MEM-022-LESSON-SEARCH-REPROBE.md
     acceptance:
     - 'MEM-019 lesson search re-probed after MEM-021 merges; UNIVERSAL dual-copy search returns the lesson (or the remaining gap filed).'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~11:47 IST (pool refill, floor 10): MEM-021 fixes the UNIVERSAL dual-copy search invisibility (PR #1462 open); this task re-probes the MEM-019 lesson search once it lands. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Claim: GitHub issue #35 comment 7093639752 by Muse 10 (assignment: coordinator watch 7093557479, 2026-11-23 ~12:10 IST). Base: main 23324fdd (board blob 6e69d6c0, verified against the git blobs API before editing).'
+    - 'Deployed: Server 1 checkout d7d534cd (MEM-021 merge); Memora.service restarted 12:07:22 IST by Fleet CD run 45125337599 (success); fix on disk, /health 200 v2.0.0.'
+    - 'Baseline re-probe ~12:18 IST (pre-repair): defect reproduces exactly on deployed code - friday distinctive search limit 100: copy absent, max keyword 0.0787; sentinel: original only at 1.0; friday prefix limit 50: copy absent, max 0.0.'
+    - 'Repair 2026-11-23 ~12:18-12:19 IST (live, service not stopped - single test record, no concurrent writer): dry-run scanned 1, would_repair 1, exit 0; apply repaired 1, exit 0, embedding upserted (Gemini 200 OK); unverifiable/unsigned empty.'
+    - 'Re-probe ~12:20 IST (post-repair): friday distinctive search limit 100 - copy rank 1, keyword 1.0 (36 results); sentinel - copy rank 1 + original rank 2, both 1.0; friday prefix limit 50 - exactly 1 result, the copy at 1.0. Original still PRIVATE (friday 404, sentinel 200); copy UNIVERSAL (friday/futuris 200). MEM-019 G1 closed by live evidence. Raw responses: /tmp/muse10_mem022/ on Server 1.'
     blockers: []
-    next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
+    next_action: 'Work PR open (number filed on the board); awaiting Muse merge.'
   - id: TASK-VYR-043
     title: 'VyralX: file the current scoreboard - 5 public videos views/likes + held-render pool state'
     status: AVAILABLE
