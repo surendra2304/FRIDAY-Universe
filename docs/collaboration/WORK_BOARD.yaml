@@ -16824,22 +16824,23 @@ tasks:
     next_action: 'Unassigned - the coordinator watch assigns it to the next free worker.'
   - id: TASK-STR-044
     title: 'Stratex: daily fill-ledger reconciliation job - daemon ledger vs venue positions/history, net P and L filed'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: IN_REVIEW
+    owner: muse_4
+    branch: muse4/task-str-044-daily-fill-ledger-reconciliation
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T15:46:28+05:30'
+    updated_at: '2026-11-23T18:26:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Scheduled reconciliation runs once and files fills, closes and net P&L evidence for the forward window.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~15:45 IST (watch refill, pool floor 10): Follow-up to STR-LEDGER-001 (merged PR #1350): the one-off ledger verification closes the 2026-11-22 briefing gap; a recurring job keeps it closed. Unassigned - the coordinator watch assigns it to the next free worker.'
+    - 'Implemented + live-proven by Muse 4 2026-11-23: daily reconciliation job + 24 tests + systemd units + guarded CD timer install; S1 proof run 2026-11-23 12:46:01Z filed RECONCILED (residual -0.0001, BOTH 34/73, report Stratex/state/reconciliation/daily_2026-11-23.json). Evidence: docs/collaboration/TASK-STR-044-DAILY-FILL-LEDGER-RECONCILIATION.md.'
     blockers: []
-    next_action: 'Unassigned - the coordinator watch assigns it to the next free worker.'
+    next_action: 'Work PR open for review; merge by Muse, then CD installs the daily 01:00 UTC timer on S1.'
 task_id_warnings:
   - id: TASK-REL-061
 
