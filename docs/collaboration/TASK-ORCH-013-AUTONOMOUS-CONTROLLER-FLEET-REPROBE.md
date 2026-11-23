@@ -338,3 +338,107 @@ names inactive — that was a naming error, corrected here.)
   verdict is fully explained by the two stale probe targets (§4.4).
 
 — Muse 13
+
+## 7. Addendum 2026-11-23 ~09:05 IST — corrected G1 diagnosis (ORCH-013 follow-up)
+
+Coordinator direction: watch follow-up 7090682375 (~08:55 IST) — "File the
+corrected G1 diagnosis (which file wins, and the true source of the stale
+endpoints) as your next evidence." Claim: issue #35 comment 7090698549.
+All facts below are first-hand, via the bridge, Server 1, 2026-11-23
+08:53–08:57 IST. No deploy, no restart, no env edit in this PR.
+
+### 7.1 Which file wins
+
+- `FRIDAY.service` (`/etc/systemd/system/FRIDAY.service`, `systemctl cat`
+  08:53:54 IST) loads `EnvironmentFile=/opt/friday_universe/FRIDAY/.env`
+  in the main unit, and drop-in
+  `/etc/systemd/system/FRIDAY.service.d/dispatch-env.conf` adds
+  `EnvironmentFile=-/etc/friday/dispatch.env`. Drop-ins apply after the
+  main unit, so for the same variable the later file (dispatch.env) wins
+  over the earlier (.env).
+- **There is no launcher.** `ExecStart` is plain uvicorn
+  (`/opt/friday_universe/venv/bin/python -m uvicorn friday.api.server:app
+  --host 0.0.0.0 --port 10000 --workers 1`). The "launcher" branch of the
+  coordinator's question is closed: no launcher script sources env.
+
+### 7.2 True source of the stale endpoints — correction to the 08:36 report
+
+- **The stale `FRIDAY_*` values are in `FRIDAY/.env` itself.** Live
+  `.env` (S1, read 08:53 IST): line 27
+  `STRATEX_URL=http://127.0.0.1:8003`, line 44
+  `FRIDAY_STRATEX_URL=http://127.0.0.1:8003`, line 57
+  `FRIDAY_VYRALX_URL=http://10.0.0.120:8010`, line 58
+  `VYRALX_URL=http://10.0.0.120:8010`. Verified identical in the pre-edit
+  backup `.env.bak-20261123-0841-g1` (lines 27/44/57/58) — the prefixed
+  keys predate the 08:41 edit, which changed only lines 27/58.
+- **Correction:** the 08:36 self-check (7090640298) said "The prefixed
+  values come from `/etc/friday/dispatch.env`." That was an unproven
+  inference and is withdrawn. The stale endpoints are fully explained by
+  `.env` lines 44/57 alone.
+- **dispatch.env is an unverified second source, not a proven one.**
+  File is `-rw------- root root`, 1063 bytes; `cat` → Permission denied
+  (verified this run — the bridge shell cannot read it). Prior repo
+  evidence says it holds no URL lines
+  (`docs/collaboration/TASK-VAL-006-STALE-MAPS.md:70` — "/etc/friday/
+  dispatch.env carries no URL lines — no second override") and that it
+  holds agent keys (`docs/handoff.md:224` — Futuris, IntelX, Inference,
+  Cortex, Memora, VyralX) — consistent with keys-only. I could not
+  re-verify its contents first-hand; a root read is still owed before
+  anyone claims dispatch.env is clean of URL lines. If it did define
+  `FRIDAY_*` keys, its later load order means it would override `.env`
+  for those keys — so the fix must cover the winning file, whichever it
+  proves to be.
+
+### 7.3 Code precedence — why the legacy edit could never work
+
+- `fleet_client.py:247-260` (read first-hand from the running S1
+  checkout): `configured_url()` reads `os.getenv(FRIDAY_<NAME>)` first,
+  then the legacy `<NAME>`, then — only if neither is set and
+  `ENVIRONMENT=production` — `CANONICAL_INTERNAL_MESH_URLS`, then
+  settings, then fallback.
+- Live process env (FRIDAY MainPID 2729705, post-rollback, 08:53 IST)
+  carries BOTH `STRATEX_URL=http://127.0.0.1:8003` AND
+  `FRIDAY_STRATEX_URL=http://127.0.0.1:8003`, both `VYRALX_URL` /
+  `FRIDAY_VYRALX_URL=http://10.0.0.120:8010`, and
+  `ENVIRONMENT=production`. The prefixed stale values win; the legacy
+  `.env` edit was inert by construction, not by accident.
+- **The correct endpoints are already in the code.**
+  `CANONICAL_INTERNAL_MESH_URLS` (`fleet_client.py:126-136`): stratex
+  `http://127.0.0.1:18003`, vyralx `http://16.176.9.247:8010` — the exact
+  values the 08:41 edit tried to set. With `ENVIRONMENT=production`,
+  removing the `STRATEX_URL` / `VYRALX_URL` / `FRIDAY_*` URL lines from
+  every loaded env file would let `configured_url()` fall through to the
+  canonical mesh. That is one candidate fix route; setting the correct
+  values in the winning file(s) is the other. Either route needs
+  coordinator clearance (live env change + FRIDAY restart) with a
+  pre-change baseline and the same verify/rollback discipline. Not done
+  in this PR.
+
+### 7.4 Baseline restated (08:56:50 IST)
+
+- `GET /health` 200 (`/friday/health` is 404 on port 10000 — the health
+  path is `/health`). `/api/agents/status` degraded 7/9: Stratex
+  UNREACHABLE `http://127.0.0.1:8003`, VyralX UNREACHABLE
+  `http://10.0.0.120:8010`; Inference, Memora, IntelX, Futuris, Cortex,
+  Forge, Sentinel all ONLINE.
+- `FRIDAY.service` active, MainPID 2729705 (post-rollback restart
+  08:46:40 IST). S1 checkout `fe3a6da7` (one merge behind main
+  `7dfaab6a` after #1445; `fleet_client.py` as read is the running code).
+
+### 7.5 Direction owed from Muse
+
+1. Which fix route: set the correct `FRIDAY_*` values in the winning
+   file(s), or remove the URL lines and let the canonical mesh defaults
+   apply.
+2. Whether a root read of `/etc/friday/dispatch.env` is authorized or
+   arranged, to close its contents question before the fix lands.
+3. Deploy clearance for the chosen route, with the same verify/rollback
+   discipline as the 08:41 attempt.
+
+**G1 stays OPEN.** No board hunk in this PR: no `TASK-ORCH-013` record
+exists on main yet (verified this run: board blob `57745c86`, 15,220
+lines, zero ORCH-013 records — the only hit is the mention in CTX-004's
+evidence). Record creation + MERGED flip ride in the coordinator's
+consolidated board PR, per watches 7090656609 / 7090682375.
+
+— Muse 13
