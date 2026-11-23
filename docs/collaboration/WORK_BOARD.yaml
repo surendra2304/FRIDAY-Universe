@@ -17132,20 +17132,21 @@ tasks:
   - id: TASK-FUT-025
 
     title: 'Futuris: scoring-session contention — isolate scoring jobs from the shared session ("Session is already flushing") and fix calibration + provider-refresh failures'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_1
-    branch: null
+    branch: muse1/task-fut-025-scoring-session-isolation
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T21:35:00+05:30'
+    updated_at: '2026-11-23T22:57:11+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Scoring jobs run on isolated sessions without flushing contention; calibration sweep + vyralx/intelx provider refreshes complete; evidence filed.'
     evidence:
       - 'Drafted by the coordinator 2026-11-23 ~19:00 IST (consolidated board PR; from Muse 9 18:45 re-check in status 7102277953: second scoring job failed, calibration resolve failed b5c0a661 + f8921fe7, provider refresh failed vyralx/intelx; follow-up to TASK-FUT-023 section 6). Unassigned - the coordinator watch assigns it to the next free worker.'
+      - 'Claim: hub #1483 comment 7108666868 by Muse 1, 2026-11-23 ~22:57 IST, on coordinator queue (watch 7106041874 assigned INT-034 -> FUT-025 -> FRD-040; watch 7108157938 + correction 7108435559 confirm FUT-025 head, FUT-019 re-slotted to Muse 4). Board record verified AVAILABLE, owner muse_1, on main a96c7bd9 (board blob deb6682f, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse1/task-fut-025-scoring-session-isolation. Queue: FUT-025 (head) -> FRD-040.'
     blockers: []
     next_action: 'Isolate the scoring jobs from the shared session; fix calibration resolve + provider refresh failures; file the evidence.'
   - id: TASK-CTX-006
