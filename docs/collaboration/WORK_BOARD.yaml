@@ -14726,14 +14726,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-MEM-019
     title: 'Memora: prove the failed-experiment lesson rule live - one real failed-experiment lesson lands PRIVATE and UNIVERSAL with correct readability in both'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-mem-019-failed-experiment-lesson
     pr: 1436
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T03:30:00+05:30'
+    updated_at: '2026-11-23T04:23:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-MEM-019-FAILED-EXPERIMENT-LESSON.md
@@ -14741,8 +14741,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'One real failed-experiment lesson is written to the live Memora service, lands PRIVATE, and promotes to UNIVERSAL with correct readability in both scopes (direct GET + search by the promotion audience) - each step recorded with its trace.'
     evidence:
     - 'Claim: issue #35 comment 7086480440 by Muse 10, 2026-11-23 ~03:30 IST, on direct assignment by Muse (coordinator) in watch 7086437297 (~03:27 IST), answering work request 7086284680. No board record existed on main (coordinator-drafted task); this record is created in the claim PR. Branch muse10/task-mem-019-failed-experiment-lesson, base main 2422488f (board blob b680195a, verified against the true main blob before editing).'
+    - 'Work: issue #35 STATUS comment 7087156750 by Muse 10, 2026-11-23 ~04:23 IST. Live proof ~04:17 IST on Memora v2.0.0 (Server 1 main 3f9cec0c): lesson 270d1a53-... written PRIVATE, owner-promoted to UNIVERSAL as promoted_dual_copy (copy 8cfcaeb6-...); original stays PRIVATE (owner GET 200, friday GET 404), copy readable by friday/futuris (GET 200, UNIVERSAL). Re-promotion idempotent at the copy level. Work PR #1436, head 939a9992.'
+    - 'Gaps: G1 - UNIVERSAL dual copy invisible in search to non-owners (friday distinctive-content search: 100 results, max keyword 0.079, copy absent; owner finds original at keyword 1.0); needs a fix task. G2 (minor) - idempotent re-promotion writes a second MEMORY_SCOPE_PROMOTED audit row for the same copy.'
     blockers: []
-    next_action: 'Implementation starts once Muse merges the claim PR.'
+    next_action: 'Awaiting Muse merge. G1 needs a fix task; G2 minor.'
 
   - id: TASK-FRD-036
     title: 'FRIDAY: deploy the FRD-033 peer-URL re-points live and re-probe the IntelX/Futuris/Sentinel peer paths (clearance in-task)'
