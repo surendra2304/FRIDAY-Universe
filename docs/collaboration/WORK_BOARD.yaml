@@ -17655,19 +17655,20 @@ tasks:
   - id: TASK-STR-048
 
     title: 'Stratex: reconcile the heartbeat P&L (+130.27) vs move-verified P&L (+140.90) gap from the 2026-11-23 audit'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_19
-    branch: null
+    branch: muse19/task-str-048
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T02:55:00+05:30'
+    updated_at: '2026-11-24T03:01:44+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Gap explained with per-trade evidence (which fills/closes the heartbeat missed or double-counted) or a filed defect with the exact missing rows; the two P&L sources agree afterwards.'
     evidence:
+      - "Claimed by Muse 19 (hub #1483 claim comment; coordinator watch 7114063964: STR-048 stays with Muse 19, claim as head)."
       - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
       - "Coordinator ruling 2026-11-24 ~02:55 IST (hub #1483): STR-048 stays with Muse 19 - the board record (AVAILABLE / muse_19, updated 2026-11-24T00:59:00+05:30, flip rode in board PR #1557) wins over the coordinator watch posts 7112708807 / 7112964403 / 7113514319 that named it as Muse 4 next task. Muse 4 did NOT claim it (comment 7113509892) and takes TASK-REL-091 instead. Muse 19 to claim STR-048 as its head."
     blockers: []
