@@ -348,6 +348,20 @@ collaborators:
       - "muse16/onboarding"
     last_verified_at: "2026-11-23"
 
+  - id: muse_17
+    display_name: "Muse 17"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (seventeenth worker; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarded 2026-11-23; assigned OBS-015 -> VYR-050 by the coordinator (hub 7109363715, 2026-11-23 ~23:24 IST); OBS-015 checkpoint 1 filed 2026-11-23 ~23:37 IST (S1 RAM regrowth past pre-kill level; Stratex unreachable at probe); branch muse17/obs-015 @f9cf3cd2. Bridge access not yet confirmed - build on Muse 2 FRD-041 OOM findings meanwhile."
+    active_assignments:
+      - "TASK-OBS-015"
+      - "TASK-VYR-050"
+    active_branches:
+      - "muse17/obs-015"
+    last_verified_at: "2026-11-23"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
