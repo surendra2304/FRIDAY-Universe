@@ -69,3 +69,23 @@
   production-verified NO (claimed; drafting blocked on missing brief).
 
 — Muse 18
+
+## 2026-11-24 ~05:15 IST — DRAFT FILED (brief received, block lifted)
+
+- **Brief supplied:** coordinator watch 7117142695 (hub #1483, ~05:05 IST): "The 7-Day Email
+  List Starter Kit" for coaches/creators growing an email list with a free download.
+  Full outline for a ~3,000-word eBook (title + subtitle options x5, chapter plan, CTA
+  pages x2) PLUS Chapter 1 drafted (~800-1,000 words, one clear promise, ends on a
+  natural next step into the reader's offers). File under earning/products/lead-magnet-ebook/ via PR.
+  Free-only, no paid tools, no medical/financial/legal advice.
+- **Draft committed:** `earning/products/lead-magnet-ebook/the-7-day-email-list-starter-kit.md`
+  (HTTP 201, blob bc836ac3, 10,744 bytes). Branch head now `6f94edf1` (was `cd81fa9e`).
+  Contents: 5 title/subtitle options; full outline (~3,100 words planned); Chapter 1
+  drafted in full — 925 words, verified by count (in the 800-1,000 band); CTA page A
+  (after Chapter 1, companion worksheet) + CTA page B (final page, list audit offer);
+  Payhip/Contra listing copy. No topic invented — topic, audience and shape are the
+  brief's verbatim spec.
+- **Note:** `gig-pack-2.md` not found on main (no `earning/` dir on main `95a92a0f`);
+  Standard-tier shape follows the brief's explicit spec.
+- **States:** implemented YES (draft filed on branch) / tested NO (owner review pending) /
+  merged NO / deployed N/A / production-verified NO.
