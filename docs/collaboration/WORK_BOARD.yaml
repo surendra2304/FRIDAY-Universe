@@ -16382,7 +16382,7 @@ tasks:
     status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-obs-017-backup-manifest
-    pr: null
+    pr: 1505
     contributors: []
     priority: P2
     created_at: '2026-11-23'
