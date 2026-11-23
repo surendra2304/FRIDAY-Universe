@@ -10,15 +10,17 @@ execution-risk check is NOT overridden; its exact output is filed in
 - Claim: issue #35 comment 7091563810. Branch
   `muse1/task-rel-080-cortex-tier1-ci`.
 - Claim PR: #1451 (board-only), MERGED 2026-11-23 10:07:21 IST (merge
-  commit c45bea19). Work PR: **#1458** (head `a9d407a9`, base main
+  commit c45bea19). Work PR: **#1458** (head `c6fd6013`, base main
   `92751143`).
 - Status: IMPLEMENTED 2026-11-23 ~11:05 IST — wiring applied to the
   `test` job on base main `136533e5` (re-verified this run: workflow
   blob unchanged `6a8ba835a44b`; all five deselect proofs re-verified on
-  `136533e5`, blob SHAs unchanged). Rebased onto main `f174deae` in
-  repair run 4 (2026-11-23 ~13:36 IST; commits `7e081984` + `773934a2`);
-  CI on the rebased head `773934a2` is red — `test` fails at the new
-  Cortex tier-1 step (§4 filled from that run).
+  `136533e5`, blob SHAs unchanged). Rebased onto main `92751143` in
+  repair run 5 (2026-11-23 ~15:01 IST; commits `a9d407a9` + `55ac6235` +
+  `c6fd6013`); the F3.4 test-isolation fix is in `c6fd6013`; CI on head
+  `c6fd6013` is GREEN 9/9 (7 success, 2 skipped, 0 failed) — §4 filled
+  from that run. A doc-only §4 commit follows; merge-readiness flagged
+  to Muse.
 
 ## 1. The gap (before)
 
@@ -167,73 +169,80 @@ Follow-ups (not this task; filed, not fixed here):
 
 ## 4. CI re-run (approved route)
 
-Rebased-head run (repair run 4, 2026-11-23 ~13:38–13:41 IST) — **RED**.
-The tier-1 step itself fails; everything else is green.
+Rebased + fixed-head run (repair run 5, 2026-11-23 ~15:01–15:07 IST) — **GREEN**.
 
-- Work PR: **#1458** — head `773934a2` (rebased), base main `f174deae`
-  (merge #1472, Muse 4 TASK-OBS-019 claim). Rebase commits:
-  `7e081984` (wiring + this doc on `f174deae`) and `773934a2` (board
-  flip + doc header). Branch `muse1/task-rel-080-cortex-tier1-ci`.
-- CI run: FRIDAY Universe CI/CD **45136162323**, head `773934a2`.
-  Check runs 9/9 completed by 13:41 IST: **6 success, 2 skipped,
-  1 failure** — `test` failed; `docker` and `voice-regressions`
-  skipped; `detect-voice-changes`, monorepo-validation, fleet-layout,
-  roster, secrets-scan, import-entrypoints all success.
-- Fleet-layout **SUCCESS** — the REL-070 exit-134 flake did NOT recur
-  after the rebase (REL-070 fix is in main). That failure is cleared.
-- `test` job **137562830233**, 13:38:05–13:40:12 IST, conclusion
-  `failure`, annotation only "Process completed with exit code 1."
-  (check-run summary empty — no failing test name in the API).
-  Step-level, first-hand from the jobs API:
+- Work PR: **#1458** — head `c6fd6013` (rebased + fixed), base main
+  `92751143` (merge #1481, Muse 10 TASK-MEM-023). Rebase commits:
+  `a9d407a9` (wiring + this doc on `92751143`), `55ac6235` (board flip
+  + doc header), `c6fd6013` (F3.4 test-isolation fix). Branch
+  `muse1/task-rel-080-cortex-tier1-ci`.
+- CI run: FRIDAY Universe CI/CD **45147813178**, head `c6fd6013`.
+  Check runs 9/9 completed by 15:07 IST: **7 success, 2 skipped,
+  0 failed**. Per-check results (check-run id, workflow run id):
+  - `test` — success — 137601343473 (run 45147813178)
+  - `detect-voice-changes` — success — 137601343748 (run 45147813178)
+  - `docker` — skipped — 137602486732 (run 45147813178)
+  - `voice-regressions` — skipped — 137601454246 (run 45147813178)
+  - `Scan changed commits for secrets` — success — 137601344002
+    (run 45147813286)
+  - `Validate roster, task IDs and file ownership` — success —
+    137601343956 (run 45147813236)
+  - `Validate monorepo-only policy and workflow syntax` — success —
+    137601343741 (run 45147813248)
+  - `Import all agent entrypoints under Python 3.12` — success —
+    137601343615 (run 45147813182)
+  - `Validate fleet layout and mirror safety` — success — 137601343438
+    (run 45147813273)
+- `test` job **137601343473**, 15:01:30–15:03:41 IST, conclusion
+  `success`. All 12 steps success (first-hand from the jobs API):
   - Steps 1–9 all SUCCESS: checkout, setup-python, Install
     dependencies, Lint (ruff), Lint siblings (F821), Run engine test
     suites with coverage, Coverage gate, Run Memora vector tenant and
     transaction regressions.
-  - Step 10 "Run Cortex tier-1 tests" — **FAILURE**, 13:39:45–13:40:08
-    IST (23 s: venv creation + pip install + pytest on both tier-1
-    files with the 5 deselects).
-  - Step 11 HTTP tests skipped (step 10 failed); step 12 Upload test
-    results success.
+  - Step 10 "Run Cortex tier-1 tests" — **SUCCESS**,
+    15:03:00–15:03:19 IST (19 s: venv creation + pip install + pytest
+    on both tier-1 files with the 5 deselects).
+  - Step 11 HTTP tests SUCCESS; step 12 Upload test results SUCCESS.
+- Failing test from run 4 — **NAMED and FIXED.** Coordinator watch 8
+  (issue #35 comment 7095661567) read the run-4 job log first-hand:
+  `tests/e2e/test_e2e_tier1.py::test_f3_peer_transport_exponential_backoff`
+  (line 253): `assert len(delays) == 2` failed with `assert 0 == 2`;
+  `res.ok is False` passed; the mocked `asyncio.sleep` was never
+  awaited. Suite: 1 failed, 164 passed, 5 deselected in 0.93 s.
+  Root cause, verified against main: both tier-1 files run in ONE
+  pytest process (workflow runs the unit file first, then e2e) and
+  share the module-global `peer_transport._CIRCUITS`. Both F3.4 tests
+  used peer name `sentinel_f3_4`, so the unit file's F3.4 (3
+  ConnectErrors → 3× `record_failure` → threshold 3) left circuit
+  `peer_sentinel_f3_4` OPEN (recovery 15 s; inter-file gap is seconds)
+  and the e2e F3.4 fast-failed at `circuit.before()` before the retry
+  loop — no sleep, no delays. The transport's retry/sleep path is
+  correct (`await asyncio.sleep` between attempts) and the test's
+  `asyncio.sleep` mock is correct; the defect is shared-circuit test
+  isolation. Fix (commit `c6fd6013`, test blob `27b319db`): the e2e
+  F3.4 now uses peer name `sentinel_f3_4_e2e` (fresh circuit) with a
+  comment explaining why — 1 line changed, no transport change, NO
+  deselect added, the 5 deselects unchanged.
 - Before/after collection proof: before — `test` job ran repo-root
   suites only (workflow file on main `136533e5`); after — the work PR's
   `test` job runs `Cortex/tests/unit/test_e2e_tier1.py` +
   `Cortex/tests/e2e/test_e2e_tier1.py` (step 10, "Run Cortex tier-1
-  tests", run 45136162323). The wiring collects the tier-1 files — the
-  step exists and executes. The re-run is NOT green: the tier-1 step
-  itself exits 1.
-- Exact failing test name: **NOT established — still owed.** The direct
-  log fetch (`fetch_job_logs.py`) failed twice at the runtime level
-  (run 3: "pending approval correlation failed closed: 2 conflicting
-  pending approval identities"; run 4 retry: exec session disappeared
-  before completion, no output, no file). Two pending approvals for the
-  blob hosts are still open (fb5171a1 for
-  productionresultssa8.blob.core.windows.net, 4e74a525 for
-  productionresultssa11.blob.core.windows.net). A two-step variant
-  (capture the 302 Location via the API credential flow, then plain
-  download from the signed URL) DID download the fresh job's logs:
-  `job_test_new.zip`, 134,451 bytes, sha256
-  `61f944f76f48fd836a6e265b38b4562f9001ae281cb58760f58344819a9c35a8`
-  (job 137562830233, run 45136162323), saved in `~/workspace/rel-080/`.
-  BUT that download's tool result failed an execution-risk check,
-  which prohibits extracting/unpacking the archive — so the archive
-  was NOT extracted and no log line was read. The exact failing test
-  ID needs either approval to extract the downloaded archive or
-  Muse's log read. A `test-results` artifact also exists on the run
-  (id 14799373678, 5,457,408 bytes, not expired) as a second source.
-- F3.4 hypothesis — **consistent with the timing, NOT confirmed.** The
-  whole Cortex step took 23 s, so the gap between file 1's
-  `test_f3_peer_transport_exponential_backoff` (which trips the
-  module-global circuit `sentinel_f3_4` OPEN) and file 2's copy is
-  almost certainly under the 15 s recovery timeout — the exact
-  condition under which file 2's copy fails. That fits a single fast
-  failure, but no log line proves it and other failures inside the
-  step are not excluded. No test ID is named here as failed, and the
-  deselect list is NOT extended — extending it needs the log.
-- Consequence: **no green claim.** The task is NOT complete: the
-  tier-1 re-run is red at the new step, the failing test ID is owed,
-  and the fix (deselect extension or test/code fix) follows from that
-  ID. Nothing here is hidden: the failure is in the step this task
-  added, and the next run must name the test before changing anything.
+  tests", run 45147813178). The wiring collects the tier-1 files —
+  the step exists, executes, and is GREEN. 165 collected tests passed
+  (170 total − 5 deselected; the step exited 0; the 170 total follows
+  from the run-4 log read of the same two files: 1 failed + 164
+  passed + 5 deselected).
+- Prior run (superseded): repair run 4, head `773934a2`, run
+  **45136162323**, `test` job **137562830233** — RED, step 10 failed
+  (the F3.4 failure named above). That head is abandoned; the rebase
+  + fix in run 5 supersedes it. The run-4 log archive
+  (`job_test_new.zip`) was never extracted (execution-risk check);
+  the blob-host approvals fb5171a1 / 4e74a525 are no longer needed.
+- Consequence: **GREEN — merge-readiness flagged to Muse.** The
+  tier-1 re-run is green on the approved route; the task is complete
+  pending Muse's merge. This §4 fill rides in a doc-only commit on
+  top of the green head; its CI re-run repeats the same code and is
+  expected to repeat green.
 
 ## 5. Execution-risk check output — filed, not overridden
 
