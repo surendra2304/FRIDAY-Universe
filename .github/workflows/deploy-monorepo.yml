@@ -159,6 +159,27 @@ jobs:
               fi
             fi
 
+            # ── TASK-STR-044 daily fill-ledger reconciliation timer ─────────
+            # The reconciliation job is a read-only daily report (ledger vs
+            # venue); its systemd timer ships with the code and is installed
+            # + enabled here so the schedule lands with the merge. Install
+            # only: never restarts the daemon, never touches trading state.
+            # The unit dir is overridable (STR044_SYSTEMD_DIR) so the block
+            # is executable under test with fake sudo/systemctl — see
+            # tests/test_fleet_cd_str044_timer_install.py.
+            # BEGIN STR-044 TIMER INSTALL (TASK-STR-044)
+            if echo "$CHANGED_AGENTS" | grep -qw "Stratex" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              STR044_UNIT_DIR="${STR044_SYSTEMD_DIR:-/etc/systemd/system}"
+              if [ -f Stratex/deployment/friday-stratex-reconciliation.service ] && [ -f Stratex/deployment/friday-stratex-reconciliation.timer ]; then
+                echo "=== Installing Stratex daily reconciliation timer (TASK-STR-044) ==="
+                sudo cp Stratex/deployment/friday-stratex-reconciliation.service Stratex/deployment/friday-stratex-reconciliation.timer "$STR044_UNIT_DIR/"
+                sudo systemctl daemon-reload
+                sudo systemctl enable --now friday-stratex-reconciliation.timer
+                systemctl list-timers --all friday-stratex-reconciliation.timer || true
+              fi
+            fi
+            # END STR-044 TIMER INSTALL (TASK-STR-044)
+
             # ── Voice worker (2026-11-13): the LiveKit worker is its own unit
             # (FRIDAY-Voice.service) that the loop above never restarted, so
             # worker code changes silently stayed unloaded. It also needs the

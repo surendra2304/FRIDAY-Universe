@@ -1,0 +1,16 @@
+[Unit]
+Description=Daily Stratex fill-ledger reconciliation timer (TASK-STR-044)
+After=network-online.target
+Wants=network-online.target
+
+[Timer]
+# Daily 01:00 UTC (06:30 IST): files the previous day's fills, closes
+# and net P&L for the forward window. Persistent so a missed run (host
+# down at 01:00) still files on the next boot instead of silently
+# skipping a day.
+OnCalendar=*-*-* 01:00:00
+Persistent=true
+Unit=friday-stratex-reconciliation.service
+
+[Install]
+WantedBy=timers.target
