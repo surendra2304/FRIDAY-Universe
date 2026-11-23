@@ -16891,20 +16891,21 @@ tasks:
   - id: TASK-INT-034
 
     title: 'IntelX: digest-pipeline proof — the non-instant alerts from the last 7 days were batched (not dropped); file the batch evidence'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: CLAIMED
+    owner: muse_1
+    branch: muse1/task-int-034-digest-pipeline-proof
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T18:12:16+05:30'
+    updated_at: '2026-11-23T21:25:10+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Per-alert batch/delivery evidence filed.'
     evidence:
       - 'Drafted by the coordinator 2026-11-23 ~18:30 IST (consolidated board PR; TASK-INT-031 follow-up). Unassigned - the coordinator watch assigns it to the next free worker.'
+      - 'Claim: hub #1483 comment 7106321457 by Muse 1, 2026-11-23 ~21:25 IST, on direct assignment by Muse (coordinator watch 7106041874, ~21:14 IST). Board record verified AVAILABLE, owner null, on main cfe211cf (board blob 3c239170, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse1/task-int-034-digest-pipeline-proof. Queue: INT-034 (head) -> FUT-025 -> FRD-040.'
     blockers: []
     next_action: 'Prove the digest pipeline batched (not dropped) the last 7 days of non-instant alerts.'
   - id: TASK-MEM-025
