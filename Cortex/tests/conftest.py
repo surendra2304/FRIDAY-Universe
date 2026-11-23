@@ -82,6 +82,24 @@ def clear_dependency_overrides():
     yield
     app.dependency_overrides.clear()
 
+@pytest.fixture(autouse=True)
+def reset_peer_circuits():
+    """Start every test with fresh peer circuit breakers (REL-084).
+
+    ``peer_transport._CIRCUITS`` is module-global: the F3.4 backoff test
+    trips ``peer_sentinel_f3_4`` OPEN, and without this reset a later
+    test reusing that peer name in the same pytest process fast-fails at
+    ``circuit.before()`` whenever the inter-test gap is under the 15 s
+    recovery timeout — the REL-080 run-4 failure (``assert 0 == 2`` on
+    the retry delays). Resetting before each test makes the F3 suite
+    order- and timing-independent; the REL-080 rename workaround
+    (``sentinel_f3_4_e2e``) stays as belt-and-braces name separation.
+    """
+    from cortex_integrations.peer_transport import reset_peer_circuits as _reset
+
+    _reset()
+    yield
+
 
 @pytest.fixture
 def sqlite_engine(tmp_path):

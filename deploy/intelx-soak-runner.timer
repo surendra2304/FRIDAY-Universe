@@ -1,0 +1,18 @@
+[Unit]
+Description=Run the IntelX INT-876 soak once daily at 09:30 IST (TASK-INT-032)
+# S2 local time is IST (verified 2026-11-24 via bridge: system date IST),
+# so 09:30 here is 09:30 IST with no UTC conversion. If S2 ever moves off
+# IST, this line must move with it — the soak slot is 09:30 IST by the
+# owner-chosen option 1A, not 09:30 local by accident.
+# Persistent=true: a missed 09:30 (host down) fires once on boot; the
+# runner is idempotent per date, so a late catch-up can never duplicate
+# the day's run.
+
+[Timer]
+OnCalendar=*-*-* 09:30:00
+Persistent=true
+AccuracySec=30s
+Unit=intelx-soak-runner.service
+
+[Install]
+WantedBy=timers.target
