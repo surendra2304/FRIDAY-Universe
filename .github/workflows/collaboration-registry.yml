@@ -25,6 +25,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read # TASK-REL-087: gh pr list needs PR read scope
 
 concurrency:
   group: collaboration-registry-${{ github.ref }}
@@ -47,6 +48,15 @@ jobs:
       - name: Install YAML parser
         run: python -m pip install "PyYAML>=6.0,<7.0"
 
+      - name: List merged pull requests (TASK-REL-087)
+        # The validator checks a post-merge task's cited PR against this
+        # list; an empty list would fail every citation, so refuse it.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr list --state merged --limit 5000 --json number --jq '.[].number' > /tmp/merged_prs.txt
+          test -s /tmp/merged_prs.txt
+
       - name: Validate collaboration registry
         # TASK-REL-085: on failure the wrapper prints the failing check +
         # offending lines into the check-run summary, so the precise
@@ -57,7 +67,7 @@ jobs:
             --step "Validate collaboration registry" \
             --workflow ".github/workflows/collaboration-registry.yml" \
             --job "Validate roster, task IDs and file ownership" \
-            -- python scripts/validate_collaboration.py
+            -- python scripts/validate_collaboration.py --merged-prs /tmp/merged_prs.txt
 
       - name: Run validator regression tests (TASK-REL-069 fixtures)
         # TASK-REL-085: same failure-summary contract as above.
