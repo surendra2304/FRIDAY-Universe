@@ -15525,14 +15525,14 @@ tasks:
 
   - id: TASK-INF-029
     title: 'Inference: measure Gemini completion time on ~9k-token prompts and set the routing deadline from that evidence'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-inf-029-gemini-9k-deadline
     pr: 1484
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T15:01:13+05:30'
+    updated_at: "2026-11-23T15:14:23+05:30"
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-029-GEMINI-9K-DEADLINE.md
@@ -15547,8 +15547,9 @@ tasks:
     - 'Claim: branch muse4/task-inf-029-gemini-9k-deadline created from main c97dacff, 2026-11-23 ~14:44 IST, on assignment in coordinator watch 7096098820 (re-slot from Muse 2). Hub claim comment NOT posted - issue #35 hit 2,500 comments and GitHub refuses new comments (403). Board owner flip to muse_4 landed via coordinator board PR #1480 (merge b1b04db2).'
     - 'Measured 2026-11-23 ~14:47-14:51 IST (this run): direct Gemini n=5 fresh on the INF-019 probe shape (35,214 chars, 13,543 calibrated tokens): 5.42 / 14.27 / 42.00 / 74.76 s served, 1 timeout >150 s (censored); median 42.00 s, p95 150.13 s nearest-rank (true p95 >=150 s), 2/5 inside the 15 s slice; combined n=8 with INF-LLM-003: median 54.66 s, 3/8 inside. Compressed prompt served in 23.52 s. Gateway path 18.34 s, Gemini cut at 15.0 s (4th occurrence), fallback served via OpenRouter nemotron. Evidence: docs/collaboration/TASK-INF-029-GEMINI-9K-DEADLINE.md.'
     - 'Deadline set from the numbers: KEEP - REQUEST_TIMEOUT 60.0, PRIMARY_ATTEMPT_FRACTION 0.6, PRIMARY_ATTEMPT_MAX_SECONDS 15.0 (primary slice 15.0 s), before = after; decision cited in the PRIMARY_ATTEMPT_MAX_SECONDS field description. A defaults-pinning test was omitted: the test file is collected by no PR-triggered workflow (TASK-REL-068 guard would fail the PR); the pin belongs with the Inference-test CI-collection follow-up.'
+    - 'Merged: work PR #1484 merged 2026-11-23 15:09:26 IST (merge f0bb67cb, CI 9/9 green on head 0a0372bf). Board flip to MERGED filed in Muse 4 OBS-016 claim PR.'
     blockers: []
-    next_action: 'Work PR open; awaiting Muse merge.'
+    next_action: 'Merged (PR #1484, merge f0bb67cb); next queued task OBS-016.'
   - id: TASK-FRG-018
     title: 'Forge: build a task-execute dispatch endpoint so other agents can send Forge work, live-proven by one real dispatched task'
     status: AVAILABLE
@@ -15660,14 +15661,14 @@ tasks:
     next_action: 'Run the end-to-end request, time each hop, file the evidence.'
   - id: TASK-OBS-016
     title: 'Fleet: diagnose the IntelX plus Futuris DEGRADED states on S2 from the ORCH-014 G1 re-probe, fix or file the root cause for each'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_4
-    branch: null
+    branch: muse4/task-obs-016-s2-degraded-diagnosis
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T10:30:00+05:30'
+    updated_at: "2026-11-23T15:14:23+05:30"
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -15675,8 +15676,9 @@ tasks:
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~10:30 IST (watch refill, pool floor 10): from Muse 13 ORCH-014 G1 evidence (comment 7091440321) - api/agents/status re-probed twice, 0 UNREACHABLE, but IntelX plus Futuris DEGRADED, pre-existing, outside G1 scope. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Assigned to Muse 4 (free, requesting work 7095729134) in coordinator watch 2026-11-23 ~14:50 IST as queue position 3 (queue: STR-HLT-002 blocked -> INF-029 -> OBS-016).'
+    - 'Claim: branch muse4/task-obs-016-s2-degraded-diagnosis created from main f0bb67cb, 2026-11-23 ~15:15 IST, on assignment in coordinator watch 7096098820 (queue: STR-HLT-002 blocked -> INF-029 -> OBS-016) and follow-up 7096942539 (blocked-head rule: work OBS-016). Hub claim posted on #1483 (successor hub; #35 full at 2,500 comments). Board owner muse_4 set via coordinator board PR #1480 (merge b1b04db2). INF-029 work PR #1484 merged 15:09:26 IST.'
     blockers: []
-    next_action: 'Diagnose both DEGRADED states live, fix or file the root cause, re-probe.'
+    next_action: 'Claimed; diagnosing both DEGRADED states live, fix or file the root cause, re-probe.'
   - id: TASK-INT-023
     title: 'IntelX: compile the INT-876 soak 7-day chain evidence for the D4 enablement judgement due 2026-11-27'
     status: IN_REVIEW
