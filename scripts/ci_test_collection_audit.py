@@ -22,6 +22,11 @@ Design (evidence, main 3dd7cfba, 2026-11-22, verified by running this
     reason, printed in the CI log. The exclusion list starts empty.
   * Also fails on stale references: a workflow naming a test file that no
     longer exists (the lists rotting the other way).
+  * The result is ALSO written to $GITHUB_STEP_SUMMARY (TASK-REL-076), so a
+    failure lists the failing files on the PR check summary page — no
+    truncated-log hunt. Locally the variable is unset and nothing is
+    written. Long lists are capped in the summary (see SUMMARY_LIST_CAP);
+    the step log always carries the full list.
 
 Usage (CI, .github/workflows/owner-workflows.yml, contracts job, first step):
     python3 scripts/ci_test_collection_audit.py --base <base-sha>
@@ -148,6 +153,79 @@ def covers(ref, wd, test_files):
     return out
 
 
+# Max failing files listed in the step summary. The step log always carries
+# the full list; the summary is the at-a-glance view for the PR checks page.
+SUMMARY_LIST_CAP = 50
+
+
+def summary_lines(scope, total, covered_count, changed_count,
+                  uncovered, stale, error=None):
+    """Markdown lines for $GITHUB_STEP_SUMMARY (TASK-REL-076).
+
+    Pure function of the guard result so tests can check the exact text
+    without running git. Lists are capped; the cap note points at the log.
+    """
+    if error is not None:
+        return [
+            "## Test-collection guard — ERROR",
+            "",
+            "- Scope: %s." % scope,
+            "- %s" % error,
+            "- The guard could not run, so collection is unverified — see the step log.",
+        ]
+    if uncovered or stale:
+        lines = [
+            "## Test-collection guard — FAIL",
+            "",
+            "- Scope: %s; %d test files in repo, %d covered by a "
+            "PR-triggered workflow." % (scope, total, covered_count),
+        ]
+        if uncovered:
+            lines.append("- Uncollected test file(s) (%d) — collected by NO "
+                         "PR-triggered workflow:" % len(uncovered))
+            for t in sorted(uncovered)[:SUMMARY_LIST_CAP]:
+                lines.append("  - `%s`" % t)
+            if len(uncovered) > SUMMARY_LIST_CAP:
+                lines.append("  - …and %d more — see the step log for the "
+                             "full list." % (len(uncovered) - SUMMARY_LIST_CAP))
+        if stale:
+            lines.append("- Stale workflow reference(s) (%d) — test files "
+                         "that do not exist:" % len(stale))
+            for wf, ref in sorted(stale)[:SUMMARY_LIST_CAP]:
+                lines.append("  - `%s` names `%s`" % (wf, ref))
+            if len(stale) > SUMMARY_LIST_CAP:
+                lines.append("  - …and %d more — see the step log for the "
+                             "full list." % (len(stale) - SUMMARY_LIST_CAP))
+        lines.append("- Fix: add each file to a workflow pytest invocation "
+                     "(or to EXCLUDED in scripts/ci_test_collection_audit.py "
+                     "with a reason), then re-run.")
+        return lines
+    return [
+        "## Test-collection guard — PASS",
+        "",
+        "- Scope: %s; %d test file(s) in scope, all collected by a "
+        "PR-triggered workflow." % (scope, changed_count),
+    ]
+
+
+def write_step_summary(lines):
+    """Append markdown to the GitHub step summary when running in Actions.
+
+    The summary is what a reviewer sees on the PR checks page without
+    opening (possibly truncated) step logs. Locally GITHUB_STEP_SUMMARY
+    is unset and this is a no-op. A failure to write never masks the
+    guard result: it only prints a warning.
+    """
+    path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not path:
+        return
+    try:
+        with open(path, "a", encoding="utf-8") as f:
+            f.write("\n".join(lines) + "\n")
+    except Exception as e:
+        print("GUARD WARNING: could not write to GITHUB_STEP_SUMMARY: %s" % e)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--base", default=os.environ.get("GUARD_BASE_SHA", ""),
@@ -160,11 +238,17 @@ def main():
     workflows_dir = os.path.join(root, ".github", "workflows")
     if not os.path.isdir(workflows_dir):
         print("GUARD ERROR: no workflows dir at %s" % workflows_dir)
+        write_step_summary(summary_lines(
+            "unknown", 0, 0, 0, [], [],
+            error="No workflows dir at %s." % workflows_dir))
         return 2
     try:
         test_files = repo_test_files(root)
     except Exception as e:
         print("GUARD ERROR: cannot list tracked test files: %s" % e)
+        write_step_summary(summary_lines(
+            "unknown", 0, 0, 0, [], [],
+            error="Cannot list tracked test files: %s." % e))
         return 2
     references, pr_workflows = parse_workflows(workflows_dir, root)
     covered = {}
@@ -183,12 +267,20 @@ def main():
         if not args.base or set(args.base) <= {"0"}:
             print("GUARD ERROR: no base sha given (--base or GUARD_BASE_SHA); "
                   "the PR diff cannot be determined, so the guard cannot run.")
+            write_step_summary(summary_lines(
+                "PR diff (no base sha)", len(test_files), len(covered), 0,
+                [], [], error="No base sha given (--base or GUARD_BASE_SHA); "
+                "the PR diff cannot be determined."))
             return 2
         try:
             diff = run_git(["diff", "--name-only", "--diff-filter=ACMRT",
                             "%s...HEAD" % args.base], cwd=root)
         except Exception as e:
             print("GUARD ERROR: cannot compute the PR diff: %s" % e)
+            write_step_summary(summary_lines(
+                "PR diff vs %s" % (args.base[:12] if args.base else "?"),
+                len(test_files), len(covered), 0, [], [],
+                error="Cannot compute the PR diff: %s." % e))
             return 2
         changed = sorted({p for p in diff.splitlines() if TEST_RE.search(p)})
         scope = "PR diff vs %s" % args.base[:12]
@@ -214,6 +306,10 @@ def main():
               "not exist:" % len(stale))
         for wf, ref in stale:
             print("  STALE: %s names %s" % (wf, ref))
+    # REL-076: the same verdict goes to the PR check summary, so the failing
+    # file list is visible without opening (possibly truncated) step logs.
+    write_step_summary(summary_lines(
+        scope, len(test_files), len(covered), len(changed), uncovered, stale))
     if uncovered or stale:
         return 1
     if not changed:
