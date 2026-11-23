@@ -162,6 +162,7 @@ import numpy  # noqa: F401
 _SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
 from livekit.agents import AutoSubscribe, JobContext, JobExecutorType, WorkerOptions, cli
+from livekit.agents.utils import http_server as _lk_http_server
 from livekit.agents.voice import Agent, AgentSession
 from livekit.agents.voice.room_io import RoomInputOptions, RoomOutputOptions
 
@@ -5357,6 +5358,69 @@ def _worker_options() -> WorkerOptions:
         job_executor_type=JobExecutorType.THREAD,
         prewarm_fnc=_prewarm_job_executor,
     )
+
+
+def _add_health_alias(app) -> bool:
+    """Mirror the SDK's GET / liveness probe onto GET /health (TASK-OBS-011).
+
+    livekit-agents 1.8.12 serves its health check only at GET /; the fleet
+    convention — and the watcher/Cortex probes — is GET /health, which 404s
+    (verified live 2026-11-23 ~13:12 IST on S1 :8081: GET / -> 200 "OK",
+    GET /health -> 404 "404: Not Found"). The SDK offers no hook to add
+    routes, so the alias reuses the exact handler object the SDK registered
+    at /: identical semantics by construction, no duplicated liveness logic.
+    Must run before the aiohttp runner starts — the router freezes on
+    startup (RuntimeError: Cannot register a resource into frozen router),
+    so a worker_started listener is too late; see _HealthAliasHttpServer.
+    Idempotent: a second call, or a future SDK that ships /health itself,
+    is a no-op. Returns True when the alias was added.
+    """
+    for resource in app.router.resources():
+        if resource.canonical == "/health":
+            return False
+    for resource in app.router.resources():
+        if resource.canonical != "/":
+            continue
+        for route in resource:
+            if route.method == "GET":
+                app.router.add_get("/health", route.handler)
+                return True
+    return False
+
+
+class _HealthAliasHttpServer(_lk_http_server.HttpServer):
+    """SDK HTTP server with GET /health aliased to GET / (TASK-OBS-011).
+
+    livekit-agents 1.8.12 gives WorkerOptions no route hook: AgentServer
+    builds its own HttpServer and registers GET / (health) and GET /worker
+    inside _start, then starts the server. Installing this subclass as
+    livekit.agents.utils.http_server.HttpServer at import time makes the
+    worker's server register /health from the same handler, before the
+    runner freezes the router. The /worker endpoint and the / semantics
+    are untouched.
+    """
+
+    async def start(self) -> None:
+        if any(
+            resource.canonical == "/health"
+            for resource in self.app.router.resources()
+        ):
+            logger.info("TASK-OBS-011: GET /health already registered; skipping alias")
+        elif _add_health_alias(self.app):
+            logger.info("TASK-OBS-011: GET /health registered (alias of GET /)")
+        else:
+            logger.warning(
+                "TASK-OBS-011: GET / route not found; /health not registered"
+            )
+        await super().start()
+
+
+# TASK-OBS-011: route the fleet-convention GET /health through the SDK's
+# built-in health server (livekit-agents 1.8.12, no public route hook).
+# The worker module IS the worker process, so patching the class here only
+# affects this server; the telemetry/prometheus server is a different class
+# (livekit.agents.telemetry.http_server) and is untouched.
+_lk_http_server.HttpServer = _HealthAliasHttpServer
 
 
 if __name__ == "__main__":
