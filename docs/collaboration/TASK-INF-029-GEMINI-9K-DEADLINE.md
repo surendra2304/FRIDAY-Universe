@@ -43,7 +43,7 @@ Elapsed **18.34 s**. Gemini's primary attempt was cut at **15.0 s** — fallback
 ## Decision: KEEP the deadline — set from these numbers
 
 **Before:** `REQUEST_TIMEOUT = 60.0`, `PRIMARY_ATTEMPT_FRACTION = 0.6`, `PRIMARY_ATTEMPT_MAX_SECONDS = 15.0` → primary slice `min(60 × 0.6, 15) = 15.0 s`.
-**After:** unchanged — `60.0 / 0.6 / 15.0`, primary slice **15.0 s**. The decision is recorded in code: the `PRIMARY_ATTEMPT_MAX_SECONDS` field description in `Inference/app/core/config.py` now cites this measurement, and a test pins the three defaults (`Inference/tests/test_provider_gateway_deadlines.py`).
+**After:** unchanged — `60.0 / 0.6 / 15.0`, primary slice **15.0 s**. The decision is recorded in code: the `PRIMARY_ATTEMPT_MAX_SECONDS` field description in `Inference/app/core/config.py` now cites this measurement. A defaults-pinning test was NOT added in this PR: `Inference/tests/test_provider_gateway_deadlines.py` is collected by no PR-triggered workflow, and the TASK-REL-068 collection guard fails any PR that touches it; the pin belongs with the Inference-test CI-collection follow-up (see G6).
 
 Why keep, on this evidence:
 
@@ -67,6 +67,7 @@ Why keep, on this evidence:
 - **G3 — the fallback model answers with a thinking trace.** As in INF-LLM-002 G3 and LLM-003 G3, `nvidia/nemotron-3.5-lightning:free` returned a thinking trace ("Here's a thinking process: ...") instead of the requested review format. Observation, not a defect.
 - **G4 — compression disagrees between runs.** 35,214 -> 32,814 chars (-7%) both runs; LLM-003's compressed attempt timed out past 150 s, this run's completed in 23.52 s. One sample each — not a general claim about compression, but it shows the compressed variant has the same heavy tail.
 - **G5 — the gateway trial exercises the explicit-timeout path only.** The harness sets `extra_params={"timeout": 60.0}`, which opts out of the INF-022 large-prompt direct-to-fallback bypass by design. The 15.0 s cut measured here is the explicit-timeout path; the default path for a large prompt skips Gemini entirely. Both paths are consistent with the KEEP decision.
+- **G6 — no PR-CI home for Inference unit tests.** `Inference/tests/test_provider_gateway_deadlines.py` (like most Inference tests) is collected by no PR-triggered workflow, so the TASK-REL-068 collection guard fails any PR that modifies it — this PR's `contracts` check failed on exactly that (guard reproduced locally: `UNCOLLECTED: Inference/tests/test_provider_gateway_deadlines.py`). A defaults-pinning test for the INF-029 decision was drafted and then omitted from this PR for that reason; it belongs with the systemic Inference-test collection follow-up.
 
 ## Reproduction
 
@@ -75,7 +76,7 @@ Harness (kept on Server 1): `PYTHONPATH=/opt/friday_universe/Inference /opt/frid
 ## States
 
 - **implemented:** YES (this run)
-- **tested:** YES — live measurement n=5 + compressed + gateway trials on S1; new defaults-pinning test added, CI to be verified on the work PR head (Muse merges only)
+- **tested:** YES — live measurement n=5 + compressed + gateway trials on S1; CI to be verified on the work PR head (Muse merges only)
 - **merged:** NO — work PR opened this run, awaiting Muse
 - **deployed:** NO — description/comment/test-only change; no behaviour change, nothing to deploy beyond the merge
 - **production-verified:** YES — the measurement itself is the production evidence (live S1, live Gemini, live gateway path); the deadline decision is filed from those numbers
