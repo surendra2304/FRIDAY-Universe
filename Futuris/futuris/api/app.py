@@ -128,20 +128,21 @@ async def lifespan(_app: FastAPI):
     # The unattended agent loop must actually run: without it nothing refreshes
     # forecasts, sweeps lifecycles or backtests unless a human calls the API.
     scheduler = None
-    scheduler_session = None
     if "pytest" not in sys.modules and settings.SCHEDULER_ENABLED:
         from futuris.infra.scheduler import ForecastScheduler
-        from futuris.storage.repositories import (
-            EventRepository,
-            ForecastRepository,
-            OutcomeRepository,
-        )
+        from futuris.storage import db as storage_db
 
-        scheduler_session = async_session_factory()
+        # TASK-FUT-025: the scheduler no longer runs on one long-lived
+        # shared session. The old code built a single session here and
+        # handed it to every repo, so every job flushed and committed on
+        # it -- the "Session is already flushing" contention behind the
+        # 17:15 / 18:15 scoring, calibration and provider-refresh
+        # failures, and the reason uncommitted writes vanished on any
+        # job's rollback. Each job now opens its own session from the
+        # process-wide factory, resolved at call time so a patched
+        # factory is honoured (B23 in deps.py).
         scheduler = ForecastScheduler(
-            forecast_repo=ForecastRepository(scheduler_session),
-            outcome_repo=OutcomeRepository(scheduler_session),
-            event_repo=EventRepository(scheduler_session),
+            session_factory=lambda: storage_db.async_session_factory(),
             emitter=event_emitter,
         )
         scheduler.start()
@@ -188,8 +189,6 @@ async def lifespan(_app: FastAPI):
     if scheduler is not None:
         await scheduler.shutdown()
     globals()["_running_scheduler"] = None
-    if scheduler_session is not None:
-        await scheduler_session.close()
     for task in background_tasks:
         task.cancel()
     if background_tasks:
