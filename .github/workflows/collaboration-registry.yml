@@ -48,7 +48,23 @@ jobs:
         run: python -m pip install "PyYAML>=6.0,<7.0"
 
       - name: Validate collaboration registry
-        run: python scripts/validate_collaboration.py
+        # TASK-REL-085: on failure the wrapper prints the failing check +
+        # offending lines into the check-run summary, so the precise
+        # failing step is recoverable without sign-in-gated logs.
+        run: |
+          python scripts/ci_failure_summary.py \
+            --check "roster-validator" \
+            --step "Validate collaboration registry" \
+            --workflow ".github/workflows/collaboration-registry.yml" \
+            --job "Validate roster, task IDs and file ownership" \
+            -- python scripts/validate_collaboration.py
 
       - name: Run validator regression tests (TASK-REL-069 fixtures)
-        run: python scripts/tests/test_validate_collaboration.py
+        # TASK-REL-085: same failure-summary contract as above.
+        run: |
+          python scripts/ci_failure_summary.py \
+            --check "roster-validator" \
+            --step "Run validator regression tests (TASK-REL-069 fixtures)" \
+            --workflow ".github/workflows/collaboration-registry.yml" \
+            --job "Validate roster, task IDs and file ownership" \
+            -- python scripts/tests/test_validate_collaboration.py

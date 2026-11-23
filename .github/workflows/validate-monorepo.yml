@@ -47,4 +47,15 @@ jobs:
         run: python -m compileall -q mesh Forge/app/verification/engine.py Futuris/futuris/core/pipeline.py Sentinel/sentinel/core/orchestrator/executor.py
 
       - name: Validate all ten agent roots and workflow syntax
-        run: python scripts/validate_fleet.py
+        # TASK-REL-085: on failure the wrapper prints the failing check +
+        # offending lines into the check-run summary, so the precise
+        # failing step is recoverable without sign-in-gated logs.
+        # (The regression-test step above already has this contract via
+        # the REL-081 runner, scripts/ci_gate_test_runner.py.)
+        run: |
+          python scripts/ci_failure_summary.py \
+            --check "fleet-layout" \
+            --step "Validate all ten agent roots and workflow syntax" \
+            --workflow ".github/workflows/validate-monorepo.yml" \
+            --job "Validate fleet layout and mirror safety" \
+            -- python scripts/validate_fleet.py
