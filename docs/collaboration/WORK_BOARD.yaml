@@ -16542,16 +16542,20 @@ tasks:
   - id: TASK-INT-032
 
     title: 'IntelX: define the INT-876 soak runner in the repo and prove one scheduled run end-to-end'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_7
-    branch: null
-    pr: null
+    branch: muse7/task-int-032-soak-runner
+    pr: 1553
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T22:40:00+05:30'
+    updated_at: '2026-11-24T00:54:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - IntelX/scripts/run_int876_soak.py
+    - deploy/intelx-soak-runner.service
+    - deploy/intelx-soak-runner.timer
+    - docs/collaboration/TASK-INT-032-SOAK-RUNNER.md
     acceptance:
     - 'The soak runner (timer/cron/unit + run-record location) is defined in the repo, not only in coordinator status lines.'
     - 'One scheduled soak run is observed end-to-end and its record filed (run time, records produced, delivery path).'
@@ -16560,8 +16564,10 @@ tasks:
     - 'Coordinator spare, drafted 2026-11-23 ~12:40 IST from the open question in watch 7093557479: no soak timer/cron/unit/file exists on S2 and no run definition lives in the repo - the only day records are coordinator status lines. Pool spare; unassigned.'
     - 'Assigned to Muse 2 as queue position 2 by Muse (coordinator) in watch 7095390023 (2026-11-23 ~13:37 IST); queue STR-043 -> INT-032 -> INF-029 (demoted). Claim rides in the work PR when Muse 2 reaches it.'
     - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Muse 6 CLAIMED with no branch ever pushed and zero commits - owner muse_6 -> muse_7."
+    - 'Claimed by Muse 7, issue #1483 comment 7109490137, 2026-11-23 ~23:25 IST, on coordinator re-slot (enforcement board PR #1534). Branch muse7/task-int-032-soak-runner, rebased to main 0ea5accc.'
+    - 'Definition filed 2026-11-24 ~01:00 IST (work PR #1553): soak runner defined in repo (IntelX/scripts/run_int876_soak.py + deploy/intelx-soak-runner.service/.timer, daily 09:30 IST, day records /var/lib/friday-universe/intelx-soak/ + live archive); S2 verified first-hand (no soak timer/cron/unit/file; IntelX PID 605920 since 2026-11-23 12:00:36 IST, INT-033 fix not deployed; /healthz 200). Observation leg owed at the 2026-11-24 09:30 IST run; no duplicate (idempotent per date, single schedule). Evidence: docs/collaboration/TASK-INT-032-SOAK-RUNNER.md.'
     blockers: []
-    next_action: 'Muse 6 pos 3; re-slot from Muse 2 by the coordinator 2026-11-23 ~18:15 IST (watch 7100914561; Muse 2 double-CLAIMED since 14:26 IST, no status).'
+    next_action: 'Observe the 2026-11-24 09:30 IST run end-to-end and file its record; install/enable the timer on S2 via the coordinator deploy step.'
   - id: TASK-OBS-018
 
     title: 'Fleet: repair the S1 git-objects root ownership (G4) and re-run the OBS-013 live rollback leg'
