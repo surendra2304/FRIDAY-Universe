@@ -8,6 +8,7 @@ stubbed and all state lives in tmp dirs.
 """
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import os
@@ -38,8 +39,34 @@ def _write_manifest(dir_path: Path, manifest: dict) -> Path:
     return dir_path
 
 
+def _one_table(agent: str) -> dict:
+    return {"agent": agent, "tables": [{"table": "T1", "row_count": 1}]}
+
+
+def _stub_entry(agent: str, out_dir: Path) -> dict:
+    """A stub backup_agent entry that satisfies the real verify pass.
+
+    TASK-SEN-022: run() now verifies the files a dump claims, so a stub
+    entry must name a real file with a matching checksum — an entry
+    with a table but no file is not a dump, it is a KeyError.
+    """
+    data = b"row\n"
+    agent_dir = out_dir / agent
+    agent_dir.mkdir(parents=True, exist_ok=True)
+    (agent_dir / "T1.jsonl.gz").write_bytes(data)
+    return {"agent": agent, "schema": agent,
+            "tables": [{"table": "T1", "row_count": 1,
+                        "sha256": hashlib.sha256(data).hexdigest(),
+                        "file": f"{agent}/T1.jsonl.gz"}]}
+
+
 def _complete_manifest(ts: str) -> dict:
-    return {"created_at": ts, "agents": [], "failed_agents": [],
+    # A realistic complete manifest: all ten fleet agents, one table each.
+    # TASK-SEN-022: the freshness check requires full-fleet coverage by
+    # default, so the fixture must carry the full agent list.
+    return {"created_at": ts,
+            "agents": [_one_table(a) for a in backup_mod.ALL_AGENTS],
+            "failed_agents": [],
             "verify": {"ok": 3, "failed": 0}, "complete": True}
 
 
@@ -81,9 +108,19 @@ class TestAgentEnvSnapshot:
 
 class TestCompleteness:
     def test_explicit_flag(self, tmp_path):
+        # TASK-SEN-022: a bare flag is a claim, not proof — without a
+        # verify block and dumped tables it does not count as complete.
         d = _write_manifest(tmp_path / "a", {"complete": True})
-        assert backup_mod.backup_completeness(d) is True
+        assert backup_mod.backup_completeness(d) is False
         d = _write_manifest(tmp_path / "b", {"complete": False})
+        assert backup_mod.backup_completeness(d) is False
+        # Flag + contents that agree: complete.
+        d = _write_manifest(tmp_path / "c", _complete_manifest("2026-11-15T10:00:00Z"))
+        assert backup_mod.backup_completeness(d) is True
+        # Flag + contents that disagree: the contents win.
+        manifest = _complete_manifest("2026-11-15T10:00:00Z")
+        manifest["failed_agents"] = ["MEMORA"]
+        d = _write_manifest(tmp_path / "d", manifest)
         assert backup_mod.backup_completeness(d) is False
 
     def test_legacy_manifest_derivation(self, tmp_path):
@@ -162,7 +199,7 @@ class TestRunBehaviour:
             calls.append(agent)
             if agent == backup_mod.MEDIA_SCHEMA:
                 raise backup_mod.OracleConfigError("no media credentials here")
-            return {"agent": agent, "schema": agent, "tables": []}
+            return _stub_entry(agent, out_dir)
 
         monkeypatch.setattr(backup_mod, "backup_agent", stub)
         rc = backup_mod.run(_run_args(tmp_path, agents="FRIDAY", media=True),
@@ -179,7 +216,7 @@ class TestRunBehaviour:
 
         def stub(agent, out_dir, **kwargs):
             calls.append(agent)
-            return {"agent": agent, "schema": agent, "tables": []}
+            return _stub_entry(agent, out_dir)
 
         monkeypatch.setattr(backup_mod, "backup_agent", stub)
         rc = backup_mod.run(_run_args(tmp_path, media_only=True), log=lambda *a: None)
@@ -191,7 +228,7 @@ class TestRunBehaviour:
 
     def test_all_agents_success_marks_complete(self, tmp_path, monkeypatch):
         def stub(agent, out_dir, **kwargs):
-            return {"agent": agent, "schema": agent, "tables": []}
+            return _stub_entry(agent, out_dir)
 
         monkeypatch.setattr(backup_mod, "backup_agent", stub)
         rc = backup_mod.run(_run_args(tmp_path, agents="FRIDAY,MEMORA"),
