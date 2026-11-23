@@ -15700,7 +15700,7 @@ tasks:
     status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-mem-022-lesson-search-reprobe
-    pr: null
+    pr: 1469
     contributors: []
     priority: P2
     created_at: '2026-11-23'
@@ -15718,7 +15718,7 @@ tasks:
     - 'Repair 2026-11-23 ~12:18-12:19 IST (live, service not stopped - single test record, no concurrent writer): dry-run scanned 1, would_repair 1, exit 0; apply repaired 1, exit 0, embedding upserted (Gemini 200 OK); unverifiable/unsigned empty.'
     - 'Re-probe ~12:20 IST (post-repair): friday distinctive search limit 100 - copy rank 1, keyword 1.0 (36 results); sentinel - copy rank 1 + original rank 2, both 1.0; friday prefix limit 50 - exactly 1 result, the copy at 1.0. Original still PRIVATE (friday 404, sentinel 200); copy UNIVERSAL (friday/futuris 200). MEM-019 G1 closed by live evidence. Raw responses: /tmp/muse10_mem022/ on Server 1.'
     blockers: []
-    next_action: 'Work PR open (number filed on the board); awaiting Muse merge.'
+    next_action: 'Work PR #1469 open, awaiting Muse merge.'
   - id: TASK-VYR-043
     title: 'VyralX: file the current scoreboard - 5 public videos views/likes + held-render pool state'
     status: AVAILABLE
