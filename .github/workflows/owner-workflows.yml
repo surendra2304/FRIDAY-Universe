@@ -20,6 +20,7 @@ on:
       - 'Memora/core/memory/search_service.py'
       - 'Memora/tests/test_direct_evidence_ranking.py'
       - 'IntelX/intelx/api/**'
+      - 'IntelX/tests/**'
       - 'VyralX/app/**'
       - 'VyralX/tests/**'
       - 'tests/test_live_research_task_contract.py'
@@ -50,6 +51,7 @@ on:
       - 'Memora/core/memory/search_service.py'
       - 'Memora/tests/test_direct_evidence_ranking.py'
       - 'IntelX/intelx/api/**'
+      - 'IntelX/tests/**'
       - 'VyralX/app/**'
       - 'VyralX/tests/**'
       - 'tests/test_live_research_task_contract.py'
@@ -180,7 +182,15 @@ jobs:
             Inference/tests/test_python_fence_boundaries.py \
             Inference/tests/test_forge_output_is_verified.py \
             Inference/tests/test_source_repair_context.py \
-            Inference/tests/test_inf015_flash_lite_catalogue.py
+            Inference/tests/test_inf015_flash_lite_catalogue.py \
+            Inference/tests/test_rel047_gateway_guards.py \
+            Inference/tests/test_gemini_token_accounting.py
+      - name: IntelX synthesis verification contracts
+        env:
+          PYTHONPATH: IntelX
+        run: |
+          python -m pip install -r IntelX/requirements.txt
+          python -m pytest -q IntelX/tests/test_int005_verification_pass.py
       - name: Stratex forward-test and self-experiment contracts
         run: |
           python -m pip install 'pandas>=2.2,<4' requests flask flask-cors python-binance
