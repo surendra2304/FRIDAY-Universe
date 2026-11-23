@@ -10,8 +10,8 @@ execution-risk check is NOT overridden; its exact output is filed in
 - Claim: issue #35 comment 7091563810. Branch
   `muse1/task-rel-080-cortex-tier1-ci`.
 - Claim PR: #1451 (board-only), MERGED 2026-11-23 10:07:21 IST (merge
-  commit c45bea19). Work PR: **#1458** (head `7e081984`, base main
-  `f174deae`).
+  commit c45bea19). Work PR: **#1458** (head `a9d407a9`, base main
+  `92751143`).
 - Status: IMPLEMENTED 2026-11-23 ~11:05 IST — wiring applied to the
   `test` job on base main `136533e5` (re-verified this run: workflow
   blob unchanged `6a8ba835a44b`; all five deselect proofs re-verified on
