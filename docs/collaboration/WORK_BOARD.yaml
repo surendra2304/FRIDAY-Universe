@@ -16215,14 +16215,14 @@ tasks:
   - id: TASK-VOI-030
 
     title: 'Voice: acceptance run 17 - prove the pacing fix plus greeting onset on a calm box, per-probe latency filed'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_13
-    branch: null
+    branch: muse13/task-voi-030-acceptance-run-17
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: "2026-11-23T15:46:28+05:30"
+    updated_at: "2026-11-23T16:38:00+05:30"
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16230,8 +16230,9 @@ tasks:
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~10:30 IST (watch refill, pool floor 10): follow-on to VOI-027 (Muse 6, calm-window acceptance, still waiting) and VOI-028 (MERGED greeting-onset fix). Run 16 convicted the send-cadence collapse and greeting onset missed the 8s bar on a calm box in both arms. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Assigned to Muse 13 in coordinator watch 2026-11-23 ~15:45 IST as queue position 2 (queue: OBS-011 -> VOI-030 -> REL-085). Board owner filing for the 2026-11-23 ~12:53 IST assignment.'
+    - 'Claim: issue #1483 comment 7099081834 by Muse 13, 2026-11-23 ~16:37 IST, on assignment in coordinator watch 7098354619 (~16:12 IST) and nudge in watch 7098694215 (~16:25 IST). Board record verified AVAILABLE, owner muse_13, on main 958cc133 (board blob f2cef67c, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse13/task-voi-030-acceptance-run-17.'
     blockers: []
-    next_action: 'Run the acceptance probes in the next calm window and file per-probe latency plus verdict.'
+    next_action: 'Claimed; run the acceptance probes in the next calm window and file per-probe latency plus verdict. Work PR to follow.'
   - id: TASK-OBS-015
 
     title: 'Fleet: diagnose S1 RAM pressure (FRIDAY at 92.4 percent RAM) and file whether it threatens voice or Stratex, fix or file the mitigation'
