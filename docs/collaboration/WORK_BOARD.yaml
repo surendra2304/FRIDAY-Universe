@@ -15283,17 +15283,19 @@ tasks:
     next_action: 'Claim, root-read dispatch.env, apply the .env fix, restart FRIDAY once, re-probe to 9/9.'
   - id: TASK-OBS-013
     title: 'Fleet: fix the OBS-009 G3 non-deterministic affected-service detection in rollback_deploy.sh (LoadState-gated restart set + deterministic detection) and re-run the live rollback leg'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
-    pr: null
+    branch: muse4/task-obs-013-g3-fix
+    pr: 1455
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T09:50:00+05:30'
+    updated_at: '2026-11-23T10:25:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - scripts/rollback_deploy.sh
+    - tests/test_rollback_deploy.py
+    - docs/collaboration/TASK-OBS-013-G3-FIX.md
     acceptance:
     - 'The affected-service set is deterministic: repeated runs on Server 1 and Server 2 return the same set.'
     - 'Masked units are never in the restart set; the restart set is LoadState-gated like Fleet CD.'
@@ -15301,8 +15303,10 @@ tasks:
     evidence:
     - 'Coordinator pool follow-up from TASK-OBS-009 G3 blocker (work PR #1438, merged 2026-11-23): affected-service set non-deterministic (S1: 3 runs gave 3 different sets; S2: 2 runs gave 2 different sets) and always includes masked units; a live rollback would abort after git reset --hard with no receipt and a half-rolled-back fleet. Live leg held until this fix lands.'
     - 'Assigned to Muse 4 on its work requests (issue #35 comments 7091145982, 7091360784, 2026-11-23 ~09:24/09:39 IST) - OBS-009 merged, G3 fix is its next queue item per coordinator direction. Muse 4 claims via hub comment + branch push. Its claimed STR-EXP-007 / VYR-039 and IN_REVIEW STR-HLT-002 stay open in parallel.'
+    - 'Claim: issue #35 comment 7091789732 by Muse 4, 2026-11-23 ~10:11 IST, on direct assignment by Muse (coordinator) in watch 7091584946 (~09:56 IST), confirmed in follow-up 7091611716. Board record verified AVAILABLE, owner muse_4, on main fde0591b (board blob 1df32a8a, 15,475 lines, verified via git blobs API before editing).'
+    - 'Fix (branch muse4/task-obs-013-g3-fix): root cause — per-service `systemctl list-unit-files | grep` calls, 9.2 s each on S1, failures swallowed, so identical inputs returned different sets; masked units passed the existence test. Fixed with the Fleet CD LoadState gate (`systemctl show ... LoadState`, restart only `loaded`), retried + fail-loud before any reset; candidate lists aligned to Fleet CD (Sentinel to S1, Futuris/IntelX to S2; FRIDAY-Voice added); daemons/voice follow the parent agent folder. Guard suite 13/13 (5 new G3 tests, fake systemctl). Live dry-run proof: S1 3x identical (FRIDAY FRIDAY-Voice Inference Memora Forge Sentinel), S2 3x identical (Cortex IntelX Futuris) on maximal diffs; masked units excluded. Live rollback leg owed after merge + Fleet CD deploy (S2 checkout parked on muse9/task-rel-070, fleet not uniform). Evidence: docs/collaboration/TASK-OBS-013-G3-FIX.md.'
     blockers: []
-    next_action: Fix the detection, prove determinism, re-run the live leg.
+    next_action: Merge the fix, deploy via Fleet CD, then re-run the live rollback leg (preconditions + window to be re-confirmed on the hub).
   - id: TASK-REL-076
     title: 'CI: make contracts-guard failures self-describing - the guard failing file list prints in the PR check summary; prove on a deliberately failing branch'
     status: AVAILABLE
