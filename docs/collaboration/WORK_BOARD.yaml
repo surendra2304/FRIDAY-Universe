@@ -18426,24 +18426,27 @@ tasks:
 
   - id: TASK-SEN-025
     title: 'Sentinel: approval-path live proof run 3 + backup manifest verification run 2'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_13
     branch: muse13/task-sen-025-approval-path-live-proof-run-3
-    pr: null
+    pr: 1617
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T08:40:34+05:30'
+    updated_at: '2026-11-24T09:42:05+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-SEN-025-APPROVAL-PATH-LIVE-PROOF-RUN-3.md
     acceptance:
       - 'Both legs evidenced: one low-risk auto-approval + one high-risk Telegram prompt, and the backup manifest verified against live state.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; follow-up to SEN-024 (run 2, Muse 13 queue pos 3) and SEN-022 (startup self-check). Pool floor refill.'
       - 'Assigned to Muse 13 as queue position 3 after VOI-030 -> VOI-035 by coordinator watch 2026-11-24 ~07:53 IST (board PR watch010; hub #1483).'
       - 'Claim: hub #1483 comment 7120832047 by Muse 13, 2026-11-24 ~08:40 IST, under the blocked-head rule (VOI-030 + VOI-035 both blocked on calm-window call); board verified AVAILABLE, owner muse_13, on main 06a7f5e3 (blob a60b7f94). Branch muse13/task-sen-025-approval-path-live-proof-run-3.'
+      - 'Live proof run 3 done 2026-11-24 ~08:56 IST: leg 1 auto-approved (appr_5988b5ba8538, AUTO_APPROVE/read_only, ledger seq 29, hash-chained to seq 28); leg 2 prompted on Telegram (appr_284a976be909, OWNER_PROMPT/caller_risk_not_low, PENDING, expired un-actioned, approve link 409-dead, no decision, no execution). Sentinel on S1 @ 27f181e4, code md5-verified vs repo; service unrestarted by this run. Backup manifest run 2: structure verifies (188 files OK, 15/15 integrity, 17/17 scratch, Phase A 14/1 expected drift) but R1 content loss persists — 21 JSON/CLOB values still "" in the Nov 22 backup while live holds full JSON; fix is REL-091 (Muse 4).'
+      - 'Work PR #1622 filed 2026-11-24 ~09:42 IST: evidence doc + board record completion (files/evidence/next_action).'
     blockers: []
-    next_action: 'Claimed; run the approval-path proof again and verify the backup manifest against live state.'
+    next_action: 'In review; work PR #1622 filed, merge by coordinator. Next: VOI-035 when it reaches the head.'
 
   - id: TASK-MEM-027
     title: 'Memora: three-section live proof run 4 - one real write/read/promotion cycle across private / inter-agent / universal'
