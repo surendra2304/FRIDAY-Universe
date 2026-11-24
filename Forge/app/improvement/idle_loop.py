@@ -871,7 +871,13 @@ class IdleExperimentLoop:
 
     # -- one cycle -----------------------------------------------------------
 
-    async def run_one_cycle(self) -> CycleReport:
+    async def run_one_cycle(self, now: datetime | None = None) -> CycleReport:
+        """Run one idle experiment cycle.
+
+        `now` is the frozen clock for tests (threaded into the
+        idle gate); omitted it means the wall clock, as in
+        production.
+        """
         if not self.experiments_enabled():
             return CycleReport(status="skipped", reason="kill_switch_off")
         load_refusal = self.host_load_refusal()
@@ -880,7 +886,7 @@ class IdleExperimentLoop:
                 f"idle experiment cycle refused by host-load gate: {load_refusal}"
             )
             return CycleReport(status="skipped", reason="host_load_gate")
-        if not await self.is_idle():
+        if not await self.is_idle(now=now):
             return CycleReport(status="skipped", reason="forge_busy")
         ledger = self._read_jsonl(self._ledger_path)
         if self._cycles_today(ledger) >= self.daily_cap:
