@@ -14903,14 +14903,14 @@ tasks:
   - id: TASK-INT-020
 
     title: 'IntelX: prove research-with-sources through FRIDAY chat, 3 consecutive live runs (M5 workflow 2)'
-    status: CLAIMED
-    owner: muse_7
-    branch: muse7/task-int-020-intelx-research-runs
+    status: AVAILABLE
+    owner: null
+    branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-22T17:25:00+05:30'
+    updated_at: '2026-11-25T02:45:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19119,14 +19119,14 @@ tasks:
 
   - id: TASK-STR-064
     title: 'Stratex: BSM-vs-market option mispricing scan - ranked research report, no trading'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-str-064-bsm-mispricing-scan-r2
     pr: 1720
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T03:06:00+05:30'
+    updated_at: '2026-11-25T04:14:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-STR-064-BSM-MISPRICING-SCAN.md
@@ -19139,8 +19139,9 @@ tasks:
     - 'Checkpoint 1 filed in docs/collaboration/TASK-STR-064-BSM-MISPRICING-SCAN.md: mispricing scanner implemented (Stratex/rigorous_backtest/ig/mispricing_scan.py) + 8 new tests, 8/8 pass first-hand; IG-STR-01 suite 7/7 pass, no regression. Live chain + ranked report is checkpoint 2.'
     - 'Checkpoint 2 DONE 2026-11-25 ~03:01 IST: live Deribit BTC chain fetched direct (S=59888.55), 3 expiries scanned (25NOV26 50: 24 OK/22 FLAGGED/4 INVALID_PRICE; 27NOV26 48: 28 OK/20 FLAGGED; 25DEC26 24: 14 OK/10 FLAGGED). Ranked report docs/collaboration/TASK-STR-064-LIVE-CHAIN-REPORT.md. Verdict: no tradeable mispricing — flags are the vol smile/skew (Dec downside puts +17% to +70% over model, upside calls -9% to -17%); 4 INVALID_PRICE are deep-ITM calls $1.43-$2.67 below the intrinsic bound, stale marks. No trading signal.'
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-STR-BSM-SCAN (IG package S-12). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'MERGED 2026-11-25 ~04:10 IST: PR #1720 merged by Muse (merge 02f3428f; CI 10/10 green, diff reviewed first-hand, coordinator watch061 7146520150).'
     blockers: []
-    next_action: 'IN_REVIEW — awaiting peer review + merge (PR #1720). No trading signal; scanner + live chain report filed.'
+    next_action: 'Merged via work PR #1720 (merge 02f3428f). No further action.'
   - id: TASK-STR-065
     title: 'Stratex: encode the Safety Nets stop-out rule into the advisory/risk gate'
     status: CLAIMED
@@ -19162,22 +19163,25 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-STR-066
     title: 'Stratex: add PDO/PDC levels plus current-day 5-minute levels to S/R annotation records'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: IN_REVIEW
+    owner: muse_15
+    branch: muse15/task-str-066-pdoc-levels
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T04:00:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-STR-066-PDOC-LEVELS.md
     acceptance:
     - Annotation output carries previous-day open/close (PDO/PDC) levels and current-day 5-minute levels alongside the existing support/resistance levels from TASK-IG-STR-03.
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-STR-PDOC-LEVELS (IG package S-10). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Claimed by Muse 15 (hub #1483 comment 7146070918, 2026-11-25 ~03:45 IST): board AVAILABLE / owner null on main 4bed6107 (re-checked on 80b75649); no competing claim; branch muse15/task-str-066-pdoc-levels.'
+    - 'Done with live proof (evidence: docs/collaboration/TASK-STR-066-PDOC-LEVELS.md): annotate_levels() in Stratex/rigorous_backtest/ig/levels.py adds PDO/PDC records (kind pdo/pdc, origin prev_day) + S/R levels recomputed from today''s 5m candles (timeframe 5m); find_levels() untouched. Tests 12/12 local (7 new); test_levels.py added to the Stratex tier-1 CI pytest invocation. Live run 2026-11-25 ~03:57 IST on real Deribit BTC-PERPETUAL candles: 101 x 1h bars (last close 59,934.5), prev-day daily open 61,386.0 / close 60,345.0, 270 x 5m bars today -> 22 records (13 base S/R + PDO + PDC + 7 5m).'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Work PR open, awaiting coordinator review/merge. No production consumer by design (annotation aid only); production-verified = live-data run above.'
   - id: TASK-STR-067
     title: 'Stratex: add the pattern-comparison step to the multi-agent research desk'
     status: AVAILABLE
@@ -19253,14 +19257,14 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-VYR-058
     title: 'VyralX: Reddit sourcing adapter for the discovery pipeline'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_7
+    branch: muse7/task-vyr-058-reddit-sourcing
+    pr: 1721
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T02:17:48+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19380,22 +19384,28 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-VYR-065
     title: 'VyralX: hard niche avoid-list exclusion guardrail in discovery'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_4
+    branch: muse4/task-vyr-065-niche-avoid-guardrail
+    pr: 1733
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T02:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-065-NICHE-AVOID-GUARDRAIL.md
+    - VyralX/app/services/niche_guard.py
+    - VyralX/tests/test_vyr065_niche_guard.py
     acceptance:
     - Discovery rejects the researched ban-list niches by rule (anime compilations, cricket/sports highlights, Bollywood edits, movie/TV scene compilations, celebrity edits, unlicensed viral-clip compilations, borrowed gameplay, borrowed exam lectures, automated finance advice), with the rejection reason logged.
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-VYR-AVOID-GUARD (research note vyralx-niche-research-20261115). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Claim: hub #1483 comment 7144438110 by Muse 4, 2026-11-25 ~02:35 IST, under the central-pool pull model (hub 7136890552). Board record verified AVAILABLE, owner null, P1, on main e5a6876f (board blob 39fa817d, via git blobs API); no competing claim, branch or PR (544 branches / 43 open PRs checked). Branch muse4/task-vyr-065-niche-avoid-guardrail from main 894dbf08.'
+    - 'Repo-side legs (single work PR, owner order 7143628341 rule 1): new stdlib-only guardrail VyralX/app/services/niche_guard.py (9 banned niches, phrase rules, rejection reason logged); wired into app/services/discovery.py (all five callers) and both supervised-cycle scripts (find_viral_candidates_flat.py, find_viral_candidates.py); new offline test VyralX/tests/test_vyr065_niche_guard.py (52 tests) + existing VYR-055 helpers (30) + service discovery test (1) — 83 passed locally, 0 failed; ruff clean; 0 false positives on the 17 merged pool items and 10 discovery queries. Evidence doc docs/collaboration/TASK-VYR-065-NICHE-AVOID-GUARDRAIL.md.'
+    - 'Live leg NOT run — gated: owner stop order not lifted (no lift through watch058, hub 7144369853); VyralX-Server route proven live by watch058 (VyralX.service active, port 8010 HTTP 200) — the server is not the blocker, the stop order is the only gate. No live step taken. Verifier re-tests live when the gate lifts.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'CLAIMED by Muse 4 (hub #1483 comment 7144438110, 2026-11-25 ~02:35 IST). Repo-side legs done in the single work PR; live leg BLOCKED on the owner stop order (watch058, hub 7144369853) — verifier re-tests live when the gate lifts.'
   - id: TASK-CTX-008
     title: 'Cortex: wire the per-agent budget gate into production (caller, durable store, breach alerts)'
     status: AVAILABLE
@@ -20113,16 +20123,17 @@ tasks:
 
   - id: TASK-VYR-071
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG-VYR-06, IG-VYR-07, IG-VYR-08, IG-VYR-09, IG-VYR-10 - live extreme-condition verification (wave 1)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_5
+    branch: muse5/task-vyr-071-prod-verify
+    pr: 1738
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T03:26:40+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-071-REPO-LEG-EVIDENCE.md
     acceptance:
     - 'PRODUCTION-VERIFY (owner standard 2026-11-24: merged code is NOT implemented): live extreme-condition verification of TASK-IG-VYR-06, TASK-IG-VYR-07, TASK-IG-VYR-08, TASK-IG-VYR-09, TASK-IG-VYR-10.'
     - 'Extreme-condition test: real end-to-end render/discovery cycle on VyralX-Server with real source videos + machine-QA under bad inputs (missing BGM, doubled captions, watermark) + metrics-sync against the real channel; loop stays OFF, uploader paused, renders held unlisted'
@@ -20130,8 +20141,33 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Claim: hub #1483 comment 7142669865 by Muse 5, 2026-11-25 ~01:15 IST. Branch muse5/task-vyr-071-prod-verify from main ce3c817f, rebased onto main 3c118b77.'
+    - 'Repo-side evidence (Muse 5, 2026-11-25 ~02:30 IST, pytest local, no server execution): IG-VYR-07 6/6, IG-VYR-08 6/6, IG-VYR-09 9/9, IG-VYR-10 3/3 — 24/24 pass. IG-VYR-06 has no code on main (previs.py + test 404, retired by TASK-VYR-033 with no successor); filed as TASK-VYR-071-FIX-01 in this PR per coordinator ruling in watch 7145228662.'
+    - 'Live leg BLOCKED (owed, not a failure): VyralX-Server probe run by the coordinator in watch058 — VyralX.service active running, port 8010 HTTP 200, route proven. Live leg gated by the owner stop order only, same posture as VYR-074. No item marked production-verified on repo-side evidence alone.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'Awaiting Muse merge of work PR #1738; verifier M9 verifies when the PR opens. Live leg resumes only when the owner stop order lifts (coordinator call).'
+
+  - id: TASK-VYR-071-FIX-01
+    title: 'IG-VYR-06 has no live implementation: previs.py was retired by TASK-VYR-033 with no successor named - decide: retire IG-VYR-06 from the verification programme or specify a replacement module, then verify it live'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:26:40+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-071-REPO-LEG-EVIDENCE.md
+    acceptance:
+    - 'Decision recorded: either IG-VYR-06 is retired from the verification programme (programme doc + board updated, item marked not-applicable, never verified), or a replacement module is specified.'
+    - 'If a replacement is specified: the replacement is implemented, its IG-VYR-06 tests pass, and it is verified live on VyralX-Server under the VYR-071 extreme-condition standard.'
+    - 'IG-VYR-06 is NOT marked verified on the basis of the retired previs.py.'
+    evidence:
+    - 'Filed by Muse 5 from TASK-VYR-071 G1, per coordinator ruling in watch 7145228662 (hub #1483): previs.py retired by TASK-VYR-033 (PR #1196) with no successor named, so file this fix task.'
+    blockers: []
+    next_action: 'Central pool (owner pull model): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins.'
 
   - id: TASK-VYR-072
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG2-VYR-01, IG2-VYR-02, IG2-VYR-03, IG2-VYR-04, IG2-VYR-05 - live extreme-condition verification (wave 1)'
@@ -20159,14 +20195,14 @@ tasks:
 
   - id: TASK-VYR-073
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG2-VYR-06, IG2-VYR-07, IG2-VYR-08, IG2-VYR-09, IG2-VYR-10 - live extreme-condition verification (wave 1)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_14
     branch: muse14/task-vyr-073
-    pr: null
+    pr: 1741
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T03:03:00+05:30'
+    updated_at: '2026-11-25T04:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20722,14 +20758,14 @@ tasks:
 
   - id: TASK-STR-076
     title: 'REPO-IMPLEMENT: Stratex repos - day-trader-skill (adapt), claude-trading-skills / tradermonty (adapt), claude-tr... (wave 1)'
-    status: AVAILABLE
-    owner: null
+    status: MERGED
+    owner: muse_2
     branch: null
-    pr: null
+    pr: 1694
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T02:53:23+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20739,8 +20775,11 @@ tasks:
     - 'live demo-daemon cycle on Stratex-Server on real market data + failure injection (venue disconnect, stale feed) + full-allowlist load scan; results filed from the live ledger'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Claim: hub #1483 comment 7138832881 by Muse 2, 2026-11-24 ~22:40 IST, per coordinator ruling 7137935600 (21:37 watch; VOI-036 released, blocked-head rule). Board record verified AVAILABLE, owner null, on main 3865fe59 (board blob 74f83507). Branch muse2/task-str-076-stratex-repo-implement-wave1.'
+    - 'Work PR #1694 (head ea01acd6): day-trader-skill adapted and proven live on 100 live BTCUSDT 5m bars; tradermonty journal/digest over 3 live fills; four reference-only repos proven absent on live server. Evidence doc docs/collaboration/TASK-STR-076-REPO-IMPLEMENT-WAVE1.md. Failure-injection leg blocked per 21:57 watch ruling 3 (hub 7138466832).'
+    - 'MERGED 2026-11-25 ~00:41 IST: PR #1694 merged (merge 4d5be7bc; CI 10/10 green on head ea01acd6, verified first-hand by Muse 2: 8 success, 2 skipped).'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'Deploy + live proof need coordinator clearance; failure-injection leg after owner clearance.'
 
   - id: TASK-STR-077
     title: 'REPO-IMPLEMENT: Stratex repos - Freqtrade (reference-only), VectorBT (adapt), Backtrader (reference-only), Hummi... (wave 1)'
@@ -20788,14 +20827,14 @@ tasks:
 
   - id: TASK-VYR-075
     title: 'REPO-IMPLEMENT: VyralX repos - Uplika (adapt), Hypit (adapt), HyperFrames (adapt), LTX-2 (reject), Claude Ads (... (wave 1)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_7
     branch: muse7/task-vyr-075-repo-implement-wave1
     pr: 1705
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T23:42:24+05:30'
+    updated_at: '2026-11-25T02:45:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20834,10 +20873,10 @@ tasks:
 
   - id: TASK-VYR-077
     title: 'REPO-IMPLEMENT: VyralX repos - Short Video Factory (adapt), AI YouTube Shorts Generator (adapt), Social Media A... (wave 1)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_tp5
+    branch: musetp5/task-vyr-077-repo-implement
+    pr: 1745
     contributors: []
     priority: P1
     created_at: '2026-11-24'
@@ -20900,14 +20939,14 @@ tasks:
 
   - id: TASK-VYR-080
     title: 'REPO-IMPLEMENT: VyralX repos - OpenCut (reference-only), AgentTube (adapt), SANA-WM (reject), WanGP (reject), C... (wave 1)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_2
+    branch: muse2/task-vyr-080-vyralx-repo-implement-wave1
+    pr: 1719
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T02:53:23+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20917,8 +20956,10 @@ tasks:
     - 'real end-to-end render/discovery cycle on VyralX-Server with real source videos + machine-QA under bad inputs (missing BGM, doubled captions, watermark) + metrics-sync against the real channel; loop stays OFF, uploader paused, renders held unlisted'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Claim: hub #1483 comment 7143373422 by Muse 2, 2026-11-25 ~01:49 IST. Board record verified AVAILABLE, owner null, P1, on main b0276946 (board blob 383d017d). No competing hub claim, no branch, no PR. Branch muse2/task-vyr-080-vyralx-repo-implement-wave1. Pulling next pool task per the pull model - STR-076 merged 00:41 IST (PR #1694), slot freed. Live legs gated under the owner stop order.'
+    - 'Work PR #1719 open (head f653d43f): AgentTube operator workflow (agenttube.py +487) + 17-test suite (test_vyr080_agenttube.py +337) + evidence doc docs/collaboration/TASK-VYR-080-REPO-IMPLEMENT-WAVE1.md. CI 10/10 green first-hand (8 success, 2 skipped). Live legs gated under the owner stop order.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'Review work PR #1719; deploy + live proof need coordinator clearance; live legs gated under the owner stop order.'
 
   - id: TASK-FRD-055
     title: 'REPO-IMPLEMENT: FRIDAY repos - Hermes Agent (reference-only), Herald OS (reference-only), OpenClaw (reference-o... (wave 2)'
