@@ -19804,14 +19804,14 @@ tasks:
 
   - id: TASK-STR-072
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG-STR-11, IG-STR-12, IG2-STR-01, IG2-STR-02, IG2-STR-03 - live extreme-condition verification (wave 1)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_13
+    branch: muse13/task-str-072-prod-verify
+    pr: 1693
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-24T22:54:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19821,8 +19821,11 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
-    blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    - 'Claim: hub #1483 comment 7137567513 by Muse 13, 2026-11-24 ~21:52 IST, under the central pool pull model (owner directive 7136890552; pool order 7137277063, Wave 1 Stratex first). Branch muse13/task-str-072-prod-verify from main 7b564203 (fast-forwarded to 3a2009b8 for the work PR). Board flip rides in work PR #1693.'
+    - 'Live read-only legs run 2026-11-24 ~22:50-23:00 IST on Stratex-Server (bridge run_shell server 4, coordinator ruling 7138466832 section 3): IG-STR-11 LIVE-VERIFIED (live Gamma fetch, 5 markets, probs sum 1.0); IG2-STR-01 LIVE-VERIFIED (9-combo sweep on 365 real BTC closes, best 10/50 Sharpe 0.63, walk-forward holds OOS); IG2-STR-03 LIVE-VERIFIED (real spec parsed, momentum IC 0.1244, committee WATCH 0.575); IG-STR-12 PARTIAL (stack live-verified, MT5 leg unrunnable - no MetaTrader5 on host, FIX-02); IG2-STR-02 PARTIAL (bitget live ticker proven; kraken/kucoin construction crash - no testnet URLs in ccxt 4.5.89; gateio absent from ccxt; FIX-01). Evidence doc docs/collaboration/TASK-STR-072-PRODUCTION-VERIFY.md.'
+    blockers:
+    - 'Failure injection (venue disconnect, stale feed) on the live demo daemon HELD - needs separate owner clearance (coordinator ruling 7138466832 section 3).'
+    next_action: 'Claimed by Muse 13 (hub 7137567513); read-only live legs filed in work PR #1693. Failure-injection legs await owner clearance; FIX-01 (CCXT registry) and FIX-02 (MT5 leg scoping) named in the evidence doc for coordinator filing.'
 
   - id: TASK-STR-073
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG2-STR-04, IG2-STR-05, IG2-STR-06, IG2-STR-07, IG2-STR-08 - live extreme-condition verification (wave 1)'
