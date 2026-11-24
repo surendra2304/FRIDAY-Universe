@@ -18827,6 +18827,132 @@ tasks:
       - 'STR-060 disposition in watch 7128801462: claim NEXT, immediately after EARN-014 work PR files. Definition (watch 7126818611): Stratex post-move open-positions reconciliation - S1 daemon live open book vs Binance venue; file positions + realised P&L + trial counter; read-only, no orders, no env changes.'
     blockers: []
     next_action: 'Awaiting Muse merge of work PR #1657 (workers never merge). STR-060 claim follows per watch 7128801462.'
+  - id: TASK-EARN-015
+    title: 'EARN: Contra lane launch - CometWorks profile pack live (owner account step only)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/contra/profile-pack.md
+    acceptance:
+    - 'Contra profile pack is complete under earning/contra/ (headline, about, 4 service listings, rate card, portfolio blurbs, owner setup checklist) - filed in PR #1722.'
+    - 'The ONLY remaining step is the owner one-time action: create the free Contra account (CometWorks Gmail, name Surendra), paste the pack blocks in, add the 4 portfolio samples and the Payhip link.'
+    - 'First-money path: a client books a Service or sends a project brief; deliver in 2-3 days; Contra pays out after client approval minus its commission. No upfront spend at any point (free-only).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 ~02:30 IST under the owner order 2026-11-25 ~02:16 IST: implement all earning lanes (Contra, itch.io second product, Adobe Stock, KDP) plus pursue the bug-bounty lane.'
+    - 'Deliverable PR #1722 (branch muse/earn-contra-profile-pack): earning/contra/profile-pack.md, built from the live CometWorks Fiverr gig material (gigs 1-4: SEO posts, YouTube scripts, social packs, product descriptions).'
+    blockers: []
+    next_action: 'Owner creates the free Contra account and pastes the pack (about 15 minutes, checklist in the pack section 6). Then this task closes and the lane is live; team maintains listings from there.'
+  - id: TASK-EARN-016
+    title: 'EARN: itch.io product 2 launch - YouTube Creator Starter Pack (owner account step only)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/itchio/product-2/README-listing.md
+    - earning/itchio/product-2/source/00-how-to-use.md
+    - earning/itchio/product-2/source/01-script-templates.md
+    - earning/itchio/product-2/source/02-hooks-bank.md
+    - earning/itchio/product-2/source/03-thumbnail-text-guide.md
+    - earning/itchio/product-2/source/04-upload-checklist.md
+    acceptance:
+    - 'Second itch.io digital product is fully built under earning/itchio/product-2/ (5 script templates, 100-hook bank, thumbnail text guide, 27-point upload checklist, how-to-use guide) with complete listing copy (title, tagline, description, $14 price, tags) - filed in PR #1723. It is NOT the social pack again; it is a new creator-tools product.'
+    - 'The ONLY remaining step is the owner one-time action: create the free itch.io account (CometWorks Gmail, creator name CometWorks) and upload the product files with the listing copy.'
+    - 'First-money path: first sale at $14; itch.io takes only its seller-set revenue share out of completed sales; no upfront spend (free-only).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 ~02:30 IST under the owner order 2026-11-25 ~02:16 IST: implement all earning lanes.'
+    - 'Deliverable PR #1723 (branch muse/earn-itchio-product-2): 6 files under earning/itchio/product-2/. The existing Payhip product (30-Day Social Media Content Pack, $19) stays the first product; this is the itch.io storefront second product.'
+    blockers: []
+    next_action: 'Owner creates the free itch.io account and uploads (about 10 minutes, checklist in README-listing.md). Then this task closes and the product is on sale; team prepares product 3 candidates from sales data.'
+  - id: TASK-EARN-017
+    title: 'EARN: Adobe Stock labelled-AI lane - batch 1 upload (owner contributor account step only)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/adobe-stock/starter-batch-plan.md
+    - earning/adobe-stock/asset-briefs-batch-1.md
+    - earning/adobe-stock/titles-keywords-batch-1.md
+    acceptance:
+    - 'Adobe Stock lane is fully prepared under earning/adobe-stock/: starter batch plan (labelling rules, Adobe-only because Shutterstock/Getty/Freepik prohibit AI uploads), 20 generation-ready asset briefs, and spreadsheet-ready titles/keywords for all 20 assets - filed in PR #1725.'
+    - 'The ONLY remaining owner step is one-time: create the free Adobe Stock Contributor account (CometWorks Gmail, name Surendra) and complete the tax form it presents. The team then generates the 20 assets from the briefs with free tools and prepares the upload set.'
+    - 'Every upload carries the generative-AI declaration - no exceptions; an unlabelled AI upload risks the account.'
+    - 'First-money path: assets pass review, a buyer licences one, royalties accrue (33% standard for images) toward the $25 payout threshold, paid via the owner payout method. This is the slow compounding lane by design.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 ~02:30 IST under the owner order 2026-11-25 ~02:16 IST: implement all earning lanes, Adobe Stock included.'
+    - 'Deliverable PR #1725 (branch muse/earn-adobe-stock-batch-1): 3 files under earning/adobe-stock/.'
+    blockers: []
+    next_action: 'Owner creates the free Adobe Stock Contributor account. Team then generates batch 1 from the briefs and hands the owner the upload-ready set with this record updated.'
+  - id: TASK-EARN-018
+    title: 'EARN: KDP ebook - Your First 100 Subscribers (manuscript completion, then owner KDP account + upload)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/kdp/manuscript-outline.md
+    - earning/kdp/chapter-01-draft.md
+    - earning/kdp/kdp-listing-copy.md
+    acceptance:
+    - 'KDP pack is filed under earning/kdp/ in PR #1726: full manuscript outline (about 25,000 words, expanded from the CometWorks 7-Day Email List Starter Kit material), the complete Chapter 1 draft as tone benchmark, and full listing copy (title, subtitle, description, 7 keyword slots, categories, $4.99 price, KDP Select, AI-assisted disclosure step).'
+    - 'Team leg remaining: draft chapters 2-8 plus appendices to the Chapter 1 standard and produce a cover with free tools; this record is the tracker for that leg (earning lane, one EARN task per worker queue).'
+    - 'The ONLY owner steps are one-time: create the free KDP account (CometWorks Gmail, name Surendra), complete its tax interview and bank details; then, when the manuscript is ready, create the title, paste the listing copy, answer the AI-content question as AI-assisted, and publish.'
+    - 'First-money path: first sale or Kindle Unlimited page-reads accrue royalties on the standard about-60-day KDP payment cycle. Publishing costs nothing (free-only).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 ~02:30 IST under the owner order 2026-11-25 ~02:16 IST: implement all earning lanes, KDP included.'
+    - 'Deliverable PR #1726 (branch muse/earn-kdp-ebook-pack): 3 files under earning/kdp/. Source topic is the strongest existing CometWorks material: the email-list starter kit already drafted as the EARN-004/EARN-010 lead-magnet pack.'
+    blockers: []
+    next_action: 'Available in the earning lane; a worker claims the manuscript-completion leg (chapters 2-8) as its single EARN queue item. Owner KDP account step can happen any time before upload.'
+  - id: TASK-EARN-019
+    title: 'EARN: bug-bounty lane - 30-day legal practice plan, then first programme (owner accounts step only)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/bug-bounty/README.md
+    - earning/bug-bounty/platform-comparison.md
+    - earning/bug-bounty/scope-and-legal-rules.md
+    - earning/bug-bounty/tooling.md
+    - earning/bug-bounty/30-day-plan.md
+    acceptance:
+    - 'Methodology pack is complete under earning/bug-bounty/ in PR #1728: platform comparison (HackerOne, Bugcrowd, Intigriti, YesWeHack - free-only signup facts), legal scope rules (only in-scope targets, never test outside a programme scope), free tooling list, 30-day learning and practice plan using only legal practice targets (PortSwigger Academy, Hack The Box free tier), and the exact owner account list.'
+    - 'NO testing of any live target is part of this task or has been done. Practice is labs only; live work begins only after the day-30 go/no-go review, inside one named programme scope.'
+    - 'The ONLY owner step is one-time: create the free accounts listed in earning/bug-bounty/README.md (HackerOne, Bugcrowd, PortSwigger Academy, Hack The Box; Intigriti and YesWeHack later).'
+    - 'First-money path: 30-day plan completes, go decision at review, one beginner-friendly public programme is hunted within its scope, first valid report pays the first bounty (realistically 2-4 months; duplicates and out-of-scope findings pay zero).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 ~02:30 IST under the owner order 2026-11-25 ~02:16 IST: pursue the bug-bounty lane (owner answer 9 to the doubts list).'
+    - 'Deliverable PR #1728 (branch muse/earn-bug-bounty-pack): 5 files under earning/bug-bounty/. Preparation only - no live target has been tested.'
+    blockers: []
+    next_action: 'Owner creates the listed free accounts when ready. A worker then claims the 30-day plan execution (labs only) as its single EARN queue item and files weekly lab evidence to this record.'
   - id: TASK-STR-060
     title: 'Stratex post-move open-positions reconciliation - reconcile the S1 daemon live open book against the Binance venue, file positions + realised P&L + trial counter (read-only, no orders, no env changes)'
     status: IN_REVIEW
