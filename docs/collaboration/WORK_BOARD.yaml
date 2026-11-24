@@ -21568,14 +21568,14 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-LAP-006
     title: 'Laptop/phone: life-in-weeks auto-wallpaper delivery - MacroDroid macro plus daily wallpaper generator'
-    status: AVAILABLE
+    status: CLOSED
     owner: null
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T03:10:00+05:30'
+    updated_at: '2026-11-25T03:05:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - FRIDAY/
@@ -21585,8 +21585,9 @@ tasks:
     - 'OWNER ONE-TIME: install MacroDroid on his phone and import the macro (his device, his tap - an agent cannot install apps on his phone). Done = package delivered + the macro logic verified by simulation (advancing the date produces the next day''s wallpaper).'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    - 'Closed by coordinator 2026-11-25: owner decision 2026-11-25 ~02:39 IST — ''Drop the wallpaper idea''. Filed by the re-audit sweep before the decision landed; closed so the decision stands.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+    next_action: 'None - closed by owner decision 2026-11-25. Do not claim or revive without a new owner order.'
   - id: TASK-FRG-030
     title: 'Forge: Gradio instant-UI delivery layer for one-prompt internal tools'
     status: AVAILABLE
@@ -22092,6 +22093,81 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-DB-001
+    title: 'DB: Stratex MySQL production-usage verification - prove live research runs actually persist to MySQL HeatWave, fix any gap found'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:02:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-DB-001-STRATEX-MYSQL-VERIFY.md
+    acceptance:
+    - 'DECIDED ARRANGEMENT (owner orders 2026-11-25 ~02:56 and ~02:59 IST - implement every agent''s storage properly, best option per agent): Memora -> Autonomous DB #1 (live, no change); IntelX + Futuris research -> Autonomous DB #2, named ''IntelX DB'' (wired in TASK-DB-002); Stratex research -> MySQL HeatWave (this task verifies production usage; do NOT migrate); VyralX -> FILES ONLY, no database (owner decision 2026-11-25 ~02:59 IST); Cortex -> Redis + files; FRIDAY/Sentinel/Forge -> files; Inference -> stateless.'
+    - 'Connect read-only to MySQL HeatWave ''FRIDAY Stratex Research'' (10.0.0.182:3306, database stratex_research; credentials from the fleet record/env only, never printed in any file, PR or hub post) from an authorised host; list the tables, row counts and newest-row timestamps in the evidence doc docs/collaboration/TASK-DB-001-STRATEX-MYSQL-VERIFY.md.'
+    - 'Match the 3 most recent research runs end-to-end: for each run, its persisted record (trial range, verdict counts) must exist in MySQL and agree with the run''s own records; quote both sides of each match in the evidence doc.'
+    - 'Prove the production writer path: identify which process/config writes research results in production (Stratex-Server daemon and/or the coordinator sandbox research runs) and show its live connection settings point at this database (host and database name only, no secrets).'
+    - 'Any gap found (runs not persisting, wrong database, stale writer, silent fallback to files) is FIXED inside this task, not just reported: fix it, run one real research write, and show the new row landing in MySQL with its timestamp.'
+    - 'Completion = production-verified under the owner''s implementation definition: real rows from real runs in the live database, read back in two independent queries/sessions and filed as evidence. Code merged alone is NOT completion.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s database-wiring order (~02:56 IST: ''Implement all of them properly... the best ones''), as corrected ~02:59 IST (VyralX removed from Autonomous DB - file-based, no DB; Autonomous DB #2 becomes the IntelX DB for IntelX + Futuris research). Verified against the live board at main 7277dcdb: no TASK-DB-* records existed; DB-001/002/003 are clash-free.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Live-fleet work: coordinator hub clearance required before any production change (standing rule).'
+  - id: TASK-DB-002
+    title: 'DB: IntelX DB wiring - IntelX research records and Futuris forecasts + scores write/read in Autonomous DB #2 (IntelX DB), proven live'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:02:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - IntelX/
+    - Futuris/
+    - docs/collaboration/TASK-DB-002-INTELX-DB-WIRING.md
+    acceptance:
+    - 'DECIDED ARRANGEMENT (owner decisions 2026-11-25 ~02:56 and ~02:59 IST): ALL IntelX and Futuris research work goes to Autonomous DB #2, named ''IntelX DB''. Reference arrangement: Memora -> Autonomous DB #1; Stratex research -> MySQL HeatWave (verified in TASK-DB-001); VyralX -> files only, no database; Cortex -> Redis + files; FRIDAY/Sentinel/Forge -> files; Inference -> stateless.'
+    - 'NAMING: Autonomous DB #2''s display name was already set to ''IntelX DB'' via the OCI API on 2026-11-25 (verified after the rename: ADB AVAILABLE; ADB #1 is named ''Memora DB'' and MySQL HeatWave is named ''Stratex DB''). This task only VERIFIES the name by API read-back at wiring time and records it in the evidence doc - if the read-back disagrees, stop and report to the coordinator instead of renaming anything.'
+    - 'SCHEMA + WIRING: create the research schema in Autonomous DB #2 (IntelX findings, watch/envelope records, seen-store entries; Futuris forecasts and accuracy scores) and wire IntelX and Futuris on IntelX-Server to write and read there. Credentials come from the fleet env/record only, never printed. Configuration must fail closed to the existing file stores if the database is unreachable - files remain the fallback during migration, and a database outage must not take either agent down (prove with one forced-failure test).'
+    - 'DATA: migrate the existing file records (IntelX seen-store state.json, watch/envelope history, Futuris forecast + score files) into Autonomous DB #2, quoting counts before and after; for any record class deliberately not migrated, state exactly why not in the evidence doc docs/collaboration/TASK-DB-002-INTELX-DB-WIRING.md.'
+    - 'LIVE PROOF (owner''s implementation definition - the thing actually working in the live agent, not code merged): (a) one real IntelX research run''s records written to and read back from Autonomous DB #2 on IntelX-Server (the daily INT-876 soak run counts as a real run); (b) one real Futuris forecast cycle persisted to Autonomous DB #2 and read back. Both proofs filed with timestamps in the evidence doc.'
+    - 'No behaviour change to IntelX alerting or the Futuris forecast cadence; the soak timer and the Futuris scheduler keep their existing schedules throughout.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s database-wiring order (~02:56 IST) and his second decision (~02:59 IST: ''All the research works of IntelX and Futuris should go to the Autonomous DB 2, named as IntelX DB''). This task supersedes the earlier formalisation-only scope for IntelX + Futuris. Verified against the live board at main 7277dcdb: no TASK-DB-* records existed; DB-001/002/003 are clash-free.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Live-fleet work: coordinator hub clearance required before any production change (standing rule).'
+  - id: TASK-DB-003
+    title: 'DB: Fleet storage audit - one live-verified table of every agent''s storage and backup state, including the VyralX file-store formalisation'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:02:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
+    acceptance:
+    - 'DECIDED ARRANGEMENT (owner orders 2026-11-25 ~02:56 and ~02:59 IST) is the reference column for the audit: Memora -> Autonomous DB #1; IntelX + Futuris research -> Autonomous DB #2, named ''IntelX DB''; Stratex research -> MySQL HeatWave ''FRIDAY Stratex Research''; VyralX -> FILES ONLY, no database (owner decision 2026-11-25 ~02:59 IST); Cortex -> Redis + files; FRIDAY/Sentinel/Forge -> files; Inference -> stateless.'
+    - 'Produce ONE table covering all 10 agents plus Inference and the FRIDAY Universe Bridge: storage type, server, path or database name, measured size, backup state. Every row verified live on its box in a single dated sweep via the FRIDAY Universe Bridge (servers 1-6). File it as docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
+    - 'VyralX formalisation (VyralX has NO database by the owner''s 2026-11-25 ~02:59 IST decision - do NOT wire her to any database): document her file store on VyralX-Server verified live - renders directory (file count and total size; 221 renders were counted at the 2026-11-24 move), candidate-pool files, metrics-sync outputs, and the BGM shelf reference (shelf lives on Oracle Server 2) - plus her backup state stated plainly.'
+    - 'Also record the state of Autonomous DB #2''s display name as found live (''IntelX DB'' or rename still pending - the rename itself belongs to TASK-DB-002).'
+    - 'Flag every store that has NO backup directly in the table, and file one named follow-up task per unbacked store (filing only; do not build backups inside this task).'
+    - 'Where a live store disagrees with the decided arrangement (an agent on the wrong store, a database in use by the wrong agent, a store nobody owns), record the disagreement in the table and in the task evidence - do not silently fix it here; the coordinator rules on it.'
+    - 'Completion = the table is filed via PR and spot-verified: coordinator or paired verifier re-reads at least 3 rows against the live boxes and confirms they match.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s database-wiring order (~02:56 IST), as corrected ~02:59 IST (VyralX file-based, no DB; Autonomous DB #2 becomes the IntelX DB for IntelX + Futuris research). Verified against the live board at main 7277dcdb: no TASK-DB-* records existed; DB-001/002/003 are clash-free.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. This is a read-only audit sweep; no production changes.'
 task_id_warnings:
   - id: TASK-REL-061
 
