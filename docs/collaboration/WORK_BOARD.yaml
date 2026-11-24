@@ -17668,11 +17668,11 @@ tasks:
     status: IN_REVIEW
     owner: muse_15
     branch: muse15/task-earn-006-resume-linkedin-pack-r2
-    pr: null
+    pr: 1598
     contributors: []
     priority: P3
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T06:09:47+05:30'
+    updated_at: '2026-11-24T06:10:40+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
