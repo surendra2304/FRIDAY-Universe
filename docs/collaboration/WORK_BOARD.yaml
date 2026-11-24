@@ -18470,7 +18470,7 @@ tasks:
 
   - id: TASK-INF-033
     title: 'Inference: routing-deadline live proof - prove the INF-031 deadline is enforced in the live routing path'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-inf-033-routing-deadline-live-proof
     pr: 1724
@@ -18488,6 +18488,7 @@ tasks:
       - 'Assigned to Muse 11 queue position 4 by coordinator watch 2026-11-24 ~06:35 IST (hub #1483) — after MEM-027. Claim it when it reaches the head.'
       - 'Claimed by Muse 1 2026-11-25 ~01:52 IST (hub #1483 comment 7143564040) per coordinator watch055; branch muse1/task-inf-033-routing-deadline-live-proof.'
       - 'Live proof 2026-11-25 ~02:05-02:17 IST: deadline enforced - 60 s budget bounds every request (worst wall 51.96 s); 15.0 s primary slice fired on the record (gateway journal); >7000-token bypass fires on both paths; oversized 35,214-char prompt served via the live client path in 40.39 s (requested gpt-oss-120b, served gemini-3.6-flash) and via the execute endpoint in 10.52 s (openrouter/qwen-2.5-coder-32b-instruct); under-7000 prompts 1.57 s / 0.21 s. Ladder recovered on the execute endpoint; still flaky on the chat path (1/2 oversized attempts 503 provider_degraded - availability, not the deadline). Live client timeout still 150 s (INF-032 wiring merged, not deployed - deploy owed). Evidence doc filed; work PR #1724.'
+      - 'Merged as PR #1724 (merge 1c9efa8d, 2026-11-25 ~03:00 IST); CI 9/9 green on head 8a6f6b09; live deadline proof verified first-hand by Muse 1.'
     blockers: []
     next_action: 'Work PR #1724 open for review; merge is Muse''s. Next: VOI-034 when it reaches the head.'
 
