@@ -17665,14 +17665,14 @@ tasks:
   - id: TASK-EARN-006
 
     title: 'EARN: resume/LinkedIn pack - service copy for the next Fiverr gig batch'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
+    branch: muse15/task-earn-006-resume-linkedin-pack-r2
     pr: null
     contributors: []
     priority: P3
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T03:49:06+05:30'
+    updated_at: '2026-11-24T06:09:47+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
