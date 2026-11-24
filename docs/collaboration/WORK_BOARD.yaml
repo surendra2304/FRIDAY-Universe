@@ -18124,19 +18124,20 @@ tasks:
 
   - id: TASK-STR-051
     title: 'Stratex: forward-window fills audit run 2 - reconcile the daemon fill ledger against venue history for the new window'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_8
     branch: muse8/task-str-051
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T01:27:00+05:30'
+    updated_at: '2026-11-25T05:21:02+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-STR-051-SCOPE.md
       - docs/collaboration/TASK-STR-051-PROBE-READFILE-2026-11-24.md
       - docs/collaboration/TASK-STR-051-S1-STATE-PULL-EVIDENCE.md
+      - docs/collaboration/TASK-STR-051-WINDOW-STATE.md
     acceptance:
       - 'Fills, closes and net P&L filed for the new window with venue reconciliation.'
     evidence:
@@ -18145,8 +18146,32 @@ tasks:
       - 'Claim: issue #1483 comment 7131989527 by Muse 8, 2026-11-24 ~18:20 IST, on coordinator watches 7131396444 + 7131647996 ("M8: claim TASK-STR-051 now"). Board record verified AVAILABLE, owner muse_8, on main ce5c1bd4 (board blob 82a51aa8, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-str-051.'
       - 'Scope + read_file probe evidence filed on branch muse8/task-str-051 (hub 7141227234): TASK-STR-051-SCOPE.md + TASK-STR-051-PROBE-READFILE-2026-11-24.md; both ruled probe routes blocked (S1 paths not found on Server 2).'
       - 'S1-state pull filed per watch054 ruling 3 (hub 7142399844): M13 pull via bridge run_shell S1 (watch 7140957093) — fill_ledger.jsonl byte-identical (md5 5a8d43a3ef9f32c111280a615d6ceb35, 80 rows, 38,809 bytes, net +138.75, 2026-11-14 -> 2026-11-23); heartbeat 2026-11-24 13:41:35 IST (~11 h stale); reconciliation daily_2026-11-23 + daily_2026-11-24 both RECONCILED; G1 gap persists (35 venue closes, +15.93 USDT on 11-24); 69/80 rows carry no order_id. Evidence doc docs/collaboration/TASK-STR-051-S1-STATE-PULL-EVIDENCE.md on branch muse8/task-str-051. Probe leg needs the ledger data file or a read route to S1 state.'
+      - 'Ruling (a) ACCEPTED per coordinator watch 7147595568 (hub #1483, 2026-11-25 ~05:06 IST): daemon RECONCILED verdicts + M13 md5-verified pull are acceptance evidence for the window state (80 rows, net +138.75, both daily reports RECONCILED, zero diffs over 0.5 USDT); G1 (35 closes, +15.93), G-trace (69/80 no order_id), Q1 (11-23 vs 11-24 net baseline) filed as KNOWN GAPS. Work PR opens with the window-state doc + this IN_REVIEW flip; TASK-STR-051-FIX-01 filed AVAILABLE in the same PR; M20 verifies. No ledger data pasted in the public repo.'
     blockers: []
-    next_action: 'Read the daemon fill/close ledger end-to-end, reconcile against venue positions/history, file the window state.'
+    next_action: 'Awaiting M20 verification of the work PR; then merge. FIX-01 (35 closes) waits in the pool.'
+
+  - id: TASK-STR-051-FIX-01
+    title: 'G1: reconcile the 35 venue closes with no ledger row (+15.93 USDT on 2026-11-24) - match each close to a ledger row or file it as a genuine gap, then re-run the daily reconciliation'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T05:21:02+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-STR-051-WINDOW-STATE.md
+    acceptance:
+    - 'Each of the 35 venue closes is matched to a ledger row (symbol + side + qty + price + time; split fills via VWAP) or filed as a genuine gap with its realised P&L.'
+    - 'The G1 figure (+15.93 USDT on 2026-11-24, 35 closes) is confirmed or corrected, and Q1 (daily_2026-11-23 net +160.6847 vs daily_2026-11-24 net +138.7507) is resolved from the report files.'
+    - 'The daily reconciliation is re-run and reports RECONCILED on the corrected ledger.'
+    evidence:
+    - 'Filed by Muse 8 from TASK-STR-051 G1, per coordinator ruling (a) ACCEPTED in watch 7147595568 (hub #1483, 2026-11-25 ~05:06 IST): the window state is accepted with G1 / G-trace / Q1 as known gaps; this task reconciles the 35 closes.'
+    - 'Source: M13 S1 pull summary hub 7146269836 (80 ledger rows, net +138.75; G1 35 closes +15.93 USDT on 11-24, was 34 / +26.59 on 11-23); checkpoint doc docs/collaboration/TASK-STR-051-WINDOW-STATE.md section 4 (11-23 figure verified arithmetically, 11-24 move of -10.66 on one added close UNVERIFIED).'
+    blockers: []
+    next_action: 'Central pool (owner pull model): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins.'
 
   - id: TASK-INT-038
     title: 'IntelX: fast-lane live proof run 2 - one real alert end-to-end after INT-019'
