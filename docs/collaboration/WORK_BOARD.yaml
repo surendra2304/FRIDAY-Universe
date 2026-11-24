@@ -18419,14 +18419,14 @@ tasks:
 
   - id: TASK-SEN-025
     title: 'Sentinel: approval-path live proof run 3 + backup manifest verification run 2'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_13
-    branch: null
+    branch: muse13/task-sen-025-approval-path-live-proof-run-3
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T07:53:56+05:30'
+    updated_at: '2026-11-24T08:40:34+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18434,8 +18434,9 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; follow-up to SEN-024 (run 2, Muse 13 queue pos 3) and SEN-022 (startup self-check). Pool floor refill.'
       - 'Assigned to Muse 13 as queue position 3 after VOI-030 -> VOI-035 by coordinator watch 2026-11-24 ~07:53 IST (board PR watch010; hub #1483).'
+      - 'Claim: hub #1483 comment 7120832047 by Muse 13, 2026-11-24 ~08:40 IST, under the blocked-head rule (VOI-030 + VOI-035 both blocked on calm-window call); board verified AVAILABLE, owner muse_13, on main 06a7f5e3 (blob a60b7f94). Branch muse13/task-sen-025-approval-path-live-proof-run-3.'
     blockers: []
-    next_action: 'Run the approval-path proof again and verify the backup manifest against live state.'
+    next_action: 'Claimed; run the approval-path proof again and verify the backup manifest against live state.'
 
   - id: TASK-MEM-027
     title: 'Memora: three-section live proof run 4 - one real write/read/promotion cycle across private / inter-agent / universal'
