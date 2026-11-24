@@ -15457,14 +15457,14 @@ tasks:
   - id: TASK-MEM-017
 
     title: 'Memora: prove cross-session memory recall through FRIDAY, 3 consecutive live runs (M5 workflow 3)'
-    status: IN_PROGRESS
-    owner: muse_11
-    branch: muse11/task-mem-017-cross-session-recall
+    status: AVAILABLE
+    owner: null
+    branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T00:35:00+05:30'
+    updated_at: '2026-11-24T22:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18245,14 +18245,14 @@ tasks:
 
   - id: TASK-API-007
     title: 'Forge: ship the missing /v1/task/execute endpoint so other agents can execute tasks through Forge'
-    status: IN_PROGRESS
-    owner: muse_11
-    branch: muse11/task-api-007-forge-task-execute
-    pr: 1626
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T10:28:08+05:30'
+    updated_at: '2026-11-24T22:20:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-API-007-FORGE-TASK-EXECUTE.md
@@ -20561,14 +20561,14 @@ tasks:
 
   - id: TASK-STR-078
     title: 'REPO-IMPLEMENT: Stratex repos - FinRL (reference-only), Lumibot (reference-only), Vibe-Trading (adapt), AutoHedg... (wave 1)'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: CLAIMED
+    owner: muse_11
+    branch: muse11/task-str-078-repo-implement
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-24T22:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
