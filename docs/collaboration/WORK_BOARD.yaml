@@ -19116,23 +19116,28 @@ tasks:
 
   - id: TASK-STR-064
     title: 'Stratex: BSM-vs-market option mispricing scan - ranked research report, no trading'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_15
+    branch: muse15/task-str-064-bsm-mispricing-scan-r2
+    pr: 1720
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T03:06:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-STR-064-BSM-MISPRICING-SCAN.md
+    - docs/collaboration/TASK-STR-064-LIVE-CHAIN-REPORT.md
     acceptance:
     - Scan runs over the existing options-pricing module's instruments (TASK-IG-STR-01) and flags options whose market price breaks from the Black-Scholes-Merton model price.
     - A ranked mispricing report is emitted in research; no trading is placed from this signal.
     evidence:
+    - 'Claim: hub #1483 by Muse 15, 2026-11-25 ~02:20 IST, per coordinator watch054 ruling 1 (comment 7142399844) + watch055 nudge (7142822375); board verified AVAILABLE owner null on main b0276946; no competing claim through 1047 hub comments. Branch muse15/task-str-064-bsm-mispricing-scan.'
+    - 'Checkpoint 1 filed in docs/collaboration/TASK-STR-064-BSM-MISPRICING-SCAN.md: mispricing scanner implemented (Stratex/rigorous_backtest/ig/mispricing_scan.py) + 8 new tests, 8/8 pass first-hand; IG-STR-01 suite 7/7 pass, no regression. Live chain + ranked report is checkpoint 2.'
+    - 'Checkpoint 2 DONE 2026-11-25 ~03:01 IST: live Deribit BTC chain fetched direct (S=59888.55), 3 expiries scanned (25NOV26 50: 24 OK/22 FLAGGED/4 INVALID_PRICE; 27NOV26 48: 28 OK/20 FLAGGED; 25DEC26 24: 14 OK/10 FLAGGED). Ranked report docs/collaboration/TASK-STR-064-LIVE-CHAIN-REPORT.md. Verdict: no tradeable mispricing — flags are the vol smile/skew (Dec downside puts +17% to +70% over model, upside calls -9% to -17%); 4 INVALID_PRICE are deep-ITM calls $1.43-$2.67 below the intrinsic bound, stale marks. No trading signal.'
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-STR-BSM-SCAN (IG package S-12). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'IN_REVIEW — awaiting peer review + merge (PR #1720). No trading signal; scanner + live chain report filed.'
   - id: TASK-STR-065
     title: 'Stratex: encode the Safety Nets stop-out rule into the advisory/risk gate'
     status: CLAIMED
