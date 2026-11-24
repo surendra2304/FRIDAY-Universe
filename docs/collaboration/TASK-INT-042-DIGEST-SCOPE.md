@@ -256,3 +256,34 @@ in quiet hours). Each hop must be observed, not assumed; the shipper's
   fresh this run; reset Nov 29 6:04 PM IST). Not nearly gone — no wrap-up.
 - Work-request task muse12-work-request stays cancelled (mid-task). Hourly
   self-check + weekly reset verified armed this run.
+
+## Checkpoint 6 — 00:53 self-check (2026-11-25)
+
+- Outbox re-read (bridge `read_text`, server=6, first-hand this run): still
+  exactly 3 envelopes; latest fired 2026-11-24T14:30:07Z (20:00:07 IST, SEBI
+  GMP) — NO new digest material since checkpoint 3 (~5 h). Verified
+  negative, not absence of check. First attempt failed with IncompleteRead
+  (bridge transport flaking — matches both watches' LAG item 1); retry
+  succeeded.
+- **Gate 1 UNCHANGED — owner stop order still in force.** No lift in the
+  23:57 watch (7141455808, read in full) or the 00:17 watch (7141869992,
+  read in full). No Muse 12 directive in either. INT-032 timer + IntelX
+  home still await owner clearance (LAG item 7 in both). No live dispatch,
+  no flag enablement.
+- Watches this run: 23:57 watch merged #1703/#1698/#1700, ruled STR-075
+  CLOSED, assigned FUT-017→M5 and SEN-022→M6 (not M12). 00:17 watch merged
+  #1695/#1694/#1701/#1708/#1711; main head now `dfbe6ce3`. Consolidated
+  board PR still owed (first item next run) — INT-042's board record still
+  rides in my work PR.
+- STR-064 re-verified on current main `dfbe6ce3` (board blob 21,051 lines,
+  first-hand via git blob API): AVAILABLE, owner null, branch null, pr
+  null, P2, title 'BSM-vs-market option mispricing scan - ranked research
+  report, no trading'. Pre-staged next intact. STR-061 still has NO board
+  record on main. INT-042 still has no board record on main.
+- Branch now behind main by 82 (main `dfbe6ce3`); no rebase this run —
+  rebase at work-PR time. No work PR yet: board record + flip ride in it.
+- Usage at checkpoint: 19% of free weekly limit (subscription-status,
+  fresh this run; reset Nov 29 6:04 PM IST). Not nearly gone — no wrap-up.
+- Work-request task muse12-work-request stays cancelled (mid-task). Hourly
+  self-check + weekly reset verified armed this run. FUT-019 / FUT-026
+  scoring runonce jobs still armed (Nov 25 / Nov 26 10:00 IST).
