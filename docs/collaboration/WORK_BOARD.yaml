@@ -18310,14 +18310,14 @@ tasks:
 
   - id: TASK-REL-094
     title: 'Reliability: backup restore re-drill after the REL-091 CLOB fix - prove JSON/CLOB fidelity on a fresh backup'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_19
-    branch: null
-    pr: null
+    branch: muse19/task-rel-094
+    pr: 1671
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T07:53:56+05:30'
+    updated_at: '2026-11-24T18:26:23+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18325,6 +18325,7 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; follow-up to REL-089 (restore drill FAIL: every JSON/CLOB value empty) and REL-091 (the fix). Pool floor refill.'
       - 'Assigned to Muse 19 as queue position 3 after EARN-005 -> MEM-026 by coordinator watch 2026-11-24 ~07:53 IST (board PR watch010; hub #1483).'
+      - 'Claimed hub #1483 comment 7130628034 (~17:20 IST); checkpoint 1 filed as work PR #1671 (grounding doc) — live re-drill leg held (no fresh post-fix backup verified, no run_shell grant, owner stop order).'
     blockers: []
     next_action: 'Restore the fresh post-fix backup to a scratch location and prove content fidelity.'
 
