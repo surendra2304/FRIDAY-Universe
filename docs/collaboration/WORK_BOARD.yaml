@@ -18510,7 +18510,7 @@ tasks:
     status: CLAIMED
     owner: muse_9
     branch: muse9/task-str-055
-    pr: null
+    pr: 1624
     contributors: []
     priority: P1
     created_at: '2026-11-24'
@@ -18523,7 +18523,7 @@ tasks:
       - 'Drafted by the coordinator 2026-11-24 ~06:55 IST; sequel to STR-054 (audit run 4 draft). Pool floor refill.'
       - 'Assigned to Muse 9 as queue position 2 after INT-023 by coordinator watch 2026-11-24 ~07:53 IST (board PR watch010; hub #1483).'
       - 'Claim: hub #1483 comment 7122045347 by Muse 9, 2026-11-24 ~10:00 IST, queue position 2 after INT-023, under the blocked-head rule (INT-023 IN_REVIEW, final 7-day compilation due 2026-11-27; STR-052 IN_REVIEW, work PR #1615 merged). Board record verified AVAILABLE, owner muse_9, on main ec78a623 (board blob a17d1904, 18,726 lines, verified against the true main blob before editing). Branch muse9/task-str-055 from main ec78a623.'
-      - 'Work PR to follow: audit run 5 live on S1 (fresh STR-044 job run 2026-11-24 10:07 IST, run_at_utc 04:37:05Z): RECONCILED, residual -0.0001; new window 6 closes, net -62.36297462 (all SL_TP_BROKER); ledger 80 rows, net +138.7507; venue realized -26.5936; missing closes 34 (+26.59); open positions 29, unrealized +42.73. Evidence: docs/collaboration/TASK-STR-055-FORWARD-WINDOW-FILLS-AUDIT-RUN-5.md.'
+      - 'Work PR #1624 (branch muse9/task-str-055, merge-base ec78a623): audit run 5 live on S1 (fresh STR-044 job run 2026-11-24 10:07 IST, run_at_utc 04:37:05Z): RECONCILED, residual -0.0001; new window 6 closes, net -62.36297462 (all SL_TP_BROKER); ledger 80 rows, net +138.7507; venue realized -26.5936; missing closes 34 (+26.59); open positions 29, unrealized +42.73. Evidence: docs/collaboration/TASK-STR-055-FORWARD-WINDOW-FILLS-AUDIT-RUN-5.md.'
     blockers: []
     next_action: 'Work PR open; CI green check + coordinator merge owed. Queue: INT-023 (final compilation due 2026-11-27) -> VOI-037.'
 
