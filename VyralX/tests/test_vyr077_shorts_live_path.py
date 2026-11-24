@@ -63,7 +63,11 @@ def test_factory_job_becomes_render_plan():
 
 
 def test_clip_becomes_render_plan_with_trim_and_crop():
-    res = sg.generate_shorts(TR, max_clips=3)
+    # Face tracking is on only when an off-peak face pass supplied a
+    # centre: give every candidate window a centre so the ranked clip
+    # is genuinely face-tracked (see the no-face-pass test below).
+    face_track = {str(s): 0.5 for s in (0, 10, 20, 30)}
+    res = sg.generate_shorts(TR, max_clips=3, face_track=face_track)
     clip = res["clips"][0]
     plan = lp.build_clip_render_plan(
         clip, TR["timed_words"], source_path="long.mp4",
@@ -79,6 +83,18 @@ def test_clip_becomes_render_plan_with_trim_and_crop():
     assert plan["publish"] is False
     assert plan["privacy_if_published"] == "unlisted"
     assert plan["bgm_fallback"] == "ambient_pad"
+
+
+def test_clip_without_face_pass_is_not_face_tracked():
+    # No face pass was run, so the plan must honestly report False —
+    # the live path carries the clip's flag, it never invents tracking.
+    res = sg.generate_shorts(TR, max_clips=3)
+    clip = res["clips"][0]
+    plan = lp.build_clip_render_plan(
+        clip, TR["timed_words"], source_path="long.mp4",
+        output_dir="/tmp/vyr077", music_dir="/tmp/vyr077/no-such-music-dir")
+    assert plan["face_tracked"] is False
+    assert plan["crop_filter"], "centre-weighted crop still carries through"
 
 
 def test_doubled_captions_deduped_and_counted():
