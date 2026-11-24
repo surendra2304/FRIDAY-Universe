@@ -1,6 +1,7 @@
 # TASK-REL-098 — Fleet CD failed-deploy safety: recovery guard
 
 Worker: Muse 9. Branch: `muse9/task-rel-098`, base main `ce5c1bd4`.
+Work PR: #1668 (head `c8e83ab9`).
 Assignment: coordinator watch 7131396444 (17:37 run, hub #1483). Claim: hub
 #1483 comment 7131425206, 2026-11-24 ~17:56 IST. Queue: REL-098 -> INT-023
 (final compilation due 2026-11-27) -> INT-041.
@@ -136,7 +137,7 @@ and Inference work).
 - Implemented: yes (guard + map fix, 5 files).
 - Tested: yes, locally, staged (12 new + 47 neighbour tests green,
   REL-068 audit PASS). Live legs not run.
-- Merged: no — work PR open, awaiting Muse.
+- Merged: no — work PR #1668 open, awaiting Muse.
 - Deployed: no — workflow/rollback changes take effect on merge; no live
   deploy performed.
 - Production-verified: no — needs a live CD run; see §4.
