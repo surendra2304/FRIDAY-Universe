@@ -18127,7 +18127,7 @@ tasks:
     status: IN_REVIEW
     owner: muse_8
     branch: muse8/task-str-051
-    pr: null
+    pr: 1749
     contributors: []
     priority: P1
     created_at: '2026-11-24'
