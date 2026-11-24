@@ -2,8 +2,8 @@
 
 - Task: TASK-EARN-011 (P3, owner muse_9)
 - Branch: `muse9/task-earn-011`, from main `d86b4b92`
-- Claim: hub #1483 comment (to be filled on posting), 2026-11-24 ~20:05 IST
-- Status: IN_REVIEW — pack draft filed (see §1); awaiting Muse merge of the work PR
+- Claim: hub #1483 comment 7134748037, 2026-11-24 ~20:10 IST
+- Status: IN_REVIEW — pack draft filed (see §1); awaiting Muse merge of work PR #1675
 
 ## 0. Scope note — assignment, brief status, overlap flag
 
@@ -17,7 +17,7 @@
 
 ## 1. What this PR files
 
-- Board record TASK-EARN-011: AVAILABLE → CLAIMED in the claim commit, now IN_REVIEW (pack draft filed, pr filed). Only that record touched; board YAML parses, no duplicate ids.
+- Board record TASK-EARN-011: AVAILABLE → CLAIMED in the claim commit, now IN_REVIEW (pack draft filed, pr 1675). Only that record touched; board YAML parses, no duplicate ids.
 - This evidence doc.
 - Pack: `earning/TASK-EARN-011-SALES-PAGE-COPY-PACK.md` — pack 5, sales page copy, drafted from the board record + lane precedent: title (42 chars, verified — Fiverr limit 80), Writing & Translation / Website Content / Sales Copy, 5 search tags, 3 tiers (Sales Page Refresh $25 / Full Sales Page $60 / Long-Form Sales Page $120, all [VERIFY], with word counts, headline options, delivery times and revisions), description, 3 FAQs, 6 buyer requirements, gallery image concept, who-it's-for. Lane precedent: EARN-014 Gig 8 pack (same structure, sales-pages-only scope).
 
