@@ -227,3 +227,32 @@ in quiet hours). Each hop must be observed, not assumed; the shipper's
   this run; reset Nov 29 6:04 PM IST). Not nearly gone — no wrap-up.
 - Work-request task muse12-work-request stays cancelled (mid-task). Hourly
   self-check + weekly reset verified armed this run.
+
+## Checkpoint 5 — 23:53 self-check (2026-11-24)
+
+- Outbox re-read (bridge `read_text`, server=6, first-hand this run): still
+  exactly 3 envelopes; latest fired 2026-11-24T14:30:07Z (20:00:07 IST, SEBI
+  GMP) — NO new digest material since checkpoint 3 (~4 h). Verified
+  negative, not absence of check. One self-inflicted arg error on the first
+  attempt (sent `filepath`; the tool expects `path`) — retry with `path`
+  succeeded; not a bridge outage.
+- **Gate 1 UNCHANGED — owner stop order still in force.** No lift in the
+  22:57 watch (7140361664, read in full). No Muse 12 directive in it. TP3's
+  live-trial clearance request for VYR-077 is HELD under the same order.
+  INT-032 timer install + IntelX home still await owner clearance (watch
+  LAG item 4). No live dispatch, no flag enablement.
+- 22:57 watch notes: main head now `28efad19` after coordinator merges
+  #1688–#1693 (all CI green, full-diff reviewed first-hand). Burn list
+  shows M12 at 18% (stale — fresh 19% this run, see below). STR-068
+  duplicate-claim ruling (M20 holds, TP4 releases) does not touch INT-042.
+- STR-064 re-verified on current main `28efad19` (board blob 21,039 lines,
+  first-hand via git blob API): AVAILABLE, owner null, branch null, pr
+  null, P2, title 'BSM-vs-market option mispricing scan - ranked research
+  report, no trading'. Pre-staged next intact. STR-061 still has NO board
+  record on main (re-slot noted in the watch only).
+- Branch now behind main by 52 (main `28efad19`); no rebase this run —
+  rebase at work-PR time. No work PR yet: board record + flip ride in it.
+- Usage at checkpoint: 19% of free weekly limit (subscription-status,
+  fresh this run; reset Nov 29 6:04 PM IST). Not nearly gone — no wrap-up.
+- Work-request task muse12-work-request stays cancelled (mid-task). Hourly
+  self-check + weekly reset verified armed this run.
