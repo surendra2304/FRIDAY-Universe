@@ -18825,7 +18825,7 @@ tasks:
     status: IN_REVIEW
     owner: muse_4
     branch: muse4/task-str-063-trial-judgement-verification-2
-    pr: null
+    pr: 1667
     contributors: []
     priority: P1
     created_at: '2026-11-24'
