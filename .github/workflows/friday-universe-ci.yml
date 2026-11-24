@@ -238,6 +238,12 @@ jobs:
       # translation RuntimeError, PRAGMA no-op expectation.
       - name: Run Forge tier-1 tests
         working-directory: Forge
+        env:
+          # Forge/app imports the repo-root `mesh` package
+          # (app/verification/engine.py), so the repo root must be on
+          # PYTHONPATH; without it collection fails with
+          # ModuleNotFoundError: No module named 'mesh'.
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           python3 -m venv .venv-forge-ci
           .venv-forge-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio respx

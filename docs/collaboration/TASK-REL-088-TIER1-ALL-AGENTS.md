@@ -107,7 +107,7 @@ the same shape as the Cortex step (REL-080) and the Memora vector step.
 - Memora: `-r requirements.txt pytest pytest-asyncio`, vector-step env,
   separate sqlite file (see above).
 - Stratex: `-r requirements.txt pytest pytest-asyncio`.
-- Forge: `-r requirements.txt pytest pytest-asyncio respx`.
+- Forge: `-r requirements.txt pytest pytest-asyncio respx`, plus `PYTHONPATH` set to the repo root. Forge/app imports the repo-root `mesh` package (app/verification/engine.py), so without it collection fails with `ModuleNotFoundError: No module named 'mesh'` (found by the work PR's CI run, attempt 2; the local runs had passed only because the bridge shell exports `PYTHONPATH=/opt/friday_universe`, which masked the missing path — see below).
 - Inference: `-r requirements.txt pytest pytest-asyncio aiosqlite`.
   requirements.txt has fastapi + sqlalchemy but no aiosqlite; the
   importability test fails with ModuleNotFoundError without it.
@@ -161,6 +161,7 @@ Proof (three legs, all on the merged head 30e1103a):
   green in CI, the fix belongs in the agents (health contract vs.
   degraded mode), not in this task's deselects.
 - VyralX fresh lock install is proven only by the work PR's CI run.
+- Local runs can mask a missing path: the bridge shell exports `PYTHONPATH=/opt/friday_universe`, so the Forge tier-1 files collected locally even without the repo root on the path. The CI run caught it (attempt 2, exit 4). CI-fidelity probes (`env -u PYTHONPATH`) now confirm the other five unrun steps need no extra path.
 - The Memora vector step and the new Memora tier-1 step share the
   Memora directory in one job; the tier-1 step's separate sqlite file
   keeps them isolated.
