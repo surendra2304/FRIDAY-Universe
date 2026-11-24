@@ -240,7 +240,11 @@ class TestObs013DeterministicLoadStateGate:
             res = run_rollback_fake(repo, S1_LOADS, "HEAD~1", "--dry-run")
             assert res.returncode == 0, res.stderr
             sets.add(would_restart(res))
-        assert sets == {"FRIDAY FRIDAY-Voice Inference Memora Forge Sentinel"}
+        # TASK-REL-098 (2026-11-24 move): FRIDAY / Inference live on
+        # FRIDAY-Server now — even though their S1 units are still
+        # LoadState=loaded (disabled, not masked), the map excludes them,
+        # so a rollback never revives the sleeping S1 backups.
+        assert sets == {"Memora Forge Sentinel"}
 
     def test_s2_masked_units_never_in_restart_set(self, repo):
         commit_folder(repo, "VyralX")
@@ -253,19 +257,29 @@ class TestObs013DeterministicLoadStateGate:
         assert sets == {"Cortex IntelX Futuris"}
 
     def test_daemon_and_voice_follow_parent_agent_folder(self, repo):
-        # Only Stratex/ changes: Stratex-Daemon restarts (parent folder),
-        # Stratex itself does not (masked) — and FRIDAY-Voice stays out.
+        # TASK-REL-098 (2026-11-24 move): Stratex-Daemon moved to
+        # Stratex-Server with Stratex, and FRIDAY-Voice moved to
+        # FRIDAY-Server with FRIDAY — neither is a Server 1 candidate any
+        # more, so a Stratex-only or FRIDAY-only change restarts nothing
+        # on Server 1 even though the units are still LoadState=loaded.
         loads = dict(S1_LOADS)
         loads["Stratex-Daemon"] = "loaded"
         commit_folder(repo, "Stratex")
         res = run_rollback_fake(repo, loads, "HEAD~1", "--dry-run")
         assert res.returncode == 0, res.stderr
-        assert would_restart(res) == "Stratex-Daemon"
-        # Only FRIDAY/ changes: FRIDAY-Voice restarts with FRIDAY.
+        assert would_restart(res) == "<none>"
         commit_folder(repo, "FRIDAY")
         res = run_rollback_fake(repo, S1_LOADS, "HEAD~1", "--dry-run")
         assert res.returncode == 0, res.stderr
-        assert would_restart(res) == "FRIDAY FRIDAY-Voice"
+        assert would_restart(res) == "<none>"
+        # Folder-following itself is preserved on Server 2: VyralX-Daemon
+        # still restarts with a VyralX change when it is loaded there.
+        s2 = dict(S2_LOADS)
+        s2["VyralX-Daemon"] = "loaded"
+        commit_folder(repo, "VyralX")
+        res = run_rollback_fake(repo, s2, "HEAD~1", "--dry-run")
+        assert res.returncode == 0, res.stderr
+        assert would_restart(res) == "VyralX-Daemon"
 
     def test_transient_show_failure_is_retried_not_dropped(self, repo):
         commit_folder(repo, "FRIDAY")
@@ -273,7 +287,7 @@ class TestObs013DeterministicLoadStateGate:
         res = run_rollback_fake(repo, S1_LOADS, "HEAD~1", "--dry-run",
                                 fail_first=2)
         assert res.returncode == 0, res.stderr
-        assert would_restart(res) == "FRIDAY FRIDAY-Voice Inference Memora Forge Sentinel"
+        assert would_restart(res) == "Memora Forge Sentinel"
 
     def test_persistent_show_failure_aborts_before_reset(self, repo):
         commit_folder(repo, "FRIDAY")

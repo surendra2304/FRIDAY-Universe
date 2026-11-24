@@ -133,9 +133,40 @@ jobs:
             # that to FRIDAY + FRIDAY-Voice on 2026-11-24 after the move).
             SERVER1_AGENTS=("Memora" "Forge" "Sentinel")
             RESTARTED_AGENTS=""
+            # ── TASK-REL-098 failed-deploy recovery guard ──────────────────
+            # A failed S1 deploy on 2026-11-24 left Memora stopped: under
+            # `set -e` a failing `systemctl restart` (or any later step)
+            # aborts the script before the health gate runs, and nothing
+            # ever starts the agent again. If this run fails AFTER it
+            # attempted a restart, make ONE bounded recovery attempt per
+            # attempted agent found inactive (reset-failed + start), then
+            # exit with the ORIGINAL failure code — recovery never masks
+            # the failure. Only agents this run attempted to restart are
+            # touched, so moved/sleeping agents (FRIDAY, Inference,
+            # Stratex on Server 1; VyralX on Server 2) are never revived
+            # by this guard. Executed by
+            # tests/test_fleet_cd_rel098_recovery_guard.py — keep the markers.
+            # BEGIN REL-098 RECOVERY GUARD (TASK-REL-098)
+            RESTART_ATTEMPTED=""
+            rel098_recover() {
+              local rc=$?
+              [ "$rc" -eq 0 ] && return 0
+              [ -n "${RESTART_ATTEMPTED:-}" ] || return 0
+              echo "=== TASK-REL-098 recovery: deploy failed (rc=$rc); starting any attempted agent found stopped ==="
+              for AGENT in $RESTART_ATTEMPTED; do
+                if [ "$(systemctl show "${AGENT}.service" --property=LoadState --value)" = loaded ] && ! systemctl is-active --quiet "${AGENT}.service"; then
+                  echo "    $AGENT: stopped after failed deploy — attempting start"
+                  sudo systemctl reset-failed "${AGENT}.service" || true
+                  sudo systemctl start "${AGENT}.service" || echo "    ::warning::$AGENT recovery start failed — manual recovery required (systemctl start ${AGENT}.service)"
+                fi
+              done
+            }
+            trap rel098_recover EXIT
+            # END REL-098 RECOVERY GUARD (TASK-REL-098)
             for AGENT in "${SERVER1_AGENTS[@]}"; do
               if echo "$CHANGED_AGENTS" | grep -qw "$AGENT" || echo "$CHANGED_AGENTS" | grep -Eqw "mesh|deploy|scripts" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
                 if [ "$(systemctl show "${AGENT}.service" --property=LoadState --value)" = loaded ]; then
+                  RESTART_ATTEMPTED="$RESTART_ATTEMPTED $AGENT"
                   echo "=== Restarting ${AGENT}.service ==="
                   sudo systemctl restart "${AGENT}.service"
                   RESTARTED_AGENTS="$RESTARTED_AGENTS $AGENT"
@@ -331,6 +362,36 @@ jobs:
             echo "Changed folders detected: $CHANGED_AGENTS"
             
             SERVER2_AGENTS=("VyralX" "Cortex" "IntelX" "Futuris")
+            # ── TASK-REL-098 failed-deploy recovery guard ──────────────────
+            # A failed S1 deploy on 2026-11-24 left Memora stopped: under
+            # `set -e` a failing `systemctl restart` (or any later step)
+            # aborts the script before the health gate runs, and nothing
+            # ever starts the agent again. If this run fails AFTER it
+            # attempted a restart, make ONE bounded recovery attempt per
+            # attempted agent found inactive (reset-failed + start), then
+            # exit with the ORIGINAL failure code — recovery never masks
+            # the failure. Only agents this run attempted to restart are
+            # touched, so moved/sleeping agents (FRIDAY, Inference,
+            # Stratex on Server 1; VyralX on Server 2) are never revived
+            # by this guard. Executed by
+            # tests/test_fleet_cd_rel098_recovery_guard.py — keep the markers.
+            # BEGIN REL-098 RECOVERY GUARD (TASK-REL-098)
+            RESTART_ATTEMPTED=""
+            rel098_recover() {
+              local rc=$?
+              [ "$rc" -eq 0 ] && return 0
+              [ -n "${RESTART_ATTEMPTED:-}" ] || return 0
+              echo "=== TASK-REL-098 recovery: deploy failed (rc=$rc); starting any attempted agent found stopped ==="
+              for AGENT in $RESTART_ATTEMPTED; do
+                if [ "$(systemctl show "${AGENT}.service" --property=LoadState --value)" = loaded ] && ! systemctl is-active --quiet "${AGENT}.service"; then
+                  echo "    $AGENT: stopped after failed deploy — attempting start"
+                  sudo systemctl reset-failed "${AGENT}.service" || true
+                  sudo systemctl start "${AGENT}.service" || echo "    ::warning::$AGENT recovery start failed — manual recovery required (systemctl start ${AGENT}.service)"
+                fi
+              done
+            }
+            trap rel098_recover EXIT
+            # END REL-098 RECOVERY GUARD (TASK-REL-098)
             # BEGIN PRE-DEPLOY HEALTH BASELINE (TASK-OBS-019)
             # The post-deploy health gate below fails the job on any agent whose
             # /health stays non-2xx. Futuris :8004 / IntelX :8005 were already
@@ -376,6 +437,7 @@ jobs:
             for AGENT in "${SERVER2_AGENTS[@]}"; do
               if echo "$CHANGED_AGENTS" | grep -qw "$AGENT" || echo "$CHANGED_AGENTS" | grep -Eqw "mesh|deploy|scripts" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
                 if [ "$(systemctl show "${AGENT}.service" --property=LoadState --value)" = loaded ]; then
+                  RESTART_ATTEMPTED="$RESTART_ATTEMPTED $AGENT"
                   echo "=== Restarting ${AGENT}.service ==="
                   sudo systemctl restart "${AGENT}.service"
                   sudo systemctl is-active "${AGENT}.service" || echo "${AGENT} is not running"
@@ -387,6 +449,7 @@ jobs:
             
             if echo "$CHANGED_AGENTS" | grep -qw "VyralX" || echo "$CHANGED_AGENTS" | grep -Eqw "mesh|deploy|scripts" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
               if [ "$(systemctl show VyralX-Daemon.service --property=LoadState --value)" = loaded ]; then
+                RESTART_ATTEMPTED="$RESTART_ATTEMPTED VyralX-Daemon"
                 echo "=== Restarting VyralX-Daemon.service ==="
                 sudo systemctl restart VyralX-Daemon.service
               fi
