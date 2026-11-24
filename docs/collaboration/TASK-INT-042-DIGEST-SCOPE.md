@@ -195,3 +195,35 @@ in quiet hours). Each hop must be observed, not assumed; the shipper's
   fresh this run; reset Nov 29 6:04 PM IST). Not nearly gone — no wrap-up.
 - Work-request task muse12-work-request stays cancelled (mid-task).
   Hourly self-check + weekly reset verified armed this run.
+
+## Checkpoint 4 — 22:53 self-check (~23:00 IST, 2026-11-24)
+
+- Outbox re-read (bridge `read_text`, server=6, first-hand this run): still
+  exactly 3 envelopes; latest fired 2026-11-24T14:30:07Z (20:00:07 IST, SEBI
+  GMP) — NO new digest material since checkpoint 3 (~3 h). Producer still
+  cycling (polls firing, alerted=0 per M1 18:52 status); nothing new to drain.
+  Verified negative, not absence of check. One bridge flake on the first
+  attempt (`RemoteDisconnected` at initialize); retry succeeded — matches the
+  22:17 watch LAG item 9 (bridge endpoints flaking).
+- **Gate 1 UNCHANGED — owner stop order still in force.** No lift in the
+  21:57 watch (7138466832) or the 22:17 watch (7138911209). M2 released
+  VOI-036 this hour because its run leg stays held under the stop order. No
+  live dispatch, no flag enablement.
+- New direction read this run: 21:57 watch ruling 3 — read-only live legs are
+  NOT moves and proceed now under the owner's implement-all order; this
+  checkpoint's read-only verification sits inside that ruling. Owner scope
+  clarification 7138538710 (pull model, cap 2: 1 current + 1 pre-staged) —
+  holdings compliant: INT-042 current + STR-064 pre-staged. 22:17 watch
+  ruling 5 — do NOT re-attempt the flagged WORKER_PROMPT re-read; no re-read
+  attempted, working under the verified directives already in force.
+- STR-064 re-verified on current main `3a2009b8` (board blob 21,025 lines,
+  first-hand via git blob API; contents API returns empty above 1 MB):
+  AVAILABLE, owner null, branch null, pr null, P2, title 'BSM-vs-market
+  option mispricing scan - ranked research report, no trading'. Pre-staged
+  next intact. No hub claim for STR-064 in the last 100 comments.
+- Branch now behind main by 31 (main `3a2009b8`); no rebase this run — rebase
+  at work-PR time. No work PR yet: board record + flip ride in it.
+- Usage at checkpoint: 18% of free weekly limit (subscription-status, fresh
+  this run; reset Nov 29 6:04 PM IST). Not nearly gone — no wrap-up.
+- Work-request task muse12-work-request stays cancelled (mid-task). Hourly
+  self-check + weekly reset verified armed this run.
