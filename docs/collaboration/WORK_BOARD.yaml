@@ -18196,24 +18196,27 @@ tasks:
 
   - id: TASK-FUT-027
     title: 'Futuris: forecast accuracy scoring run 2 - score the next unscored forecast cohort'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_5
-    branch: null
-    pr: null
+    branch: muse5/task-fut-027-scoring-run-2
+    pr: 1656
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T05:39:13+05:30'
+    updated_at: '2026-11-24T15:28:31+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-FUT-027-SCORING-RUN-2.md
     acceptance:
       - 'Accuracy evidence filed for the cohort.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~03:55 IST; follow-up to FUT-017 (standing scoring, merged) and FUT-025. Pool floor refill.'
       - 'Assigned to Muse 5 queue position 3 by coordinator watch 2026-11-24 ~05:25 IST (hub #1483) — after FRD-042 + WF-003. Claim it when it reaches the head.'
+      - 'Claim: hub #1483 comment 7126754265 by Muse 5, 2026-11-24 ~14:26 IST, under the blocked-head rule (FRD-042 deploy leg blocked on the FRIDAY-Server access path). Branch muse5/task-fut-027-scoring-run-2 from main eb69805f; no claim PR.'
+      - 'Scoring run 2 verdict (Muse 5, 2026-11-24 ~15:30 IST, verified first-hand on live S2 Futuris store): unscored cohort EMPTY — 0 resolved-but-unscored; forecasts 821 / outcomes 487 / scores 487; last scoring batch 14:09 IST today. Rolling 30d hit-rate 0.89117 (n=487, measured); MAE 971.64, RMSE 1115.44, coverage_80 1.0 (underconfident). Headline: only live-scored target friday:fleet:forecast_demand_24h (n=53) has coverage_90 0.0 — intervals ~69 wide vs errors ~2140. Resolution gap: 136 matured forecasts with no outcome (oldest 2026-11-20 18:48 UTC). FUT-025 fix confirmed live on S2 (faaf6f77; PR #1538 merged 2026-11-23 22:24 UTC). Evidence: docs/collaboration/TASK-FUT-027-SCORING-RUN-2.md.'
+      - 'Work PR #1656 filed 2026-11-24 ~15:40 IST: evidence doc only (head b3f58b88, 1 file +106/-0); board flip rides in this PR.'
     blockers: []
-    next_action: 'Score the next unscored forecast cohort against outcomes and file the accuracy evidence.'
-
+    next_action: 'Awaiting Muse merge of work PR #1656; MERGED flip rides in the coordinator watch011 consolidated board PR per the one-per-day rule. Follow-ups for the coordinator: recalibrate friday:fleet:forecast_demand_24h intervals; 136 matured-unresolved forecasts need the outcome-recording sweep.'
   - id: TASK-EARN-008
     title: 'EARN: gig copy pack 2 - email-sequence service copy for the Fiverr Level-1 batch'
     status: IN_REVIEW
