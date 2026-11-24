@@ -81,9 +81,19 @@ tools with a sequenced stub bridge; registration), plus media cases in
   other 156 tests passed.
 - Fix (commit 3 on this branch): `raising=False` on all three
   `monkeypatch.setattr(ctypes, "windll", ...)` calls in the new test file.
-  CI re-run pending on the test-fix head — result to be filled here after
-  the run.
-- Test count added: TBD (counted from the CI log after the green run).
+- CI result on the test-fix head (fbc9be67, PR #1742): **10/10 green** —
+  voice-regressions, test, contracts, Import all agent entrypoints,
+  roster, fleet-layout, monorepo-syntax, secrets, detect-voice-changes all
+  SUCCESS; docker skipped (main-only); 0 failed. Verified first-hand via
+  the check-runs API 2026-11-25 ~04:49 IST. The `test` job took ~11 min
+  (started 23:08:02Z); the FRIDAY tier-1 invocation (5 files) passes.
+- Test count: the FRIDAY tier-1 invocation runs 159 tests (count from the
+  previous run's log: 156 passed + 3 failed; the fix changed only the 3
+  tests' setup, no tests added or removed, and the final run is green, so
+  all 159 pass). New test file
+  `FRIDAY/tests/test_frd044_spotify_voice_control.py` contributes the
+  media-key / media-status / tools / registration cases; the lap001
+  parity cases ride in `test_laptop_bridge_lap001.py`.
 
 ## Board flips in this PR
 
