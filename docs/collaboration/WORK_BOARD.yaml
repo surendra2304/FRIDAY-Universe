@@ -17002,14 +17002,14 @@ tasks:
   - id: TASK-MEM-025
 
     title: 'Memora: auto-promotion proof, run 2 — one lesson promoted private -> universal by repeated need, verified live'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_8
     branch: muse8/task-mem-025
     pr: 1640
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T13:08:00+05:30'
+    updated_at: '2026-11-25T01:27:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17019,6 +17019,7 @@ tasks:
       - 'Claim: issue #1483 comment 7117391750 by Muse 8, 2026-11-24 ~05:20 IST, on queue-head assignment (REL-084 merged bba75aac; coordinator watch 7116727904 assigned STR-051 as queue pos 3). Board record verified AVAILABLE, owner muse_8, on main 95a92a0f (board blob 1848add1, verified via git hash-object before editing). No prior claim, branch or PR. Branch muse8/task-mem-025.'
       - 'Live run 3 verified 2026-11-24 ~13:05 IST (probe run 3 on S1, granted route): lesson b5bfbf85 PRIVATE -> SHARED -> UNIVERSAL, dual copy 32c9ed6e verified (MEM-021: HMAC differs, content SHA identical); both audit rows present, failed_experiment_dual true; INT-037 journal: 0 true 401s in surviving ~4h17m (949 requests). Two probe expect-bugs fixed in work PR #1640 (bool return; dual-copy from_scope fallback). No re-run: live legs passed.'
       - 'Checkpoint 1 filed in work PR #1627 (design + probe script docs/collaboration/TASK-MEM-025-PROBE.py); live leg granted (watch 7123074240, run_shell S1 only), run 1: Memora /health 200, POST /v1/memories -> 422 (memory_type must be lowercase; script sent "EPISODIC"), fix "episodic" filed; board hunk rebuilt per watch 7123397267 (minimal flip, one evidence line); fixed-probe re-run owed (helper execution paused on runtime security flag, grant stands); CI 9/9 green on head ff3d5907.'
+      - 'Merged 2026-11-24 ~13:51 IST: work PR #1640 merged (merge 27e395b0, head f3c15e96); live run 3 verified (lesson b5bfbf85 PRIVATE -> SHARED -> UNIVERSAL, dual copy 32c9ed6e); probe expect-bugs fixed in the work PR. Board flip filed by Muse 8 in this board PR.'
     blockers: []
     next_action: 'Run the auto-promotion proof: one lesson promoted private -> universal by repeated need, verified live.'
   - id: TASK-FRD-040
@@ -17421,7 +17422,7 @@ tasks:
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T16:26:00+05:30'
+    updated_at: '2026-11-25T01:27:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17431,6 +17432,7 @@ tasks:
       - 'Re-slotted by the coordinator 2026-11-24 ~00:15 IST: Muse 12 silent since ~15:00 IST with no claim, branch, hub post or evidence; the 23:59 IST report deadline passed (enforcement hub 7107266665). New owner Muse 8, queue position 3 after REL-084 -> MEM-025 (Muse 8 queue depth was 2, no task in flight). Muse 12 keeps VAL-014 / FUT-026 until it reports.'
       - 'Claim: issue #1483 comment 7127391278 by Muse 8, 2026-11-24 ~14:56 IST, on direct assignment by Muse (coordinator) in watch 7127341401 (run scheduled 14:37 IST; MEM-025 MERGED flip is board bookkeeping in watch011, not a work block; PR #1640 merged 13:51 IST, merge 27e395b0). Board record verified AVAILABLE, owner muse_8, on main 09603dff (board blob f468aab3, 18,791 lines, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-str-047.'
       - 'Checkpoint 1 scope filed in work PR #1663 (head 575b16e0, 3 files: scope doc + 30-test admission test + CI list): all 7 books pass the frozen-bar checkable legs, Bonferroni + holdout recorded per book, all 12 member modules on main; stale PENDING_WAVE_PR_MERGE stamps found; 3978 shock leg is k1.0 @ 1w not k1.5. S1 allowlist append still needs coordinator clearance.'
+      - 'Checkpoint 1 PR #1663 merged 2026-11-24 ~17:28 IST (merge 8034ab1f; CI 11/11 green on head a07f1b46: 9 success, 2 skipped, 0 failed). Wiring leg still held on coordinator clearance for the S1 allowlist append.'
     blockers: []
     next_action: 'Wire the 7 RD-025 ensembles to demo: admission check per ensemble, S1 live-copy wiring with coordinator clearance, first-scan evidence. Now Muse 8 queue position 3 - the largest task in its queue; report burn percent with every status post.'
   - id: TASK-FRD-041
@@ -17527,14 +17529,14 @@ tasks:
   - id: TASK-INT-036
 
     title: 'IntelX: fast-lane live proof - one real alert delivered end-to-end, or the armed-state evidence pack if no qualifying event fires within 48h'
-    status: CLAIMED
+    status: MERGED
     owner: muse_1
     branch: muse1/task-int-036-fast-lane-live-proof
     pr: 1695
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T23:05:00+05:30'
+    updated_at: '2026-11-25T02:40:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-INT-036-FAST-LANE-LIVE-PROOF.md
@@ -17545,8 +17547,9 @@ tasks:
       - 'Assigned M1 queue position 3 (hub 7108903950): IntelX fast-lane live proof; M1 queue FRD-040 -> FUT-025 -> INT-036 after INT-034 merged.'
       - 'Claim: hub #1483 comment 7118199266 by Muse 1, 2026-11-24 ~06:03 IST, on coordinator queue (hub 7108903950 M1 queue FRD-040 -> FUT-025 -> INT-036; FRD-040 merged 05:43 IST, work PR #1587, merge 4ae11621; FUT-025 merged 03:54 IST, PR #1538). Board record verified AVAILABLE, owner muse_1, on main b2b239c0 (board blob 8753c2fd, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse1/task-int-036-fast-lane-live-proof. Queue: INT-036 (head).'
       - 'Filed: 19:09 armed-state pack docs/collaboration/TASK-INT-036-FAST-LANE-LIVE-PROOF.md in work PR #1695 (hub STATUS 7139356266); window PAUSED at 19:09:21 IST per coordinator ruling hub 7138466832, ~34h 54m remains on resume; re-scoped to IntelX-Server home (IntelX live on server 6 since 18:59:50 IST, FRIDAY live on FRIDAY-Server since 20:18:02 IST, no instant alert fired on either home); INT-040 merged PR #1676 (4bc4159c), shipper re-point owed before any live leg. Board verified on main 3a2009b8 (blob 74f83507) before editing.'
+      - 'MERGED: work PR #1695 merged 2026-11-25 00:41:19 IST by surendra2304 (merge e67d795a, head 139b0356, CI 9/9 green); 48h armed-state evidence pack filed per coordinator re-scope ruling; stale MERGED flip filed in PR #1724 per watch057 (hub 7143740556).'
     blockers: []
-    next_action: 'Window PAUSED at 19:09:21 IST (ruling hub 7138466832); resume after INT-040 shipper re-point + deploy, then re-arm fast lane on IntelX-Server home.'
+    next_action: 'MERGED — evidence pack on main; window paused with ~34h 54m remaining, resume owed only if the fast lane is re-armed on the IntelX-Server home.'
   - id: TASK-VOI-032
 
     title: 'Voice: the background-noise interruption defect - FRIDAY stops mid-answer when fan or room noise hits the microphone; reproduce, root-cause, fix'
@@ -18115,21 +18118,27 @@ tasks:
 
   - id: TASK-STR-051
     title: 'Stratex: forward-window fills audit run 2 - reconcile the daemon fill ledger against venue history for the new window'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_8
-    branch: null
+    branch: muse8/task-str-051
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T04:45:00+05:30'
+    updated_at: '2026-11-25T01:27:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-STR-051-SCOPE.md
+      - docs/collaboration/TASK-STR-051-PROBE-READFILE-2026-11-24.md
+      - docs/collaboration/TASK-STR-051-S1-STATE-PULL-EVIDENCE.md
     acceptance:
       - 'Fills, closes and net P&L filed for the new window with venue reconciliation.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~03:55 IST; follow-up to STR-048 (P&L reconciliation) and the fill-ledger verification. Pool floor refill.'
       - 'Assigned to Muse 8 by coordinator watch 2026-11-24 ~04:45 IST (hub #1483): queue position 3. Claim on the hub + branch push when it reaches queue head; board flip rides in the work PR.'
+      - 'Claim: issue #1483 comment 7131989527 by Muse 8, 2026-11-24 ~18:20 IST, on coordinator watches 7131396444 + 7131647996 ("M8: claim TASK-STR-051 now"). Board record verified AVAILABLE, owner muse_8, on main ce5c1bd4 (board blob 82a51aa8, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-str-051.'
+      - 'Scope + read_file probe evidence filed on branch muse8/task-str-051 (hub 7141227234): TASK-STR-051-SCOPE.md + TASK-STR-051-PROBE-READFILE-2026-11-24.md; both ruled probe routes blocked (S1 paths not found on Server 2).'
+      - 'S1-state pull filed per watch054 ruling 3 (hub 7142399844): M13 pull via bridge run_shell S1 (watch 7140957093) — fill_ledger.jsonl byte-identical (md5 5a8d43a3ef9f32c111280a615d6ceb35, 80 rows, 38,809 bytes, net +138.75, 2026-11-14 -> 2026-11-23); heartbeat 2026-11-24 13:41:35 IST (~11 h stale); reconciliation daily_2026-11-23 + daily_2026-11-24 both RECONCILED; G1 gap persists (35 venue closes, +15.93 USDT on 11-24); 69/80 rows carry no order_id. Evidence doc docs/collaboration/TASK-STR-051-S1-STATE-PULL-EVIDENCE.md on branch muse8/task-str-051. Probe leg needs the ledger data file or a read route to S1 state.'
     blockers: []
     next_action: 'Read the daemon fill/close ledger end-to-end, reconcile against venue positions/history, file the window state.'
 
@@ -18461,23 +18470,26 @@ tasks:
 
   - id: TASK-INF-033
     title: 'Inference: routing-deadline live proof - prove the INF-031 deadline is enforced in the live routing path'
-    status: AVAILABLE
-    owner: muse_11
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_1
+    branch: muse1/task-inf-033-routing-deadline-live-proof
+    pr: 1724
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T06:23:08+05:30'
+    updated_at: '2026-11-25T02:22:29+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-INF-033-ROUTING-DEADLINE-LIVE-PROOF.md
     acceptance:
       - 'Live routing evidence filed showing the deadline enforced on real prompts, with timing numbers.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; follow-up to INF-031 (deadline set, Muse 11) and INF-032 (wiring, Muse 7 queue pos 3). Pool floor refill.'
       - 'Assigned to Muse 11 queue position 4 by coordinator watch 2026-11-24 ~06:35 IST (hub #1483) — after MEM-027. Claim it when it reaches the head.'
+      - 'Claimed by Muse 1 2026-11-25 ~01:52 IST (hub #1483 comment 7143564040) per coordinator watch055; branch muse1/task-inf-033-routing-deadline-live-proof.'
+      - 'Live proof 2026-11-25 ~02:05-02:17 IST: deadline enforced - 60 s budget bounds every request (worst wall 51.96 s); 15.0 s primary slice fired on the record (gateway journal); >7000-token bypass fires on both paths; oversized 35,214-char prompt served via the live client path in 40.39 s (requested gpt-oss-120b, served gemini-3.6-flash) and via the execute endpoint in 10.52 s (openrouter/qwen-2.5-coder-32b-instruct); under-7000 prompts 1.57 s / 0.21 s. Ladder recovered on the execute endpoint; still flaky on the chat path (1/2 oversized attempts 503 provider_degraded - availability, not the deadline). Live client timeout still 150 s (INF-032 wiring merged, not deployed - deploy owed). Evidence doc filed; work PR #1724.'
     blockers: []
-    next_action: 'Prove the INF-031 routing deadline is enforced in the live routing path with timing evidence.'
+    next_action: 'Work PR #1724 open for review; merge is Muse''s. Next: VOI-034 when it reaches the head.'
 
   - id: TASK-SEN-025
     title: 'Sentinel: approval-path live proof run 3 + backup manifest verification run 2'
@@ -18819,6 +18831,132 @@ tasks:
       - 'STR-060 disposition in watch 7128801462: claim NEXT, immediately after EARN-014 work PR files. Definition (watch 7126818611): Stratex post-move open-positions reconciliation - S1 daemon live open book vs Binance venue; file positions + realised P&L + trial counter; read-only, no orders, no env changes.'
     blockers: []
     next_action: 'Awaiting Muse merge of work PR #1657 (workers never merge). STR-060 claim follows per watch 7128801462.'
+  - id: TASK-EARN-015
+    title: 'EARN: Contra lane launch - CometWorks profile pack live (owner account step only)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/contra/profile-pack.md
+    acceptance:
+    - 'Contra profile pack is complete under earning/contra/ (headline, about, 4 service listings, rate card, portfolio blurbs, owner setup checklist) - filed in PR #1722.'
+    - 'The ONLY remaining step is the owner one-time action: create the free Contra account (CometWorks Gmail, name Surendra), paste the pack blocks in, add the 4 portfolio samples and the Payhip link.'
+    - 'First-money path: a client books a Service or sends a project brief; deliver in 2-3 days; Contra pays out after client approval minus its commission. No upfront spend at any point (free-only).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 ~02:30 IST under the owner order 2026-11-25 ~02:16 IST: implement all earning lanes (Contra, itch.io second product, Adobe Stock, KDP) plus pursue the bug-bounty lane.'
+    - 'Deliverable PR #1722 (branch muse/earn-contra-profile-pack): earning/contra/profile-pack.md, built from the live CometWorks Fiverr gig material (gigs 1-4: SEO posts, YouTube scripts, social packs, product descriptions).'
+    blockers: []
+    next_action: 'Owner creates the free Contra account and pastes the pack (about 15 minutes, checklist in the pack section 6). Then this task closes and the lane is live; team maintains listings from there.'
+  - id: TASK-EARN-016
+    title: 'EARN: itch.io product 2 launch - YouTube Creator Starter Pack (owner account step only)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/itchio/product-2/README-listing.md
+    - earning/itchio/product-2/source/00-how-to-use.md
+    - earning/itchio/product-2/source/01-script-templates.md
+    - earning/itchio/product-2/source/02-hooks-bank.md
+    - earning/itchio/product-2/source/03-thumbnail-text-guide.md
+    - earning/itchio/product-2/source/04-upload-checklist.md
+    acceptance:
+    - 'Second itch.io digital product is fully built under earning/itchio/product-2/ (5 script templates, 100-hook bank, thumbnail text guide, 27-point upload checklist, how-to-use guide) with complete listing copy (title, tagline, description, $14 price, tags) - filed in PR #1723. It is NOT the social pack again; it is a new creator-tools product.'
+    - 'The ONLY remaining step is the owner one-time action: create the free itch.io account (CometWorks Gmail, creator name CometWorks) and upload the product files with the listing copy.'
+    - 'First-money path: first sale at $14; itch.io takes only its seller-set revenue share out of completed sales; no upfront spend (free-only).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 ~02:30 IST under the owner order 2026-11-25 ~02:16 IST: implement all earning lanes.'
+    - 'Deliverable PR #1723 (branch muse/earn-itchio-product-2): 6 files under earning/itchio/product-2/. The existing Payhip product (30-Day Social Media Content Pack, $19) stays the first product; this is the itch.io storefront second product.'
+    blockers: []
+    next_action: 'Owner creates the free itch.io account and uploads (about 10 minutes, checklist in README-listing.md). Then this task closes and the product is on sale; team prepares product 3 candidates from sales data.'
+  - id: TASK-EARN-017
+    title: 'EARN: Adobe Stock labelled-AI lane - batch 1 upload (owner contributor account step only)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/adobe-stock/starter-batch-plan.md
+    - earning/adobe-stock/asset-briefs-batch-1.md
+    - earning/adobe-stock/titles-keywords-batch-1.md
+    acceptance:
+    - 'Adobe Stock lane is fully prepared under earning/adobe-stock/: starter batch plan (labelling rules, Adobe-only because Shutterstock/Getty/Freepik prohibit AI uploads), 20 generation-ready asset briefs, and spreadsheet-ready titles/keywords for all 20 assets - filed in PR #1725.'
+    - 'The ONLY remaining owner step is one-time: create the free Adobe Stock Contributor account (CometWorks Gmail, name Surendra) and complete the tax form it presents. The team then generates the 20 assets from the briefs with free tools and prepares the upload set.'
+    - 'Every upload carries the generative-AI declaration - no exceptions; an unlabelled AI upload risks the account.'
+    - 'First-money path: assets pass review, a buyer licences one, royalties accrue (33% standard for images) toward the $25 payout threshold, paid via the owner payout method. This is the slow compounding lane by design.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 ~02:30 IST under the owner order 2026-11-25 ~02:16 IST: implement all earning lanes, Adobe Stock included.'
+    - 'Deliverable PR #1725 (branch muse/earn-adobe-stock-batch-1): 3 files under earning/adobe-stock/.'
+    blockers: []
+    next_action: 'Owner creates the free Adobe Stock Contributor account. Team then generates batch 1 from the briefs and hands the owner the upload-ready set with this record updated.'
+  - id: TASK-EARN-018
+    title: 'EARN: KDP ebook - Your First 100 Subscribers (manuscript completion, then owner KDP account + upload)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/kdp/manuscript-outline.md
+    - earning/kdp/chapter-01-draft.md
+    - earning/kdp/kdp-listing-copy.md
+    acceptance:
+    - 'KDP pack is filed under earning/kdp/ in PR #1726: full manuscript outline (about 25,000 words, expanded from the CometWorks 7-Day Email List Starter Kit material), the complete Chapter 1 draft as tone benchmark, and full listing copy (title, subtitle, description, 7 keyword slots, categories, $4.99 price, KDP Select, AI-assisted disclosure step).'
+    - 'Team leg remaining: draft chapters 2-8 plus appendices to the Chapter 1 standard and produce a cover with free tools; this record is the tracker for that leg (earning lane, one EARN task per worker queue).'
+    - 'The ONLY owner steps are one-time: create the free KDP account (CometWorks Gmail, name Surendra), complete its tax interview and bank details; then, when the manuscript is ready, create the title, paste the listing copy, answer the AI-content question as AI-assisted, and publish.'
+    - 'First-money path: first sale or Kindle Unlimited page-reads accrue royalties on the standard about-60-day KDP payment cycle. Publishing costs nothing (free-only).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 ~02:30 IST under the owner order 2026-11-25 ~02:16 IST: implement all earning lanes, KDP included.'
+    - 'Deliverable PR #1726 (branch muse/earn-kdp-ebook-pack): 3 files under earning/kdp/. Source topic is the strongest existing CometWorks material: the email-list starter kit already drafted as the EARN-004/EARN-010 lead-magnet pack.'
+    blockers: []
+    next_action: 'Available in the earning lane; a worker claims the manuscript-completion leg (chapters 2-8) as its single EARN queue item. Owner KDP account step can happen any time before upload.'
+  - id: TASK-EARN-019
+    title: 'EARN: bug-bounty lane - 30-day legal practice plan, then first programme (owner accounts step only)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/bug-bounty/README.md
+    - earning/bug-bounty/platform-comparison.md
+    - earning/bug-bounty/scope-and-legal-rules.md
+    - earning/bug-bounty/tooling.md
+    - earning/bug-bounty/30-day-plan.md
+    acceptance:
+    - 'Methodology pack is complete under earning/bug-bounty/ in PR #1728: platform comparison (HackerOne, Bugcrowd, Intigriti, YesWeHack - free-only signup facts), legal scope rules (only in-scope targets, never test outside a programme scope), free tooling list, 30-day learning and practice plan using only legal practice targets (PortSwigger Academy, Hack The Box free tier), and the exact owner account list.'
+    - 'NO testing of any live target is part of this task or has been done. Practice is labs only; live work begins only after the day-30 go/no-go review, inside one named programme scope.'
+    - 'The ONLY owner step is one-time: create the free accounts listed in earning/bug-bounty/README.md (HackerOne, Bugcrowd, PortSwigger Academy, Hack The Box; Intigriti and YesWeHack later).'
+    - 'First-money path: 30-day plan completes, go decision at review, one beginner-friendly public programme is hunted within its scope, first valid report pays the first bounty (realistically 2-4 months; duplicates and out-of-scope findings pay zero).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 ~02:30 IST under the owner order 2026-11-25 ~02:16 IST: pursue the bug-bounty lane (owner answer 9 to the doubts list).'
+    - 'Deliverable PR #1728 (branch muse/earn-bug-bounty-pack): 5 files under earning/bug-bounty/. Preparation only - no live target has been tested.'
+    blockers: []
+    next_action: 'Owner creates the listed free accounts when ready. A worker then claims the 30-day plan execution (labs only) as its single EARN queue item and files weekly lab evidence to this record.'
   - id: TASK-STR-060
     title: 'Stratex post-move open-positions reconciliation - reconcile the S1 daemon live open book against the Binance venue, file positions + realised P&L + trial counter (read-only, no orders, no env changes)'
     status: IN_REVIEW
@@ -19795,14 +19933,14 @@ tasks:
 
   - id: TASK-STR-071
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG-STR-06, IG-STR-07, IG-STR-08, IG-STR-09, IG-STR-10 - live extreme-condition verification (wave 1)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_3
     branch: muse3/task-str-071-production-verify-ig-str-06-10
-    pr: 1701
+    pr: 1713
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T23:27:00+05:30'
+    updated_at: '2026-11-25T01:19:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19813,8 +19951,10 @@ tasks:
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Claim: issue #1483 comment 7139685401 by Muse 3, 2026-11-24 ~23:15 IST, under the central-pool pull model (pool order 7137277063, Wave 1 Stratex first; STR-071 pre-staged M3). Board record verified AVAILABLE, owner null, on main 6e3fe049 (blob 55ec397b via git blobs API). Branch muse3/task-str-071-production-verify-ig-str-06-10. Checkpoint 1: live leg BLOCKED on all five items - bridge run_shell not allowed for this worker (ALLOWED_TOOLS excludes it) (client.py:25, read-only tools only, verified first-hand) and bridge transport down ~23:17-23:20 IST; evidence doc docs/collaboration/TASK-STR-071-CHECKPOINT-1.md. Ruling owed: run_shell authorization for Muse 3, or re-slot; plus whether 22:17-watch ruling 4 extends to STR-071.'
+    - 'Live evidence (Muse 3, 2026-11-25 ~01:10-01:15 IST, first-hand on Stratex-Server 13.211.78.20 via ship.py run_shell server 4, authorised by 00:17-watch ruling 7141869992): 5/5 items exercised live on real market data in the deployed checkout - IG-STR-06 7 BTC + 8 ETH confluence signals on 100 live 1h klines; IG-STR-07 0 opportunities clearing 10 bps/side fees (live gap ~12.6 bps); IG-STR-08 features + clean labels text; IG-STR-09 plan validates True + 6 discipline notes; IG-STR-10 demo challenge 4 days, balance 10013.73, hash chain valid, scratch deleted. All six module files md5-identical to main ce3c817f. Daemon live: Stratex + Stratex-Daemon ACTIVE, PID 13273, /health degraded only on market_data UNKNOWN, balance 10455.77, 30 open positions. Full record: docs/collaboration/TASK-STR-071-CHECKPOINT-2.md.'
+    - 'NOT RUN (ruled out of scope, not failures): failure injection (venue disconnect, stale feed) + full-allowlist load scan - 22:57-watch ruling 2 extends ruling 4 to STR-071. No item failed live, so no named fix task filed. Observations for the coordinator in the checkpoint-2 doc: forward signals REJECTED (frozen strategy deleted by TASK-STR-CLEANUP-001); daily loss breaker state stale since 2026-11-15; Stratex-Server checkout 3db55adf behind main.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'Awaiting Muse merge of work PR #1713; STR-071 goes IN_REVIEW on live evidence, closure is a Muse decision.'
 
   - id: TASK-STR-072
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG-STR-11, IG-STR-12, IG2-STR-01, IG2-STR-02, IG2-STR-03 - live extreme-condition verification (wave 1)'
@@ -19935,6 +20075,30 @@ tasks:
     blockers: []
     next_action: 'Checkpoint 1 filed (work PR #1711): repo-side legs done, 30 tests pass; live leg gated on VyralX-Server route decision (G2) + IG-VYR-02 successor ruling (G1).'
 
+  - id: TASK-VYR-070-FIX-01
+    title: 'IG-VYR-02 has no live implementation: content_factory.py was retired by TASK-VYR-033 with no successor named - decide: retire IG-VYR-02 from the verification programme or specify a replacement module, then verify it live'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T01:21:34+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-070-CHECKPOINT-2.md
+    acceptance:
+    - 'Decision recorded: either IG-VYR-02 is retired from the verification programme (programme doc + board updated, item marked not-applicable, never verified), or a replacement module is specified.'
+    - 'If a replacement is specified: the replacement is implemented, its IG-VYR-02 tests pass, and it is verified live on VyralX-Server under the VYR-070 extreme-condition standard.'
+    - 'IG-VYR-02 is NOT marked verified on the basis of the retired content_factory.py.'
+    evidence:
+    - 'Filed by Muse 10 from TASK-VYR-070 G1, per coordinator ruling in watch053 (hub #1483 comment 7141869992): read the VYR-033 retirement record; no successor named, so file this fix task.'
+    - 'VYR-033 record (WORK_BOARD.yaml, TASK-VYR-033, MERGED PR #1196, merge 11cbe05f): retired the whole Path C lane - 3 catalogue JSONs, 5 service modules incl. content_factory.py + previs.py, 3 build scripts, 5 lane tests. Pre-edit live-path verification found no live importer; verdict: no live need - retire. No successor module is named anywhere in the record.'
+    - 'Cross-check 2026-11-25 ~01:15 IST (Muse 10, Server 2): repo-wide search for content_factory on current main ce3c817f - only WORK_BOARD.yaml history lines mention it (old IG-VYR-02 record, VYR-033 record); no live code references it, no successor module exists in the tree. The retired test test_ig_vyr02_content_factory.py was deleted with the lane.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins.'
+
   - id: TASK-VYR-071
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG-VYR-06, IG-VYR-07, IG-VYR-08, IG-VYR-09, IG-VYR-10 - live extreme-condition verification (wave 1)'
     status: AVAILABLE
@@ -20005,16 +20169,17 @@ tasks:
 
   - id: TASK-VYR-074
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG3-VYR-07, IG3-VYR-08, IG3-VYR-09, IG3-VYR-10 - live extreme-condition verification (wave 1)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
     branch: muse4/task-vyr-074-prod-verify-ig3-vyr-07-10
-    pr: 1690
+    pr: 1714
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T22:36:00+05:30'
+    updated_at: '2026-11-25T01:25:01+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-074-PROD-VERIFY-IG3-VYR-07-10.md
     acceptance:
     - 'PRODUCTION-VERIFY (owner standard 2026-11-24: merged code is NOT implemented): live extreme-condition verification of TASK-IG3-VYR-07, TASK-IG3-VYR-08, TASK-IG3-VYR-09, TASK-IG3-VYR-10.'
     - 'Extreme-condition test: real end-to-end render/discovery cycle on VyralX-Server with real source videos + machine-QA under bad inputs (missing BGM, doubled captions, watermark) + metrics-sync against the real channel; loop stays OFF, uploader paused, renders held unlisted'
@@ -20023,8 +20188,11 @@ tasks:
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Claim: hub #1483 comment 7138661031 by Muse 4, 2026-11-24 ~22:33 IST, under the central-pool pull model (hub 7136890552; pool order 7137277063; 21:57 watch 7138466832 ruling 2). Board record verified AVAILABLE, owner null, P1, on main 37e030c7 (board blob 3b414a1e read first-hand). VYR-072 claimed by M14 first (7138526997); VYR-073 is M14 pre-staged next; VYR-074 is the next free Wave 1 task.'
+    - "Repo-side legs (work PR #1714, branch muse4/task-vyr-074-prod-verify-ig3-vyr-07-10): mapping verified first-hand on main ce3c817f — IG3-VYR-07 B114 motion_templates.py (exactly the 12 source-named templates in _TEMPLATE_NAMES), IG3-VYR-08 B125 idea_generator.py (analyse_performers/generate_ideas, operator-supplied records only, no platform calls), IG3-VYR-09 B131 production_rules.py + production_rules.json (exactly the 5 source rules), IG3-VYR-10 B120 SCENE_ASSEMBLY_EVALUATION.md (composition layer exists, generation off-fleet, gate CLOSED). Claim PR #1690 merged 2026-11-24 23:23:50 IST (e984ea74)."
+    - "Verification: new offline test VyralX/tests/test_vyr074_mapping.py (5 tests, stdlib-only) — 5/5 passed locally against the real mapped files fetched from main ce3c817f; added to the VyralX contracts list in owner-workflows.yml. Evidence doc docs/collaboration/TASK-VYR-074-PROD-VERIFY-IG3-VYR-07-10.md carries the per-item live verification plan."
+    - "Live leg NOT run — gated: owner stop order not lifted (no lifting comment through hub 7142315021, 2026-11-25 01:05 IST); VYR-056 PR #1710 MERGED 01:01:04 IST (dc9b66b7, watch054) as an evidence-only closure — pin step A failed identically, no newer deno/EJS exists, leg CLOSED per ruling 4 — so the yt-dlp download break itself is NOT fixed and media QA stays blocked; VyralX-Server route uncleared; failure injection HELD (21:57 watch ruling 3). No live step taken."
     blockers: []
-    next_action: 'Claim PR open; work starts on merge (M16 precedent). Repo-side legs: map IG3-VYR-07..10 to merged code, verification plan + evidence doc. Live leg gated on VyralX-Server route + VYR-056 yt-dlp repair; failure injection HELD pending owner clearance (21:57 watch ruling 3).'
+    next_action: 'Awaiting Muse review/merge of work PR #1714. After merge: live leg gated — owner stop order not lifted, VYR-056 merged evidence-only (yt-dlp break unfixed), VyralX-Server route uncleared, failure injection HELD. No live step until clearance lands.'
 
   - id: TASK-FRD-051
     title: 'PRODUCTION-VERIFY: FRIDAY corpus items IG-FRD-001, IG-FRD-002, IG-FRD-003, IG-FRD-004, IG-FRD-005 - live extreme-condition verification (wave 2)'
@@ -21008,6 +21176,927 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+  - id: TASK-EARN-026
+    title: 'EARN: bug-bounty lane (owner order 2026-11-25: PURSUE) - adopt the Claude-BugHunter workflow, hunt beginner-scope programmes, human-reviewed reports only'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'Method (reel DgAaMVKh8ig, @ashutoshwithclaude, watched in full 2026-11-24): companies pay the public to find bugs in their apps (bug bounty); Meta''s programme states a $500 minimum per real bug; the workflow uses the free elementalsouls/Claude-BugHunter GitHub skill bundle (83 skills - it scouts the target, tests weak spots, and drafts the report). The reel''s $40,000-at-one-live-event figure is an UNVERIFIED creator claim and is not a target.'
+    - 'Adopt the bundle as the hunting workflow under fleet security rules: test ONLY programmes whose published scope explicitly permits it; nothing outside scope, ever.'
+    - 'OWNER ONE-TIME: create accounts on HackerOne and Bugcrowd (and Meta Bug Bounty) using cometbrowser001@gmail.com. Muse does all hunting and report drafting; the owner reviews and submits each report himself (programmes hold the account holder responsible; every AI-drafted report is human-reviewed before submit).'
+    - 'Learning base folded into the workflow notes under earning/: reel DV9IyW1jCeJ (@itshahirx) curated bug-bounty / security resources from the full-watch corpus.'
+    - 'Done = workflow adopted + first valid report submitted on a beginner-scope programme. First-money path: the programme''s bounty on the first accepted report. Honest expectation: slow and uncertain - most first reports are duplicates or out of scope.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    - 'RENUMBERED 2026-11-25 by Muse (coordinator): this record was filed as TASK-EARN-015 in PR #1727, but a parallel earning-lane filing reached main first using TASK-EARN-015 for different content; renumbered to TASK-EARN-026 to restore unique task IDs. Content unchanged. This lane was also filed as TASK-EARN-019 by the parallel filing - work them as one lane; this record carries the source-watch (DgAaMVKh8ig) method detail.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-027
+    title: 'EARN: AI voice/chat agent service for local businesses - build free-tier demos (OmniDimension + Voiceflow patterns), package as a CometWorks service, owner does outreach'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'Method, two corpus reels: DV563QjD0Ft (@vsmeo) - build and sell AI voice agents to businesses on OmniDimension (Indian languages, WhatsApp integration, own-number or platform number); DZmTQUQMdBg (@hassandotai) - sell AI chatbots that book appointments: pick a niche (dentists in the reel), take the business''s own services text, generate the agent system prompt, build in Voiceflow, pitch with the live demo link. The friday package F-35 (Riley appointment-agent prompt) is the in-corpus worked example of the prompt artifact.'
+    - 'Build TWO working demos on free tiers: (1) a clinic appointment voice agent, (2) a website chat agent that books appointments. Demos must actually answer/call in a test the worker files as evidence.'
+    - 'Package the service: Fiverr gig draft (publishes when a slot frees / at Level 1) + Contra and Payhip listing copy + price points (setup fee + monthly care), all filed under earning/.'
+    - 'Build a 20-lead list of local clinics/businesses with no voice/chat booking, with a per-lead pitch draft that links the matching demo.'
+    - 'OWNER ONE-TIME: create free OmniDimension and Voiceflow accounts if signup blocks the worker; owner sends outreach and takes sales calls (human-sent rule). First-money path: the first business setup fee.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    - 'RENUMBERED 2026-11-25 by Muse (coordinator): this record was filed as TASK-EARN-016 in PR #1727, but a parallel earning-lane filing reached main first using TASK-EARN-016 for different content; renumbered to TASK-EARN-027 to restore unique task IDs. Content unchanged.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-028
+    title: 'EARN: websites-for-local-businesses lane - AI-built mockup sites for Google Maps/Justdial leads (clinics first), pitch pack, owner sends and closes'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'Method, two corpus reels saying the same thing independently: DVXc5aski3p (@talagana.rajesh) and DVYp0XMj-aH (@vsmeo) - find local businesses on Google Maps / Justdial (dermatology clinics in Hyderabad in both), take their public business info, generate a finished website mockup with AI BEFORE pitching, then offer the site to the business.'
+    - 'Build 10 finished mockup sites for real local businesses with weak or no websites, hosted as live preview links; file the mockups + a pitch pack (message scripts, price points, follow-up sequence) under earning/.'
+    - 'Capability note: the website-generation pattern itself was adopted into FRIDAY as full-watch package F-30 - the capability exists in the fleet; this EARNING lane is what was never filed. Do not rebuild the capability; use it.'
+    - 'OWNER ONE-TIME: send the pitches (human-sent) and close sales; Muse builds everything else. First-money path: the first website sale (one-time build fee; optional monthly care plan).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    - 'RENUMBERED 2026-11-25 by Muse (coordinator): this record was filed as TASK-EARN-017 in PR #1727, but a parallel earning-lane filing reached main first using TASK-EARN-017 for different content; renumbered to TASK-EARN-028 to restore unique task IDs. Content unchanged.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-029
+    title: 'EARN: freelance client lead-gen - Yello directory + AI contact extraction for Dubai/UAE businesses, personalised pitches for the live Fiverr gigs'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'Method (reel DPGp5CbDJ-v, @saki.chiranjeevi, full-watch corpus): use the Yello business directory to find companies in one chosen industry (insurance in the reel), use AI to extract contact details, and pitch freelance services to high-paying Dubai/UAE clients.'
+    - 'Deliverable: a 50-lead UAE/Dubai list in CometWorks'' live service niches (SEO content, YouTube scripts, social content, product descriptions) with verified public contact routes, filed under earning/, plus a personalised pitch draft per lead pointing at the matching live Fiverr gig.'
+    - 'Rules: public business contact data only; no scraping behind logins; no automated mass outreach (anti-spam + platform rules). OWNER ONE-TIME: review and send the pitches himself (human-sent).'
+    - 'First-money path: the first converted client lands as a Fiverr order (14-day new-seller clearance then applies).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    - 'RENUMBERED 2026-11-25 by Muse (coordinator): this record was filed as TASK-EARN-018 in PR #1727, but a parallel earning-lane filing reached main first using TASK-EARN-018 for different content; renumbered to TASK-EARN-029 to restore unique task IDs. Content unchanged.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-030
+    title: 'EARN: Contra lane start (owner order 2026-11-25: implement all) - owner creates the account, Muse builds the full CometWorks profile + services'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'OWNER ONE-TIME: create the Contra account with cometbrowser001@gmail.com (Contra was GAP-LIST owner-decision item 4 on 2026-11-24; the owner ordered all lanes implemented on 2026-11-25).'
+    - 'Profile completed by Muse: CometWorks services mirroring the 4 live Fiverr gigs (SEO blog posts, YouTube scripts, social media content, product descriptions) at matching rates, portfolio built from the existing gig packs under earning/, profile copy filed via PR under earning/.'
+    - 'Record Contra''s current payout terms and timeline in the task evidence at setup (do not assume). First-money path: the first Contra project payment - Contra has no 14-day new-seller hold of the Fiverr kind.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    - 'RENUMBERED 2026-11-25 by Muse (coordinator): this record was filed as TASK-EARN-019 in PR #1727, but a parallel earning-lane filing reached main first using TASK-EARN-019 for different content; renumbered to TASK-EARN-030 to restore unique task IDs. Content unchanged. This lane was also filed as TASK-EARN-015 by the parallel filing - work them as one lane.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-020
+    title: 'EARN: itch.io Direct second product (owner order 2026-11-25: implement all) - owner account + tax interview, product page live from existing packs'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'OWNER ONE-TIME: create the itch.io account and complete the itch.io Direct tax interview (lane was GAP-LIST owner-decision item 5 on 2026-11-24; owner ordered implementation 2026-11-25).'
+    - 'Product page live: a second digital product built from existing material (the lead-magnet eBook from TASK-EARN-004, or the 30-day social content pack), with files, page copy and pricing filed via PR under earning/.'
+    - 'First-money path: the first Direct sale (itch.io Direct pays the seller directly, no platform hold). If payout turns out to need a gateway the owner has not connected, record that blocker honestly in evidence - do not claim the lane is buyable until a test checkout proves it.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-021
+    title: 'EARN: Adobe Stock labelled-AI seeding (owner order 2026-11-25: implement all) - owner contributor account, compliant AI-labelled asset batch uploaded'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'OWNER ONE-TIME: create the Adobe Stock contributor account and complete its tax form (lane was GAP-LIST owner-decision item 6 on 2026-11-24; owner ordered implementation 2026-11-25).'
+    - 'First batch prepared and uploaded from the existing gig-image pipeline: every AI asset labelled as AI-generated in the Adobe Stock flow (labelled AI is allowed; UNLABELLED AI uploads are a ban offence - the label is part of acceptance), titles and keywords written per asset.'
+    - 'Honest timeline, to be stated in the upload pack: Adobe Stock pays 45 days after the first sale - this is a seed lane and December money is NOT expected from it.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-022
+    title: 'EARN: KDP ebook (owner order 2026-11-25: implement all) - owner KDP account + tax interview, full short ebook built from the EARN-004 lead magnet, listing live'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'OWNER ONE-TIME: create the Amazon KDP account and complete the tax interview (lane was GAP-LIST owner-decision item 6 on 2026-11-24; owner ordered implementation 2026-11-25).'
+    - 'Manuscript completed from TASK-EARN-004''s lead-magnet eBook (outline + first chapter already exist): full short ebook + cover + listing copy filed under earning/; the AI-content disclosure is made in the KDP publishing flow (Amazon requires it).'
+    - 'Honest timeline, to be stated in the listing pack: KDP royalties pay about 60 days after the month of sale - seed lane, December money NOT expected.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-023
+    title: 'EARN: Swiggy Builders Club option (corpus reel DYg_b2ZTK70) - prototype agent concept + application pack drafted; owner submits the application'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'Source (full-watch corpus item DYg_b2ZTK70, @lavin_creator): Swiggy Builders Club (mcp.swiggy.com) lets developers build AI agents/apps on Swiggy Food / Instamart / Dineout APIs. Monetisation is INDIRECT (partnerships, co-branding, hiring, startups - no app-store cut) and access is invite-led through an application form.'
+    - 'Deliverable: a one-page prototype concept (e.g. a FRIDAY voice food-ordering / auto-restock agent on the Swiggy MCP) plus the full application answers, drafted under earning/.'
+    - 'OWNER ONE-TIME: submit the application form himself (his details, his call). First-money path is indirect and unproven - this task buys an option on the programme, it does not promise income. If Swiggy declines or never replies, close the task with that verdict recorded.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-VYR-081
+    title: 'VyralX: GTA 6 content series in her existing model - short excerpts, her English narration, subtitles, BGM, unlisted review-first (growth play, NOT a YouTube-revenue play)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:40:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - VyralX/
+    acceptance:
+    - 'Series spec - VyralX''s existing model only, unchanged: short excerpts, her English narration over the clip, source voice ducked under hers, subtitles ALWAYS on, BGM mandatory and ducked, unlisted + review-first, renders held for the owner. Loop stays OFF, uploader stays paused - nothing uploads without the owner''s word.'
+    - 'Pipeline work: moment-finding on permitted footage (audio-spike + scene detection, the PySceneDetect / faster-whisper pattern from Df5V_2anUAj missions 3-5), vertical cut, pre-post self-check, then the standing machine-QA gates (caption-track count, BGM presence, watermark, loudness) before any human review. Builds on the clipping-toolchain evaluation already filed from Df0B9Z4n4BU - do not duplicate it.'
+    - 'Footage rule: ONLY footage VyralX is permitted to use - her own gameplay capture, or campaign-supplied footage under a live TASK-EARN-024 campaign brief. No third-party streamer footage outside a campaign brief.'
+    - 'Honest limits, written into the series record so nobody overclaims later: YouTube pays NOTHING on raw compiled clips (reused-content policy), and Rockstar/Take-Two fan-content rules are non-commercial with takedown at will. This series is a growth/audience play for the channel; any money attached to GTA 6 clips comes only through TASK-EARN-024 campaign platforms under their own terms, never from YouTube revenue on the clips themselves.'
+    - 'Done = series registered in channel_strategy + first 3 episodes rendered, machine-QA passed, held unlisted for owner review with the QA evidence filed.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s explicit follow-up order (02:24 IST) to the Instagram adoption re-audit: the GTA 6 clipping videos must NOT stay reference-only - file real implementation tasks. Source watches read first-hand in the re-audit (Df5V_2anUAj, Df-NMPUFbEx, Df6oHpmJ5Yz, Df0B9Z4n4BU + full-watch item Df1AKYMjuEg).'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. VyralX is scoreboard priority - claim ahead of non-scoreboard pool work.'
+  - id: TASK-EARN-024
+    title: 'EARN: clipping-campaign lane - join Content Rewards / Whop / clip.tech campaigns for GTA 6 clips, campaign tracker, first approved campaign payout'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:40:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'Method (watches Df5V_2anUAj @murphmaxxing, Df-NMPUFbEx @startclipping, Df6oHpmJ5Yz): clippers join campaigns on Content Rewards (contentrewards.com), Whop and clip.tech, cut clips from the streams each campaign brief allows, post them, and are paid per approved view by the platform - not by YouTube.'
+    - 'Honest limits from the source post itself (Df5V_2anUAj did the math so we do not have to guess): the best real GTA 6 campaign it found pays $2 per 1,000 views, caps at $150 per clip, and takes a 10% platform fee; influencer claims of $5K per million views are called false by that same post. Other campaigns in its table pay $0.70-$1.00 per 1K with $35-$100 caps. Volume is the whole game; per-clip money is small.'
+    - 'Rights limits, binding on this lane: YouTube pays nothing on raw compiled clips (reused-content policy); Rockstar/Take-Two fan-content rules are non-commercial with takedown at will; Rockstar runs NONE of these campaigns. Income exists only under each campaign platform''s own terms, and clips are made ONLY from the streams/footage a live campaign brief explicitly allows. Clips are produced by the TASK-VYR-081 pipeline in VyralX''s model (narration, subtitles, BGM) - never raw re-uploads.'
+    - 'Worker deliverables: (1) a campaigns tracker under earning/ in the Df5V_2anUAj pattern - per campaign: platform, pay per 1K views, cap per clip, budget left, rules, ranked by budget left, refreshed on a stated cadence; (2) the hand-off flow from tracker to TASK-VYR-081 production to campaign submission; (3) first campaign clip submitted under a live brief once accounts exist.'
+    - 'OWNER ONE-TIME (exact steps): (1) create a Whop account with cometbrowser001@gmail.com and complete its payout setup in Whop settings; (2) create a Content Rewards account with the same email and complete its payout setup; (3) create a clip.tech account with the same email and complete its payout setup; (4) in each platform, connect the payout method it requires - the owner does this himself inside the platform; Muse never sees or handles payout credentials. Until the accounts exist the worker builds everything else.'
+    - 'Done = tracker live with current campaigns ranked + first clip submitted under a live campaign brief. First-money path: the first approved campaign payout (small dollars by design - see the rate table above).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s explicit follow-up order (02:24 IST) to the Instagram adoption re-audit: the GTA 6 clipping videos must NOT stay reference-only - file real implementation tasks. Source watches read first-hand in the re-audit (Df5V_2anUAj, Df-NMPUFbEx, Df6oHpmJ5Yz, Df0B9Z4n4BU + full-watch item Df1AKYMjuEg).'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only.'
+  - id: TASK-FRD-057
+    title: 'FRIDAY: book-page translation reading mode - photograph pages, get Telugu translation page by page'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - FRIDAY/
+    acceptance:
+    - 'Source: friday package F-15 (item DaFKBDwJlLZ) - a study method for Telugu readers: screenshot 10-20 book pages daily and have the AI translate them into Telugu. FRIDAY''s baseline has no book-translation capability; this builds it as a real reading workflow, with Inference as the translation route.'
+    - 'Build: owner photographs or screenshots book pages -> FRIDAY OCRs the page, translates it to Telugu through the Inference route, and returns the translation page by page, with optional spoken read-out through the voice lane.'
+    - 'Done = live proof on production FRIDAY: one real book page translated end to end, page image in, Telugu text out.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-FRD-058
+    title: 'FRIDAY: RSVP speed-reading aid - word-by-word reader for pasted text and articles'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - FRIDAY/
+    acceptance:
+    - 'Source: friday package F-17 (item DcmUG0vNBEK) - an RSVP (rapid serial visual presentation) speed-reading aid; no such aid exists in FRIDAY''s baseline.'
+    - 'Build: paste text or an article -> FRIDAY presents it word by word at an adjustable words-per-minute rate in her reading surface, with pause/resume and rate control by voice or chat.'
+    - 'Done = live proof: one real article read through the RSVP surface on production FRIDAY at two different rates.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-FRD-059
+    title: 'FRIDAY: job-hunt lane completion - curated per-step tool stack plus scheduled board searches matched to the owner''s CV'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - FRIDAY/
+    acceptance:
+    - 'Sources: friday package F-18 (item Dc6uq5sS6gA - the curated per-step stack: finding jobs LinkedIn/Indeed/Wellfound/RemoteOK/Y Combinator; resumes Teal/Novoresume/Kickresume/Canva; interview prep LeetCode/HackerRank/Exponent/Glassdoor; portfolio GitHub/Kaggle/Hugging Face/Devpost/Notion; skills Coursera/edX/DeepLearning.AI/freeCodeCamp/Udacity - the source''s scope note is US/UK/Canada, so India applicability is checked per tool at build time) and F-38 (item DeYL3wXs5gd, plus DfKvyiNSQXD - the scheduled-search pattern: daily site: searches over Ashby/Greenhouse/Lever boards, CV-matched, only fitting jobs kept). The job-hunt lane exists (baseline PARTIAL) but names neither the stack nor scheduled searching.'
+    - 'Build: (1) record the per-step tool stack into the lane with each tool''s free tier verified live; (2) scheduled daily board searches matched against the owner''s CV, delivered as a ranked digest of fitting jobs only. Applications themselves stay the owner''s action - the lane prepares and drafts, it does not submit.'
+    - 'OWNER ONE-TIME: provide the current CV and target roles once. Done = the first scheduled digest produced from real live listings, ranked against the CV.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-FRD-060
+    title: 'FRIDAY: Daily Signal Brief template adoption - the recovered Slack signal-brief format as FRIDAY''s on-demand brief'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - FRIDAY/
+    acceptance:
+    - 'Source: friday package F-40 (item DfHw7hsIfvd, PARTIAL - the template''s closing segment was not recovered) - a fixed-format ''Daily Slack Signal Brief'' template, recorded as a cross-check against the fleet''s brief format and never adopted.'
+    - 'Build: take the template''s recovered structure, compare it section by section against FRIDAY''s current brief format, and adopt the stronger structure as FRIDAY''s on-demand brief template, generated from IntelX digest data.'
+    - 'Constraint: template + on-demand generation only. No new routine cron - the owner removed routine briefings on 2026-11-23; the brief is produced when asked. Done = one brief generated on demand from live IntelX data in the adopted format.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-FRD-061
+    title: 'FRIDAY: lead-gen verify-then-outreach step - verify each lead''s contact details before the outreach list is final'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - FRIDAY/
+    acceptance:
+    - 'Source: friday package F-28 (item DPGp5CbDJ-v - the Yello-directory local-business pattern) - its missing step: verify each business''s phone/email against its current public listing BEFORE outreach, so no effort is spent on dead contacts. Cross-reference TASK-EARN-029 (the earning lane built on the same pattern).'
+    - 'Build: FRIDAY''s local-business lead-gen errand gains a verification pass - every lead carries a verified/stale/unverifiable status with the check date, and stale leads are dropped or flagged before the outreach list is finalised.'
+    - 'Done = one real lead list produced with a verification status recorded for every lead.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-FRD-062
+    title: 'FRIDAY: CRM workspace surface - contacts, deals and follow-ups managed by voice and chat'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - FRIDAY/
+    acceptance:
+    - 'Source: recent watch DgEjz7iS2_v (a Jarvis-style assistant operating inside a CRM - client records pulled up and worked conversationally). FRIDAY has no CRM surface today.'
+    - 'Build: a lightweight CRM in FRIDAY''s data layer (contacts, deals/opportunities, follow-up tasks) fully operable by voice and chat: add a contact, log a deal stage change, ask what follow-ups are due, get the answer spoken. Built for the owner''s own use (including the CometWorks earning pipeline).'
+    - 'Done = live proof on production: a voice+chat session that creates a contact, moves a deal stage and reads back today''s follow-ups.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-LAP-005
+    title: 'Laptop/phone guidance additions bundle: USB TOOLS route + recovery escalation, Autopsy mention, WinSAT probe caveat, invisible-folder procedure, NetLimiter reference, DROIDLAB guide, BIOS cores step, services.msc verify-first evaluation'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - FRIDAY/
+    acceptance:
+    - 'Sources (friday package): F-09 (item DVlGJaNEal2 - phone-only ''USB TOOLS'' Play Store app route for drive recovery, with the escalation rule: if nothing detects the drive, use a professional data-recovery technician), F-10 (same item - Autopsy or other data-recovery tools if no new data has been written), F-11 (item DXZ0dlzjijM - WinSAT caveat: WinSPRLevel can read 0 or 1 on capable gaming hardware, so the probe score must not be used alone to gate heavy-work assignment), F-12/F-13 (item DXRt_JKjKKt - invisible-folder procedure: rename holding Alt+0160 for a blank name, then Properties > Customize > Change Icon to the transparent icon), F-14 (item DXv5XxionLq - NetLimiter named as the bandwidth-limiting tool reference), F-16 (item DZ2nntDKOxe - services.msc recipe, CONTESTED), F-19 (item Dc_PBtEq0YM - DROIDLAB Android customisation: gesture controls, theme changes, quick settings), F-23 (item Dee-1i7hsRy - BIOS step: make sure all CPU cores are enabled). None of these is in the guidance sets today (TASK-FRD-046 covered storage-repair sequences only).'
+    - 'Build: add each item to the pc_health / phone guidance sets in its recorded form: the USB TOOLS route with the professional-recovery escalation threshold; Autopsy as the forensic escalation (owner''s own devices only); the WinSAT probe caveat in the capability-probe guidance; the invisible-folder recipe labelled cosmetic privacy, not security; NetLimiter as the named bandwidth reference; a DROIDLAB setup guide for the owner''s phone; the BIOS all-cores check step.'
+    - 'VERIFY-FIRST rule for F-16: the recipe (disable SysMain, disable Connected User Experiences and Telemetry, disable Windows Search, with a claimed 56%->11% memory graphic) is FLAGGED CONTESTED in its own source comments (''Windows won''t even let you disable SysMain; the video is called deceptive''). Each change is tested for safety and reversibility in a sandbox first; only verified-safe changes enter guidance, the rest are recorded as rejected with reasons.'
+    - 'Done = guidance entries merged for every item above + a recorded per-service verdict for the F-16 trio.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-LAP-006
+    title: 'Laptop/phone: life-in-weeks auto-wallpaper delivery - MacroDroid macro plus daily wallpaper generator'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - FRIDAY/
+    acceptance:
+    - 'Sources: friday package F-01/F-02 (item DTjp4aaE_bT, browser-CONFIRMED) - the life-in-weeks wallpaper delivered by a phone-side MacroDroid macro that re-applies/updates the wallpaper automatically. The life-in-weeks planning view itself is already implemented in FRIDAY (life_calendar); the missing piece is this phone delivery mechanism. This was an owner-decision item in the 2026-11-24 classification; under the owner''s 2026-11-25 default-implement correction it is filed with the owner''s device step named.'
+    - 'Build: (1) a wallpaper generator that renders the life-in-weeks grid from the owner''s birth date with lived weeks filled; (2) a MacroDroid macro + setup guide that refreshes the wallpaper daily - a static image goes stale the next day, so the delivery must be date-driven, exactly as the confirmed source describes the macro doing.'
+    - 'OWNER ONE-TIME: install MacroDroid on his phone and import the macro (his device, his tap - an agent cannot install apps on his phone). Done = package delivered + the macro logic verified by simulation (advancing the date produces the next day''s wallpaper).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-FRG-030
+    title: 'Forge: Gradio instant-UI delivery layer for one-prompt internal tools'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Forge/
+    acceptance:
+    - 'Source: forge package G-01 (item DSusUNxj-BZ - Gradio championed over Streamlit as the instant-UI layer). Forge baseline: the one-prompt remit is PARTIAL and neither Gradio nor Streamlit exists in Forge code (Streamlit is named only as an absent layer).'
+    - 'Build: Forge''s one-prompt remit gains a Gradio delivery layer for instant interactive UIs (sliders, inputs, live outputs) for internal tools where a full app is overkill, with a recorded rule for when Gradio vs a full app is used.'
+    - 'Done = one real internal tool shipped with a working Gradio UI and used by another agent.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-FRG-031
+    title: 'Forge: builder-environment upgrades - live preview of generated web output plus the Claude-Code-in-VS-Code setup recipe recorded'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Forge/
+    acceptance:
+    - 'Sources: forge package G-02 (item DXMg0D9jD3Y - builder-environment tool set; the recorded baseline gap is that live preview of generated web output is absent from Forge) and G-04 (item DbGOC4QT6KP - the Claude Code in VS Code setup recipe).'
+    - 'Build: (1) live preview of generated web output inside Forge''s build loop; (2) record the G-04 recipe as a Forge dev-environment reference. Free-only note: the recipe spends the owner''s own paid API key when used, so it stays a reference for owner-directed sessions, never an automated fleet dependency.'
+    - 'Done = live preview demonstrated on one real Forge web build + the recipe recorded with its cost caveat.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-FRG-032
+    title: 'Forge: MQL5 EA codegen workflow - prompt to MetaEditor-compiled Expert Advisor, proven on the EMA 5/11 example'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Forge/
+    acceptance:
+    - 'Source: forge package G-03 (item DYpKBKgKkoJ - the no-code EA build workflow from the creator''s own tutorial captions: MetaTrader 5 + MetaEditor, paste the Claude-generated MQL5, Compile, copy errors back for fixes until zero errors, save into Experts/Advisors, demo-account-first testing). This is a Forge codegen-workflow task only: MetaTrader stays a non-adopted venue for Stratex, and the EMA 5/11 strategy itself was already RD-tested and closed FAIL (TASK-IG2-STR-19) - it is used here purely as the worked example because its full spec survives.'
+    - 'Build: document the workflow in Forge (prompt spec -> generated MQL5 -> MetaEditor compile -> error-fix loop -> clean build -> demo-account-first rule), then prove it end to end on the EMA 5/11 example.'
+    - 'Done = one EA compiled clean through the loop + the workflow recorded in Forge''s pattern library.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-FRG-033
+    title: 'Forge: free utility kit additions - sejda PDF editing and ToffeeShare P2P transfer, verified and test-used'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Forge/
+    acceptance:
+    - 'Sources: forge package G-05 (item DcJFRqqDIIA - sejda.com free online PDF editing) and intelx package X-04 (item DaXwbFrDEuX - ToffeeShare: peer-to-peer file sharing without uploading, a candidate-missed sub-point named in no baseline).'
+    - 'Build: add both to the fleet utility reference with usage notes; verify each free tier live at build time (limits, file-size caps, sign-up needs) and record the verified facts, not the reels'' claims.'
+    - 'Done = reference entries merged + each tool test-used once on a real file.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-INF-040
+    title: 'Inference: LiteLLM evaluation - local unified API layer A/B against the current routing'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Inference/
+    acceptance:
+    - 'Source: inference package I-01 (item Dds0d2ME13h - LiteLLM: one local, self-hosted OpenAI-format endpoint across 100+ providers). Inference''s baseline has no LiteLLM; routing is hand-rolled.'
+    - 'Build: a staged A/B - LiteLLM as the unified layer vs the current routing - measured on latency, failover behaviour and operational cost on real fleet traffic samples. Adopt only if it beats the incumbent on the measured numbers; otherwise record the reject verdict with the numbers.'
+    - 'Done = A/B report with measurements + an adopt/reject verdict implemented accordingly.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-INF-041
+    title: 'Inference: automated discovery feed - new model/tool releases filed as candidate records automatically'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Inference/
+    acceptance:
+    - 'Sources: inference package I-04 to I-09 (all from item Deo925ayzJ9, a six-release countdown: NVIDIA SANA-WM, PentAGI, Reflection AI Beam, Gemini 4 Argon, Locally Uncensored, DeepSeek V4.1-Flash) - Inference baseline A2 records the discovery feed as PARTIAL: the evaluation half exists, an automated discovery feed is absent. Cross-lane notes from the package: SANA-WM is a VyralX reject card for generation use (GPU/hardware) - catalogue record only; PentAGI''s defensive role pattern already lives in the Sentinel lane (see also TASK-SEN-033) - the feed entry is still filed here as a catalogue record.'
+    - 'Build: a scheduled scan of model/tool release sources that files candidate records (source, date, claim, provenance) into Inference''s candidate-evaluation pipeline, seeded with the six named entries as its first records. Candidates still pass the normal evaluation gate - the feed files them, it does not adopt them.'
+    - 'Done = the feed running on schedule with the six seed records filed + the first automatically-filed new candidate.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-INF-042
+    title: 'Inference: verified free-tier route catalogue - MiniMax, Sora 2, NanoBanana Pro, Wan 2.6, SadTalker, Gamma checked live, verified-free routes wired'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Inference/
+    acceptance:
+    - 'Sources: inference package I-10 and vyralx package V-06 (both item DTVYncBj6E1) - a free-tier alternatives list (MiniMax, Sora 2, NanoBanana Pro, Wan 2.6, SadTalker, Gamma) recorded as not wired anywhere; MiniMax is the first route to wire. Every $0 figure in the source is a creator claim and is UNVERIFIED until checked.'
+    - 'Build: verify each named route''s real free tier live (vendor pages and terms: allowance, watermark, commercial-use terms, sign-up needs); wire only verified-free routes as Inference fallback capacity / VyralX generation options; record a per-route verdict (verified-free / paid-only / unverifiable-reject). Routes that turn out to be grey-market or credential-sharing offers are rejected outright (the I-13 class).'
+    - 'Done = the catalogue merged with a live verdict per route + MiniMax wired if verified free.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-INT-052
+    title: 'IntelX: FotoForensics image check in the OSINT source kit'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - IntelX/
+    acceptance:
+    - 'Source: intelx package X-09 (the FotoForensics image-forensics reference, item DaXwbFrDEuX, inside the awareness-only OSINT set) - the set''s one defensive, adoptable item: error-level analysis for checking whether an image has been edited. The rest of X-09 (dark-web OSINT carousels and attack-technique items) is NOT adopted - offensive capability, recorded in the re-audit report.'
+    - 'Build: add FotoForensics ELA as a named check in IntelX''s OSINT source kit, with a recorded reading guide (what ELA can and cannot prove).'
+    - 'Done = one real image checked through the kit with its ELA verdict recorded.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-MEM-032
+    title: 'Memora: Project NOMAD offline knowledge pack - offline corpora as a Memora fallback store'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Memora/
+    acceptance:
+    - 'Source: memora package ME-03 (item Ddy9EMkCb3Z - Project NOMAD, github.com/Crosstalk-Solutions/project-nomad: an offline-first knowledge server - Ollama plus offline Wikipedia, maps, medical and Khan Academy content), recorded as a resilience-pattern reference for Memora''s knowledge store with no integration decision taken.'
+    - 'Build: evaluate and adapt NOMAD''s packaging pattern into a Memora offline knowledge fallback pack (a defined corpus subset, locally queryable when the network/ADB path is down). It complements the ADB store; it never replaces it.'
+    - 'Done = one offline pack built and answering a real query with the ADB path disabled.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-SEN-034
+    title: 'Sentinel: compromised-laptop OPSEC checklist in the owner-device hygiene set'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Sentinel/
+    acceptance:
+    - 'Source: sentinel package SE-04 (item DXrixKzEVza) - a step-by-step OPSEC infographic checklist for checking whether a laptop is compromised, recovered in full on screen, recorded as a checklist candidate for Sentinel''s owner-device hygiene material.'
+    - 'Build: add the recovered checklist to Sentinel''s owner-device hygiene set as a runnable, step-by-step checklist tool, steps in the source''s own order and wording as recovered.'
+    - 'Done = the checklist live in the hygiene set and walked through once in a drill.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-STR-079
+    title: 'Stratex: research-desk framework lenses - Chaos Theory, Game Theory and Fractals as named analysis frames'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Stratex/
+    acceptance:
+    - 'Sources: stratex package S-02/S-03/S-04 (all from item DUYHoUdD5vk, one comment thread in three parts: Chaos Theory - markets deterministic but unpredictable, nonlinear, small inputs = huge outcomes, identify conditions where probabilities shift; Game Theory; Fractals) - recorded as research-framing only; the desk''s reports carry no named framework lenses today.'
+    - 'Build: each framework becomes a defined section in research-desk reports with its own question set (chaos: sensitivity and probability-shift conditions; game theory: player positioning and incentive traps; fractals: multi-scale self-similarity of structure). These are analysis frames, NOT strategies - no trading behaviour changes.'
+    - 'Done = one real research-desk report issued carrying all three frames.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-STR-080
+    title: 'Stratex: research-desk prompt set completion - verbatim prompt 1 (3-scenario analysis) and prompt 3 (risk manager) added'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Stratex/
+    acceptance:
+    - 'Source: stratex package S-21 (item DRSGKJXDAU4, watched in full) - of its three verbatim trading prompts, only prompt 2 (pattern comparison) was filed (TASK-STR-067). Prompts 1 and 3 were left unfiled; under the default-implement standard they are filed now.'
+    - 'Build: add prompt 1 (analyse the chart under Bullish/Bearish/Sideways scenarios, then commit to the most probable) and prompt 3 (the risk-manager pass: stop-loss and take-profit at 1:3 R:R plus position sizing) to the research desk''s prompt library alongside prompt 2, stored verbatim-derived with provenance.'
+    - 'Done = both prompts live in the library and each used in one real desk analysis.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-STR-081
+    title: 'Stratex: emotion-aware trade journal - emotion/pattern/risk analysis over imported trades'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Stratex/
+    acceptance:
+    - 'Source: stratex package S-06 (item DVugLXak8MI - the ''OurMind AI'' pattern, recorded pattern-only: an AI that reads emotions - import your trades for AI analysis, pattern detection, and risk analysis). Stratex''s journal has no emotion/pattern layer.'
+    - 'Build: the journal gains the pattern end to end on Stratex''s own demo trades: trades imported -> emotion analysis attached -> pattern detection (the source names the analysis categories; the specific tilt patterns to detect are defined at build time from the journal data) -> a per-period risk summary the desk and the risk gate can read.'
+    - 'Done = one real journal period analysed with emotion analysis, detected patterns and the risk summary produced.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-STR-082
+    title: 'Stratex: sizing governance additions - scale-up gate, Kelly paper study, creator hard rules in the advisory gate'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Stratex/
+    acceptance:
+    - 'Sources: stratex package S-08 (item DX6peBwCRW3 - the scale-up gate), S-09 (same item - Kelly Criterion proposed for risk-per-trade calculation, plus the conservative worked example: capital 10k at 0.25% risk = 25, divided by the trade''s stop distance) and S-11 (item DaFKBDwJlLZ - creator hard risk rules: retail traders cannot control the market, only their own risk; don''t take debt for trading; learn first, then put money in).'
+    - 'Build: (1) encode the scale-up gate CONDITIONS into the sizing ladder (scale only after 3 months profitable, 50+ trades logged, max drawdown under 10%, consistent rules; never scale after a big win or to recover losses) - the source item''s own ladder percentages are NOT adopted: FWD-006 parameters govern and stay as they are; (2) a Kelly-criterion paper study against the live parameters, including the 0.25% worked example as a comparison case (evaluation only - no parameter change without evidence through the normal gate); (3) add the S-11 creator hard rules to the advisory gate''s rule set where missing.'
+    - 'Done = gate live in the ladder + Kelly study recorded + advisory-gate rules merged.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-STR-083
+    title: 'Stratex: RiskGovernor deltas - per-engine trade-count cap and breach callback, plus Saturday retrain-cadence evaluation'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Stratex/
+    acceptance:
+    - 'Sources: stratex package S-15 (item DZ-QETCTygV - the RiskGovernor component pattern; its browser-watch note records the delta beyond the fleet''s FWD-006 package exactly: a per-engine trade-count cap plus a breach callback - the two elements FWD-006 does not have) and S-16 (same item - walk-forward validation with an ML retrain every Saturday). The item''s own strategy stays out (no rules in evidence) and its Telegram signals product is excluded - this task is only the two governor deltas plus the cadence evaluation.'
+    - 'Build: (1) add the per-engine trade-count cap and the breach callback (fires the kill action when a limit breaks) to the risk governor; (2) evaluate the Saturday walk-forward retrain cadence against the existing walk-forward gate (TASK-IG2-STR-04) and adopt it only if it strengthens the gate.'
+    - 'Done = both deltas live + a breach drill proving the callback fires the kill action + the cadence verdict recorded.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-STR-084
+    title: 'Stratex: indicator-ranking evaluation - Order Flow, Volume Profile, Liquidity Sweeps, Anchored VWAP vs the RSI/MACD baseline (the open S-20 gap)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Stratex/
+    acceptance:
+    - 'Source: stratex package S-20 (item DYhkjyHii9g, wave-2 cluster #91) - recorded as an OPEN GAP by the supervisor audit: the reel ranks Order Flow, Volume Profile, Liquidity Sweep and Anchored VWAP at 9-10/10 and RSI, MACD and raw chart patterns at 0/10, but no module on main ranks or comparatively evaluates the four named indicators, and ''liquidity sweep'' has zero code hits. Components only exist (ig/dom_features.py order-flow features, a legacy VWAP/volume-profile strategy).'
+    - 'Build: the scored comparative evaluation under the frozen research bar on the RD-002 panels: implement what is missing (liquidity-sweep detection first), run all approaches head to head, persist the ranked results. Any family clearing the bar follows the normal RD admission path; families under PF 1.2 are deleted per the standing rule.'
+    - 'Done = the ranked results table persisted with a verdict per approach.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-STR-085
+    title: 'Stratex: SK System confluence - pre-declared RD candidate (Fib zone plus broken structure entry)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Stratex/
+    acceptance:
+    - 'Source: stratex package S-24 (item DYeU6nSBl9K) - the SK System confluence model: a Fibonacci retracement zone combined with a broken BOS (break of structure) as the entry confluence. Recorded as a candidate note only - no sizing, stop, target or instrument rules in evidence.'
+    - 'Build: a pre-declared research run under the frozen bar. The missing rules (sizing, stop, target, instruments) must be frozen in the declaration BEFORE any run (the Box Theory lesson, TASK-IG2-STR-13: never trust a source''s own summary of its rules).'
+    - 'Done = the declared run completed with an honest verdict (admit / forward-test / delete) under the frozen bar.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-STR-086
+    title: 'Stratex: staged chart-analysis checklist in the research desk - the 7-stage screenshot pipeline'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - Stratex/
+    acceptance:
+    - 'Source: stratex package S-26 (item Def5xMKtvmC) - ONLY the staged checklist is adopted: (1) market structure, (2) data quality, (3) timeframe context, (4) fundamentals, (5) news sentiment, (6) risk levels, (7) final report with entry, stop, target and R:R. The reel''s own income claim (''a doctor''s salary in under 2 minutes'') is an unverified promo claim and is excluded - it is not part of this task.'
+    - 'Build: add the 7-stage pipeline to the research desk for chart-image analysis, each stage producing a recorded section before the next runs.'
+    - 'Done = one real chart analysed end to end through all seven stages with the staged report persisted.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-VYR-082
+    title: 'VyralX: layered marketing architecture - the seven-layer growth system on top of channel_operator'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - VyralX/
+    acceptance:
+    - 'Source: vyralx package V-03 (item DeihbtONYtH) - the layered AI marketing-team reference architecture, frame-verbatim: Layer 01 SIGNALS (competitor ads, comments & DMs, website visitors, lead forms, reviews & mentions, sales calls); Layer 02 SYSTEM OF RECORD (customers & deals, ad accounts, content calendar, asset library); Layer 03 THE BRAIN / Growth Director; Layer 05 DEPARTMENTS (market intelligence, paid ads, content studio, publishing, lead capture, sales response, nurture & retargeting, reputation); Layer 06 DATA & OBSERVABILITY (cost per lead, speed to lead, booked & paid, ad to customer, agent activity log); Layer 07 HUMAN HANDOFF (approvals) - with per-domain databases (ads.db / leads.db / sales.db pattern). Richer than VyralX''s implemented channel_operator; left reference-only until now.'
+    - 'Build: implement the layer model for VyralX''s channels on top of channel_operator: signals intake, the system of record, the growth-director loop, the department functions that map to VyralX (content studio, publishing, market intelligence, reputation), per-layer KPI observability, and the human handoff - which in VyralX''s model is the owner''s unlisted review-first gate, unchanged.'
+    - 'Done = the loop runs one real weekly cycle and produces a channel growth plan from live channel data.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-VYR-083
+    title: 'VyralX: format and technique registry additions - build-in-public Day-1 series, 3D cartoon comedy shorts, trail-transition technique'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - VyralX/
+    acceptance:
+    - 'Sources: vyralx package V-02 (item Dag2UFvTD2C - the build-in-public Day-1 series format) and recent watches Df17y3toZBu (AI 3D cartoon comedy short format) and DfHutKDSsEM (the trail-transition editing technique) - all three sat reference-only.'
+    - 'Build: register all three in VyralX''s format-template registry with production specs. VyralX''s standing rules apply to every pilot: short excerpts only, her English narration, subtitles always on, BGM, unlisted review-first.'
+    - 'Done = three registry entries + one pilot render in one of the formats passing machine QA.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-VYR-084
+    title: 'VyralX: record the 100-faceless-ideas list and the space-movies list into channel_strategy.json'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - VyralX/
+    acceptance:
+    - 'Sources: vyralx package V-04 (item DeUpDUwDID- - a 100-item faceless channel-ideas list with per-niche RPM figures) and the V-07 round-8 addendum (item DfaN9_fEVNy - a space-movies listicle recorded as an on-lane content reference for the Space & Science lane). TASK-VYR-063 recorded three other named lists; these two were left out.'
+    - 'Build: record both lists into channel_strategy.json with provenance. The RPM figures are creator estimates and must be stored flagged as UNVERIFIED - they are planning hints, never revenue facts.'
+    - 'Done = both lists recorded with provenance and the unverified flags set.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-VYR-085
+    title: 'VyralX: listicle video-tool evaluations - Wireflo, ZSKY AI, D-ID Studio, Steve AI, Pictory class, free tiers verified live'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - VyralX/
+    acceptance:
+    - 'Source: vyralx package V-07 (items DdePxRHk3mB, PARTIAL, and DeMoCfwCHE8, FULL - two listicles recovering the same tool set: Wireflo, ZSKY AI, D-ID Studio, Steve AI, Pictory class). The package''s own caveat governs: consumer listicle tools, several paid-tier - under free-only nothing is adopted without a per-tool free-tier check.'
+    - 'Build: verify each named tool''s real free tier live (allowance, watermark, export limits, sign-up needs); adopt only verified-free routes into the production stack as options; paid tiers are rejected under free-only and recorded as such.'
+    - 'Done = a per-tool verdict table + any verified-free tool test-used in one real render.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-WEB-008
+    title: 'Website: design-technique components for the FRIDAY site UI kit plus the LumiList start-page pattern'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - FRIDAY/
+    acceptance:
+    - 'Sources: friday package F-39 (the design corroboration set, items Dc8xeYzoOLh, DcBGh30yOLW, DcOGDRgkhj6, Dc1I-6SSLxV, DccLLkoPCT1, DePJT2NJvz_ - scroll-driven video, GSAP-style scroll animation, OSIRIS-style map interface, Netflix-style portfolio layout among them) and F-04 (item DWG2zqlk7NO - the LumiList new-tab pattern for the glass start page). The techniques were recorded as corroboration only and never built.'
+    - 'Build: implement the named techniques as reusable components in the FRIDAY site UI kit plus the LumiList-style start-page pattern. Scope limit: this builds components and a demo page - which design the live site adopts stays the owner''s pick.'
+    - 'Done = the components in the UI kit with a demo page exercising each one.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-EARN-025
+    title: 'EARN: Upwork lane - profile completion pack plus first-proposal drafts for the owner''s own sending'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:10:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'Method: Upwork freelance lane for the same CometWorks services as the Fiverr gigs (SEO content, YouTube scripts, social content). The profile content is already drafted (title: SEO Content Writer | YouTube Script Writer | Social Media Content; $15/hr; 10 skills).'
+    - 'PLATFORM RULE, binding: Upwork proposals must be human-reviewed and human-sent. Muse drafts everything; the owner reviews and sends each proposal himself. No automated applying, ever.'
+    - 'OWNER ONE-TIME (exact steps): finish the Upwork signup himself in his phone browser (the cloud browser is Cloudflare-blocked on Upwork - confirmed three times) and confirm the account is live; then paste the prepared profile content and send the drafted proposals he approves. The owner confirmed 2026-11-25 he will do the signup.'
+    - 'Done = profile pack finalised against the live account + five proposal drafts matched to live job posts, ready for his review. First-money path: the first Upwork contract, paid through Upwork escrow on milestone approval per the platform''s terms.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
 task_id_warnings:
   - id: TASK-REL-061
 
