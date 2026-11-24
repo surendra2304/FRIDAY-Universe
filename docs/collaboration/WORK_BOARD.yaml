@@ -17855,7 +17855,7 @@ tasks:
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T02:55:00+05:30'
+    updated_at: '2026-11-24T23:19:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17863,18 +17863,19 @@ tasks:
     evidence:
     - 'Drafted by the coordinator 2026-11-24 ~00:15 IST (standing backlog item (iii)): the VYR-034 watch passed and the next supervised cycle needs a fresh candidate pool from most-popular discovery with the machine QA gates applied first. Pool floor refill.'
     - "Claim: hub #1483 comment 7113525908 by Muse 18, 2026-11-24 ~02:15 IST, on the blocked-head skip from TASK-STR-049 (U1 read path gone - see TASK-STR-049). Branch muse18/task-vyr-051-candidate-pool @15cb373d verified via ls-remote against true main 855f2515."
+    - "Re-claimed as current head by Muse 18 under the central-pool pull model per coordinator watch 7138911209 (22:17 run, 2026-11-24): STR-049 + STR-053 released to the pool; VYR-051 discovery probe passed 2026-11-24 ~22:40 IST (ytsearch5, RC=0, 5 results). Claim PR from branch muse18/task-vyr-051-candidate-pool, rebased onto main 6e3fe049."
     blockers: []
     next_action: 'Run most-popular discovery per category, apply the machine QA gates, file the ranked pool.'
   - id: TASK-STR-049
     title: 'Stratex: verify the latest self-experiment trial judgement past counter 3980 and file it'
     status: AVAILABLE
-    owner: muse_18
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T02:55:00+05:30'
+    updated_at: '2026-11-24T23:19:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17882,6 +17883,7 @@ tasks:
     evidence:
     - 'Drafted by the coordinator 2026-11-24 ~00:15 IST (standing backlog item (xii) run 2): trial 3980 was proven 2026-11-22 (expectancy +2.32 percent, PF 1.26 over 2,208 trades); the judgement stream needs continuous verification as the counter advances. Pool floor refill.'
     - "Coordinator direction 2026-11-24 ~02:55 IST (hub #1483): the U1 read path is GONE - AWS U1/U2 were deleted 2026-11-23 ~18:09 IST on the owner order; the live trial counter now sits on Oracle S1 (Stratex live there, counter 3987 at the move). Re-probe from S1 via the bridge; do not wait on U1. Muse 18 skipped to TASK-VYR-051 per the blocked-head rule (comment 7113525908)."
+    - 'Released to the pool by coordinator watch 7138911209 (22:17 run, 2026-11-24): blocked on the owner-pending read-route decision; diagnosis + checkpoints filed; no movable leg. Note: the read-only Stratex-Server route (bridge run_shell S2 -> ssh ubuntu@13.211.78.20) was proven by Muse 15 / Muse 5 and cleared for read-only live legs by watch 7138466832 ruling 3, so the next worker can re-probe the live counter via that route.'
     blockers: []
     next_action: 'Read the live trial counter, verify the newest judgement, file it with the numbers.'
 
@@ -18337,13 +18339,13 @@ tasks:
   - id: TASK-STR-053
     title: 'Stratex: forward-window fills audit run 3 - reconcile the daemon fill ledger against venue history for the new window'
     status: AVAILABLE
-    owner: muse_18
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T06:56:23+05:30'
+    updated_at: '2026-11-24T23:19:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18351,8 +18353,9 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; sequel to STR-051 (audit run 2, Muse 8 queue). Pool floor refill.'
       - 'Assigned to Muse 18 queue position 3 by coordinator watch 2026-11-24 ~06:55 IST (hub #1483) - after STR-049 (blocked) + VYR-051 (blocked). Both heads blocked: claim STR-053 now per the blocked-head rule.'
+      - 'Released to the pool by coordinator watch 7138911209 (22:17 run, 2026-11-24): blocked on the owner-pending read-route decision; diagnosis + checkpoints filed; no movable leg. Note: the read-only Stratex-Server route (bridge run_shell S2 -> ssh ubuntu@13.211.78.20) was proven by Muse 15 / Muse 5 and cleared for read-only live legs by watch 7138466832 ruling 3, so the next worker can re-probe the live fill ledger via that route.'
     blockers: []
-    next_action: 'Muse 18 pos 3 (queue STR-049 -> VYR-051 -> STR-053); both heads blocked, claim STR-053 now.'
+    next_action: 'Released to the pool 2026-11-24 (watch 7138911209); next worker re-probes the live fill ledger via the proven read-only Stratex-Server route.'
 
   - id: TASK-VOI-036
     title: 'FRIDAY voice: acceptance run 21 - next calm-window run after VOI-035 (run 20); per-probe latency filed'
