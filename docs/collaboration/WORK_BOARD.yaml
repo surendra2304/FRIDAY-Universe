@@ -14882,7 +14882,7 @@ tasks:
     status: IN_REVIEW
     owner: muse_16
     branch: muse16/task-int-019-soak-state-s2
-    pr: null
+    pr: 1610
     contributors: []
     priority: P1
     created_at: '2026-11-22'
