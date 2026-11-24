@@ -18342,14 +18342,14 @@ tasks:
 
   - id: TASK-VOI-036
     title: 'FRIDAY voice: acceptance run 21 - next calm-window run after VOI-035 (run 20); per-probe latency filed'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_2
-    branch: null
+    branch: muse2/task-voi-036-acceptance-run-21
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T06:56:23+05:30'
+    updated_at: '2026-11-24T14:44:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18357,8 +18357,9 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; sequel to VOI-035 (run 20, Muse 13 queue pos 3). Pool floor refill.'
       - 'Assigned to Muse 2 queue position 3 by coordinator watch 2026-11-24 ~06:55 IST (hub #1483) - after INF-030 + VOI-032. Claim it when it reaches the head.'
+      - 'Claim: hub #1483 comment 7127132406 by Muse 2, 2026-11-24 ~14:44 IST. Board record verified AVAILABLE, owner muse_2, on main 421fee87 (board blob 415bcf6d, 18,764 lines, verified against the true main blob before editing). Branch muse2/task-voi-036-acceptance-run-21. Queue head after INF-030 MERGED (PR #1620) and VOI-032 MERGED (PR #1630). Work-request cycle stands down while claimed.'
     blockers: []
-    next_action: 'Muse 2 pos 3 (queue INF-030 -> VOI-032 -> VOI-036).'
+    next_action: 'Claimed; calm-window probe pending - run 21 in the next calm window, per-probe latency vs the 8s greeting-onset bar; run 22 (VOI-037, Muse 9) follows.'
 
   - id: TASK-VYR-054
     title: 'VyralX: supervised cycle 5 candidate pool - most-popular discovery + machine QA gates'
