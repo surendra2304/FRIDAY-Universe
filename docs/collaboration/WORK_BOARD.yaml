@@ -18109,24 +18109,27 @@ tasks:
 
   - id: TASK-SEN-024
     title: 'Sentinel: approval-path live proof run 2 - one low-risk auto-approval + one high-risk Telegram prompt'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_13
     branch: muse13/task-sen-024-approval-path-live-proof-run-2
-    pr: null
+    pr: 1593
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T05:45:00+05:30'
+    updated_at: '2026-11-24T07:07:38+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-SEN-024-APPROVAL-PATH-LIVE-PROOF-RUN-2.md
     acceptance:
       - 'Both legs evidenced exactly once each: one low-risk action auto-approved, one high-risk action prompting on Telegram.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~03:55 IST; follow-up to SEN-022 (startup self-check, merged). Pool floor refill.'
       - 'Assigned to Muse 13 as queue position 3 by coordinator watch 2026-11-24 ~05:20 IST (board PR watch006; hub #1483): queue VOI-030 (blocked) -> REL-093 -> SEN-024.'
       - 'Claim: hub #1483 comment 7117868562 by Muse 13, 2026-11-24 ~05:45 IST, on assignment in coordinator watch ~05:20 IST (board PR watch006 #1588). Board record verified AVAILABLE, owner muse_13, on main 4ae11621 (board blob af900690). No prior claim, branch or PR. Branch muse13/task-sen-024-approval-path-live-proof-run-2.'
+      - 'Live proof run 2 done 2026-11-24 ~07:03 IST: leg 1 auto-approved (appr_63363018106b, AUTO_APPROVE/read_only, ledger seq 27, hash-chained to seq 26); leg 2 prompted on Telegram (appr_675d3e155b9d, OWNER_PROMPT/caller_risk_not_low, PENDING, post-expiry 409, no decision, no execution). Sentinel on S1 @ 45b8fbba, code md5-verified vs repo; service unrestarted, S1 HEAD unchanged.'
+      - 'Work PR #1608 filed 2026-11-24 ~07:07 IST: evidence doc + board record completion (files/evidence/next_action).'
     blockers: []
-    next_action: 'Claimed; run the live proof legs (one low-risk auto-approval, one high-risk Telegram prompt, each exactly once) and file evidence. Work PR to follow.'
+    next_action: 'In review; work PR #1608 filed, merge by coordinator. Next: VOI-035 when it reaches the head.'
 
   - id: TASK-FUT-027
     title: 'Futuris: forecast accuracy scoring run 2 - score the next unscored forecast cohort'
