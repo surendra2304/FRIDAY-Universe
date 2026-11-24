@@ -372,6 +372,15 @@ jobs:
       # main: 5 passed, 0 failed, 0 deselects - see the evidence doc.
       # NOTE: a fresh lock install is unproven locally; the work PR's CI
       # run is the proof of that path.
+      # TASK-VYR-075: the six test_vyr075_* files are collected here so
+      # the REL-068 collection guard passes — a PR test must run in PR
+      # CI. They run in the same lock venv as the tier-1 set.
+      # TASK-VYR-075: install ffmpeg explicitly (same step as the
+      # contracts job) — the hyperframes render and format-clone tests
+      # encode/probe real media and must not depend on whatever the
+      # runner image happens to ship.
+      - name: Install ffmpeg for VyralX real-render tests
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Run VyralX tier-1 tests
         working-directory: VyralX
         run: |
@@ -386,7 +395,10 @@ jobs:
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
             -- .venv-vyralx-ci/bin/python -m pytest -q \
-            tests/test_recovery_and_readiness.py tests/test_obs003_health_labelling.py
+            tests/test_recovery_and_readiness.py tests/test_obs003_health_labelling.py \
+            tests/test_vyr075_claude_ads_e2e.py tests/test_vyr075_format_clone_e2e.py \
+            tests/test_vyr075_hyperframes_render.py tests/test_vyr075_ltx2_reject.py \
+            tests/test_vyr075_operator_cycle.py tests/test_vyr075_studio_reference.py
 
       - name: Start API server and run HTTP tests
         run: |

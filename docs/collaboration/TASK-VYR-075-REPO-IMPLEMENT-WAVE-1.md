@@ -245,6 +245,16 @@ All on this VM (Python 3.12.3, venv from `VyralX/requirements.lock`
   - `test_vyr009_compliance_gate` (2 tests) —
     `ImportError: cannot import name '_run' from
     'app.services.viral_remix'`.
+- CI note: the contracts job's REL-068 collection guard initially
+  failed on this PR — the 6 new `VyralX/tests/test_vyr075_*.py`
+  files were collected by no PR-triggered workflow (VyralX's own
+  `ci.yml` is not a repo-root PR workflow). Fixed in this PR: the
+  six files are added to the `test` job's VyralX tier-1 pytest
+  invocation in `.github/workflows/friday-universe-ci.yml`, with an
+  explicit ffmpeg install step (same command as the contracts job)
+  because the hyperframes-render and format-clone tests encode and
+  probe real media. Guard re-run locally after the fix: PASS, 8
+  files in scope (6 new + 2 modified repo-root tests).
 - `ruff check` on every file touched by this PR: clean (0 errors).
   Notes: full-tree `ruff check app tests scripts` reports 142
   pre-existing errors in untouched files, and the two touched
