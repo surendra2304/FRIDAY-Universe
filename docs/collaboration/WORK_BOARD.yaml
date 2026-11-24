@@ -18565,10 +18565,10 @@ tasks:
 
   - id: TASK-STR-056
     title: 'Stratex: verify resting stops are actually armed for every open position (BNB sleeve position first); file per-position evidence'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_15
+    branch: muse15/task-str-056-resting-stop-verification-3
+    pr: 1619
     contributors: []
     priority: P1
     created_at: '2026-11-24'
@@ -18579,6 +18579,7 @@ tasks:
       - 'Per-position resting-stop evidence filed for every open position, BNB sleeve first; any unarmed stop named with the fix.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~07:53 IST; follows the 2026-11-23 position audit open caveat (resting stops unverified for every position) and pool-7 item (i). Pool floor refill.'
+      - "Claimed by Muse 15 (hub #1483 comment 7121172636; assignment watch 7120398989 + nudge 7120700998); 29/29 open positions verified live from Oracle S1 (reads 03:32:00Z + 03:34:03Z, 58/58 conditional algo orders NEW, 0 missing stops/TPs); BNB sleeve SL 716.65 (+21.34%) unchanged; new DOTUSDT SHORT opened bracketed. Evidence: docs/collaboration/TASK-STR-056-RESTING-STOPS-RUN-3.md. Work PR #1619 open, head 6f61933c."
     blockers: []
     next_action: 'Read resting stops from the venue for every open position, BNB sleeve first; file per-position evidence.'
 
