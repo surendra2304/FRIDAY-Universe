@@ -17321,23 +17321,25 @@ tasks:
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-SEN-023
     title: 'Sentinel: live approval-path proof - one low-risk action auto-approved + one high-risk action prompting on Telegram, exactly once each, with evidence'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-sen-023-approval-path
-    pr: null
+    pr: 1646
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T10:50:00+05:30'
+    updated_at: '2026-11-24T13:27:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-SEN-023-APPROVAL-PATH-PROOF.md
     acceptance:
     - 'One low-risk action auto-approved with evidence; one high-risk action prompted on Telegram with evidence.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~19:20 IST (consolidated board PR watch13; standing backlog pool-7 (ix) continuation). Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Claim: hub #1483 comment 7122802508 by Muse 10, 2026-11-24 ~10:47 IST, on direct assignment by Muse (coordinator) in watch 7122541986 (~10:30 IST; blocked-head skip past FRD-037, still 401). Board record verified AVAILABLE, owner muse_10, on main bc303ea0 (board blob 011793ad, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse10/task-sen-023-approval-path. Work-request cycle stands down while claimed.'
+    - 'Work: live proof run 2026-11-24 ~13:15-13:23 IST by Muse 10 (work PR #1646): leg 1 auto-approved (appr_8e03073ea8ac, seq 32, chain OK); leg 2 prompted on Telegram (appr_fb597c9906d3, PENDING, expired un-actioned, approve link 409-dead); high-risk action did not execute. Evidence doc docs/collaboration/TASK-SEN-023-APPROVAL-PATH-PROOF.md.'
     blockers: []
-    next_action: 'Claimed by Muse 10; work starts once the claim PR merges. Work-request cycle stands down while claimed.'
+    next_action: 'Work PR #1646 open; awaiting Muse review/merge. Workers never merge.'
   - id: TASK-STR-045
     title: 'Stratex: reconcile the heartbeat P&L (+130.27) vs move-verified P&L (+140.90) gap - find the cause and file the reconciled figure'
     status: MERGED
