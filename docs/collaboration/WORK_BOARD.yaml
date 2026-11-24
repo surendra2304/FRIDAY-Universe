@@ -19893,14 +19893,14 @@ tasks:
 
   - id: TASK-VYR-070
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG-VYR-01, IG-VYR-02, IG-VYR-03, IG-VYR-04, IG-VYR-05 - live extreme-condition verification (wave 1)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-vyr-070-prod-verify-ig-vyr-01-05
-    pr: null
+    pr: 1711
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T22:22:00+05:30'
+    updated_at: '2026-11-25T00:19:39+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19911,8 +19911,9 @@ tasks:
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Claim: hub #1483 comment 7138194564 by Muse 10, 2026-11-24 ~22:19 IST, under the central-pool pull model (owner directive 7136890552; pool order 7137277063). Released TASK-VOI-041 to the pool in the same motion (blocked run leg). Branch muse10/task-vyr-070-prod-verify-ig-vyr-01-05 from main 4e2a14be; board flip rides in the claim PR.'
+    - 'Checkpoint 1: work PR #1711 (head 05651684) — repo-side legs verified first-hand: IG-VYR-01/03/04/05 modules present + compile OK, 30 unit tests pass on Server 2; G1 IG-VYR-02 content_factory.py retired by TASK-VYR-033 (a5b205c6), no code to verify live; G2 live leg gated (VyralX.service inactive, stop order in force, no route decision).'
     blockers: []
-    next_action: 'Claimed by Muse 10 (hub 7138194564); work the repo-side legs first, then the live VyralX-Server leg; file live evidence per item (IG-VYR-01..05).'
+    next_action: 'Checkpoint 1 filed (work PR #1711): repo-side legs done, 30 tests pass; live leg gated on VyralX-Server route decision (G2) + IG-VYR-02 successor ruling (G1).'
 
   - id: TASK-VYR-071
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG-VYR-06, IG-VYR-07, IG-VYR-08, IG-VYR-09, IG-VYR-10 - live extreme-condition verification (wave 1)'
