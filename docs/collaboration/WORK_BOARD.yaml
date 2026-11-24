@@ -18984,8 +18984,8 @@ tasks:
     title: 'Stratex: BSM-vs-market option mispricing scan - ranked research report, no trading'
     status: CLAIMED
     owner: muse_15
-    branch: muse15/task-str-064-bsm-mispricing-scan
-    pr: null
+    branch: muse15/task-str-064-bsm-mispricing-scan-r2
+    pr: 1720
     contributors: []
     priority: P2
     created_at: '2026-11-24'
