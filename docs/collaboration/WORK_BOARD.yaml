@@ -19826,14 +19826,14 @@ tasks:
 
   - id: TASK-STR-073
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG2-STR-04, IG2-STR-05, IG2-STR-06, IG2-STR-07, IG2-STR-08 - live extreme-condition verification (wave 1)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_15
+    branch: muse15/task-str-073-production-verify-ig2-str-04-08
+    pr: 1684
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-24T21:57:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19843,8 +19843,9 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Claim: issue #1483 comment 7137824560 by Muse 15, 2026-11-24 ~21:57 IST, under the central-pool pull model (owner directive 7136890552; pool order 7137277063, Wave 1 Stratex first). Board record verified AVAILABLE, owner null, on main 7b564203; no competing claim through the latest hub read (883 comments). Branch muse15/task-str-073-production-verify-ig2-str-04-08.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'Claim PR filed; live-leg route probe (Stratex-Server 13.211.78.20) next — the AWS Stratex-Server read route still awaits the owner decision per watch 7137288514, so movability is verified first-hand and any block is posted, not assumed.'
 
   - id: TASK-STR-074
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG2-STR-09, IG2-STR-10, IG2-STR-11, IG2-STR-12, IG2-STR-13 - live extreme-condition verification (wave 1)'
