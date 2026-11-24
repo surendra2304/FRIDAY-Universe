@@ -46,6 +46,40 @@
 
 - Next: adapt design for the two adapt repos against VyralX's services (captions, audio_mixer, film_pipeline, full_pipeline_engine, discovery); AGPL-compliance decision owed before any Short Video Factory code is merged; Lemo-Opuscar license read owed before any of its material is used. Live trials for reference-only repos still need the bridge (blocked).
 
+## Checkpoint 3 — adapt design (2026-11-24 ~23:30 IST)
+
+- Baseline read first-hand from live main 6e3fe049: both adapt repos already have pattern-only ports in VyralX from earlier IG2 tasks, with tests. No upstream code is vendored in either. VYR-077 is the wave-1 implementation that makes these ports actually run in VyralX's live production path, proven by one real end-to-end use including a failure case.
+
+### Repo 1 — Short Video Factory (adapt) — port exists: `VyralX/app/services/shorts_factory.py` (TASK-IG2-VYR-03, 190 lines, tested)
+
+- What the port already does: headless planning core — prompt + storyboard material in, deterministic copy (hook + narration + title), compliance screen via `compliance_gate.find_finance_advice`, EdgeTTS voice plan (free), auto-mix segment plan, timed subtitle cues via VyralX's own `captions.segment_script`, batch queue via `fill_batch` that fills to a preset target. Owner rules baked in: Shorts <60s (rejected, never silently trimmed), lanes space_science / history / tech_ai, money is stories never advice, storyboard materials must carry licence + source URL or the job is refused, anything published stays UNLISTED.
+- What does NOT transfer (per the port's own docstring): the upstream app is a TypeScript/Electron desktop GUI and cannot run inside VyralX's ~180MB service cap on the ~956MB fleet VMs. The port renders nothing itself; rendering is by VyralX's existing renderer.
+- Gaps VYR-077 must close: (a) the port plans from storyboard materials but does not auto-clip existing footage — upstream's AI batch auto-clipping has no VyralX equivalent yet; the live path must cut real source material, not just plan from it. (b) Upstream subtitle parsing and pixi.js effects have no fleet equivalent (film_pipeline is stdlib-only, no Node/Chromium) — effects must be expressed through VyralX's own `motion_templates` / `motion_graphics`, or recorded as absent. (c) The port is not yet wired into `full_pipeline_engine.execute_pipeline` as a stage — it must be called by the live pipeline, not only by its unit test.
+- AGPL: pattern-only, no upstream code vendored. The compliance decision is still owed before ANY Short Video Factory code is merged into VyralX. This design keeps pattern-only.
+
+### Repo 2 — AI YouTube Shorts Generator (adapt) — port exists: `VyralX/app/services/shorts_generator.py` (TASK-IG2-VYR-04, 176 lines, tested)
+
+- What the port already does: long-form to Shorts repurposing, LOCAL mode only, from a transcript dict — deterministic highlight-window scoring on named virality signals (`score_window`), de-duplication of overlapping windows, 9:16 vertical-crop plans. Binding mode rule: the upstream default `--mode api` (MuAPI, pay-per-call) is rejected by `ensure_local_mode` / `PaidModeRejected`.
+- Upstream local mode (read first-hand from Anil-matcha main): yt-dlp download (`local/downloader.py`) → faster-whisper transcribe (`local/transcriber.py`, returns `{duration, segments[start, end, text]}`, with SRT cache) → LLM highlight ranking (`local/llm.py`, OpenAI or Gemini) → ffmpeg subclip + OpenCV face-aware vertical crop (`local/clipper.py`, Haar cascade, no external models).
+- Gaps VYR-077 must close: (a) transcript source — VyralX has no faster-whisper transcriber yet; confirm whether faster-whisper is installed on VyralX-Server, and if absent, record the install as a fleet change needing Muse clearance (FREE, pip, but a fleet change all the same). (b) Download — VyralX has `ytdlp_support.py` (cookie-jar handling for YouTube's bot challenge) and `youtube.py`; wire the download through it. (c) Clipping — VyralX has `renderer.py` (`render_video`, ffmpeg subprocess) and `video_editor.py`, but no OpenCV face-aware vertical crop; the crop must be reimplemented natively (ffmpeg crop filter, or an OpenCV step if OpenCV is present on the fleet — check first, do not assume). (d) Ranking — the upstream LLM step is PAID and must NOT be used; VyralX's deterministic `score_window` replaces it, and the design keeps it that way (FREE ONLY).
+- Live path wiring: `generate_shorts` output (clip plans) → `captions.py` (`write_srt` / `write_ass`) → `audio_mixer.py` (voiceover ducking, BGM) → `renderer.render_video` → unlisted, review-first. One real long-form source, end to end.
+
+### Reference-only repos — evidence plan
+
+- Social Media Agent / LangChain (MIT): publishing/distribution only, no video code. Evidence: map its human-in-the-loop review step to VyralX's existing `gatekeeper.py`, `compliance_gate.py` and `review_notes.py`; guardrail proof that its publishing code is absent from every VyralX production path.
+- Lemo-Opuscar: license read owed FIRST (GitHub API: NOASSERTION; repo has LICENSE, LICENSES/, REUSE.toml). No material used until the licence text is read. If it is not permissive, the evidence is the read itself plus guardrail proof of absence.
+- MG Styles 15 (MIT): 15 motion-design styles as prompts + demos + source. Evidence: trial one style prompt as a title-card / transition look through VyralX's own `motion_templates.py` / `motion_graphics.py`, unlisted; if a style cannot be expressed there, record that instead of vendoring its code.
+- Claude Animation Base (MIT): p5.js + headless-Chromium renderer (`render.mjs`). The fleet has no Chromium (film_pipeline: "no Node/Chromium here"). Evidence: guardrail proof of absence from the production path, unless Muse clears a local-only trial. Do not install Chromium on the fleet without Muse clearance.
+
+### Live trial plan — CLEARANCE REQUESTED FROM MUSE (no fleet shell run yet)
+
+- Scope: one real end-to-end trial on VyralX-Server via the bridge, read-only checks first, then one render. Loop stays OFF, uploader paused, renders held unlisted, review-first.
+- Read-only checks first: Python version, ffmpeg presence, faster-whisper installed or not, OpenCV installed or not, disk space on VyralX-Server.
+- Then one real trial: a real long-form source → transcript → highlight windows → 9:16 clips → captions → BGM mix → render via `renderer.render_video`, unlisted.
+- Failure case included (per acceptance): missing BGM (audio_mixer must fall back to its ambient-pad synthesis, not fail silently), doubled captions (captions dedupe), watermark (provenance_watermark handling). The trial must show the failure case handled, not just the happy path.
+- Metrics-sync against the real channel is part of the acceptance but is a separate step after the render proves out; it is not claimed here.
+- **I have not run any fleet shell yet. This is a clearance request: Muse, please clear or amend the live-trial scope above on #1483 before I run anything on VyralX-Server.**
+
 ## Usage
 
 - 0% of free weekly limit (checked this run; reset Mon Nov 30, 3:03 PM IST). Additional tokens 0% used.
