@@ -316,3 +316,61 @@ in quiet hours). Each hop must be observed, not assumed; the shipper's
   this run; reset Nov 29 6:04 PM IST). Not nearly gone — no wrap-up.
 - Work-request task muse12-work-request stays cancelled (mid-task). Hourly
   self-check + weekly reset verified armed this run.
+
+## Checkpoint 9 — 03:53 self-check (2026-11-25)
+
+- Outbox re-read (bridge `read_text`, server=6, first-hand this run): FOUR
+  envelopes now — NEW digest material. Envelope 4: `ai_model_releases`,
+  "GPT-6 models demonstrate intrinsic protein-design capabilities" (OpenAI
+  Blog), fired 2026-11-24T21:30:32Z (03:00:32 IST 2026-11-25), score 4.
+  First new envelope since checkpoint 3 — the watches are cycling on
+  IntelX-Server with fresh material (~8 h after the SEBI GMP envelope).
+  First bridge attempt failed with IncompleteRead (transport flaking, as in
+  checkpoint 6); retry succeeded. Verified positive, not assumed.
+- **Gate 1 UNCHANGED — owner stop order still in force.** No lift in
+  watch059 (7145228662) or watch060 (7146031769), both read in full. No Muse
+  12 directive on INT-042 in either. Live legs fleet-wide still gated on
+  the freeze (M5 VYR-071 + M4 VYR-065 live legs blocked with reason; M1
+  FRD-044 live-proof leg needs hub clearance). No live dispatch, no flag
+  enablement.
+- **Owner order 7143628341 ADOPTED by watch060** (Muse's watch, the
+  governing record): hourly "still working" posts STOP (rule 7 — post only
+  on claim, completion-with-evidence, or blocked-with-reason); board flips
+  ride in YOUR OWN PR (rule 4 — consolidated board PR abolished, #1736 was
+  the last); NO checkpoint PRs, one work PR when DONE or genuinely BLOCKED
+  (rule 1); completion = LIVE PROOF only (rule 2); paired verification
+  (rule 3); burn bar — under 50% by Wed 20:00 IST → next task doubled
+  (rule 6). Escalation 7145448295 governs: holdings confirm M12 INT-042.
+  Rule 4 (blocked head → release + pull next) NOT applied to INT-042: the
+  freeze blocks live legs fleet-wide and M5/M4/M8/M20 all keep their blocked
+  tasks; the producer side is cycling with fresh material, so the block is
+  an owner-side freeze, not a task dead end. This run's hub post is a
+  blocked-with-reason status (allowed by rule 7), answering watch060's
+  silence flag for M12 (re-slot clock warning).
+- **Verifier duty — STR-077 (M17):** watch060 paired-verifier list names
+  M12 verifier for STR-077 (M17 keeps it per the escalation correction;
+  watch059's M10 assignment void). VYR-078 (M3): watch058 named M12
+  verifier, but watch060's verifier list omits VYR-078 and NO work PR is
+  open for VYR-078, STR-077, or VYR-077 (42 open PRs checked first-hand
+  this run, by title and branch) — neither verifier duty is triggerable
+  yet. M3 is silent per watch060. No verdict owed this run.
+- **STR-064 COMPLETED by M15** (comment 7145493341): work PR #1720 head
+  86a29da6, CI 10/10 green, live proof filed (real Deribit chain, 122
+  instruments, no tradeable mispricing); merge HELD in watch060 pending
+  diff review (mergeable unknown first-hand). M12's second-reserve
+  position on STR-064 is moot. M15 then claimed STR-066 (7146070918).
+- **DB wiring programme landed:** IntelX DB (ADB #2) for IntelX + Futuris
+  research; DB-001/002/003 filed, PR #1734 merged e54da6b0. DB tasks
+  assigned M6/M16/M10 (escalation) — not M12. The IntelX-DB wiring +
+  live-proof team task is drafted into the pool next run (watch059) — a
+  possible next pull if INT-042's freeze persists.
+- Branch now behind main by 148 (main `80b75649`); no rebase this run —
+  rebase at work-PR time. No work PR yet: board record + flip ride in it
+  (rule 4).
+- Usage at checkpoint: 20% of free weekly limit (subscription-status,
+  fresh this run; reset Nov 29 6:04 PM IST). Not nearly gone — no wrap-up.
+  Under the Wed 20:00 IST 50% bar (rule 6) — the doubled-scope flag
+  applies to the NEXT task, not this one.
+- Work-request task muse12-work-request stays cancelled (mid-task). Hourly
+  self-check + weekly reset verified armed this run. FUT-019 / FUT-026
+  scoring runonce jobs still armed (Nov 25 / Nov 26 10:00 IST).
