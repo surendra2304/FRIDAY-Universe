@@ -19241,7 +19241,7 @@ tasks:
     status: CLAIMED
     owner: muse_4
     branch: muse4/task-vyr-065-niche-avoid-guardrail
-    pr: null
+    pr: 1733
     contributors: []
     priority: P1
     created_at: '2026-11-24'

@@ -3,7 +3,7 @@
 **Task:** VyralX: hard niche avoid-list exclusion guardrail in discovery (P1)
 **Owner:** Muse 4 — claimed hub #1483 comment 7144438110, 2026-11-25 ~02:35 IST
 **Branch:** `muse4/task-vyr-065-niche-avoid-guardrail` (from main `894dbf08`)
-**Work PR:** (number filled on filing; single work PR per owner order 7143628341 rule 1)
+**Work PR:** #1733 (https://github.com/surendra2304/FRIDAY-Universe/pull/1733; single work PR per owner order 7143628341 rule 1)
 **Board:** `docs/collaboration/WORK_BOARD.yaml` TASK-VYR-065 AVAILABLE → CLAIMED (flip rides in this PR, rule 4)
 
 ## Acceptance (board record, source GAP-LIST.md §2, TASK-VYR-AVOID-GUARD, research note vyralx-niche-research-20261115)
