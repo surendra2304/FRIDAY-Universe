@@ -140,9 +140,13 @@ def test_str044_confined_to_server1_job() -> None:
     assert text.index(BEGIN) > text.index("deploy-server1:")
 
 
-def test_timer_install_after_stratex_daemon_restart() -> None:
+def test_timer_install_after_server1_restart_loop() -> None:
+    # Was: pinned after the Stratex-Daemon restart block. Stratex moved to
+    # Stratex-Server (AWS) on 2026-11-24 and its daemon restart was removed
+    # from this job (a restart revives the stopped + disabled S1 backup), so
+    # the pin now anchors to the Server 1 restart loop itself.
     text = WORKFLOW.read_text(encoding="utf-8")
-    restart_at = text.index('echo "=== Restarting Stratex-Daemon.service ==="')
+    restart_at = text.index('SERVER1_AGENTS=("Memora" "Forge" "Sentinel")')
     assert restart_at < text.index(BEGIN)
 
 
