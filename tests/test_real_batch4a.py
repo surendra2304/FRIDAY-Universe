@@ -838,12 +838,19 @@ class TestOpenHiggsfield:
         assert stats["total"] == 1
 
     def test_multi_model_studio(self):
+        # TASK-VYR-075: the studio is reference-only — generate()
+        # refuses honestly (no GPU locally; paid MuAPI barred by the
+        # FREE-only rule) instead of fabricating an output_path for
+        # media never produced.
         from VyralX.app.services.real_open_higgsfield import MultiModelStudio, GenerationRequest
         studio = MultiModelStudio()
         req = GenerationRequest(request_id="g1", model="Flux.1-dev", prompt="test")
         result = studio.generate(req)
         assert result.model in studio.router.available_models
-        assert studio.total_generations == 1
+        assert result.available is False
+        assert result.output_path == ""
+        assert "MuAPI" in result.reason
+        assert studio.total_generations == 0
 
     def test_studio_capabilities(self):
         from VyralX.app.services.real_open_higgsfield import MultiModelStudio

@@ -496,7 +496,13 @@ class MultiPlatformAdManager:
         campaign = self.campaigns.get(campaign_id)
         if not campaign:
             return {"success": False, "error": "Campaign not found"}
-        auth = CapabilityGate.authorize_action(user_capabilities, action)
+        # TASK-VYR-075: the route-level actions ("pause"/"activate")
+        # are the gate's "campaign_pause" action — without this
+        # mapping the gate saw an unknown action, required nothing,
+        # and authorised every pause. The gate must actually gate.
+        gate_action = {"pause": "campaign_pause",
+                       "activate": "campaign_pause"}.get(action, action)
+        auth = CapabilityGate.authorize_action(user_capabilities, gate_action)
         if not auth["authorized"]:
             return {"success": False, "error": "Insufficient capabilities", "missing": auth["missing"]}
         if action == "pause":

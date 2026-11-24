@@ -91,9 +91,30 @@ class GenerationRequest:
         return base_time * resolution_factor * step_factor * self.batch_size
 
 
+# TASK-VYR-075: the studio is REFERENCE-ONLY (registry fit for
+# Anil-matcha/Open-Generative-AI). No generation ever runs here:
+# the fleet has no GPU for the free local engines (sd.cpp / Wan2GP)
+# and the cloud path is the paid, credit-metered MuAPI gateway,
+# barred by the FREE-only rule. generate() therefore refuses
+# honestly instead of returning a fabricated output_path / elapsed
+# time for media that was never produced (the pre-VYR-075 behaviour).
+STUDIO_UNAVAILABLE_REASON = (
+    "generation unavailable: no local GPU on the fleet for the free "
+    "local engines (sd.cpp / Wan2GP), and the paid MuAPI gateway is "
+    "barred by the FREE-only rule. This studio is a reference catalog "
+    "only — see studio_layout_reference() for the multi-studio layout "
+    "pattern kept for a future VyralX creation console."
+)
+
+
 @dataclass
 class GenerationResult:
-    """Result of a generation."""
+    """Result of a generation.
+
+    ``available`` is False when nothing was generated (see
+    STUDIO_UNAVAILABLE_REASON); in that case ``output_path`` is
+    empty — a result never claims a file that does not exist.
+    """
     request_id: str
     model: str
     prompt: str
@@ -103,6 +124,8 @@ class GenerationResult:
     seed: int
     elapsed: float
     quality_score: float = 0.0
+    available: bool = True
+    reason: str = ""
 
     @property
     def file_size_estimate(self) -> int:
@@ -387,22 +410,27 @@ class MultiModelStudio:
     results: list[GenerationResult] = field(default_factory=list)
 
     def generate(self, request: GenerationRequest) -> GenerationResult:
+        """Refuse honestly: no generation runs (see module note).
+
+        The result carries ``available=False`` and an empty
+        ``output_path``; it is NOT appended to ``self.results``, so
+        ``total_generations`` counts only media actually produced
+        (zero, until a real generation path exists).
+        """
         model = self.router.route_request(request)
-        expected_time = request.estimated_time_seconds
-        elapsed = expected_time * 0.85
-        result = GenerationResult(
+        return GenerationResult(
             request_id=request.request_id,
             model=model,
             prompt=request.prompt,
-            output_path=f"/outputs/{request.request_id}.{request.output_format}",
+            output_path="",
             width=request.width,
             height=request.height,
             seed=request.seed,
-            elapsed=elapsed,
+            elapsed=0.0,
+            quality_score=0.0,
+            available=False,
+            reason=STUDIO_UNAVAILABLE_REASON,
         )
-        result.quality_score = GenerationResult.compute_quality_score(elapsed, expected_time)
-        self.results.append(result)
-        return result
 
     def generate_batch(self, requests: list[GenerationRequest]) -> list[GenerationResult]:
         results = []
@@ -452,3 +480,25 @@ class MultiModelStudio:
             "unique_models_used": self.unique_models_used,
             "average_quality": self.average_quality,
         }
+
+
+def studio_layout_reference() -> dict[str, Any]:
+    """Multi-studio layout kept as a UI reference (TASK-VYR-075).
+
+    The layout pattern — one studio per modality plus workflows —
+    is the reference for a future VyralX creation console. It is
+    data only: no studio here generates anything (see
+    STUDIO_UNAVAILABLE_REASON). Studio names are the ones verified
+    from the IntelX registry card; the upstream lists 14 studios
+    and the remainder are marked unverified rather than guessed.
+    """
+    from pathlib import Path
+
+    data_file = (Path(__file__).resolve().parent.parent / "data"
+                 / "studio_layout_reference.json")
+    if not data_file.is_file():
+        return {"available": False,
+                "reason": f"layout reference missing: {data_file}"}
+    import json
+
+    return json.loads(data_file.read_text(encoding="utf-8"))

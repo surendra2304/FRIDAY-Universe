@@ -273,6 +273,10 @@ class TestVyralXE2E:
         assert data["is_safe"] is True
 
     def test_higgsfield_generate(self, client):
+        # TASK-VYR-075: the studio is reference-only — the route
+        # answers 503 with the honest reason (no GPU locally; paid
+        # MuAPI barred by the FREE-only rule) instead of a fabricated
+        # success with an output_path for media never produced.
         resp = client.post("/api/v1/vyralx/engines/studio/generate", json={
             "prompt": "Cinematic visual render of decentralized AI intelligence network",
             "model": "Flux.1-dev",
@@ -280,12 +284,13 @@ class TestVyralXE2E:
             "height": 1024,
             "num_steps": 20,
         })
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["status"] == "success"
-        assert "Flux.1-dev" in data["model"]
-        assert "output_path" in data
-        assert data["total_studio_generations"] >= 1
+        assert resp.status_code == 503
+        detail = resp.json()["detail"]
+        assert detail["status"] == "unavailable"
+        assert detail["available"] is False
+        assert "Flux.1-dev" in detail["model"]
+        assert "MuAPI" in detail["reason"]
+        assert "output_path" not in detail
 
     def test_higgsfield_capabilities(self, client):
         resp = client.get("/api/v1/vyralx/engines/studio/capabilities")
