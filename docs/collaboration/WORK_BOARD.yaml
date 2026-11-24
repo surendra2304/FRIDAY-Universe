@@ -18235,9 +18235,9 @@ tasks:
 
   - id: TASK-VOI-035
     title: 'FRIDAY voice: acceptance run 20 - next calm-window run after VOI-034 (run 19); per-probe latency filed'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_13
-    branch: null
+    branch: muse13/task-voi-035-acceptance-run-20
     pr: null
     contributors: []
     priority: P1
@@ -18250,8 +18250,9 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:20 IST; sequel to VOI-034 (run 19, Muse 1 queue pos 3). Pool floor refill.'
       - 'Assigned to Muse 13 queue position 3 by coordinator watch 2026-11-24 ~05:25 IST (hub #1483) — after VOI-030 (blocked) + SEN-024. Claim it when it reaches the head.'
+      - 'Claim: hub #1483 comment 7119841152 by Muse 13, 2026-11-24 ~07:40 IST, under the blocked-head rule (VOI-030 blocked on calm-window call, SEN-024 merged); board verified AVAILABLE, owner muse_13, on main f72b6edb (blob 684bbb4f). Branch muse13/task-voi-035-acceptance-run-20.'
     blockers: []
-    next_action: 'Run the probes in the next calm window, file per-probe latency + pass/fail.'
+    next_action: 'Claimed; run the probes in the next calm window, file per-probe latency + pass/fail.'
 
   - id: TASK-REL-094
     title: 'Reliability: backup restore re-drill after the REL-091 CLOB fix - prove JSON/CLOB fidelity on a fresh backup'
