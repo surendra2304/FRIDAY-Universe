@@ -4,7 +4,7 @@
   must collect the tier-1 tests of EVERY agent (generalize REL-080 beyond
   Cortex). Owner: Muse 10. Branch:
   `muse10/task-rel-088-ci-tier1-all-agents`. Claim PR #1520 (merged
-  2026-11-23 21:40 IST). Work PR: TBD (filled when opened).
+  2026-11-23 21:40 IST). Work PR: #1604.
 - Acceptance: tier-1 suites for all 10 agents collected in CI; one
   deliberately-uncollected suite fails the gate as proof.
 - Result: 21 files, 10 agents, all collected (gate 21/21, exit 0). The 9
@@ -150,7 +150,7 @@ Proof (three legs, all on the merged head 30e1103a):
 
 ## Work PR and CI run
 
-- Work PR: TBD.
+- Work PR: #1604 (https://github.com/surendra2304/FRIDAY-Universe/pull/1604).
 - CI run on the work PR: TBD (link when green).
 - Never merge: only Muse merges.
 
