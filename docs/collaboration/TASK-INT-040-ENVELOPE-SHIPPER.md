@@ -110,6 +110,20 @@ the 2 envelopes INT-038 observed (harness adapters + RBI "Stop Switch", fired 20
 4. Hop log records `shipped` for both envelope_ids, a `run_summary` (`ok: true`, shipped 2),
    and both audits.
 
+## CI on the work PR
+
+- First head `01a5e175`: the `contracts` job failed — not on the code, on the TASK-REL-068
+  collection guard (`scripts/ci_test_collection_audit.py`, first step of the contracts job):
+  `FAIL: 1 test file(s) shipped in this PR are collected by NO PR-triggered workflow. ...
+  UNCOLLECTED: IntelX/tests/test_int040_outbox_shipper.py` (job log read first-hand).
+  Fix (commit `cddd3534`): the new test file is now collected by the IntelX
+  health-capability contracts step in `.github/workflows/owner-workflows.yml`, alongside
+  the other IntelX contract tests — one line, no other workflow change.
+- Final head `cddd3534`: **CI 10/10 green first-hand** (8 success, 2 skipped, 0 failed):
+  `contracts` success, `test` success, fleet-layout / monorepo-policy / roster / secrets /
+  entrypoints success, docker + voice-regressions skipped. The new tests therefore also
+  pass in CI under the real IntelX conftest, not only standalone.
+
 ## What this task does NOT do (owed after the freeze lifts)
 
 - **Live end-to-end verification is OWED, not claimed.** Owner stop order ~16:42 IST
@@ -126,6 +140,8 @@ the 2 envelopes INT-038 observed (harness adapters + RBI "Stop Switch", fired 20
 
 - `IntelX/intelx/watches/outbox_shipper.py` (new, ~490 lines, stdlib only)
 - `IntelX/tests/test_int040_outbox_shipper.py` (new, ~290 lines, 14 tests)
+- `.github/workflows/owner-workflows.yml` (1 line: collect the new tests in the IntelX
+  contracts step — REL-068 guard fix, commit `cddd3534`)
 - This evidence doc: `docs/collaboration/TASK-INT-040-ENVELOPE-SHIPPER.md`
 
 ## States
