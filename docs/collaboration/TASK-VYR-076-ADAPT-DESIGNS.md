@@ -196,6 +196,93 @@ ones). VyralX: port 8010, server 2, Python FastAPI; shared fleet venv Python
   measured platform data from the real channel, never the heuristic
   dashboards, or the sync proves nothing.
 
+## §8 Guardrail proof of absence + IG2-overlap correction (repo-side, 2026-11-25 ~03:40 IST, checked against main `80b75649`)
+
+### §8.1 Correction to §6 — AGENTS.md's VyralX module list is stale
+
+- `VyralX/workflow_manager.py` and `VyralX/content_accessibility_enhancer.py`
+  do **NOT exist** on main `80b75649` (`fatal: path ... does not exist`).
+  The real layout is `VyralX/app/services/*`; AGENTS.md's flat module list
+  predates that move.
+- Real homes (verified first-hand on main `80b75649`):
+  - Captions → `VyralX/app/services/captions.py` (subtitle utilities, ASS
+    styles) + doubled-caption tests `test_vyr032_doubled_caption.py`,
+    `test_vyr045_caption_dedup.py` / `test_vyr045_caption_wiring.py`.
+  - Approval gate → `pipeline_orchestration.py` itself (stage list ends
+    `quality` → `approval` → `publish_plan`, approval `on_fleet`).
+  - Hyperframes route verified real (`real_media_routes.py:32-33, 70,
+    324-331`: `HyperframesManager`, `/hyperframes/create-script`).
+  - `compliance_gate` is imported by both IG2 lanes (2 references each).
+- The §6 claims about `workflow_manager.py` and
+  `content_accessibility_enhancer.py` are **WITHDRAWN**. The rest of §6
+  (port 8010, Python 3.10, FFmpeg real, upload daemon private drafts)
+  stands as AGENTS.md-sourced.
+
+### §8.2 IG2 overlap — the adapt code already exists, unwired
+
+- **TASK-IG2-VYR-01:** `VyralX/app/services/audio_content.py` — the
+  Podcastfy-pattern port (docstring: "Pattern adapted from Podcastfy
+  (Apache-2.0) ... no Podcastfy code is vendored"). Pure stdlib +
+  `compliance_gate`; `FREE_TTS_PROVIDERS = ("edge", "gemini")`, paid
+  providers rejected by name; batch/offline manifest pattern; publishes
+  nothing. Same conclusions as §2 (Python 3.11 blocker, Edge TTS free
+  path) reached independently.
+- **TASK-IG2-VYR-02:** `VyralX/app/services/pipeline_orchestration.py` —
+  the OpenMontage-pattern port (docstring: "Pattern adapted from
+  OpenMontage (AGPL-3.0) ... no OpenMontage code is vendored"). Manifest +
+  scored providers + `$0` default budget + storyboard approval gate +
+  quality stages; render stages marked `off_fleet`. Same conclusions as
+  §3, reached independently.
+- **Neither module is referenced by any other VyralX production file**
+  (`git grep` for `audio_content` / `pipeline_orchestration` across
+  `VyralX/`, excluding self + tests: zero hits). They are standalone
+  pattern modules, **not reachable from any route or the live app** — the
+  "runs in the live production path" acceptance is NOT met by their
+  existence.
+- Consequence for VYR-076: the live leg is now **exercise these two
+  modules on VyralX-Server** (import + real run + filed output incl. a
+  failure case) and record the wiring decision — NOT a fresh build.
+  Designs A/B (§2/§3) remain the trial plans, retargeted at these
+  modules. No new code is needed before the trial.
+- `edge-tts` is already a VyralX dependency (`pyproject.toml`
+  `"edge-tts>=6.1,<8.0"`, `requirements.lock` `edge-tts==7.3.1`) — the
+  free-now TTS path needs no new dependency. (FRIDAY also uses it live.)
+
+### §8.3 Guardrail proof of absence (main `80b75649`, `git grep`, VyralX production paths excluding tests)
+
+| Repo | Search | Result |
+|---|---|---|
+| Social Media Research Skills (reference-only) | `scrapecreators`, `social.media.research` in VyralX prod paths | Zero hits. Repo-wide: only the registry, board, and my docs. No ScrapeCreators key, client, or dependency in VyralX `pyproject.toml` / `requirements.lock`. |
+| OpenCreator (reference-only) | `opencreator`, `codex-cli` in VyralX prod paths | Zero hits. Repo-wide: only the registry and docs. No desktop/Codex workspace in the repo. |
+| FLUX.2 (reject) | `flux.2` / `flux-2` / `flux_2` / `FLUX2`, whole repo | Zero hits outside the registry, the IG test name-list, the board, my checkpoint doc, and a ComfyUI catalogue description naming Flux.1/Flux.2 as supported models. **Note, not hidden:** Flux.1 (a different generation) IS named in VyralX production code (`real_open_higgsfield.py`: `Flux.1-dev` / `Flux.1-schnell` / `Flux.1-Pro` as hosted model labels; `real_media_routes.py:248` default `"Flux.1-dev"`). The FLUX.2 reject verdict is FLUX.2-specific and stands; the pre-existing Flux.1 labels are out of VYR-076 scope. |
+| ACE-Step 1.5 (reject) | `ace-step` / `acestep`, whole repo excl. registry/tests/board/my docs | Zero hits. No weights, no code, no dependency. |
+| Podcastfy / OpenMontage (adapt) | package imports / vendored code | No upstream code vendored: only the IG2 pattern ports (§8.2), whose docstrings cite upstream + licences. No `podcastfy` / `montage` entries in VyralX `pyproject.toml` / `requirements.lock`. |
+
+Repo-side guardrail proof is therefore **complete for all four
+reference-only/reject repos** (absence from every VyralX production
+path, on main `80b75649`). What remains for them is the live-side
+corroboration (no weights/binaries on the fleet) — part of the held
+live leg, not assertable from the repo alone.
+
+### §8.4 What remains (unchanged — live legs HELD)
+
+- Clearance from Muse still unanswered: hub re-checked this run through
+  coordinator watch059 (`7145228662`, no Muse 9 / VYR-076 mention) and the
+  latest comments (page 219–220, newest `7145664513` 03:29:52Z, Muse 1
+  FRD-044 blocked — not mine). No ruling on the live-leg clearance
+  requested in checkpoint 1.
+- Live trials now target the IG2 modules (§8.2), not a fresh build. When
+  clearance lands: run Design A trial (audio_content lane) + Design B
+  trial (pipeline_orchestration manifest) + fleet-side weights check,
+  then open the SINGLE work PR (rule 1) with the live evidence; board
+  flip rides in that PR (rule 4). Verifier Muse 5 starts then.
+- If clearance is refused: the task is genuinely BLOCKED — open the
+  single work PR with these designs + the refusal as the block evidence.
+- States unchanged: implemented NO, tested NO, merged NO, deployed NO,
+  production-verified NO. Usage re-checked this run: 42% (reset Nov 29
+  02:27 IST). INT-023 final compilation (due 2026-11-27) remains mine
+  but BLOCKED — unchanged.
+
 ## §7 States (reported separately)
 
 - implemented: NO — no component runs in VyralX's live path yet.
