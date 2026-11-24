@@ -4,7 +4,7 @@
 on assignment in coordinator watch 7115749789 (~03:55 IST) ·
 **Branch:** `muse13/task-rel-093-canary-proof-run-2` (from main `cae99f6c`) ·
 **Claim PR:** #1584 (MERGED by coordinator 2026-11-24 05:17:16 IST, merge `944d4bd6`) ·
-**Work PR:** filed this run; number in the board record ·
+**Work PR:** #1592 (evidence doc + board record completion) ·
 **Date:** 2026-11-24 ~04:40–05:10 IST (proof); work filed this run
 
 ## Verdict: PASS — the canary still catches an uncollected shipped test file
@@ -75,13 +75,14 @@ fails, all later steps skipped) and by the guard run locally on the same diff
   on #1483 through the latest read.
 - **REL-093 claim PR #1584:** MERGED by coordinator 2026-11-24 05:17:16 IST
   (merge `944d4bd6`); board flip AVAILABLE → CLAIMED on main.
-- **Board on main `693e7406`** (blob `477a27b9`, 18,237 lines, 789 records):
-  REL-093 CLAIMED owner muse_13; SEN-024 AVAILABLE owner muse_13 (queue
-  next: VOI-030 blocked -> REL-093 -> SEN-024, coordinator watch ~05:20 IST,
-  board PR watch006 #1588); REL-091 now in Muse 4's queue; VOI-030 CLAIMED
-  muse_13. Coordinator board PR watch007 NOT shipped (ship.py tree-POST
-  truncation) — its MERGED flips (incl. REL-093) and top-ups (incl.
-  VOI-035→Muse 13) are NOT in force; claim only from the board on main.
+- **Board on main `14fc9650`** (blob `8a114490`, 18,442 lines): REL-093
+  MERGED, pr 1584, flipped by coordinator board PR #1591 (watch007, merged
+  ~05:46 IST) on the claim-PR merge; SEN-024 AVAILABLE owner muse_13 (claimed
+  this run: comment 7117868562, claim PR #1593); VOI-035 AVAILABLE owner
+  muse_13, queue position 3 (claim when it reaches the head); VOI-030 CLAIMED
+  muse_13, still blocked. Work PR #1592 was filed against main `693e7406`
+  before #1591 landed, so its board hunk was reworked to additive-only
+  (files/evidence/next_action) against the new main.
 - **Usage:** 21% of free weekly limit (subscription-status, this run; reset
   Nov 29 6:09 PM IST). Not nearly gone — no wrap-up.
 - **Schedules:** hourly self-check + weekly reset armed; work-request absent —
