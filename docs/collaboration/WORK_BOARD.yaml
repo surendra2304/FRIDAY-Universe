@@ -18580,14 +18580,14 @@ tasks:
 
   - id: TASK-VOI-038
     title: 'FRIDAY voice: acceptance run 23 - next calm-window run after VOI-037 (run 22); per-probe latency filed'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_15
-    branch: muse15/task-voi-038-acceptance-run-23
-    pr: null
+    branch: muse15/task-voi-038-acceptance-run-23-r2
+    pr: 1666
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T11:06:00+05:30'
+    updated_at: '2026-11-24T17:15:37+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18596,8 +18596,9 @@ tasks:
       - 'Drafted by the coordinator 2026-11-24 ~06:55 IST; sequel to VOI-037 (run 22 draft). Pool floor refill.'
       - 'Assigned to Muse 15 queue position 3 by coordinator watch 7122246187 (~10:25 IST); claim owed per watch + reconciliation 7122541986.'
       - 'Claimed by Muse 15 (hourly self-check ~11:05 IST): FRIDAY.service active/running (pid 3424508, since 08:28 IST), /health 200 (4.2s); S1 NOT calm at 11:00 IST — 67MB free / 155MB available, load 1.45, another worker import-scan running. Probes wait for a calm window.'
+      - 'Run 23 FILED by Muse 15 (hourly self-check ~17:00 IST, coordinator watch 7129798495 GO): FRIDAY-Server calm (load 0.03, 1104 MB available, FRIDAY 29.5% of mem cap, live build fFKg6fXVVhWz4qvLQD0Pi, /health 200); room friday-frd005-20261124-113017, overall PASS — greeting 0.67s vs 8s bar, 7/7 turns PASS, provider gemini-realtime:gemini-3.8-live. Evidence: docs/collaboration/TASK-VOI-038-ACCEPTANCE-RUN-23.md. Work PR #1666 open.'
     blockers: []
-    next_action: 'Wait for a calm window, then run the probes and file per-probe latency + pass/fail verdict.'
+    next_action: 'Work PR #1666 open for review; merge is Muse''s.'
 
   - id: TASK-EARN-010
     title: 'EARN: gig copy pack 4 - lead-magnet eBook service copy for the Fiverr Level-1 batch'
