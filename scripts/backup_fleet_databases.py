@@ -115,7 +115,11 @@ def jsonl_encode_value(value):
     if isinstance(value, (_dt.datetime, _dt.date, _dt.timedelta)):
         return str(value)
     if hasattr(value, "read"):  # LOB
-        raw = value.read(LOB_CAP_BYTES)
+        # TASK-REL-091: python-oracledb LOB.read(offset, amount) takes the
+        # 1-based OFFSET first, not the amount. The old read(LOB_CAP_BYTES)
+        # started at byte 1,000,000, so every CLOB under 1 MB read back empty
+        # (14,414 empty strings in the Nov 22 backup). Read from offset 1.
+        raw = value.read(1, LOB_CAP_BYTES)
         if isinstance(raw, bytes):
             return {"__b64__": __import__("base64").b64encode(raw).decode()}
         return str(raw)

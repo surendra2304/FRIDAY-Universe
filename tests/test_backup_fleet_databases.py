@@ -90,11 +90,69 @@ class TestJsonlEncoding:
         assert backup_mod.jsonl_encode_value(dt.date(2026, 11, 10)) == "2026-11-10"
 
     def test_lob_object_read(self):
+        # Fake uses the real python-oracledb LOB signature read(offset, amount).
         class Lob:
-            def read(self, cap=None):
+            def read(self, offset=1, amount=None):
                 return "lob-text"
 
         assert backup_mod.jsonl_encode_value(Lob()) == "lob-text"
+
+
+class TestClobLossRegression:
+    """TASK-REL-091 — CLOBs under 1 MB dumped as empty strings.
+
+    python-oracledb's LOB.read(offset, amount) takes the 1-based offset
+    first. The old call read(LOB_CAP_BYTES) started at byte 1,000,000, so
+    every CLOB smaller than the cap read back empty (14,414 empty strings
+    in the Nov 22 backup). The fake below implements the real oracle
+    slicing semantics, so these tests fail on the old call and pass on
+    the fixed one.
+    """
+
+    class OracleLob:
+        """Minimal LOB with python-oracledb read(offset, amount) semantics."""
+
+        def __init__(self, text):
+            self._text = text
+            self.calls = []
+
+        def read(self, offset=1, amount=None):
+            self.calls.append((offset, amount))
+            if offset > len(self._text):
+                return ""
+            end = None if amount is None else offset - 1 + amount
+            return self._text[offset - 1:end]
+
+    def test_small_clob_dumps_nonempty_and_reads_from_offset_one(self):
+        lob = self.OracleLob("hello world")
+        assert backup_mod.jsonl_encode_value(lob) == "hello world"
+        assert lob.calls == [(1, backup_mod.LOB_CAP_BYTES)]
+
+    def test_clob_just_under_cap_dumps_in_full(self):
+        text = "x" * (backup_mod.LOB_CAP_BYTES - 1)
+        assert backup_mod.jsonl_encode_value(self.OracleLob(text)) == text
+
+    def test_clob_over_cap_truncates_at_cap(self):
+        text = "y" * (backup_mod.LOB_CAP_BYTES + 500)
+        assert backup_mod.jsonl_encode_value(self.OracleLob(text)) == "y" * backup_mod.LOB_CAP_BYTES
+
+    def test_genuinely_empty_clob_stays_empty(self):
+        assert backup_mod.jsonl_encode_value(self.OracleLob("")) == ""
+
+    def test_blob_lob_dumps_base64(self):
+        import base64
+
+        class OracleBlob:
+            def read(self, offset=1, amount=None):
+                data = b"\x00\x01\x02"
+                if offset > len(data):
+                    return b""
+                end = None if amount is None else offset - 1 + amount
+                return data[offset - 1:end]
+
+        assert backup_mod.jsonl_encode_value(OracleBlob()) == {
+            "__b64__": base64.b64encode(b"\x00\x01\x02").decode()
+        }
 
 
 class TestDumpTable:
