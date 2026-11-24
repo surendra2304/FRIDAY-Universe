@@ -21041,6 +21041,201 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+  - id: TASK-EARN-015
+    title: 'EARN: bug-bounty lane (owner order 2026-11-25: PURSUE) - adopt the Claude-BugHunter workflow, hunt beginner-scope programmes, human-reviewed reports only'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'Method (reel DgAaMVKh8ig, @ashutoshwithclaude, watched in full 2026-11-24): companies pay the public to find bugs in their apps (bug bounty); Meta''s programme states a $500 minimum per real bug; the workflow uses the free elementalsouls/Claude-BugHunter GitHub skill bundle (83 skills - it scouts the target, tests weak spots, and drafts the report). The reel''s $40,000-at-one-live-event figure is an UNVERIFIED creator claim and is not a target.'
+    - 'Adopt the bundle as the hunting workflow under fleet security rules: test ONLY programmes whose published scope explicitly permits it; nothing outside scope, ever.'
+    - 'OWNER ONE-TIME: create accounts on HackerOne and Bugcrowd (and Meta Bug Bounty) using cometbrowser001@gmail.com. Muse does all hunting and report drafting; the owner reviews and submits each report himself (programmes hold the account holder responsible; every AI-drafted report is human-reviewed before submit).'
+    - 'Learning base folded into the workflow notes under earning/: reel DV9IyW1jCeJ (@itshahirx) curated bug-bounty / security resources from the full-watch corpus.'
+    - 'Done = workflow adopted + first valid report submitted on a beginner-scope programme. First-money path: the programme''s bounty on the first accepted report. Honest expectation: slow and uncertain - most first reports are duplicates or out of scope.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-016
+    title: 'EARN: AI voice/chat agent service for local businesses - build free-tier demos (OmniDimension + Voiceflow patterns), package as a CometWorks service, owner does outreach'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'Method, two corpus reels: DV563QjD0Ft (@vsmeo) - build and sell AI voice agents to businesses on OmniDimension (Indian languages, WhatsApp integration, own-number or platform number); DZmTQUQMdBg (@hassandotai) - sell AI chatbots that book appointments: pick a niche (dentists in the reel), take the business''s own services text, generate the agent system prompt, build in Voiceflow, pitch with the live demo link. The friday package F-35 (Riley appointment-agent prompt) is the in-corpus worked example of the prompt artifact.'
+    - 'Build TWO working demos on free tiers: (1) a clinic appointment voice agent, (2) a website chat agent that books appointments. Demos must actually answer/call in a test the worker files as evidence.'
+    - 'Package the service: Fiverr gig draft (publishes when a slot frees / at Level 1) + Contra and Payhip listing copy + price points (setup fee + monthly care), all filed under earning/.'
+    - 'Build a 20-lead list of local clinics/businesses with no voice/chat booking, with a per-lead pitch draft that links the matching demo.'
+    - 'OWNER ONE-TIME: create free OmniDimension and Voiceflow accounts if signup blocks the worker; owner sends outreach and takes sales calls (human-sent rule). First-money path: the first business setup fee.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-017
+    title: 'EARN: websites-for-local-businesses lane - AI-built mockup sites for Google Maps/Justdial leads (clinics first), pitch pack, owner sends and closes'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'Method, two corpus reels saying the same thing independently: DVXc5aski3p (@talagana.rajesh) and DVYp0XMj-aH (@vsmeo) - find local businesses on Google Maps / Justdial (dermatology clinics in Hyderabad in both), take their public business info, generate a finished website mockup with AI BEFORE pitching, then offer the site to the business.'
+    - 'Build 10 finished mockup sites for real local businesses with weak or no websites, hosted as live preview links; file the mockups + a pitch pack (message scripts, price points, follow-up sequence) under earning/.'
+    - 'Capability note: the website-generation pattern itself was adopted into FRIDAY as full-watch package F-30 - the capability exists in the fleet; this EARNING lane is what was never filed. Do not rebuild the capability; use it.'
+    - 'OWNER ONE-TIME: send the pitches (human-sent) and close sales; Muse builds everything else. First-money path: the first website sale (one-time build fee; optional monthly care plan).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-018
+    title: 'EARN: freelance client lead-gen - Yello directory + AI contact extraction for Dubai/UAE businesses, personalised pitches for the live Fiverr gigs'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'Method (reel DPGp5CbDJ-v, @saki.chiranjeevi, full-watch corpus): use the Yello business directory to find companies in one chosen industry (insurance in the reel), use AI to extract contact details, and pitch freelance services to high-paying Dubai/UAE clients.'
+    - 'Deliverable: a 50-lead UAE/Dubai list in CometWorks'' live service niches (SEO content, YouTube scripts, social content, product descriptions) with verified public contact routes, filed under earning/, plus a personalised pitch draft per lead pointing at the matching live Fiverr gig.'
+    - 'Rules: public business contact data only; no scraping behind logins; no automated mass outreach (anti-spam + platform rules). OWNER ONE-TIME: review and send the pitches himself (human-sent).'
+    - 'First-money path: the first converted client lands as a Fiverr order (14-day new-seller clearance then applies).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-019
+    title: 'EARN: Contra lane start (owner order 2026-11-25: implement all) - owner creates the account, Muse builds the full CometWorks profile + services'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'OWNER ONE-TIME: create the Contra account with cometbrowser001@gmail.com (Contra was GAP-LIST owner-decision item 4 on 2026-11-24; the owner ordered all lanes implemented on 2026-11-25).'
+    - 'Profile completed by Muse: CometWorks services mirroring the 4 live Fiverr gigs (SEO blog posts, YouTube scripts, social media content, product descriptions) at matching rates, portfolio built from the existing gig packs under earning/, profile copy filed via PR under earning/.'
+    - 'Record Contra''s current payout terms and timeline in the task evidence at setup (do not assume). First-money path: the first Contra project payment - Contra has no 14-day new-seller hold of the Fiverr kind.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-020
+    title: 'EARN: itch.io Direct second product (owner order 2026-11-25: implement all) - owner account + tax interview, product page live from existing packs'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'OWNER ONE-TIME: create the itch.io account and complete the itch.io Direct tax interview (lane was GAP-LIST owner-decision item 5 on 2026-11-24; owner ordered implementation 2026-11-25).'
+    - 'Product page live: a second digital product built from existing material (the lead-magnet eBook from TASK-EARN-004, or the 30-day social content pack), with files, page copy and pricing filed via PR under earning/.'
+    - 'First-money path: the first Direct sale (itch.io Direct pays the seller directly, no platform hold). If payout turns out to need a gateway the owner has not connected, record that blocker honestly in evidence - do not claim the lane is buyable until a test checkout proves it.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-021
+    title: 'EARN: Adobe Stock labelled-AI seeding (owner order 2026-11-25: implement all) - owner contributor account, compliant AI-labelled asset batch uploaded'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'OWNER ONE-TIME: create the Adobe Stock contributor account and complete its tax form (lane was GAP-LIST owner-decision item 6 on 2026-11-24; owner ordered implementation 2026-11-25).'
+    - 'First batch prepared and uploaded from the existing gig-image pipeline: every AI asset labelled as AI-generated in the Adobe Stock flow (labelled AI is allowed; UNLABELLED AI uploads are a ban offence - the label is part of acceptance), titles and keywords written per asset.'
+    - 'Honest timeline, to be stated in the upload pack: Adobe Stock pays 45 days after the first sale - this is a seed lane and December money is NOT expected from it.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-022
+    title: 'EARN: KDP ebook (owner order 2026-11-25: implement all) - owner KDP account + tax interview, full short ebook built from the EARN-004 lead magnet, listing live'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'OWNER ONE-TIME: create the Amazon KDP account and complete the tax interview (lane was GAP-LIST owner-decision item 6 on 2026-11-24; owner ordered implementation 2026-11-25).'
+    - 'Manuscript completed from TASK-EARN-004''s lead-magnet eBook (outline + first chapter already exist): full short ebook + cover + listing copy filed under earning/; the AI-content disclosure is made in the KDP publishing flow (Amazon requires it).'
+    - 'Honest timeline, to be stated in the listing pack: KDP royalties pay about 60 days after the month of sale - seed lane, December money NOT expected.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-EARN-023
+    title: 'EARN: Swiggy Builders Club option (corpus reel DYg_b2ZTK70) - prototype agent concept + application pack drafted; owner submits the application'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:30:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'Source (full-watch corpus item DYg_b2ZTK70, @lavin_creator): Swiggy Builders Club (mcp.swiggy.com) lets developers build AI agents/apps on Swiggy Food / Instamart / Dineout APIs. Monetisation is INDIRECT (partnerships, co-branding, hiring, startups - no app-store cut) and access is invite-led through an application form.'
+    - 'Deliverable: a one-page prototype concept (e.g. a FRIDAY voice food-ordering / auto-restock agent on the Swiggy MCP) plus the full application answers, drafted under earning/.'
+    - 'OWNER ONE-TIME: submit the application form himself (his details, his call). First-money path is indirect and unproven - this task buys an option on the programme, it does not promise income. If Swiggy declines or never replies, close the task with that verdict recorded.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
 task_id_warnings:
   - id: TASK-REL-061
 
