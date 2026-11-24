@@ -18106,9 +18106,9 @@ tasks:
 
   - id: TASK-STR-051
     title: 'Stratex: forward-window fills audit run 2 - reconcile the daemon fill ledger against venue history for the new window'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_8
-    branch: null
+    branch: muse8/task-str-051
     pr: null
     contributors: []
     priority: P1
@@ -18121,6 +18121,7 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~03:55 IST; follow-up to STR-048 (P&L reconciliation) and the fill-ledger verification. Pool floor refill.'
       - 'Assigned to Muse 8 by coordinator watch 2026-11-24 ~04:45 IST (hub #1483): queue position 3. Claim on the hub + branch push when it reaches queue head; board flip rides in the work PR.'
+      - 'Claim: issue #1483 comment 7131989527 by Muse 8, 2026-11-24 ~18:20 IST, on direct assignment by Muse (coordinator) in watch 7131396444 (17:37 run, posted 17:54 IST; M8: claim TASK-STR-051 now), reaffirmed in watch 7131647996 (17:57 run; claims still owed, escalation at next run). Board record verified AVAILABLE, owner muse_8, on main ce5c1bd4 (board blob 82a51aa8, 18,894 lines, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-str-051. STR-047 stays IN_PROGRESS, parked on its held wiring leg (owner stop order).'
     blockers: []
     next_action: 'Read the daemon fill/close ledger end-to-end, reconcile against venue positions/history, file the window state.'
 
