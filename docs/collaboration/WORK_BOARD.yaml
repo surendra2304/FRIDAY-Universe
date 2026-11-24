@@ -15674,14 +15674,14 @@ tasks:
   - id: TASK-WF-002
 
     title: 'Integration: fresh multi-agent trace, one end-to-end task across at least three agents'
-    status: CLAIMED
-    owner: muse_14
-    branch: muse14/task-wf-002-e2e-trace
+    status: AVAILABLE
+    owner: null
+    branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T18:05:00+05:30'
+    updated_at: '2026-11-24T22:26:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-WF-002-CODE-LEVEL-TRACE.md
@@ -15692,6 +15692,7 @@ tasks:
     - 'Reserve per coordinator assignment round 7084017188: claim immediately on finishing the current task if no new assignment has landed.'
     - 'Assigned to Muse 14 by the coordinator, hub post 7091751044, 2026-11-23 10:09 IST, queue position 3 after SEN-022 (VAL-012 head blocked). Claim via hub comment + branch push once SEN-022 is in flight.'
     - 'Claim recorded in this board record by Muse 14, 2026-11-23 ~18:05 IST, per coordinator watch 7100338636 (~17:28 IST, confirmed in push 7100469274 ~17:40 IST): code-level trace leg now, live leg waits for the FRD-038 401 fix (Muse 11). No hub comment posted from this run (local files only; hub comment + PR filing are a separate step after review). Branch muse14/task-wf-002-e2e-trace, base main 7345f64a. Code-level leg filed: docs/collaboration/TASK-WF-002-CODE-LEVEL-TRACE.md. Verdict (code-level only): Memora leg fully wired, blocked only by the 401 FRD-038 owns (mechanism pinned: bus sends x-api-key only, Memora resolves the expected key by X-Agent-Name, dependencies.py:356); Futuris leg CANNOT complete via the bus (/v1/task/execute is a 501 refusal stub for every real action, Futuris/futuris/api/app.py:356-357; real forecast API unreachable from the fixed bus action path); IntelX leg fully wired, no code-level blocker. Silent-failure risks S1-S8 named with file/line (S1 callback/receipt vs store divergence, S2 accepted parking lot, S3 in-memory store, S4 unlinked router/bus records, S5 routing never learns, S6 stale Futuris circuit, S7 200-running filed as accepted, S8 no accepted-task deadline). Also found: universe_orchestrator and agent_runtime /v1/agent/* are NOT mounted in the live server.py — no live aggregator exists; the live leg must assemble the briefing from the three receipts + store report.'
+    - 'Released by Muse 14, 2026-11-24 ~22:00 IST (hub #1483 status 7138017641), per central pool pull model (hub 7136890552): live leg blocked - owner stop order (no server moves) + owner key paste and direction owed. Code-level leg MERGED as PR #1500. Back in the pool.'
     blockers: []
     next_action: 'Live leg, once the FRD-038 401 fix lands: (1) re-run the VAL-009 Memora recall and confirm completed receipt AND completed store record; (2) Futuris: wire a real handler behind /v1/task/execute first (or explicitly record a bypass to POST /v1/forecast) and reset the Futuris circuit before re-probing; (3) IntelX research_live via the bus with timeout_sec >= 115, confirm durable_run + run_id retrievable via research_recall; (4) assemble the briefing from the three receipts + store report, checking receipts AND records for every leg; (5) leave no leg at dispatched and no circuit open. See TASK-WF-002-CODE-LEVEL-TRACE.md live-leg remainder.'
   - id: TASK-VAL-010
@@ -16589,14 +16590,14 @@ tasks:
   - id: TASK-OBS-018
 
     title: 'Fleet: repair the S1 git-objects root ownership (G4) and re-run the OBS-013 live rollback leg'
-    status: CLAIMED
-    owner: muse_14
-    branch: muse14/task-obs-018-s1-git-objects
+    status: AVAILABLE
+    owner: null
+    branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: "2026-11-23T23:48:00+05:30"
+    updated_at: '2026-11-24T22:26:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-OBS-018-G4-DIAGNOSIS.md
@@ -16607,6 +16608,7 @@ tasks:
     - 'Coordinator spare, drafted 2026-11-23 ~12:40 IST from the OBS-013 G4 abort evidence (work PR #1459, merge 292823f0): S1 git fetch fails rc=128, root-owned loose objects + pack-1716efea; Muse 4 queue notes the live-leg re-run pending G4 repair. Fleet mutation needs coordinator hub clearance first - no live change without it. Pool spare; unassigned.'
     - 'Assigned to Muse 14 in coordinator watch 2026-11-23 ~15:45 IST as queue position 2 (queue: WF-002 -> OBS-018 -> VYR-044).'
     - 'Diagnosis (Muse 14, 2026-11-23 ~23:48 IST; doc docs/collaboration/TASK-OBS-018-G4-DIAGNOSIS.md): G4 NOT present on S1 anymore — 0 non-ubuntu entries under .git/objects (94 at the OBS-013 abort, chowned to 0 in the 12:25 IST repair), S1 main @ 8c0ef142, Fleet CD run 45235566621 fetched that head at 23:41:11 IST (FETCH_HEAD). S2 also 0 non-ubuntu entries (was 13; mechanism unknown), parked on muse5/task-vyr-045-caption-dedup, main head missing. Remaining: live fetch rc=0 + fsck verification, CD run completion, OBS-013 leg re-run. Clearance requested on hub #1483.'
+    - 'Released by Muse 14, 2026-11-24 ~22:00 IST (hub #1483 status 7138017641), per central pool pull model (hub 7136890552): leg (b) held under the owner stop order; coordinator ruled S2 503 evidence stands and no rollback leg is needed (disposition ANSWERED). Leg (a) verification COMPLETE and MERGED as PR #1542. Back in the pool.'
     blockers: []
     next_action: 'Coordinator hub clearance for live verification + leg re-run; then verify fetch/fsck on S1 and re-run the OBS-013 leg.'
   - id: TASK-REL-084
@@ -16666,13 +16668,13 @@ tasks:
 
     title: 'VyralX: run the machine-QA gates (caption-track count, BGM presence, watermark, loudness) over the held-render pool and file the pass/fail table per render'
     status: AVAILABLE
-    owner: muse_14
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: "2026-11-23T15:46:28+05:30"
+    updated_at: '2026-11-24T22:26:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16680,6 +16682,7 @@ tasks:
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~13:05 IST (pool spare, floor 10).'
     - 'Assigned to Muse 14 in coordinator watch 2026-11-23 ~15:45 IST as queue position 3 (queue: WF-002 -> OBS-018 -> VYR-044).'
+    - 'Hold released by Muse 14, 2026-11-24 ~22:00 IST (hub #1483 status 7138017641): never claimed, queue position 3 only; owner set to null so the pool record is clean.'
     blockers: []
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-FRG-019
@@ -19939,14 +19942,14 @@ tasks:
 
   - id: TASK-VYR-072
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG2-VYR-01, IG2-VYR-02, IG2-VYR-03, IG2-VYR-04, IG2-VYR-05 - live extreme-condition verification (wave 1)'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: CLAIMED
+    owner: muse_14
+    branch: muse14/task-vyr-072
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-24T22:26:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19956,6 +19959,7 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Claimed by Muse 14, hub #1483 comment 7138526997, 2026-11-24 ~22:26 IST, per central pool pull model (hub 7136890552). Board verified AVAILABLE, owner null on main ca6de826; branch muse14/task-vyr-072 created at ca6de826.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
 
