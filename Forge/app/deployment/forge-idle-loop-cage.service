@@ -1,0 +1,41 @@
+[Unit]
+Description=Forge idle experiment loop — one caged cycle (TASK-FRG-001)
+Documentation=https://github.com/surendra2304/FRIDAY-Universe/blob/main/docs/collaboration/TASK-FRG-001-CAGE-PROOF.md
+After=network.target
+# Separate from the production Forge unit (forge.service): this unit runs
+# ONLY the idle-loop one-shot driver, once, then exits. It is never
+# enabled (no [Install] section) — start it on demand:
+#   systemctl start forge-idle-loop-cage.service
+# or transiently, without installing the file:
+#   systemd-run --unit=forge-idle-loop-cage --property=MemoryMax=128M \
+#     --property=CPUQuota=25% /opt/friday_universe/venv312/bin/python \
+#     /opt/friday_universe/Forge/scripts/frg001_idle_cycle_once.py
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/friday_universe/Forge
+EnvironmentFile=/etc/default/friday_universe.env
+# Activation is explicit: the loop only runs when this flag is "on".
+# The production unit does NOT set it (default off), so a cycle can
+# only ever run inside this cage.
+Environment=FORGE_IDLE_EXPERIMENTS=on
+ExecStart=/opt/friday_universe/venv312/bin/python scripts/frg001_idle_cycle_once.py --data-dir /opt/friday_universe/Forge/data/idle_experiments
+# Hard cage — strictly tighter than the production unit (forge.service:
+# MemoryMax=180M, MemoryHigh=150M, no CPU quota). Server 1 carries
+# seven agents in ~956 MB RAM; the battery spawns pytest subprocesses
+# and must never compete with production work for memory.
+MemoryMax=128M
+MemoryHigh=96M
+CPUQuota=25%
+TasksMax=64
+LimitNOFILE=4096
+# Hardening: the driver only needs the experiment ledger under data/
+# and a private /tmp for the golden battery's throwaway sandboxes.
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+NoNewPrivileges=true
+ReadWritePaths=/opt/friday_universe/Forge/data
+RemainAfterExit=no

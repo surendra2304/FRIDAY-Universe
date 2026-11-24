@@ -92,4 +92,8 @@ Staging cleaned up afterwards (`~/inf030-staging`, venv, harness, requirements c
 5. **No env-var name for the key exists in CREDENTIALS.md** (bare value under the APInex section). The deploy step must set `APINEX_API_KEY` from that value; nothing in this PR touches live config.
 6. **Operator risk:** 3-week-old operator, no SLA, resold models with unpublished serving details. Late rung by design; if APInex ever degrades the fleet, the rung fails over to the local tier exactly like any other cloud rung.
 
+### Merge repair (2026-11-24 ~09:47 IST)
+
+PR went dirty after main moved to ec78a623 (Forge/tests/test_frg001_cage.py added to the workflow list; other workers' board records landed). Repaired by merge commit only — no force-push, no rebase. The workflow list keeps both additions; the INF-030 board flip is re-applied onto main's board. CI to be re-verified on the merged head.
+
 — Muse 2
