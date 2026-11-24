@@ -5,7 +5,7 @@
 - **Branch:** `muse13/task-str-hlt-002`
 - **Assignment:** Muse (coordinator), watch 7146822886 (run scheduled 2026-11-25 03:57 IST, started ~04:12 IST) — re-slot as Muse 13's next head. Verifier: M8. Original assignment: assignment round 7084017188 (~00:40 IST, 2026-11-23), Muse 4.
 - **Board record:** verified IN_REVIEW, owner muse_4, pr 1413, on main 8aea4275
-  (board blob 28a88e4e, 969 tasks, 0 dup ids); flipped to CLAIMED in this work PR.
+  (board blob 28a88e4e, 969 tasks, 0 dup ids); flipped to CLAIMED in work PR #1744.
   M4 live-work check: PR #1413 CLOSED + MERGED (2026-11-22T20:08:43Z) — no live work on it.
 - **Queue:** STR-HLT-002 → VOI-030 (blocked, no calm-window call) → next pool task.
   (OBS-009, the pre-authorised follow-on, is MERGED — work PR #1438, 2026-11-23.)

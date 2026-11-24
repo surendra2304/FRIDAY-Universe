@@ -15477,14 +15477,14 @@ tasks:
   - id: TASK-STR-HLT-002
 
     title: 'Pepperstone cTrader shakedown: grant, token exchange, env wiring, stop-loss read-back + balance reconciled (gated on Spotware app Active)'
-    status: IN_REVIEW
-    owner: muse_4
-    branch: muse4/task-str-hlt-002-pepperstone-shakedown
-    pr: 1413
+    status: CLAIMED
+    owner: muse_13
+    branch: muse13/task-str-hlt-002
+    pr: 1744
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T00:35:00+05:30'
+    updated_at: '2026-11-25T04:45:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -15495,9 +15495,11 @@ tasks:
     - 'Claim: issue #35 comment 7084800769 by Muse 4, 2026-11-23 ~01:30 IST, on direct assignment by Muse (coordinator) in assignment round 7084017188 (~00:40 IST), nudged 7084387415 (~00:55 IST), follow-up 7084721822 (~01:19 IST). Board record verified AVAILABLE, owner muse_4, on main d769cb7a (board blob 7fca0e7c). Branch muse4/task-str-hlt-002-pepperstone-shakedown.'
     - 'Blocked-head 2026-11-23 ~14:50 IST (coordinator watch): Spotware app still Submitted, gate closed; Muse 4 skips to INF-029 per the blocked-head rule and keeps working. Re-check on Spotware Active.'
     - 'Wait state filed 2026-11-23 ~01:40 IST (probe 1, S1 via bridge): app status NOT verifiable as Active from any first-hand source reachable by this worker — Spotware portal needs the owner cTrader ID sign-in; Open API needs client id/secret + token, none of which exist in the S1 env (all six PEPPERSTONE_CTRADER_* names missing; only CTRADER_FIX_* present; .env mode 0600, 7,366 B, 80 names). Last recorded state stands: Submitted, review pending (2026-11-21). No grant fabricated, no token exchanged, no env wired, no shakedown run. U1 env not readable via bridge (S1/S2 only) — U1 re-check owed. Evidence doc docs/collaboration/TASK-STR-HLT-002-PEPPERSTONE-SHAKEDOWN.md; PR #1413.'
+    - 'Re-slot claim: hub #1483 comment 7147144715 by Muse 13, 2026-11-25 ~04:40 IST, on coordinator watch 7146822886 (run scheduled 03:57 IST). Board verified IN_REVIEW/muse_4/pr 1413 on main 8aea4275 (blob 28a88e4e, 969 tasks, 0 dup ids). M4 PR #1413 merged - no live work. Branch muse13/task-str-hlt-002; work PR #1744; verifier M8.'
+    - 'Re-check 2, 2026-11-25 ~04:45 IST (bridge run_shell S1): S1 .env 517 B, 7 names (ALPACA x2 + TELEGRAM x5), 0 PEPPERSTONE_CTRADER_*; shakedown script + adapter present; S1 daemon failed since 2026-11-24 13:42 IST (sleeping backup). Server-4 env check NOT done - ssh ubuntu@13.211.78.20 from S2: Permission denied (publickey), exit 255. Gate closed; no grant fabricated. Evidence doc docs/collaboration/TASK-STR-HLT-002-PEPPERSTONE-SHAKEDOWN.md.'
     blockers:
     - 'Spotware review of app Stratex Demo (ID 49885) pending — gate closed until the app shows Active.'
-    next_action: Re-check app status on Spotware approval; on Active, grant + exchange + wire + shakedown. Pre-authorised follow-on TASK-OBS-009 taken in parallel (separate claim + branch + PR).
+    next_action: Re-check app status on Spotware approval; on Active, grant + exchange + wire + shakedown. Gate closed as of re-check 2 (2026-11-25 ~04:45 IST, first-hand S1 probe; server-4 check blocked on ssh auth).
   - id: TASK-VOI-029
 
     title: 'Voice: prove M5 workflow 5, 3 consecutive live voice sessions (consumes the VOI-027 verdict)'
@@ -17873,14 +17875,14 @@ tasks:
     next_action: 'Run most-popular discovery per category, apply the machine QA gates, file the ranked pool.'
   - id: TASK-STR-049
     title: 'Stratex: verify the latest self-experiment trial judgement past counter 3980 and file it'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_13
     branch: muse13/task-str-049
     pr: 1717
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T02:52:00+05:30'
+    updated_at: '2026-11-25T04:06:26+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-STR-049-TRIAL-JUDGEMENT-3988.md
@@ -17892,8 +17894,9 @@ tasks:
     - 'Released to the pool by coordinator watch 7138911209 (22:17 run, 2026-11-24): blocked on the owner-pending read-route decision; diagnosis + checkpoints filed; no movable leg. Note: the read-only Stratex-Server route (bridge run_shell S2 -> ssh ubuntu@13.211.78.20) was proven by Muse 15 / Muse 5 and cleared for read-only live legs by watch 7138466832 ruling 3, so the next worker can re-probe the live counter via that route.'
     - 'Claim: hub #1483 comment 7143153454 by Muse 13, 2026-11-25 ~01:40 IST, on coordinator watch054 assignment (hub 7142399844), nudged in watch055 (7142822375); board verified AVAILABLE, owner null, on main ce3c817f (blob 383d017d). Branch muse13/task-str-049.'
     - 'Correction 2026-11-25 ~02:52 IST (watch058, hub 7144369853): first probe verified the frozen S1 copy (trial 3988); re-verified from live Stratex-Server - counter 3991, trial 3989 PROVEN (full bar: +0.9700 percent, PF 1.2337, 4208 trades, 5/5 folds, p 4.02e-07), trials 3990/3991 FORWARD_TEST; live daemon UP on server 4, S1 failure is the sleeping backup. Work PR #1717, verifier M2.'
+    - 'MERGED 2026-11-25 04:06:26 IST: work PR #1717 merged by Surendra (merge 2c51d17b, CI 9/9 green on true head 0224f6de). MERGED flip rides in Muse 13 work PR #1744 (STR-HLT-002).'
     blockers: []
-    next_action: 'Verifier M2 checks the corrected PR #1717 and posts the verdict; merge follows when CI-green.'
+    next_action: 'Closed - merged. No further action.'
 
   - id: TASK-STR-050
     title: 'Stratex: resting-stop verification run 2 - re-read every open position bracket after the next daemon cycle'
@@ -18313,14 +18316,14 @@ tasks:
 
   - id: TASK-VOI-035
     title: 'FRIDAY voice: acceptance run 20 - next calm-window run after VOI-034 (run 19); per-probe latency filed'
-    status: CLAIMED
-    owner: muse_13
-    branch: muse13/task-voi-035-acceptance-run-20
+    status: AVAILABLE
+    owner: null
+    branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T05:39:13+05:30'
+    updated_at: '2026-11-24T21:52:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18329,8 +18332,9 @@ tasks:
       - 'Drafted by the coordinator 2026-11-24 ~05:20 IST; sequel to VOI-034 (run 19, Muse 1 queue pos 3). Pool floor refill.'
       - 'Assigned to Muse 13 queue position 3 by coordinator watch 2026-11-24 ~05:25 IST (hub #1483) — after VOI-030 (blocked) + SEN-024. Claim it when it reaches the head.'
       - 'Claim: hub #1483 comment 7119841152 by Muse 13, 2026-11-24 ~07:40 IST, under the blocked-head rule (VOI-030 blocked on calm-window call, SEN-024 merged); board verified AVAILABLE, owner muse_13, on main f72b6edb (blob 684bbb4f). Branch muse13/task-voi-035-acceptance-run-20.'
+      - 'Released to the pool 2026-11-24 ~21:52 IST by Muse 13 (blocked: no calm-window call + owner stop order; branch stands on remote, claim commit only). Release flip rides in Muse 13 work PR #1744 (STR-HLT-002).'
     blockers: []
-    next_action: 'Claimed; run the probes in the next calm window, file per-probe latency + pass/fail.'
+    next_action: 'Released to the pool; re-claim when a calm window is called.'
 
   - id: TASK-REL-094
     title: 'Reliability: backup restore re-drill after the REL-091 CLOB fix - prove JSON/CLOB fidelity on a fresh backup'
@@ -18500,14 +18504,14 @@ tasks:
 
   - id: TASK-SEN-025
     title: 'Sentinel: approval-path live proof run 3 + backup manifest verification run 2'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_13
     branch: muse13/task-sen-025-approval-path-live-proof-run-3
-    pr: 1617
+    pr: 1622
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T09:42:05+05:30'
+    updated_at: '2026-11-24T11:01:59+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-SEN-025-APPROVAL-PATH-LIVE-PROOF-RUN-3.md
@@ -18519,8 +18523,9 @@ tasks:
       - 'Claim: hub #1483 comment 7120832047 by Muse 13, 2026-11-24 ~08:40 IST, under the blocked-head rule (VOI-030 + VOI-035 both blocked on calm-window call); board verified AVAILABLE, owner muse_13, on main 06a7f5e3 (blob a60b7f94). Branch muse13/task-sen-025-approval-path-live-proof-run-3.'
       - 'Live proof run 3 done 2026-11-24 ~08:56 IST: leg 1 auto-approved (appr_5988b5ba8538, AUTO_APPROVE/read_only, ledger seq 29, hash-chained to seq 28); leg 2 prompted on Telegram (appr_284a976be909, OWNER_PROMPT/caller_risk_not_low, PENDING, expired un-actioned, approve link 409-dead, no decision, no execution). Sentinel on S1 @ 27f181e4, code md5-verified vs repo; service unrestarted by this run. Backup manifest run 2: structure verifies (188 files OK, 15/15 integrity, 17/17 scratch, Phase A 14/1 expected drift) but R1 content loss persists — 21 JSON/CLOB values still "" in the Nov 22 backup while live holds full JSON; fix is REL-091 (Muse 4).'
       - 'Work PR #1622 filed 2026-11-24 ~09:42 IST: evidence doc + board record completion (files/evidence/next_action).'
+      - 'MERGED 2026-11-24 11:01:59 IST: work PR #1622 merged by Surendra (merge 38ea41b6b). MERGED flip rides in Muse 13 work PR #1744 (STR-HLT-002).'
     blockers: []
-    next_action: 'In review; work PR #1622 filed, merge by coordinator. Next: VOI-035 when it reaches the head.'
+    next_action: 'Closed - merged. No further action.'
 
   - id: TASK-MEM-027
     title: 'Memora: three-section live proof run 4 - one real write/read/promotion cycle across private / inter-agent / universal'
@@ -19976,14 +19981,14 @@ tasks:
 
   - id: TASK-STR-072
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG-STR-11, IG-STR-12, IG2-STR-01, IG2-STR-02, IG2-STR-03 - live extreme-condition verification (wave 1)'
-    status: CLAIMED
+    status: MERGED
     owner: muse_13
     branch: muse13/task-str-072-prod-verify
     pr: 1693
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T22:54:00+05:30'
+    updated_at: '2026-11-24T23:37:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19995,9 +20000,10 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Claim: hub #1483 comment 7137567513 by Muse 13, 2026-11-24 ~21:52 IST, under the central pool pull model (owner directive 7136890552; pool order 7137277063, Wave 1 Stratex first). Branch muse13/task-str-072-prod-verify from main 7b564203 (fast-forwarded to 3a2009b8 for the work PR). Board flip rides in work PR #1693.'
     - 'Live read-only legs run 2026-11-24 ~22:50-23:00 IST on Stratex-Server (bridge run_shell server 4, coordinator ruling 7138466832 section 3): IG-STR-11 LIVE-VERIFIED (live Gamma fetch, 5 markets, probs sum 1.0); IG2-STR-01 LIVE-VERIFIED (9-combo sweep on 365 real BTC closes, best 10/50 Sharpe 0.63, walk-forward holds OOS); IG2-STR-03 LIVE-VERIFIED (real spec parsed, momentum IC 0.1244, committee WATCH 0.575); IG-STR-12 PARTIAL (stack live-verified, MT5 leg unrunnable - no MetaTrader5 on host, FIX-02); IG2-STR-02 PARTIAL (bitget live ticker proven; kraken/kucoin construction crash - no testnet URLs in ccxt 4.5.89; gateio absent from ccxt; FIX-01). Evidence doc docs/collaboration/TASK-STR-072-PRODUCTION-VERIFY.md.'
+    - 'MERGED 2026-11-24 23:37 IST: work PR #1693 merged by Surendra (merge 28efad19, CI 9/9 green on head 1785d4ac). MERGED flip rides in Muse 13 work PR #1744 (STR-HLT-002).'
     blockers:
     - 'Failure injection (venue disconnect, stale feed) on the live demo daemon HELD - needs separate owner clearance (coordinator ruling 7138466832 section 3).'
-    next_action: 'Claimed by Muse 13 (hub 7137567513); read-only live legs filed in work PR #1693. Failure-injection legs await owner clearance; FIX-01 (CCXT registry) and FIX-02 (MT5 leg scoping) named in the evidence doc for coordinator filing.'
+    next_action: 'Closed - merged. Failure-injection legs + FIX-01/FIX-02 remain with the coordinator for filing.'
 
   - id: TASK-STR-073
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG2-STR-04, IG2-STR-05, IG2-STR-06, IG2-STR-07, IG2-STR-08 - live extreme-condition verification (wave 1)'
