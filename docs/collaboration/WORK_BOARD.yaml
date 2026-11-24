@@ -18501,23 +18501,25 @@ tasks:
 
   - id: TASK-VOI-037
     title: 'FRIDAY voice: acceptance run 22 - next calm-window run after VOI-036 (run 21); per-probe latency filed'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_9
-    branch: null
-    pr: null
+    branch: muse9/task-voi-037
+    pr: 1635
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T07:53:56+05:30'
+    updated_at: '2026-11-24T12:02:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-VOI-037-CALM-WINDOW-RUN-22.md
     acceptance:
       - 'Per-probe latency filed with a pass/fail verdict on the 8s greeting-onset bar.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~06:35 IST; sequel to VOI-036 (run 21 draft). Pool floor refill.'
       - 'Assigned to Muse 9 as queue position 3 after INT-023 -> STR-055 by coordinator watch 2026-11-24 ~07:53 IST (board PR watch010; hub #1483).'
+      - 'Claim: hub #1483 comment 7123998734 by Muse 9, 2026-11-24 ~12:00 IST, queue head under the blocked-head rule (INT-023 IN_REVIEW, final 7-day compilation due 2026-11-27; STR-055 MERGED 11:02 IST, PR #1624, merge 29db8c08). Board record verified AVAILABLE, owner muse_9, on main 5b245ffd (board blob beabe8e5, 18,740 lines, verified against the true main blob before editing). Branch muse9/task-voi-037 from main 5b245ffd. Calm check 1 (S1, read-only, ~11:59 IST): NOT a calm window — load 1.66/1.44/1.33 but FRIDAY.service 209,678,336 / 209,715,200 bytes (99.98% of 200 MB cap); host RAM available 147 MB and falling; Stratex daemon still down (recovery is Muse 4 per watch 7123816690). No LiveKit call run. Work PR #1635.'
     blockers: []
-    next_action: 'Run the probes in the next calm window and file per-probe latency + pass/fail.'
+    next_action: 'Re-probe the calm state on the next check; run the probes only when FRIDAY has real memory headroom and no S1 recovery is pending.'
 
   - id: TASK-STR-055
     title: 'Stratex: forward-window fills audit run 5 - reconcile the daemon fill ledger against venue history for the new window'
