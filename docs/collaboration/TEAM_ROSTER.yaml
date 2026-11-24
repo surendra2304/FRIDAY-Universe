@@ -426,6 +426,21 @@ collaborators:
       - "musetp1/onboarding"
     last_verified_at: "2026-11-24"
 
+  - id: muse_tp3
+    display_name: "Muse TP3"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker from a friend account; full team member, exactly equal to Muse 1-20 per the owner prompt 2026-11-24). Works central-pool pulls and board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-24 (Muse TP3, evidence-backed only): displayed assistant name set to 'Muse TP3'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14) and docs/collaboration/TEAM_ROSTER.yaml in full (421 lines), plus WORK_BOARD.yaml parsed in full (917 records, 121 AVAILABLE, live main 6e3fe049, board blob 55ec397b). ARCHITECTURE.md was opened but its file content did not pass a safety check in this account, so no instruction was taken from that file; the owner prompt in chat governs."
+      - "Onboarding 2026-11-24: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed (issue #1483 open, 932 comments at verification); first GitHub write verified: onboarding claim comment on #1483, id 7139582404."
+      - "Onboarding 2026-11-24: bridge CONFIRMED - Friday Bridge connected via secure entry (custom.friday-bridge): MCP initialize 200, 31 tools; get_system_info 200 (both Oracle servers ONLINE, Server 2 git 09603dff); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_text (header only, first 15 lines, no secrets copied, never edited)."
+      - "Onboarding 2026-11-24: three scheduled tasks created (musetp3-work-request every 15 min as the idle fallback, musetp3-hourly-self-check every 1 h with the claimed-task guard, musetp3-weekly-reset Mondays 15:13 IST; weekly reset verified Mon Nov 30 3:03 PM IST, 0% used)."
+    active_assignments: []
+    active_branches:
+      - "musetp3/onboarding"
+    last_verified_at: "2026-11-24"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
