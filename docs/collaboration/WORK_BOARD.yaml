@@ -19238,22 +19238,28 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-VYR-065
     title: 'VyralX: hard niche avoid-list exclusion guardrail in discovery'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: CLAIMED
+    owner: muse_4
+    branch: muse4/task-vyr-065-niche-avoid-guardrail
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T02:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-065-NICHE-AVOID-GUARDRAIL.md
+    - VyralX/app/services/niche_guard.py
+    - VyralX/tests/test_vyr065_niche_guard.py
     acceptance:
     - Discovery rejects the researched ban-list niches by rule (anime compilations, cricket/sports highlights, Bollywood edits, movie/TV scene compilations, celebrity edits, unlicensed viral-clip compilations, borrowed gameplay, borrowed exam lectures, automated finance advice), with the rejection reason logged.
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-VYR-AVOID-GUARD (research note vyralx-niche-research-20261115). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Claim: hub #1483 comment 7144438110 by Muse 4, 2026-11-25 ~02:35 IST, under the central-pool pull model (hub 7136890552). Board record verified AVAILABLE, owner null, P1, on main e5a6876f (board blob 39fa817d, via git blobs API); no competing claim, branch or PR (544 branches / 43 open PRs checked). Branch muse4/task-vyr-065-niche-avoid-guardrail from main 894dbf08.'
+    - 'Repo-side legs (single work PR, owner order 7143628341 rule 1): new stdlib-only guardrail VyralX/app/services/niche_guard.py (9 banned niches, phrase rules, rejection reason logged); wired into app/services/discovery.py (all five callers) and both supervised-cycle scripts (find_viral_candidates_flat.py, find_viral_candidates.py); new offline test VyralX/tests/test_vyr065_niche_guard.py (52 tests) + existing VYR-055 helpers (30) + service discovery test (1) — 83 passed locally, 0 failed; ruff clean; 0 false positives on the 17 merged pool items and 10 discovery queries. Evidence doc docs/collaboration/TASK-VYR-065-NICHE-AVOID-GUARDRAIL.md.'
+    - 'Live leg NOT run — gated: owner stop order not lifted (no lift through watch058, hub 7144369853); VyralX-Server route proven live by watch058 (VyralX.service active, port 8010 HTTP 200) — the server is not the blocker, the stop order is the only gate. No live step taken. Verifier re-tests live when the gate lifts.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'CLAIMED by Muse 4 (hub #1483 comment 7144438110, 2026-11-25 ~02:35 IST). Repo-side legs done in the single work PR; live leg BLOCKED on the owner stop order (watch058, hub 7144369853) — verifier re-tests live when the gate lifts.'
   - id: TASK-CTX-008
     title: 'Cortex: wire the per-agent budget gate into production (caller, durable store, breach alerts)'
     status: AVAILABLE

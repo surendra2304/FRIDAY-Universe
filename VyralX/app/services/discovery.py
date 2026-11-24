@@ -1,5 +1,6 @@
 import httpx
 from app.config import get_settings
+from app.services.niche_guard import check_query, filter_candidates
 
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEOS_URL = "https://www.googleapis.com/youtube/v3/videos"
@@ -12,6 +13,11 @@ def discover_youtube_videos(query: str, max_results: int = 10, order: str = "vie
     max_results = max(1, min(int(max_results), 25))
     if order not in {"relevance", "date", "viewCount", "rating"}:
         raise ValueError("Unsupported YouTube search ordering")
+    # TASK-VYR-065: a query naming a banned niche is rejected outright —
+    # the search is never issued, so no banned-niche pool can be built.
+    allowed, reason = check_query(query)
+    if not allowed:
+        return []
     params = {"key": settings.youtube_data_api_key, "part": "snippet", "type": "video",
               "q": query[:200], "maxResults": max_results, "order": order,
               "safeSearch": "moderate"}
@@ -53,6 +59,11 @@ def discover_youtube_videos(query: str, max_results: int = 10, order: str = "vie
             "discovery_only": True,
             "rights_verified": False,
         })
+    # TASK-VYR-065: hard niche avoid-list — drop banned-niche candidates
+    # before they can reach any caller (API route, orchestrator, project
+    # pipeline, task dispatch, repurposer). Rejections are logged with
+    # their reason inside filter_candidates.
+    candidates, _rejected = filter_candidates(candidates)
     if order == "viewCount":
         return sorted(candidates, key=lambda x: x["view_count"], reverse=True)
     return candidates
