@@ -17260,14 +17260,14 @@ tasks:
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-EARN-003
     title: 'CometWorks Level-1 queue pack 2 - podcast scripts / show notes (Gig Pack #2 Level-1 queue)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_3
-    branch: null
+    branch: muse3/task-earn-003-podcast-pack-2
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:15:00+05:30'
+    updated_at: '2026-11-24T19:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17275,6 +17275,7 @@ tasks:
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~20:40 IST (consolidated board PR watch14; earning lane, queue position 3 only; Level-1 queue per ~/workspace/earning-project/fiverr-gig-pack-2.md). Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Assigned Muse 3 queue position 3 (hub 7109363715, 2026-11-23 ~23:24 IST; earning lane, position 3 only). Board flip rides in the coordinator consolidated board PR 2026-11-24 ~00:15 IST.'
+    - 'Claim: hub #1483 comment 7131772361 by Muse 3, 2026-11-24 ~18:10 IST (INT-037 MERGED #1661; REL-090 skipped per blocked-head rule - live S1 repoint blocked by owner stop order; EARN-003 claimed as working head). Board record verified AVAILABLE, owner muse_3, on main 118bbfed. Branch muse3/task-earn-003-podcast-pack-2 created from main ce5c1bd4; fast-forwarded to main 118bbfed for the claim flip.'
     blockers: []
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-FRG-020
