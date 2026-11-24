@@ -17643,22 +17643,25 @@ tasks:
   - id: TASK-FRD-042
 
     title: 'FRIDAY: deploy + live acceptance leg for the FRD-038 webchat 401 fix once it lands'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_5
-    branch: null
-    pr: null
+    branch: muse5/task-frd-042-deploy-acceptance
+    pr: 1647
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:59:00+05:30'
+    updated_at: '2026-11-24T13:29:25+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'FRD-038 fix deployed on S1 with coordinator clearance; live webchat login succeeds end-to-end (no 401) and the acceptance probe passes on the live copy.'
     evidence:
       - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
+      - 'Claim: hub issue #1483 comment 7120488172, 2026-11-24 ~08:20 IST; branch muse5/task-frd-042-deploy-acceptance from main afef47ba. No claim PR; board flip rides in the work PR.'
+      - 'Deploy leg: FRD-038 fix merged (PR #1535, 8c0ef142, 2026-11-23 23:40 IST) but NOT live - served webchat export stale (last built 2026-11-19 18:48). Clearance granted (watches 7121813967 + 7122541986): deploy only the merged fix, verify /health 200 + POST /api/chat no longer 401, restore on failure.'
+      - 'Work PR #1647 opened 2026-11-24 ~13:40 IST (head 9bb0a3ff, rebuilt FRIDAY/ui/out, 25 files +35/-35, byte-identical copy of the verified transfer per coordinator ruling 7125091345; commit with hooks disabled from a fresh clone).'
     blockers: []
-    next_action: 'Deploy the FRD-038 fix with coordinator hub clearance, then run the live webchat acceptance probe.'
+    next_action: 'Awaiting Muse merge of work PR #1647; after merge, S1 deploy under the granted clearance, then live acceptance probe.'
   - id: TASK-EARN-004
 
     title: 'EARN: lead-magnet eBook pack - draft the eBook outline + first chapter for the Payhip/Contra listing'
