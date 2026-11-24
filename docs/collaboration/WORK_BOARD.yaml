@@ -20004,16 +20004,17 @@ tasks:
 
   - id: TASK-VYR-074
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG3-VYR-07, IG3-VYR-08, IG3-VYR-09, IG3-VYR-10 - live extreme-condition verification (wave 1)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
     branch: muse4/task-vyr-074-prod-verify-ig3-vyr-07-10
-    pr: 1690
+    pr: 1714
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T22:36:00+05:30'
+    updated_at: '2026-11-25T01:25:01+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-074-PROD-VERIFY-IG3-VYR-07-10.md
     acceptance:
     - 'PRODUCTION-VERIFY (owner standard 2026-11-24: merged code is NOT implemented): live extreme-condition verification of TASK-IG3-VYR-07, TASK-IG3-VYR-08, TASK-IG3-VYR-09, TASK-IG3-VYR-10.'
     - 'Extreme-condition test: real end-to-end render/discovery cycle on VyralX-Server with real source videos + machine-QA under bad inputs (missing BGM, doubled captions, watermark) + metrics-sync against the real channel; loop stays OFF, uploader paused, renders held unlisted'
@@ -20022,8 +20023,11 @@ tasks:
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Claim: hub #1483 comment 7138661031 by Muse 4, 2026-11-24 ~22:33 IST, under the central-pool pull model (hub 7136890552; pool order 7137277063; 21:57 watch 7138466832 ruling 2). Board record verified AVAILABLE, owner null, P1, on main 37e030c7 (board blob 3b414a1e read first-hand). VYR-072 claimed by M14 first (7138526997); VYR-073 is M14 pre-staged next; VYR-074 is the next free Wave 1 task.'
+    - "Repo-side legs (work PR #1714, branch muse4/task-vyr-074-prod-verify-ig3-vyr-07-10): mapping verified first-hand on main ce3c817f — IG3-VYR-07 B114 motion_templates.py (exactly the 12 source-named templates in _TEMPLATE_NAMES), IG3-VYR-08 B125 idea_generator.py (analyse_performers/generate_ideas, operator-supplied records only, no platform calls), IG3-VYR-09 B131 production_rules.py + production_rules.json (exactly the 5 source rules), IG3-VYR-10 B120 SCENE_ASSEMBLY_EVALUATION.md (composition layer exists, generation off-fleet, gate CLOSED). Claim PR #1690 merged 2026-11-24 23:23:50 IST (e984ea74)."
+    - "Verification: new offline test VyralX/tests/test_vyr074_mapping.py (5 tests, stdlib-only) — 5/5 passed locally against the real mapped files fetched from main ce3c817f; added to the VyralX contracts list in owner-workflows.yml. Evidence doc docs/collaboration/TASK-VYR-074-PROD-VERIFY-IG3-VYR-07-10.md carries the per-item live verification plan."
+    - "Live leg NOT run — gated: owner stop order not lifted (no lifting comment through hub 7142315021, 2026-11-25 01:05 IST); VYR-056 PR #1710 HELD for full-diff review in watch 7141869992; VyralX-Server route uncleared; failure injection HELD (21:57 watch ruling 3). No live step taken."
     blockers: []
-    next_action: 'Claim PR open; work starts on merge (M16 precedent). Repo-side legs: map IG3-VYR-07..10 to merged code, verification plan + evidence doc. Live leg gated on VyralX-Server route + VYR-056 yt-dlp repair; failure injection HELD pending owner clearance (21:57 watch ruling 3).'
+    next_action: 'Awaiting Muse review/merge of work PR #1714. After merge: live leg gated — owner stop order not lifted, VYR-056 PR #1710 unmerged, VyralX-Server route uncleared, failure injection HELD. No live step until clearance lands.'
 
   - id: TASK-FRD-051
     title: 'PRODUCTION-VERIFY: FRIDAY corpus items IG-FRD-001, IG-FRD-002, IG-FRD-003, IG-FRD-004, IG-FRD-005 - live extreme-condition verification (wave 2)'
