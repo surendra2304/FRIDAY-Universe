@@ -14,6 +14,9 @@ Covered here:
 * InferenceChatProvider's wire contract against a monkeypatched httpx:
   message flattening, the markup tool protocol, provenance passthrough,
   and degraded/unavailable → LLMProviderError.
+* TASK-INF-032 — the Inference routing deadline wired into the live
+  routing path: the client timeout defaults to the 60 s gateway
+  deadline + 10 s transport margin (env override still wins).
 """
 
 from __future__ import annotations
@@ -25,9 +28,12 @@ from friday.core.types import Message, Role, ToolCall
 from friday.llm.base import BaseLLMProvider
 from friday.llm.escalation import (
     COMPLEX_KINDS,
+    INFERENCE_CLIENT_TIMEOUT_MARGIN_S,
+    INFERENCE_ROUTING_DEADLINE_S,
     EscalatingLLMProvider,
     InferenceChatProvider,
     TurnRouteContext,
+    _inference_timeout_s,
     bind_turn_route_context,
     classify_turn_complexity,
 )
@@ -433,3 +439,38 @@ def test_inference_provider_prefers_gemini_for_synthesis_only(monkeypatch):
     provider = InferenceChatProvider(base_url="http://127.0.0.1:8001", api_key="k")
     provider.generate(_msgs("write the report"))
     assert _FakeClient.last_request["json"]["model"] == "gemini-3.8-flash"
+
+
+# ---------------------------------------------------------------------------
+# TASK-INF-032 — the routing deadline wired into the live routing path
+# ---------------------------------------------------------------------------
+
+
+def test_inference_timeout_default_is_routing_deadline_plus_margin(monkeypatch):
+    monkeypatch.delenv("FRIDAY_LLM_ESCALATION_TIMEOUT_S", raising=False)
+    assert INFERENCE_ROUTING_DEADLINE_S == 60.0
+    assert INFERENCE_CLIENT_TIMEOUT_MARGIN_S == 10.0
+    assert _inference_timeout_s() == 70.0
+
+
+def test_inference_timeout_env_override_wins(monkeypatch):
+    monkeypatch.setenv("FRIDAY_LLM_ESCALATION_TIMEOUT_S", "120")
+    assert _inference_timeout_s() == 120.0
+
+
+def test_inference_timeout_invalid_env_falls_back_to_deadline(monkeypatch):
+    monkeypatch.setenv("FRIDAY_LLM_ESCALATION_TIMEOUT_S", "not-a-number")
+    assert _inference_timeout_s() == 70.0
+
+
+def test_inference_timeout_clamps_to_sane_bounds(monkeypatch):
+    monkeypatch.setenv("FRIDAY_LLM_ESCALATION_TIMEOUT_S", "5")
+    assert _inference_timeout_s() == 10.0
+    monkeypatch.setenv("FRIDAY_LLM_ESCALATION_TIMEOUT_S", "900")
+    assert _inference_timeout_s() == 600.0
+
+
+def test_inference_chat_provider_uses_deadline_timeout_by_default(monkeypatch):
+    monkeypatch.delenv("FRIDAY_LLM_ESCALATION_TIMEOUT_S", raising=False)
+    provider = InferenceChatProvider(base_url="http://127.0.0.1:8001", api_key="<redacted>")
+    assert provider.timeout == 70.0

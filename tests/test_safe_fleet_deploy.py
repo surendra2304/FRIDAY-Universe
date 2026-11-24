@@ -108,7 +108,19 @@ def test_parked_branch_is_refused_even_at_targets_own_commit(checkout):
     assert git(local, "branch", "--show-current") == "claude/parked-side-branch"
 
 
-def test_voice_worker_restart_is_explicit_in_cd():
+def test_moved_agents_are_never_restarted_on_server1():
+    # Since 2026-11-24, FRIDAY + Inference live on FRIDAY-Server (AWS) and
+    # Stratex on Stratex-Server (AWS). Their Server 1 units are stopped +
+    # disabled sleeping backups; a CD restart revives them (systemctl
+    # restart overrides the disabled state), which produced a duplicate
+    # live FRIDAY on 2026-11-24. The Server 1 deploy job must therefore
+    # neither list them nor restart their units. (This replaces the
+    # 2026-11-13-era assertion that the voice worker restart be explicit:
+    # the worker no longer runs on Server 1 at all.)
     text = WORKFLOW.read_text()
-    assert "sudo systemctl restart FRIDAY-Voice.service" in text
+    s1 = text.split("deploy-server2:")[0]
+    assert 'SERVER1_AGENTS=("Memora" "Forge" "Sentinel")' in s1
+    assert "sudo systemctl restart FRIDAY-Voice.service" not in s1
+    assert "sudo systemctl restart Stratex-Daemon.service" not in s1
+    assert "- 'FRIDAY/**'" not in s1.split("server2:")[0]
     assert "git reset --hard" not in text
