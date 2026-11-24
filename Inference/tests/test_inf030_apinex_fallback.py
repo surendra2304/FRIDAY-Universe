@@ -352,6 +352,10 @@ def test_gateway_pools_include_apinex(monkeypatch):
     monkeypatch.setattr(settings, "LOCAL_ENABLED", False)
 
     gateway = ModelGateway.__new__(ModelGateway)
+    # House pattern (test_inf008 / test_rel047): __new__ skips __init__,
+    # so the pools dicts must exist before _initialize_pools() fills them.
+    gateway.key_pools = {}
+    gateway.rate_limiters = {}
     gateway._initialize_pools()
 
     assert "apinex" in gateway.key_pools
