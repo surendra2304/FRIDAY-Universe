@@ -1,9 +1,11 @@
-# TASK-VYR-071 — repo-side verification legs (evidence, 2026-11-25 ~02:30 IST)
+# TASK-VYR-071 — repo-side verification legs (evidence, 2026-11-25 ~02:30 IST; updated ~03:20 IST)
 
 **Task:** PRODUCTION-VERIFY VyralX corpus items IG-VYR-06..10, wave 1, P1.
 Claim of record: hub #1483 comment 7142669865 (~01:15 IST 2026-11-25).
-Branch: `muse5/task-vyr-071-prod-verify` from main `ce3c817f`.
-Verified against main `e5a6876f` (2026-11-24T20:28:51Z), board read first-hand (21,090 lines).
+Branch: `muse5/task-vyr-071-prod-verify` from main `ce3c817f`, rebased onto main `e54da6b0` (2026-11-25 ~03:20 IST; the ruling named `7277dcdb`, main has since moved to `e54da6b0` via board PR #1734).
+Verified against main `e5a6876f` (2026-11-24T20:28:51Z), board read first-hand (21,090 lines); board re-verified on main `e54da6b0` (22,217 lines) this run.
+
+**Coordinator ruling (watch 7145228662, 2026-11-25 ~03:10 IST):** file **TASK-VYR-071-FIX-01** (retire-or-replace decision for `previs.py`, retired by VYR-033 with no successor) in the work PR, exactly as M10 filed FIX-01 via #1715. Open the work PR now with the repo-side evidence (24/24) + IN_REVIEW flip. Verifier M9 verifies when the PR opens.
 
 **Method:** files fetched from main via the public raw endpoint; the surviving test
 files run locally with pytest 9.2.0 (Pillow 10.2.0, ffmpeg/ffprobe present).
@@ -20,7 +22,8 @@ This is branch work only, not a checkpoint PR (owner order 7143628341, rule 1).
   Same situation as IG-VYR-02 in TASK-VYR-070 (G1): VYR-033 retired the whole
   Path C lane and names no successor module anywhere in its record (verified
   first-hand by M10 for VYR-070). 5 claimed tests are gone with the module.
-  Decision owed by the coordinator: successor ruling or a named fix task.
+  **Filed as TASK-VYR-071-FIX-01 in this PR** (board record, AVAILABLE, P2):
+  decide retire-or-replace for `previs.py`, per the coordinator ruling above.
   Do not mark verified what does not exist.
 - **IG-VYR-07 (generated-footage intake) — 6/6 tests pass.**
   `VyralX/app/services/generated_footage.py` (`784b73ef`),
@@ -45,10 +48,12 @@ This is branch work only, not a checkpoint PR (owner order 7143628341, rule 1).
 
 ## Live leg — BLOCKED, with reason
 
-- VyralX-Server probe owed by the coordinator (watch057 carried item 5); no
-  clearance landed; `VyralX.service` inactive on S2 (M10 VYR-070 checkpoint 2, G2).
-- Owner stop order ~16:42 IST 2026-11-24 still in force. No live step taken.
-- No per-task run_shell grant for VYR-071; no live move made.
+- VyralX-Server probe RUN by the coordinator in watch058 (hub #1483 comment
+  7144369853, carried into the ruling watch 7145228662): `VyralX.service`
+  active running, port 8010 HTTP 200. The server route is proven.
+- Live leg now gated by the owner stop order (~16:42 IST 2026-11-24) only —
+  same posture as VYR-074. No live step taken by Muse 5; no per-task
+  run_shell grant for VYR-071; no live move made.
 - Acceptance requires, per item, a live run on the real agent (end-to-end
   render/discovery cycle + machine-QA under bad inputs + metrics-sync). A
   code-only report is rejected — so this task is NOT done and no item is
@@ -64,3 +69,4 @@ This is branch work only, not a checkpoint PR (owner order 7143628341, rule 1).
 - Usage: 31% of free weekly limit (checked this run; reset Nov 28, 9:38 PM IST).
 
 — Muse 5
+
