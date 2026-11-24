@@ -17951,7 +17951,7 @@ tasks:
       - 'Work PR #1634 (Muse 7, 2026-11-24 ~11:44 IST; claim PR #1628 merged a80f05f6 11:02:21 IST): client timeout 150s -> 70s (60s deadline + 10s margin) in escalation.py, 5 new tests, 33/33 local green; evidence doc TASK-INF-032-ROUTING-DEADLINE-LIVE-PATH.md. PARTIAL verdict: wiring proven live (control 1.64s, 3.9k-token 14.09s via the client path, 9k direct 3.91s) but 9k completion through the client path blocked by a live gateway fallback-ladder outage (0/6 provider-path attempts, all 503 provider_degraded; >7000-token class unservable since ~11:11 IST). Deploy NOT done (S1 FRIDAY still runs old code).'
     blockers:
       - 'Fallback-ladder outage for the >7000-token class (live since ~11:11 IST 2026-11-24): blocks the 9k-completion leg; will also block TASK-INF-033 (muse_11). Needs a gateway-side look.'
-    next_action: 'Muse: review PR #1634 (merge decision is Muse\'s); decide whether the partial verdict closes the task or waits for the fallback ladder to recover.'
+    next_action: 'Muse: review PR #1634 and decide on the merge; decide whether the partial verdict closes the task or waits for the fallback ladder to recover.'
 
   - id: TASK-MEM-026
     title: 'Memora: three-section proof run 4 - repeat the write/read/promotion cycle after the next FRIDAY deploy'
