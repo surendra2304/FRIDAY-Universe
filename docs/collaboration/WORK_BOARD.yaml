@@ -20123,16 +20123,17 @@ tasks:
 
   - id: TASK-VYR-071
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG-VYR-06, IG-VYR-07, IG-VYR-08, IG-VYR-09, IG-VYR-10 - live extreme-condition verification (wave 1)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_5
+    branch: muse5/task-vyr-071-prod-verify
+    pr: 1738
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T03:26:40+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-071-REPO-LEG-EVIDENCE.md
     acceptance:
     - 'PRODUCTION-VERIFY (owner standard 2026-11-24: merged code is NOT implemented): live extreme-condition verification of TASK-IG-VYR-06, TASK-IG-VYR-07, TASK-IG-VYR-08, TASK-IG-VYR-09, TASK-IG-VYR-10.'
     - 'Extreme-condition test: real end-to-end render/discovery cycle on VyralX-Server with real source videos + machine-QA under bad inputs (missing BGM, doubled captions, watermark) + metrics-sync against the real channel; loop stays OFF, uploader paused, renders held unlisted'
@@ -20140,8 +20141,33 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Claim: hub #1483 comment 7142669865 by Muse 5, 2026-11-25 ~01:15 IST. Branch muse5/task-vyr-071-prod-verify from main ce3c817f, rebased onto main 3c118b77.'
+    - 'Repo-side evidence (Muse 5, 2026-11-25 ~02:30 IST, pytest local, no server execution): IG-VYR-07 6/6, IG-VYR-08 6/6, IG-VYR-09 9/9, IG-VYR-10 3/3 — 24/24 pass. IG-VYR-06 has no code on main (previs.py + test 404, retired by TASK-VYR-033 with no successor); filed as TASK-VYR-071-FIX-01 in this PR per coordinator ruling in watch 7145228662.'
+    - 'Live leg BLOCKED (owed, not a failure): VyralX-Server probe run by the coordinator in watch058 — VyralX.service active running, port 8010 HTTP 200, route proven. Live leg gated by the owner stop order only, same posture as VYR-074. No item marked production-verified on repo-side evidence alone.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'Awaiting Muse merge of work PR #1738; verifier M9 verifies when the PR opens. Live leg resumes only when the owner stop order lifts (coordinator call).'
+
+  - id: TASK-VYR-071-FIX-01
+    title: 'IG-VYR-06 has no live implementation: previs.py was retired by TASK-VYR-033 with no successor named - decide: retire IG-VYR-06 from the verification programme or specify a replacement module, then verify it live'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T03:26:40+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-071-REPO-LEG-EVIDENCE.md
+    acceptance:
+    - 'Decision recorded: either IG-VYR-06 is retired from the verification programme (programme doc + board updated, item marked not-applicable, never verified), or a replacement module is specified.'
+    - 'If a replacement is specified: the replacement is implemented, its IG-VYR-06 tests pass, and it is verified live on VyralX-Server under the VYR-071 extreme-condition standard.'
+    - 'IG-VYR-06 is NOT marked verified on the basis of the retired previs.py.'
+    evidence:
+    - 'Filed by Muse 5 from TASK-VYR-071 G1, per coordinator ruling in watch 7145228662 (hub #1483): previs.py retired by TASK-VYR-033 (PR #1196) with no successor named, so file this fix task.'
+    blockers: []
+    next_action: 'Central pool (owner pull model): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins.'
 
   - id: TASK-VYR-072
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG2-VYR-01, IG2-VYR-02, IG2-VYR-03, IG2-VYR-04, IG2-VYR-05 - live extreme-condition verification (wave 1)'
