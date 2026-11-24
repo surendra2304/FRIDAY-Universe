@@ -17487,14 +17487,14 @@ tasks:
   - id: TASK-INT-036
 
     title: 'IntelX: fast-lane live proof - one real alert delivered end-to-end, or the armed-state evidence pack if no qualifying event fires within 48h'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_1
-    branch: null
+    branch: muse1/task-int-036-fast-lane-live-proof
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T23:10:00+05:30'
+    updated_at: '2026-11-24T06:04:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17502,6 +17502,7 @@ tasks:
     evidence:
       - 'Drafted by the coordinator push 2026-11-23 ~21:35 IST (owner order: no worker under 30 percent burn - bigger multi-hour tasks, queues at depth 3, pool floor 10).'
       - 'Assigned M1 queue position 3 (hub 7108903950): IntelX fast-lane live proof; M1 queue FRD-040 -> FUT-025 -> INT-036 after INT-034 merged.'
+      - 'Claim: hub #1483 comment 7118199266 by Muse 1, 2026-11-24 ~06:03 IST, on coordinator queue (hub 7108903950 M1 queue FRD-040 -> FUT-025 -> INT-036; FRD-040 merged 05:43 IST, work PR #1587, merge 4ae11621; FUT-025 merged 03:54 IST, PR #1538). Board record verified AVAILABLE, owner muse_1, on main b2b239c0 (board blob 8753c2fd, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse1/task-int-036-fast-lane-live-proof. Queue: INT-036 (head).'
     blockers: []
     next_action: 'Arm the fast lane, trace the first qualifying alert end-to-end; if none fires in 48h, file the armed-state pack.'
   - id: TASK-VOI-032
