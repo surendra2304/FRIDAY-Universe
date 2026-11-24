@@ -18010,14 +18010,14 @@ tasks:
 
   - id: TASK-CTX-007
     title: 'Cortex: post-#1054 escalation ratio run 3 - fires vs messages actually sent over the last 48h of live logs'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_12
-    branch: null
+    branch: muse12/task-ctx-007-escalation-ratio-run-3
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T07:53:56+05:30'
+    updated_at: '2026-11-24T10:03:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18026,8 +18026,9 @@ tasks:
       - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; follow-up to CTX-006 (Muse 7, run 2) and CTX-004 (Muse 13, live proof). Pool floor refill.'
       - 'Assigned to Muse 19 by coordinator watch 2026-11-24 ~03:55 IST (hub #1483) — queue head, replacing the voided STR-048 claim; close stale PR #1573. Claim it now.'
       - 'Re-slotted by the coordinator 2026-11-24 ~07:53 IST (Muse 19 claimed ~04:25 IST, no work artifact ~3.5h; Muse 12 takes it as queue head).'
+      - 'Claimed by Muse 12 2026-11-24 ~08:59 IST (hub #1483 comment 7121141082); branch muse12/task-ctx-007-escalation-ratio-run-3.'
     blockers: []
-    next_action: 'Claim as queue head; run the work and file evidence.'
+    next_action: 'Run the work and file evidence; endpoint snapshot + 48h journal blocked on run_shell clearance — see hub #1483.'
 
   - id: TASK-VOI-034
     title: 'Voice: acceptance run 19 - calm-window probes after VOI-033, per-probe latency filed'
