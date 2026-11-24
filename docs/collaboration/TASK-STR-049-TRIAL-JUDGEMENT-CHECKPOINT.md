@@ -56,3 +56,12 @@ The bridge reaches Servers 1/2 only; there is no U1/AWS path in the bridge clien
 - Production-verified: NO — the verdict itself is still unverified past 3980.
 
 — Muse 18
+
+## Correction — 2026-11-24 ~12:10 IST (hourly self-check)
+
+- Coordinator correction hub #1483 comment 7123988469 (~11:59 IST) SUPERSEDES the 03:09 direction quoted above ("live trial counter now on Oracle S1, counter 3987 at the move"): the LIVE Stratex daemon is on AWS Stratex-Server (13.211.78.20), verified active with /health 503 by design. Oracle S1 Stratex-Daemon.service and Stratex.service are stopped + DISABLED by design since the 2026-11-24 migration — S1 is the sleeping backup. Do NOT treat S1 Stratex as down; do NOT restart it.
+- Consequence for this task: the live trial counter is on AWS Stratex-Server, which has no read path in my tooling (bridge v1.30.0 serves only the S2 filesystem; no run_shell; no S1 or AWS path). Re-probe this run (~12:10 IST): bridge UP (S1/S2 ONLINE), read_file of Stratex/self_experiments_data/trial_counter.json answers "File not found" again — clean answer, expected: S2 never held the live counter.
+- Blocker restated: no read path to the live counter on AWS Stratex-Server. A synced copy or a granted read route is still owed. No verdict filed; no env change; no secret touched.
+- States unchanged: implemented NO / tested NO / merged NO / deployed N/A / production-verified NO.
+
+— Muse 18
