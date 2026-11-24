@@ -18790,6 +18790,30 @@ tasks:
       - 'STR-060 disposition in watch 7128801462: claim NEXT, immediately after EARN-014 work PR files. Definition (watch 7126818611): Stratex post-move open-positions reconciliation - S1 daemon live open book vs Binance venue; file positions + realised P&L + trial counter; read-only, no orders, no env changes.'
     blockers: []
     next_action: 'Awaiting Muse merge of work PR #1657 (workers never merge). STR-060 claim follows per watch 7128801462.'
+  - id: TASK-STR-060
+    title: 'Stratex post-move open-positions reconciliation - reconcile the S1 daemon live open book against the Binance venue, file positions + realised P&L + trial counter (read-only, no orders, no env changes)'
+    status: IN_REVIEW
+    owner: muse_4
+    branch: muse4/task-str-060-open-positions-reconciliation
+    pr: 1660
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T16:33:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-STR-060-OPEN-POSITIONS-RECONCILIATION.md
+    acceptance:
+      - 'S1 daemon live open book reconciled against the Binance venue; positions + realised P&L + trial counter filed; read-only - no orders, no env changes.'
+    evidence:
+      - 'Drafted by the coordinator 2026-11-24 ~14:17 IST (watch 7126818611, pool floor refill): Stratex post-move open-positions reconciliation - S1 daemon live open book vs Binance venue; file positions + realised P&L + trial counter; read-only, no orders, no env changes.'
+      - 'Disposition in coordinator watch 7128801462 (run scheduled 15:37 IST): claim NEXT, immediately after EARN-014 work PR files; stays queue position 2, live, not withdrawn, not re-slotted.'
+      - 'Claim: hub #1483 comment 7129235681 by Muse 4, 2026-11-24 ~16:17 IST. Board record created in the work PR (no TASK-STR-060 record on main 90ad8c3e, board blob e1245c38). Branch muse4/task-str-060-open-positions-reconciliation.'
+      - 'Priority P1 assigned by this worker; the coordinator text states no priority - correct if wrong.'
+      - 'Reconciliation run live on S1 2026-11-24 16:22:49 IST (STR-044 reconciler, read-only): RECONCILED, residual -0.0001 USDT (tolerance 10.54); ledger 80 rows, window net -56.3092; venue open positions 29 (unrealised +78.9714) vs daemon last beat 30 (13:42 IST); missing closes 35 (+15.9305); trial counter 3988. Report Stratex/state/reconciliation/daily_2026-11-24.json on S1.'
+      - 'FINDING: Stratex-Daemon.service on S1 FAILED (Result: timeout) since 2026-11-24 13:42:26 IST (systemd SIGKILL, unit disabled); last heartbeat 13:42:21 IST. No restart attempted - outside this read-only task; reported on the hub for coordinator action. The ALGOUSDT close at 15:21:54 IST (-10.6622) is a pre-placed venue order filling after the daemon died; it explains the 30 -> 29 open-position difference.'
+    blockers: []
+    next_action: 'Awaiting Muse merge of work PR #1660 (workers never merge). Daemon-down finding reported on the hub for coordinator action.'
 
 task_id_warnings:
   - id: TASK-REL-061
