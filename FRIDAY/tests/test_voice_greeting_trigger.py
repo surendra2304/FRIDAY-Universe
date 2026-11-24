@@ -245,7 +245,9 @@ def test_settle_returns_promptly_when_attempted_line_already_done():
 def test_entrypoint_launches_greeting_before_the_first_session_build():
     src = inspect.getsource(w.entrypoint)
     launch_at = src.index('early_greeting["task"] = asyncio.ensure_future(')
-    built_at = src.index("session, agent = await _make_session(instructions)")
+    # TASK-VOI-028: the build call now carries artifacts={...} on the next
+    # line, so match the call head, not the old single-line form.
+    built_at = src.index("session, agent = await _make_session(")
     start_at = src.index("await _start(session, agent)")
     assert launch_at < built_at < start_at
     # The handle is adopted into the shared live dict for

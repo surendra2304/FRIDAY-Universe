@@ -122,7 +122,9 @@ def test_entrypoint_first_session_built_in_job_after_connect():
     assert "_build_first_session" not in src
     assert "_build_task" not in src
     connect_at = src.index("await ctx.connect(")
-    build_at = src.index("session, agent = await _make_session(instructions)")
+    # TASK-VOI-028: the build call now carries artifacts={...} on the next
+    # line, so match the call head, not the old single-line form.
+    build_at = src.index("session, agent = await _make_session(")
     start_at = src.index("await _start(session, agent)")
     assert connect_at < build_at < start_at
     # The key + memory legs still start before the connect.

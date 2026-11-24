@@ -131,7 +131,7 @@ class TestTypedInputRouting:
 
         result = await session.process_typed_input("increase volume")
 
-        agent.process_message.assert_called_once_with("increase volume")
+        agent.process_message.assert_called_once_with("increase volume", channel="voice")
         assert result == "Volume raised from 50% to 60%."
         # Result sent to Live model for speaking
         session._session.send_realtime_input.assert_called_once()
@@ -183,7 +183,7 @@ async def test_instant_command_executes_locally_without_second_model_turn(monkey
         asyncio.Event(),
     )
 
-    agent.process_message.assert_called_once_with("what time is it")
+    agent.process_message.assert_called_once_with("what time is it", channel="voice")
     # FRIDAY speaks the verified local result directly; it must not wait on a
     # second Gemini turn that may never arrive.
     session._session.send_realtime_input.assert_not_called()
@@ -227,7 +227,7 @@ async def test_live_tool_call_for_instant_command_is_not_executed_twice(monkeypa
         ToolCallSession(), MockSpeakerStream(), lambda *_: None, asyncio.Event()
     )
 
-    agent.process_message.assert_called_once_with("close the tab")
+    agent.process_message.assert_called_once_with("close the tab", channel="voice")
     agent._execute_single_tool_call.assert_not_called()
     response = ToolCallSession.send_tool_response.call_args.kwargs["function_responses"][0]
     assert response.response["status"] == "handled_locally"
