@@ -55,7 +55,7 @@ def _fake_windll(calls: list):
 def test_client_media_key_sends_windows_key(monkeypatch):
     _as_windows(monkeypatch)
     calls: list = []
-    monkeypatch.setattr(ctypes, "windll", _fake_windll(calls))
+    monkeypatch.setattr(ctypes, "windll", _fake_windll(calls), raising=False)
     ok, output, error = client._cmd_media_key({"action": "play_pause"}, 5.0)
     assert ok, error
     assert json.loads(output) == {"action": "play_pause", "key": "0xB3", "sent": True}
@@ -65,7 +65,7 @@ def test_client_media_key_sends_windows_key(monkeypatch):
 def test_client_media_key_next_and_previous(monkeypatch):
     _as_windows(monkeypatch)
     calls: list = []
-    monkeypatch.setattr(ctypes, "windll", _fake_windll(calls))
+    monkeypatch.setattr(ctypes, "windll", _fake_windll(calls), raising=False)
     assert client._cmd_media_key({"action": "next"}, 5.0)[0]
     assert client._cmd_media_key({"action": "previous"}, 5.0)[0]
     assert calls[0][0] == 0xB0
@@ -192,7 +192,7 @@ def test_client_media_status_non_windows_is_honest_error():
 def test_client_dispatches_media_commands(monkeypatch):
     _as_windows(monkeypatch)
     calls: list = []
-    monkeypatch.setattr(ctypes, "windll", _fake_windll(calls))
+    monkeypatch.setattr(ctypes, "windll", _fake_windll(calls), raising=False)
     record = client._execute_command("lap-test", "req-1", "media_key", {"action": "next"}, 5.0)
     assert record["ok"] is True
     assert record["command"] == "media_key"

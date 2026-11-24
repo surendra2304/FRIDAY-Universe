@@ -71,8 +71,18 @@ tools with a sequenced stub bridge; registration), plus media cases in
   debt, surfaced by this PR's 1-line parity change).
 - Fix (commit 2 on this branch): both files appended to the FRIDAY tier-1
   pytest invocation in `.github/workflows/friday-universe-ci.yml`, following
-  the TASK-INF-032 precedent in the same step. CI re-run pending on the
-  amended head — result to be filled here after the run.
+  the TASK-INF-032 precedent in the same step.
+- CI result on the amended head (e76ab3ee): 9/10 — contracts now SUCCESS;
+  **test FAILED**: 3 failed, 156 passed in the FRIDAY tier-1 run (run
+  45506096864). All 3 failures were in the new test file —
+  `monkeypatch.setattr(ctypes, "windll", ...)` raises AttributeError on
+  Linux CI because `ctypes.windll` does not exist there (default
+  raising=True). The lap001 tests (including the new parity cases) and all
+  other 156 tests passed.
+- Fix (commit 3 on this branch): `raising=False` on all three
+  `monkeypatch.setattr(ctypes, "windll", ...)` calls in the new test file.
+  CI re-run pending on the test-fix head — result to be filled here after
+  the run.
 - Test count added: TBD (counted from the CI log after the green run).
 
 ## Board flips in this PR
