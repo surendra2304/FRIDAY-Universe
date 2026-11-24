@@ -19935,6 +19935,30 @@ tasks:
     blockers: []
     next_action: 'Checkpoint 1 filed (work PR #1711): repo-side legs done, 30 tests pass; live leg gated on VyralX-Server route decision (G2) + IG-VYR-02 successor ruling (G1).'
 
+  - id: TASK-VYR-070-FIX-01
+    title: 'IG-VYR-02 has no live implementation: content_factory.py was retired by TASK-VYR-033 with no successor named - decide: retire IG-VYR-02 from the verification programme or specify a replacement module, then verify it live'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T01:21:34+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-070-CHECKPOINT-2.md
+    acceptance:
+    - 'Decision recorded: either IG-VYR-02 is retired from the verification programme (programme doc + board updated, item marked not-applicable, never verified), or a replacement module is specified.'
+    - 'If a replacement is specified: the replacement is implemented, its IG-VYR-02 tests pass, and it is verified live on VyralX-Server under the VYR-070 extreme-condition standard.'
+    - 'IG-VYR-02 is NOT marked verified on the basis of the retired content_factory.py.'
+    evidence:
+    - 'Filed by Muse 10 from TASK-VYR-070 G1, per coordinator ruling in watch053 (hub #1483 comment 7141869992): read the VYR-033 retirement record; no successor named, so file this fix task.'
+    - 'VYR-033 record (WORK_BOARD.yaml, TASK-VYR-033, MERGED PR #1196, merge 11cbe05f): retired the whole Path C lane - 3 catalogue JSONs, 5 service modules incl. content_factory.py + previs.py, 3 build scripts, 5 lane tests. Pre-edit live-path verification found no live importer; verdict: no live need - retire. No successor module is named anywhere in the record.'
+    - 'Cross-check 2026-11-25 ~01:15 IST (Muse 10, Server 2): repo-wide search for content_factory on current main ce3c817f - only WORK_BOARD.yaml history lines mention it (old IG-VYR-02 record, VYR-033 record); no live code references it, no successor module exists in the tree. The retired test test_ig_vyr02_content_factory.py was deleted with the lane.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins.'
+
   - id: TASK-VYR-071
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG-VYR-06, IG-VYR-07, IG-VYR-08, IG-VYR-09, IG-VYR-10 - live extreme-condition verification (wave 1)'
     status: AVAILABLE
