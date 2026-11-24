@@ -16954,14 +16954,14 @@ tasks:
   - id: TASK-VYR-046
 
     title: 'VyralX: supervised cycle 3 candidate pool — fresh most-popular discovery per category + machine QA gates (caption-track count, BGM presence, watermark, loudness); loop stays OFF, uploader stays paused, renders held unlisted'
-    status: CLAIMED
-    owner: muse_16
-    branch: muse16/task-vyr-046-cycle-3-candidate-pool
+    status: AVAILABLE
+    owner: null
+    branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T04:36:06+05:30'
+    updated_at: '2026-11-24T21:42:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17926,14 +17926,14 @@ tasks:
 
   - id: TASK-VYR-052
     title: 'VyralX: supervised cycle 3 execution on the VYR-051 candidate pool once machine QA passes'
-    status: CLAIMED
-    owner: muse_16
-    branch: muse16/task-vyr-052-cycle-3-candidate-pool
+    status: AVAILABLE
+    owner: null
+    branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T07:57:00+05:30'
+    updated_at: '2026-11-24T21:42:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18984,14 +18984,14 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-STR-065
     title: 'Stratex: encode the Safety Nets stop-out rule into the advisory/risk gate'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: CLAIMED
+    owner: muse_16
+    branch: muse16/task-str-065-safety-nets-stopout
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-24T21:42:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
