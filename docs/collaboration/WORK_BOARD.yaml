@@ -19827,7 +19827,7 @@ tasks:
     status: CLAIMED
     owner: muse_15
     branch: muse15/task-str-073-production-verify-ig2-str-04-08
-    pr: null
+    pr: 1684
     contributors: []
     priority: P1
     created_at: '2026-11-24'
