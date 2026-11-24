@@ -77,6 +77,10 @@ def _normalise_post(raw: dict[str, Any]) -> dict[str, Any]:
         "author": str(raw.get("author") or ""),
         "title": str(raw.get("title") or ""),
         "selftext": str(raw.get("selftext") or ""),
+        # TASK-VYR-058: the post's external link (a link post's target;
+        # empty for self posts). The discovery adapter reads this to
+        # find YouTube videos sourced from a subreddit.
+        "link_url": str(raw.get("url") or ""),
         "score": int(raw.get("score") or 0),
         "num_comments": int(raw.get("num_comments") or 0),
         "permalink": permalink,
