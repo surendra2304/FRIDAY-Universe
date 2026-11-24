@@ -19103,14 +19103,14 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-VYR-058
     title: 'VyralX: Reddit sourcing adapter for the discovery pipeline'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_7
+    branch: muse7/task-vyr-058-reddit-sourcing
+    pr: 1721
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T02:17:48+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
