@@ -21236,6 +21236,53 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+  - id: TASK-VYR-081
+    title: 'VyralX: GTA 6 content series in her existing model - short excerpts, her English narration, subtitles, BGM, unlisted review-first (growth play, NOT a YouTube-revenue play)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:40:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - VyralX/
+    acceptance:
+    - 'Series spec - VyralX''s existing model only, unchanged: short excerpts, her English narration over the clip, source voice ducked under hers, subtitles ALWAYS on, BGM mandatory and ducked, unlisted + review-first, renders held for the owner. Loop stays OFF, uploader stays paused - nothing uploads without the owner''s word.'
+    - 'Pipeline work: moment-finding on permitted footage (audio-spike + scene detection, the PySceneDetect / faster-whisper pattern from Df5V_2anUAj missions 3-5), vertical cut, pre-post self-check, then the standing machine-QA gates (caption-track count, BGM presence, watermark, loudness) before any human review. Builds on the clipping-toolchain evaluation already filed from Df0B9Z4n4BU - do not duplicate it.'
+    - 'Footage rule: ONLY footage VyralX is permitted to use - her own gameplay capture, or campaign-supplied footage under a live TASK-EARN-024 campaign brief. No third-party streamer footage outside a campaign brief.'
+    - 'Honest limits, written into the series record so nobody overclaims later: YouTube pays NOTHING on raw compiled clips (reused-content policy), and Rockstar/Take-Two fan-content rules are non-commercial with takedown at will. This series is a growth/audience play for the channel; any money attached to GTA 6 clips comes only through TASK-EARN-024 campaign platforms under their own terms, never from YouTube revenue on the clips themselves.'
+    - 'Done = series registered in channel_strategy + first 3 episodes rendered, machine-QA passed, held unlisted for owner review with the QA evidence filed.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s explicit follow-up order (02:24 IST) to the Instagram adoption re-audit: the GTA 6 clipping videos must NOT stay reference-only - file real implementation tasks. Source watches read first-hand in the re-audit (Df5V_2anUAj, Df-NMPUFbEx, Df6oHpmJ5Yz, Df0B9Z4n4BU + full-watch item Df1AKYMjuEg).'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. VyralX is scoreboard priority - claim ahead of non-scoreboard pool work.'
+  - id: TASK-EARN-024
+    title: 'EARN: clipping-campaign lane - join Content Rewards / Whop / clip.tech campaigns for GTA 6 clips, campaign tracker, first approved campaign payout'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T02:40:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - earning/
+    acceptance:
+    - 'Method (watches Df5V_2anUAj @murphmaxxing, Df-NMPUFbEx @startclipping, Df6oHpmJ5Yz): clippers join campaigns on Content Rewards (contentrewards.com), Whop and clip.tech, cut clips from the streams each campaign brief allows, post them, and are paid per approved view by the platform - not by YouTube.'
+    - 'Honest limits from the source post itself (Df5V_2anUAj did the math so we do not have to guess): the best real GTA 6 campaign it found pays $2 per 1,000 views, caps at $150 per clip, and takes a 10% platform fee; influencer claims of $5K per million views are called false by that same post. Other campaigns in its table pay $0.70-$1.00 per 1K with $35-$100 caps. Volume is the whole game; per-clip money is small.'
+    - 'Rights limits, binding on this lane: YouTube pays nothing on raw compiled clips (reused-content policy); Rockstar/Take-Two fan-content rules are non-commercial with takedown at will; Rockstar runs NONE of these campaigns. Income exists only under each campaign platform''s own terms, and clips are made ONLY from the streams/footage a live campaign brief explicitly allows. Clips are produced by the TASK-VYR-081 pipeline in VyralX''s model (narration, subtitles, BGM) - never raw re-uploads.'
+    - 'Worker deliverables: (1) a campaigns tracker under earning/ in the Df5V_2anUAj pattern - per campaign: platform, pay per 1K views, cap per clip, budget left, rules, ranked by budget left, refreshed on a stated cadence; (2) the hand-off flow from tracker to TASK-VYR-081 production to campaign submission; (3) first campaign clip submitted under a live brief once accounts exist.'
+    - 'OWNER ONE-TIME (exact steps): (1) create a Whop account with cometbrowser001@gmail.com and complete its payout setup in Whop settings; (2) create a Content Rewards account with the same email and complete its payout setup; (3) create a clip.tech account with the same email and complete its payout setup; (4) in each platform, connect the payout method it requires - the owner does this himself inside the platform; Muse never sees or handles payout credentials. Until the accounts exist the worker builds everything else.'
+    - 'Done = tracker live with current campaigns ranked + first clip submitted under a live campaign brief. First-money path: the first approved campaign payout (small dollars by design - see the rate table above).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s explicit follow-up order (02:24 IST) to the Instagram adoption re-audit: the GTA 6 clipping videos must NOT stay reference-only - file real implementation tasks. Source watches read first-hand in the re-audit (Df5V_2anUAj, Df-NMPUFbEx, Df6oHpmJ5Yz, Df0B9Z4n4BU + full-watch item Df1AKYMjuEg).'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only.'
 task_id_warnings:
   - id: TASK-REL-061
 
