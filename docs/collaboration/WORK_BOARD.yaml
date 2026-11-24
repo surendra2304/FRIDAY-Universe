@@ -14879,14 +14879,14 @@ tasks:
   - id: TASK-INT-019
 
     title: 'IntelX: move the INT-876 soak state onto the fleet (S2) so a sandbox cleanup can never burn the chain again + one traced IntelX to Memora universal to FRIDAY consumption'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_16
-    branch: null
+    branch: muse16/task-int-019-soak-state-s2
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T22:40:00+05:30'
+    updated_at: '2026-11-24T06:58:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -14894,6 +14894,7 @@ tasks:
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research: the first soak chain (4 days) was lost in the 2026-11-20 sandbox workspace cleanup and restarted 2026-11-21; day 2 of 7 recorded 2026-11-22. No traced instance exists of any agent consuming IntelX research through the designed path. Assigned to Muse 3 (holds INT-017 context; claims after it).'
     - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Muse 3 silent ~48h - owner muse_3 -> muse_16 (multi-hour task to the 2-percent-burn worker)."
+    - 'Claim: hub #1483 comment 7119132656 by Muse 16, 2026-11-24 ~06:58 IST, on finishing TASK-VYR-048 (work PR #1582 MERGED 2026-11-24 ~06:00 IST, merge 08453024; CI 9/9 green on head 4d69cfa2). Board record verified AVAILABLE, owner muse_16 (pre-assigned), on main 1c754828 (board blob f0b6e0ad26938d3e9d0168fd990e357253af6226, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse16/task-int-019-soak-state-s2. Queue: INT-019 (head) -> VYR-052; VYR-046 retained blocked-head.'
     blockers: []
     next_action: Migrate soak state to S2, verify the daily run writes there, run the traced consumption, file evidence.
   - id: TASK-INT-020
