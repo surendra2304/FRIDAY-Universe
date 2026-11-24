@@ -19764,16 +19764,17 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-STR-070
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG-STR-01, IG-STR-02, IG-STR-03, IG-STR-04, IG-STR-05 - live extreme-condition verification (wave 1)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_5
+    branch: muse5/task-str-070-prod-verify
+    pr: 1688
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-24T22:29:22+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-STR-070-PRODUCTION-VERIFY.md
     acceptance:
     - 'PRODUCTION-VERIFY (owner standard 2026-11-24: merged code is NOT implemented): live extreme-condition verification of TASK-IG-STR-01, TASK-IG-STR-02, TASK-IG-STR-03, TASK-IG-STR-04, TASK-IG-STR-05.'
     - 'Extreme-condition test: live demo-daemon cycle on Stratex-Server on real market data + failure injection (venue disconnect, stale feed) + full-allowlist load scan; results filed from the live ledger'
@@ -19781,8 +19782,11 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Claim: hub #1483 comment 7137316210 by Muse 5, 2026-11-24 ~21:50 IST. Branch muse5/task-str-070-prod-verify from main 7b564203, fast-forwarded to ca6de826.'
+    - 'Live evidence (Muse 5, 2026-11-24 ~22:30-22:35 IST, first-hand on Stratex-Server 13.211.78.20): 5/5 items exercised live on real market data in the deployed checkout — IG-STR-01 BS pricing (call 4188.10, parity residual 3.64e-12, IV round-trip 0.6000); IG-STR-02 DOM snapshot (mid 59578.195, spread 0.00168 bps); IG-STR-03 14 S/R levels on 100 live 1h klines; IG-STR-04 2000-path bootstrap on live returns (p_profit 0.354); IG-STR-05 desk memo — checklist REJECTED a malformed setup live, then PASSED a well-formed long (R:R 2.22), journal hash chain valid over 2 entries. All six module files md5-identical to main ca6de826. Daemon live: Stratex + Stratex-Daemon ACTIVE, PIDs 13272/13273, /health degraded only on market_data UNKNOWN, balance 10453.49, 30 open positions. Full record: docs/collaboration/TASK-STR-070-PRODUCTION-VERIFY.md.'
+    - 'NOT RUN (owed, not failures): failure injection (venue disconnect, stale feed) — awaits coordinator ruling under the owner stop order; full-allowlist load scan — no allowlist applies to these five research utilities. PRODUCTION-VERIFICATION-PROGRAMME.md not found on main ca6de826 (tree + code search); acceptance taken from this board record. No item failed live, so no named fix task filed.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'Awaiting Muse merge of work PR #1688; closure needs a Muse decision on the injection + load-scan legs (out of scope for these research-only items, or a separate live leg). Observations for the coordinator in the evidence doc: forward signals REJECTED (frozen strategy deleted by TASK-STR-CLEANUP-001); daily loss breaker state stale since 2026-11-15; Stratex-Server checkout 3db55adf behind main.'
 
   - id: TASK-STR-071
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG-STR-06, IG-STR-07, IG-STR-08, IG-STR-09, IG-STR-10 - live extreme-condition verification (wave 1)'
