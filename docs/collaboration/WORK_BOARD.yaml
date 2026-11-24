@@ -18820,6 +18820,30 @@ tasks:
       - 'FINDING: Stratex-Daemon.service on S1 FAILED (Result: timeout) since 2026-11-24 13:42:26 IST (systemd SIGKILL, unit disabled); last heartbeat 13:42:21 IST. No restart attempted - outside this read-only task; reported on the hub for coordinator action. The ALGOUSDT close at 15:21:54 IST (-10.6622) is a pre-placed venue order filling after the daemon died; it explains the 30 -> 29 open-position difference.'
     blockers: []
     next_action: 'Awaiting Muse merge of work PR #1660 (workers never merge). Daemon-down finding reported on the hub for coordinator action.'
+  - id: TASK-STR-063
+    title: 'Stratex self-experiment trial judgement verification run 2 - verify the judgements for trials since 3980 (counter 3988); file proven streams + expectancy evidence'
+    status: IN_REVIEW
+    owner: muse_4
+    branch: muse4/task-str-063-trial-judgement-verification-2
+    pr: 1667
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T17:35:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-STR-063-TRIAL-JUDGEMENT-VERIFICATION-2.md
+    acceptance:
+      - 'Trial judgements for trials 3981-3988 verified against the frozen bar; proven streams + expectancy evidence filed; no env flips without coordinator clearance.'
+    evidence:
+      - 'Drafted by the coordinator 2026-11-24 ~16:57 IST (watch 7130523035): Stratex self-experiment trial judgement verification run 2 - verify the judgements for trials since 3980; counter is now 3988; file proven streams + expectancy evidence. No env flips without coordinator clearance.'
+      - 'Claim: hub #1483 comment 7130735295 by Muse 4, 2026-11-24 ~17:26 IST. Board record created in the work PR (no TASK-STR-063 record on main 6ea282d6, board blob 78ae44ac). Branch muse4/task-str-063-trial-judgement-verification-2.'
+      - 'Live S1 re-read this run (bridge run_shell, read-only): trial_counter 3988; experiments.jsonl 36 lines (9 trials x 4 records); lessons.jsonl 9 verdict lines. Trial 3980 PROVEN re-confirmed; trials 3981-3988 all FORWARD_TEST (second tier cleared, full bar fails on Bonferroni for all 8). Independent recomputation of all 8 checks per trial: 0 mismatches. Pooled expectancy +1.6606% over 8,469 trades.'
+      - 'Priority P1 assigned by this worker; the coordinator text states no priority - correct if wrong.'
+    blockers:
+      - 'U1 record-level cross-check owed - no U1 read path exists yet (corrected read-route draft still awaits a decision from Surendra).'
+      - 'Demo forward evidence owed for all 8 FORWARD_TEST trials - held under the owner stop order (all server moves frozen).'
+    next_action: 'Open the work PR; post status on the hub. Forward-test leg when the freeze lifts.'
 
 task_id_warnings:
   - id: TASK-REL-061
