@@ -17529,14 +17529,14 @@ tasks:
   - id: TASK-INT-036
 
     title: 'IntelX: fast-lane live proof - one real alert delivered end-to-end, or the armed-state evidence pack if no qualifying event fires within 48h'
-    status: CLAIMED
+    status: MERGED
     owner: muse_1
     branch: muse1/task-int-036-fast-lane-live-proof
     pr: 1695
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T23:05:00+05:30'
+    updated_at: '2026-11-25T02:40:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-INT-036-FAST-LANE-LIVE-PROOF.md
@@ -17547,8 +17547,9 @@ tasks:
       - 'Assigned M1 queue position 3 (hub 7108903950): IntelX fast-lane live proof; M1 queue FRD-040 -> FUT-025 -> INT-036 after INT-034 merged.'
       - 'Claim: hub #1483 comment 7118199266 by Muse 1, 2026-11-24 ~06:03 IST, on coordinator queue (hub 7108903950 M1 queue FRD-040 -> FUT-025 -> INT-036; FRD-040 merged 05:43 IST, work PR #1587, merge 4ae11621; FUT-025 merged 03:54 IST, PR #1538). Board record verified AVAILABLE, owner muse_1, on main b2b239c0 (board blob 8753c2fd, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse1/task-int-036-fast-lane-live-proof. Queue: INT-036 (head).'
       - 'Filed: 19:09 armed-state pack docs/collaboration/TASK-INT-036-FAST-LANE-LIVE-PROOF.md in work PR #1695 (hub STATUS 7139356266); window PAUSED at 19:09:21 IST per coordinator ruling hub 7138466832, ~34h 54m remains on resume; re-scoped to IntelX-Server home (IntelX live on server 6 since 18:59:50 IST, FRIDAY live on FRIDAY-Server since 20:18:02 IST, no instant alert fired on either home); INT-040 merged PR #1676 (4bc4159c), shipper re-point owed before any live leg. Board verified on main 3a2009b8 (blob 74f83507) before editing.'
+      - 'MERGED: work PR #1695 merged 2026-11-25 00:41:19 IST by surendra2304 (merge e67d795a, head 139b0356, CI 9/9 green); 48h armed-state evidence pack filed per coordinator re-scope ruling; stale MERGED flip filed in PR #1724 per watch057 (hub 7143740556).'
     blockers: []
-    next_action: 'Window PAUSED at 19:09:21 IST (ruling hub 7138466832); resume after INT-040 shipper re-point + deploy, then re-arm fast lane on IntelX-Server home.'
+    next_action: 'MERGED — evidence pack on main; window paused with ~34h 54m remaining, resume owed only if the fast lane is re-armed on the IntelX-Server home.'
   - id: TASK-VOI-032
 
     title: 'Voice: the background-noise interruption defect - FRIDAY stops mid-answer when fan or room noise hits the microphone; reproduce, root-cause, fix'
@@ -18469,23 +18470,26 @@ tasks:
 
   - id: TASK-INF-033
     title: 'Inference: routing-deadline live proof - prove the INF-031 deadline is enforced in the live routing path'
-    status: AVAILABLE
-    owner: muse_11
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_1
+    branch: muse1/task-inf-033-routing-deadline-live-proof
+    pr: 1724
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T06:23:08+05:30'
+    updated_at: '2026-11-25T02:22:29+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-INF-033-ROUTING-DEADLINE-LIVE-PROOF.md
     acceptance:
       - 'Live routing evidence filed showing the deadline enforced on real prompts, with timing numbers.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; follow-up to INF-031 (deadline set, Muse 11) and INF-032 (wiring, Muse 7 queue pos 3). Pool floor refill.'
       - 'Assigned to Muse 11 queue position 4 by coordinator watch 2026-11-24 ~06:35 IST (hub #1483) — after MEM-027. Claim it when it reaches the head.'
+      - 'Claimed by Muse 1 2026-11-25 ~01:52 IST (hub #1483 comment 7143564040) per coordinator watch055; branch muse1/task-inf-033-routing-deadline-live-proof.'
+      - 'Live proof 2026-11-25 ~02:05-02:17 IST: deadline enforced - 60 s budget bounds every request (worst wall 51.96 s); 15.0 s primary slice fired on the record (gateway journal); >7000-token bypass fires on both paths; oversized 35,214-char prompt served via the live client path in 40.39 s (requested gpt-oss-120b, served gemini-3.6-flash) and via the execute endpoint in 10.52 s (openrouter/qwen-2.5-coder-32b-instruct); under-7000 prompts 1.57 s / 0.21 s. Ladder recovered on the execute endpoint; still flaky on the chat path (1/2 oversized attempts 503 provider_degraded - availability, not the deadline). Live client timeout still 150 s (INF-032 wiring merged, not deployed - deploy owed). Evidence doc filed; work PR #1724.'
     blockers: []
-    next_action: 'Prove the INF-031 routing deadline is enforced in the live routing path with timing evidence.'
+    next_action: 'Work PR #1724 open for review; merge is Muse''s. Next: VOI-034 when it reaches the head.'
 
   - id: TASK-SEN-025
     title: 'Sentinel: approval-path live proof run 3 + backup manifest verification run 2'
