@@ -14944,22 +14944,23 @@ tasks:
   - id: TASK-FRG-001
 
     title: 'Forge: prove the FRG-017 idle loop is deployed and cycling (or switch it on) inside a hard resource cage + ship the first tool another agent is blocked on'
-    status: CLAIMED
+    status: MERGED
     owner: muse_6
     branch: muse6/task-frg-001-idle-loop-proof
     pr: 1532
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-23T18:10:00+05:30'
+    updated_at: '2026-11-24T09:11:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Live evidence the idle loop cycles (timestamps of completed idle experiments) under a MemoryMax/CPU-quota cage on a separate transient unit, with build/test execution kept off the production host per D-029 (sandbox/CI, results as PRs); one named blocked-agent tool shipped and used by that agent.'
     evidence:
     - 'Coordinator pool 8, from the 2026-11-22 research: FRG-017 merged 2026-11-18 but deployment/cycling has no live evidence; the self-upgrade programme (owner standing architecture law, Forge-first) has zero production instances. Assigned to Muse 6 (claims after VOI-027).'
+    - 'PR #1532 merged 2026-11-24 08:54 IST (head 39a1730d, base afef47ba, CI 11/11: 9 success, 2 skipped, contracts green); cage proof 27/27 checks PASS, 49 tests PASS; evidence doc docs/collaboration/TASK-FRG-001-CAGE-PROOF.md. Live S1 cycle leg still owed - needs low-memory window + server access via Muse.'
     blockers: []
-    next_action: Verify or enable the loop with the cage, run one cycle, ship the blocked-agent tool, file evidence.
+    next_action: 'Live S1 cycle leg: run one caged idle-loop cycle on Server 1 in a low-memory window (needs Muse/server access), file timestamps; then flip to DEPLOYED.'
   - id: TASK-FRG-002
 
     title: 'Forge: prove 3 consecutive live code-task runs requested through FRIDAY chat (M5 workflow 4)'
