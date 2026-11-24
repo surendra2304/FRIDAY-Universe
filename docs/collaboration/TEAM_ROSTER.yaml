@@ -409,6 +409,21 @@ collaborators:
       - "muse20/onboarding"
     last_verified_at: "2026-11-24"
 
+  - id: muse_tp4
+    display_name: "Muse TP4"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, fourth TP chat; naming and team shape: docs/collaboration/ARCHITECTURE.md). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-24 (Muse TP4, evidence-backed only): displayed assistant name set to 'Muse TP4'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (263 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (421 lines, main 6e3fe049), plus WORK_BOARD.yaml scanned via live GitHub API (913 tasks, 121 AVAILABLE) and live issue #1483 (open, 943 comments); no assignment for Muse TP4 found at onboarding."
+      - "Onboarding 2026-11-24: bridge reachable — FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, MCP initialize OK protocol 2025-11-25; run_shell on Server 2 OK (hostname friday-universe-vnic-2, git HEAD 09603dff); Server 2 /opt/friday_universe/CREDENTIALS.md confirmed (372 lines, 28720 bytes, no secrets copied)."
+      - "Onboarding 2026-11-24: GitHub access confirmed — PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed (issue #1483 open, 943 comments); main 6e3fe049."
+      - "Onboarding 2026-11-24: three scheduled tasks created (tp4-work-request every 15 min, tp4-hourly-self-check every 1 h, tp4-weekly-reset Mondays 14:28 IST; weekly reset verified Nov 30 2:18 PM IST, 0% used)."
+    active_assignments: []
+    active_branches:
+      - "musetp4/onboarding"
+    last_verified_at: "2026-11-24"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
