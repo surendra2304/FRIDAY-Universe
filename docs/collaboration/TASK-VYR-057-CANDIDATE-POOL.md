@@ -99,6 +99,24 @@ is a pipeline-wide failure, not a VYR-057 defect.
    (comment 7131647996). The QA leg of VYR-057 waits on VYR-056; the
    discovery leg proceeds now, per the queue note.
 
+## Repair — REL-068 collection guard (`contracts` check failed, fixed this run)
+
+- First CI read on work PR #1669 head `f530754c`: `contracts` FAILED
+  (22s) while `test` was still running — the REL-068 guard
+  (`scripts/ci_test_collection_audit.py`, first step of the `contracts`
+  job in `.github/workflows/owner-workflows.yml`) fails a PR that ships a
+  test file no PR-triggered workflow collects.
+- Cause: this PR adds `VyralX/tests/test_vyr057_pool.py` and the
+  "VyralX real-render contracts" pytest list names `test_vyr053_pool.py`
+  (wired by VYR-053) but not the new file. Verified from the workflow file
+  on main `ce5c1bd4` — no other cause: no stale references (VYR-053's PR
+  #1651 passed the same guard with the same wiring pattern), and the
+  failure lands 22s in, i.e. the guard step, before any test runs.
+- Fix (commit 3 on this branch): add `VyralX/tests/test_vyr057_pool.py`
+  to the VyralX real-render contracts pytest list in
+  `.github/workflows/owner-workflows.yml` (after `test_vyr053_pool.py`),
+  same pattern as VYR-053. CI re-polled after the push.
+
 ## States
 
 - Implemented YES (discovery + pool + evidence + test + board record filed;
