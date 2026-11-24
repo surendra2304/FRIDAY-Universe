@@ -27,3 +27,25 @@
 - EARN-004: MERGED (PR #1589, merge `06ebe1f6`).
 
 — Muse 18, 2026-11-24 ~09:15 IST.
+
+## CHECKPOINT 2 — 86-row extract pulled + independently re-scored (2026-11-24 ~16:15 IST)
+
+- Ruling applied: coordinator watch 7128069261 (15:17 IST run) — M12 to commit the 86-row extract; the scoped-extract route M12 used (S2 repo venv, repository layer only, read-only, no scoring, no writes) granted to me for this pull only if the committed file is still missing by my next run.
+- Condition verified this run: committed file still missing — GitHub code search for EXTRACT-2026-11-24: 0 results; M12 FUT-028 branch `muse12/task-fut-028-forecast-accuracy-scoring-run-3` ahead_by 0, behind_by 182 vs main. M12's extract holds aggregates only, in his workspace only.
+- Tooling: bridge server exposes `run_shell` (S1/S2); my local client allowlist gained `run_shell` for this granted pull only (edit noted in client.py with the grant cited). No other `run_shell` use this run.
+- Pull (read-only): `/opt/friday_universe/venv312/bin/python`, cwd `/opt/friday_universe/Futuris`, PYTHONPATH set; script called only `list_unscored_resolved` / `count_scores` / `count_event_only_resolved` / `list_recent_scores(100)` / `calibration_report`. No scoring (`--score` never passed), no writes to the store. DATABASE_URL came from the server env, never printed or copied.
+- Result (extracted 2026-11-24T10:44:15Z): unscored_resolved_count 0 (cohort still empty); scored_total 496 (was 469 at M12's 12:59 IST extract — +27 since, the backstop keeps scoring); event_only_resolved 0.
+- Sample definition (stated plainly): the 86 rows are the NEWEST 86 score rows by scored_at at pull time, scored_at 2026-11-23T16:45:42Z–2026-11-24T09:39:01Z — NOT exactly the FUT-024→469 set (27 newer rows landed since M12's extract). 12 targets; evidence classes live + synthetic.
+- Filed: `docs/collaboration/TASK-FUT-029-EXTRACT-2026-11-24.json`, commit `7ea38940`, blob `e9a299f0`, 80,726 bytes, sha256 `94db775af1f188288365513e981c900cd7d5545c74359d3e895538abd35d8c5a` (verified byte-for-byte after transfer).
+- Independent re-score: recomputed signed_error, abs_error, pct_error, interval_hit, interval_width, winkler for all 86 rows from the row snapshots alone, using the repo's own definitions (`Futuris/futuris/services/forecast_tracker.py`: `score_forecast` / `winkler_score`, main `90ad8c3e`). Agreement: 86/86 on every field, 0 mismatches, agreement rate 1.0. The backstop's scores are verified.
+- Calibration snapshot at pull (n=496): verdict underconfident; rolling 30d hit-rate 0.891129; MAE 973.119, RMSE 1115.657; by nominal level: 0.80 n=318 coverage 1.0, 0.90 n=178 coverage 0.6966.
+- Note: M5's FUT-027 run-2 work PR #1656 open (head `c6b33422`); run-3 cohort definition (FUT-028/029) still awaits run 2 landing per watch 7128801462. My verification leg is done for this sample; the scoring leg still has no unscored cohort.
+- Re-probes this run: STR-049 `trial_counter.json` "File not found" (clean); STR-053 `fill_ledger.jsonl` "File not found" (clean); VYR-051 `viral_loop_state.json` still 11 cycles, last 2026-11-21T01:27:06Z, held_publish_jobs [861]. Live Stratex state on AWS Stratex-Server; corrected read-route draft still awaiting Surendra's decision in main chat (NOT posted to the hub).
+
+## States (updated)
+
+- FUT-029: implemented YES (extract + verification filed) / tested NO / merged NO / deployed N/A / production-verified NO.
+- STR-049 / VYR-051 / STR-053: unchanged, still blocked on the AWS read path.
+- EARN-004: MERGED (PR #1589, merge `06ebe1f6`).
+
+— Muse 18, 2026-11-24 ~16:15 IST.
