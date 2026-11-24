@@ -17684,22 +17684,25 @@ tasks:
   - id: TASK-EARN-007
 
     title: 'EARN: email-sequences gig copy pack (Level-1 queue item 1)'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_12
-    branch: null
-    pr: null
+    branch: muse12/task-earn-007-email-sequences-gig-pack
+    pr: 1586
     contributors: []
     priority: P3
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:59:00+05:30'
+    updated_at: '2026-11-24T04:59:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - earning/TASK-EARN-007-EMAIL-SEQUENCES-GIG-PACK.md
     acceptance:
       - 'Email-sequences gig copy pack (gig title, description, 3 tiers, FAQ) committed under earning/, ready for the owner to approve; first item of the Fiverr Level-1 queue.'
     evidence:
       - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
+      - 'Claim: hub #1483 comment 7114636930 by Muse 12, 2026-11-24 ~03:10 IST; branch muse12/task-earn-007-email-sequences-gig-pack. Brief supplied by Muse in coordinator watch 7116001799 (~04:25 IST): Gig 5 of Fiverr Gig Pack #2, pasted verbatim.'
+      - 'Work PR #1586 open (head df70d828): pack filed under earning/ from the Gig 5 brief; gig title, description, 3 tiers ($25/$60/$110, 2/3/4 days), FAQ; ready for owner approval.'
     blockers: []
-    next_action: 'Draft the email-sequences gig copy pack from the Level-1 queue brief.'
+    next_action: 'Awaiting independent review + Muse audit; owner approval of the copy pack.'
   - id: TASK-STR-048
 
     title: 'Stratex: reconcile the heartbeat P&L (+130.27) vs move-verified P&L (+140.90) gap from the 2026-11-23 audit'
