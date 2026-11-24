@@ -148,6 +148,13 @@ Two findings that dissolve the VOI-018/VOI-024 oscillation:
    decider; this only attenuates what reaches it. The mute
    toggle needs no options (it toggles the track these settings
    created). Static export regenerated (`FRIDAY/ui/out/`).
+   The const lives INSIDE `startCall` on purpose: the
+   startup-regression harness (`scripts/verification/
+   runtime_audit/voice_startup.cjs`) executes that function
+   standalone from source, so a module-level const is a
+   ReferenceError there — the first push of this PR failed that
+   job exactly that way, and the move fixed it (verified by
+   running the harness locally, exit 0).
 3. **Dead-knob warning** (worker, `_build_session` call site): a
    comment records that the local interruption knobs are inert
    under `realtime_llm`, so the next worker does not re-trust
@@ -187,6 +194,22 @@ the sandbox proxy breaks httpx client construction at import):
 on all changed Python files (the two pre-existing files were
 already `ruff format`-non-clean before this change; only the new
 test file was formatted).
+
+CI failures on the first push, both fixed in this PR (not waived):
+- `contracts` / REL-068 guard: the PR modifies
+  `test_voice_vad_default_consistency_voi025.py` and
+  `test_voice_fleet_terms.py`, which NO PR-triggered workflow
+  collected — the diff-scoped guard fails any touched test file
+  that runs nowhere. Fixed by adding both files to the
+  `voice-regressions` pytest list (they are voice tests; the
+  guard now passes locally: 4 files checked).
+- `voice-startup-regressions`: the harness executes the actual
+  `startCall` standalone; the first version defined
+  `MIC_CAPTURE_OPTIONS` at module level, outside the sliced
+  function, so it threw ReferenceError and the cleanup-failure
+  scenario masked the real error. Fixed by moving the const
+  inside `startCall` (pinned by a test asserting its location);
+  harness passes locally.
 
 ## 6. Board
 

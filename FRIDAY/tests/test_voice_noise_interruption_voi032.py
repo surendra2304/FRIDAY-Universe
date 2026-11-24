@@ -298,3 +298,9 @@ def test_mic_capture_options_pinned():
     assert src.count("setMicrophoneEnabled(true, MIC_CAPTURE_OPTIONS)") == 2
     # No bare enable left: every publish states its processing.
     assert "setMicrophoneEnabled(true)" not in src.replace("setMicrophoneEnabled(true, MIC_CAPTURE_OPTIONS)", "")
+    # The options const MUST live inside startCall: the
+    # startup-regression harness executes that function standalone
+    # from source, so a module-level const is a ReferenceError there
+    # (CI failure on the first push of this PR).
+    start = src.index("async function startCall() {")
+    assert src.index("const MIC_CAPTURE_OPTIONS") > start
