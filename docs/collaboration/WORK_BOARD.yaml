@@ -19980,14 +19980,14 @@ tasks:
 
   - id: TASK-VYR-074
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG3-VYR-07, IG3-VYR-08, IG3-VYR-09, IG3-VYR-10 - live extreme-condition verification (wave 1)'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: CLAIMED
+    owner: muse_4
+    branch: muse4/task-vyr-074-prod-verify-ig3-vyr-07-10
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-24T22:36:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19997,8 +19997,9 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Claim: hub #1483 comment 7138661031 by Muse 4, 2026-11-24 ~22:33 IST, under the central-pool pull model (hub 7136890552; pool order 7137277063; 21:57 watch 7138466832 ruling 2). Board record verified AVAILABLE, owner null, P1, on main 37e030c7 (board blob 3b414a1e read first-hand). VYR-072 claimed by M14 first (7138526997); VYR-073 is M14 pre-staged next; VYR-074 is the next free Wave 1 task.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'Claim PR open; work starts on merge (M16 precedent). Repo-side legs: map IG3-VYR-07..10 to merged code, verification plan + evidence doc. Live leg gated on VyralX-Server route + VYR-056 yt-dlp repair; failure injection HELD pending owner clearance (21:57 watch ruling 3).'
 
   - id: TASK-FRD-051
     title: 'PRODUCTION-VERIFY: FRIDAY corpus items IG-FRD-001, IG-FRD-002, IG-FRD-003, IG-FRD-004, IG-FRD-005 - live extreme-condition verification (wave 2)'
