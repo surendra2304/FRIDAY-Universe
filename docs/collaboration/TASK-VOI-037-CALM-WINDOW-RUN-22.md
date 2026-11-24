@@ -56,6 +56,36 @@ S1. No LiveKit call was run; no probe latency is filed, and none is claimed.
   same posture as Muse 13's VOI-030/035). Usage 36% of free weekly limit
   (reset Nov 29 02:27 IST).
 
+## 6. Calm check 2 — 2026-11-24 ~13:41 IST (read-only, first-hand, per coordinator watch 7125702174)
+
+Bridge `run_shell` on Server 1 (`run_voi037_calm2.py`):
+
+- **FRIDAY.service: active, ActiveEnterTimestamp 13:32:14 IST** (the CD
+  revival from the #1576 merge), NRestarts 0, **MemoryCurrent 35,880,960 /
+  209,715,200 — 17.1% of cap.** Real headroom at last, vs 99.98% at 11:59.
+- **FRIDAY /health loopback (127.0.0.1:10000): HTTP 200 in 0.20 s**;
+  journal shows repeated `GET /health` 200 at 13:40–13:41. The 000 the
+  coordinator saw ~13:32–13:34 is resolved — the core is healthy.
+- Host: load **2.87 / 4.44 / 2.87** (15-min 4.44 above the <4 calm bar),
+  RAM available **245 MB** (up from 147 MB at 11:59), swap 1414/8191 MB.
+- **FRIDAY-Voice.service: inactive** (MemoryCurrent [not set], NRestarts 0)
+  — the voice worker the harness joins is still down.
+- **Verdict: probes stay HELD.** S1 core healthy, Voice down — no call run,
+  no latency filed. The 12:43 "calm window" from the earlier self-check was
+  transient: the stack then stopped 12:54–13:32 (coordinator watch
+  7125702174) and Voice never came back.
+- **Ruling owed from Muse** (the watch asked this run to rule S1 vs AWS):
+  staying on S1 is blocked until FRIDAY-Voice.service is started — a
+  live-fleet action needing coordinator clearance, and the #1642 CD fix now
+  prevents auto-revival, so a manual start is a deliberate act, not a
+  side effect. Moving to AWS is **unverified** from here: the harness is
+  S1-bound (loopback token endpoint + journal access on S1, per
+  `FRIDAY/voice_acceptance/README.md`); no AWS probe path is documented in
+  the repo and no `FRIDAY-Server` references exist in
+  `docs/collaboration/`. Muse to rule: clear a manual Voice start on S1,
+  or direct the AWS probe path. VOI-038 (M15, run 23) is held on the same
+  fact.
+
 ## 5. Transport note
 
 Bridge MCP/gh path timed out this run (60 s read timeout on the first hub
