@@ -74,7 +74,8 @@ Kill switch: ``FRIDAY_LLM_ESCALATION=off`` disables escalation
 entirely (the factory then builds exactly the pre-REL-044 stack).
 Depth threshold: ``FRIDAY_LLM_ESCALATION_DEPTH`` (default 3).
 Inference call timeout: ``FRIDAY_LLM_ESCALATION_TIMEOUT_S``
-(default 150).
+(default 70: the 60 s Inference routing deadline + 10 s transport
+margin, TASK-INF-032).
 
 TASK-INF-016 (owner decision, 2026-11-18) — adaptive routing: the
 escalation target is no longer one fixed quality model for everything
@@ -313,11 +314,28 @@ def _depth_threshold() -> int:
         return 3
 
 
+#: TASK-INF-032 — the Inference routing deadline, wired into the live
+#: routing path. Mirrors the Inference gateway's REQUEST_TIMEOUT
+#: (TASK-INF-029 KEEP: 60.0 s; TASK-INF-031 live-proved the default path
+#: at 20.12 s wall for a 9k-token prompt): the gateway bounds every
+#: /v1/chat/completions call at 60 s end-to-end (route deadline,
+#: TASK-INF-010) with a 15 s primary slice (PRIMARY_ATTEMPT_FRACTION
+#: 0.6, PRIMARY_ATTEMPT_MAX_SECONDS 15.0). The FRIDAY-side client must
+#: wait at least that long, plus a small transport margin — otherwise
+#: it kills a call the gateway would have served inside its budget
+#: (the sibling AIUniverseClient's hard-coded 45 s has exactly that
+#: hole; see the INF-032 evidence doc). The env override still wins;
+#: the clamp keeps the bound sane.
+INFERENCE_ROUTING_DEADLINE_S = 60.0
+INFERENCE_CLIENT_TIMEOUT_MARGIN_S = 10.0
+
+
 def _inference_timeout_s() -> float:
+    default = INFERENCE_ROUTING_DEADLINE_S + INFERENCE_CLIENT_TIMEOUT_MARGIN_S
     try:
-        return max(10.0, min(600.0, float(os.getenv("FRIDAY_LLM_ESCALATION_TIMEOUT_S", "150"))))
+        return max(10.0, min(600.0, float(os.getenv("FRIDAY_LLM_ESCALATION_TIMEOUT_S", str(default)))))
     except ValueError:
-        return 150.0
+        return default
 
 
 #: Verified-catalogue model requested per dominant task kind, following

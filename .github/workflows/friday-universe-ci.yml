@@ -159,6 +159,11 @@ jobs:
             --deselect tests/e2e/test_e2e_tier1.py::test_f8_post_plan_valid_payload
 
       # TASK-REL-088: FRIDAY tier-1 tests. Own venv from
+      # TASK-INF-032: tests/test_llm_escalation.py rides in this
+      # invocation so the REL-068 test-collection guard sees it
+      # collected by a PR-triggered workflow (it was uncollected
+      # before; the file needs the same venv — requirements.txt
+      # carries the provider SDKs its import chain needs).
       # FRIDAY/requirements.txt + pytest + pytest-asyncio (the suite uses
       # @pytest.mark.asyncio; requirements.txt lacks the plugin). Proven
       # locally on current main: 86 passed, 0 failed, 0 deselects - see
@@ -177,7 +182,8 @@ jobs:
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
             -- .venv-friday-ci/bin/python -m pytest -q \
-            tests/test_tier1_resilience_and_contracts.py tests/e2e/test_tier1_features.py
+            tests/test_tier1_resilience_and_contracts.py tests/e2e/test_tier1_features.py \
+            tests/test_llm_escalation.py
 
       # TASK-REL-088: Memora tier-1 tests. Same venv pattern as the vector
       # step above, plus pytest + pytest-asyncio; same env, but a separate
