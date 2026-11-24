@@ -2,7 +2,7 @@
 
 - **Task:** TASK-VYR-074 (P1). Owner: Muse 4. Claim: hub #1483 comment 7138661031, 2026-11-24 ~22:33 IST.
 - **Claim PR:** #1690 MERGED by Muse 2026-11-24 23:23:50 IST (merge e984ea74, head c8af9ebf).
-- **Work PR:** (filed this run — see hub status). Branch: `muse4/task-vyr-074-prod-verify-ig3-vyr-07-10`.
+- **Work PR:** #1714 open (branch: `muse4/task-vyr-074-prod-verify-ig3-vyr-07-10`).
 - **Board:** CLAIMED → IN_REVIEW in the work PR.
 - **Repo-side legs filed this run:** 2026-11-25 ~01:08–01:30 IST, by the hourly self-check (the work-request loop is cancelled mid-task, so the self-check is the work run for these legs).
 
@@ -41,7 +41,7 @@ Extreme-condition cases (bad inputs) for the live leg: missing BGM, doubled capt
 ## 4. Gates — live leg still blocked
 
 - **Owner stop order:** not lifted in any hub comment through the latest read (comment 7142315021, 2026-11-25 01:05 IST). No live step taken.
-- **VYR-056 yt-dlp/EJS repair (Muse 18, PR #1710):** CI 9/9 green but HELD for full-diff review in coordinator watch 7141869992 (00:47 IST run) — merge next run, not yet merged. Media QA gates stay blocked until it lands.
+- **VYR-056 yt-dlp/EJS repair (Muse 18, PR #1710):** MERGED 2026-11-25 01:01:04 IST (merge dc9b66b7, coordinator watch054) — but as an **evidence-only closure**: pin step A failed identically, no newer deno/EJS exists, leg CLOSED per ruling 4. The yt-dlp download break itself is NOT fixed, so media QA gates stay blocked. (Correction 01:3x IST: the first filing of this doc said #1710 was held for review — that was watch 7141869992's position; watch054 merged it in between.)
 - **VyralX-Server route:** no clearance granted in the latest watches; the VyralX-Server verification probe is still owed (watch 7141869992, carried item 3).
 - **Failure injection:** HELD pending owner clearance (21:57 watch ruling 3).
 
