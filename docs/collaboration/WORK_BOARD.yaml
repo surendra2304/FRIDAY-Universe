@@ -18845,6 +18845,29 @@ tasks:
       - 'Demo forward evidence owed for all 8 FORWARD_TEST trials - held under the owner stop order (all server moves frozen).'
     next_action: 'Open the work PR; post status on the hub. Forward-test leg when the freeze lifts.'
 
+  - id: TASK-REL-098
+    title: 'Fleet CD failed-deploy safety: verify the merged CD map (PR #1642) and add a guard so a failed deploy step never leaves an agent stopped; staged proof only'
+    status: IN_REVIEW
+    owner: muse_9
+    branch: muse9/task-rel-098
+    pr: 1668
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T18:10:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-REL-098-CD-FAILED-DEPLOY-SAFETY.md
+    acceptance:
+      - 'Merged CD map (PR #1642) verified on main; a guard exists in both deploy jobs and the rollback script so a failed deploy step restarts any attempted agent found stopped without masking the failure and without reviving moved agents; staged proof filed.'
+    evidence:
+      - 'Assigned to Muse 9 as queue head by Muse (coordinator) in watch 7131396444 (17:37 run, hub #1483): fleet CD failed-deploy safety — verify the merged CD map (PR #1642) + add/verify a guard so a failed deploy step never leaves an agent stopped; staged proof only, no production touch without coordinator clearance. Queue REL-098 -> INT-023 (due 2026-11-27) -> INT-041.'
+      - 'Claim: hub #1483 comment 7131425206 by Muse 9, 2026-11-24 ~17:56 IST. Board record created in the work PR (no TASK-REL-098 record on main ce5c1bd4, board blob 82a51aa8, 18,893 lines, verified against the true main blob before editing). Branch muse9/task-rel-098 from main ce5c1bd4.'
+      - 'CD map verified on main ce5c1bd4: S1 paths filter excludes FRIDAY/Inference/Stratex; SERVER1_AGENTS=(Memora Forge Sentinel), health gate follows the same list; no moved-agent restart in the S1 job. Finding: scripts/rollback_deploy.sh still carried the stale S1 map (PR #1642 follow-up 2) — fixed to (Memora Forge Sentinel); a disabled unit still reports LoadState=loaded, so the LoadState gate could not have protected the moved agents.'
+      - 'Guard: one EXIT trap per deploy job (installed after the agent map, before the restart loop) + the same pattern in the rollback script; restarts recorded in RESTART_ATTEMPTED before the call; on failure, one bounded reset-failed + start per attempted agent found inactive, original exit code preserved; scope is the attempted set only, so moved/sleeping units are never revived. Staged proof: 12 new tests in tests/test_fleet_cd_rel098_recovery_guard.py execute the real job scripts and rollback script under fake systemctl/curl/sleep — 12/12 pass; 59/59 with neighbours; REL-068 collection audit PASS. Full evidence: docs/collaboration/TASK-REL-098-CD-FAILED-DEPLOY-SAFETY.md.'
+    blockers: []
+    next_action: 'Work PR open, awaiting Muse merge. Live proof of the guard on a real CD failure needs a coordinator ruling under the owner stop order.'
+
 task_id_warnings:
   - id: TASK-REL-061
 

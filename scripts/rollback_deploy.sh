@@ -28,7 +28,15 @@ RECEIPTS_DIR="/var/lib/friday-universe/rollback-receipts"
 # is a Server 1 service (loaded+active on Server 1, masked on Server 2)
 # — verified live 2026-11-23. Membership is still LoadState-gated below,
 # so a listed-but-masked unit is never restarted.
-SERVER1_SERVICES=(FRIDAY FRIDAY-Voice Inference Memora Stratex Forge Sentinel Stratex-Daemon)
+# TASK-REL-098 (2026-11-24 move): FRIDAY + Inference now live on
+# FRIDAY-Server (AWS) and Stratex on Stratex-Server (AWS); their Server 1
+# units are stopped + disabled sleeping backups. The LoadState gate can NOT
+# protect them — a disabled unit still reports LoadState=loaded, so a
+# restart here would revive the backup (the PR #1642 defect, fixed in the
+# workflow map). They are removed from this list with the daemon/voice
+# units that moved with them; a rollback affecting their folders restarts
+# nothing on Server 1, which is correct — they deploy nowhere on Oracle now.
+SERVER1_SERVICES=(Memora Forge Sentinel)
 SERVER2_SERVICES=(VyralX Cortex IntelX Futuris VyralX-Daemon)
 # Ports for health checks of units that expose one (daemon units have none).
 declare -A PORTS=( [FRIDAY]=10000 [Inference]=8001 [Memora]=8002 [Stratex]=8003
@@ -154,6 +162,33 @@ if $DRY_RUN; then
   git diff --stat "$CURRENT" "$TARGET_RESOLVED" | tail -5
   exit 0
 fi
+
+# --- TASK-REL-098 failed-deploy recovery guard ---
+# The restart loop below runs under `set -e`: a failing `systemctl restart`
+# aborts the script mid-loop, leaving that service stopped (the Fleet CD
+# failure mode of 2026-11-24: a failed deploy left Memora stopped) with no
+# receipt written. If this script fails AFTER the reset, make ONE bounded
+# recovery attempt per affected service found inactive (reset-failed +
+# start), then exit with the ORIGINAL failure code — recovery never masks
+# the failure. Only services in this run's affected set are touched; a run
+# that fails before the reset (AFFECTED empty) or succeeds is a no-op.
+# Executed by tests/test_fleet_cd_rel098_recovery_guard.py.
+REL098_AFFECTED="${AFFECTED:-}"
+rel098_recover() {
+  local rc=$?
+  [ "$rc" -eq 0 ] && return 0
+  [ -n "${REL098_AFFECTED:-}" ] || return 0
+  echo "TASK-REL-098 recovery: rollback failed (rc=$rc); starting any affected service found stopped"
+  for svc in $REL098_AFFECTED; do
+    state="$(unit_load_state "$svc" 2>/dev/null || true)"
+    if [ "$state" = "loaded" ] && ! systemctl is-active --quiet "${svc}.service"; then
+      echo "  $svc: stopped after failed rollback — attempting start"
+      sudo systemctl reset-failed "${svc}.service" || true
+      sudo systemctl start "${svc}.service" || echo "  WARNING: $svc recovery start failed — manual recovery required (systemctl start ${svc}.service)"
+    fi
+  done
+}
+trap rel098_recover EXIT
 
 if ! $ASSUME_YES; then
   echo "About to roll back $REPO:"
