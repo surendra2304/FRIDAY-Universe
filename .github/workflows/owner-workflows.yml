@@ -198,7 +198,8 @@ jobs:
             Inference/tests/test_source_repair_context.py \
             Inference/tests/test_inf015_flash_lite_catalogue.py \
             Inference/tests/test_rel047_gateway_guards.py \
-            Inference/tests/test_gemini_token_accounting.py
+            Inference/tests/test_gemini_token_accounting.py \
+            Inference/tests/test_inf030_apinex_fallback.py
       - name: Futuris health-capability contracts (TASK-REL-067)
         env:
           PYTHONPATH: Futuris

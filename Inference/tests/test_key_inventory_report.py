@@ -15,6 +15,7 @@ def test_provider_key_counts_report_only_provider_counts():
         "GROQ": 1,
         "MISTRAL": 0,
         "OPENROUTER": 0,
+        "APINEX": 0,
         "COHERE": 0,
         "HUGGINGFACE": 0,
         "NVIDIA": 0,

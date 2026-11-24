@@ -27,21 +27,21 @@ from app.security.prompt_isolation import (
 
 
 def test_deterministic_waterfall_sequence():
-    """Safety Invariant 2: Waterfall order must strictly be Groq -> OpenRouter -> Gemini across configured keys."""
+    """Safety Invariant 2: Waterfall order must strictly be Groq -> OpenRouter -> Gemini -> APInex across configured keys."""
     names = [p for p, _ in DETERMINISTIC_WATERFALL_ORDER]
-    assert names == ["groq", "openrouter", "gemini"]
+    assert names == ["groq", "openrouter", "gemini", "apinex"]
 
     # Test cycling starting after Groq
     seq_after_groq = ProviderSwitchingPolicy.get_waterfall_sequence("groq")
-    assert [p for p, _ in seq_after_groq] == ["openrouter", "gemini"]
+    assert [p for p, _ in seq_after_groq] == ["openrouter", "gemini", "apinex"]
 
     # Test cycling starting after OpenRouter
     seq_after_openrouter = ProviderSwitchingPolicy.get_waterfall_sequence("openrouter")
-    assert [p for p, _ in seq_after_openrouter] == ["gemini", "groq"]
+    assert [p for p, _ in seq_after_openrouter] == ["gemini", "apinex", "groq"]
 
     # Test cycling starting after Gemini
     seq_after_gemini = ProviderSwitchingPolicy.get_waterfall_sequence("gemini")
-    assert [p for p, _ in seq_after_gemini] == ["groq", "openrouter"]
+    assert [p for p, _ in seq_after_gemini] == ["apinex", "groq", "openrouter"]
 
 
 def test_model_registry_defaults_and_resolution():
@@ -60,14 +60,22 @@ def test_model_registry_defaults_and_resolution():
     assert gemini_rec is not None
     assert gemini_rec.endpoint.provider == "gemini"
 
+    apinex_rec = registry.resolve("free/qwen-3.8-max", "apinex")
+    assert apinex_rec is not None
+    assert apinex_rec.endpoint.provider == "apinex"
+
     # Test waterfall sequence
     seq = registry.get_waterfall_sequence()
-    assert [r.endpoint.provider for r in seq] == ["groq", "openrouter", "gemini"]
+    assert [r.endpoint.provider for r in seq] == ["groq", "openrouter", "gemini", "apinex"]
 
     # Test fallback resolution
     fb = registry.resolve_fallback("groq", "openai/gpt-oss-120b")
     assert fb is not None
     assert fb.endpoint.provider == "openrouter"
+
+    fb2 = registry.resolve_fallback("gemini", "gemini-flash-latest")
+    assert fb2 is not None
+    assert fb2.endpoint.provider == "apinex"
 
 
 def test_model_policy_leak_prevention():

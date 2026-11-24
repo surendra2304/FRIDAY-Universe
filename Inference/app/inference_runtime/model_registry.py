@@ -21,6 +21,7 @@ WATERFALL_MODELS: list[tuple[str, str, frozenset[Capability], int]] = [
     ("groq", "openai/gpt-oss-120b", frozenset({Capability.CHAT, Capability.STREAM, Capability.JSON, Capability.TOOLS}), 128_000),
     ("openrouter", "meta-llama/llama-3.3-70b-instruct", frozenset({Capability.CHAT, Capability.STREAM, Capability.JSON, Capability.TOOLS}), 128_000),
     ("gemini", "gemini-flash-latest", frozenset({Capability.CHAT, Capability.STREAM, Capability.JSON, Capability.TOOLS, Capability.VISION}), 1_000_000),
+    ("apinex", "free/qwen-3.8-max", frozenset({Capability.CHAT, Capability.STREAM, Capability.JSON, Capability.TOOLS, Capability.VISION}), 1_000_000),
 ]
 
 
@@ -83,12 +84,12 @@ class ModelRegistry:
     def get_waterfall_sequence(self, start_provider: str | None = None) -> list[ModelRecord]:
         """Returns enabled models in the deterministic failover waterfall sequence.
 
-        Order: Groq -> Mistral -> OpenAI -> Gemini.
+        Order: Groq -> OpenRouter -> Gemini -> APInex.
         If start_provider is specified, cycles through remaining ladder rungs.
         """
         with self._lock:
             enabled_map = {r.endpoint.provider: r for r in self._models.values() if r.enabled}
-            waterfall_providers = ["groq", "openrouter", "gemini"]
+            waterfall_providers = ["groq", "openrouter", "gemini", "apinex"]
 
             if start_provider and start_provider.lower() in waterfall_providers:
                 idx = waterfall_providers.index(start_provider.lower())

@@ -222,7 +222,7 @@ def test_nvidia_rung_disabled_by_default_and_reversible(monkeypatch):
 
 def test_execute_never_attempts_nvidia_primary_while_disabled(monkeypatch):
     calls = []
-    _wire_providers(monkeypatch, calls, fail={"groq", "openrouter", "gemini"})
+    _wire_providers(monkeypatch, calls, fail={"groq", "openrouter", "gemini", "apinex"})
     gateway = _gateway({"openrouter": KeyPool("openrouter", ["k1"])})
 
     with pytest.raises(ProviderUnconfiguredError, match="disabled by configuration"):
@@ -256,7 +256,7 @@ def test_execute_nvidia_primary_reaches_credential_gate_when_reenabled(monkeypat
 
 def test_execute_routes_oversized_prompt_away_from_groq_primary(monkeypatch):
     calls = []
-    _wire_providers(monkeypatch, calls, fail={"groq", "openrouter", "gemini"})
+    _wire_providers(monkeypatch, calls, fail={"groq", "openrouter", "gemini", "apinex"})
     gateway = _gateway({"openrouter": KeyPool("openrouter", ["k1"])})
 
     with pytest.raises(TemporaryUnavailableError, match="Groq guard"):
@@ -281,22 +281,25 @@ def test_waterfall_skips_groq_rung_for_oversized_prompt(monkeypatch):
     _wire_providers(monkeypatch, calls, fail={"openrouter"})
     gateway = _gateway({"openrouter": KeyPool("openrouter", ["k1"])})
 
-    with pytest.raises(GatewayError, match="primary failed"):
-        asyncio.run(
-            gateway._execute_dynamic_fallback(
-                failed_provider="gemini",
-                request=_big_request(),
-                capability="general",
-                stage_name="test",
-                last_error=GatewayError("primary failed", provider="gemini"),
-                deadline=time.monotonic() + 10,
-            )
+    # TASK-INF-030: the waterfall's first rung for a gemini failure is Groq
+    # (skipped for size), then APInex — the last cloud rung — serves.
+    resp = asyncio.run(
+        gateway._execute_dynamic_fallback(
+            failed_provider="gemini",
+            request=_big_request(),
+            capability="general",
+            stage_name="test",
+            last_error=GatewayError("primary failed", provider="gemini"),
+            deadline=time.monotonic() + 10,
         )
+    )
 
+    assert resp.content == "answer from apinex"
+    assert resp.provider == "apinex"
     # The waterfall's first rung for a gemini failure is Groq — skipped for
-    # size. Only OpenRouter was attempted (dynamic rung + waterfall rung).
+    # size. Only OpenRouter (dynamic rung, failed) and APInex were attempted.
     assert "groq" not in calls
-    assert calls == ["openrouter", "openrouter"]
+    assert calls == ["openrouter", "apinex"]
 
 
 def test_speculative_race_drops_groq_for_oversized_prompt(monkeypatch):

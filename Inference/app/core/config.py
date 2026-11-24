@@ -230,6 +230,12 @@ from typing import Anyfrom pydantic import AliasChoices, Field, field_validato
     OPENROUTER_API_KEY: str | None = Field(default=None)
     OPENROUTER_API_KEYS: str | None = Field(default=None)
 
+    # TASK-INF-030: APInex gateway (https://api.apinex.bond/v1), free-tier
+    # fallback rung. Key owner-provided 2026-11-23 (S2 CREDENTIALS.md);
+    # live probe 2026-11-24: free/qwen-3.8-max answers in 1.11s at $0.
+    APINEX_API_KEY: str | None = Field(default=None)
+    APINEX_API_KEYS: str | None = Field(default=None)
+
     COHERE_API_KEY: str | None = Field(default=None)
     COHERE_API_KEYS: str | None = Field(default=None)
 
@@ -533,7 +539,7 @@ from typing import Anyfrom pydantic import AliasChoices, Field, field_validato
     def validate_environment(self) -> dict[str, Any]:
         """Validate startup configuration and return runtime provider readiness summary."""
         configured_providers = []
-        for prov in ("gemini", "groq", "cerebras", "openrouter", "mistral", "openai", "nvidia", "cohere", "huggingface"):
+        for prov in ("gemini", "groq", "cerebras", "openrouter", "apinex", "mistral", "openai", "nvidia", "cohere", "huggingface"):
             if self.get_provider_keys(prov):
                 configured_providers.append(prov)
         if self.LOCAL_ENABLED:
