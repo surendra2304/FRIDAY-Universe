@@ -80,6 +80,7 @@ Staging cleaned up afterwards (`~/inf030-staging`, venv, harness, requirements c
 
 - **Implemented:** code + tests + evidence doc + board flip in PR #1620.
 - **Tested:** repo CI on the PR head (see PR checks). Staging failover proof above (live, real gateway, real key, real completion).
+- **CI fix (2026-11-24 ~09:25 IST):** first CI run failed the `contracts` job on the TASK-REL-068 collection guard — not on the new test (it was collected), but on the three pre-existing test files this PR modifies (`test_inf008_failover_drill.py`, `test_key_inventory_report.py`, `test_universal_task_and_waterfall.py`), which no PR-triggered workflow collected. Fixed by adding all three to the Inference pytest list in `owner-workflows.yml` (same job as the other Inference tests), so CI now runs them; re-verified with the audit script locally (5/5 covered, 0 stale) before pushing.
 - **Not merged:** only Muse merges. **Not deployed:** the running Inference service is untouched; live-copy wiring needs coordinator clearance on hub #1483. **Not production-verified:** no live traffic has used the rung yet.
 
 ## 7. Honesty bounds / follow-ups for Muse
