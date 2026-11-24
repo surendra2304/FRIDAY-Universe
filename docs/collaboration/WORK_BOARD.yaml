@@ -18954,6 +18954,801 @@ tasks:
     blockers: []
     next_action: 'Work PR open, awaiting Muse merge. Live leg (timer install on S2 + live envelope S2 -> S1 -> drainer delivery) waits for the freeze lift and coordinator clearance.'
 
+  - id: TASK-STR-064
+    title: 'Stratex: BSM-vs-market option mispricing scan - ranked research report, no trading'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Scan runs over the existing options-pricing module's instruments (TASK-IG-STR-01) and flags options whose market price breaks from the Black-Scholes-Merton model price.
+    - A ranked mispricing report is emitted in research; no trading is placed from this signal.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-STR-BSM-SCAN (IG package S-12). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-STR-065
+    title: 'Stratex: encode the Safety Nets stop-out rule into the advisory/risk gate'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Overlap with the FWD-006 daily breaker / DD kill is checked first and the verdict recorded.
+    - The rule's two triggers (session flips from profit to loss; capital drawdown starts) exist as tested guardrail checks in the advisory/risk gate.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-STR-SAFETY-NETS (IG package S-05). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-STR-066
+    title: 'Stratex: add PDO/PDC levels plus current-day 5-minute levels to S/R annotation records'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Annotation output carries previous-day open/close (PDO/PDC) levels and current-day 5-minute levels alongside the existing support/resistance levels from TASK-IG-STR-03.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-STR-PDOC-LEVELS (IG package S-10). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-STR-067
+    title: 'Stratex: add the pattern-comparison step to the multi-agent research desk'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Research-desk output includes a pattern-match section: current price action compared with the last 3 similar patterns in 6 months, what happened after each, and the historical success rate. Research surface only.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-STR-PROMPT2 (IG package S-21 prompt 2). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-FRD-044
+    title: 'FRIDAY: Spotify playback control by voice (play/pause/skip/search-and-play)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - A spoken request changes actual Spotify playback on the owner's machine, riding the laptop-control lane.
+    - Ambiguous requests carry a confirmation safeguard (TASK-IG-VOI-01 pattern).
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-FRD-SPOTIFY (watched reel DdyY6FAzDtj, @dhaibuilds Jarvis-cost reel, full watch 2026-11-23). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-FRD-045
+    title: 'FRIDAY: WOOP goal-setting template inside FRIDAY''s goal loop'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - An owner goal created by voice/chat is structured as a WOOP record (Wish, Outcome, Obstacle, Plan) that the goal loop (TASK-IG-FRD-001) works against.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-FRD-WOOP (IG package F-05). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-FRD-046
+    title: 'FRIDAY (laptop lane): storage-repair sequences in the pc_health guidance set'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Each sequence (diskpart repartition, diskpart write-protection removal, Linux fsck equivalent, DISM component-store cleanup) is an enumerate-first, dry-run-by-default guided routine alongside TASK-IG-LAP-03's pc_health/pc_cleanup.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-FRD-LAP-REPAIR (IG package F-06, F-07, F-08, F-20). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-VYR-058
+    title: 'VyralX: Reddit sourcing adapter for the discovery pipeline'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Discovery can ingest Reddit-sourced (subreddit) candidates through the same machine-QA gates as YouTube candidates.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-VYR-REDDIT (IG package audit gap B113). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-VYR-059
+    title: 'VyralX: competitor-ad scanning in the creative audit'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - creative_audit.py can ingest a competitor creative (today it audits only VyralX's own creative) and produce the same evidence-gated audit plus draft lessons.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-VYR-COMP-AD (IG package audit gaps B116/B126). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-VYR-060
+    title: 'VyralX: automatic bad-take detection in the render QA chain'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Machine QA emits a bad-take verdict per render segment; failed/awkward takes are flagged before human review.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-VYR-BADTAKE (IG package audit gap B119). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-VYR-061
+    title: 'VyralX: best-take selection plus blank-frame self-verification for renders'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - The pipeline picks the best take among candidates and self-verifies that no blank frames survive into a held render.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-VYR-BESTTAKE (IG package audit gap B121). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-VYR-062
+    title: 'VyralX: stick-figure style template in the format-template registry'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Stick-figure style is a validated registry template usable by the faceless-series automation (TASK-IG-VYR-04).
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-VYR-STICKFIG (IG package audit gap B112). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-VYR-063
+    title: 'VyralX: record the three corpus named lists into channel_strategy.json'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'All three lists are present as data in channel_strategy.json: the Photopea toolkit list (B129), the 7 teaching channels (B132), and the 5-generator shortlist (B136).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-VYR-NAMED-LISTS (IG supervisor audit). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-VYR-064
+    title: 'VyralX: public-domain source whitelist lane for the Space & Science niche'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Discovery draws from the whitelist (NASA Image & Video Library, NASA-centre credits only; NOAA; USGS; Wikimedia CC0/PD) for a space/science series, with the licence recorded per item.
+    - 'Guards hold: no NASA logos, credit in description, YouTube Audio Library music only.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-VYR-PD-WHITELIST (research note vyralx-niche-research-20261115). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-VYR-065
+    title: 'VyralX: hard niche avoid-list exclusion guardrail in discovery'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Discovery rejects the researched ban-list niches by rule (anime compilations, cricket/sports highlights, Bollywood edits, movie/TV scene compilations, celebrity edits, unlicensed viral-clip compilations, borrowed gameplay, borrowed exam lectures, automated finance advice), with the rejection reason logged.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-VYR-AVOID-GUARD (research note vyralx-niche-research-20261115). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-CTX-008
+    title: 'Cortex: wire the per-agent budget gate into production (caller, durable store, breach alerts)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Dispatch paths report usage to the BudgetLedger and consult the gate.
+    - The in-memory store is replaced with the durable Oracle store the code's docstring names; usage persists across a Cortex restart.
+    - Breach alerts dispatch to the owner channel (Telegram via Sentinel) instead of recording in-ledger only; a real dispatch is budget-checked and a forced breach produces exactly one owner alert.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-COR-BUDGET-WIRE (IG package C-01, audit-confirmed 2026-11-16). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-INT-043
+    title: 'IntelX: give the five shipped-but-unconsumed capabilities production consumers'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Each of the five has a live production caller: HeadlineWatch (scheduler + delivery wiring to Stratex), SocialLinkReader (into the retriever/research pipeline), AiRadar (a referencing surface), TrackingService (API import + its 4 live layers reachable), FootprintAudit (an API route).'
+    - One end-to-end production use is evidenced.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-INT-WIRE-5 (IG package X-07, audit-confirmed). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-INT-044
+    title: 'IntelX: production-implementation tracker for the scouted-repos registry (102 entries)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:25:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'A filed, evidence-linked status line exists for all 102 registry entries.'
+    - 'The 46 adopt/adapt entries each carry a live production implementation status: implemented + production-verified, or explicitly not-yet with the blocking reason.'
+    - 'The 46 reference-only dispositions are re-verified against the live agents, and the 10 reject entries are proven absent from every production path.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); scope CORRECTED the same evening: a coordinator audit verified from origin/main that the scouted_repos registry already holds all 102 cards (expanded 32 -> 102 via PR #771, recorded in TASK-IG-INT-06 board evidence), so the original GAP-LIST draft premise (TASK-INT-REGISTRY-102, IG package X-06 - incorporate the 70 wave-2 cards) was stale and is NOT the task. Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+
+  - id: TASK-INT-045
+    title: 'IntelX: find a viable free feed route for First Squawk and activate it in headline_watch.py'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - First Squawk items flow through the headline watch, or a verified no-free-route verdict is recorded and the source is dispositioned.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-INT-SQUAWK (IG package X-02). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-INT-046
+    title: 'IntelX: Telegram topic-search source discovery for the standing watches'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - A topic query returns a candidate-source list (relevant public Telegram channels/groups/resources) that IntelX can propose for watch inclusion. Distinct from Sentinel's known-channel monitoring (TASK-IG-SEN-03).
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-INT-TG-SEARCH (IG package X-01). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-INT-047
+    title: 'IntelX: Tor Metrics as a network-monitoring source in the OSINT source kit'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Tor Metrics data (public relay/traffic/censorship metrics only) is fetchable and cited by an IntelX report type.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-INT-TOR (IG package X-03). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-MEM-029
+    title: 'Memora: production callers for the three shipped-but-never-invoked services'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Each service is invoked by a real production path or scheduled job: skill-learning (TASK-IG2-MEM-02), user-model (TASK-IG2-MEM-03), and the claude-mem session-capture service (PR #709).'
+    - 'One evidenced cycle each: a learned skill, a user-model update, a captured session.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-MEM-WIRE (IG package ME-02 + ME-D1, audit-confirmed zero production callers). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-MEM-030
+    title: 'Memora: Obsidian-vault second-brain presentation plus nightly per-agent work summaries'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - The vault view exists over Memora's store (Inbox, Daily Logs, Projects, Areas, Resources, Memories, Archive).
+    - One nightly summary cycle from every agent is evidenced in the vault.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-MEM-VAULT (IG package ME-01). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-FRG-021
+    title: 'Forge: per-interface binding in the parallel range-chunk downloader'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - parallel_download can bind chunk streams to named interfaces (per-interface source routing / SO_BINDTODEVICE, modelled on Plexo) where more than one exists, with tests; single-link behaviour unchanged.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-FRG-BIND (IG package F-D1). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-SEN-026
+    title: 'Sentinel: tracking-pixel / open-tracking awareness inside extortion-mail triage'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Triage output carries the pixel warning when an embedded remote image is present, and the calm-response guidance tells the owner not to open/load images.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-SEN-PIXEL (IG package SE-01). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-SEN-027
+    title: 'Sentinel: family secret-phrase anti-impersonation practice in owner-security guidance'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'The practice is a named Sentinel guidance item in the scam-verification flow: a family codeword any ''we are in trouble, send money'' claim must produce, which the owner can set up. The phrase itself is never stored by the fleet.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-SEN-FAMILY-PHRASE (IG package SE-03). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-SEN-028
+    title: 'Sentinel: 7-step digital-footprint cleanup as an owner checklist tool'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Sentinel can walk the owner through the 7 steps with per-step status: HIBP check (reuses TASK-IG2-INT-06), JustDeleteMe, email aliases, Google My Activity cleanup, YourDigitalRights.org, ExifTool metadata stripping, EFF Cover Your Tracks.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-SEN-FOOTPRINT-CLEAN (IG package SE-05). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-SEN-029
+    title: 'Sentinel: add Cybrary and SANS Cyber Aces to the curated security learning reference'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Both names (Cybrary, cybrary.it; SANS Cyber Aces) are present in SECURITY_REFERENCE_IG.md section 1 (TASK-IG-SEN-04).
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-SEN-RESOURCES (IG package SE-02). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-SEN-030
+    title: 'Sentinel: DNS-hygiene and Android Private DNS checks in the owner-device posture evaluator'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - The posture report (TASK-IG-SEN-02 evaluator) states the device's Private DNS setting and resolver hygiene; both checks are included in the output.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-SEN-DNS (IG package F-24 + F-25). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-FUT-030
+    title: 'Futuris: Futuris-side economic-calendar module for outlook generation'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Futuris outlook generation consumes the economic-calendar feed directly (the feed TASK-IG2-STR-11 built Stratex-primary), evidenced in one outlook.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-FUT-CAL (ig-fullwatch futuris package cross-reference). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-STR-068
+    title: 'Stratex: new pairs-trading / stat-arb research family (Engle-Granger, OU half-life, Kalman hedge, z-score)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'The four blocks from the source post are implemented in the research desk: Engle-Granger cointegration screen, Ornstein-Uhlenbeck half-life filter, Kalman dynamic hedge ratio, and the z-score entry/exit rule, with the post''s production cautions (EG critical values, skip long half-lives, stop near |z|=4, include costs).'
+    - The family runs under the frozen admission bar like every family; the creator's simulated results (Kalman Sharpe 0.46 vs static OLS 0.23) are unproven claims, not evidence.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 1 (watch record DfztwFuxh4f, @quantfinance.ai Pairs Trading Toolkit, code in post). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-STR-069
+    title: 'Stratex: harden the research-to-backtest-to-incubate checklist'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'The checklist gains the named items: mandatory clean-data / unseen-data re-test after any big backtest, a >=50-trade minimum, a drawdown-vs-return robustness gate, tiny-size incubation before any scale-up, a repainting warning, and ''never run a bot you did not build''.'
+    - The hardened checklist is recorded in the research desk alongside the existing two-tier admission / self-experiment loop discipline.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 2 (watch record Df-ksdKnOk3, @moondevonyt, 5 mistakes every new automated trader makes). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-VYR-066
+    title: 'VyralX: long-form AI story-video pipeline (ChatGPT script, Gemini TTS, Hark AI images)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'A 5-15 minute story video is produced end to end: ChatGPT script, Google AI Studio TTS (Gemini 2.5 TTS, multi-voice), Hark AI images with consistent characters, assembly, and YouTube upload through VyralX''s existing review-first gates (held unlisted until owner review).'
+    - Workflow steps rest on the reel's legible on-screen text; the reel's spoken Telugu narration was not recovered (named gap in the watch record).
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 3 (watch record DgCvwzbxoWw, @hellotejaa_ai AI story-video workflow). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-VYR-067
+    title: 'VyralX: reference-video style-guide editing for renders'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - From a set of top-3 reference videos, a written editing style guide is extracted (cuts, B-roll, captions, music).
+    - 'A new render is edited against that guide: pauses cut, word-by-word captions, B-roll matched to spoken words, clean voice plus SFX. Steps rest on the reel''s on-screen text; spoken Telugu narration was not recovered (named gap).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 4 (watch record DfhU7aUh3-I, @tarakram.ai Claude video-editing guide). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-VYR-068
+    title: 'VyralX: evaluate AutoClip / OpenShorts / ViralCutter clipping tooling for the own-content highlight pipeline'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Each named free open-source tool is evaluated against VyralX''s own-content highlight pipeline: AutoClip (subtitle-driven highlight detection), OpenShorts (9:16 recut, face tracking, auto subtitles/dubbing), ViralCutter (word-by-word captions, Colab).'
+    - Scope is the tooling evaluation only; joining paid clipping campaigns with other streamers' footage is an owner-decision lane and is NOT part of this task.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 5 (watch record Df0B9Z4n4BU, @ashutoshwithclaude GTA-6 clipping carousel). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-VYR-069
+    title: 'VyralX: ''what-if'' narrated-story format template in the format-template registry'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'The what-if format is a validated registry template: one counterfactual premise, single narrator, chaptered escalation, cliffhanger ending, episode series - alongside the stick-figure template (TASK-VYR-062).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 6 (watch record DfwBFHyyzci, @geezzwjs, full narration recovered). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-FRD-047
+    title: 'FRIDAY: Nod-style one-page pre-call brief from Gmail + Calendar'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Before each calendar call, FRIDAY reads Gmail + Calendar + the client's latest news and writes a one-page brief, unprompted.
+    - 'The brief flow keeps FRIDAY''s existing pattern: she asks before send/pay/delete actions.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 7 (watch record Df59TEyS_Yu, @talagana.rajesh, n8n ''Nod''). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-FRD-048
+    title: 'FRIDAY: evaluate Fish Audio voice plus push-to-talk against the current Gemini Live setup'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - An evaluation compares the make-your-own-jarvis pattern (Fish Audio voice library / own-voice clone, OpenRouter free key, hold-Space push-to-talk) with FRIDAY's current Gemini Live voice source and interaction, using our own accounts only.
+    - 'SECURITY: the source reel displays what appears to be a real API key on screen; that key must never be used, copied, or stored - by this task or any other.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 8 (watch record DekVCC7yk7S, @ariacodez build-your-own-JARVIS). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-FRD-049
+    title: 'FRIDAY: voice-drawn on-screen task board'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - A spoken request draws a persistent task board in a screen corner (position and items named by voice, e.g. bottom left with three things) and FRIDAY opens sites by voice from it.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 9 (watch record DgB9CDDlc4b, @jabirbuilds talk-to-Mac Jarvis). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-FRD-050
+    title: 'FRIDAY: voice place-finder flow (map search, highest-rated filter, route time, verdict aloud)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'A spoken place request runs the full flow: map search by cuisine/type, filter to the highest-rated result, show the route time from a named start point, and read the verdict aloud.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 10 (watch record DfgYm5-hQbm, @2blockmedia Atlas). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-FRG-022
+    title: 'Forge: adopt the Agency repo''s Reality Checker and AI Code Auditor roles as workflow passes'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Two named passes exist, coordinated by an agents-orchestrator pattern: Reality Checker (blocks the ship until it is proven to work) and AI Code Auditor (hardcoded keys, injection holes), adopted from the 250-agent open-source Agency repo role definitions.'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 11 (watch record Df9NFPKivh7, @madiyarbegenov ''The Agency'' carousel). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-INF-034
+    title: 'Inference: evaluate the AWS/Berkeley ''Infinity'' scale-to-zero agent runtime'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'An evaluation report covers the Infinity runtime (Apache 2.0) against the fleet''s RAM constraint: idle agents compress to ~100 KB snapshots, zero CPU/RAM while waiting, wake in under 2 ms; 75,000 idle agents in 8 GB RAM claimed by the source.'
+    - Evaluation only - no adoption implied. Filed as TASK-INF-034 because TASK-INF-032 and TASK-INF-033 already exist on the live board.
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 12 (watch record De9or1Jienw, @itisjiwan, AWS + UC Berkeley ''Infinity''). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+  - id: TASK-FRG-023
+    title: 'Forge: evaluate Antigravity remote-SSH mode as a fleet dev workflow'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T21:15:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'An evaluation covers Antigravity''s remote-SSH mode (v2.33.0+) for fleet dev work: agents, projects, git trees and terminals run on the remote Linux machine and keep running with the laptop closed.'
+    - 'The evaluation records the setup gotchas from the full watch: AllowTcpForwarding required including on jump hosts, and glibc-only (Alpine/musl fails).'
+    evidence:
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 13 (watch record Df_5HRok_uH, @_aidailyhacks Google Antigravity SSH). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    blockers: []
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
 task_id_warnings:
   - id: TASK-REL-061
 
