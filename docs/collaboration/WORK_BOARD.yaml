@@ -17636,22 +17636,23 @@ tasks:
   - id: TASK-EARN-004
 
     title: 'EARN: lead-magnet eBook pack - draft the eBook outline + first chapter for the Payhip/Contra listing'
-    status: AVAILABLE
+    status: MERGED
     owner: muse_18
     branch: null
-    pr: null
+    pr: 1589
     contributors: []
     priority: P3
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:59:00+05:30'
+    updated_at: '2026-11-24T06:56:23+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'A complete lead-magnet eBook pack (outline + first chapter + listing copy) committed under earning/, ready for the owner to approve for listing.'
     evidence:
       - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
+      - 'MERGED 2026-11-24 ~06:55 IST: PR #1589 merged (merge 06ebe1f6; CI 9/9 verified first-hand by the coordinator: 7 success, 2 skipped). eBook pack filed under earning/ (owner approval of the copy still owed before any Fiverr/Payhip use).'
     blockers: []
-    next_action: 'Draft the eBook outline, first chapter and listing copy; keep it free-only, no paid tools.'
+    next_action: 'Merged via work PR #1589 (merge 06ebe1f6); eBook pack filed under earning/. No further action.'
   - id: TASK-EARN-005
 
     title: 'EARN: sales page copy pack for the 19-dollar digital product'
@@ -18035,7 +18036,7 @@ tasks:
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T04:45:00+05:30'
+    updated_at: '2026-11-24T06:56:23+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18043,8 +18044,9 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~03:55 IST; follow-up to OBS-008 (health alerting) and OBS-022 (diagnosis). Pool floor refill.'
       - 'Assigned to Muse 17 by coordinator watch 2026-11-24 ~04:45 IST (hub #1483): queue position 3. Claim on the hub + branch push when it reaches queue head; board flip rides in the work PR.'
+      - 'Coordinator watch 2026-11-24 ~06:55 IST: next_action copy error fixed (was Muse 8 queue MEM-025 -> STR-047 -> STR-051); claim PR owed after hub claim 7118289110.'
     blockers: []
-    next_action: 'Muse 8 pos 3 (queue MEM-025 -> STR-047 -> STR-051; REL-084 merged).'
+    next_action: 'Muse 17 pos 2 (queue VYR-050 -> OBS-023 -> VYR-054); CLAIMED on hub 7118289110, claim PR owed - flip rides in it.'
 
   - id: TASK-STR-051
     title: 'Stratex: forward-window fills audit run 2 - reconcile the daemon fill ledger against venue history for the new window'
@@ -18250,78 +18252,82 @@ tasks:
   - id: TASK-STR-053
     title: 'Stratex: forward-window fills audit run 3 - reconcile the daemon fill ledger against venue history for the new window'
     status: AVAILABLE
-    owner: null
+    owner: muse_18
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T05:39:13+05:30'
+    updated_at: '2026-11-24T06:56:23+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Fills, closes and net P&L filed for the new window with venue reconciliation.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; sequel to STR-051 (audit run 2, Muse 8 queue). Pool floor refill.'
+      - 'Assigned to Muse 18 queue position 3 by coordinator watch 2026-11-24 ~06:55 IST (hub #1483) - after STR-049 (blocked) + VYR-051 (blocked). Both heads blocked: claim STR-053 now per the blocked-head rule.'
     blockers: []
-    next_action: 'Read the daemon fill/close ledger end-to-end, reconcile against venue positions/history, file the window state.'
+    next_action: 'Muse 18 pos 3 (queue STR-049 -> VYR-051 -> STR-053); both heads blocked, claim STR-053 now.'
 
   - id: TASK-VOI-036
     title: 'FRIDAY voice: acceptance run 21 - next calm-window run after VOI-035 (run 20); per-probe latency filed'
     status: AVAILABLE
-    owner: null
+    owner: muse_2
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T05:39:13+05:30'
+    updated_at: '2026-11-24T06:56:23+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Per-probe latency filed with a pass/fail verdict on the 8s greeting-onset bar.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; sequel to VOI-035 (run 20, Muse 13 queue pos 3). Pool floor refill.'
+      - 'Assigned to Muse 2 queue position 3 by coordinator watch 2026-11-24 ~06:55 IST (hub #1483) - after INF-030 + VOI-032. Claim it when it reaches the head.'
     blockers: []
-    next_action: 'Run the probes in the next calm window and file per-probe latency + pass/fail.'
+    next_action: 'Muse 2 pos 3 (queue INF-030 -> VOI-032 -> VOI-036).'
 
   - id: TASK-VYR-054
     title: 'VyralX: supervised cycle 5 candidate pool - most-popular discovery + machine QA gates'
     status: AVAILABLE
-    owner: null
+    owner: muse_17
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T05:39:13+05:30'
+    updated_at: '2026-11-24T06:56:23+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Candidate pool filed with per-candidate machine-QA results; renders held unlisted; loop stays OFF, uploader stays paused.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; sequel to VYR-053 (cycle 4, Muse 4 queue pos 3). Pool floor refill.'
+      - 'Assigned to Muse 17 queue position 3 by coordinator watch 2026-11-24 ~06:55 IST (hub #1483) - after VYR-050 (blocked) + OBS-023. Claim it when it reaches the head.'
     blockers: []
-    next_action: 'Prepare the candidate pool from most-popular-video discovery + machine QA gates (caption-track count, BGM presence, watermark, loudness).'
+    next_action: 'Muse 17 pos 3 (queue VYR-050 -> OBS-023 -> VYR-054).'
 
   - id: TASK-FUT-028
     title: 'Futuris: forecast accuracy scoring run 3 - score the next unscored forecast cohort'
     status: AVAILABLE
-    owner: null
+    owner: muse_12
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T05:39:13+05:30'
+    updated_at: '2026-11-24T06:56:23+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Accuracy evidence filed for the cohort.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; follow-up to FUT-027 (scoring run 2, Muse 5 queue pos 3). Pool floor refill.'
+      - 'Assigned to Muse 12 queue position 3 by coordinator watch 2026-11-24 ~06:55 IST (hub #1483) - after VAL-014 + FUT-026. Claim it when it reaches the head.'
     blockers: []
-    next_action: 'Score the next unscored forecast cohort against outcomes and file the accuracy evidence.'
+    next_action: 'Muse 12 pos 3 (queue VAL-014 -> FUT-026 -> FUT-028).'
 
   - id: TASK-INT-039
     title: 'IntelX: fast-lane live proof run 3 - one real alert end-to-end after INT-038'
@@ -18457,6 +18463,63 @@ tasks:
       - 'Drafted by the coordinator 2026-11-24 ~06:35 IST; sequel to VOI-036 (run 21 draft). Pool floor refill.'
     blockers: []
     next_action: 'Run the probes in the next calm window and file per-probe latency + pass/fail.'
+
+  - id: TASK-STR-055
+    title: 'Stratex: forward-window fills audit run 5 - reconcile the daemon fill ledger against venue history for the new window'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T06:56:23+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Fills, closes and net P&L filed for the new window with venue reconciliation.'
+    evidence:
+      - 'Drafted by the coordinator 2026-11-24 ~06:55 IST; sequel to STR-054 (audit run 4 draft). Pool floor refill.'
+    blockers: []
+    next_action: 'Read the daemon fill/close ledger end-to-end, reconcile against venue positions/history, file the window state.'
+
+  - id: TASK-VOI-038
+    title: 'FRIDAY voice: acceptance run 23 - next calm-window run after VOI-037 (run 22); per-probe latency filed'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T06:56:23+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Per-probe latency filed with a pass/fail verdict on the 8s greeting-onset bar.'
+    evidence:
+      - 'Drafted by the coordinator 2026-11-24 ~06:55 IST; sequel to VOI-037 (run 22 draft). Pool floor refill.'
+    blockers: []
+    next_action: 'Run the probes in the next calm window and file per-probe latency + pass/fail.'
+
+  - id: TASK-EARN-010
+    title: 'EARN: gig copy pack 4 - lead-magnet eBook service copy for the Fiverr Level-1 batch'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P3
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T06:56:23+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'A complete lead-magnet eBook service copy pack (3 tiers, FAQ, requirements) committed under earning/, ready for the owner to approve.'
+    evidence:
+      - 'Drafted by the coordinator 2026-11-24 ~06:55 IST; Level-1 queue brief (fiverr-gig-pack-2.md). Pool floor refill.'
+    blockers: []
+    next_action: 'Draft the eBook service copy pack; keep it free-only, no paid tools.'
 
 task_id_warnings:
   - id: TASK-REL-061
