@@ -1346,6 +1346,13 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
             "ram_percent": snap.ram_percent,
             "ram_used_gb": snap.ram_used_gb,
             "ram_total_gb": snap.ram_total_gb,
+            # Memory guard (TASK-FRD-041): the service's own cgroup cap is
+            # the real kill threshold — surface it so the HUD shows what
+            # the kernel will enforce, not just system RAM.
+            "cgroup_mem_percent": snap.cgroup_mem_percent,
+            "cgroup_mem_used_mb": snap.cgroup_mem_used_mb,
+            "cgroup_mem_limit_mb": snap.cgroup_mem_limit_mb,
+            "cgroup_swap_percent": snap.cgroup_swap_percent,
             "battery_percent": snap.battery_percent,
             "battery_plugged": snap.battery_plugged,
             "disk_percent": snap.disk_percent,
