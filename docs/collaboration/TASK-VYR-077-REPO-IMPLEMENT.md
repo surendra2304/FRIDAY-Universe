@@ -91,6 +91,32 @@
 - Main has moved: live main is now `36cde725` (was `6e3fe049` at claim). The task branch is still based at `6e3fe049`; a rebase onto current main is owed before the PR opens, per board-craft rules. The new files are additive (no edits to existing files), so no conflict is expected.
 - Live-trial clearance request from checkpoint 3 is still open — no fleet shell run yet.
 
+## Checkpoint 5 — reference-only evidence (2026-11-24 ~23:55 IST)
+
+- No fleet shell was run for this checkpoint. All evidence below is from first-hand reads of live main 6e3fe049 (via the GitHub API) and public upstream reads. No upstream code was vendored anywhere.
+
+### Social Media Agent / LangChain (reference-only) — review mapping + absence proof
+
+- Upstream (from scouting, unflagged search results): a TypeScript/LangGraph agent that drafts Twitter/LinkedIn posts from a URL, with a human-in-the-loop review step, then schedules them. No video, caption, TTS or editing components.
+- Correction to checkpoint 3: `VyralX/app/services/gatekeeper.py` is NOT the review gate — it is a mesh-auth client (verifies tokens with the Gatekeeper service). The real review equivalents in VyralX are: `compliance_gate.py` (TASK-VYR-009, 521 lines, enforcement layer — provenance must be present and licence-allowed, sync must be *measured* never asserted, `assert_ready_to_upload` blocks upload until the measured record passes), `remix_flow.compliance_checklist` (TASK-VYR-004, advisory checklist stored on the review-queue entry while the render waits for approval), and `review_notes.py` (operator-visible provenance notes, fact_check_notes, max 20 notes x 500 chars).
+- Mapping: the upstream human-in-the-loop review step maps onto VyralX's measured gate + review queue + operator notes — stronger than a human glance, because the gate is evidence-based (measured sync, licence-checked provenance) rather than a skim before posting.
+- Absence proof: a read-only grep of live VyralX/app found no Arcade API, no Tweepy, no Twitter/LinkedIn posting client. Platform names appear only as scoring tables (`viral_predictor.py`: platform weights and posting-time tables), ads platform lists (`real_claude_ads.py`) and route fields (`real_media_routes.py`). The upstream's publishing/scheduling code is absent from every VyralX production path.
+
+### MG Styles 15 (reference-only) — style-prompt mapping
+
+- Upstream (read first-hand): 15 prompts in `prompts/` (e.g. `01-flat-vector.md`, 7,284 chars), each a bilingual director brief — style, fixed output spec (1920x1080, 30 fps, 10 s, H.264, -14 LUFS), suggested technical route (HTML + SVG + GSAP), creative seed, signature features. The prompt itself says to change the Output size for vertical 1080x1920.
+- VyralX targets: `motion_templates.py` (TASK-IG3-VYR-07, 315 lines: template library + slot editor — `list_templates`, `get_template`, `fill_template`, `export_spec`) and `motion_graphics.py` (TASK-IG-VYR-09, 145 lines: `title_card_plan`, `lower_third_plan`, `kinetic_text_plan`, `hyperframes_export` — HTML/CSS compositions).
+- Mapping: an MG style prompt is the same shape as a VyralX motion-template entry — a style brief with output spec and signature features. A trial expresses one prompt (e.g. 01-flat-vector, re-specced to 1080x1920) as a `motion_templates` entry / title-card plan. No upstream code is vendored; the prompt text is a reference, not a dependency.
+- Fleet constraint (honest limit): the prompt's own route needs Node + Chrome to render, and `motion_graphics.py` already records that headless-Chrome rendering is far too heavy for the ~1 GB fleet servers — compositions are artifacts rendered on the owner's machine, never on the fleet. So the style trial's render cannot happen on VyralX-Server; the evidence is the mapping plus the template entry, and any render is an owner-machine step, not a fleet step.
+
+### Claude Animation Base (reference-only) — absence proof
+
+- Upstream needs headless Chromium (`render.mjs`) to render p5.js frames to MP4. The fleet has no Chromium (film_pipeline: "no Node/Chromium here"; motion_graphics.py: headless Chrome far too heavy for ~1 GB fleet servers). No p5.js renderer exists in VyralX. Guardrail proof of absence from the production path; a trial would be owner-machine only, and is not claimed here.
+
+### Lemo-Opuscar (reference-only) — licence resolved in checkpoint 4
+
+- Licence read stands: docs/style prompts CC BY-NC 4.0 + additional permission to adapt them to make films (commercial included, with credit); code MIT; docs must not be shipped as a VyralX product feature without a commercial licence. No material used yet; a style-prompt trial follows the same owner-machine render constraint as MG Styles 15.
+
 ## Usage
 
 - 0% of free weekly limit (checked this run; reset Mon Nov 30, 3:03 PM IST). Additional tokens 0% used.
