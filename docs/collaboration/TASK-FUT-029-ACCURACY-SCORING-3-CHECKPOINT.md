@@ -49,3 +49,23 @@
 - EARN-004: MERGED (PR #1589, merge `06ebe1f6`).
 
 — Muse 18, 2026-11-24 ~16:15 IST.
+
+## CHECKPOINT 3 — M12's merged extract independently re-scored (2026-11-24 ~17:15 IST)
+
+- M12's extract PR #1659 MERGED 2026-11-24T11:23:57Z (merge `428a0ea5`, verified first-hand: state closed, merged true). File `docs/collaboration/TASK-FUT-029-86-ROW-EXTRACT-2026-11-24.json`, blob `777bc842`, 56,576 bytes — the canonical 86 rows behind the FUT-024→469 jump (scored_at in (2026-11-23T14:10:00Z, 2026-11-24T07:30:33Z], scores[383:469]).
+- Independent re-score of the MERGED file: recomputed signed_error, abs_error, pct_error, interval_hit, interval_width, winkler for all 86 rows from the row snapshots alone, using the repo's own definitions (`Futuris/futuris/services/forecast_tracker.py`: `score_forecast` / `winkler_score`, main `89605ae4`, file sha `33bc044b`). Agreement: 344/344 field checks, 0 mismatches, agreement rate 1.0. The backstop's scores on the canonical file are verified.
+- Invariants re-checked on the merged file: 86 rows, 86 unique forecast_ids, 0 null probability, 0 null resolution_method, interval hits 76/86 (matches the coordinator's own verification in watch 7130069033). By nominal level: 0.80 n=59 coverage 1.0, 0.90 n=27 coverage 0.6296. Mean abs_error 1002.04, mean winkler 14242.51, pct_error range 8.96–119.73, interval_width range 79.56–11020.36.
+- Cross-pull check: 59/86 forecast_ids are shared with my own 10:44:15Z pull (newest-86 window; 27 rows differ on each side, as expected from the different windows). On the 59 shared rows, 0 mismatches on all 15 comparable fields between the two independent pulls. (`probability` / `resolution_method` exist only in M12's file — my pull's `list_recent_scores` rows do not carry them; 0 null there.)
+- Cohort status: M5's FUT-027 run-2 work PR #1656 MERGED 2026-11-24T10:38:22Z (merge `c6b33422`) with 0 unscored cohort. The FUT-029 scoring leg still has no unscored cohort; hold-vs-rescope ruling still owed (M12 asked again in hub 7129244435; no ruling in the 16:37 coordinator watch 7130069033). The verification leg is complete; the work PR files it.
+- Owner stop order (~16:42 IST, recorded in watch 7130069033): "Don't move anything now, keep as it is how it is now." ALL server moves FROZEN until the owner's explicit word. No move work in my queue; other work continues.
+- Re-probes this run: STR-049 `trial_counter.json` "File not found" (clean answer on retry after one bridge transport error); STR-053 `fill_ledger.jsonl` "File not found" (clean); VYR-051 `viral_loop_state.json` still 11 cycles, last 2026-11-21T01:27:06Z, held_publish_jobs [861]. Live Stratex state on AWS Stratex-Server; corrected read-route draft still awaiting Surendra's decision in main chat (NOT posted to the hub). S1 Stratex daemon intentionally stopped/disabled since ~13:41 IST per watch 7130069033 — NOT an incident, nobody restarts it.
+- Bridge UP: `get_system_info` OK — S1 ONLINE, S2 ONLINE; S2 commit `09603dff` (unchanged). One transport failure this run (STR-049 first attempt); the rest answered in seconds.
+- Board verified first-hand this run: WORK_BOARD.yaml at main `89605ae4` (blob `d037e8a3`, 2,488,983 bytes, 18,867 lines, sha256 `28cc64d7…`) — 4 muse_18 records: STR-049 AVAILABLE/P1, VYR-051 CLAIMED/P2 (branch recorded), EARN-004 MERGED/P3 (pr 1589), STR-053 AVAILABLE/P1. FUT-029 AVAILABLE/P1, owner null (flip rides in watch011 tomorrow).
+
+## States (updated 2026-11-24 ~17:15 IST)
+
+- FUT-029: implemented YES (extract + verification filed; merged-file re-score agreement 1.0) / tested NO / merged NO (work PR owed this run) / deployed N/A / production-verified NO.
+- STR-049 / VYR-051 / STR-053: unchanged, still blocked on the AWS read path.
+- EARN-004: MERGED (PR #1589, merge `06ebe1f6`).
+
+— Muse 18, 2026-11-24 ~17:15 IST.
