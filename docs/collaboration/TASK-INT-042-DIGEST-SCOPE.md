@@ -120,3 +120,78 @@ in quiet hours). Each hop must be observed, not assumed; the shipper's
   fresh this run; reset Nov 29 6:04 PM IST). Not nearly gone — no wrap-up.
 - Work-request task muse12-work-request stays cancelled (mid-task).
   Hourly self-check + weekly reset verified armed this run.
+
+## Checkpoint 3 — 21:53 IST hourly self-check (2026-11-24)
+
+- Owed verification DONE this run (20:57 watch, hub 7136585984): the
+  read-only, first-hand check of the outbox path + watch state on
+  IntelX-Server. No code changed; gate state only.
+- **Gate 2 CLEARED — shipper merged:** PR #1676 MERGED (merge `4bc4159c`,
+  2026-11-24T15:29:47Z / 20:59:47 IST), coordinator-merged by the 20:37
+  watch (hub 7136251890) after a full-diff review + `git merge-tree`
+  simulation proving the merged tree intact. INT-040's shipper code is now
+  on main — but see the re-scope note below: its S2 source no longer exists.
+- **Gate 3 RULED — IntelX lives on IntelX-Server:** 20:57 watch
+  (7136585984): IntelX + Futuris moved to IntelX-Server (32.236.185.237)
+  ~19:12 IST, production-verified — watches cycling with synced state
+  there. Oracle Server 1 holds only a sleeping copy (IntelX.service MASKED
+  + failed since Nov 20); Oracle Server 2 holds nothing but the bridge +
+  repo checkout. The poll → S2-outbox → shipper leg in its OLD form does
+  NOT exist: S2 producer stopped clean 19:09:21 IST,
+  `/opt/friday_universe/IntelX` absent on S2.
+- **Verification (read-only, first-hand, this run — bridge `read_text`,
+  server=6):**
+  - Outbox path EXACT: `/opt/friday_universe/IntelX/data/watches/outbox.jsonl`
+    on IntelX-Server (32.236.185.237). 3 envelopes, all `alert_class`
+    `digest`, `quiet_hours_exempt` false. Tail-read from line 4 returns
+    empty — exactly 3 lines total.
+  - Envelope 1: `ai_model_releases`, fired 2026-11-20T18:26:48Z (Hugging
+    Face harness adapters, score 4).
+  - Envelope 2: `india_tech_regulatory`, fired 2026-11-23T16:33:10Z (RBI
+    stop switch, score 5).
+  - Envelope 3: `india_tech_regulatory`, fired 2026-11-24T14:30:07Z
+    (20:00:07 IST, SEBI GMP, score 3) — AFTER the ~19:12 IST move and
+    after the S2 producer stop (19:09:21 IST). This is the cycling proof:
+    the poll loop runs on IntelX-Server with synced state, not a stale copy.
+  - State file: `/opt/friday_universe/IntelX/data/watches/state.json`,
+    version 1. The `ai_model_releases` seen map matches the Nov 20 poll
+    (`first_seen` 2026-11-20T18:26:50Z, baseline entries). The
+    `india_tech_regulatory` section was not reached in the read window
+    (large baseline load); its fires are proven by the outbox itself.
+  - Enabled watches on current main (`IntelX/intelx/watches/engine.py`,
+    read first-hand): `ai_model_releases` (L174, enabled=True) AND
+    `india_tech_regulatory` (L298, enabled=True, live proof passed
+    2026-11-15/16). CORRECTION to checkpoint 1: TWO watches are enabled,
+    not one — both have fired envelopes in the IntelX-Server outbox.
+  - Route note: `bridge.py` allow-list extended with `read_text`
+    (read-only, `server` param) for this coordinator-directed verification;
+    write tools (`run_shell`, `edit_file`, `write_file`, restarts) remain
+    blocked without Muse clearance.
+- **Gate 1 UNCHANGED — owner stop order still in force.** M13 status
+  21:36 IST and M2 status 21:37 IST both confirm; no lift in any watch
+  through 21:17 (hub 7137288514). No live dispatch, no flag enablement.
+- **Re-scope consequence:** INT-040's shipper tails the S2 outbox, which
+  no longer exists — the transfer leg must be re-pointed at the
+  IntelX-Server outbox (or the drainer reads it where it now lives) before
+  any live leg is scoped. Drainer offset defect carried from the 20:57
+  watch: offset 3644 > outbox 1823 B — restart behaviour against the
+  shrunk outbox is unverified; it is a re-scope item for the live legs.
+- **Live leg now waits on:** gate 1 lifting. The "verified armed on
+  IntelX-Server" half of the 20:57 ruling is satisfied for the producer
+  side (20:00 IST envelope); the drainer/flag side on the new home is
+  still unscoped and frozen.
+- **Pool model (owner directive 7136890552, ~21:25 IST):** queue is now
+  INT-042 (current) + STR-064 (pre-staged next, P2, BSM-vs-market option
+  mispricing scan — research report, no trading; verified AVAILABLE /
+  owner null on main `cc66b42d`, no hub claim through the 21:17 watch).
+  FUT-028 RELEASED this run (blocked, empty cohort, ruling owed — board
+  flip AVAILABLE / owner null rides in the consolidated board PR).
+  FUT-030 is in the central pool now. Aggressive burn order (7137435150)
+  noted: usage 18% is low against a full-week burn; INT-042's live leg is
+  frozen, so progress stays read-only until the freeze lifts.
+- Branch now behind main by 19 (main `cc66b42d`); no rebase this run —
+  rebase at work-PR time. No work PR yet: board record + flip ride in it.
+- Usage at checkpoint: 18% of free weekly limit (subscription-status,
+  fresh this run; reset Nov 29 6:04 PM IST). Not nearly gone — no wrap-up.
+- Work-request task muse12-work-request stays cancelled (mid-task).
+  Hourly self-check + weekly reset verified armed this run.
