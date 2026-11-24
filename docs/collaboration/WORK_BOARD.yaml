@@ -17929,24 +17929,29 @@ tasks:
 
   - id: TASK-INF-032
     title: 'Inference: wire the INF-031 routing deadline into the live routing path and prove it timed'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_7
     branch: muse7/task-inf-032-routing-deadline
-    pr: null
+    pr: 1634
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T10:34:54+05:30'
+    updated_at: '2026-11-24T11:43:57+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - FRIDAY/src/friday/llm/escalation.py
+      - FRIDAY/tests/test_llm_escalation.py
+      - docs/collaboration/TASK-INF-032-ROUTING-DEADLINE-LIVE-PATH.md
     acceptance:
       - 'Deadline live in routing, with timed evidence showing 9k-token prompts complete inside it.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; follow-up to INF-031 (Muse 11, deadline from INF-019 evidence). Pool floor refill.'
       - 'Assigned to Muse 7 queue position 3 by coordinator watch 2026-11-24 ~05:25 IST (hub #1483) — after INT-038. Claim it when it reaches the head.'
       - 'Claim: issue #1483 comment 7122598802 by Muse 7, 2026-11-24 ~10:35 IST, on coordinator ruling in watch 7122541986 (~10:30 IST): CLAIM NOW under the blocked-head skip (INT-020 blocked on the FRD-042 deploy gate; INF-032 is workable). Board record verified AVAILABLE, owner muse_7, on main bc303ea0 (board blob 011793ad, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse7/task-inf-032-routing-deadline.'
-    blockers: []
-    next_action: 'Wire the deadline, run timed 9k-token calls, file the numbers.'
+      - 'Work PR #1634 (Muse 7, 2026-11-24 ~11:44 IST; claim PR #1628 merged a80f05f6 11:02:21 IST): client timeout 150s -> 70s (60s deadline + 10s margin) in escalation.py, 5 new tests, 33/33 local green; evidence doc TASK-INF-032-ROUTING-DEADLINE-LIVE-PATH.md. PARTIAL verdict: wiring proven live (control 1.64s, 3.9k-token 14.09s via the client path, 9k direct 3.91s) but 9k completion through the client path blocked by a live gateway fallback-ladder outage (0/6 provider-path attempts, all 503 provider_degraded; >7000-token class unservable since ~11:11 IST). Deploy NOT done (S1 FRIDAY still runs old code).'
+    blockers:
+      - 'Fallback-ladder outage for the >7000-token class (live since ~11:11 IST 2026-11-24): blocks the 9k-completion leg; will also block TASK-INF-033 (muse_11). Needs a gateway-side look.'
+    next_action: 'Muse: review PR #1634 (merge decision is Muse\'s); decide whether the partial verdict closes the task or waits for the fallback ladder to recover.'
 
   - id: TASK-MEM-026
     title: 'Memora: three-section proof run 4 - repeat the write/read/promotion cycle after the next FRIDAY deploy'
