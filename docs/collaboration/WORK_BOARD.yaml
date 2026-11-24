@@ -18077,14 +18077,14 @@ tasks:
 
   - id: TASK-SEN-024
     title: 'Sentinel: approval-path live proof run 2 - one low-risk auto-approval + one high-risk Telegram prompt'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_13
-    branch: null
+    branch: muse13/task-sen-024-approval-path-live-proof-run-2
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T05:20:00+05:30'
+    updated_at: '2026-11-24T05:45:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18092,8 +18092,9 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~03:55 IST; follow-up to SEN-022 (startup self-check, merged). Pool floor refill.'
       - 'Assigned to Muse 13 as queue position 3 by coordinator watch 2026-11-24 ~05:20 IST (board PR watch006; hub #1483): queue VOI-030 (blocked) -> REL-093 -> SEN-024.'
+      - 'Claim: hub #1483 comment 7117868562 by Muse 13, 2026-11-24 ~05:45 IST, on assignment in coordinator watch ~05:20 IST (board PR watch006 #1588). Board record verified AVAILABLE, owner muse_13, on main 4ae11621 (board blob af900690). No prior claim, branch or PR. Branch muse13/task-sen-024-approval-path-live-proof-run-2.'
     blockers: []
-    next_action: 'Run one low-risk auto-approval and one high-risk Telegram prompt, each exactly once, with evidence.'
+    next_action: 'Claimed; run the live proof legs (one low-risk auto-approval, one high-risk Telegram prompt, each exactly once) and file evidence. Work PR to follow.'
 
   - id: TASK-FUT-027
     title: 'Futuris: forecast accuracy scoring run 2 - score the next unscored forecast cohort'
