@@ -19268,7 +19268,7 @@ tasks:
     blockers: []
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-INT-044
-    title: 'IntelX: incorporate all 102 verified repo cards into the scouted_repos registry'
+    title: 'IntelX: production-implementation tracker for the scouted-repos registry (102 entries)'
     status: AVAILABLE
     owner: null
     branch: null
@@ -19276,15 +19276,18 @@ tasks:
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-24T21:25:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
-    - Registry count covers all 102 verified cards (32 wave-1 plus the 70 wave-2 cards and wave-2b trading-skill cards) and the generator reproduces it.
+    - 'A filed, evidence-linked status line exists for all 102 registry entries.'
+    - 'The 46 adopt/adapt entries each carry a live production implementation status: implemented + production-verified, or explicitly not-yet with the blocking reason.'
+    - 'The 46 reference-only dispositions are re-verified against the live agents, and the 10 reject entries are proven absent from every production path.'
     evidence:
-    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-INT-REGISTRY-102 (IG package X-06, audit-confirmed, plus S-23/S-27 cards). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); scope CORRECTED the same evening: a coordinator audit verified from origin/main that the scouted_repos registry already holds all 102 cards (expanded 32 -> 102 via PR #771, recorded in TASK-IG-INT-06 board evidence), so the original GAP-LIST draft premise (TASK-INT-REGISTRY-102, IG package X-06 - incorporate the 70 wave-2 cards) was stale and is NOT the task. Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     blockers: []
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+
   - id: TASK-INT-045
     title: 'IntelX: find a viable free feed route for First Squawk and activate it in headline_watch.py'
     status: AVAILABLE
