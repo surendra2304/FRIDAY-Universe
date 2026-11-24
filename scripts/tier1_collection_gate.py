@@ -25,8 +25,8 @@ WORKFLOW = ".github/workflows/friday-universe-ci.yml"
 # Fixed tier-1 list (repo-relative). Named suites where they exist; for the
 # five agents with no tier-1-named suite, the health-contract /
 # importability / resilience core files (see docs/collaboration evidence
-# doc for TASK-REL-088; the 5 candidate sets are provisional until their
-# local runs confirm them).
+# doc for TASK-REL-088; the 5 candidate sets were confirmed by local
+# runs on current main).
 TIER1_FILES = [
     # FRIDAY
     "FRIDAY/tests/test_tier1_resilience_and_contracts.py",
@@ -41,22 +41,22 @@ TIER1_FILES = [
     # Cortex (wired by REL-080)
     "Cortex/tests/unit/test_e2e_tier1.py",
     "Cortex/tests/e2e/test_e2e_tier1.py",
-    # Inference (candidate - confirm by local run)
+    # Inference (confirmed by local run)
     "Inference/tests/test_health_security.py",
     "Inference/tests/test_module_importability.py",
     "Inference/tests/test_monitoring_health_evidence.py",
-    # Sentinel (candidate)
+    # Sentinel (confirmed by local run)
     "Sentinel/tests/security/test_health_readiness.py",
     "Sentinel/tests/security/test_health_durability_truthfulness.py",
     "Sentinel/tests/unit/test_foundation.py",
-    # IntelX (candidate)
+    # IntelX (confirmed by local run)
     "IntelX/tests/test_intelx_health_contract.py",
     "IntelX/tests/test_health.py",
     "IntelX/tests/test_healthz_liveness.py",
-    # Futuris (candidate)
+    # Futuris (confirmed by local run)
     "Futuris/tests/test_futuris_health_contract.py",
     "Futuris/tests/api/test_health.py",
-    # VyralX (candidate)
+    # VyralX (confirmed by local run)
     "VyralX/tests/test_recovery_and_readiness.py",
     "VyralX/tests/test_obs003_health_labelling.py",
 ]
