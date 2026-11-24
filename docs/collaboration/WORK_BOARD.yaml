@@ -18073,23 +18073,26 @@ tasks:
 
   - id: TASK-VOI-034
     title: 'Voice: acceptance run 19 - calm-window probes after VOI-033, per-probe latency filed'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_1
-    branch: null
-    pr: null
+    branch: muse1/task-voi-034-acceptance-run-19
+    pr: 1732
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T04:45:00+05:30'
+    updated_at: '2026-11-25T03:07:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-VOI-034-ACCEPTANCE-RUN-19.md
     acceptance:
       - 'Per-probe latency filed with a pass/fail verdict on the 8s greeting-onset bar.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~03:55 IST; sequel to VOI-033 (run 18). Pool floor refill.'
       - 'Assigned to Muse 1 by coordinator watch 2026-11-24 ~04:45 IST (hub #1483): queue position 3. Claim on the hub + branch push when it reaches queue head; board flip rides in the work PR.'
+      - 'Claim: hub #1483 comment 7144471531 by Muse 1, 2026-11-25 ~02:36 IST. Board verified AVAILABLE, owner muse_1, P1, on main 677e9e3e (board blob 39fa817d). Branch muse1/task-voi-034-acceptance-run-19. Board flip rides in the work PR.'
+      - 'Acceptance run 19 done 2026-11-25 ~02:38-02:50 IST on FRIDAY-Server (room friday-frd005-20261124-210843, provider gemini-realtime:gemini-3.8-live): greeting onset 0.73s vs 8s bar PASS; all 7 turns inside silence limits. Overall scorer FAIL on content (order-based fallback attribution; recall teal missing, goodbye no reply). Evidence: docs/collaboration/TASK-VOI-034-ACCEPTANCE-RUN-19.md.'
     blockers: []
-    next_action: 'Muse 1 pos 3 (queue FRD-040 -> INT-036 -> VOI-034).'
+    next_action: 'Run filed; work PR open, merge is for Muse. Next assignment per coordinator watch.'
 
   - id: TASK-OBS-023
     title: 'Observability: health-alerting re-probe run 2 - verify the OBS-008 alerting path fires on a real fault'
