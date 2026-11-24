@@ -19119,14 +19119,14 @@ tasks:
 
   - id: TASK-STR-064
     title: 'Stratex: BSM-vs-market option mispricing scan - ranked research report, no trading'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-str-064-bsm-mispricing-scan-r2
     pr: 1720
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T03:06:00+05:30'
+    updated_at: '2026-11-25T04:14:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-STR-064-BSM-MISPRICING-SCAN.md
@@ -19139,8 +19139,9 @@ tasks:
     - 'Checkpoint 1 filed in docs/collaboration/TASK-STR-064-BSM-MISPRICING-SCAN.md: mispricing scanner implemented (Stratex/rigorous_backtest/ig/mispricing_scan.py) + 8 new tests, 8/8 pass first-hand; IG-STR-01 suite 7/7 pass, no regression. Live chain + ranked report is checkpoint 2.'
     - 'Checkpoint 2 DONE 2026-11-25 ~03:01 IST: live Deribit BTC chain fetched direct (S=59888.55), 3 expiries scanned (25NOV26 50: 24 OK/22 FLAGGED/4 INVALID_PRICE; 27NOV26 48: 28 OK/20 FLAGGED; 25DEC26 24: 14 OK/10 FLAGGED). Ranked report docs/collaboration/TASK-STR-064-LIVE-CHAIN-REPORT.md. Verdict: no tradeable mispricing — flags are the vol smile/skew (Dec downside puts +17% to +70% over model, upside calls -9% to -17%); 4 INVALID_PRICE are deep-ITM calls $1.43-$2.67 below the intrinsic bound, stale marks. No trading signal.'
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-STR-BSM-SCAN (IG package S-12). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'MERGED 2026-11-25 ~04:10 IST: PR #1720 merged by Muse (merge 02f3428f; CI 10/10 green, diff reviewed first-hand, coordinator watch061 7146520150).'
     blockers: []
-    next_action: 'IN_REVIEW — awaiting peer review + merge (PR #1720). No trading signal; scanner + live chain report filed.'
+    next_action: 'Merged via work PR #1720 (merge 02f3428f). No further action.'
   - id: TASK-STR-065
     title: 'Stratex: encode the Safety Nets stop-out rule into the advisory/risk gate'
     status: CLAIMED
@@ -19162,22 +19163,25 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-STR-066
     title: 'Stratex: add PDO/PDC levels plus current-day 5-minute levels to S/R annotation records'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: IN_REVIEW
+    owner: muse_15
+    branch: muse15/task-str-066-pdoc-levels
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T04:00:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-STR-066-PDOC-LEVELS.md
     acceptance:
     - Annotation output carries previous-day open/close (PDO/PDC) levels and current-day 5-minute levels alongside the existing support/resistance levels from TASK-IG-STR-03.
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-STR-PDOC-LEVELS (IG package S-10). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Claimed by Muse 15 (hub #1483 comment 7146070918, 2026-11-25 ~03:45 IST): board AVAILABLE / owner null on main 4bed6107 (re-checked on 80b75649); no competing claim; branch muse15/task-str-066-pdoc-levels.'
+    - 'Done with live proof (evidence: docs/collaboration/TASK-STR-066-PDOC-LEVELS.md): annotate_levels() in Stratex/rigorous_backtest/ig/levels.py adds PDO/PDC records (kind pdo/pdc, origin prev_day) + S/R levels recomputed from today''s 5m candles (timeframe 5m); find_levels() untouched. Tests 12/12 local (7 new); test_levels.py added to the Stratex tier-1 CI pytest invocation. Live run 2026-11-25 ~03:57 IST on real Deribit BTC-PERPETUAL candles: 101 x 1h bars (last close 59,934.5), prev-day daily open 61,386.0 / close 60,345.0, 270 x 5m bars today -> 22 records (13 base S/R + PDO + PDC + 7 5m).'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Work PR open, awaiting coordinator review/merge. No production consumer by design (annotation aid only); production-verified = live-data run above.'
   - id: TASK-STR-067
     title: 'Stratex: add the pattern-comparison step to the multi-agent research desk'
     status: AVAILABLE

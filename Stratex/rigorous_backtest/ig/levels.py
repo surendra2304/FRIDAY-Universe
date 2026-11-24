@@ -7,6 +7,11 @@ support/resistance levels, scores each level by how often price tested
 it, and emits the levels as JSON-serialisable annotation records the
 owner (or a chart UI) can draw directly.
 
+`annotate_levels` (TASK-STR-066) extends the base S/R records with the
+previous-day open/close (PDO/PDC) reference levels and with S/R levels
+recomputed from the current day's 5-minute candles, so one annotation
+output carries all three level families side by side.
+
 ANNOTATION AID ONLY — a level is a place price reacted before, drawn
 for the owner's own review. This module emits no signals, no entries,
 no orders, and nothing in production consumes it.
@@ -92,6 +97,69 @@ def find_levels(candles, window=2, tol_frac=0.005, min_touches=1):
                 "last_index": max(c["indices"]),
                 "at_price": at_price,
             })
+    if records:
+        top = max(r["touches"] for r in records)
+        for r in records:
+            r["strength"] = r["touches"] / top
+    records.sort(key=lambda r: r["price"])
+    return records
+
+
+def _prev_day_records(prev_day, last_close, tol_frac):
+    """PDO/PDC annotation records from the previous day's candle.
+
+    prev_day is a dict with at least "open" and "close" keys. Each
+    record is a single-touch reference level: kind "pdo" /
+    "pdc", origin "prev_day", first/last index None (the level comes
+    from one daily candle, not from a swing in the base series).
+    """
+    if not isinstance(prev_day, dict) or "open" not in prev_day \
+            or "close" not in prev_day:
+        raise ValueError('prev_day must be a dict with "open" and "close"')
+    records = []
+    for kind, price in (("pdo", prev_day["open"]),
+                        ("pdc", prev_day["close"])):
+        records.append({
+            "kind": kind,
+            "origin": "prev_day",
+            "price": round(price, 10),
+            "touches": 1,
+            "first_index": None,
+            "last_index": None,
+            "at_price": abs(price - last_close) <= tol_frac * last_close,
+        })
+    return records
+
+
+def annotate_levels(candles, prev_day=None, today_5m=None,
+                    window=2, tol_frac=0.005, min_touches=1):
+    """Full annotation output: base S/R levels plus PDO/PDC and
+    current-day 5-minute levels (TASK-STR-066).
+
+    - Base records come from find_levels() on `candles` (unchanged).
+    - `prev_day` (optional dict with "open"/"close") adds one PDO and
+      one PDC record, each a single-touch reference level.
+    - `today_5m` (optional list of the current day's 5-minute candles)
+      adds S/R levels recomputed from that series; those records carry
+      "timeframe": "5m" and indices relative to the 5-minute series.
+    - With neither extra input the output is identical to find_levels().
+      Strength is normalised across the combined set so the most-tested
+      level scores 1.0; records are sorted by price.
+    """
+    if tol_frac <= 0:
+        raise ValueError("tol_frac must be > 0")
+    if len(candles) < 2 * window + 1:
+        return []
+    records = find_levels(candles, window=window, tol_frac=tol_frac,
+                          min_touches=min_touches)
+    last_close = candles[-1]["close"]
+    if prev_day is not None:
+        records.extend(_prev_day_records(prev_day, last_close, tol_frac))
+    if today_5m is not None:
+        for r in find_levels(today_5m, window=window, tol_frac=tol_frac,
+                             min_touches=min_touches):
+            r["timeframe"] = "5m"
+            records.append(r)
     if records:
         top = max(r["touches"] for r in records)
         for r in records:
