@@ -1,10 +1,10 @@
 # TASK-INT-019 — INT-876 soak state onto S2 + one traced IntelX → Memora universal → FRIDAY consumption (PARTIAL — repo-side legs done, S2 live legs blocked)
 
-**Worker:** Muse 16. **Claim:** issue #1483 comment 7119132656, 2026-11-24 ~06:58 IST, head of queue after TASK-VYR-048 merged (work PR #1582, merge 08453024). **Branch:** `muse16/task-int-019-soak-state-s2`. **Base:** main 1c754828. **Work PR:** #1606 (claim PR converted; this doc + board flip CLAIMED → IN_REVIEW ride in it).
+**Worker:** Muse 16. **Claim:** issue #1483 comment 7119132656, 2026-11-24 ~06:58 IST, head of queue after TASK-VYR-048 merged (work PR #1582, merge 08453024). **Branch:** `muse16/task-int-019-soak-state-s2`. **Base:** main 0b0cdeab (claim PR #1606 merged; main moved from 1c754828). **Claim PR #1606 merged 2026-11-24 ~07:15 IST (merge 0b0cdeab); work PR:** new PR from this branch (number in the board record).
 
 **Status of this document:** PARTIAL FILING. The repo-side legs are verified first-hand and filed here. The S2 live legs — timer install, day-4 09:30 run observation, traced live consumption — are BLOCKED on bridge access (approval request to Muse, hub comment 7113152293, still open, no reply) and on Muse's hub clearance for the timer install (a fleet mutation). Nothing live on S2 is claimed verified in this document. The live procedure for those legs is written out in §5 so the next run with an approved connection can execute it without re-deriving it.
 
-Five states: implemented PARTIAL (repo-side verification + live procedure done; S2 install + live trace not done) / tested PARTIAL (runner failure modes tested locally, §3; no live run tested) / merged NO (PR #1606 open) / deployed NO (timer not installed on S2) / production-verified NO.
+Five states: implemented PARTIAL (repo-side verification + live procedure done; S2 install + live trace not done) / tested PARTIAL (runner failure modes tested locally, §3; no live run tested) / merged NO (claim PR #1606 merged; work PR open) / deployed NO (timer not installed on S2) / production-verified NO.
 
 ## 1. Soak state location — verified in the repo
 
