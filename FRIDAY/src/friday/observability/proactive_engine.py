@@ -9,10 +9,17 @@ Monitors:
   - System telemetry  : CPU, RAM, battery, disk, network
   - Active window     : what the user is currently doing
   - Anomaly detection : sudden spikes, low battery, hot CPU
+  - Memory guard (TASK-FRD-041): the service's own cgroup limit — the
+    kernel kills FRIDAY when the *cgroup* (200 MB on Server 1) fills,
+    long before system RAM looks critical, so the guard watches
+    /sys/fs/cgroup memory.max/memory.current and warns at 75%, escalates
+    at 90% with a direct Telegram send (the 2026-11-23 08:03 IST kill
+    proved a queued-only warning dies with the process).
 """
 
 from __future__ import annotations
 
+import os
 import random
 import threading
 from dataclasses import dataclass, field
@@ -25,6 +32,97 @@ from friday.core.logging import get_logger
 from friday.observability.notifications import NotificationManager
 
 logger = get_logger("observability.proactive")
+
+
+#: Memory-guard thresholds (TASK-FRD-041), as a share of the service's own
+#: cgroup memory cap. On Server 1 the cap is 200 MB (FRIDAY.service
+#: MemoryMax=200M): warning at 150 MB used leaves ~50 MB of headroom, critical
+#: at 180 MB leaves ~20 MB. The 2026-11-23 victim grew to ~164 MB RSS in
+#: ~6 minutes, so these are minutes of warning, not hours — by design.
+MEMORY_WARN_PERCENT = 75.0
+MEMORY_CRITICAL_PERCENT = 90.0
+MEMORY_RECOVERED_PERCENT = 60.0
+
+#: Cgroup base path; tests monkeypatch this to a fabricated tree.
+CGROUP_BASE = "/sys/fs/cgroup"
+
+
+def _read_cgroup_int(*relative_paths: str) -> int | None:
+    """Read the first readable cgroup value file; None when absent/unlimited.
+
+    A file containing ``max`` means the resource is unlimited and is treated
+    as no limit (None). Any read/parse failure returns None — the guard
+    degrades to "no cgroup data" instead of raising.
+    """
+    for relative in relative_paths:
+        try:
+            with open(os.path.join(CGROUP_BASE, relative), encoding="utf-8") as handle:
+                raw = handle.read().strip()
+        except (OSError, ValueError):
+            continue
+        if raw in ("", "max"):
+            return None
+        try:
+            return int(raw)
+        except ValueError:
+            continue
+    return None
+
+
+@dataclass
+class CgroupMemory:
+    """The service's own memory-cgroup accounting (cgroup v2, v1 fallback)."""
+
+    limit_bytes: int | None  # None when the cgroup has no memory cap
+    used_bytes: int
+    swap_limit_bytes: int | None
+    swap_used_bytes: int | None
+
+    @property
+    def percent(self) -> float | None:
+        if self.limit_bytes is None or self.limit_bytes <= 0:
+            return None
+        return round(self.used_bytes / self.limit_bytes * 100, 1)
+
+    @property
+    def swap_percent(self) -> float | None:
+        if self.swap_limit_bytes is None or self.swap_limit_bytes <= 0:
+            return None
+        if self.swap_used_bytes is None:
+            return None
+        return round(self.swap_used_bytes / self.swap_limit_bytes * 100, 1)
+
+
+def read_cgroup_memory() -> CgroupMemory | None:
+    """Read this process's memory-cgroup accounting; None when unavailable.
+
+    Prefers cgroup v2 (memory.max / memory.current / memory.swap.*) and falls
+    back to v1 (memory/memory.limit_in_bytes / memory/memory.usage_in_bytes /
+    memory/memory.memsw.*). Returns None when no cgroup files exist at all
+    (dev machines, containers without limits) or the used value cannot be read.
+    A present-but-unlimited cap yields limit_bytes=None with a real used_bytes.
+    """
+    used = _read_cgroup_int(
+        "memory.current",
+        "memory/memory.usage_in_bytes",
+    )
+    if used is None:
+        return None
+    return CgroupMemory(
+        limit_bytes=_read_cgroup_int(
+            "memory.max",
+            "memory/memory.limit_in_bytes",
+        ),
+        used_bytes=used,
+        swap_limit_bytes=_read_cgroup_int(
+            "memory.swap.max",
+            "memory/memory.memsw.limit_in_bytes",
+        ),
+        swap_used_bytes=_read_cgroup_int(
+            "memory.swap.current",
+            "memory/memory.memsw.usage_in_bytes",
+        ),
+    )
 
 
 @dataclass
@@ -44,6 +142,12 @@ class SystemSnapshot:
     active_window: str = ""
     top_processes: list[str] = field(default_factory=list)
     measurement_error: str | None = None
+    # Memory guard (TASK-FRD-041): the service's own cgroup, not system RAM.
+    # None when the process runs without a cgroup memory cap (dev/CI).
+    cgroup_mem_percent: float | None = None
+    cgroup_mem_used_mb: float | None = None
+    cgroup_mem_limit_mb: float | None = None
+    cgroup_swap_percent: float | None = None
 
     def cpu_hot(self) -> bool:
         return self.cpu_percent is not None and self.cpu_percent >= 85
@@ -56,6 +160,14 @@ class SystemSnapshot:
 
     def disk_full(self) -> bool:
         return self.disk_percent is not None and self.disk_percent >= 90
+
+    def memory_pressure_warning(self) -> bool:
+        """Cgroup use at/above the warning threshold (TASK-FRD-041)."""
+        return self.cgroup_mem_percent is not None and self.cgroup_mem_percent >= MEMORY_WARN_PERCENT
+
+    def memory_pressure_critical(self) -> bool:
+        """Cgroup use at/above the critical threshold (TASK-FRD-041)."""
+        return self.cgroup_mem_percent is not None and self.cgroup_mem_percent >= MEMORY_CRITICAL_PERCENT
 
 
 def capture_snapshot() -> SystemSnapshot:
@@ -78,6 +190,9 @@ def capture_snapshot() -> SystemSnapshot:
                     break
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
+        # Memory guard (TASK-FRD-041): the cgroup cap is the real kill
+        # threshold — system RAM can look fine while the cgroup is full.
+        cgroup = read_cgroup_memory()
         return SystemSnapshot(
             timestamp=datetime.now(timezone.utc),
             cpu_percent=round(cpu, 1),
@@ -90,6 +205,10 @@ def capture_snapshot() -> SystemSnapshot:
             network_up_kbps=up_kbps,
             network_down_kbps=down_kbps,
             top_processes=top,
+            cgroup_mem_percent=cgroup.percent if cgroup else None,
+            cgroup_mem_used_mb=round(cgroup.used_bytes / (1024 ** 2), 1) if cgroup else None,
+            cgroup_mem_limit_mb=round(cgroup.limit_bytes / (1024 ** 2), 1) if cgroup and cgroup.limit_bytes else None,
+            cgroup_swap_percent=cgroup.swap_percent if cgroup else None,
         )
     except Exception as exc:
         logger.warning(f"System snapshot failed: {exc}")
@@ -131,10 +250,15 @@ class ProactiveEngine:
         notifications: NotificationManager,
         user_name: str = "Surendra",
         poll_interval_seconds: float = 30.0,
+        telegram_sender: Callable[[str], bool] | None = None,
     ) -> None:
         self.notifications = notifications
         self.user_name = user_name
         self.poll_interval = poll_interval_seconds
+        # Memory guard (TASK-FRD-041): direct Telegram sender for the critical
+        # threshold. None means "use the real Telegram gateway lazily"; tests
+        # pass a recorder. The sender must never raise — see _send_telegram.
+        self._telegram_sender = telegram_sender
         self._running = False
         self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
@@ -193,13 +317,14 @@ class ProactiveEngine:
         # with 17 near-identical lines on the owner's next question.
         # Dedupe is now per CATEGORY with state-change awareness: one live
         # alert per condition, re-announced only after the cooldown lapses.
-        announcements: list[tuple[str, str, str]] = []  # (category, message, severity)
+        announcements: list[tuple[str, str, str, str | None]] = []  # (category, message, severity, direct-telegram text or None)
         if current.cpu_hot():
             announcements.append((
                 "cpu_hot",
                 f"CPU is running hot at {current.cpu_percent}%. "
                 f"{'Top offender: ' + current.top_processes[0] if current.top_processes else 'Keeping an eye on it.'}",
                 "warning",
+                None,
             ))
         if current.ram_critical():
             announcements.append((
@@ -207,6 +332,7 @@ class ProactiveEngine:
                 f"RAM usage is at {current.ram_percent}% ({current.ram_used_gb}/{current.ram_total_gb} GB). "
                 "Might want to close a few things.",
                 "warning",
+                None,
             ))
         if current.battery_low():
             announcements.append((
@@ -214,12 +340,42 @@ class ProactiveEngine:
                 f"Battery is at {current.battery_percent}% and not charging. "
                 "Plugging in would be wise.",
                 "warning",
+                None,
             ))
         if current.disk_full():
             announcements.append((
                 "disk_full",
                 f"Disk is {current.disk_percent}% full. Running low on space.",
                 "warning",
+                None,
+            ))
+        # Memory guard (TASK-FRD-041): the cgroup cap is what kills FRIDAY,
+        # so warn on cgroup use, not system RAM. Critical also goes straight
+        # to Telegram: on 2026-11-23 the ram_critical warning sat in the
+        # in-memory queue and died with the process ~4 minutes later, before
+        # any turn surfaced it. The direct send is gated by the same
+        # per-category cooldown as the queue post, so it fires at most once
+        # per 5 minutes while the condition holds.
+        if current.memory_pressure_critical():
+            announcements.append((
+                "memory_critical",
+                f"my memory use is at {current.cgroup_mem_percent}% of the "
+                f"{current.cgroup_mem_limit_mb} MB service limit "
+                f"({current.cgroup_mem_used_mb} MB used). If it keeps climbing "
+                "the kernel will kill me without warning.",
+                "critical",
+                f"FRIDAY memory critical: {current.cgroup_mem_percent}% of the "
+                f"{current.cgroup_mem_limit_mb} MB service limit "
+                f"({current.cgroup_mem_used_mb} MB used). I may be killed soon.",
+            ))
+        elif current.memory_pressure_warning():
+            announcements.append((
+                "memory_pressure",
+                f"my memory use is at {current.cgroup_mem_percent}% of the "
+                f"{current.cgroup_mem_limit_mb} MB service limit "
+                f"({current.cgroup_mem_used_mb} MB used).",
+                "warning",
+                None,
             ))
         if (
             previous
@@ -228,21 +384,61 @@ class ProactiveEngine:
             and current.cpu_percent < 30
             and previous.cpu_percent >= 85
         ):
-            announcements.append(("cpu_cooled", "CPU has cooled down. Crisis averted.", "info"))
+            announcements.append(("cpu_cooled", "CPU has cooled down. Crisis averted.", "info", None))
+        if (
+            previous
+            and (previous.memory_pressure_warning() or previous.memory_pressure_critical())
+            and current.cgroup_mem_percent is not None
+            and current.cgroup_mem_percent < MEMORY_RECOVERED_PERCENT
+        ):
+            announcements.append((
+                "memory_recovered",
+                "Memory pressure has eased back below "
+                f"{MEMORY_RECOVERED_PERCENT:.0f}% of the service limit.",
+                "info",
+                None,
+            ))
         for fn in self._custom_checks:
             try:
                 result = fn(current, previous)
                 if result:
-                    announcements.append((f"custom:{fn.__name__}", result, "info"))
+                    announcements.append((f"custom:{fn.__name__}", result, "info", None))
             except Exception as exc:
                 logger.warning(f"Custom proactive check failed: {exc}")
-        for category, message, severity in announcements:
+        for category, message, severity, telegram_text in announcements:
             if self._should_announce(category):
                 self.notifications.post_notification(
                     message=_phrase(message),
                     category=category,
                     severity=severity,
                 )
+                if telegram_text is not None:
+                    self._send_telegram(telegram_text)
+
+    def _send_telegram(self, text: str) -> None:
+        """Best-effort direct Telegram send in a daemon thread; never raises.
+
+        The gateway is imported lazily so the engine stays importable without
+        Telegram configured. An injected ``telegram_sender`` (tests, or a
+        caller that already owns a gateway) is used instead when present.
+        An unconfigured gateway stays silent.
+        """
+        def _deliver() -> None:
+            try:
+                if self._telegram_sender is not None:
+                    self._telegram_sender(text)
+                    return
+                from friday.proactive.telegram_gateway import telegram_gateway
+
+                if not telegram_gateway.is_configured():
+                    return
+                telegram_gateway.send_message(text)
+            except Exception as exc:  # never break the monitoring loop
+                logger.warning(f"Memory-guard Telegram send failed: {exc}")
+
+        threading.Thread(
+            target=_deliver, name="friday-memory-guard-telegram", daemon=True
+        ).start()
 
     def _should_announce(self, category: str) -> bool:
         """Per-category cooldown so we do not repeat the same condition.
