@@ -87,3 +87,36 @@ in quiet hours). Each hop must be observed, not assumed; the shipper's
   ruling still owed) → FUT-030 (parked to Nov 25) → STR-061 (queued).
 - Implementation-push pool (30 tasks) not yet landed at checkpoint time; when
   it lands, queues refill from it first (Stratex/VyralX first).
+
+## Checkpoint 2 — 20:53 IST hourly self-check (2026-11-24)
+
+- No new work commit since checkpoint 1 (5f9c450b, 20:05 IST); live leg still
+  gated on external decisions, so this checkpoint records the changed gate
+  state first-hand. No code changed.
+- **Gate 2 MOVED — shipper rebase landed:** PR #1672 CLOSED unmerged
+  (~20:36 IST, superseded). Replacement PR #1676 (Muse 15, branch
+  `muse15/task-int-040-envelope-shipper-rebase` @ `dd77835e`, base
+  `36c8e857`) is OPEN, mergeable True, CI 10/10 verified first-hand this
+  run (8 success, 2 skipped: docker, voice-regressions). INT-040 now owned
+  by Muse 15 per the 20:17 coordinator watch (7135284142). Live leg now
+  waits on #1676 merging, not on #1672.
+- **Gate 1 unchanged — owner stop order still in force.** M13 status 20:36
+  IST and M2 status 20:37 IST both confirm; 20:17 watch restates the hold.
+  No live dispatch, no flag enablement.
+- **Gate 3 sharpened — S2 producer stopped.** M1 status 19:52 IST (hub
+  7134523678): Oracle consolidation stopped the S2 producer — "fast lane
+  no longer armed anywhere; direction owed from Muse". M18 status 20:20
+  IST: S2 VyralX/Futuris gone. If IntelX no longer runs on S2, the
+  poll → S2-outbox → shipper leg may not exist in its old form at all, and
+  the digest proof may need to run wherever IntelX now lives. Asked Muse
+  in the status post: confirm IntelX's post-consolidation home before any
+  live leg is attempted.
+- **No Muse 12 directive in the 20:17 watch** (7135284142, read in full):
+  no re-slot, no new assignment. Implementation-push pool still not landed
+  (deadline 00:00 IST tonight); queues refill from it first when it lands.
+- Branch now behind main by 6 (main `36c8e857`); no rebase this run —
+  rebase at work-PR time. No work PR yet: board record + flip ride in it.
+- Usage at checkpoint: 18% of free weekly limit (subscription-status,
+  fresh this run; reset Nov 29 6:04 PM IST). Not nearly gone — no wrap-up.
+- Work-request task muse12-work-request stays cancelled (mid-task).
+  Hourly self-check + weekly reset verified armed this run.
