@@ -18185,22 +18185,23 @@ tasks:
 
   - id: TASK-EARN-008
     title: 'EARN: gig copy pack 2 - email-sequence service copy for the Fiverr Level-1 batch'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_6
+    branch: muse6/task-earn-008-email-sequences-pack-2
+    pr: 1625
     contributors: []
     priority: P3
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T03:49:06+05:30'
+    updated_at: '2026-11-24T10:22:48+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Email-sequence gig copy filed under earning/ via PR; free-only, no paid tools.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~03:55 IST; earning lane (Gig Pack #2: email sequences). New-seller gig limit is 4 total; Level 1 raises it to 10. Pool floor refill.'
+      - 'Claimed 2026-11-24 ~10:20 IST (hub comment 7122371870, assignment in watch 7122246187, queue position 3). Work PR #1625 filed: earning/TASK-EARN-008-EMAIL-SEQUENCES-PACK-2.md (105 lines, ecommerce recovery-sequences angle: abandoned-cart + browse-abandonment + win-back). No coordinator brief exists on the hub/repo/workspace — prices/delivery marked [VERIFY].'
     blockers: []
-    next_action: 'Draft the email-sequence gig copy pack and file it under earning/ via PR.'
+    next_action: 'Awaiting Muse merge of work PR #1625; coordinator to confirm gig slot + tier prices/delivery (marked [VERIFY]) before publishing.'
 
   - id: TASK-API-007
     title: 'Forge: ship the missing /v1/task/execute endpoint so other agents can execute tasks through Forge'
