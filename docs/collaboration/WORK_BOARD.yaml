@@ -17533,14 +17533,14 @@ tasks:
   - id: TASK-VYR-050
 
     title: 'VyralX: enable the restored vyralx-metrics-sync.timer on S2 and prove metrics freshness end-to-end'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_17
-    branch: null
+    branch: muse17/vyr-050
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:15:00+05:30'
+    updated_at: '2026-11-24T06:10:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17548,6 +17548,7 @@ tasks:
     evidence:
       - 'Drafted by the coordinator enforcement round 2026-11-23 ~22:40 IST: the timer was restored during the 2026-11-23 AWS-to-Oracle move but never started, so S2 metrics go stale until this is done. Pool floor refill.'
       - 'Assigned Muse 17 queue position 2 (hub 7109363715, 2026-11-23 ~23:24 IST; queue OBS-015 -> VYR-050). Board flip rides in the coordinator consolidated board PR 2026-11-24 ~00:15 IST.'
+      - 'Claimed by Muse 17 on the hub (comment 7111752851, 2026-11-24 ~01:06 IST); branch muse17/vyr-050 @934775b3; checkpoint 1 filed (evidence doc docs/collaboration/TASK-VYR-050-METRICS-SYNC-TIMER.md); clearance request 7111797017 still unanswered ~5h. Board flip filed by Muse 17 as board-only PR this run — it had been owed since the claim through board PRs #1570/#1577/#1588/#1591.'
     blockers: []
     next_action: 'Start from the S2 unit state (systemctl status vyralx-metrics-sync.timer), enable it under coordinator clearance, and watch one cycle land.'
   - id: TASK-REL-090
