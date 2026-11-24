@@ -2,7 +2,7 @@
 
 **Worker:** Muse 9. **Claim:** issue #35 comment 7092399995, 2026-11-23 ~11:02 IST, on coordinator assignment in watch 7092357321. **Branch:** `muse9/task-int-023`. **Base:** main 136533e5.
 
-**Status of this document:** INTERIM compilation. The chain runs 2026-11-21 → 2026-11-27 (day 7 = judgement day). Today is day 3. Days 4–7 have not run yet, so no final 7-day compilation or final judgement recommendation can be filed today. This document compiles what is verifiable for days 1–3 and states plainly what is not verifiable.
+**Status of this document:** INTERIM compilation (days 1–3) + FINAL-LEG PROGRESS (§8, day 4). The chain runs 2026-11-21 → 2026-11-27 (day 7 = judgement day). Days 5–7 have not run yet, so no final 7-day compilation or final judgement recommendation can be filed today. This document compiles what is verifiable for days 1–4 and states plainly what is not verifiable. Final-leg claim: coordinator watch 7136251890 (20:37 run, 2026-11-24), answering work request 7136053755 — INT-023 stays open with Muse 9 through 2026-11-27.
 
 ## 1. What the soak is claimed to be
 
@@ -86,6 +86,31 @@ The D4 judgement cannot be made before 2026-11-27 in any case (day 7 has not run
 
 - Days 4–7 (2026-11-24 → 2026-11-27) have not run. The final 7-day compilation and the final D4 recommendation can only be filed after the 2026-11-27 run.
 - This interim compilation is filed now so the evidence gap is on the record before more days pass silently. The work PR carries this doc + the board record (IN_REVIEW).
-- **Open question for Muse (coordinator):** confirm the soak runner/record location (§6.1) and whether INT-023 stays open with Muse 9 through 2026-11-27 for the final compilation, or closes on this interim filing with the final compilation as a follow-up task.
+- **Open question for Muse (coordinator):** confirm the soak runner/record location (§6.1) and whether INT-023 stays open with Muse 9 through 2026-11-27 for the final compilation, or closes on this interim filing with the final compilation as a follow-up task. **Answered in part 2026-11-24:** coordinator watch 7136251890 (20:37 run) assigns INT-023 to Muse 9 as interim head through 2026-11-27; and TASK-INT-032 (Muse 7, PR #1553, merged b63d0f30) now defines the runner in the repo — `IntelX/scripts/run_int876_soak.py` + `deploy/intelx-soak-runner.service/.timer`, daily 09:30 IST, day records `/var/lib/friday-universe/intelx-soak/YYYY-MM-DD.json` + the live archive. The timer itself is NOT installed on any server (§8); "1A"/"D4" definitions are still undefined in any readable source.
 
-— Muse 9, 2026-11-23 ~11:20 IST
+## 8. Final-leg progress — day 4 (2026-11-24)
+
+**Filed 2026-11-24 ~21:40 IST. Claim:** coordinator watch 7136251890 (20:37 run), answering work request 7136053755 (hub #1483 comment 7136549618). Board on main 4bc4159c: IN_REVIEW, owner muse_9, pr 1460, branch muse9/task-int-023 (fully merged, fast-forwarded to main 4bc4159c). Work PR: this PR.
+
+**Day 4 verdict: NO 09:30 soak run on 2026-11-24.**
+
+What was checked this run (all read-only):
+
+- **Live research archive (Oracle-backed, complete; 40 most recent runs listed):** the most recent run overall is `lr_84b50db5`, 2026-11-24 06:29:59 IST, query "Oracle Cloud Infrastructure Always Free Ampere A1 …", SUCCESS, task `disp_bddae31fb8af` — a bus dispatch run, not the soak (wrong slot, wrong query). **Zero runs after 06:30 IST on Nov 24; zero runs in the 09:30 slot; zero runs with task_id `soak-876-2026-11-24`; zero runs with the standing soak query "latest AI model releases" on Nov 24.** Read via the S1 IntelX checkout (`/opt/friday_universe/IntelX`, .env present) because the S2 IntelX directory is gone (see below) — same durable store, same read path as INT-023 §4 / INT-035 §3.
+- **S2 journal, IntelX.service 09:20–09:45 IST:** two lines only — watch polls at 09:38:33/34 (`ai_model_releases`, `india_tech_regulatory`). No `research_live` dispatch. IntelX was still running on S2 at 09:38 (PID 622490, the INF-028 restart).
+- **S1 journal, IntelX.service 09:20–09:45 IST:** no entries — IntelX was not running on S1 at 09:30.
+- **Hub scan:** every #1483 comment 2026-11-24 07:41–21:15 IST (390 comments, pages 95–172; first-150-char bodies) — no soak/876/INT-023/INT-032/INT-035 mention except this run's claim (7136549618). **Zero #1483 comments at all 09:30–13:35 IST** (4-hour hub silence). No coordinator day-4 record. Caveats: scan bodies truncated to 150 chars; the 20:37 watch was read in full (no day-4 record); the 02:54–07:41 IST window is covered by INT-035's scan, which found no soak record.
+- **Soak runner state:** timer NOT installed — no `intelx-soak-runner.timer` unit on S2 or S1, no `/var/lib/friday-universe/intelx-soak/` record dir on either server. The INT-032 deploy step (install/enable timer) never happened; the owner stop order (17:26 IST) then froze live moves, and the Oracle consolidation (owner order 19:31 IST) moved IntelX off S2.
+- **IntelX has no running home right now (verified both servers):** S2 — `IntelX.service` inactive (MainPID 0), `/opt/friday_universe/IntelX` directory gone, `/health` empty. S1 — `IntelX.service` MASKED (`ActiveState=failed`), `/health` empty; S1 checkout at `b51ef05f` (merge PR #1669), behind main 4bc4159c. Where IntelX runs after the consolidation is unanswered — the same open question as INT-042 gate 3 (20:37 watch).
+
+**Chain tally after day 4: zero verifiable passing soak days out of four elapsed days.** Days 1–3 as before (§§3–4); day 4 joins them — no 09:30 run observable in any live source. The INF-028 fix is live (5 SUCCESS runs Nov 24 01:18–01:43 IST), so a green soak day is possible in principle — but no soak run was executed to prove it.
+
+**Block (posted on the hub this run):** the soak chain cannot produce days 5–7 while (a) the INT-032 timer is not installed on any server and (b) IntelX has no running home after the consolidation. Both are coordinator decisions (timer install + IntelX home), not worker work. INT-023 stays open through Nov 27 for the final compilation; if the chain cannot run, the final filing will record seven days with zero verifiable passing days and the D4 recommendation will be NOT ENABLE on the current evidence.
+
+## 9. What remains for Muse 9 on INT-023 (final leg)
+
+- Days 5–7 (2026-11-25 → 2026-11-27): observe each 09:30 slot in the live archive + hub, record run id + outcome per day — **contingent on the block in §8 being cleared** (timer installed, IntelX running somewhere).
+- After the 2026-11-27 run: complete the 7-day chain, state the final D4 recommendation with the evidence, file the final compilation.
+- Open questions for Muse (coordinator): (1) timer install + IntelX home — the §8 block; (2) "1A"/"D4" definitions, still undefined in any readable source; (3) whether days with no observable 09:30 run count toward the 7-day chain, or the chain restarts.
+
+— Muse 9, 2026-11-24 ~21:40 IST

@@ -16378,11 +16378,11 @@ tasks:
     status: IN_REVIEW
     owner: muse_9
     branch: muse9/task-int-023
-    pr: 1460
+    pr: 1680
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T11:35:00+05:30'
+    updated_at: '2026-11-24T21:33:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INT-023-SOAK-CHAIN-EVIDENCE.md
@@ -16392,8 +16392,10 @@ tasks:
     - 'Drafted by the coordinator 2026-11-23 ~10:30 IST (watch refill, pool floor 10): INT-876 soak D4 enablement judgement is due earliest 2026-11-27 (owner chose 1A, once-daily 09:30 IST silent run); the chain restarts 2026-11-21 and the judgement needs the compiled chain. Does not duplicate the soak itself, which runs separately. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Claim: issue #35 comment 7092399995 by Muse 9, 2026-11-23 ~11:02 IST, on direct assignment by Muse (coordinator) in watch 7092357321 (~10:37-10:55 IST). Board record verified AVAILABLE, owner muse_ai, on main 136533e5 (board blob d81164af, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse9/task-int-023.'
     - 'INTERIM compilation filed 2026-11-23 ~11:25 IST (docs/collaboration/TASK-INT-023-SOAK-CHAIN-EVIDENCE.md): full hub scan 2026-11-21 00:00 UTC to 2026-11-23 ~10:44 IST (202 pages) finds only 2 coordinator status lines recording day 1 (7058036493, 7060081284) - no day-2 or day-3 record, no run definition, no 1A/D4 definition anywhere; live research archive (36 runs, Oracle-backed, complete) has zero runs 2026-11-21, three DEGRADED runs 2026-11-22 22:53-23:28 IST, three DEGRADED runs 2026-11-23 09:00-09:02 IST (FRIDAY-chat INT-020 shape, not the soak); no 09:30 run observable on any day Nov 21-23 in journal or archive; sampled run lr_6d6a7103193348adb29bd4e8 DEGRADED synthesis_entailment_unverified, 15/15 findings single-source; IntelX /health 503 degraded 2026-11-23 ~11:09 IST; INT-019 (soak state to S2) still AVAILABLE/unclaimed. Interim recommendation: do NOT enable on current evidence; final 7-day compilation + D4 recommendation owed after the 2026-11-27 run.'
+    - 'Final-leg claim: hub #1483 comment 7136549618 by Muse 9, 2026-11-24 ~21:10 IST, on coordinator assignment in watch 7136251890 (20:37 run), answering work request 7136053755. Board record verified IN_REVIEW, owner muse_9, on main 4bc4159c (board blob 5eb60d07, verified against the true main blob before editing). Branch muse9/task-int-023 (fully merged interim branch, fast-forwarded to main 4bc4159c, rebased onto b2374d2a before this PR). Push pool stays next head after INT-023 (Stratex/VyralX first). Work-request cycle disabled on claim.'
+    - 'Day-4 progress filed 2026-11-24 ~21:40 IST (evidence doc §8): NO 09:30 soak run on 2026-11-24. Live archive (40 runs, Oracle-backed, read via S1 IntelX checkout): most recent run lr_84b50db5 06:29:59 IST (bus dispatch, OCI query); zero runs after 06:30 IST, zero in the 09:30 slot, zero soak-876 task ids. S2 journal 09:20-09:45 IST: only watch polls; S1 journal: no entries. Hub scan 07:41-21:15 IST (390 comments): no day-4 record; zero comments 09:30-13:35 IST. INT-032 timer never installed on either server; no soak record dir. IntelX has no running home after the Oracle consolidation (S2 dir gone + service inactive; S1 service masked/failed). Chain tally: zero verifiable passing soak days out of four. BLOCK posted on hub: days 5-7 cannot run until the timer is installed and IntelX has a running home (coordinator decisions). Work PR #1680.'
     blockers: []
-    next_action: 'Interim compilation filed; days 4-7 (2026-11-24 to 2026-11-27) still to run. Open question for Muse: confirm the soak runner/record location and whether INT-023 stays open with Muse 9 through 2026-11-27 for the final compilation, or closes on this interim filing with the final compilation as a follow-up task.'
+    next_action: 'Day-4 progress filed (evidence doc §8, work PR #1680); BLOCK posted on hub - days 5-7 (2026-11-25 to 2026-11-27) contingent on timer install + IntelX home (coordinator decisions). Final 7-day compilation + D4 recommendation due 2026-11-27.'
   - id: TASK-FUT-023
 
     title: 'Futuris: verify the last 3 scheduler cycles produced real forecasts and score the oldest unscored forecasts, file accuracy evidence'
