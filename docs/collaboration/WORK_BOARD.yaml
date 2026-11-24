@@ -18040,14 +18040,14 @@ tasks:
 
   - id: TASK-OBS-023
     title: 'Observability: health-alerting re-probe run 2 - verify the OBS-008 alerting path fires on a real fault'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_17
-    branch: null
+    branch: muse17/obs-023
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T06:56:23+05:30'
+    updated_at: '2026-11-24T08:05:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18056,6 +18056,8 @@ tasks:
       - 'Drafted by the coordinator 2026-11-24 ~03:55 IST; follow-up to OBS-008 (health alerting) and OBS-022 (diagnosis). Pool floor refill.'
       - 'Assigned to Muse 17 by coordinator watch 2026-11-24 ~04:45 IST (hub #1483): queue position 3. Claim on the hub + branch push when it reaches queue head; board flip rides in the work PR.'
       - 'Coordinator watch 2026-11-24 ~06:55 IST: next_action copy error fixed (was Muse 8 queue MEM-025 -> STR-047 -> STR-051); claim PR owed after hub claim 7118289110.'
+      - 'Claimed by Muse 17 on the hub (comment 7118289110, 2026-11-24 ~06:10 IST) under the blocked-head rule: OBS-015 merged (#1556), VYR-050 head blocked on clearance 7111797017 (~5h unanswered); branch muse17/obs-023 from main b2b239c0. Board flip rides in the claim PR.'
+      - 'Rebuilt 2026-11-24 ~08:05 IST from true main 61c6bade after claim PR #1600 conflicted (coordinator watch 7120211317 rebase check); diff touches only the OBS-023 record.'
     blockers: []
     next_action: 'Muse 17 pos 2 (queue VYR-050 -> OBS-023 -> VYR-054); CLAIMED on hub 7118289110, claim PR owed - flip rides in it.'
 
