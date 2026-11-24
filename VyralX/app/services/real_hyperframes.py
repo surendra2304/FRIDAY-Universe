@@ -12,9 +12,16 @@ Tests: tests/test_real_batch4a.py
 
 from __future__ import annotations
 
+import glob as _glob
 import hashlib
+import json as _json
+import os as _os
 import re
+import shutil as _shutil
+import subprocess as _subprocess
+import tempfile as _tempfile
 from dataclasses import dataclass, field
+from pathlib import Path as _Path
 from typing import Any
 
 
@@ -166,7 +173,6 @@ class SceneTransition:
         if self.type == "fade":
             return f"transition: opacity {self.duration}s ease-in-out;"
         elif self.type == "slide":
-            direction = getattr(self, "_direction", "left")
             return f"transition: transform {self.duration}s ease-in-out;"
         elif self.type == "wipe":
             return f"transition: clip-path {self.duration}s ease-in-out;"
@@ -399,3 +405,282 @@ class HyperframesManager:
 
     def supported_aspects(self) -> list[str]:
         return AspectRatioHandler.standard_aspects()
+
+    def render_film(self, script_title: str, output_path: str,
+                    preset: str = "shorts", fps: int = 30) -> dict[str, Any]:
+        """Render a stored script to a real MP4 film (code render).
+
+        Raises KeyError for an unknown title and ValueError for an
+        empty script; see :func:`render_film` for the render contract.
+        """
+        script = self.scripts.get(script_title)
+        if script is None:
+            raise KeyError(f"no Hyperframes script titled {script_title!r}")
+        return render_film(script, output_path, preset=preset, fps=fps)
+
+
+# --------------------------------------------------------------------------- #
+# Code-rendered film output (TASK-VYR-075)
+#
+# Upstream HyperFrames renders HTML scenes in headless Chrome and
+# encodes with FFmpeg. Headless-Chrome rendering NEVER runs inside
+# the fleet service (film_pipeline.render_gate: owner_machine /
+# post_arm only). What runs here instead is the Hypit pattern — a
+# CODE render, $0: each scene becomes a Pillow frame (background
+# colour + title + wrapped text) and FFmpeg encodes the frames to
+# a real MP4. The result is a genuine video file (probed with
+# ffprobe, signal-checked with media_quality), but it is NOT a
+# Chrome render of the HTML — the result dict says so on its face,
+# and the Chrome-fidelity leg stays gated off-fleet.
+# --------------------------------------------------------------------------- #
+
+CODE_RENDERER = "code_render_pillow_ffmpeg"
+CHROME_RENDER_NOTE = (
+    "not a headless-Chrome render: Chrome rendering is gated off-fleet "
+    "by film_pipeline.render_gate (owner_machine/post_arm only)"
+)
+_FILM_PRESETS = {"shorts": "9:16", "long": "16:9", "square": "1:1"}
+_FONT_CANDIDATES = (
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+    "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",
+    "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+)
+
+
+def _parse_hex_color(value: str) -> tuple[int, int, int]:
+    text = str(value or "").strip()
+    match = re.fullmatch(r"#([0-9a-fA-F]{6})", text)
+    if not match:
+        raise ValueError(f"bad hex colour {value!r}; expected #RRGGBB")
+    hexpart = match.group(1)
+    return (int(hexpart[0:2], 16), int(hexpart[2:4], 16),
+            int(hexpart[4:6], 16))
+
+
+def _resolve_font(bold: bool) -> str | None:
+    """First usable TTF on this host, or None (Pillow default font)."""
+    wanted = "Bold" if bold else "Regular"
+    for candidate in _FONT_CANDIDATES:
+        if wanted in candidate and _os.path.exists(candidate):
+            return candidate
+    found = sorted(_glob.glob(
+        "/usr/share/fonts/**/DejaVuSans*.ttf", recursive=True))
+    if found:
+        bold_first = sorted(found, key=lambda p: (0 if "Bold" in p else 1,
+                                                  p))
+        return bold_first[0] if bold else next(
+            (p for p in found if "Bold" not in p), found[0])
+    return None
+
+
+def _wrap_lines(draw: Any, text: str, font: Any, max_width: int) -> list[str]:
+    words = str(text or "").split()
+    if not words:
+        return []
+    lines: list[str] = []
+    current = ""
+    for word in words:
+        trial = f"{current} {word}".strip()
+        width = draw.textlength(trial, font=font)
+        if width <= max_width or not current:
+            current = trial
+        else:
+            lines.append(current)
+            current = word
+    if current:
+        lines.append(current)
+    return lines
+
+
+def render_scene_frame(scene: HTMLScene, width: int, height: int,
+                       font_path: str | None = None) -> Any:
+    """Render one scene to a Pillow image (background + title + text).
+
+    Raises ValueError on a bad colour. The frame carries the scene's
+    own text only — no footage, no reference media.
+    """
+    from PIL import Image, ImageDraw, ImageFont
+
+    bg = _parse_hex_color(scene.bg_color)
+    fg = _parse_hex_color(scene.text_color)
+    image = Image.new("RGB", (width, height), bg)
+    draw = ImageDraw.Draw(image)
+    margin = max(24, width // 16)
+    max_text_width = width - 2 * margin
+
+    bold_path = font_path or _resolve_font(bold=True)
+    regular_path = font_path or _resolve_font(bold=False)
+    if bold_path:
+        title_font = ImageFont.truetype(bold_path, size=max(28, height // 12))
+    else:
+        title_font = ImageFont.load_default()
+    if regular_path:
+        body_font = ImageFont.truetype(regular_path,
+                                       size=max(18, height // 26))
+    else:
+        body_font = ImageFont.load_default()
+
+    title = scene.title or ""
+    body = scene.text_content or ""
+    title_lines = _wrap_lines(draw, title, title_font, max_text_width)
+    body_lines = _wrap_lines(draw, body, body_font, max_text_width)
+    line_height_title = max(30, height // 11)
+    line_height_body = max(22, height // 24)
+    total_height = (len(title_lines) * line_height_title
+                    + len(body_lines) * line_height_body + height // 24)
+    y = max(margin, (height - total_height) // 2)
+    for line in title_lines:
+        draw.text(((width - draw.textlength(line, font=title_font)) / 2, y),
+                  line, font=title_font, fill=fg)
+        y += line_height_title
+    y += height // 48
+    for line in body_lines:
+        draw.text(((width - draw.textlength(line, font=body_font)) / 2, y),
+                  line, font=body_font, fill=fg)
+        y += line_height_body
+    return image
+
+
+def _run_ffmpeg(argv: list[str], timeout: int = 120) -> None:
+    proc = _subprocess.run(argv, capture_output=True, text=True,
+                           timeout=timeout)
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"ffmpeg failed ({proc.returncode}): "
+            f"{(proc.stderr or '').strip()[-500:]}")
+
+
+def _probe_film(path: _Path, ffprobe_bin: str) -> dict[str, Any]:
+    proc = _subprocess.run(
+        [ffprobe_bin, "-v", "error", "-show_entries",
+         "format=duration:stream=codec_type,codec_name,width,height",
+         "-of", "json", str(path)],
+        capture_output=True, text=True, timeout=30)
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"ffprobe failed ({proc.returncode}): "
+            f"{(proc.stderr or '').strip()[-300:]}")
+    data = _json.loads(proc.stdout or "{}")
+    video = next((s for s in data.get("streams", [])
+                  if s.get("codec_type") == "video"), {})
+    return {
+        "duration_seconds": float(data.get("format", {}).get("duration") or 0),
+        "width": int(video.get("width") or 0),
+        "height": int(video.get("height") or 0),
+        "video_codec": str(video.get("codec_name") or ""),
+        "audio_stream_count": sum(
+            1 for s in data.get("streams", [])
+            if s.get("codec_type") == "audio"),
+    }
+
+
+def _qa_film(path: _Path, probe: dict[str, Any],
+             ffmpeg_bin: str) -> dict[str, Any]:
+    """Signal QA via media_quality; honest unavailable if unimportable."""
+    try:
+        from app.services.media_quality import analyze_media_signals
+    except ImportError:
+        try:
+            from VyralX.app.services.media_quality import (
+                analyze_media_signals)
+        except ImportError:
+            return {"available": False,
+                    "reason": "media_quality module unavailable"}
+    return analyze_media_signals(
+        path, ffmpeg_bin=ffmpeg_bin,
+        actual_duration=float(probe.get("duration_seconds") or 0),
+        audio_stream_count=int(probe.get("audio_stream_count") or 0))
+
+
+def render_film(script: VideoScript, output_path: str | _Path,
+                preset: str = "shorts", fps: int = 30,
+                ffmpeg_bin: str = "ffmpeg",
+                ffprobe_bin: str = "ffprobe") -> dict[str, Any]:
+    """Render a Hyperframes script to a real MP4 film (code render).
+
+    Returns a result dict (never a fabricated success): on success
+    ``available`` is True with the output path, ffprobe facts and
+    the media_quality signal scan. The film is SILENT by design —
+    no BGM track; BGM is a separate mix step (see
+    renderer.render_video ``bgm_path``). Raises ValueError for an
+    empty script or an unknown preset, RuntimeError when ffmpeg /
+    ffprobe fails, and returns ``available=False`` when ffmpeg is
+    not installed.
+    """
+    if not script.scenes:
+        raise ValueError("cannot render a script with no scenes")
+    if preset not in _FILM_PRESETS:
+        raise ValueError(
+            f"unknown preset {preset!r}; expected one of "
+            f"{sorted(_FILM_PRESETS)}")
+    if fps <= 0:
+        raise ValueError("fps must be positive")
+    if _shutil.which(ffmpeg_bin) is None:
+        return {"available": False,
+                "reason": f"ffmpeg not found on PATH ({ffmpeg_bin})"}
+    if _shutil.which(ffprobe_bin) is None:
+        return {"available": False,
+                "reason": f"ffprobe not found on PATH ({ffprobe_bin})"}
+
+    width, height = AspectRatioHandler.resolution_for(_FILM_PRESETS[preset])
+    out = _Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    font_used = _resolve_font(bold=True) or "pillow-default"
+
+    with _tempfile.TemporaryDirectory(prefix="hyperframes-film-") as tmp:
+        tmpdir = _Path(tmp)
+        segments: list[_Path] = []
+        for index, scene in enumerate(script.scenes):
+            frame = render_scene_frame(scene, width, height)
+            frame_path = tmpdir / f"scene-{index:02d}.png"
+            frame.save(frame_path)
+            segment = tmpdir / f"scene-{index:02d}.mp4"
+            _run_ffmpeg([
+                ffmpeg_bin, "-hide_banner", "-loglevel", "error", "-y",
+                "-threads", "1",
+                "-framerate", str(fps), "-loop", "1", "-i", str(frame_path),
+                "-t", str(float(scene.duration)),
+                "-vf", f"scale={width}:{height}",
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+                "-pix_fmt", "yuv420p", "-r", str(fps), "-an", str(segment),
+            ])
+            segments.append(segment)
+        if len(segments) == 1:
+            _shutil.copyfile(segments[0], out)
+        else:
+            concat_list = tmpdir / "concat.txt"
+            concat_list.write_text("".join(
+                f"file '{s.as_posix()}'\n" for s in segments))
+            _run_ffmpeg([
+                ffmpeg_bin, "-hide_banner", "-loglevel", "error", "-y",
+                "-threads", "1",
+                "-f", "concat", "-safe", "0", "-i", str(concat_list),
+                "-c", "copy", str(out),
+            ])
+    if not out.is_file() or out.stat().st_size == 0:
+        raise RuntimeError("render produced no output file")
+
+    probe = _probe_film(out, ffprobe_bin)
+    qa = _qa_film(out, probe, ffmpeg_bin)
+    return {
+        "available": True,
+        "renderer": CODE_RENDERER,
+        "chrome_render": CHROME_RENDER_NOTE,
+        "output_path": str(out),
+        "preset": preset,
+        "fps": fps,
+        "scenes": script.scene_count(),
+        "title": script.title,
+        "duration_seconds": probe["duration_seconds"],
+        "width": probe["width"],
+        "height": probe["height"],
+        "video_codec": probe["video_codec"],
+        "audio": "silent — no BGM track (BGM is a separate mix step)",
+        "audio_stream_count": probe["audio_stream_count"],
+        "font": font_used,
+        "probe": probe,
+        "qa": qa,
+    }

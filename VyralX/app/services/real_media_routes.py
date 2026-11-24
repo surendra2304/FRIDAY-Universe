@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import logging
+import re
 import uuid
+from pathlib import Path
 from typing import List
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 try:
+    from app.config import get_settings
     from app.services.real_claude_ads import (
         MultiPlatformAdManager,
         AdComplianceChecker,
@@ -24,12 +27,15 @@ try:
         MultiModelStudio,
         GenerationRequest,
         PromptEnhancer,
+        studio_layout_reference,
     )
     from app.services.real_hyperframes import (
         HyperframesManager,
         AspectRatioHandler,
     )
+    from app.services import channel_operator, format_clone
 except ImportError:
+    from VyralX.app.config import get_settings
     from VyralX.app.services.real_claude_ads import (
         MultiPlatformAdManager,
         AdComplianceChecker,
@@ -47,11 +53,13 @@ except ImportError:
         MultiModelStudio,
         GenerationRequest,
         PromptEnhancer,
+        studio_layout_reference,
     )
     from VyralX.app.services.real_hyperframes import (
         HyperframesManager,
         AspectRatioHandler,
     )
+    from VyralX.app.services import channel_operator, format_clone
 
 logger = logging.getLogger("vyralx.real_media_routes")
 router = APIRouter(prefix="/engines", tags=["Real Media & Growth Engines"])
@@ -246,7 +254,14 @@ class HiggsfieldGenRequest(BaseModel):
 
 @router.post("/studio/generate")
 def higgsfield_generate(req: HiggsfieldGenRequest):
-    """Route and synthesize visual media across 600+ AI generation models."""
+    """Request visual media generation (reference-only studio).
+
+    TASK-VYR-075: no generation runs here — the fleet has no GPU
+    for the free local engines and the paid MuAPI gateway is barred
+    by the FREE-only rule. The route answers 503 with the honest
+    reason instead of a fabricated success (the pre-VYR-075
+    behaviour returned an output_path for media never produced).
+    """
     rid = f"gen_{uuid.uuid4().hex[:8]}"
     gen_req = GenerationRequest(
         request_id=rid,
@@ -258,6 +273,14 @@ def higgsfield_generate(req: HiggsfieldGenRequest):
         num_steps=req.num_steps,
     )
     result = _studio.generate(gen_req)
+    if not result.available:
+        raise HTTPException(status_code=503, detail={
+            "status": "unavailable",
+            "engine": "OpenHiggsfieldAI",
+            "model": result.model,
+            "reason": result.reason,
+            "available": False,
+        })
     return {
         "status": "success",
         "engine": "OpenHiggsfieldAI",
@@ -268,6 +291,20 @@ def higgsfield_generate(req: HiggsfieldGenRequest):
         "quality_score": result.quality_score,
         "seed": result.seed,
         "total_studio_generations": _studio.total_generations,
+    }
+
+
+@router.get("/studio/layout-reference")
+def higgsfield_layout_reference():
+    """Multi-studio layout kept as a UI reference (TASK-VYR-075).
+
+    Data only: the layout pattern for a future VyralX creation
+    console. No studio here generates anything.
+    """
+    return {
+        "status": "success",
+        "engine": "OpenHiggsfieldAI",
+        "layout": studio_layout_reference(),
     }
 
 
@@ -320,6 +357,232 @@ def get_supported_aspect_ratios():
         "engine": "Hyperframes",
         "supported_aspect_ratios": aspects,
         "resolutions": resolutions,
+    }
+
+
+class HyperframesRenderRequest(BaseModel):
+    title: str = "Autonomous Video Pipeline"
+    preset: str = "shorts"
+
+
+@router.post("/hyperframes/render")
+def render_hyperframes_film(req: HyperframesRenderRequest):
+    """Render a stored Hyperframes script to a real MP4 film.
+
+    TASK-VYR-075: a CODE render (Pillow frames + FFmpeg encode) —
+    a genuine video file, probed and signal-checked. It is NOT a
+    headless-Chrome render of the HTML; Chrome rendering stays
+    gated off-fleet (film_pipeline.render_gate). The film is silent
+    by design (no BGM track); the response says so.
+    """
+    settings = get_settings()
+    if _hyperframes.scripts.get(req.title) is None:
+        raise HTTPException(status_code=404,
+                            detail=f"no Hyperframes script titled {req.title!r}")
+    slug = re.sub(r"[^A-Za-z0-9]+", "-", req.title).strip("-").lower() or "film"
+    out_path = settings.render_dir / f"hyperframes-{slug}-{uuid.uuid4().hex[:8]}.mp4"
+    try:
+        result = _hyperframes.render_film(req.title, str(out_path),
+                                           preset=req.preset)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    if not result.get("available"):
+        raise HTTPException(status_code=503, detail=result.get("reason", "render unavailable"))
+    return {
+        "status": "success",
+        "engine": "Hyperframes",
+        **result,
+    }
+
+
+# ── CLAUDE-ADS AUDIT + CAPABILITY-GATED ACTIONS ─────────────────────────────
+
+class AdAuditRequest(BaseModel):
+    account_id: str = "acc_vyralx_001"
+
+
+@router.post("/ads/audit")
+def audit_ad_account(req: AdAuditRequest):
+    """Source-grounded audit of a registered ad account (TASK-VYR-075).
+
+    An unknown account returns a critical finding, not a 404 —
+    the audit IS the result.
+    """
+    audit = _ad_manager.audit_account(req.account_id)
+    return {
+        "status": "success",
+        "engine": "ClaudeAds",
+        "audit_id": audit.audit_id,
+        "platform": audit.platform,
+        "account_id": audit.account_id,
+        "findings": audit.findings,
+        "summary": audit.summary(),
+    }
+
+
+class AdActionRequest(BaseModel):
+    action: str = "pause"
+    capabilities: List[str] = Field(default_factory=list)
+
+
+@router.post("/ads/campaign/{campaign_id}/action")
+def ad_campaign_action(campaign_id: str, req: AdActionRequest):
+    """Capability-gated campaign action (TASK-VYR-075).
+
+    Account changes stay drafts unless the caller's capabilities
+    pass the gate (upstream Claude Ads pattern). Unknown campaign
+    → 404; missing capability → 403 with the missing list.
+    """
+    result = _ad_manager.manage_campaign(campaign_id, req.action,
+                                         req.capabilities)
+    if not result.get("success"):
+        if result.get("error") == "Campaign not found":
+            raise HTTPException(status_code=404, detail="Campaign not found")
+        raise HTTPException(status_code=403, detail={
+            "error": result.get("error"),
+            "missing": result.get("missing", []),
+        })
+    return {
+        "status": "success",
+        "engine": "ClaudeAds",
+        **result,
+    }
+
+
+# ── UPLIKA PATTERN: APPROVAL-GATED CHANNEL OPERATOR ─────────────────────────
+
+class OperatorCycleRequest(BaseModel):
+    videos: List[dict] = Field(default_factory=list)
+    topics: List[dict] = Field(default_factory=list)
+    comments: List[dict] = Field(default_factory=list)
+    start: str = "2026-11-24T18:00:00+05:30"
+
+
+@router.post("/operator/cycle")
+def run_channel_operator_cycle(req: OperatorCycleRequest):
+    """Run one approval-gated channel-operator cycle (TASK-VYR-075).
+
+    The Uplika pattern, implemented natively: analytics → winning
+    formats → packaging → schedule → comment drafts, all
+    pending_review. The plan publishes nothing (publish=False,
+    privacy unlisted); a naive start, unknown lane or empty topic
+    → 422.
+    """
+    from datetime import datetime
+
+    try:
+        start = datetime.fromisoformat(req.start)
+        plan = channel_operator.run_operator_cycle(
+            {"videos": req.videos, "topics": req.topics,
+             "comments": req.comments},
+            start,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {
+        "status": "success",
+        "engine": "ChannelOperator",
+        "plan": plan,
+    }
+
+
+# ── HYPIT PATTERN: WORD-ANCHORED FORMAT CLONING ────────────────────────────
+
+class FormatTemplateRequest(BaseModel):
+    duration_seconds: float = 30.0
+    timed_words: List[dict] = Field(default_factory=list)
+
+
+@router.post("/format-clone/template")
+def build_format_template_route(req: FormatTemplateRequest):
+    """Build a word-anchored format template (TASK-VYR-075).
+
+    Structure only: the template never carries the reference's
+    footage, images, or words.
+    """
+    try:
+        template = format_clone.build_format_template(
+            {"duration_seconds": req.duration_seconds,
+             "timed_words": req.timed_words})
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {
+        "status": "success",
+        "engine": "FormatClone",
+        "template": template,
+    }
+
+
+class FormatCloneRequest(BaseModel):
+    template: dict = Field(default_factory=dict)
+    new_script: str = ""
+    topic: str = ""
+
+
+@router.post("/format-clone/clone")
+def clone_format_route(req: FormatCloneRequest):
+    """Map a new script onto a format template (TASK-VYR-075).
+
+    The plan stays pending_review; publishing is never implied.
+    """
+    try:
+        plan = format_clone.clone_format(req.template, req.new_script,
+                                         topic=req.topic)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {
+        "status": "success",
+        "engine": "FormatClone",
+        "plan": plan,
+    }
+
+
+class FormatVariantsRequest(BaseModel):
+    template: dict = Field(default_factory=dict)
+    scripts: List[str] = Field(default_factory=list)
+
+
+@router.post("/format-clone/variants")
+def format_variants_route(req: FormatVariantsRequest):
+    """One clone plan per supplied script (TASK-VYR-075)."""
+    try:
+        plans = format_clone.make_variants(req.template, req.scripts)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {
+        "status": "success",
+        "engine": "FormatClone",
+        "plans": plans,
+    }
+
+
+class KeyframesRequest(BaseModel):
+    video_path: str = ""
+
+
+@router.post("/format-clone/keyframes")
+def extract_keyframes_route(req: KeyframesRequest):
+    """Extract scene-change keyframes from a reference video.
+
+    TASK-VYR-075: the video must live inside VyralX media storage
+    (path-traversal defence). A missing file or missing ffmpeg
+    returns an honest available=False, never invented frames.
+    """
+    settings = get_settings()
+    media_root = settings.media_dir.resolve()
+    video = Path(req.video_path).resolve()
+    if media_root not in video.parents:
+        raise HTTPException(
+            status_code=422,
+            detail="video_path must be inside VyralX media storage")
+    out_dir = settings.render_dir / f"keyframes-{uuid.uuid4().hex[:8]}"
+    result = format_clone.extract_keyframes(video, out_dir)
+    return {
+        "status": "success",
+        "engine": "FormatClone",
+        **result,
     }
 
 
