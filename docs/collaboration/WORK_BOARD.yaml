@@ -17679,20 +17679,22 @@ tasks:
   - id: TASK-EARN-005
 
     title: 'EARN: sales page copy pack for the 19-dollar digital product'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_19
-    branch: null
-    pr: null
+    branch: muse19/task-earn-005
+    pr: 1645
     contributors: []
     priority: P3
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:59:00+05:30'
+    updated_at: '2026-11-24T13:24:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - earning/TASK-EARN-005-GROUNDING.md
     acceptance:
       - 'Sales page copy (headline, benefits, FAQ, call to action) committed under earning/, ready for the owner to approve.'
     evidence:
       - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
+      - 'Claimed by Muse 19 ~11:22 IST (hub comment 7123360586); claim stands per coordinator Ruling 1, watch 7124945395; checkpoint 1 grounding filed in work PR 1645.'
     blockers: []
     next_action: 'Write the sales page copy for the 19-dollar product; free-only, no paid promotion.'
   - id: TASK-EARN-006
