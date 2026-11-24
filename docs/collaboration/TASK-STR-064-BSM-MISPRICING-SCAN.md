@@ -1,4 +1,4 @@
-# TASK-STR-064: BSM-vs-market option mispricing scan — checkpoint 1
+# TASK-STR-064: BSM-vs-market option mispricing scan — complete, in review (PR #1720)
 
 ## Task
 
@@ -75,20 +75,66 @@ the Stratex tier-1 pytest invocation in
 ("374 covered, 1 checked, PASS"). The suite also passed 8/8 under a
 pytest-style import run locally (no pytest installed on this VM).
 
-## Checkpoint 2 — live chain + ranked report (next)
+## Checkpoint 2 — live chain + ranked report (DONE, this run, 2026-11-25 ~03:01 IST)
 
-- Fetch a real option chain (Deribit public API, no auth — dominant
-  crypto options venue; Binance options as fallback) and run the scan on
-  live market prices; file the ranked report from the live data.
-- Route: direct fetch from here if reachable, else on Stratex-Server
-  via the proven S2→ssh read-only route (STR-073 precedent). No deploy,
-  no venue writes, no trading — research read-only.
-- No live moves made in checkpoint 1; no orders placed; no secrets in
-  the code or this doc.
+Full ranked report: `docs/collaboration/TASK-STR-064-LIVE-CHAIN-REPORT.md`
+(146 lines, 3 per-expiry tables, rendered by the repo scanner's
+`render_markdown` from live data — no hand-written numbers).
+
+- **Fetch:** Deribit public API, direct from this VM (no auth, no venue
+  account), 2026-11-24 21:31 UTC (= 2026-11-25 03:01 IST). Spot (Deribit
+  BTC index) S = 59,888.55. No Stratex-Server leg needed — direct fetch
+  worked. No orders, no venue writes, no trading.
+- **Method:** three expiries — 25NOV26 (daily, T≈0.001y), 27NOV26
+  (weekly, T≈0.007y), 25DEC26 (monthly, T≈0.083y). Per expiry,
+  sigma_ref = that expiry's ATM call implied vol solved from its live
+  mark price (0.4797 / 0.5376 / 0.4861). Strikes within ±15% of spot;
+  mark prices in BTC converted at the index. r = 0.05 (assumption,
+  stated), q = 0. Flag threshold 5% (default).
+- **Results (scanned / OK / FLAGGED / INVALID_PRICE / ERROR):**
+  - 25NOV26: 50 / 24 / 22 / 4 / 0. ATM call +0.00% by construction.
+  - 27NOV26: 48 / 28 / 20 / 0 / 0.
+  - 25DEC26: 24 / 14 / 10 / 0 / 0.
+- **Reading the flags (the research answer):** the flags are the vol
+  smile, not arbitrage.
+  - *Near expiry (25NOV26, 27NOV26):* flags concentrate in far-OTM
+    options where the flat-vol model price is ~$0.00 while the market
+    charges $0.17–$130 for gap risk the model cannot carry — e.g.
+    BTC-25NOV26-51000-P market $0.17 vs model $0.00, IV 1.339 vs ATM
+    0.480; BTC-27NOV26-51000-P market $22.72 vs model $0.07, IV 0.913
+    vs ATM 0.538. The billion-% relative deviations in the table are
+    an artifact of dividing by a ~zero model price; the IV column is
+    the meaningful signal there.
+  - *Monthly (25DEC26):* the clean signal. Downside puts trade
+    +17% to +70% above the flat-vol model (IV 0.53–0.59 vs ATM 0.486:
+    BTC-25DEC26-52000-P +70.31%, 54000-P +36.00%, 55000-P +25.79%,
+    56000-P +17.08%); upside calls trade −9% to −17% below it (IV
+    0.45–0.46: 68000-C −16.87%, 67000-C −15.42%, 66000-C −13.51%).
+    A downside skew — the market prices downside protection richer
+    and upside cheaper than one flat vol allows.
+  - *INVALID_PRICE (4, all 25NOV26):* deep-ITM calls (51000–54000)
+    trading $1.43–$2.67 (0.02–0.04%) below the discounted-intrinsic
+    lower bound — genuine bound violations per the pricer, but
+    trivially small on options expiring in ~10 hours; read as stale
+    marks / settlement rounding, not tradeable arbitrage.
+- **Verdict: no tradeable mispricing found.** The scanner works live
+  end-to-end (fetch → scan → ranked report), and the market is not
+  leaving BSM arbitrage on the table in this sample. What it leaves is
+  the smile/skew a single-vol BSM cannot express — which is exactly
+  what the IV cross-check in the scanner is for. No trading signal is
+  placed from this; Stratex trades no options today.
+- **Minor observation (IG-STR-01 pricer, not this scanner):**
+  `bs_price` returns a tiny negative (~−1e-12) for deep-OTM
+  near-expiry calls, rendering as model "−0.00" (BTC-25NOV26-68000-C).
+  Floating-point artifact at the 1e-12 scale; immaterial to any
+  decision, but it is why `rel_dev=inf` rows at T≈0 are numerical
+  noise — read the IV column instead. Not fixed here (out of scope
+  for this task; named for a future IG-STR-01 touch-up).
 
 ## Board
 
-TASK-STR-064: AVAILABLE → CLAIMED (owner muse_15, branch
-`muse15/task-str-064-bsm-mispricing-scan`, this PR).
+TASK-STR-064: AVAILABLE → CLAIMED → IN_REVIEW (owner muse_15, branch
+`muse15/task-str-064-bsm-mispricing-scan-r2`, PR #1720). Task complete:
+scanner + tests + live chain report filed; awaiting peer review + merge.
 
 — Muse 15
