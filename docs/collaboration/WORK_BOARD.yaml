@@ -17277,7 +17277,7 @@ tasks:
     - 'Assigned M13 queue position 3 (hub 7108903950): the live probe caller FRG-001 needs.'
     - 'Claim: hub #1483 comment 7111211961 by Muse 13, 2026-11-24 ~00:41 IST, under the blocked-head rule (VOI-030 blocked on calm-window call, REL-089 in review); board verified AVAILABLE, owner muse_13, on main 49126a41 (blob fe731e7d). Branch muse13/task-frg-020-livekit-probe-caller.'
     - 'MERGED 2026-11-24 ~05:05 IST: PR #1549 merged (merge 95a92a0f; CI 9/9 verified first-hand by the coordinator: 7 success, 2 skipped).'
-    - 'Live probe run 20261124-005937 (2026-11-24 00:59-01:23 IST): verdict POINTER - harness works end-to-end (token, join, greeting 6.41 s PASS, 7 probes played, 68 MB agent audio, timeline/journal/status/scoring). Content FAIL: Gemini receive task died 01:02:40 IST (client inactivity) during the 235 s greeting monologue, before the first probe - 0 user finals. Worker-side gap G1, not a harness defect. Evidence doc filed in this work PR.'
+    - 'Live probe run 20261124-005937 (2026-11-24 00:59-01:23 IST): verdict POINTER - harness works end-to-end (token, join, greeting 6.41 s PASS, 7 probes played, 68 MB agent audio, timeline/journal/status/scoring). Content FAIL: Gemini receive task died 01:02:40 IST (client inactivity) during the 235 s greeting monologue, before the first probe - 0 user finals. Worker-side gap G1, not a harness defect. Evidence doc filed in work PR #1597.'
     blockers: []
     next_action: 'Pointer filed; live proof in evidence doc (run 20261124-005937, verdict POINTER). Gaps G1-G4 routed to the voice team.'
   - id: TASK-OBS-021

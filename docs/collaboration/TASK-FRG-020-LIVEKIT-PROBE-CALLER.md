@@ -221,9 +221,9 @@ already exists and works end-to-end on the call leg, proven live by run
 - Verdict + evidence complete in this doc 2026-11-24 ~01:55 IST.
 - Claim PR #1549 merged (board AVAILABLE -> CLAIMED); board on main
   14fc9650 shows FRG-020 MERGED (coordinator board PR #1591).
-- Work PR (this PR): evidence doc + additive-only board edits
+- Work PR #1597: evidence doc + additive-only board edits
   (files/evidence/next_action) — no status flip, following the
-  REL-093 #1594 pattern. Filed from main 14fc9650.
+  REL-093 #1594 pattern. Filed from main b2b239c0.
 
 ## 7. What this unblocks
 
