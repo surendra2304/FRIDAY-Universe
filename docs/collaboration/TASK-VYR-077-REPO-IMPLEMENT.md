@@ -122,3 +122,18 @@
 - 0% of free weekly limit (checked this run; reset Mon Nov 30, 3:03 PM IST). Additional tokens 0% used.
 
 — Muse TP3
+
+## Checkpoint 6 — TP5 takeover scoping (2026-11-25 ~05:20 IST)
+
+- Claim: hub issue #1483 comment 7146797722 (2026-11-25 ~04:25 IST, in the VYR-064 completion post). Branch `musetp5/task-vyr-077-repo-implement` from main `2c51d17b` (verified on origin, no commits).
+- Board re-verified first-hand this run on origin/main `07c526bf`: VYR-077 AVAILABLE / owner null / branch null / pr null, P1. No competing live claim.
+- Prior claim: TP3 claimed VYR-077 (hub comment 7139661577, 2026-11-24 ~23:15 IST), branch `musetp3/task-vyr-077-repo-implement-wave1` from main `6e3fe049`, checkpoints 1–5 filed in this doc. That slot is dead: TP3's branch no longer exists on origin, its work PR #1709 merged (`97944537`), no TP3 VYR-077 hub activity since checkpoint 5 (~23:55 IST 2026-11-24). My claim stands as the live claim of record. No re-do of TP3's scoping: checkpoints 1–5 stand.
+- Repo-side work DONE and merged (verified first-hand on origin/main `07c526bf`): `VyralX/app/services/shorts_live_path.py` present; `VyralX/tests/test_vyr077_shorts_live_path.py` present; merge commit `97944537` ("Merge pull request #1709 from surendra2304/musetp3/task-vyr-077-repo-implement-wave1") in main history. CI green is inherited from the merge (merge authority requires fully green CI); not re-run here — no local execution of repo code on this VM, per the standing API-only pattern.
+- Registry re-verified first-hand this run from origin/main `IntelX/intelx/registries/scouted_repos.json` (102 entries): all six VYR-077 entries present, fits match the board — Short Video Factory adapt (AGPL-3.0), AI YouTube Shorts Generator adapt (MIT), Social Media Agent / LangChain reference-only (MIT), Lemo-Opuscar reference-only (custom composite licence, resolved in checkpoint 4), MG Styles 15 reference-only (MIT), Claude Animation Base reference-only (MIT).
+- What remains for DONE (the live leg): real end-to-end render/discovery cycle on VyralX-Server with real source videos + machine-QA under bad inputs (missing BGM, doubled captions, watermark) + metrics-sync against the real channel; loop OFF, uploader paused, renders held unlisted. HELD under the owner stop order (2026-11-24 17:26 IST, partial lift for key architecture / bridge / Inference only); coordinator watch 04:37 IST confirms live legs stay gated by the stop order. Clearance requested from Muse in this run's hub post (renewing TP3's checkpoint-3 request). No fleet shell run by TP5 in this run.
+- Board flip: AVAILABLE → CLAIMED, owner muse_tp5, branch `musetp5/task-vyr-077-repo-implement`, pr (this PR) — rides in this PR.
+- Next: (a) Muse clearance for the live trial; (b) once cleared, read-only fleet checks (Python / ffmpeg / faster-whisper / OpenCV / disk) then one real end-to-end trial incl. the failure case; (c) completion post with live evidence + board flip to DONE.
+- States: implemented PARTIAL (repo-side wiring merged; live path not yet proven end-to-end), tested NO (live trial not run), merged PARTIAL (repo-side PR #1709 merged; this flip PR open), deployed NO, production-verified NO.
+- Usage: 3% of free weekly limit (checked this run via subscription-status; reset Nov 30 14:05 IST).
+
+— Muse TP5
