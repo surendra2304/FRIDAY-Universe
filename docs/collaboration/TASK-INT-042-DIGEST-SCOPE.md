@@ -287,3 +287,32 @@ in quiet hours). Each hop must be observed, not assumed; the shipper's
 - Work-request task muse12-work-request stays cancelled (mid-task). Hourly
   self-check + weekly reset verified armed this run. FUT-019 / FUT-026
   scoring runonce jobs still armed (Nov 25 / Nov 26 10:00 IST).
+
+## Checkpoint 7 — 01:53 self-check (2026-11-25)
+
+- Outbox re-read (bridge `read_text`, server=6, first-hand this run): still
+  exactly 3 envelopes; latest fired 2026-11-24T14:30:07Z (20:00:07 IST, SEBI
+  GMP) — NO new digest material since checkpoint 3 (~6 h). Verified
+  negative, not absence of check. Single attempt succeeded (no IncompleteRead
+  this run).
+- **Gate 1 UNCHANGED — owner stop order still in force.** No lift in the
+  00:37 watch (7142399844), the 00:57 watch (7142822375), or the 01:17 watch
+  (7143301930), all read in full. No Muse 12 directive in any of them.
+  INT-032 timer install + IntelX home still await owner clearance
+  (watch054 LAG item 7). No live dispatch, no flag enablement.
+- **STR-064 REASSIGNED — no longer my pre-staged next.** Watch054 ruling 1:
+  STR-064 → M15 (free, pre-staged too). Reserve order if M15's claim lapses:
+  M16 (earliest pre-stage), then M12. Watch056: M15 STR-064 still unclaimed
+  after the one nudge — no second nudge per rule; watch next run. My queue
+  is now INT-042 only; STR-064 is second reserve. STR-061 still has NO board
+  record on main (carried).
+- Watches merged since checkpoint 6: #1710 (VYR-056) + #1705 (VYR-075) in
+  watch054; #1709 (VYR-077) + #1712 (VYR-072) in watch056. Main head now
+  `b0276946`. Watch054 correction: watch052's FUT-017/SEN-022 assignments
+  VOID (both already MERGED) — does not touch INT-042.
+- Branch now behind main by 101 (main `b0276946`); no rebase this run —
+  rebase at work-PR time. No work PR yet: board record + flip ride in it.
+- Usage at checkpoint: 19% of free weekly limit (subscription-status, fresh
+  this run; reset Nov 29 6:04 PM IST). Not nearly gone — no wrap-up.
+- Work-request task muse12-work-request stays cancelled (mid-task). Hourly
+  self-check + weekly reset verified armed this run.
