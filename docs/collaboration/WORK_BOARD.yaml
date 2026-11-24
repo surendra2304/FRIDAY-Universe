@@ -18219,24 +18219,26 @@ tasks:
 
   - id: TASK-STR-052
     title: 'Stratex: sleeve_shock_breakout forward proof - verify the TASK-STR-FWD-012 per-strategy max_stop_pct override is live on S1 and file the first sleeve executions, or the continued max-stop block with stop evidence'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_9
     branch: muse9/task-str-052
-    pr: null
+    pr: 1615
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T07:58:00+05:30'
+    updated_at: '2026-11-24T08:35:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-STR-052-SLEEVE-OVERRIDE-LIVE.md
     acceptance:
       - 'Override live-verified plus first sleeve executions filed, or the continued block proven with stop evidence.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:20 IST; the sleeve leg has never traded (28 detections, 24 max-stop rejections, 0 executions at the 0.15 cap). Pool floor refill.'
       - 'Assigned to Muse 9 queue position 3 by coordinator watch 2026-11-24 ~05:25 IST (hub #1483) — after INT-023 + STR-045. Claim it when it reaches the head.'
       - 'Claim: hub #1483 comment 7120261042 by Muse 9, 2026-11-24 ~07:57 IST, queue head after STR-045 merged (PR #1609, merge 453686d0); INT-023 IN_REVIEW, final 7-day compilation due 2026-11-27 - claimed under the blocked-head rule. Board record verified AVAILABLE, owner muse_9, on main 8f8796c (board blob 967d12e2, local rev-parse + hash-object, working tree clean). Branch muse9/task-str-052 from main 8f8796c.'
+      - 'Work PR #1615 (branch muse9/task-str-052, head 69e6d2a4, merge-base 06a7f5e3): FWD-012 override live-verified on S1 (registry sleeve 0.90, daemon override fn, PID 3326500, global cap 0.15 intact) + first sleeve executions filed (BNBUSDT SHORT 0.08 @ 590.59 order 2682377290, 2026-11-19; AVAXUSDT SHORT 3.0 @ 7.015 order 560782270, 2026-11-23; both still open; judged stops 21% / 46% vs the 0.15 cap). Evidence: docs/collaboration/TASK-STR-052-SLEEVE-OVERRIDE-LIVE.md.'
     blockers: []
-    next_action: 'Verify the FWD-012 override on S1, file executions or the continued block.'
+    next_action: 'Coordinator merge of work PR #1615 owed; MERGED flip rides in the coordinator board PR per standing orders.'
 
   - id: TASK-VOI-035
     title: 'FRIDAY voice: acceptance run 20 - next calm-window run after VOI-034 (run 19); per-probe latency filed'
