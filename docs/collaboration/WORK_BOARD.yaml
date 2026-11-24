@@ -17536,14 +17536,14 @@ tasks:
   - id: TASK-VOI-032
 
     title: 'Voice: the background-noise interruption defect - FRIDAY stops mid-answer when fan or room noise hits the microphone; reproduce, root-cause, fix'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_2
-    branch: null
+    branch: muse2/task-voi-032-background-noise-interruption
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T23:10:00+05:30'
+    updated_at: '2026-11-24T10:58:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17551,6 +17551,7 @@ tasks:
     evidence:
       - 'Drafted by the coordinator push 2026-11-23 ~21:35 IST (owner order: no worker under 30 percent burn - bigger multi-hour tasks, queues at depth 3, pool floor 10).'
       - 'Assigned M2 queue position 3 (hub 7108903950): background-noise interruption defect.'
+      - 'Claimed by Muse 2 on the hub (comment 7123027488, 2026-11-24 ~10:58 IST) as queue head after INF-030 MERGED (PR #1620, merge 3db55adf). Branch muse2/task-voi-032-background-noise-interruption from main bc303ea0. Board flip rides in the claim PR.'
     blockers: []
     next_action: 'Reproduce the owner-reported defect with controlled noise, find the threshold at fault, fix and prove with calm/noise A/B probes - speed stays the headline metric.'
   - id: TASK-VYR-050
