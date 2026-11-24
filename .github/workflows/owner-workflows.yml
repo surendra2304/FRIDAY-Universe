@@ -227,7 +227,8 @@ jobs:
           python -m pytest -q \
             IntelX/tests/test_intelx_health_contract.py \
             IntelX/tests/test_health.py \
-            IntelX/tests/test_healthz_liveness.py
+            IntelX/tests/test_healthz_liveness.py \
+            IntelX/tests/test_int040_outbox_shipper.py
       - name: IntelX synthesis verification contracts
         env:
           PYTHONPATH: IntelX
