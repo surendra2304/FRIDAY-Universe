@@ -59,8 +59,21 @@ tools with a sequenced stub bridge; registration), plus media cases in
 `FRIDAY/tests/test_voice_confirmation_policy.py` and classify cases in
 `FRIDAY/tests/test_voice_instant_routing.py`.
 
-- CI result on the work PR head: TBD (to be filled after the CI run).
-- Test count added: TBD.
+- CI result on the first work PR head (481ff486, PR #1742): 9/10 —
+  voice-regressions, test, Import all agent entrypoints, roster,
+  fleet-layout, monorepo-syntax, secrets, detect-voice-changes all
+  SUCCESS; docker skipped (main-only); **contracts FAILED**.
+  Failure (run 45503246374, job 138831717916, log read via the bridge):
+  the REL-068 test-collection guard (`scripts/ci_test_collection_audit.py`)
+  found 2 test files in this PR collected by NO PR-triggered workflow:
+  `FRIDAY/tests/test_frd044_spotify_voice_control.py` (new) and
+  `FRIDAY/tests/test_laptop_bridge_lap001.py` (pre-existing uncollected
+  debt, surfaced by this PR's 1-line parity change).
+- Fix (commit 2 on this branch): both files appended to the FRIDAY tier-1
+  pytest invocation in `.github/workflows/friday-universe-ci.yml`, following
+  the TASK-INF-032 precedent in the same step. CI re-run pending on the
+  amended head — result to be filled here after the run.
+- Test count added: TBD (counted from the CI log after the green run).
 
 ## Board flips in this PR
 

@@ -18076,14 +18076,14 @@ tasks:
 
   - id: TASK-VOI-034
     title: 'Voice: acceptance run 19 - calm-window probes after VOI-033, per-probe latency filed'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-voi-034-acceptance-run-19
     pr: 1732
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T03:07:00+05:30'
+    updated_at: '2026-11-25T04:26:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-VOI-034-ACCEPTANCE-RUN-19.md
@@ -18094,8 +18094,9 @@ tasks:
       - 'Assigned to Muse 1 by coordinator watch 2026-11-24 ~04:45 IST (hub #1483): queue position 3. Claim on the hub + branch push when it reaches queue head; board flip rides in the work PR.'
       - 'Claim: hub #1483 comment 7144471531 by Muse 1, 2026-11-25 ~02:36 IST. Board verified AVAILABLE, owner muse_1, P1, on main 677e9e3e (board blob 39fa817d). Branch muse1/task-voi-034-acceptance-run-19. Board flip rides in the work PR.'
       - 'Acceptance run 19 done 2026-11-25 ~02:38-02:50 IST on FRIDAY-Server (room friday-frd005-20261124-210843, provider gemini-realtime:gemini-3.8-live): greeting onset 0.73s vs 8s bar PASS; all 7 turns inside silence limits. Overall scorer FAIL on content (order-based fallback attribution; recall teal missing, goodbye no reply). Evidence: docs/collaboration/TASK-VOI-034-ACCEPTANCE-RUN-19.md.'
+      - 'MERGED: work PR #1732, merge 4bed6107, head 1b178ade, CI 9/9 green, merged by surendra2304 at 22:06:41Z / 03:36:41 IST 2026-11-25, verified first-hand via the PR API. MERGED flip rides in the FRD-044 work PR per coordinator watch hub #1483 comment 7146031769.'
     blockers: []
-    next_action: 'Run filed; work PR open, merge is for Muse. Next assignment per coordinator watch.'
+    next_action: 'Merged 2026-11-25 03:36:41 IST via PR #1732 (merge 4bed6107, CI 9/9 green).'
 
   - id: TASK-OBS-023
     title: 'Observability: health-alerting re-probe run 2 - verify the OBS-008 alerting path fires on a real fault'
@@ -19198,23 +19199,40 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-FRD-044
     title: 'FRIDAY: Spotify playback control by voice (play/pause/skip/search-and-play)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_1
+    branch: muse1/task-frd-044-spotify-voice-control
+    pr: 1742
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T04:26:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-FRD-044-SPOTIFY-VOICE-CONTROL.md
+    - FRIDAY/scripts/laptop_bridge_client.py
+    - FRIDAY/src/friday/remote/laptop_bridge.py
+    - FRIDAY/src/friday/tools/builtin/laptop_control.py
+    - FRIDAY/src/friday/tools/builtin/__init__.py
+    - FRIDAY/src/friday/agent/mixins/tools.py
+    - FRIDAY/src/friday/voice/confirmation_policy.py
+    - FRIDAY/src/friday/agent/agent.py
+    - FRIDAY/src/friday/agent/mixins/fast_paths.py
+    - FRIDAY/tests/test_frd044_spotify_voice_control.py
+    - FRIDAY/tests/test_laptop_bridge_lap001.py
+    - FRIDAY/tests/test_voice_confirmation_policy.py
+    - FRIDAY/tests/test_voice_instant_routing.py
+    - .github/workflows/friday-universe-ci.yml
     acceptance:
     - A spoken request changes actual Spotify playback on the owner's machine, riding the laptop-control lane.
     - Ambiguous requests carry a confirmation safeguard (TASK-IG-VOI-01 pattern).
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-FRD-SPOTIFY (watched reel DdyY6FAzDtj, @dhaibuilds Jarvis-cost reel, full watch 2026-11-23). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Claim: hub #1483 comment 7145513924 by Muse 1, 2026-11-25 ~03:20 IST, per coordinator watch059 (hub 7145228662). Board verified AVAILABLE, owner null, P1, on main 2c51d17b (board blob 5d3436dd). Branch muse1/task-frd-044-spotify-voice-control.'
+    - 'Implementation: laptop media-key pair (media_key + media_status read-back) on the LAP-001 lane; spotify_control tool with verified state; media confirmation family; voice fast-path + classify spotify_media. Evidence: docs/collaboration/TASK-FRD-044-SPOTIFY-VOICE-CONTROL.md.'
+    - 'Work PR #1742 (head 481ff486, base main 2c51d17b): CI 9/10 on first head — contracts failed on the REL-068 test-collection guard (2 test files uncollected); fixed by adding both files to the FRIDAY tier-1 pytest invocation in friday-universe-ci.yml (this commit). Live leg GATED: needs owner laptop online + Spotify + Muse hub clearance.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Work PR #1742 open; CI re-run pending on the contracts fix. Live leg gated: owner laptop online + Spotify + Muse hub clearance.'
   - id: TASK-FRD-045
     title: 'FRIDAY: WOOP goal-setting template inside FRIDAY''s goal loop'
     status: AVAILABLE
