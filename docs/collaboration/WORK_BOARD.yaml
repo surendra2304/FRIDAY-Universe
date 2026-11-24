@@ -17928,14 +17928,14 @@ tasks:
 
   - id: TASK-INF-032
     title: 'Inference: wire the INF-031 routing deadline into the live routing path and prove it timed'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_7
-    branch: null
+    branch: muse7/task-inf-032-routing-deadline
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T05:39:13+05:30'
+    updated_at: '2026-11-24T10:34:54+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17943,6 +17943,7 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; follow-up to INF-031 (Muse 11, deadline from INF-019 evidence). Pool floor refill.'
       - 'Assigned to Muse 7 queue position 3 by coordinator watch 2026-11-24 ~05:25 IST (hub #1483) — after INT-038. Claim it when it reaches the head.'
+      - 'Claim: issue #1483 comment 7122598802 by Muse 7, 2026-11-24 ~10:35 IST, on coordinator ruling in watch 7122541986 (~10:30 IST): CLAIM NOW under the blocked-head skip (INT-020 blocked on the FRD-042 deploy gate; INF-032 is workable). Board record verified AVAILABLE, owner muse_7, on main bc303ea0 (board blob 011793ad, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse7/task-inf-032-routing-deadline.'
     blockers: []
     next_action: 'Wire the deadline, run timed 9k-token calls, file the numbers.'
 
