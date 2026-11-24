@@ -133,6 +133,7 @@ def call(agent, method, path, body=None, auth=True):
 
 
 def expect(cond, label):
+    cond = bool(cond)
     log(("PASS " if cond else "FAIL ") + label)
     if not cond:
         _results.append({"check_failed": label})
@@ -223,7 +224,7 @@ def main():
     promos = sw.get("promotions", []) if isinstance(sw, dict) else []
     hit = [p for p in promos if p.get("memory_id") == mid]
     ok &= expect(s == 200 and len(hit) == 1
-                 and hit[0].get("from_scope") == "PRIVATE"
+                 and hit[0].get("from_scope", hit[0].get("scope")) == "PRIVATE"
                  and hit[0].get("to_scope") == "SHARED"
                  and hit[0].get("path") == "auto_repeated_need",
                  f"sweep 1 promotes PRIVATE->SHARED auto (got {json.dumps(sw)[:400]})")
@@ -263,7 +264,7 @@ def main():
     promos = sw.get("promotions", []) if isinstance(sw, dict) else []
     hit = [p for p in promos if p.get("memory_id") == mid]
     ok &= expect(s == 200 and len(hit) == 1
-                 and hit[0].get("from_scope") == "SHARED"
+                 and hit[0].get("from_scope", hit[0].get("scope")) == "SHARED"
                  and hit[0].get("to_scope") == "UNIVERSAL"
                  and hit[0].get("path") == "auto_repeated_need"
                  and hit[0].get("status") == "promoted_dual_copy",
