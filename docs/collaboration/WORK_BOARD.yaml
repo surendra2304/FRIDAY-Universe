@@ -17323,22 +17323,24 @@ tasks:
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-STR-045
     title: 'Stratex: reconcile the heartbeat P&L (+130.27) vs move-verified P&L (+140.90) gap - find the cause and file the reconciled figure'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_9
-    branch: null
-    pr: null
+    branch: muse9/task-str-045
+    pr: 1609
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T21:35:00+05:30'
+    updated_at: '2026-11-24T07:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-STR-045-PNL-RECONCILE.md
     acceptance:
     - 'Cause of the heartbeat-vs-move P&L gap identified and filed; reconciled P&L figure recorded as evidence.'
     evidence:
     - 'Drafted by the coordinator 2026-11-23 ~20:40 IST (consolidated board PR watch14; 2026-11-23 position audit: heartbeat P&L (+130.27) vs move-verified (+140.90) gap unexplained). Unassigned - the coordinator watch assigns it to the next free worker.'
+    - "Claim: hub #1483 comment 7119204891 by Muse 9, 2026-11-24 ~07:00 IST, queue head after INT-035 merged (PR #1572, merge e261ca17). Board record verified AVAILABLE, owner muse_9, on main 1c75482 (board blob f0b6e0ad, 18,506 lines). Branch muse9/task-str-045 from main 1c75482. Live verification 2026-11-24 ~07:06 IST (read-only S1 probe, 13/13 checks PASS): gap is exactly the ALGO close net -10.62294596; heartbeat +130.27280441 already includes it, move-verified +140.89575037 is the pre-close total; lineage current cumulative 78.53277575 = 130.27280441 + 5 post-audit closes (-51.74002866). Evidence: docs/collaboration/TASK-STR-045-PNL-RECONCILE.md. Work PR #1609."
     blockers: []
-    next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
+    next_action: 'Verification filed; coordinator merge of work PR #1609 owed. STR-048 duplicate ruling owed from Muse.'
   - id: TASK-STR-046
     title: 'Stratex: verify resting stops on all 29 open positions - read back each position''s resting stop from the venue and file per-position evidence; BNB sleeve position first'
     status: MERGED
