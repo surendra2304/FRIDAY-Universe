@@ -179,6 +179,25 @@ export function VoiceCall({
   }, [linkRef, endCall, toggleMute, status, message]);
 
   async function startCall() {
+    /* TASK-VOI-032: the microphone's browser-side audio processing,
+       pinned explicitly at every enable site instead of left to SDK
+       defaults. Steady room noise (a fan) reaches Gemini's
+       server-side activity detection, which — at the worker's start
+       sensitivity — decides barge-in; the browser's noise
+       suppression is the first filter in that chain, so it is
+       stated here as a contract, not assumed. These are
+       best-effort browser preferences, not guarantees: the
+       worker-side sensitivity is the gate that decides, this only
+       attenuates what reaches it. The mute toggle needs no options
+       — it toggles the track these settings created. This const
+       lives inside startCall on purpose: the startup-regression
+       harness executes this function standalone from source, so
+       anything it references must be defined in here. */
+    const MIC_CAPTURE_OPTIONS = {
+      noiseSuppression: true,
+      echoCancellation: true,
+      autoGainControl: true,
+    };
     if (status === "connecting" || status === "connected") return;
     setStatus("connecting");
     setMessage("Reaching FRIDAY…");
@@ -325,7 +344,7 @@ export function VoiceCall({
             if (!roomRef.current) {
               const fresh = new Room({ adaptiveStream: true, dynacast: true });
               await fresh.connect(body.server_url, body.token);
-              await fresh.localParticipant.setMicrophoneEnabled(true);
+              await fresh.localParticipant.setMicrophoneEnabled(true, MIC_CAPTURE_OPTIONS);
               roomRef.current = fresh;
               connectedAtRef.current = Date.now();
               lastActivityRef.current = Date.now();
@@ -341,7 +360,7 @@ export function VoiceCall({
       });
 
       await room.connect(body.server_url, body.token);
-      await room.localParticipant.setMicrophoneEnabled(true);
+      await room.localParticipant.setMicrophoneEnabled(true, MIC_CAPTURE_OPTIONS);
       if (startupDisconnected) throw new Error("The line dropped while it was opening. Try again.");
 
       startupComplete = true;

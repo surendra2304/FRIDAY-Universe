@@ -51,13 +51,24 @@ def resolve_env_file() -> Path:
 # Single shared default for VAD start-of-speech sensitivity (TASK-VOI-025).
 # Both voice entry paths read this one value: the CLI/desktop session via
 # Settings.voice_vad_start_sensitivity below, and the LiveKit worker via
-# _start_sensitivity() in friday/voice/livekit_worker.py. HIGH is the
-# TASK-VOI-024 precautionary default — every transcript-positive session
-# on record ran HIGH, and the VOI-018 LOW default correlated with
-# zero-transcript runs. LOW stays available per path via env override
-# (FRIDAY_VOICE_VAD_START_SENSITIVITY=low for the session path,
-# FRIDAY_VOICE_AAD_START_SENSITIVITY=low for the worker path).
-VOICE_VAD_START_SENSITIVITY_DEFAULT = "HIGH"
+# _start_sensitivity() in friday/voice/livekit_worker.py. LOW is the
+# TASK-VOI-032 default. The TASK-VOI-024 precautionary HIGH default rested
+# on a correlation — every transcript-positive session on record ran HIGH
+# and every zero-transcript run ran LOW — but TASK-VOI-024's own diagnosis
+# then convicted the real mechanism, send-path pacing (the plugin's send
+# task delivered ~15.2 audio events/s against the 20/s realtime stream,
+# so speech sat behind seconds of unsent silence until the no-transcript
+# watchdog tore the session down), and shipped the pacing fix. The LOW
+# arm of the 2026-11-19 A/B never got a clean test: its send cadence had
+# already collapsed. With pacing fixed, LOW is the documented setting for
+# noisy environments again — steady background noise (a fan) must not
+# register as a user turn and stop FRIDAY mid-answer (2026-11-17 live
+# test: >=9 interruptions in ~37 s at a 1-4 s cadence). HIGH stays
+# available per path via env override (FRIDAY_VOICE_VAD_START_SENSITIVITY=high
+# for the session path, FRIDAY_VOICE_AAD_START_SENSITIVITY=high for the
+# worker path) if transcripts ever regress; the calm-vs-noise A/B owed
+# by VOI-032 is the proof either way.
+VOICE_VAD_START_SENSITIVITY_DEFAULT = "LOW"
 
 
 class NonEmptyEnvSettingsSource(EnvSettingsSource):
@@ -597,7 +608,7 @@ class Settings(BaseSettings):
     voice_context_compression_enabled: bool = Field(default=True, description="Enable Gemini Live context window compression")
     voice_vad_start_sensitivity: str = Field(
         default=VOICE_VAD_START_SENSITIVITY_DEFAULT,
-        description="VAD start of speech sensitivity: HIGH, LOW, UNSPECIFIED (HIGH is the single shared default with the LiveKit worker - TASK-VOI-024 precautionary default; LOW stays available via env if the fan-noise defect returns with transcripts proven healthy)",
+        description="VAD start of speech sensitivity: HIGH, LOW, UNSPECIFIED (LOW is the single shared default with the LiveKit worker - TASK-VOI-032; HIGH stays available via env if the fan-noise defect returns with transcripts proven healthy)",
     )
     voice_vad_end_sensitivity: str = Field(
         default="HIGH",

@@ -142,7 +142,7 @@ def test_realtime_config_pins_aad(monkeypatch):
     assert cfg is not None
     aad = cfg.automatic_activity_detection
     assert aad.start_of_speech_sensitivity == (
-        genai_types_real.StartSensitivity.START_SENSITIVITY_HIGH
+        genai_types_real.StartSensitivity.START_SENSITIVITY_LOW
     )
     assert aad.end_of_speech_sensitivity == (
         genai_types_real.EndSensitivity.END_SENSITIVITY_HIGH
