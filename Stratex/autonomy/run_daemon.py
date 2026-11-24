@@ -1122,6 +1122,13 @@ class StratexTradingEngine:
         except Exception:
             pass
 
+        # TASK-STR-076: adapted day-trader-chain review on live candles,
+        # once an hour, verdict filed in the advisory ledger. Best-effort
+        # and fully guarded inside _maybe_run_wave1_review — it can never
+        # block the scan cycle. Demo only; the chain emits a decision
+        # record, never an order.
+        self._maybe_run_wave1_review()
+
         self.scan_count += 1
         return results
 
@@ -3032,6 +3039,49 @@ class StratexTradingEngine:
                     pass
         except Exception as e:
             logger.debug(f"Prefetch error: {e}")
+
+    def _maybe_run_wave1_review(self) -> None:
+        """TASK-STR-076: run the adapted day-trader chain once per hour on
+        live candles and file the verdict in the advisory ledger.
+
+        Best-effort and fully guarded: any failure is logged and never
+        propagates, so this review can never block the scan cycle or the
+        trading engine. Disabled with STRATEX_WAVE1_REVIEW=0. Demo only:
+        the chain produces a decision record, never an order.
+        """
+        try:
+            if os.getenv("STRATEX_WAVE1_REVIEW", "1") == "0":
+                return
+            if time.time() - float(getattr(self, "_last_wave1_review", 0.0) or 0.0) < 3600:
+                return
+            self._last_wave1_review = time.time()
+            venues = getattr(self, "symbols", {}) or {}
+            if not venues:
+                return
+            venue = next(iter(venues))
+            symbols = venues.get(venue) or []
+            if not symbols:
+                return
+            symbol = symbols[0]
+            candles = self.engine.get_candles(venue, symbol, "5m", 100)
+            if not candles:
+                return
+            import repo_wave1 as _wave1
+
+            bars = _wave1.bars_from_candles(candles)
+            if len(bars) < 10:
+                return
+            equity = float(getattr(self.engine, "total_equity", 0.0) or 0.0)
+            if equity <= 0:
+                return
+            decision = _wave1.run_wave1_cycle(
+                symbol, bars, equity, equity, now=time.time())
+            logger.info(
+                "[STRATEX] TASK-STR-076 wave-1 review: %s %s "
+                "(ledger_appended=%s)", symbol, decision.get("verdict"),
+                decision.get("ledger_appended"))
+        except Exception as e:
+            logger.warning("[STRATEX] TASK-STR-076 wave-1 review skipped: %s", e)
 
     def _candles_to_df(self, candles: list) -> "object | None":
         """Convert candle list to a pandas DataFrame (None when pandas is unavailable)."""

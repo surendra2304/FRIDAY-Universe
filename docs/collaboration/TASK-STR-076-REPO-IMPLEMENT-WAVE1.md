@@ -83,13 +83,16 @@ demo-only, no trading-behaviour change to any existing strategy):
    Stratex sources and `requirements.txt`: no production path imports the
    upstream packages (`nautilus_trader`, `tradingagents`, `langgraph`,
    `openterminal`, agiprolabs code) and none is installed on the live server.
-4. **Live production-path wiring.** `run_wave1_cycle()` is called from the
-   advisory consultation path: `AdvisoryScheduler.run_consultation_cycle()`
-   runs the wave-1 review on the live daemon telemetry after the advisory
-   gate, inside the scheduler's existing never-propagate guard, and appends
-   the verdict to the advisory ledger. The call cannot block the trading
-   engine (try/except, shadow-mode default preserved, no parameter changes,
-   no risk-limit changes).
+4. **Live production-path wiring.** `_maybe_run_wave1_review()` in
+   `StratexTradingEngine` (`autonomy/run_daemon.py`, called at the end of
+   `scan_and_execute`): once an hour it runs the adapted chain on the
+   first venue/symbol's live 5m candles with live equity and files the
+   verdict in the advisory ledger via `run_wave1_cycle()`. Fully guarded
+   (try/except, env kill-switch `STRATEX_WAVE1_REVIEW=0`, 1-hour throttle);
+   it can never block the scan cycle or the trading engine, changes no
+   parameters and no risk limits, and places no orders.
+   Regression tests: `Stratex/tests/test_str076_repo_implement_wave1.py`
+   (29 tests), added to the Owner Workflow Contracts Stratex list.
 
 ## Live evidence (Stratex-Server, read-only, bridge `run_shell` server 4)
 
@@ -129,15 +132,49 @@ demo-only, no trading-behaviour change to any existing strategy):
   TradingAgents port) is unmounted dead code: nothing imports
   `real_engines_bp`.
 
-## End-to-end use (adapted chain, live data) — results to be filled from the run
+## End-to-end use (adapted chain, live data)
 
-- E2E run: `run_wave1_cycle()` on the live 100-bar BTCUSDT 5m feed, budget
-  from the live daemon equity, plus the failure case (stale/empty feed →
-  BLOCKED, reason recorded; and a risk-BLOCK case).
-- Full-allowlist load scan: the chain's scan step run over all 32 live
-  ledger symbols on the live feed, with wall time and pass/block counts.
-- Journal/postmortem/digest run over the live fill-ledger tail (closed
-  trades) — results filed below once run.
+Run 2026-11-24 ~23:20 IST, PR-identical code (`Stratex/repo_wave1.py`)
+executed locally on the 100 live BTCUSDT 5m bars fetched read-only from
+the server (budget = live daemon equity 10,556.99, `now` = last bar + 60 s):
+
+- **Scan TRIGGERED**: opening range (first 3 bars) high 60,233.20 / low
+  59,731.90; first completed bar closing above the high at 1795520700
+  (close 60,296.60, volume 5,886.101). Entry 60,296.60.
+- **Exit plan**: or-mid stop 59,982.55, 2R target 60,924.70, risk 314.05.
+- **Time Machine**: 2,000 replays, seed 19 — target 32.25%, stop 67.75%,
+  neither 0%, green 32.25%, mean R -0.0325, median end price 60,232.42
+  (p5 60,020.45 / p95 60,846.26). Recorded as evidence, not a gate.
+- **Sizing — first run FAILED CLOSED, honestly**: the upstream whole-share
+  rule floored the 0.0035-unit position to 0 units and the chain returned
+  BLOCKED ("zero units: stop too far for max loss per trade"). That rule
+  is correct for Alpaca equities and wrong for a crypto venue, so sizing
+  is now quantised to the venue minimum quantity (0.001, `whole_units`
+  flag restores the upstream rule). Re-run: qty 0.003, notional $180.89,
+  risk $0.94.
+- **Risk check PASS** (no block reasons). **Verdict: GO** — entry 60,296.60,
+  stop 59,982.55, target 60,924.70, qty 0.003, notional $180.89, risk $0.94.
+  No order was placed: the module emits a decision record only.
+- **Failure cases (offline, no live fault injected)**:
+  empty feed -> BLOCKED `no-data`; last bar 100,000 s old -> BLOCKED
+  `stale-feed` (age 100,000 s > 900 s cap); max-loss-per-trade $0.002 ->
+  BLOCKED `sizing refused: zero units`.
+- **Full-allowlist load scan**: the chain run once per symbol over all 32
+  distinct live-ledger symbols on the same live feed — **32/32 GO in
+  0.031 s**, zero crashes. Limitation stated plainly: all 32 evaluations
+  reuse the single live BTCUSDT feed (only BTCUSDT klines were fetched
+  read-only); per-symbol feeds are a deploy-time matter, not claimed here.
+- **Journal + digest over the live fill-ledger tail** (ADAUSDT -11.36,
+  ALGOUSDT -10.74, SOLUSDT -10.06 net): 3 theses recorded, 0 wins / 3
+  losses, win rate 0.0, profit factor 0.0, gross loss 3.3814 (per-unit
+  P&L). R-multiples are `None` — the fill ledger records no stop, so no
+  R is invented. Postmortem needs realised 5d/20d returns, which the live
+  ledger does not carry, so the live leg files journal + digest only;
+  postmortem categories are proven on theses in CI
+  (`test_postmortem_categories`).
+- **Tests**: 29 regression tests, all passing locally
+  (`pytest -q Stratex/tests/test_str076_repo_implement_wave1.py` —
+  29 passed). CI status on the PR to be recorded after the PR opens.
 
 ## Blocked leg — failure injection (NOT run)
 
