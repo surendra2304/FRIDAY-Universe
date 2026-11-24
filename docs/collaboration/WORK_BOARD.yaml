@@ -19152,22 +19152,24 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-VYR-061
     title: 'VyralX: best-take selection plus blank-frame self-verification for renders'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: MERGED
+    owner: muse_tp1
+    branch: musetp1/task-vyr-061-best-take-selection
+    pr: 1692
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-24T23:37:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - The pipeline picks the best take among candidates and self-verifies that no blank frames survive into a held render.
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-VYR-BESTTAKE (IG package audit gap B121). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Claim: hub #1483 comment 7138904746 by Muse TP1, 2026-11-24 ~22:47 IST; board verified AVAILABLE, owner null, P1, on main 3a2009b8; 912 hub comments scanned, zero VYR-061 mentions.'
+    - 'Work PR #1692 (head 4d2ed39c): take_verification gains blank_segments_from_intervals / verify_render_signals / select_verified_best_take (fail-closed); project_pipeline records qa_report blank_self_verification on held renders; 8 new tests in VyralX/tests/test_vyr061_best_take_gate.py. Local evidence 15/15 tests pass; real-ffmpeg synthetic renders: 4.0s black segment measured 3.0-7.0s, gate FAIL; clean PASS; selection picked clean over higher-scoring blank take. CI 9/9 green; merged 2026-11-24 23:28 IST (merge commit 36cde725).'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Merged; deploy to VyralX-Server needs coordinator clearance on hub #1483, then production-verify per the owner standard (merged code is NOT implemented).'
   - id: TASK-VYR-062
     title: 'VyralX: stick-figure style template in the format-template registry'
     status: AVAILABLE
