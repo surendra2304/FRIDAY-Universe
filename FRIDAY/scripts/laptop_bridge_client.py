@@ -41,7 +41,10 @@ as a base64 JPEG attachment so FRIDAY can actually see the screen),
 and ``click`` * (keyboard/mouse via pyautogui, or xdotool on Linux),
 ``list_files``, ``read_file``, ``run_shell``, ``system_info``, ``notify``,
 plus the TASK-IG-LAP-03 PC care pack: ``pc_health``, ``pc_cleanup``,
-``hotkey``, ``storage_check``, ``storage_repair``.
+``hotkey``, ``storage_check``, ``storage_repair``, and the TASK-FRD-044
+media pair: ``media_key`` (Windows media keys) and ``media_status``
+(SystemMediaTransportControls read-back — the proof leg for Spotify
+control; needs the ``winrt`` package on the laptop).
 
 Optional laptop-side dependencies: Pillow (screenshots), pyautogui
 (type/click; xdotool is the Linux fallback), plyer or win10toast (notify),
@@ -118,6 +121,12 @@ ALLOWED_COMMANDS = frozenset(
         "hotkey",
         "storage_check",
         "storage_repair",
+        # TASK-FRD-044: Spotify playback control by voice — media keys
+        # land here because this client runs on the owner's Windows
+        # laptop; media_status reads the session back so a key press is
+        # never claimed as proof of playback on its own.
+        "media_key",
+        "media_status",
     }
 )
 _TRUNCATION_MARKER = "\n[truncated]"
@@ -963,6 +972,118 @@ def _cmd_hotkey(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | 
     return False, "", _NO_INPUT_BACKEND
 
 
+# Windows Virtual Key Codes for media (TASK-FRD-044). Same keybd_event
+# technique as friday.tools.builtin.media_control — the difference is
+# that this client runs on the owner's Windows laptop, where the keys
+# actually land on the media session (the cloud host is Linux, where
+# media_control's keys are no-ops).
+VK_MEDIA_NEXT_TRACK = 0xB0
+VK_MEDIA_PREV_TRACK = 0xB1
+VK_MEDIA_PLAY_PAUSE = 0xB3
+KEYEVENTF_KEYUP = 0x0002
+
+_MEDIA_KEY_ACTIONS = {
+    "play_pause": VK_MEDIA_PLAY_PAUSE,
+    "play": VK_MEDIA_PLAY_PAUSE,
+    "pause": VK_MEDIA_PLAY_PAUSE,
+    "toggle": VK_MEDIA_PLAY_PAUSE,
+    "next": VK_MEDIA_NEXT_TRACK,
+    "skip": VK_MEDIA_NEXT_TRACK,
+    "previous": VK_MEDIA_PREV_TRACK,
+    "prev": VK_MEDIA_PREV_TRACK,
+}
+
+
+def _cmd_media_key(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | None]:
+    """Send one Windows media key (TASK-FRD-044).
+
+    The key press is the delivery mechanism, not the proof: a sent key
+    does not prove playback changed. Callers verify with media_status.
+    """
+    action = str(args.get("action") or "").strip().lower()
+    if action not in _MEDIA_KEY_ACTIONS:
+        return False, "", "media_key requires action play_pause, next or previous"
+    if platform.system() != "Windows":
+        return (
+            False,
+            "",
+            "media keys are only available on a Windows laptop; "
+            f"this client runs {platform.system()}",
+        )
+    vk_code = _MEDIA_KEY_ACTIONS[action]
+    try:
+        import ctypes
+
+        user32 = ctypes.windll.user32
+        user32.keybd_event(vk_code, 0, 0, 0)
+        user32.keybd_event(vk_code, 0, KEYEVENTF_KEYUP, 0)
+    except Exception as exc:
+        return False, "", f"media key failed: {type(exc).__name__}: {exc}"
+    return True, json.dumps({"action": action, "key": f"0x{vk_code:02X}", "sent": True}), None
+
+
+def _cmd_media_status(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | None]:
+    """Read back the current media session (TASK-FRD-044).
+
+    Uses the Windows SystemMediaTransportControls session manager via
+    the ``winrt`` package. This is the proof leg for Spotify control:
+    the session reports the track and whether it is actually playing.
+    When ``winrt`` is not installed on the laptop the failure names
+    the missing package instead of pretending a session was read.
+    """
+    if platform.system() != "Windows":
+        return (
+            False,
+            "",
+            "media_status is only available on a Windows laptop; "
+            f"this client runs {platform.system()}",
+        )
+    try:
+        from winrt.windows.media.control import (
+            GlobalSystemMediaTransportControlsSessionManager as _SessionManager,
+        )
+        from winrt.windows.media.control import (
+            GlobalSystemMediaTransportControlsSessionPlaybackStatus as _PlaybackStatus,
+        )
+    except ImportError:
+        return (
+            False,
+            "",
+            "media_status needs the 'winrt' package on the laptop "
+            "(pip install winrt); no media session could be read",
+        )
+
+    async def _collect() -> dict[str, Any]:
+        manager = await _SessionManager.request_async()
+        session = manager.get_current_session()
+        if session is None:
+            return {
+                "playing": False,
+                "status": "no_session",
+                "title": None,
+                "artist": None,
+                "source": None,
+            }
+        info = session.get_playback_info()
+        status = info.playback_status
+        playing = status == _PlaybackStatus.PLAYING
+        status_name = getattr(status, "name", str(status))
+        props = await session.try_get_media_properties_async()
+        return {
+            "playing": bool(playing),
+            "status": status_name,
+            "title": props.title or None,
+            "artist": props.artist or None,
+            "source": session.source_app_user_model_id or None,
+        }
+
+    try:
+        result = asyncio.run(_collect())
+    except Exception as exc:
+        return False, "", f"media_status failed: {type(exc).__name__}: {exc}"
+    return True, json.dumps(result), None
+
+
 def _normalise_volume(value: Any) -> str:
     text = str(value or "").strip().rstrip("/\\")
     if re.fullmatch(r"[A-Za-z]:", text or ""):
@@ -1112,6 +1233,8 @@ _COMMANDS = {
     "hotkey": _cmd_hotkey,
     "storage_check": _cmd_storage_check,
     "storage_repair": _cmd_storage_repair,
+    "media_key": _cmd_media_key,
+    "media_status": _cmd_media_status,
 }
 
 

@@ -47,7 +47,7 @@ client = _load_client()
 
 def test_allowlist_parity_between_client_and_server():
     assert set(client.ALLOWED_COMMANDS) == set(lb.ALLOWED_LAPTOP_COMMANDS)
-    for new_command in ("open_app", "type_text", "click", "screenshot_data"):
+    for new_command in ("open_app", "type_text", "click", "screenshot_data", "media_key", "media_status"):
         assert new_command in lb.ALLOWED_LAPTOP_COMMANDS
 
 

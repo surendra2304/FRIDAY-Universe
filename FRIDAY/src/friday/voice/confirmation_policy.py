@@ -117,6 +117,45 @@ _AMBIGUOUS_CONFIRM_FAMILIES = {
     "follow": re.compile(r"\b(follow|unfollow|block|unblock)\b"),
 }
 
+# Media playback (TASK-FRD-044): voice control of Spotify on the owner's
+# laptop rides the laptop media keys. Pause/skip/next are fully specified
+# and reversible, so they pass. A "play" with no named track ("play",
+# "play something", "play some music") names nothing to start — the
+# gate asks what to play first (the TASK-IG-VOI-01 pattern for an
+# ambiguous request). A named play ("play Bohemian Rhapsody on Spotify")
+# passes. "play chess" is not media: no media noun, no match.
+_MEDIA_VERB = re.compile(r"\b(play|pause|resume|skip|next|previous|stop)\b")
+_MEDIA_NOUN = re.compile(
+    r"\b(spotify|song|track|music|playlist|album|something|anything|whatever)\b"
+)
+_MEDIA_GENERIC_OBJECT = frozenset(
+    {
+        "something",
+        "anything",
+        "whatever",
+        "music",
+        "some music",
+        "a song",
+        "some songs",
+        "something good",
+    }
+)
+
+
+def _media_ambiguous(text: str) -> bool:
+    """True when a play request names no track to start."""
+    lowered = text.strip().lower()
+    if re.search(r"\b(pause|resume|skip|next|previous|stop)\b", lowered):
+        return False
+    match = re.search(r"\bplay\b\s*(.*)$", lowered)
+    if not match:
+        return False
+    rest = match.group(1).strip().rstrip(".!?").strip()
+    rest = re.sub(r"\s+on\s+spotify\s*$", "", rest).strip()
+    rest = re.sub(r"\s+spotify\s*$", "", rest).strip()
+    return not rest or rest in _MEDIA_GENERIC_OBJECT
+
+
 # "share" joins the post family only with a media/demonstrative object —
 # "share price" is a Stratex question, not a publishing action.
 _SHARE_POST = re.compile(
@@ -291,6 +330,23 @@ def classify_request(text: str) -> Classification:
             return Classification(SENSITIVE, family, ambiguous,
                                   tuple(reasons), _summarize(family, raw))
 
+    # Media playback (TASK-FRD-044): a media verb plus a media noun (or a
+    # bare media verb, or a bare "play"). Pause/skip/next are fully
+    # specified and reversible; only a track-less "play" is ambiguous.
+    if _MEDIA_VERB.search(lowered) and (
+        _MEDIA_NOUN.search(lowered)
+        or re.search(r"\b(pause|resume|skip|next|previous|stop)\b", lowered)
+        or re.fullmatch(r"(?:please\s+)?play\s*[.!?]?", lowered)
+    ):
+        if question:
+            return Classification(READ_ONLY, "media", False,
+                                  ("question about an action",),
+                                  _summarize("media", raw))
+        ambiguous = _media_ambiguous(raw)
+        reasons = ("no track named",) if ambiguous else ()
+        return Classification(SENSITIVE, "media", ambiguous,
+                              reasons, _summarize("media", raw))
+
     if question:
         return Classification(READ_ONLY, "none", False,
                               ("question / recall",), _summarize("ask", raw))
@@ -312,6 +368,9 @@ def decide(text: str) -> Decision:
             "Shall I go ahead?"
         )
         return Decision(CONFIRM, cls, question)
+    if cls.family == "media" and cls.ambiguous:
+        # A track-less "play" asks what to play, not who it goes to.
+        return Decision(CONFIRM, cls, "What would you like me to play on Spotify?")
     if cls.ambiguous:
         question = (
             "I want to make sure I act on the right target — "
@@ -390,5 +449,6 @@ def instruction_section() -> str:
         "if the user said 'message her' or 'send it' and no name is "
         "established in this conversation, ask who they mean first. "
         "Read-only questions never need confirmation; answer them "
-        "immediately."
+        "immediately. If the user says 'play something' or 'play some "
+        "music' without naming a song, ask what they want to hear first."
     )
