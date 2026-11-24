@@ -215,7 +215,7 @@ async def test_cycle_runs_past_stale_rows(tmp_path):
         FakeBattery((0.5, 1.0, 1.0), (1.0, 1.0, 1.0)),
         FakeWriter(),
     )
-    report = await loop.run_one_cycle()
+    report = await loop.run_one_cycle(now=NOW)
     assert report.status == "ran"
     assert report.verdict == "PROMOTE"
     assert report.spec_id == "cli_todo"  # no failures on record: least-tested spec
@@ -231,7 +231,7 @@ async def test_cycle_still_skips_on_fresh_active_row(tmp_path):
         FakeBattery((0.5, 1.0, 1.0), (1.0, 1.0, 1.0)),
         FakeWriter(),
     )
-    report = await loop.run_one_cycle()
+    report = await loop.run_one_cycle(now=NOW)
     assert report.status == "skipped"
     assert report.reason == "forge_busy"
     assert read_jsonl(tmp_path / "idle" / "experiments.jsonl") == []
