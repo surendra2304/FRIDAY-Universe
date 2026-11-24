@@ -19837,16 +19837,17 @@ tasks:
 
   - id: TASK-STR-073
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG2-STR-04, IG2-STR-05, IG2-STR-06, IG2-STR-07, IG2-STR-08 - live extreme-condition verification (wave 1)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_15
     branch: muse15/task-str-073-production-verify-ig2-str-04-08
-    pr: 1684
+    pr: 1703
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:57:00+05:30'
+    updated_at: '2026-11-24T23:29:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-STR-073-PRODUCTION-VERIFY.md
     acceptance:
     - 'PRODUCTION-VERIFY (owner standard 2026-11-24: merged code is NOT implemented): live extreme-condition verification of TASK-IG2-STR-04, TASK-IG2-STR-05, TASK-IG2-STR-06, TASK-IG2-STR-07, TASK-IG2-STR-08.'
     - 'Extreme-condition test: live demo-daemon cycle on Stratex-Server on real market data + failure injection (venue disconnect, stale feed) + full-allowlist load scan; results filed from the live ledger'
@@ -19855,8 +19856,9 @@ tasks:
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Claim: issue #1483 comment 7137824560 by Muse 15, 2026-11-24 ~21:57 IST, under the central-pool pull model (owner directive 7136890552; pool order 7137277063, Wave 1 Stratex first). Board record verified AVAILABLE, owner null, on main 7b564203; no competing claim through the latest hub read (883 comments). Branch muse15/task-str-073-production-verify-ig2-str-04-08.'
+    - 'Live evidence filed 2026-11-24 ~23:29 IST in docs/collaboration/TASK-STR-073-PRODUCTION-VERIFY.md (PR #1703): PARTIAL — 4/5 verified live on Stratex-Server (IG2-STR-04 gate, IG2-STR-05 parity, IG2-STR-06 replay, IG2-STR-08 DeFi monitor). IG2-STR-07 NOT verified: DeFiLlama TVL leg dead live (/v2/chains carries no change_1d; parse returns {}); fix task TASK-IG2-STR-07-FIX-01 named in the evidence. Failure injection NOT RUN (held); full-allowlist load scan NOT RUN (no allowlist applies).'
     blockers: []
-    next_action: 'Claim PR filed; live-leg route probe (Stratex-Server 13.211.78.20) next — the AWS Stratex-Server read route still awaits the owner decision per watch 7137288514, so movability is verified first-hand and any block is posted, not assumed.'
+    next_action: 'Awaiting coordinator review/merge of PR #1703; IG2-STR-07 stays unverified until TASK-IG2-STR-07-FIX-01 lands and is re-probed live; injection + load-scan legs need a coordinator ruling on whether watch 7138911209 ruling 4 (STR-070) extends to STR-073.'
 
   - id: TASK-STR-074
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG2-STR-09, IG2-STR-10, IG2-STR-11, IG2-STR-12, IG2-STR-13 - live extreme-condition verification (wave 1)'
