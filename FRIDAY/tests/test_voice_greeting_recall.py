@@ -213,8 +213,10 @@ def test_keeper_stands_down_when_cache_comfortably_fresh(monkeypatch):
 
 def test_keeper_refreshes_before_expiry(monkeypatch):
     _clear_cache()
-    # 200 s into the 240 s TTL: ~40 s remain — inside the refresh window.
-    w._KEY_CACHE.update({"key": "k1", "ts": time.time() - 200.0})
+    # (TTL - 40) s into the TTL: ~40 s remain — inside the refresh window.
+    # TASK-VOI-020 raised the TTL 240 s -> 1800 s; the old hardcoded 200 s
+    # left 1600 s remaining, outside the 75 s refresh-ahead window.
+    w._KEY_CACHE.update({"key": "k1", "ts": time.time() - (w._KEY_CACHE_TTL_S - 40.0)})
     probed = _stub_probe(monkeypatch, lambda key: True)
     assert w._key_keeper_step() == "refreshed"
     assert probed == ["k1"]  # a real probe round ran despite the valid cache
@@ -224,7 +226,7 @@ def test_keeper_refreshes_before_expiry(monkeypatch):
 
 def test_failed_refresh_keeps_still_valid_key_and_cache(monkeypatch):
     _clear_cache()
-    old_ts = time.time() - 200.0
+    old_ts = time.time() - (w._KEY_CACHE_TTL_S - 40.0)
     w._KEY_CACHE.update({"key": "k1", "ts": old_ts})
     _stub_probe(monkeypatch, lambda key: False)  # every candidate rejected
     assert w._key_keeper_step() == "refreshed"
@@ -237,7 +239,7 @@ def test_failed_refresh_keeps_still_valid_key_and_cache(monkeypatch):
 
 def test_unjudged_refresh_keeps_verified_key(monkeypatch):
     _clear_cache()
-    old_ts = time.time() - 200.0
+    old_ts = time.time() - (w._KEY_CACHE_TTL_S - 40.0)
     w._KEY_CACHE.update({"key": "k1", "ts": old_ts})
     _stub_probe(monkeypatch, lambda key: "unjudged")  # probes cannot judge
     assert w._key_keeper_step() == "refreshed"

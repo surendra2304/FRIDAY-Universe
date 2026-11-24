@@ -480,6 +480,10 @@ jobs:
             src/friday/voice/dictation.py \
             tests/test_voice_dictation.py \
             tests/test_ux_and_cli.py
+      # TASK-REL-097: the pytest list below now names all 44 shipped
+      # FRIDAY/tests/test_voice_*.py — the 17 FRD/greeting/routing files the
+      # REL-068 guard showed as collected by no PR-triggered workflow on main
+      # 404f5014 were appended here (voice-regressions is their home job).
       - name: Run voice, LiveKit, Gemini, and CLI regressions
         run: |
           python -m pytest -q \
@@ -514,7 +518,24 @@ jobs:
             tests/test_voice_fleet_terms.py \
             tests/test_voice_greeting_onset_voi026.py \
             tests/test_voice_greeting_onset_voi028.py \
-            tests/test_voice_noise_interruption_voi032.py
+            tests/test_voice_noise_interruption_voi032.py \
+            tests/test_voice_brain_latency_frd011.py \
+            tests/test_voice_brain_delivery_frd012.py \
+            tests/test_voice_recall_fact_frd014.py \
+            tests/test_voice_fragment_guard_frd015.py \
+            tests/test_voice_recall_concurrency_frd016.py \
+            tests/test_voice_recall_draw_logging_frd017.py \
+            tests/test_voice_recall_retry_frd017.py \
+            tests/test_voice_silent_path_frd018.py \
+            tests/test_voice_verbatim_watch_frd018.py \
+            tests/test_voice_fragment_recovery_frd019.py \
+            tests/test_voice_recall_gate_frd019.py \
+            tests/test_voice_recall_remote_deadline_frd020.py \
+            tests/test_voice_greeting_recall.py \
+            tests/test_voice_greeting_single_owner.py \
+            tests/test_voice_greeting_trigger.py \
+            tests/test_voice_instant_routing.py \
+            tests/test_voice_session_build_overlap.py
 
   docker:
     runs-on: ubuntu-latest
