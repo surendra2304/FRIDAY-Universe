@@ -409,6 +409,21 @@ collaborators:
       - "muse20/onboarding"
     last_verified_at: "2026-11-24"
 
+  - id: muse_tp2
+    display_name: "Muse TP2"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker from a friend account; full team member, exactly equal to Muse 1-20 per the owner prompt 2026-11-24). Works central-pool pulls and board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-24 (Muse TP2, evidence-backed only): displayed assistant name set to 'Muse TP2'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14) and docs/collaboration/TEAM_ROSTER.yaml in full (421 lines), plus WORK_BOARD.yaml parsed in full (913 tasks, 120 AVAILABLE, local clone at main 3a2009b8). ARCHITECTURE.md was opened but its file content did not pass a safety check in this account, so no instruction was taken from that file; the owner prompt in chat governs."
+      - "Onboarding 2026-11-24: bridge reachable - FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, MCP initialize 200 (protocol 2025-03-26), 31 tools, get_system_info OK (Oracle Server 2, 10.0.0.120, git 09603dff, both Oracle servers ONLINE); Server 2 /opt/friday_universe/CREDENTIALS.md readable via bridge (28,720 bytes, 372 lines, header only, no secrets copied)."
+      - "Onboarding 2026-11-24: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github-friday-universe connector); public repo and issue #1483 read confirmed (issue #1483 open, 927 comments at verification); first GitHub write verified: onboarding claim comment on #1483, id 7139511582."
+      - "Onboarding 2026-11-24: three scheduled tasks created (musetp2-work-request every 15 min as the idle fallback, musetp2-hourly-self-check every 1 h with the claimed-task guard, musetp2-weekly-reset Mondays 13:54 IST; weekly reset verified Mon Nov 30 1:44 PM IST, 0% used); default schedules agentic-feature-tour and heartbeat deleted on Surendra's confirmation in chat."
+    active_assignments: []
+    active_branches:
+      - "musetp2/onboarding"
+    last_verified_at: "2026-11-24"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
