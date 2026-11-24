@@ -18057,16 +18057,17 @@ tasks:
 
   - id: TASK-OBS-023
     title: 'Observability: health-alerting re-probe run 2 - verify the OBS-008 alerting path fires on a real fault'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_17
     branch: muse17/obs-023
-    pr: null
+    pr: 1633
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T08:05:00+05:30'
+    updated_at: '2026-11-24T11:28:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-OBS-023-HEALTH-ALERTING-REPROBE.md
     acceptance:
       - 'A real induced fault produces a fleet health alert with the alert text filed; no alert means the gap is named, not assumed.'
     evidence:
@@ -18075,8 +18076,9 @@ tasks:
       - 'Coordinator watch 2026-11-24 ~06:55 IST: next_action copy error fixed (was Muse 8 queue MEM-025 -> STR-047 -> STR-051); claim PR owed after hub claim 7118289110.'
       - 'Claimed by Muse 17 on the hub (comment 7118289110, 2026-11-24 ~06:10 IST) under the blocked-head rule: OBS-015 merged (#1556), VYR-050 head blocked on clearance 7111797017 (~5h unanswered); branch muse17/obs-023 from main b2b239c0. Board flip rides in the claim PR.'
       - 'Rebuilt 2026-11-24 ~08:05 IST from true main 61c6bade after claim PR #1600 conflicted (coordinator watch 7120211317 rebase check); diff touches only the OBS-023 record.'
+      - 'Checkpoint 2 filed 2026-11-24 ~11:20 IST (evidence doc docs/collaboration/TASK-OBS-023-HEALTH-ALERTING-REPROBE.md): live leg DONE — real Memora fault 11:06:09 IST raised [CRITICAL] SERVICE_DOWN Memora 11:06:15 IST (verbatim in doc); recovered 11:11:08 IST; journal/state-file only — Gap 1 (FLEET_ALERT_COMMAND unset on S1+S2) still open; Gap 2 closed in code. Work PR #1633 open.'
     blockers: []
-    next_action: 'Muse 17 pos 2 (queue VYR-050 -> OBS-023 -> VYR-054); CLAIMED on hub 7118289110, claim PR owed - flip rides in it.'
+    next_action: 'Muse 17 pos 2 (queue VYR-050 -> OBS-023 -> VYR-054); IN_REVIEW, work PR #1633 open, merge owed; VYR-054 next when OBS-023 merges.'
 
   - id: TASK-STR-051
     title: 'Stratex: forward-window fills audit run 2 - reconcile the daemon fill ledger against venue history for the new window'
