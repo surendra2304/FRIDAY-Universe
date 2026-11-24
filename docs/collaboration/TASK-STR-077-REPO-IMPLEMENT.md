@@ -42,3 +42,27 @@ Acceptance item (c) needs a live demo-daemon cycle on Stratex-Server (real marke
 ## 6. Next
 
 Per-repo legs in order: (1) VectorBT sweep harness (adapt, new code, offline/small-universe); (2) CCXT adapter end-to-end use + failure case (adapt, verification/extension of the existing adapter); (3) reference-only live-trial/guardrail proofs for Freqtrade, Backtrader, Hummingbot (absence from every production path + pattern notes); (4) live demo-daemon cycle on Stratex-Server if the read route is granted. Checkpoint 2 files the per-repo evidence.
+
+## 7. VectorBT leg — verification (2026-11-25 ~02:30 IST, main `e5a6876f`, S2 venv)
+
+**CORRECTION to §4:** the checkpoint-1 claim "no `vectorbt` imports anywhere under `Stratex/*.py`" is WRONG. First-hand search on main `e5a6876f` finds extensive VectorBT prior art. The VectorBT adapt leg is therefore verification/extension of existing work, not greenfield. (Search-scope error in checkpoint 1; corrected here, not hidden.)
+
+**Prior art verified on main `e5a6876f`:**
+- `Stratex/research/sweep_harness/harness.py` — parameter-sweep harness, `SweepGrid` with a hard `max_combos: 4096` RAM guard; pattern adapted from vectorbt community edition (pattern only, vectorbt is NOT a fleet dependency). Board record TASK-IG2-STR-01, MERGED, pr 668 (IG Repo Wave 2).
+- `Stratex/stratex_vectorbt/adapter.py` — `VectorBTResearchAdapter` / `SweepSpec` / `SweepResult`; sweep over a Cartesian grid, `rank()` with a profit-factor >= 1.20 gate; `validate_with_canonical_engine` hooks the canonical BacktestEngine. Pure Python (dataclasses/itertools/math); no vectorbt import.
+- `Stratex/app/agents/real_vectorbt.py` — `SignalGenerator`, `PortfolioSimulation.simulate_real_vectorbt` using native `vbt.Portfolio.from_signals` when available; native path returns `engine: 'vectorbt_real'`, fallback (internal SMA simulation) returns `engine: 'vectorbt_simulated'`. Wired into `Stratex/app/trading_hub.py` and the `/api/v1/trading/engines/vectorbt/*` routes.
+
+**Live evidence on S2 (scratch worktree of origin/main `e5a6876f`, venv python, pytest 9.2.0; worktree removed after):**
+- `Stratex/tests/test_contracts.py::test_vectorbt_style_sweep` — **1 passed in 0.40s** (adapter sweep + rank on a mock eval).
+- `Stratex/tests/test_additional_integrations.py::test_vectorbt_sweep_grid_and_ranking` — **COLLECTION ERROR, not run:** `Stratex/execution/__init__.py` refuses to load without the `binance` module (`ModuleNotFoundError: No module named 'binance'`). Venv pip list shows only numpy 2.2.6, pytest 9.2.0, pytest-asyncio — NO pandas, NO vectorbt, NO binance. Same absence on system python 3.10.12 and venv312 (venv312 has no pytest at all).
+- Direct smoke, venv python, 120 synthetic closes: `HAS_REAL_VECTORBT=False`; `simulate_real_vectorbt` returns `engine: 'vectorbt_simulated'`, final 10504.81 on 10000 init, total_return 0.0505, sharpe 3.058, max_drawdown 0.0052. The fallback path runs and is honestly labelled; the native vectorbt path cannot run on the fleet as configured (deps absent).
+
+**Verdict for the VectorBT leg: PARTIAL.** Adapter logic verified on the fleet venv; native vectorbt path and the integration-grid test blocked on missing fleet deps (vectorbt / pandas / binance). No dependency installed — that is a server-environment change, not attempted without direction. The live-data leg (acceptance item c) is still gated on the Stratex-Server read route (owner decision owed). Next: CCXT adapter end-to-end use + failure case (§6 order), then the reference-only guardrail proofs.
+
+## 8. Operating rules in force this run (owner order 7143628341, watch057 7143740556)
+
+- NO checkpoint PRs: branch work only; the work PR opens when DONE or genuinely BLOCKED. This doc update is a branch commit, not a PR.
+- Board flips ride in the worker's own work PR. Stale flips owed by M17 ride in the next work PR: VYR-050 IN_REVIEW/pr 1641 → MERGED, OBS-023 IN_REVIEW/pr 1633 → MERGED, VYR-054 AVAILABLE/owner muse_17 → MERGED (all three verified still unflipped on main `e5a6876f` this run).
+- Paired verification: STR-077 (M17) → verifier M11 (starts when the work PR opens). M17 is verifier for STR-074 (TP4) → M17; no STR-074 work PR is open yet, duty armed.
+- Hourly "still working" hub posts ABOLISHED (rule 7): this verification is recorded here in the branch doc, not posted. Posts only on claim, completion-with-evidence, or blocked-with-reason.
+- The STR-077 live-leg gate question (does M3's STR-071 live-leg route via the bridge WRITE client change the gate?) is still unanswered in watches 054–057; #1713 (STR-071) is merged with live evidence, but no general lift of the owner stop order appears in any watch. Gate unchanged.
