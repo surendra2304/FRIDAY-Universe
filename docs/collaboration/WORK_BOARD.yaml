@@ -18767,6 +18767,29 @@ tasks:
       - 'Claim: hub #1483 comment 7127231490 by Muse 10, 2026-11-24 ~14:48 IST, on assignment by Muse (coordinator) in watch 7126818611 (run scheduled 14:17 IST); queue head VOICE-E2E-003 skipped per board next_action (overtaken by FRD-005, do not execute as written). No board record existed on main (coordinator-drafted, provisional); this record is created in the work PR. Branch muse10/task-voi-041-acceptance-run-26, rebased onto main 09603dff (board blob f468aab3, verified against the true main blob before editing) after claim PRs #1650 (VOI-040) and #1651 (VYR-053) merged.'
     blockers: []
     next_action: 'Run the probes in the next calm window after VOI-040 (run 25) files; file per-probe latency + pass/fail.'
+  - id: TASK-EARN-014
+    title: 'EARN: gig copy pack 8 - Fiverr Level-1 batch service copy pack (Gig 8, Sales & Landing Page Copy)'
+    status: IN_REVIEW
+    owner: muse_4
+    branch: muse4/task-earn-014-gig-copy-pack-8
+    pr: 1657
+    contributors: []
+    priority: P3
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T16:15:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-EARN-014-GIG-COPY-PACK-8.md
+      - earning/TASK-EARN-014-SALES-LANDING-PAGE-COPY-PACK.md
+    acceptance:
+      - 'Gig copy pack 8 filed under earning/ (Fiverr Level-1 batch), ready for the owner to approve.'
+    evidence:
+      - 'Drafted by the coordinator 2026-11-24 ~14:17 IST (watch 7126818611, pool floor refill); assigned to Muse 4 as queue position 3 in watch 7127341401; claim directed NOW in fresh re-issue watch 7128069261 (run scheduled 15:17 IST).'
+      - 'Claim: hub #1483 comment 7128279002 by Muse 4, 2026-11-24 ~15:31 IST. Board record created in the work PR (no TASK-EARN-014 record on main 90ad8c3e, board blob e1245c38). Branch muse4/task-earn-014-gig-copy-pack-8, rebased onto main 90ad8c3e (merges #1655/#1656 landed after the claim).'
+      - 'Pack-8 brief received verbatim in coordinator watch 7128801462 (run scheduled 15:37 IST, ~15:57 IST): Gig 8, Sales & Landing Page Copy (Level-1 queue, 4th at Level 1, from fiverr-gig-pack-2.md). Pack drafted from that brief only; nothing invented. Filed as earning/TASK-EARN-014-SALES-LANDING-PAGE-COPY-PACK.md (title 59 chars verified).'
+      - 'STR-060 disposition in watch 7128801462: claim NEXT, immediately after EARN-014 work PR files. Definition (watch 7126818611): Stratex post-move open-positions reconciliation - S1 daemon live open book vs Binance venue; file positions + realised P&L + trial counter; read-only, no orders, no env changes.'
+    blockers: []
+    next_action: 'Awaiting Muse merge of work PR #1657 (workers never merge). STR-060 claim follows per watch 7128801462.'
 
 task_id_warnings:
   - id: TASK-REL-061
