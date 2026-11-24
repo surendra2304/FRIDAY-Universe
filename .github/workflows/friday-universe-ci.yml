@@ -16,6 +16,13 @@ jobs:
         with:
           python-version: '3.11'
 
+      # TASK-REL-088: tier-1 collection gate. The test job must collect the
+      # tier-1 suites of EVERY agent (21 files, 10 agents). Unlike the
+      # REL-068 diff-scoped audit, this gate checks a FIXED list, so a PR
+      # that unwires a suite without touching a test file fails here.
+      - name: Tier-1 collection gate (all agents)
+        run: python3 scripts/tier1_collection_gate.py
+
       - name: Install dependencies
         run: |
           pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas ruff
@@ -150,6 +157,230 @@ jobs:
             --deselect tests/e2e/test_e2e_tier1.py::test_f16_readme_contains_env_vars_table \
             --deselect tests/e2e/test_e2e_tier1.py::test_f16_env_example_contains_all_core_settings \
             --deselect tests/e2e/test_e2e_tier1.py::test_f8_post_plan_valid_payload
+
+      # TASK-REL-088: FRIDAY tier-1 tests. Own venv from
+      # FRIDAY/requirements.txt + pytest + pytest-asyncio (the suite uses
+      # @pytest.mark.asyncio; requirements.txt lacks the plugin). Proven
+      # locally on current main: 86 passed, 0 failed, 0 deselects - see
+      # docs/collaboration/TASK-REL-088-TIER1-ALL-AGENTS.md.
+      - name: Run FRIDAY tier-1 tests
+        working-directory: FRIDAY
+        run: |
+          python3 -m venv .venv-friday-ci
+          .venv-friday-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio
+          # TASK-REL-086: on failure the wrapper prints the failing test
+          # names + log tail into the check-run summary.
+          python3 ../scripts/ci_failure_summary.py \
+            --pytest \
+            --check "test-job" \
+            --step "Run FRIDAY tier-1 tests" \
+            --workflow ".github/workflows/friday-universe-ci.yml" \
+            --job "test" \
+            -- .venv-friday-ci/bin/python -m pytest -q \
+            tests/test_tier1_resilience_and_contracts.py tests/e2e/test_tier1_features.py
+
+      # TASK-REL-088: Memora tier-1 tests. Same venv pattern as the vector
+      # step above, plus pytest + pytest-asyncio; same env, but a separate
+      # sqlite file (memora_ci_tier1.db) so the tier-1 run starts from a
+      # fresh DB exactly like the local proof runs. Two deselects are
+      # pre-existing failures proven on current main - see the evidence
+      # doc: /health returns 503 and /ready omits the "wal" key.
+      - name: Run Memora tier-1 tests
+        working-directory: Memora
+        env:
+          MEMORA_ENV: testing
+          ENVIRONMENT: testing
+          MEMORA_EMBEDDING_MODE: hashing
+          DATABASE_URL: sqlite:///./data/memora_ci_tier1.db
+        run: |
+          python3 -m venv .venv-memora-ci
+          .venv-memora-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio
+          # TASK-REL-086: on failure the wrapper prints the failing test
+          # names + log tail into the check-run summary.
+          python3 ../scripts/ci_failure_summary.py \
+            --pytest \
+            --check "test-job" \
+            --step "Run Memora tier-1 tests" \
+            --workflow ".github/workflows/friday-universe-ci.yml" \
+            --job "test" \
+            -- .venv-memora-ci/bin/python -m pytest -q \
+            tests/test_tier1_resilience_contracts.py \
+            --deselect tests/test_tier1_resilience_contracts.py::test_health_probe_contract \
+            --deselect tests/test_tier1_resilience_contracts.py::test_ready_probe_contract
+
+      # TASK-REL-088: Stratex tier-1 tests. Own venv from
+      # Stratex/requirements.txt + pytest + pytest-asyncio. One deselect is
+      # a pre-existing failure proven on current main - see the evidence
+      # doc: /health returns 503, expects 200 (same signature as Memora).
+      - name: Run Stratex tier-1 tests
+        working-directory: Stratex
+        run: |
+          python3 -m venv .venv-stratex-ci
+          .venv-stratex-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio
+          # TASK-REL-086: on failure the wrapper prints the failing test
+          # names + log tail into the check-run summary.
+          python3 ../scripts/ci_failure_summary.py \
+            --pytest \
+            --check "test-job" \
+            --step "Run Stratex tier-1 tests" \
+            --workflow ".github/workflows/friday-universe-ci.yml" \
+            --job "test" \
+            -- .venv-stratex-ci/bin/python -m pytest -q \
+            tests/test_tier1_resilience_and_contracts.py \
+            --deselect tests/test_tier1_resilience_and_contracts.py::TestStandardizedContracts::test_health_includes_service_metadata
+
+      # TASK-REL-088: Forge tier-1 tests. Own venv from
+      # Forge/requirements.txt + pytest + pytest-asyncio + respx (one test
+      # needs respx; it fails on collection without it). Six deselects are
+      # pre-existing failures proven on current main - see the evidence
+      # doc: ready probe 503, diagnostics status "unhealthy" (no live
+      # Oracle ADB in the test env), db_path TypeError x2, postgres URL
+      # translation RuntimeError, PRAGMA no-op expectation.
+      - name: Run Forge tier-1 tests
+        working-directory: Forge
+        env:
+          # Forge/app imports the repo-root `mesh` package
+          # (app/verification/engine.py), so the repo root must be on
+          # PYTHONPATH; without it collection fails with
+          # ModuleNotFoundError: No module named 'mesh'.
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python3 -m venv .venv-forge-ci
+          .venv-forge-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio respx
+          # TASK-REL-086: on failure the wrapper prints the failing test
+          # names + log tail into the check-run summary.
+          python3 ../scripts/ci_failure_summary.py \
+            --pytest \
+            --check "test-job" \
+            --step "Run Forge tier-1 tests" \
+            --workflow ".github/workflows/friday-universe-ci.yml" \
+            --job "test" \
+            -- .venv-forge-ci/bin/python -m pytest -q \
+            tests/unit/test_tier1_resilience.py tests/unit/test_deep_upgrade_tier1.py \
+            --deselect tests/unit/test_tier1_resilience.py::test_ready_probe_contract \
+            --deselect tests/unit/test_tier1_resilience.py::test_status_diagnostics_endpoint \
+            --deselect tests/unit/test_tier1_resilience.py::test_sqlite_pragmas_and_wal_mode \
+            --deselect tests/unit/test_deep_upgrade_tier1.py::test_database_manager_crud_and_row_mapping \
+            --deselect tests/unit/test_deep_upgrade_tier1.py::test_async_db_connection_wrapper_features \
+            --deselect tests/unit/test_deep_upgrade_tier1.py::test_oracle_and_postgres_url_translation
+
+      # TASK-REL-088: Inference tier-1 set (no tier-1-named suite exists,
+      # so tier-1 = the health-contract + importability core files).
+      # Own venv from Inference/requirements.txt + pytest + pytest-asyncio
+      # + aiosqlite (requirements.txt lacks aiosqlite; the async-sqlite
+      # import fails without it). Proven locally on current main: 12
+      # passed, 0 failed, 0 deselects - see the evidence doc.
+      - name: Run Inference tier-1 tests
+        working-directory: Inference
+        run: |
+          python3 -m venv .venv-inference-ci
+          .venv-inference-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio aiosqlite
+          # TASK-REL-086: on failure the wrapper prints the failing test
+          # names + log tail into the check-run summary.
+          python3 ../scripts/ci_failure_summary.py \
+            --pytest \
+            --check "test-job" \
+            --step "Run Inference tier-1 tests" \
+            --workflow ".github/workflows/friday-universe-ci.yml" \
+            --job "test" \
+            -- .venv-inference-ci/bin/python -m pytest -q \
+            tests/test_health_security.py tests/test_module_importability.py tests/test_monitoring_health_evidence.py
+
+      # TASK-REL-088: Sentinel tier-1 set (health-contract + durability +
+      # foundation core files; no tier-1-named suite exists). Own venv
+      # from Sentinel/requirements.txt + pytest + pytest-asyncio. Proven
+      # locally on current main: 13 passed, 0 failed, 0 deselects - see
+      # the evidence doc.
+      - name: Run Sentinel tier-1 tests
+        working-directory: Sentinel
+        run: |
+          python3 -m venv .venv-sentinel-ci
+          .venv-sentinel-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio
+          # TASK-REL-086: on failure the wrapper prints the failing test
+          # names + log tail into the check-run summary.
+          python3 ../scripts/ci_failure_summary.py \
+            --pytest \
+            --check "test-job" \
+            --step "Run Sentinel tier-1 tests" \
+            --workflow ".github/workflows/friday-universe-ci.yml" \
+            --job "test" \
+            -- .venv-sentinel-ci/bin/python -m pytest -q \
+            tests/security/test_health_readiness.py tests/security/test_health_durability_truthfulness.py tests/unit/test_foundation.py
+
+      # TASK-REL-088: IntelX tier-1 set (health-contract core files; no
+      # tier-1-named suite exists). Own venv from IntelX/requirements.txt
+      # + pytest + pytest-asyncio + aiosqlite (requirements.txt has
+      # sqlalchemy[asyncio] but no aiosqlite; collection errors without
+      # it). Proven locally on current main: 22 passed, 0 failed,
+      # 0 deselects - see the evidence doc.
+      - name: Run IntelX tier-1 tests
+        working-directory: IntelX
+        run: |
+          python3 -m venv .venv-intelx-ci
+          .venv-intelx-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio aiosqlite
+          # TASK-REL-086: on failure the wrapper prints the failing test
+          # names + log tail into the check-run summary.
+          python3 ../scripts/ci_failure_summary.py \
+            --pytest \
+            --check "test-job" \
+            --step "Run IntelX tier-1 tests" \
+            --workflow ".github/workflows/friday-universe-ci.yml" \
+            --job "test" \
+            -- .venv-intelx-ci/bin/python -m pytest -q \
+            tests/test_intelx_health_contract.py tests/test_health.py tests/test_healthz_liveness.py
+
+      # TASK-REL-088: Futuris tier-1 set (health-contract core files; no
+      # tier-1-named suite exists). Own venv from Futuris/requirements.txt
+      # + pytest + pytest-asyncio + aiosqlite. DATABASE_URL is a dummy
+      # oracle+oracledb URL: the import-time check validates the scheme
+      # only, and the tests themselves use local SQLite fixtures, so no
+      # live Oracle is needed. Proven locally on current main: 8 passed,
+      # 0 failed, 0 deselects - see the evidence doc.
+      - name: Run Futuris tier-1 tests
+        working-directory: Futuris
+        env:
+          DATABASE_URL: oracle+oracledb://dummy:dummy@localhost:1521/dummy
+          # Futuris/futuris/core/pipeline.py imports the repo-root `mesh`
+          # package, so the repo root must be on PYTHONPATH; without it
+          # collection fails with ModuleNotFoundError: No module named
+          # 'mesh' (PR #1604 CI run 45305996260, exit 2). Same fix as Forge.
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python3 -m venv .venv-futuris-ci
+          .venv-futuris-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio aiosqlite
+          # TASK-REL-086: on failure the wrapper prints the failing test
+          # names + log tail into the check-run summary.
+          python3 ../scripts/ci_failure_summary.py \
+            --pytest \
+            --check "test-job" \
+            --step "Run Futuris tier-1 tests" \
+            --workflow ".github/workflows/friday-universe-ci.yml" \
+            --job "test" \
+            -- .venv-futuris-ci/bin/python -m pytest -q \
+            tests/test_futuris_health_contract.py tests/api/test_health.py
+
+      # TASK-REL-088: VyralX tier-1 set (recovery + health-labelling core
+      # files; no tier-1-named suite exists). VyralX has no
+      # requirements.txt; install from requirements.lock (SEN-012 pinned
+      # snapshot) + pytest + pytest-asyncio. Proven locally on current
+      # main: 5 passed, 0 failed, 0 deselects - see the evidence doc.
+      # NOTE: a fresh lock install is unproven locally; the work PR's CI
+      # run is the proof of that path.
+      - name: Run VyralX tier-1 tests
+        working-directory: VyralX
+        run: |
+          python3 -m venv .venv-vyralx-ci
+          .venv-vyralx-ci/bin/python -m pip install --disable-pip-version-check -r requirements.lock pytest pytest-asyncio
+          # TASK-REL-086: on failure the wrapper prints the failing test
+          # names + log tail into the check-run summary.
+          python3 ../scripts/ci_failure_summary.py \
+            --pytest \
+            --check "test-job" \
+            --step "Run VyralX tier-1 tests" \
+            --workflow ".github/workflows/friday-universe-ci.yml" \
+            --job "test" \
+            -- .venv-vyralx-ci/bin/python -m pytest -q \
+            tests/test_recovery_and_readiness.py tests/test_obs003_health_labelling.py
 
       - name: Start API server and run HTTP tests
         run: |
