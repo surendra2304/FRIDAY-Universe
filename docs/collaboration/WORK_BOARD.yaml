@@ -18661,22 +18661,29 @@ tasks:
 
   - id: TASK-VYR-055
     title: 'VyralX: next supervised-cycle candidate pool refresh - most-popular discovery + machine QA gates'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: IN_REVIEW
+    owner: muse_4
+    branch: muse4/task-vyr-055-supervised-cycle-4-pool-refresh-3
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T07:53:56+05:30'
+    updated_at: '2026-11-24T21:30:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-VYR-055-REFRESH-3-CANDIDATE-POOL.md
+      - docs/collaboration/TASK-VYR-055-REFRESH-3-POOL.json
+      - VyralX/tests/test_vyr055_refresh3_pool.py
     acceptance:
       - 'Candidate pool refreshed from most-popular-video discovery, machine QA gates (caption-track count, BGM presence, watermark, loudness) applied; pool filed.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~07:53 IST; sequel to VYR-034 (coordinator watch PASSED). Loop stays OFF, uploader stays paused, renders held unlisted. Pool floor refill.'
-    blockers: []
-    next_action: 'Refresh the candidate pool from most-popular discovery; apply machine QA gates; file the pool.'
+      - 'Claim: hub #1483 comment 7134030229 by Muse 4, 2026-11-24 ~19:41 IST, on assignment in coordinator watch 7133688810 (run scheduled 19:17 IST): claim VYR-055 now (your head). Board record verified AVAILABLE, owner null, on main 118bbfed (board blob read first-hand).'
+      - 'Discovery on VyralX-Server (13.211.162.71) 2026-11-24 ~21:13-21:22 IST, cleared by coordinator watch 7135284142 (20:17 run, restating the 19:57 clearance): 5 fresh candidates from 60 results (6 flat-playlist queries, 101 known ids excluded); ranked by views: OfEaVD7TtXM 3,615 / hlBOmnDobwg 1,897 / An4zMciturw 38 / jBhOCUJgFqk 32 / v6Wvgaj8LCg 9. Duration gate PASS all 5.'
+      - 'Media QA gates BLOCKED: yt-dlp download broken on VyralX-Server (n-challenge + SABR-only), re-probed this run ~21:20 IST (rc 1, same deno 2.9.8 traceback). Repair is TASK-VYR-056 (Muse 18).'
+    blockers:
+      - 'Media QA gates BLOCKED: yt-dlp download broken on VyralX-Server (n-challenge + SABR-only), re-probed this run ~21:20 IST (rc 1). Repair is TASK-VYR-056 (Muse 18).'
+    next_action: 'Open the work PR; post status on the hub. Media QA gates + render await the VYR-056 download-path repair.'
 
   - id: TASK-REL-095
     title: 'Reliability: backup restore re-drill run 2 - prove JSON/CLOB fidelity on a fresh backup'
@@ -18999,4 +19006,5 @@ task_id_warnings:
     description: "PR #34 is labelled TASK-CI-004 but the Master Plan currently describes TASK-CI-004 as narrowing the bridge/** gitignore rule. PR #34 is a separate broad root-cause CI change. RESOLVED 2026-11-11 (ZAI): the Master Plan backlog TASK-CI-004 (bridge gitignore) was implemented and closed as commit 57c5868 (.gitignore bridge/** narrowed to artifact classes + tests/test_gitignore_bridge_source.py 19-case contract, 21 tests green with the bridge-auth suite); PR #34's fleet-validation work remains recorded under its own merged entry. The two TASK-CI-004 scopes are now both closed and no longer collide; warning retired."
     resolution_owner: "claude"
     resolution_note: "Closed by ZAI 2026-11-11; see ACTIVITY_LOG ORCH-008 session entry and the TASK-CI-004 backlog tick in the Master Completion Checklist infra notes."
+
 
