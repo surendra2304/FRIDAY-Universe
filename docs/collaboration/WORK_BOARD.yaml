@@ -16039,7 +16039,7 @@ tasks:
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T18:12:16+05:30'
+    updated_at: '2026-11-24T01:35:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-VAL-009-ROUTER-BUS-TRACE.md
@@ -16050,9 +16050,10 @@ tasks:
     - 'Claim: issue #35 comment 7093685321 by Muse 8, 2026-11-23 ~12:18 IST, on queue assignment (coordinator queues post 2026-11-23 ~01:00 IST; watch 7091751044 + watch 7093557479: Muse 8 -> REL-076 MERGED -> VAL-009). Board record verified AVAILABLE, owner muse_8, on main 23324fdd (board blob 6e69d6c0, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse8/task-val-009.'
     - 'Probe executed 2026-11-23 ~14:18 IST under coordinator clearance (watch 7095390023): submit task_b9f56ce22f6c -> route MEMORA 0.94 -> dispatch disp_2ed5e1717a66 -> completion callback recorded_via agent_completion_callback; read-back total 2 in the shared store (assigned 1, failed 1). Trace: docs/collaboration/TASK-VAL-009-ROUTER-BUS-TRACE.md.'
     - 'ACCEPTANCE NOT MET: dispatch failed - Memora /v1/task/execute returned HTTP 401 "Invalid agent credentials" (real 3.1 s round trip); the recall never ran. Same shared 401 gate the coordinator is investigating (watch 7095390023). Second finding: callback receipt claims completed while the store still records the dispatch failed. No retry, no re-target - awaiting Muse''s call: hold for the 401 fix + re-probe, or re-scope.'
+    - 'Re-probe 2026-11-24 ~01:28 IST after FRD-038 merged (coordinator watch 7111833560 lifted the hold): submit task_cff80843fa2d -> route MEMORA 0.94 -> dispatch disp_78a2ad24d9f9 STILL FAILED, same HTTP 401 Invalid agent credentials (3.9 s round trip); callback accepted (recorded_via agent_completion_callback); read-back total 4 in the shared store (assigned 1, completed 1 IntelX, failed 2); receipt/store divergence reproduced (receipt completed, store failed). Acceptance STILL NOT MET. Trace: docs/collaboration/TASK-VAL-009-ROUTER-BUS-TRACE.md (Re-probe section). Likely cause: FRD-038 fix merged but not yet deployed live (Muse 5 TASK-FRD-042 deploy leg pending) or fix does not cover this path; Muse 9 IntelX dispatch completed in the same hour, so the 401 is Memora-credential-specific.'
     - 'Merged via work PR #1479 (merge a6ac267742); CI green on the merged head (9/9 on head 1ee8728f0e: 7 success, 2 skipped); board flip in the coordinator consolidated board PR 2026-11-23 ~18:30 IST (base main 237667b6).'
     blockers: []
-    next_action: 'Probe executed, trace filed; acceptance NOT met (dispatch 401, shared gate). Awaiting Muse call: hold for 401 fix + re-probe, or re-scope.'
+    next_action: 'Re-probe executed 2026-11-24 ~01:28 IST: dispatch STILL 401 after FRD-038 merged; acceptance still not met. Awaiting Muse call: confirm FRD-038 deploy (Muse 5 TASK-FRD-042) and re-probe a third time, or re-scope.'
   - id: TASK-VYR-040
 
     title: 'VyralX: supervised cycle 2 from FRESH most-popular candidates (not the VYR-037 pool), machine QA gates first, renders held unlisted'
