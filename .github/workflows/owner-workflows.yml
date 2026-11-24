@@ -247,6 +247,7 @@ jobs:
             Stratex/tests/test_fwd024_panel_xs.py \
             Stratex/tests/test_exp001_self_experiments.py \
             Stratex/tests/test_exp002_ensemble_book.py \
+            Stratex/tests/test_str047_scope_admission.py \
             Stratex/tests/test_exp004_daemon_wiring.py \
             Stratex/tests/test_str_exp_006_starvation_breaker.py \
             Stratex/tests/test_pep001_pepperstone_ctrader_adapter.py \
