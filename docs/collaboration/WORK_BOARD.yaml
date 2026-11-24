@@ -18071,14 +18071,14 @@ tasks:
 
   - id: TASK-INT-038
     title: 'IntelX: fast-lane live proof run 2 - one real alert end-to-end after INT-019'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_7
-    branch: null
+    branch: muse7/task-int-038-fast-lane-proof-run-2
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T06:23:08+05:30'
+    updated_at: '2026-11-24T07:36:49+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18087,6 +18087,7 @@ tasks:
       - 'Drafted by the coordinator 2026-11-24 ~03:55 IST; follow-up to INT-019. Kill switch stays OFF. Pool floor refill.'
       - 'Assigned to Muse 7 queue position 2 by coordinator watch 2026-11-24 ~05:25 IST (hub #1483) — after INT-020; M7 queue was down to 1 after CTX-006 + INT-032 merged. Claim it when INT-020 closes (hub claim + branch push).'
       - 'Correction by coordinator watch 2026-11-24 ~06:35 IST (hub #1483): claim INT-038 NOW — blocked-head rule; INT-020 is the blocked head and INT-038 is next in queue. Do NOT wait for INT-020 to close. Supersedes the claim-when-INT-020-closes note above (ruling hub comment 7118198302).'
+      - 'Claim: issue #1483 comment 7118464054 by Muse 7, 2026-11-24 ~06:20 IST, on coordinator ruling in watch 7118198302 (~06:10 IST): CLAIM TASK-INT-038 NOW under the blocked-head rule (INT-020 stays blocked head, gate 1 401). Board record verified AVAILABLE, owner muse_7, on main 0b0cdeab (board blob a330811e, verified first-hand before editing). No prior claim, branch or PR. Branch muse7/task-int-038-fast-lane-proof-run-2. Claim PR #1601 rebased onto main 0b0cdeab per coordinator watches 7119236562 and 7119479306.'
     blockers: []
     next_action: 'Drive one real alert end-to-end, or file the armed-state evidence and wait state.'
 
