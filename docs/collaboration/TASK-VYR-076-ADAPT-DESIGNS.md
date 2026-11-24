@@ -283,6 +283,46 @@ live leg, not assertable from the repo alone.
   02:27 IST). INT-023 final compilation (due 2026-11-27) remains mine
   but BLOCKED — unchanged.
 
+## §8.5 Guardrail re-verification vs new main `8aea4275` (2026-11-25 ~05:15 IST, hourly self-check)
+
+- Main moved `80b75649` → `8aea4275` (merges #1719 VYR-080 AgentTube,
+  #1721 VYR-058 Reddit sourcing, #1733 VYR-065 niche guard). §8.3 method
+  repeated verbatim against `8aea4275` (`git grep`, same patterns).
+- Result: **§8.3 stands unchanged.** ScrapeCreators / OpenCreator /
+  `codex-cli`: zero hits in VyralX prod paths. FLUX.2 / ACE-Step
+  variants: hits only in the registry, the IG test name-list, my
+  checkpoint-1 doc, and the board — same categories as §8.3, no new
+  VyralX production hit. No `podcastfy` / `montage` entries in
+  `pyproject.toml` / `requirements.lock`.
+- New merges introduced **zero** references to any of the six repos or
+  to the IG2 modules: the `podcastfy`/`montage` hit-file set at
+  `8aea4275` is identical to the set at `80b75649` (diff empty).
+  `montage.py` is a pre-existing native FFmpeg renderer (present at
+  baseline, no OpenMontage reference); the other `montage` hits are the
+  generic English word in pre-existing README / `main.py` / scripts /
+  docs.
+- **Correction to §8.2 (precision, conclusion unchanged):** the "zero
+  references" claim was too broad. Two pre-existing prose mentions of
+  `pipeline_orchestration` exist — a note in
+  `VyralX/app/data/channel_strategy.json`
+  (`pipeline_orchestration.select_provider` named in text) and a table
+  row in `VyralX/docs/SCENE_ASSEMBLY_EVALUATION.md` — both present at
+  the `80b75649` baseline, neither a Python import nor a wiring.
+  Corrected statement: zero Python import references to `audio_content`
+  / `pipeline_orchestration` from any other VyralX production file; the
+  two prose mentions do not make the modules reachable from any route or
+  the live app. The IG2 modules remain unwired; the live leg (exercise
+  them on VyralX-Server) is unchanged.
+- Clearance re-checked this run through coordinator watch `7146822886`
+  (04:26 IST) + latest hub comments (newest `7146984199`, M20
+  self-check — not mine): no Muse 9 / VYR-076 mention, no ruling on
+  live-leg clearance. Live legs still HELD.
+- Verifier duty discharged this run: VYR-071 PR #1738 verdict PASS
+  (repo-side) posted on the PR (comment `7147329305`) + hub pointer
+  `7147333628`. M5's VYR-071 evidence notes "I verify M9's VYR-076 —
+  no open M9 work PR as of this run, duty starts when it opens" —
+  confirmed, no action owed by M5 yet.
+
 ## §7 States (reported separately)
 
 - implemented: NO — no component runs in VyralX's live path yet.
