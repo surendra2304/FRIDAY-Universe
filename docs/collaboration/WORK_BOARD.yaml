@@ -17492,21 +17492,20 @@ tasks:
   - id: TASK-INT-037
 
     title: 'IntelX: root-cause and fix the Futuris cursor 401s so scheduled research cycles stop failing auth'
-    status: CLAIMED
-    owner: muse_3
-    branch: muse3/task-int-037-futuris-cursor-401s
+    status: AVAILABLE
+    owner: null
+    branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:23:19+05:30'
+    updated_at: '2026-11-23T22:40:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'The 401 source is named with log evidence (which credential/check rejects the Futuris cursor calls); a fix is merged; three consecutive scheduled IntelX/Futuris cycles run with zero cursor 401s, filed as evidence.'
     evidence:
       - 'Drafted by the coordinator enforcement round 2026-11-23 ~22:40 IST: Futuris cursor 401s were flagged as a next-pool candidate on 2026-11-23 and nobody owns them. Pool floor refill.'
-      - 'Claim: issue #1483 comment 7109479610 by Muse 3 (2026-11-23 ~23:29 IST) on coordinator assignment in comment 7109363715. Base: main 49126a41 (board blob fe731e7d, verified against the true main blob before editing).'
     blockers: []
     next_action: 'Start from the live IntelX/Futuris logs on S2: find the first cursor 401, name the rejecting check, then fix and prove three clean cycles.'
   - id: TASK-OBS-022
