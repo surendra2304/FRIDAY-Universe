@@ -26,6 +26,31 @@ class MemoraClient:
         self.timeout = timeout
         self.last_error: str | None = None
 
+    def _key_candidates(self, agent: str) -> list[tuple[str, str]]:
+        """Ordered (label, key) candidates for one agent, chain order kept.
+
+        TASK-MEM-005-R2: the dedicated ``{AGENT}_MEMORA_API_KEY`` wins over
+        the per-agent ``{AGENT}_API_KEY``; ``MEMORA_API_KEY`` is never
+        consulted. An explicit ``api_key`` passed to the constructor wins
+        over both env keys. Candidates are deduped by value, so a key that
+        appears twice in the chain is never presented twice.
+        """
+        candidates: list[tuple[str, str]] = []
+        seen: set[str] = set()
+
+        def _add(label: str, value: str | None) -> None:
+            if value and value not in seen:
+                seen.add(value)
+                candidates.append((label, value))
+
+        _add("explicit api_key", self.api_key)
+        _add(
+            f"{agent.upper()}_MEMORA_API_KEY",
+            os.getenv(f"{agent.upper()}_MEMORA_API_KEY"),
+        )
+        _add(f"{agent.upper()}_API_KEY", os.getenv(f"{agent.upper()}_API_KEY"))
+        return candidates
+
     def _request(
         self,
         agent_name: str,
@@ -35,41 +60,72 @@ class MemoraClient:
         payload: dict[str, Any] | None = None,
     ) -> Any:
         agent = agent_name.strip().lower()
-        # TASK-MEM-005-R2: the agent's dedicated Memora key wins over its
-        # per-agent key; MEMORA_API_KEY is never consulted.
-        key = self.api_key or os.getenv(f"{agent.upper()}_MEMORA_API_KEY") or os.getenv(f"{agent.upper()}_API_KEY")
-        if not key:
+        candidates = self._key_candidates(agent)
+        if not candidates:
             self.last_error = f"{agent.upper()}_API_KEY is not configured"
             return {"status": "error", "cloud": False, "error": self.last_error}
-        headers = {
-            "X-Agent-Name": agent,
-            "Authorization": f"Bearer {key}",
-            "Accept": "application/json",
-        }
         data = None
         if payload is not None:
-            headers["Content-Type"] = "application/json"
             data = json.dumps(payload).encode("utf-8")
-        request = urllib.request.Request(
-            f"{self.base_url}{path}", data=data, headers=headers, method=method
-        )
-        try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                body = response.read()
-                result = json.loads(body.decode("utf-8")) if body else {}
-                if response.status < 200 or response.status >= 300:
-                    self.last_error = f"Memora HTTP {response.status}"
-                    return {"status": "error", "cloud": False, "error": self.last_error}
-                self.last_error = None
-                if isinstance(result, dict):
-                    result.setdefault("cloud", True)
-                return result
-        except urllib.error.HTTPError as exc:
-            self.last_error = f"Memora HTTP {exc.code}"
-            return {"status": "error", "cloud": False, "error": self.last_error}
-        except Exception as exc:
-            self.last_error = type(exc).__name__
-            return {"status": "error", "cloud": False, "error": self.last_error}
+        # TASK-INT-037: on HTTP 401 the presented key is rejected — retry the
+        # same request ONCE with the next key in the chain and log a loud
+        # warning naming the rejected key, so a stale dedicated key fails one
+        # poll loudly instead of 401-looping every poll (FUT-022 storm: 174
+        # cursor 401s in 45 min). No third key, no second retry.
+        for attempt, (label, key) in enumerate(candidates[:2]):
+            headers = {
+                "X-Agent-Name": agent,
+                "Authorization": f"Bearer {key}",
+                "Accept": "application/json",
+            }
+            if payload is not None:
+                headers["Content-Type"] = "application/json"
+            request = urllib.request.Request(
+                f"{self.base_url}{path}", data=data, headers=headers, method=method
+            )
+            try:
+                with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                    body = response.read()
+                    result = json.loads(body.decode("utf-8")) if body else {}
+                    if response.status < 200 or response.status >= 300:
+                        if (
+                            response.status == 401
+                            and attempt == 0
+                            and len(candidates) > 1
+                        ):
+                            logger.warning(
+                                "Memora rejected key %s for agent %s (HTTP 401); "
+                                "retrying once with %s",
+                                label,
+                                agent,
+                                candidates[1][0],
+                            )
+                            continue
+                        self.last_error = f"Memora HTTP {response.status}"
+                        return {"status": "error", "cloud": False, "error": self.last_error}
+                    self.last_error = None
+                    if isinstance(result, dict):
+                        result.setdefault("cloud", True)
+                    return result
+            except urllib.error.HTTPError as exc:
+                if exc.code == 401 and attempt == 0 and len(candidates) > 1:
+                    logger.warning(
+                        "Memora rejected key %s for agent %s (HTTP 401); "
+                        "retrying once with %s",
+                        label,
+                        agent,
+                        candidates[1][0],
+                    )
+                    continue
+                self.last_error = f"Memora HTTP {exc.code}"
+                return {"status": "error", "cloud": False, "error": self.last_error}
+            except Exception as exc:
+                self.last_error = type(exc).__name__
+                return {"status": "error", "cloud": False, "error": self.last_error}
+        # Unreachable: every path inside the loop returns, or continues to an
+        # attempt that returns. Kept so a future refactor cannot fall through.
+        self.last_error = "Memora HTTP 401"
+        return {"status": "error", "cloud": False, "error": self.last_error}
 
     def record_interaction(
         self,
