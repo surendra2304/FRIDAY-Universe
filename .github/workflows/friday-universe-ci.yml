@@ -340,6 +340,11 @@ jobs:
         working-directory: Futuris
         env:
           DATABASE_URL: oracle+oracledb://dummy:dummy@localhost:1521/dummy
+          # Futuris/futuris/core/pipeline.py imports the repo-root `mesh`
+          # package, so the repo root must be on PYTHONPATH; without it
+          # collection fails with ModuleNotFoundError: No module named
+          # 'mesh' (PR #1604 CI run 45305996260, exit 2). Same fix as Forge.
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           python3 -m venv .venv-futuris-ci
           .venv-futuris-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio aiosqlite

@@ -115,12 +115,12 @@ the same shape as the Cortex step (REL-080) and the Memora vector step.
 - IntelX: `-r requirements.txt pytest pytest-asyncio aiosqlite`.
   requirements.txt has sqlalchemy[asyncio] but no aiosqlite; all 22
   tests errored on collection without it.
-- Futuris: `-r requirements.txt pytest pytest-asyncio aiosqlite`, plus
+- Futuris: `-r requirements.txt pytest pytest-asyncio aiosqlite`, plus `PYTHONPATH` set to the repo root, plus
   `DATABASE_URL: oracle+oracledb://dummy:dummy@localhost:1521/dummy`.
   The import-time check validates the URL scheme only; the tests use
   local SQLite fixtures, so no live Oracle is needed. Without the dummy
   URL the conftest import raises RuntimeError (DATABASE_URL not
-  configured). The dummy URL is a localhost placeholder, not a secret.
+  configured). The dummy URL is a localhost placeholder, not a secret. Plus `PYTHONPATH` set to the repo root: `Futuris/futuris/core/pipeline.py` imports the repo-root `mesh` package, so without it collection fails with `ModuleNotFoundError: No module named 'mesh'` (found by the work PR's CI run 45305996260, exit 2; the local probes had passed only because the bridge shell exports `PYTHONPATH=/opt/friday_universe` and the probe cwd was the worktree root, which masked the missing path — same as Forge).
 - VyralX: `-r requirements.lock pytest pytest-asyncio`. VyralX has no
   requirements.txt (only pyproject.toml + the SEN-012 pinned
   requirements.lock, 84 lines) and no tests/conftest.py. NOTE: a fresh
@@ -151,7 +151,7 @@ Proof (three legs, all on the merged head 30e1103a):
 ## Work PR and CI run
 
 - Work PR: #1604 (https://github.com/surendra2304/FRIDAY-Universe/pull/1604).
-- CI run on the work PR: TBD (link when green).
+- CI run 45305996260 on head 78b970d5: test job FAILED — Futuris step exit 2 (`ModuleNotFoundError: No module named 'mesh'` at collection; both Futuris files); every other tier-1 step passed (gate, FRIDAY, Memora, Stratex, Forge, Inference, Sentinel, IntelX); VyralX and HTTP steps skipped after the failure. Fix: this commit (Futuris `PYTHONPATH` = repo root). Re-run pending; link when green.
 - Never merge: only Muse merges.
 
 ## Open items (not blockers for this task)
@@ -161,7 +161,7 @@ Proof (three legs, all on the merged head 30e1103a):
   green in CI, the fix belongs in the agents (health contract vs.
   degraded mode), not in this task's deselects.
 - VyralX fresh lock install is proven only by the work PR's CI run.
-- Local runs can mask a missing path: the bridge shell exports `PYTHONPATH=/opt/friday_universe`, so the Forge tier-1 files collected locally even without the repo root on the path. The CI run caught it (attempt 2, exit 4). CI-fidelity probes (`env -u PYTHONPATH`) now confirm the other five unrun steps need no extra path.
+- Local runs can mask a missing path: the bridge shell exports `PYTHONPATH=/opt/friday_universe`, so the Forge tier-1 files collected locally even without the repo root on the path. The CI run caught it (attempt 2, exit 4). CI-fidelity probes (`env -u PYTHONPATH`, run from each agent's own directory so the worktree cwd cannot mask a missing path) confirm the remaining steps need no extra path: VyralX passes 5/5 with PYTHONPATH unset. (The earlier probe run from the worktree root had wrongly cleared Futuris; the work PR's CI re-run caught it.)
 - The Memora vector step and the new Memora tier-1 step share the
   Memora directory in one job; the tier-1 step's separate sqlite file
   keeps them isolated.
