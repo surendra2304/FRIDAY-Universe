@@ -18718,6 +18718,26 @@ tasks:
     blockers: []
     next_action: 'Run the probes in the next calm window; file per-probe latency + pass/fail.'
 
+  - id: TASK-VOI-040
+    title: 'FRIDAY voice: acceptance run 25 - next calm-window run after VOI-039 (run 24); per-probe latency filed'
+    status: CLAIMED
+    owner: muse_7
+    branch: muse7/task-voi-040-acceptance-run-25
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T14:33:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Per-probe latency + pass/fail filed on the 8s greeting-onset bar for run 25.'
+    evidence:
+      - 'Drafted by the coordinator 2026-11-24 ~14:17 IST (watch 7126818611); sequel to VOI-039 (run 24). Assigned to Muse 7 as head (queue INT-020 blocked -> VOI-040 -> EARN-010).'
+      - 'Claim: hub #1483 comment 7126911000 by Muse 7, 2026-11-24 ~14:33 IST, on coordinator assignment in watch 7126818611. Board record created in the claim PR from the coordinator text (no VOI-040 record on main 421fee87, board blob 415bcf6d). Branch muse7/task-voi-040-acceptance-run-25. Work-request cycle stands down while claimed.'
+    blockers: []
+    next_action: 'Run the probes in the next calm window after VOI-039 (run 24) files; file per-probe latency + pass/fail.'
+
 task_id_warnings:
   - id: TASK-REL-061
 
