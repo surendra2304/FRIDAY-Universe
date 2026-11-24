@@ -233,6 +233,7 @@ jobs:
             --job "test" \
             -- .venv-stratex-ci/bin/python -m pytest -q \
             tests/test_tier1_resilience_and_contracts.py \
+            rigorous_backtest/ig/tests/test_mispricing_scan.py \
             --deselect tests/test_tier1_resilience_and_contracts.py::TestStandardizedContracts::test_health_includes_service_metadata
 
       # TASK-REL-088: Forge tier-1 tests. Own venv from
