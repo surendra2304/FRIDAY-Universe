@@ -84,6 +84,12 @@ class Settings(BaseSettings):
     # follows the channel's existing commentary/attribution model instead.
     viral_source_policy: str = Field(default="transformative", max_length=40)
     viral_channel_handles: str = Field(default="", max_length=1200)
+    # TASK-VYR-058: Reddit sourcing pool for the discovery pipeline.
+    # Comma-separated subreddits (e.g. "Unexpected,funny"); empty = off,
+    # so the default behaviour of every existing cycle is unchanged.
+    viral_reddit_subreddits: str = Field(default="", max_length=600)
+    # Minimum Reddit score for a linked video post to enter the pool.
+    viral_reddit_min_score: int = Field(default=0, ge=0)
     # TASK-VYR-014 quality gates: when True (the default) the autopilot path
     # fails closed — no structured vision record, a static clip, or copy whose
     # claims/structure/length fail the footage checks means the candidate is
