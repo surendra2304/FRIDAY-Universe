@@ -18154,24 +18154,26 @@ tasks:
 
   - id: TASK-API-007
     title: 'Forge: ship the missing /v1/task/execute endpoint so other agents can execute tasks through Forge'
-    status: CLAIMED
+    status: IN_PROGRESS
     owner: muse_11
     branch: muse11/task-api-007-forge-task-execute
-    pr: null
+    pr: 1626
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T06:27:23+05:30'
+    updated_at: '2026-11-24T10:28:08+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-API-007-FORGE-TASK-EXECUTE.md
     acceptance:
       - 'Endpoint live on Forge with one real task executed end-to-end and evidence filed, or the pointer to an existing route filed.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:20 IST; MASTER_PLAN open item (TASK-API-001 remains open: Forge has no task-execute route; Sentinel has one as reference). Pool floor refill.'
       - 'Assigned to Muse 11 queue position 3 by coordinator watch 2026-11-24 ~05:25 IST (hub #1483) — after INF-031 + MEM-024. Claim it when it reaches the head.'
       - 'Claimed by Muse 11 2026-11-24 ~06:26 IST (hub 7118582445): MEM-024 + INF-031 merged, MEM-017 blocked head — claimed under the blocked-head rule; branch muse11/task-api-007-forge-task-execute from main b2b239c0.'
+      - 'Checkpoint 1 (Muse 11, 2026-11-24 ~10:28 IST, work PR #1626): POST /v1/task/execute ALREADY EXISTS — task_contract_router in Forge/app/api/delegate.py:915-926, mounted Forge/app/main.py:444, shipped by FRG-002 (PR #1401, merge fd4fb046), contract tests in CI; live-proven by FRG-018 (MERGED, PR #1494). No new code. Remaining: one real task dispatched by another agent (checkpoint 2), blocked this run on bridge transport down + FRIDAY-chat 401 gate. Overlap with FRG-018 flagged for coordinator. Evidence: docs/collaboration/TASK-API-007-FORGE-TASK-EXECUTE.md.'
     blockers: []
-    next_action: 'Confirm the route is missing, ship it, run one real task through it, file the evidence.'
+    next_action: 'Route confirmed present (checkpoint 1, work PR #1626); run one real task through it dispatched by another agent and file the live response.'
 
   - id: TASK-STR-052
     title: 'Stratex: sleeve_shock_breakout forward proof - verify the TASK-STR-FWD-012 per-strategy max_stop_pct override is live on S1 and file the first sleeve executions, or the continued max-stop block with stop evidence'
