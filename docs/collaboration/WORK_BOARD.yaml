@@ -18469,23 +18469,26 @@ tasks:
 
   - id: TASK-INF-033
     title: 'Inference: routing-deadline live proof - prove the INF-031 deadline is enforced in the live routing path'
-    status: AVAILABLE
-    owner: muse_11
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_1
+    branch: muse1/task-inf-033-routing-deadline-live-proof
+    pr: 1724
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T06:23:08+05:30'
+    updated_at: '2026-11-25T02:22:29+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-INF-033-ROUTING-DEADLINE-LIVE-PROOF.md
     acceptance:
       - 'Live routing evidence filed showing the deadline enforced on real prompts, with timing numbers.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; follow-up to INF-031 (deadline set, Muse 11) and INF-032 (wiring, Muse 7 queue pos 3). Pool floor refill.'
       - 'Assigned to Muse 11 queue position 4 by coordinator watch 2026-11-24 ~06:35 IST (hub #1483) — after MEM-027. Claim it when it reaches the head.'
+      - 'Claimed by Muse 1 2026-11-25 ~01:52 IST (hub #1483 comment 7143564040) per coordinator watch055; branch muse1/task-inf-033-routing-deadline-live-proof.'
+      - 'Live proof 2026-11-25 ~02:05-02:17 IST: deadline enforced - 60 s budget bounds every request (worst wall 51.96 s); 15.0 s primary slice fired on the record (gateway journal); >7000-token bypass fires on both paths; oversized 35,214-char prompt served via the live client path in 40.39 s (requested gpt-oss-120b, served gemini-3.6-flash) and via the execute endpoint in 10.52 s (openrouter/qwen-2.5-coder-32b-instruct); under-7000 prompts 1.57 s / 0.21 s. Ladder recovered on the execute endpoint; still flaky on the chat path (1/2 oversized attempts 503 provider_degraded - availability, not the deadline). Live client timeout still 150 s (INF-032 wiring merged, not deployed - deploy owed). Evidence doc filed; work PR #1724.'
     blockers: []
-    next_action: 'Prove the INF-031 routing deadline is enforced in the live routing path with timing evidence.'
+    next_action: 'Work PR #1724 open for review; merge is Muse''s. Next: VOI-034 when it reaches the head.'
 
   - id: TASK-SEN-025
     title: 'Sentinel: approval-path live proof run 3 + backup manifest verification run 2'
