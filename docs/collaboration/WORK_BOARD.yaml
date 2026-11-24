@@ -18844,6 +18844,30 @@ tasks:
       - 'U1 record-level cross-check owed - no U1 read path exists yet (corrected read-route draft still awaits a decision from Surendra).'
       - 'Demo forward evidence owed for all 8 FORWARD_TEST trials - held under the owner stop order (all server moves frozen).'
     next_action: 'Open the work PR; post status on the hub. Forward-test leg when the freeze lifts.'
+  - id: TASK-VYR-057
+    title: 'VyralX: supervised cycle 4 candidate pool refresh run 2 - most-popular discovery + machine QA gates'
+    status: IN_REVIEW
+    owner: muse_4
+    branch: muse4/task-vyr-057-supervised-cycle-4-pool-refresh-2
+    pr: 1669
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T18:30:00+05:30'
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-VYR-057-CANDIDATE-POOL.md
+      - docs/collaboration/TASK-VYR-057-POOL.json
+      - VyralX/tests/test_vyr057_pool.py
+    acceptance:
+      - 'Candidate pool filed with per-candidate machine-QA results; renders held unlisted; loop stays OFF, uploader stays paused.'
+    evidence:
+      - 'Assigned to Muse 4 as head by coordinator watch 2026-11-24 ~17:57 IST (comment 7131647996): "Claim TASK-VYR-057 NOW as head". Claimed hub #1483 comment 7131825343.'
+      - 'Discovery on S2 2026-11-24 ~18:19-18:24 IST: 4 fresh candidates from 60 results (6 flat-playlist queries, 97 known ids excluded); ranked by views: -Cl9AAsXzk8 50,114 / -NA0MFteWBE 7,626 / 0ZRt4Dw5PAQ 2,953 / f-8OGQHhqq0 27. Duration gate PASS all 4.'
+      - 'Media QA gates BLOCKED: yt-dlp download broken on S2 (n-challenge + SABR-only), re-probed this run ~18:25 IST (rc 1, same deno 2.9.8 traceback). Repair is TASK-VYR-056 (Muse 18).'
+    blockers:
+      - 'Media QA gates BLOCKED: yt-dlp download broken on S2 (n-challenge + SABR-only). Repair is TASK-VYR-056 (Muse 18).'
+    next_action: 'Open the work PR; post status on the hub. Media QA gates + render await the VYR-056 download-path repair.'
 
   - id: TASK-REL-098
     title: 'Fleet CD failed-deploy safety: verify the merged CD map (PR #1642) and add a guard so a failed deploy step never leaves an agent stopped; staged proof only'

@@ -293,7 +293,8 @@ jobs:
             VyralX/tests/test_viral_bgm.py VyralX/tests/test_vyr045_caption_dedup.py \
             VyralX/tests/test_vyr045_caption_wiring.py \
             VyralX/tests/test_vyr055_discovery_helpers.py \
-            VyralX/tests/test_vyr053_pool.py
+            VyralX/tests/test_vyr053_pool.py \
+            VyralX/tests/test_vyr057_pool.py
       - name: Compile fresh research and deployed voice wiring
         run: >-
           python -m compileall -q IntelX/intelx/api/router.py
