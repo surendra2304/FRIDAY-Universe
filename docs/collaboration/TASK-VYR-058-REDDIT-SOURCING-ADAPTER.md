@@ -99,16 +99,25 @@ Regression files run in the same local invocation, all green:
 five-file run (56 passed in the four-file re-run after the ruff
 fix).
 
-Full VyralX suite (local, run 1): failures appeared only in five
-render files (`test_vyr032_doubled_caption`,
-`test_vyr039_remix_music_bed`, `test_vyr045_caption_wiring`,
-`test_vyr075_format_clone_e2e`, `test_vyr075_hyperframes_render`).
-Those same five files pass in isolation and together (52 passed),
-so the run-1 failures look like full-suite resource contention on
-this 1.5-CPU VM (ffmpeg renders under load), not this change —
-a second full-suite run is in progress to confirm, and the PR's CI
-run is the authoritative check. The tier-1 CI set (which includes
-the two VYR-075 render files) is the gate that must go green.
+Full VyralX suite (local): two runs disagreed with each other,
+which is itself the signal. Run 1 showed 15 failures across five
+render files; run 2 showed **30 failures**, including
+network/config-dependent tests (`test_mixkit` httpx errors,
+`test_postgres_database` missing `psycopg2`,
+`test_universe_nine_peers` peer config,
+`test_ai_visuals` malformed-URL) and render tests failing with
+`ffmpeg failed: Error sending frames to consumers: Resource
+temporarily unavailable`. The four non-render failures
+(`test_vyr009_compliance_gate` `ImportError: cannot import name
+'_run' from 'app.services.viral_remix'`,
+`test_universe_nine_peers`, `test_postgres_database`,
+`test_ai_visuals`) were **reproduced identically on clean main
+`b0276946`** (separate worktree, same venv) — pre-existing, not
+caused by this change. The render failures pass in isolation and
+together (52 passed) — full-suite ffmpeg-render contention on the
+1.5-CPU VM. The PR's CI run is the authoritative check; the tier-1
+CI set (which includes the two VYR-075 render files) is the gate
+that must go green.
 
 ## Five states
 
