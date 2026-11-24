@@ -1,14 +1,14 @@
 # TASK-STR-HLT-002 — Pepperstone cTrader shakedown
 
-- **Status:** CLAIMED (2026-11-23 ~01:30 IST, issue #35 comment 7084800769)
-- **Owner:** Muse 4 (`muse_4`)
-- **Branch:** `muse4/task-str-hlt-002-pepperstone-shakedown`
-- **Assignment:** Muse (coordinator), assignment round 7084017188 (~00:40 IST),
-  nudged 7084387415 (~00:55 IST), follow-up 7084721822 (~01:19 IST)
-- **Board record:** verified AVAILABLE, owner muse_4, on main d769cb7a
-  (board blob 7fca0e7c); flipped to CLAIMED in this work PR
-- **Queue:** STR-HLT-002 → OBS-009 → STR-EXP-008*
-  (+ STR-EXP-007 U1 trial-3980 live-copy confirmation owed in the same window)
+- **Status:** CLAIMED (2026-11-25 ~04:40 IST, hub issue #1483 comment 7147144715 — re-slot from Muse 4)
+- **Owner:** Muse 13 (`muse_13`)
+- **Branch:** `muse13/task-str-hlt-002`
+- **Assignment:** Muse (coordinator), watch 7146822886 (run scheduled 2026-11-25 03:57 IST, started ~04:12 IST) — re-slot as Muse 13's next head. Verifier: M8. Original assignment: assignment round 7084017188 (~00:40 IST, 2026-11-23), Muse 4.
+- **Board record:** verified IN_REVIEW, owner muse_4, pr 1413, on main 8aea4275
+  (board blob 28a88e4e, 969 tasks, 0 dup ids); flipped to CLAIMED in this work PR.
+  M4 live-work check: PR #1413 CLOSED + MERGED (2026-11-22T20:08:43Z) — no live work on it.
+- **Queue:** STR-HLT-002 → VOI-030 (blocked, no calm-window call) → next pool task.
+  (OBS-009, the pre-authorised follow-on, is MERGED — work PR #1438, 2026-11-23.)
 
 ## Task
 
@@ -18,12 +18,15 @@ stop-loss read-back + balance reconciled. Gated on the Spotware
 
 - If Active: grant demo 5376835 ONLY, exchange the token immediately
   (the code lives one minute; the refresh token rotates on every
-  refresh — persist the new one each time), wire the env on U1 plus
-  the S1 sleeper copy, then `Stratex/scripts/pepperstone_shakedown.py`
+  refresh — persist the new one each time), wire the env on the live
+  host (Stratex-Server, server 4 — U1/U2 were deleted 2026-11-23 ~18:09 IST
+  on the owner order; the S1 copy is the sleeping backup) plus the S1
+  sleeper copy, then `Stratex/scripts/pepperstone_shakedown.py`
   must PASS fully before any engine wiring.
-- If still Submitted: file the wait state, and take TASK-OBS-009
-  (fleet rollback drill with live evidence) as the pre-authorised
-  follow-on — no waiting for a new assignment.
+- If still Submitted: file the wait state; the pre-authorised follow-on
+  TASK-OBS-009 is already MERGED (work PR #1438), so no follow-on is
+  taken — the head stays blocked and the worker reports FREE, requesting
+  work, per the blocked-head rule.
 
 Demo only. No real money, no live trading. The Pepperstone demo is
 verified ($10,000 virtual, demo 5376835, no live account).
@@ -104,3 +107,50 @@ value was read, printed, or stored.
    the Spotware review, until then.
 4. [ ] STR-EXP-007 owed item: U1 live-copy confirmation of trial-3980
    (blocked on U1 reachability).
+
+### Re-check 2 — Muse 13, 2026-11-25 ~04:45 IST (re-slot claim)
+
+First-hand, via the bridge (`run_shell`, Server 1 + Server 2). Names only —
+no credential value was read, printed, or stored.
+
+- S1 `/opt/friday_universe/.env` exists, mode 0600, **517 B, 7 env names**:
+  `ALPACA_API_KEY_ID`, `ALPACA_API_SECRET_KEY`, `TELEGRAM_BOT_TOKEN`,
+  `TELEGRAM_CHAT_ID`, `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_WEBHOOK_URL`,
+  `TELEGRAM_ZAI_NOTIFICATION_BOT_TOKEN`. (Probe 1, 2026-11-23, saw 7,366 B /
+  80 names — the S1 sleeper env has been cut down since; observation only,
+  no live impact: S1 is the sleeping backup.)
+- **Still zero `PEPPERSTONE_CTRADER_*` names on S1** (count 0 of 7).
+  No `CTRADER_FIX_*` names either in the current 7-name file.
+- `Stratex/scripts/pepperstone_shakedown.py` (14,871 B) and
+  `Stratex/exchanges/pepperstone_ctrader_adapter.py` (59,949 B) present on S1.
+- S1 `Stratex-Daemon.service`: **failed** (Result: timeout) since Tue
+  2026-11-24 13:42:26 IST — the sleeping backup, as established in the
+  STR-049 correction; the live daemon runs on Stratex-Server (server 4).
+- Server-4 env check **NOT done — route failed, exact error**:
+  `ssh ubuntu@13.211.78.20` from Server 2 returns
+  `Permission denied (publickey)`, exit 255. No other route improvised;
+  the server-4 re-check is owed when the ssh key access is restored.
+  (The S2 → server-4 read-only route was proven by Muse 15 / Muse 5 and
+  cleared by coordinator ruling 7138466832 §3; the key that made it work
+  no longer authenticates from S2.)
+
+### Wait state — re-filed 2026-11-25 ~04:45 IST
+
+- **Gate still closed.** No hub/board record since the 2026-11-21 submission
+  states the Spotware app Active; no `PEPPERSTONE_CTRADER_*` credential
+  names exist on the reachable S1 copy; the live host (server 4) could not
+  be re-checked (ssh auth, above).
+- **No grant fabricated, no token exchanged, no env wired, no shakedown run.**
+- Head stays blocked on the Spotware review. Next: re-check on approval;
+  worker reports FREE, requesting work, per the blocked-head rule.
+- Owner stop order still in force for live legs (latest watches: M17
+  dep-install clearance notes the live demo-daemon leg stays gated;
+  M14 VYR-073 + M12 INT-042 live legs blocked).
+
+### STR-EXP-007 owed item — superseded
+
+- U1/U2 were deleted 2026-11-23 ~18:09 IST on the owner order, so a U1
+  live-copy confirmation is no longer possible as specified. Superseded by
+  TASK-STR-049 (merged, PR #1717): the live trial counter now sits on
+  Stratex-Server and trial 3989 was proven from it (full frozen bar).
+  No further action on this item from this task.
