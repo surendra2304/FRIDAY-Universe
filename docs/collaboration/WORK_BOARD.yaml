@@ -18921,6 +18921,35 @@ tasks:
     blockers: []
     next_action: 'Work PR open, awaiting Muse merge. Live proof of the guard on a real CD failure needs a coordinator ruling under the owner stop order.'
 
+  - id: TASK-INT-040
+    title: 'S2->S1 envelope shipper: repair the IntelX watch outbox transfer path so fired alert envelopes reach S1'
+    status: IN_REVIEW
+    owner: muse_15
+    branch: muse15/task-int-040-envelope-shipper-rebase
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-24'
+    updated_at: '2026-11-24T20:21:00+05:30'
+    files:
+      - IntelX/intelx/watches/outbox_shipper.py
+      - IntelX/tests/test_int040_outbox_shipper.py
+      - .github/workflows/owner-workflows.yml
+      - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-INT-040-ENVELOPE-SHIPPER.md
+      - docs/collaboration/TASK-REL-097-CI-CANARY-VOICE-TESTS.md
+    acceptance:
+      - 'Shipper tails the S2 watch outboxes by byte offset and appends only new envelopes to the S1 outbox (never a whole-file copy); dedupe on dedupe_key; every hop logged; audit() reports missing envelope_ids instead of staying silent.'
+      - '14/14 shipper unit tests pass; staged produce -> ship -> receive simulation proves the RBI envelope lands in S1; live end-to-end leg owed after the freeze lifts.'
+    evidence:
+      - 'Re-slotted to Muse 15 by Muse (coordinator) in watch 7134904761 (19:57 run, hub #1483): #1672 (Muse 5) held — rebase demanded in the 19:17 and 19:37 watches, no movement across two runs. Muse 15: rebase onto main d86b4b92, restore the two FUT-029 files #1665 added, push as own branch, open a new PR; #1672 closed unmerged once the replacement PR is filed.'
+      - 'Claim: hub #1483 comment 7135168610 by Muse 15, 2026-11-24 ~20:21 IST. No TASK-INT-040 record on main d86b4b92 (verified by grep on the live board); record created in this work PR. Source branch muse5/task-int-040-envelope-shipper @ 2f2fe6bdcd9830fd0f7d156a36f3a1a40a821d57 (5 commits ahead of merge-base ce5c1bd4), cherry-picked cleanly onto main d86b4b92 with zero conflicts.'
+      - 'Stale-branch revert hazard verified and repaired: the Muse 5 branch lacked docs/collaboration/TASK-FUT-029-ACCURACY-SCORING-3-CHECKPOINT.md and docs/collaboration/TASK-FUT-029-EXTRACT-2026-11-24.json (both on main via #1665); after the rebase both files are present on this branch and the diff vs main touches only the 4 INT-040 files (+940/-1).'
+      - 'Implementation (Muse 5, rebased unchanged): IntelX/intelx/watches/outbox_shipper.py (stdlib only, tail-by-offset, append-only, SshAppendTransport ssh <host> "cat >> <dest>"); 14/14 unit tests pass; staged proof 2026-11-24 ~18:40 IST — audit BEFORE found both S2 envelopes missing (exit 1), ship moved 2 (exit 0), audit AFTER clean with S1 at 6 lines, RBI envelope line 6, S1 original 4 lines byte-identical. CI on the original head cddd3534 was 10/10 green (8 success + 2 skipped).'
+      - 'Also in this PR: REL-097 evidence-doc correction (coordinator watch 7134320067) — the "voice-regressions job will be skipped on this PR" paragraph was stale; the job RAN on PR #1674 and is green (PR comment 7133533667).'
+    blockers: []
+    next_action: 'Work PR open, awaiting Muse merge. Live leg (timer install on S2 + live envelope S2 -> S1 -> drainer delivery) waits for the freeze lift and coordinator clearance.'
+
 task_id_warnings:
   - id: TASK-REL-061
 
