@@ -496,7 +496,7 @@ class ModelGateway:
 
     def _initialize_pools(self) -> None:
         """Initialize key pools and rate limiters for all known providers."""
-        all_providers = ["gemini", "groq", "cerebras", "mistral", "openrouter", "cohere", "huggingface", "nvidia", "bytez"]
+        all_providers = ["gemini", "groq", "cerebras", "mistral", "openrouter", "cohere", "huggingface", "nvidia", "bytez", "apinex"]
         if settings.LOCAL_ENABLED:
             # Self-hosted tier: keyless, unmetered, and therefore the correct final
             # rung of the fallback ladder. Registered only when enabled so that a
@@ -521,7 +521,8 @@ class ModelGateway:
                     max_concurrency=int(settings.LOCAL_MAX_CONCURRENCY),
                 )
                 continue
-            rpm = 10.0 if prov in ("gemini", "cohere") else 20.0
+            # TASK-INF-030: APInex free tier caps at 15 RPM/account — 10 stays under it.
+            rpm = 10.0 if prov in ("gemini", "cohere", "apinex") else 20.0
             self.rate_limiters[prov] = ProviderRateLimiter(prov, requests_per_second=rpm / 60.0, max_concurrency=4)
 
         # TASK-IG-INF-02: operator-configured custom endpoints get their
@@ -1323,7 +1324,7 @@ class ModelGateway:
                     "OpenRouter dynamic fallback failed (%s)", type(typed_error).__name__
                 )
 
-        # 2. Deterministic Failover Waterfall: Groq -> Mistral -> OpenAI -> Gemini
+        # 2. Deterministic Failover Waterfall: Groq -> OpenRouter -> Gemini -> APInex (TASK-INF-030)
         remaining = (deadline - time.monotonic()) if deadline else 60.0
         if remaining > 0:
             waterfall_sequence = ProviderSwitchingPolicy.get_waterfall_sequence(failed_provider)

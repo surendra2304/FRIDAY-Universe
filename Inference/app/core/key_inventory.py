@@ -13,6 +13,7 @@ PROVIDERS = (
     "GROQ",
     "MISTRAL",
     "OPENROUTER",
+    "APINEX",
     "COHERE",
     "HUGGINGFACE",
     "NVIDIA",

@@ -22,11 +22,13 @@ class FallbackRoute(BaseModel):
     fallback_model: str
 
 
-# Deterministic Failover Waterfall: Groq (Llama-3.3-70b) -> Mistral (Codestral/Large) -> OpenAI (GPT-4o) -> Google Gemini (Gemini 2.5/3.8 Flash/Pro)
+# Deterministic Failover Waterfall: Groq -> OpenRouter -> Gemini -> APInex
+# (TASK-INF-030: APInex is the last cloud rung; free/qwen-3.8-max verified live 2026-11-24, 1.11s, cost $0)
 DETERMINISTIC_WATERFALL_ORDER: list[tuple[str, str]] = [
     ("groq", "openai/gpt-oss-120b"),
     ("openrouter", "meta-llama/llama-3.3-70b-instruct"),
     ("gemini", "gemini-flash-latest"),
+    ("apinex", "free/qwen-3.8-max"),
 ]
 
 # Explicit provider fallback configuration across active verified providers
@@ -73,6 +75,11 @@ PROVIDER_FALLBACK_MATRIX: dict[str, FallbackRoute] = {
     ),
     "huggingface": FallbackRoute(
         primary_provider="huggingface",
+        fallback_provider="groq",
+        fallback_model="openai/gpt-oss-120b",
+    ),
+    "apinex": FallbackRoute(
+        primary_provider="apinex",
         fallback_provider="groq",
         fallback_model="openai/gpt-oss-120b",
     ),

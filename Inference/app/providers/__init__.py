@@ -1,5 +1,6 @@
 """Provider factory and registry for Inference (Verified Cloud Providers)."""
 
+from app.providers.apinex import ApinexProvider
 from app.providers.base import BaseLLMProvider
 from app.providers.bytez import BytezProvider
 from app.providers.cerebras import CerebrasProvider
@@ -26,6 +27,7 @@ _PROVIDER_MAP: dict[str, type[BaseLLMProvider]] = {
     "mistral": MistralProvider,
     "openai": OpenAIProvider,
     "openrouter": OpenRouterProvider,
+    "apinex": ApinexProvider,
     "cohere": CohereProvider,
     "huggingface": HuggingFaceProvider,
     "nvidia": NvidiaProvider,
@@ -93,6 +95,7 @@ def get_provider(name: str = "gemini", **kwargs) -> BaseLLMProvider:
 
 
 __all__ = [
+    "ApinexProvider",
     "BaseLLMProvider",
     "BytezProvider",
     "CerebrasProvider",

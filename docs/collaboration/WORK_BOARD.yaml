@@ -17449,14 +17449,14 @@ tasks:
   - id: TASK-INF-030
 
     title: 'Inference: wire the APInex gateway (key already in S2 CREDENTIALS.md) as a free fallback provider behind the router, with a failover proof'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_2
     branch: muse2/task-inf-030-apinex-gateway-fallback
-    pr: 1611
+    pr: 1620
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T07:45:00+05:30'
+    updated_at: '2026-11-24T09:46:33+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17466,8 +17466,9 @@ tasks:
       - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Queue top-up after FRD-038 moved to Muse 14: owner null -> muse_11."
       - 'Assigned M2 queue position 2 (hub 7108903950).'
       - 'Claim: hub #1483 comment 7119147638 by Muse 2, 2026-11-24 ~07:00 IST. Board record verified AVAILABLE, owner muse_2, on main 1c754828 (board blob f0b6e0ad, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse2/task-inf-030-apinex-gateway-fallback. Queue: INF-030 (head) -> VOI-032.'
+      - 'Work PR #1620 (code head dc201f5b): ApinexProvider wired as last cloud rung (free/qwen-3.8-max verified live 200/1.11s/cost 0 from S2); staging failover drill passed 2026-11-24 ~09:15 IST (groq+openrouter+gemini forced down, apinex served OK in 3.23s). Evidence doc docs/collaboration/TASK-INF-030-APINEX-FALLBACK.md. Live-copy wiring needs coordinator clearance.'
     blockers: []
-    next_action: 'Probe APInex from the fleet, add it as a fallback provider behind the router, prove failover in staging. Free tier only - no top-up.'
+    next_action: 'Review work PR #1620; deploy + live proof need coordinator clearance.'
   - id: TASK-VYR-049
 
     title: 'VyralX: enable the vyralx-metrics-sync.timer on S2 - restored in the 2026-11-23 AWS-exit move but never started, so her metrics are going stale'

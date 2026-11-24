@@ -22,10 +22,12 @@ Drill findings fixed alongside this suite (measured before the fix):
       identical condition.
 
 One measured boundary is pinned as a contract, not fixed: the ladder is
-exactly {OpenRouter rung, waterfall groq/openrouter/gemini, local tier,
-LiteLLM}. With those three providers down, second-tier providers are never
-attempted — widening that is routing policy (TASK-REL-043/044), and this
-test makes any change to it deliberate.
+exactly {OpenRouter rung, waterfall groq/openrouter/gemini/apinex, local
+tier, LiteLLM}. With those four providers down, second-tier providers are
+never attempted — widening that is routing policy (TASK-REL-043/044), and
+this test makes any change to it deliberate. TASK-INF-030 widened the
+waterfall deliberately: APInex (free/qwen-3.8-max, verified live 2026-11-24)
+is the last cloud rung.
 """
 
 import asyncio
@@ -53,7 +55,7 @@ from app.providers.errors import (
 )
 from app.providers.gateway import KeyPool, ModelGateway
 
-PROVIDERS = ["gemini", "groq", "cerebras", "mistral", "openrouter", "cohere", "huggingface", "nvidia"]
+PROVIDERS = ["gemini", "groq", "cerebras", "mistral", "openrouter", "cohere", "huggingface", "nvidia", "apinex"]
 
 
 class _Limiter:
@@ -254,10 +256,11 @@ def test_drill_all_providers_connrefused_raise_gateway_error(monkeypatch):
 
 
 def test_drill_waterfall_breadth_contract(monkeypatch):
-    """Measured boundary (policy, TASK-REL-043/044): with the waterfall trio
-    down, healthy second-tier providers are never attempted."""
+    """Measured boundary (policy, TASK-REL-043/044, TASK-INF-030): with the
+    waterfall quartet (groq/openrouter/gemini/apinex) down, healthy
+    second-tier providers are never attempted."""
     script = _all("ok")
-    for p in ("gemini", "groq", "openrouter"):
+    for p in ("gemini", "groq", "openrouter", "apinex"):
         script[p] = "e503"
     calls = {}
     gateway = _gateway(monkeypatch, script, calls=calls)
