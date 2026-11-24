@@ -210,6 +210,16 @@ CI failures on the first push, both fixed in this PR (not waived):
   scenario masked the real error. Fixed by moving the const
   inside `startCall` (pinned by a test asserting its location);
   harness passes locally.
+- `voice-regressions` on head `7e6cabe5`: the 5 library-behaviour
+  tests in the new suite failed in CI (and locally in the full
+  list) with `RuntimeError: There is no current event loop` —
+  `AgentSession.__init__` reads `asyncio.get_event_loop()` and
+  the full suite leaves the main thread with no current loop
+  after the async tests; the tests passed alone, which is why
+  the 96-test local run missed it. Fixed by handing the
+  session an explicit fresh loop in the test helper (never
+  started — construction only); full `voice-regressions` list
+  passes locally: **483 passed**.
 
 ## 6. Board
 

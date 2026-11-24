@@ -166,12 +166,23 @@ def _activity(monkeypatch):
     """A real AgentSession + AgentActivity built with the worker's
     exact session kwargs, on a dummy-key realtime model (model
     construction is local; no network, no room, no session start).
+
+    The session is handed an explicit fresh event loop:
+    AgentSession.__init__ reads asyncio.get_event_loop() when no
+    loop is passed, and a full-suite run leaves the main thread
+    with no current loop (pytest-asyncio closes it after the async
+    tests), which raises RuntimeError there. The loop is never
+    started — construction only — so this changes no behaviour
+    under test.
     """
+    import asyncio
+
     monkeypatch.delenv("FRIDAY_VOICE_AAD_START_SENSITIVITY", raising=False)
     model = w._build_realtime_model("dummy-key-for-offline-probe", "You are FRIDAY.")
     assert model is not None
     session = w._build_session(
         llm=model,
+        loop=asyncio.new_event_loop(),
         turn_detection="realtime_llm",
         min_endpointing_delay=0.5,
         max_endpointing_delay=3.0,
