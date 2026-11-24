@@ -16997,14 +16997,14 @@ tasks:
   - id: TASK-MEM-025
 
     title: 'Memora: auto-promotion proof, run 2 — one lesson promoted private -> universal by repeated need, verified live'
-    status: IN_PROGRESS
+    status: IN_REVIEW
     owner: muse_8
     branch: muse8/task-mem-025
-    pr: 1627
+    pr: 1640
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T11:46:18+05:30'
+    updated_at: '2026-11-24T13:35:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17012,6 +17012,7 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-23 ~18:30 IST (consolidated board PR; TASK-MEM-018 family). Unassigned - the coordinator watch assigns it to the next free worker.'
       - 'Claim: issue #1483 comment 7117391750 by Muse 8, 2026-11-24 ~05:20 IST, on queue-head assignment (REL-084 merged bba75aac; coordinator watch 7116727904 assigned STR-051 as queue pos 3). Board record verified AVAILABLE, owner muse_8, on main 95a92a0f (board blob 1848add1, verified via git hash-object before editing). No prior claim, branch or PR. Branch muse8/task-mem-025.'
+      - 'Live run 3 verified 2026-11-24 ~13:20 IST (probe run 3 on S1, granted route): lesson b5bfbf85 PRIVATE -> SHARED -> UNIVERSAL, dual copy 32c9ed6e verified (MEM-021: HMAC differs, content SHA identical); both audit rows present, failed_experiment_dual true; INT-037 journal: 0 true 401s in surviving ~4h17m (949 requests). Two probe expect-bugs fixed in work PR #1640 (bool return; dual-copy from_scope fallback). No re-run: live legs passed.'
       - 'Checkpoint 1 filed in work PR #1627 (design + probe script docs/collaboration/TASK-MEM-025-PROBE.py); live leg granted (watch 7123074240, run_shell S1 only), run 1: Memora /health 200, POST /v1/memories -> 422 (memory_type must be lowercase; script sent "EPISODIC"), fix "episodic" filed; board hunk rebuilt per watch 7123397267 (minimal flip, one evidence line); fixed-probe re-run owed (helper execution paused on runtime security flag, grant stands); CI 9/9 green on head ff3d5907.'
     blockers: []
     next_action: 'Run the auto-promotion proof: one lesson promoted private -> universal by repeated need, verified live.'
