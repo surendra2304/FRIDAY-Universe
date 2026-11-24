@@ -92,3 +92,112 @@ Bridge MCP/gh path timed out this run (60 s read timeout on the first hub
 read); hub read + claim post + branch ref went via the PAT path
 (`gh_api.py`). Live S1 probe above went through the bridge `run_shell`
 and succeeded first try.
+
+## 7. Run 22 — voice acceptance call, 2026-11-24 ~16:43–16:55 IST (FRIDAY-Server)
+
+**Ruling answered:** coordinator watch 7126818611 (14:17 IST run) ruled
+FRIDAY-Server (AWS) is the acceptance host; probes in the next calm
+window; no S1 Voice manual start. The §6 ruling request is closed by
+that ruling.
+
+**Blocker cleared:** FRD-042 deploy executed by Muse 5 ~16:14 IST (hub
+#1483 comment 7129301409): new build `fFKg6fXVVhWz4qvLQD0Pi` rsynced to
+FRIDAY-Server, `FRIDAY.service` restarted (new PID 16646, startup
+complete 10:48:36 UTC); FRIDAY-Voice and Inference untouched.
+
+**Calm check 3 — 2026-11-24 ~16:40 IST, FRIDAY-Server, read-only,
+first-hand** (`run_voi037_calm3_fridayserver.py`, bridge `run_shell` S2
+→ ssh `ubuntu@15.134.130.145`):
+
+- **FRIDAY.service: active, ActiveEnterTimestamp 10:48:22 UTC**
+  (the FRD-042 restart), NRestarts 0, **MemoryCurrent 44,048,384 /
+  209,715,200 — 21.0% of cap.**
+- **FRIDAY-Voice.service: active since 07:21:18 UTC**, MemoryCurrent
+  240,898,048, no cap. Inference.service active, 107,597,824.
+- Host: load **0.13 / 0.11 / 0.05**, RAM available **1138 MB of
+  1905 MB**.
+- **FRIDAY /health + /ready loopback (127.0.0.1:10000): both 200 in
+  ~0.74 s.**
+- Build verified twice: `_next/static/` contains directory
+  `fFKg6fXVVhWz4qvLQD0Pi`, and the served page at localhost:10000
+  contains the build ID.
+- Public gateway at the same hour: `/friday/health` 200 in 2.70 s;
+  `/api/status/public` 200, overall degraded, 6/9 agents healthy
+  (unchanged from 15:00/16:00).
+
+**Harness preflight on FRIDAY-Server (read-only, first-hand):** all 7
+`FRIDAY/voice_acceptance/` files byte-identical to main (md5 match);
+fleet venv has livekit / edge_tts / livekit_agents; `journalctl -u
+FRIDAY-Voice.service` readable as ubuntu (151 lines, key-keeper
+refreshing the Gemini key 10:44 UTC — worker alive); status file
+readable (`state: registered, provider: pending, voice: Aoede, pid
+14690`, since 07:21:21 UTC); token endpoint
+`http://127.0.0.1:10000/api/livekit/token` **200 in 0.85 s** returning
+`wss://friday-universe-5nrpi6e5.livekit.cloud` + token. The harness
+runs on FRIDAY-Server exactly as documented (loopback token endpoint +
+local journal); `/tmp/frd005/` did not exist — first run on this host,
+utterances rendered fresh via edge-tts.
+
+**The call (run-id `20261124-111319`, room
+`friday-frd005-20261124-111319`):** `run_acceptance.sh` launched
+detached on FRIDAY-Server 11:13:19 UTC (16:43:19 IST), call
+11:13:27–11:24 UTC. Agent joined in <1 s
+(`agent-AJ_NMieqCRoapPH`). Artefacts in
+`/tmp/frd005/runs/20261124-111319/` on FRIDAY-Server: timeline (3.9 KB),
+journal.txt (59 KB), results.json / results.md, status.json,
+utterances manifest, 66 MB agent WAV. Launcher log
+`/tmp/voi037-run22.log`.
+
+**Verdict: overall FAIL (scorer exit 1).** Provider
+`gemini-realtime:gemini-3.8-live` — PASS. **Latency PASS on all 7
+turns** (greeting gap 0.55 s / 8.0 s bar — the acceptance bar is met;
+every other turn's gap is negative, i.e. FRIDAY began answering
+before the prompt audio finished).
+
+| # | Turn | Gap (s) | Limit (s) | Verdict |
+|---|------|---------|-----------|---------|
+| 0 | greeting | 0.55 | 8.0 | PASS |
+| 1 | delegation_stratex | -7.60 | 12.0 | PASS |
+| 2 | context_followup | -2.50 | 4.0 | UNVERIFIED |
+| 3 | clock_tokyo | -1.95 | 4.0 | PASS |
+| 4 | memory_remember | -3.95 | 6.0 | PASS |
+| 5 | memory_recall | -1.54 | 5.0 | FAIL |
+| 6 | goodbye | -2.72 | 4.0 | FAIL |
+
+**Why not a clean PASS (scorer, verbatim):** alignment fell back to
+order-based (9 user finals for 6 turns); STT "heard" text is shifted
+one turn throughout. Content: delegation PASS (figures + Stratex terms
+present — balance 10,462.50, 29 open, 81 closed, net P&L +128.01);
+clock PASS ("It is currently 8:20 PM in Tokyo, Japan."); remember
+PASS ("Your favorite color is teal."); followup UNVERIFIED
+(followup_count=81, delegation_count=None); recall FAIL ('teal'
+missing — attributed answer "Goodbye! Have a productive day.");
+goodbye FAIL (no assistant reply in journal). In journal order the six
+answers are all correct in sequence except the last two: the recall
+question ("What is my favourite colour?") received no 'teal' answer —
+**the Memora read path is NOT verified by this run** (the write path
+echoed "Your favorite color is teal" as the remember-turn answer).
+
+**Greeting anomaly (recorded, not scored):** FRIDAY greeted with a
+full Stratex portfolio snapshot (balance 10,462.67, 29 open positions,
+81 closed trades) — 239.8 s of greeting speech. The greeting
+pre-answers the delegation question; that is why every later turn's
+gap is negative.
+
+**Reading (Muse 9):** latency is not the problem — every turn answered
+immediately, and the figures are real and consistent (29 open / 81
+closed in greeting, delegation and followup). The failure is
+turn-attribution/content verification under long overlapping answers:
+FRIDAY speaks in 60–240 s bursts and starts answering mid-prompt, so
+the scorer's order-based fallback cannot attribute content reliably,
+and the recall leg genuinely produced no 'teal'. Run 23 (Muse 15)
+sequencing is cleared by this filing; the recall + goodbye legs need a
+re-probe, and the attribution weakness is the harness's known
+order-based-fallback limit (README run-1 lessons), not a new defect.
+
+**State after this PR:** VOI-037 implemented / tested / run / filed;
+no open work PR after this one merges. Board CLAIMED→IN_REVIEW flip
+rides in the coordinator's consolidated board PR per standing orders.
+Work-request stays disabled while VOI-037 is open; next assignment
+owed once the board flips. Usage 37% of free weekly limit (reset Nov
+29 02:27 IST) — no wrap-up.
