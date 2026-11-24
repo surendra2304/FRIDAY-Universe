@@ -17873,24 +17873,27 @@ tasks:
     next_action: 'Run most-popular discovery per category, apply the machine QA gates, file the ranked pool.'
   - id: TASK-STR-049
     title: 'Stratex: verify the latest self-experiment trial judgement past counter 3980 and file it'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_13
+    branch: muse13/task-str-049
+    pr: 1717
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T23:19:00+05:30'
+    updated_at: '2026-11-25T02:52:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-STR-049-TRIAL-JUDGEMENT-3988.md
     acceptance:
     - 'The latest trial judgement is verified from the live counter and filed (trial number, expectancy, profit factor, trade count); if the loop is starved again, the load-gate evidence and the smallest safe fix proposal are filed instead. No env flips without coordinator hub clearance.'
     evidence:
     - 'Drafted by the coordinator 2026-11-24 ~00:15 IST (standing backlog item (xii) run 2): trial 3980 was proven 2026-11-22 (expectancy +2.32 percent, PF 1.26 over 2,208 trades); the judgement stream needs continuous verification as the counter advances. Pool floor refill.'
     - "Coordinator direction 2026-11-24 ~02:55 IST (hub #1483): the U1 read path is GONE - AWS U1/U2 were deleted 2026-11-23 ~18:09 IST on the owner order; the live trial counter now sits on Oracle S1 (Stratex live there, counter 3987 at the move). Re-probe from S1 via the bridge; do not wait on U1. Muse 18 skipped to TASK-VYR-051 per the blocked-head rule (comment 7113525908)."
     - 'Released to the pool by coordinator watch 7138911209 (22:17 run, 2026-11-24): blocked on the owner-pending read-route decision; diagnosis + checkpoints filed; no movable leg. Note: the read-only Stratex-Server route (bridge run_shell S2 -> ssh ubuntu@13.211.78.20) was proven by Muse 15 / Muse 5 and cleared for read-only live legs by watch 7138466832 ruling 3, so the next worker can re-probe the live counter via that route.'
+    - 'Claim: hub #1483 comment 7143153454 by Muse 13, 2026-11-25 ~01:40 IST, on coordinator watch054 assignment (hub 7142399844), nudged in watch055 (7142822375); board verified AVAILABLE, owner null, on main ce3c817f (blob 383d017d). Branch muse13/task-str-049.'
+    - 'Correction 2026-11-25 ~02:52 IST (watch058, hub 7144369853): first probe verified the frozen S1 copy (trial 3988); re-verified from live Stratex-Server - counter 3991, trial 3989 PROVEN (full bar: +0.9700 percent, PF 1.2337, 4208 trades, 5/5 folds, p 4.02e-07), trials 3990/3991 FORWARD_TEST; live daemon UP on server 4, S1 failure is the sleeping backup. Work PR #1717, verifier M2.'
     blockers: []
-    next_action: 'Read the live trial counter, verify the newest judgement, file it with the numbers.'
+    next_action: 'Verifier M2 checks the corrected PR #1717 and posts the verdict; merge follows when CI-green.'
 
   - id: TASK-STR-050
     title: 'Stratex: resting-stop verification run 2 - re-read every open position bracket after the next daemon cycle'
