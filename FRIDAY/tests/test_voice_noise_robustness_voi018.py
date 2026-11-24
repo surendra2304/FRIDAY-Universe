@@ -48,6 +48,17 @@ override (FRIDAY_VOICE_AAD_START_SENSITIVITY=low) if the fan
 defect above returns with transcripts proven healthy. The
 barge-in guards (activity handling, prefix padding, end
 sensitivity, silence) are exactly as VOI-018 left them.
+
+TASK-VOI-032 (2026-11-24) RESTORES the default to LOW — the pins
+below now assert the restored contract. VOI-024's own diagnosis
+convicted send-path pacing, not sensitivity, as the transcript
+mechanism, and shipped the pacing fix; and library archaeology
+on the deployed livekit-agents 1.8.11 proved the local
+interruption guards inert on the realtime_llm path, leaving
+this sensitivity as the only gate between fan noise and a
+truncated answer. HIGH stays available as the explicit env
+override (FRIDAY_VOICE_AAD_START_SENSITIVITY=high) if
+transcripts ever regress; the calm-vs-noise A/B is the proof.
 """
 
 import sys
@@ -80,30 +91,30 @@ def _aad(monkeypatch, env=None):
 # ---------------------------------------------------------------------------
 
 
-def test_default_start_sensitivity_is_high(monkeypatch):
-    """No env override -> HIGH (TASK-VOI-024 revert): HIGH is the
-    configuration of every transcript-positive session on record;
-    the VOI-018 LOW default correlated perfectly with the
-    zero-transcript runs that followed it. (On VOI-018/VOI-023
-    code this is LOW and the test fails — that is the defect this
-    revert removes.)"""
+def test_default_start_sensitivity_is_low(monkeypatch):
+    """No env override -> LOW (TASK-VOI-032 restore): LOW is the
+    documented setting for noisy environments, and the VOI-024
+    HIGH revert's premise — the transcript-gap correlation — now
+    has a proven alternative mechanism (send-path pacing, fixed).
+    (On VOI-024 code this is HIGH and the test fails — that is the
+    defect this restore removes.)"""
     aad = _aad(monkeypatch)
     assert aad.start_of_speech_sensitivity == (
-        _TYPES.StartSensitivity.START_SENSITIVITY_HIGH
+        _TYPES.StartSensitivity.START_SENSITIVITY_LOW
     )
 
 
-def test_helper_default_is_high(monkeypatch):
+def test_helper_default_is_low(monkeypatch):
     monkeypatch.delenv("FRIDAY_VOICE_AAD_START_SENSITIVITY", raising=False)
-    assert w._start_sensitivity() == _TYPES.StartSensitivity.START_SENSITIVITY_HIGH
+    assert w._start_sensitivity() == _TYPES.StartSensitivity.START_SENSITIVITY_LOW
 
 
-def test_junk_env_value_falls_back_to_high(monkeypatch):
-    """A typo'd override must land on the default side — HIGH —
-    never silently re-enable the suspect LOW setting."""
+def test_junk_env_value_falls_back_to_low(monkeypatch):
+    """A typo'd override must land on the default side — LOW —
+    never silently re-enable the suspect HIGH setting."""
     aad = _aad(monkeypatch, env="loud")
     assert aad.start_of_speech_sensitivity == (
-        _TYPES.StartSensitivity.START_SENSITIVITY_HIGH
+        _TYPES.StartSensitivity.START_SENSITIVITY_LOW
     )
 
 

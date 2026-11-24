@@ -28,6 +28,22 @@ import { apiBase, durationClock, fetchWorker, requestJson, type WorkerStatus } f
 const IDLE_TIMEOUT_MS = 3 * 60 * 1000;
 const HARD_CAP_MS = 30 * 60 * 1000;
 
+/* TASK-VOI-032: the microphone's browser-side audio processing, pinned
+   explicitly at every enable site instead of left to SDK defaults.
+   Steady room noise (a fan) reaches Gemini's server-side activity
+   detection, which — at the worker's start sensitivity — decides
+   barge-in; the browser's noise suppression is the first filter in
+   that chain, so it is stated here as a contract, not assumed.
+   These are best-effort browser preferences, not guarantees: the
+   worker-side sensitivity is the gate that decides, this only
+   attenuates what reaches it. The mute toggle needs no options —
+   it toggles the track these settings created. */
+const MIC_CAPTURE_OPTIONS = {
+  noiseSuppression: true,
+  echoCancellation: true,
+  autoGainControl: true,
+};
+
 export type VoicePhase = "resting" | "opening" | "listening" | "thinking" | "speaking" | "down";
 
 export interface VoiceLinkControls {
@@ -325,7 +341,7 @@ export function VoiceCall({
             if (!roomRef.current) {
               const fresh = new Room({ adaptiveStream: true, dynacast: true });
               await fresh.connect(body.server_url, body.token);
-              await fresh.localParticipant.setMicrophoneEnabled(true);
+              await fresh.localParticipant.setMicrophoneEnabled(true, MIC_CAPTURE_OPTIONS);
               roomRef.current = fresh;
               connectedAtRef.current = Date.now();
               lastActivityRef.current = Date.now();
@@ -341,7 +357,7 @@ export function VoiceCall({
       });
 
       await room.connect(body.server_url, body.token);
-      await room.localParticipant.setMicrophoneEnabled(true);
+      await room.localParticipant.setMicrophoneEnabled(true, MIC_CAPTURE_OPTIONS);
       if (startupDisconnected) throw new Error("The line dropped while it was opening. Try again.");
 
       startupComplete = true;

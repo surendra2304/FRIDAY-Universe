@@ -1397,27 +1397,38 @@ def _env_int(name: str, default: int) -> int:
 
 def _start_sensitivity():
     """Gemini start-of-speech sensitivity for the realtime config
-    (TASK-VOI-018; default reverted by TASK-VOI-024). Pure —
-    unit-tested.
+    (TASK-VOI-018; default reverted by TASK-VOI-024; default restored
+    by TASK-VOI-032). Pure — unit-tested.
 
     Default is the single shared default with the CLI/desktop session
     path (TASK-VOI-025): config.py's
-    VOICE_VAD_START_SENSITIVITY_DEFAULT, currently HIGH — the
-    pre-VOI-018 (VOI-012) value (env
-    FRIDAY_VOICE_AAD_START_SENSITIVITY=low selects the VOI-018
-    value explicitly): VOI-018 shipped LOW so steady background
+    VOICE_VAD_START_SENSITIVITY_DEFAULT, currently LOW — the
+    pre-VOI-024 (VOI-018) value (env
+    FRIDAY_VOICE_AAD_START_SENSITIVITY=high selects the VOI-024
+    value explicitly). VOI-018 shipped LOW so steady background
     noise (a fan) would not register as a user turn and interrupt
-    the agent mid-answer. The transcript-gap diagnosis then found
-    the correlation that outweighs it: every transcript-positive
+    the agent mid-answer. VOI-024 reverted the default to HIGH on
+    the transcript-gap correlation: every transcript-positive
     session on record ran HIGH, and every zero-transcript run
     since the flip (retests #14, #15B, #16) ran LOW; the
     2026-11-19 A/B experiment could not exonerate LOW (its LOW
     arm's send cadence collapsed, so the clean sensitivity test
-    never occurred), and HIGH is the configuration of the
-    experiment's fully working arm. HIGH is therefore the
-    precautionary default again; LOW stays one env var away if
-    the fan defect returns with transcripts proven healthy.
-    Any value other than "low" (including junk) resolves to
+    never occurred). VOI-032 restores LOW because VOI-024's own
+    diagnosis then convicted the real transcript mechanism —
+    send-path pacing, not sensitivity (the plugin's send task
+    delivered ~15.2 audio events/s against the 20/s realtime
+    stream, so speech sat behind seconds of unsent silence until
+    the no-transcript watchdog tore the session down) — and
+    shipped the pacing fix, so the correlation's premise is
+    gone; and because library archaeology on the deployed pins
+    (livekit-agents 1.8.11) proved the local interruption guards
+    are inert on the realtime_llm path (see _build_session call
+    site): the AAD start sensitivity is the ONLY gate between
+    fan noise and a truncated answer, so it must be the
+    noise-robust value. The calm-vs-noise A/B owed by VOI-032
+    is the live proof — transcripts healthy under LOW, answers
+    finished under noise, real barge-in intact.
+    Any value other than "high" (including junk) resolves to
     the shared default. Returns None when the genai SDK
     lacks the sensitivity enum (the caller then builds no
     config at all).
@@ -1432,7 +1443,7 @@ def _start_sensitivity():
     try:
         from friday.core.config import VOICE_VAD_START_SENSITIVITY_DEFAULT
     except Exception:
-        VOICE_VAD_START_SENSITIVITY_DEFAULT = "HIGH"
+        VOICE_VAD_START_SENSITIVITY_DEFAULT = "LOW"
     if str(VOICE_VAD_START_SENSITIVITY_DEFAULT).strip().upper() == "LOW":
         return genai_types.StartSensitivity.START_SENSITIVITY_LOW
     return genai_types.StartSensitivity.START_SENSITIVITY_HIGH
@@ -1447,9 +1458,11 @@ def _realtime_input_config():
     and turn finalization. Google's configuration guidance is to pin
     all four explicitly. Shipped values (each env-overridable):
 
-    - start_of_speech_sensitivity HIGH (the VOI-012 value;
-      TASK-VOI-018 shipped LOW, TASK-VOI-024 reverted the default;
-      env FRIDAY_VOICE_AAD_START_SENSITIVITY=low selects LOW):
+    - start_of_speech_sensitivity LOW (the VOI-018 value, restored
+      by TASK-VOI-032; TASK-VOI-024 reverted the default to HIGH on
+      the transcript-gap correlation, TASK-VOI-032 restores LOW —
+      see _start_sensitivity; env
+      FRIDAY_VOICE_AAD_START_SENSITIVITY=high selects HIGH):
       VOI-012 shipped HIGH so a barge-in would raise Gemini's
       `interrupted` signal promptly; VOI-018 flipped the default
       to LOW after the owner's 2026-11-17 live test showed
@@ -1458,11 +1471,16 @@ def _realtime_input_config():
       transcript-gap diagnosis (2026-11-19) then found every
       transcript-positive session on record ran HIGH and every
       zero-transcript run since the flip ran LOW, and the A/B
-      experiment could not exonerate LOW — so the default is
-      HIGH again as a precaution, and LOW remains available by
-      env if the fan defect returns with transcripts proven
-      healthy (activity_handling below is unchanged, and prefix
-      padding keeps the first syllable of a genuine barge-in).
+      experiment could not exonerate LOW — so the default went
+      HIGH again as a precaution. VOI-032 restores LOW: the
+      diagnosis itself convicted send-path pacing, not
+      sensitivity, as the transcript mechanism (and shipped the
+      pacing fix), and library archaeology on the deployed pins
+      proved the local interruption guards are inert on the
+      realtime_llm path — this sensitivity is the only gate
+      between fan noise and a truncated answer (activity_handling
+      below is unchanged, and prefix padding keeps the first
+      syllable of a genuine barge-in).
     - activity_handling START_OF_ACTIVITY_INTERRUPTS: stated
       explicitly (it is the API default) so the interrupt contract
       does not drift with plugin/API defaults: detected user activity
@@ -3601,6 +3619,22 @@ async def entrypoint(ctx: JobContext):
             f"session build {session_build_seq['n']}"
         )
         _wrap_model_frame_counters(model, counters)
+        # TASK-VOI-032: the interruption knobs below are NOT a
+        # second line of defence on this path — they are inert
+        # under turn_detection="realtime_llm" on the deployed
+        # livekit-agents 1.8.11 (proven offline against the real
+        # AgentActivity: on_vad_inference_done ignores VAD events
+        # in realtime_llm mode, and _interrupt_by_audio_activity
+        # returns early while server-side turn detection is on, so
+        # min_interruption_duration / resume_false_interruption /
+        # false_interruption_timeout never gate anything; the
+        # server's `interrupted` signal cuts her off through
+        # input_speech_started -> interrupt() with no duration,
+        # transcript or energy check). They stay because the
+        # session builder must survive older plugin generations
+        # and the flat kwargs are the deployed shape — but the
+        # noise-robustness gate is the AAD start sensitivity in
+        # _realtime_input_config, not these. Do not re-trust them.
         session = _build_session(
             llm=model,
             turn_detection="realtime_llm",

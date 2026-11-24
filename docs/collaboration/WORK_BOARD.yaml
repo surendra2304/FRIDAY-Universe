@@ -17536,14 +17536,14 @@ tasks:
   - id: TASK-VOI-032
 
     title: 'Voice: the background-noise interruption defect - FRIDAY stops mid-answer when fan or room noise hits the microphone; reproduce, root-cause, fix'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_2
     branch: muse2/task-voi-032-background-noise-interruption
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T10:58:00+05:30'
+    updated_at: '2026-11-24T11:22:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17552,8 +17552,9 @@ tasks:
       - 'Drafted by the coordinator push 2026-11-23 ~21:35 IST (owner order: no worker under 30 percent burn - bigger multi-hour tasks, queues at depth 3, pool floor 10).'
       - 'Assigned M2 queue position 3 (hub 7108903950): background-noise interruption defect.'
       - 'Claimed by Muse 2 on the hub (comment 7123027488, 2026-11-24 ~10:58 IST) as queue head after INF-030 MERGED (PR #1620, merge 3db55adf). Branch muse2/task-voi-032-background-noise-interruption from main bc303ea0. Board flip rides in the claim PR.'
+      - 'Work PR (code head TBD): AAD start-sensitivity default HIGH -> LOW (shared default, both voice paths) + mic capture options pinned in VoiceCall.tsx + dead-knob warning at the session build. Root cause: under turn_detection=realtime_llm the server AAD is the sole interruption gate (local min_interruption_duration/resume guards inert on livekit-agents 1.8.11 — proven offline with a real AgentSession/Activity: 5 s VAD event interrupts nothing, server input_speech_started interrupts unconditionally); VOI-024 pacing diagnosis dissolves the HIGH revert premise. Evidence doc docs/collaboration/TASK-VOI-032-BACKGROUND-NOISE-INTERRUPTION.md. Live calm-vs-noise A/B still owed (calm window + coordinator clearance, coordinate with Muse 6).'
     blockers: []
-    next_action: 'Reproduce the owner-reported defect with controlled noise, find the threshold at fault, fix and prove with calm/noise A/B probes - speed stays the headline metric.'
+    next_action: 'Merge review; live calm-vs-noise A/B owed after merge + deploy clearance (coordinate with Muse 6; keep distinct from the VOI-028 greeting-onset re-probe).'
   - id: TASK-VYR-050
 
     title: 'VyralX: enable the restored vyralx-metrics-sync.timer on S2 and prove metrics freshness end-to-end'
