@@ -20808,13 +20808,13 @@ tasks:
   - id: TASK-LAP-002
     title: 'PRODUCTION-VERIFY: laptop/phone corpus items IG-LAP-01..04 + IG2-LAP-01 - real device verification (wave 2)'
     status: AVAILABLE
-    owner: muse_7
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-26T02:19:53+05:30'
+    updated_at: '2026-11-26T02:42:23+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20825,8 +20825,9 @@ tasks:
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Assigned to Muse 7 as queue head by coordinator watch118 (2026-11-26, hub #1483); P1 production-verify laptop/phone corpus wave 2. M7 silent since 2026-11-24 - status report demanded in the same hub post; tasks return to the pool if no report/claim by the next run (watch108 precedent).'
+    - 'Returned to the pool by coordinator watch119 (2026-11-26, hub #1483): assigned to Muse 7 as queue head by watch118 (hub 7174335125, board PR #1895 merge 489a1b3b) with a status report demanded; no report or claim landed by this run - M7 silent since 2026-11-24. No new assignment to M7 until it reports.'
     blockers: []
-    next_action: 'Assigned to muse_7 as queue head by coordinator watch118 (2026-11-26, hub #1483); claim via hub #1483.'
+    next_action: 'In the pool - claim via hub #1483 when assigned.'
 
   - id: TASK-INF-035
     title: 'PRODUCTION-VERIFY: Inference corpus items IG-INF-01, IG-INF-02, IG-INF-03, IG-INF-04 - live load + failover verification (wave 3)'
@@ -21425,12 +21426,12 @@ tasks:
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-26T01:58:39+05:30'
+    updated_at: '2026-11-26T02:42:23+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
-    - 'REPO-IMPLEMENT (owner order 2026-11-24: implement ALL 102 scouted repos): Locally Uncensored (reference-only), Jarvis / vierisid (reference-only), Awesome Harness Engineering (reference-only), DeepSeek Harness (reference-only), VoiceStudio (adapt, target Voice) - targets FRIDAY/Voice.'
-    - 'For adopt/adapt entries: the adapted component must run in the target agent''s live production path, proven by one real end-to-end use filed as evidence incl. a failure case.'
+    - 'REPO-IMPLEMENT (owner order 2026-11-24: implement ALL 102 scouted repos): Locally Uncensored (reference-only), Jarvis / vierisid (reference-only), Awesome Harness Engineering (reference-only), DeepSeek Harness (reference-only), VoiceStudio (reference-only + owner-gated offline fixed-line re-render; live-path adoption ruled out by TASK-IG-VOI-05) - targets FRIDAY/Voice.'
+    - 'For adopt/adapt entries: the adapted component must run in the target agent''s live production path, proven by one real end-to-end use filed as evidence incl. a failure case. (Exception, coordinator ruling watch119: the VoiceStudio leg is re-scoped to reference-only + owner-gated offline fixed-line re-render per FRIDAY/docs/VOICESTUDIO_EVALUATION.md (TASK-IG-VOI-05); it does not run in the live path.)'
     - 'For reference-only/reject entries: a paper judgement is NOT a result - prove with live evidence whether it works in the agent or not (live trial or guardrail proof of absence from every production path), and file that evidence per repo.'
     - 'real owner-style request executed end-to-end through the live FRIDAY service on FRIDAY-Server + failure injection (a downstream agent down) + latency measured per item'
     evidence:
@@ -21438,8 +21439,9 @@ tasks:
     - 'Assigned to Muse TP10 as queue position 1 by coordinator watch102 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 14181d3c. Head of TP10 queue; TP10 claimed it (hub 7163604370). Live legs ruled in watch101 (7164435710).'
     - 'Coordinator watch113 (2026-11-26): released to the pool. Watch111 demand (hub 7170527287, 2026-11-25 23:39 IST) required implementation plus checkpoint 1 or release by the next run; branch musetp10/task-frd-056 still f216e1b, 0 commits, no PR, no post since the demand. Four consecutive hourly checks with zero code evidence.'
     - 'Claimed by Muse TP6 2026-11-26 ~01:10 IST (hub #1483 comment 7172627840, first claim in time; WATCH116 ruling 7173089848 confirms the claim stands over the WATCH115 queue assignment to Muse 12).'
+    - 'Coordinator ruling watch119 (2026-11-26, hub #1483): VoiceStudio leg RE-SCOPED - the board acceptance required the adapted component to run in Voice''s live production path, but FRIDAY/docs/VOICESTUDIO_EVALUATION.md (TASK-IG-VOI-05, on main) rules live adoption out (Gemini Live end-to-end since VOI-009, no TTS stage; Oracle servers ~956MB RAM, no capacity; speed; AGPL + CC-BY-NC default weights). TP6 proceeds reference-only + the evaluation''s owner-gated offline fixed-line re-render as future work; no install, no live change. The four reference-only legs are unaffected.'
     blockers: []
-    next_action: 'Claimed by Muse TP6 2026-11-26 ~01:10 IST (hub #1483 comment 7172627840); CLAIMED flip rides in the TP6 work PR.'
+    next_action: 'Claimed by Muse TP6 2026-11-26 ~01:10 IST (hub #1483 comment 7172627840); CLAIMED flip rides in the TP6 work PR. VoiceStudio leg re-scoped by coordinator ruling watch119 (reference-only + owner-gated offline re-render; no live adoption).'
 
   - id: TASK-FRG-027
     title: 'REPO-IMPLEMENT: Forge repos - MausBot / OpenMausBot (reference-only), JCode (adapt), Paperclip (reference-only... (wave 3)'
@@ -21784,13 +21786,13 @@ tasks:
   - id: TASK-EARN-030
     title: 'EARN: Contra lane start (owner order 2026-11-25: implement all) - owner creates the account, Muse builds the full CometWorks profile + services'
     status: AVAILABLE
-    owner: muse_7
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T02:19:53+05:30'
+    updated_at: '2026-11-26T02:42:23+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -21802,8 +21804,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
     - 'RENUMBERED 2026-11-25 by Muse (coordinator): this record was filed as TASK-EARN-019 in PR #1727, but a parallel earning-lane filing reached main first using TASK-EARN-019 for different content; renumbered to TASK-EARN-030 to restore unique task IDs. Content unchanged. This lane was also filed as TASK-EARN-015 by the parallel filing - work them as one lane.'
     - 'Assigned to Muse 7 as queue position 3 (earning lane) by coordinator watch118 (2026-11-26, hub #1483); Contra lane - owner creates the account, Muse builds the profile pack.'
+    - 'Returned to the pool by coordinator watch119 (2026-11-26, hub #1483): assigned to Muse 7 as queue position 3 (earning lane) by watch118 (hub 7174335125, board PR #1895 merge 489a1b3b); no report or claim landed by this run - M7 silent since 2026-11-24. No new assignment to M7 until it reports.'
     blockers: []
-    next_action: 'Assigned to muse_7 as queue position 3 (earning lane) by coordinator watch118 (2026-11-26, hub #1483); claim via hub #1483 when it reaches queue head.'
+    next_action: 'In the pool - claim via hub #1483 when assigned.'
   - id: TASK-EARN-020
     title: 'EARN: itch.io Direct second product (owner order 2026-11-25: implement all) - owner account + tax interview, product page live from existing packs'
     status: AVAILABLE
@@ -22074,14 +22077,14 @@ tasks:
     next_action: 'Assigned to muse_tp1 as queue position 3 by coordinator watch102 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
   - id: TASK-LAP-005
     title: 'Laptop/phone guidance additions bundle: USB TOOLS route + recovery escalation, Autopsy mention, WinSAT probe caveat, invisible-folder procedure, NetLimiter reference, DROIDLAB guide, BIOS cores step, services.msc verify-first evaluation'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-lap-005-laptop-phone-guidance-bundle
     pr: 1894
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T02:23:03+05:30'
+    updated_at: '2026-11-26T02:42:23+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - FRIDAY/
@@ -22094,8 +22097,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Assigned to Muse 15 as queue head by coordinator watch117 (2026-11-26, hub #1483); FRD-043 stays held (position 2), EARN-018 position 3.'
     - 'Claimed by Muse 15 2026-11-26 ~02:09 IST (hub 7173987632); work PR #1894 open (head 3482450d): guidance additions in docs/PC_CARE.md (7 PC items) + docs/PHONE_CONTROL.md (DROIDLAB) + evidence doc docs/collaboration/TASK-LAP-005-EVIDENCE.md. First draft corrected in-PR to the board acceptance (F-09..F-23): USB TOOLS is the phone-only Play Store app over OTG, invisible-folder is Alt+0160 + transparent icon, WinSAT caveat is WinSPRLevel 0/1; F-16 trio verdicts recorded, 56%-11% graphic rejected. F-16 sandbox test NOT run (no Windows sandbox available) — verdicts grounded in published service docs.'
+    - 'Merged with work PR #1894 (merge ebba852d, 2026-11-26, coordinator watch119): guidance additions in docs/PC_CARE.md (7 PC items) + docs/PHONE_CONTROL.md (DROIDLAB) + evidence doc; CI 7 success + 2 skipped on head 8403b8bd; F-16 sandbox test NOT run (no Windows sandbox) - verdicts grounded in published service docs; first draft corrected in-PR to the board acceptance.'
     blockers: []
-    next_action: 'Work PR #1894 in review; merge owed once CI is green.'
+    next_action: 'Done - guidance merged; F-16 sandbox re-test owed before the owner acts on the trio on a machine he cares about.'
   - id: TASK-LAP-006
     title: 'Laptop/phone: life-in-weeks auto-wallpaper delivery - MacroDroid macro plus daily wallpaper generator'
     status: CLOSED
@@ -23081,13 +23085,13 @@ tasks:
   - id: TASK-IG2-FRD-01-ACTIVATE-01
     title: 'FRIDAY: activate the IG2-FRD-01 mailbox and re-probe triage + drafts live'
     status: AVAILABLE
-    owner: muse_7
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T02:19:53+05:30'
+    updated_at: '2026-11-26T02:42:23+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -23096,8 +23100,9 @@ tasks:
     - 'Named by Muse 1 in TASK-FRD-053 (work PR #1833, merged 1d7e9592): IG2-FRD-01 NOT VERIFIED - mailbox unconfigured on FRIDAY-Server; both tools execute live and fail honestly in ~2-5 ms; nothing sent.'
     - 'Coordinator watch099 (2026-11-25): filed from the FRD-053 follow-up.'
     - 'Assigned to Muse 7 as queue position 2 by coordinator watch118 (2026-11-26, hub #1483); P1 FRIDAY mailbox activation, credentials-file flow only.'
+    - 'Returned to the pool by coordinator watch119 (2026-11-26, hub #1483): assigned to Muse 7 as queue position 2 by watch118 (hub 7174335125, board PR #1895 merge 489a1b3b); no report or claim landed by this run - M7 silent since 2026-11-24. No new assignment to M7 until it reports.'
     blockers: []
-    next_action: 'Assigned to muse_7 as queue position 2 by coordinator watch118 (2026-11-26, hub #1483); claim via hub #1483 when it reaches queue head.'
+    next_action: 'In the pool - claim via hub #1483 when assigned.'
 
   - id: TASK-IG2-FRD-02-ACTIVATE-01
     title: 'FRIDAY: activate the IG2-FRD-02 WhatsApp gateway and re-probe live'
@@ -23144,14 +23149,14 @@ tasks:
 
   - id: TASK-IG-FRD-006-FIX-01
     title: 'FRIDAY: fix intelx_research 30s timeout so IG-FRD-006 delivers a Sources: section live'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-ig-frd-006-fix-01-intelx-timeout
     pr: 1892
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T01:46:08+05:30'
+    updated_at: '2026-11-26T02:42:23+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-IG-FRD-006-FIX-01.md
@@ -23164,8 +23169,9 @@ tasks:
     - 'Coordinator watch108 (2026-11-25): assigned to muse_1 as queue position 2 behind TASK-VOI-040 (run 25); P1 FRIDAY live fix, re-probe on FRIDAY-Server.'
     - 'Claim: hub #1483 comment 7172477590 by Muse 1, 2026-11-26 ~01:04 IST, on coordinator assignment (watch108). Board verified AVAILABLE, owner muse_1, branch null, pr null, P1, on main 70ce108. Branch muse1/task-ig-frd-006-fix-01-intelx-timeout @ 70ce108. Board flip rides in the work PR.'
     - 'Root cause found first-hand (evidence doc): (1) code — the agent passes an explicit 30s timeout that shadows intelx_research declared 125s, and the parallel fan-out caps at tool_timeout+1 (31s); (2) fleet — friday-server (172.26.12.144) has no route to 10.0.0.120 (TCP connect blackholes, verified) and IntelX.service is stopped+disabled on S2 since 2026-11-24 19:09:21 UTC. Fix honors per-tool timeouts (tools.py + agent.py) with 3 regression tests; live re-probe blocked on IntelX restart + route + deploy clearance (Muse rulings owed).'
+    - 'Merged with work PR #1892 (merge 3f1d5cba, 2026-11-26, coordinator watch119): per-tool timeouts honored (tools.py + agent.py) + 3 regression tests; CI 8 success + 2 skipped on head 65af3b93; live re-probe BLOCKED on Muse rulings: IntelX restart on S2, friday-server to 10.0.0.120 route, deploy clearance (CD broken, owner stop order).'
     blockers: []
-    next_action: 'Fix implemented (per-tool timeout honored) + 3 regression tests; work PR open, merge is for Muse. Live re-probe BLOCKED on Muse rulings: IntelX restart on S2, friday-server to 10.0.0.120 route, deploy clearance for the fix (CD broken).'
+    next_action: 'Done - fix merged; live re-probe blocked on Muse rulings (IntelX restart on S2, friday-server to 10.0.0.120 route, deploy clearance).'
 
 task_id_warnings:
   - id: TASK-REL-061
