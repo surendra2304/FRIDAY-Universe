@@ -19884,14 +19884,14 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-SEN-026
     title: 'Sentinel: tracking-pixel / open-tracking awareness inside extortion-mail triage'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
-    pr: null
+    branch: muse4/task-sen-026-tracking-pixel-triage
+    pr: 1902
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T12:47:00+05:30'
+    updated_at: '2026-11-26T03:25:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19899,8 +19899,10 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-SEN-PIXEL (IG package SE-01). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     - 'Assigned to Muse 4 by the coordinator (watch085): queue position 2 behind TASK-SEN-032. Freeness verified first-hand on main be3f303e (AVAILABLE / owner null, no branch). Board flip in coordinator board PR watch085.'
+    - 'Claim: hub #1483 comment 7175442056 by Muse 4, 2026-11-26 ~03:15 IST (correction of the SEN-027 misclaim in 7175425880; SEN-027 is queue pos 3). Board record verified AVAILABLE, owner muse_4, on main 614e6b1d; no competing claim, branch or PR.'
+    - 'Pre-existing SE-01 pixel detection verified in the triage module (tracking_pixel flag + signal + markdown section + pixel guidance, tested); gap found: base calm-response guidance had no do-not-open/do-not-load-images line. Fix: standing line in DO_NOT_PAY_GUIDANCE + 2 regression tests; triage file 11 passed, Sentinel tier-1 total 37 passed; test file wired into friday-universe-ci.yml tier-1 (was UNCOLLECTED per REL-068). Evidence docs/collaboration/TASK-SEN-026-TRACKING-PIXEL-TRIAGE.md.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'CLAIMED by Muse 4 (hub #1483 comment 7175442056, 2026-11-26 ~03:15 IST). Work PR open from branch muse4/task-sen-026-tracking-pixel-triage; live leg N/A (library-only, no endpoint) - behaviour proven by unit suite + SEN-032 S1 probe driver. Next in queue: TASK-SEN-027.'
   - id: TASK-SEN-027
     title: 'Sentinel: family secret-phrase anti-impersonation practice in owner-security guidance'
     status: AVAILABLE
@@ -20013,7 +20015,7 @@ tasks:
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-26T03:17:00+05:30'
+    updated_at: '2026-11-26T04:46:20+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20022,8 +20024,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 1 (watch record DfztwFuxh4f, @quantfinance.ai Pairs Trading Toolkit, code in post). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     - 'Merged with work PR #1739 (merge ff31619c, 2026-11-25, owner-merged): pairs-trading / stat-arb research family implemented, tested, backtested on S1 - FAILED the bar. Muse 8 paired verification (hub #1483 comment 7174601349): substance verified, bar failed honestly, kill not triggered. CI green on head 934b9394.'
+    - 'PARK verdict filed by Muse 13 (TASK-STR-068-FIX-01, work PR #1910, hub #1483 comment 7177301712): full bar FAIL (75/200 trades, p 0.0910 vs 0.01, 3/5 folds), kill not triggered; family held out of demo trading pending a real cointegrated-pair universe + cost/borrow schedule + frozen-bar re-test.'
     blockers: []
-    next_action: 'Done - research merged; kill / park / iterate verdict owed (filed as TASK-STR-068-FIX-01).'
+    next_action: 'PARK verdict filed by Muse 13 (TASK-STR-068-FIX-01, work PR #1910, hub 7177301712): family held out of demo trading; re-entry needs a real cointegrated-pair universe + cost/borrow schedule + frozen-bar re-test.'
   - id: TASK-STR-069
     title: 'Stratex: harden the research-to-backtest-to-incubate checklist'
     status: IN_REVIEW
@@ -23206,14 +23209,14 @@ tasks:
 
   - id: TASK-STR-068-FIX-01
     title: 'Stratex pairs-trading family: kill / park / iterate verdict after the honest failed bar (follow-up to merged TASK-STR-068)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_13
+    branch: muse13/task-str-068-fix-01-verdict
+    pr: 1910
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T03:17:00+05:30'
+    updated_at: '2026-11-26T04:46:20+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-STR-068-FIX-01-EVIDENCE.md
@@ -23223,8 +23226,9 @@ tasks:
     - 'Done = verdict evidence filed on the board + TASK-STR-068 next_action updated to the verdict; if ITERATE, the follow-up task is filed.'
     evidence:
     - 'Filed by Muse (coordinator) watch120 (2026-11-26, hub #1483): TASK-STR-068 merged via PR #1739 (merge ff31619c, 2026-11-25) after the Muse 8 paired verification (hub 7174601349) confirmed the substance and the bar FAILED honestly; the kill was not triggered. The family needs a verdict, not silence.'
+    - 'Claimed by Muse 13 (hub #1483 comment 7177301712, 2026-11-26 ~04:44 IST); verdict PARK filed as checkpoint 1 in work PR #1910 (docs/collaboration/TASK-STR-068-FIX-01-EVIDENCE.md): full bar FAIL (75/200 trades, p 0.0910 vs 0.01, 3/5 folds), kill not triggered; re-entry needs a real cointegrated-pair universe + cost/borrow schedule + frozen-bar re-test.'
     blockers: []
-    next_action: 'In the pool - claim via hub #1483 when assigned.'
+    next_action: 'Claimed by Muse 13; verdict PARK filed in work PR #1910 — merge is the coordinator''s call.'
   - id: TASK-REL-100
     title: 'Oracle Server 2 disk pressure: reconcile the conflicting readings (86-91%) and reclaim / bound the growth before a live service is hit'
     status: AVAILABLE

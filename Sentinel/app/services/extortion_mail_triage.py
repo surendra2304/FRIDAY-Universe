@@ -59,6 +59,12 @@ too — and a pixel is not access to the machine: it reports an open,
 nothing more. Detection covers the HTML body text passed in; a
 pixel inside a PDF attachment is visible only if the caller's
 extractor preserves the markup.
+
+TASK-SEN-026: the calm-response guidance also carries the standing
+do-not-open / do-not-load-images line (DO_NOT_PAY_GUIDANCE) on every
+extortion verdict, pixel or not — the pixel-specific line alone left
+extortion mail with an undetected pixel without any instruction
+about images.
 """
 from __future__ import annotations
 
@@ -115,6 +121,14 @@ def _has_tracking_pixel(body: str) -> bool:
 DO_NOT_PAY_GUIDANCE: tuple[str, ...] = (
     "Do NOT pay — payment marks you as a payer, funds the next round, and buys nothing: these senders almost never delete or withhold anything.",
     "Do NOT reply to the sender and do not click links or open attachments in the message.",
+    # TASK-SEN-026: the standing do-not-open / do-not-load-images line.
+    # It belongs in the base guidance, not only in the pixel-specific
+    # line: an extortion mail whose pixel evades detection (hidden in
+    # an attachment, or a tracking image the heuristics miss) still
+    # needs the owner told not to open it again or load its images —
+    # each open or image load can confirm to the sender that this
+    # address is live and being read.
+    "Do not open this message again or load its images: each open or image load can tell the sender this address is live and being read. Keep remote images blocked in your mail client.",
     "Preserve the evidence: keep the original email with full headers (do not forward-and-delete); screenshot the demand and the amount/address asked.",
     "Verify calmly, separately from the email: check your own accounts/devices directly (never via links in the message). If it claims your files are encrypted, run the compromised-host triage on that machine.",
     "If the message shows a password you recognise, treat that password as burned: change it — and anywhere you reused it — from a clean device, and enable MFA. Old breached passwords are the usual source; the sender rarely has live access.",
