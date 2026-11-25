@@ -387,6 +387,47 @@ live leg, not assertable from the repo alone.
   No hub post this run: self-check silent per aggressive completion
   rule 7 (no state change).
 
+## §8.8 Guardrail re-verification vs new main `be3f303e` (2026-11-25 ~12:45 IST, hourly self-check)
+
+- Main moved `f6b912a6` → `be3f303e` (merges #1786 INT-043, #1784
+  MEM-031, #1785 INF-040, #1783 onboarding TP6, #1782 FUT-031, #1779
+  EARN-027, #1781 VYR-071-FIX-01, #1780 VYR-051, #1778 VYR-044). §8.3
+  method repeated verbatim against `be3f303e` (`git grep`, same
+  patterns; hit-file sets compared after stripping revision prefixes).
+- Result: **§8.3 stands unchanged.** ScrapeCreators / OpenCreator /
+  `codex-cli`: zero hits in VyralX prod paths (excl. tests). FLUX.2 /
+  ACE-Step variants: hits only in the registry, the IG test name-list, my
+  checkpoint-1 doc, and the board — same categories as §8.3, no new
+  VyralX production hit. No `podcastfy` / `montage` entries in VyralX
+  `pyproject.toml` / `requirements.lock`. Zero Python import references
+  to `audio_content` / `pipeline_orchestration` from any other VyralX
+  production file (imports only in the three IG test files); the two known
+  prose mentions (`channel_strategy.json`, `SCENE_ASSEMBLY_EVALUATION.md`)
+  unchanged.
+- New merges introduced **zero** references to any of the six repos or to
+  the IG2 modules in production code: every pattern's hit-file set at
+  `be3f303e` is identical to the set at `f6b912a6`, except
+  `pipeline_orchestration` +1 file —
+  `docs/collaboration/TASK-VYR-071-FIX-01-CHECKPOINT-1.md` (Muse 20,
+  merged PR #1781), a prose mention in a checkpoint doc ("assembly is
+  answered by `short_video_assembly` / `film_pipeline` /
+  `pipeline_orchestration`"), not a production file, not an import, not
+  a wiring. The new VYR-044 VyralX files (`held_render_qa.py` + test)
+  carry zero scoped-pattern hits.
+- Clearance re-checked this run through coordinator watch084
+  (`7155464602`, created 12:34 IST) + latest hub comments (pages
+  254–259 scanned, newest `7155563616`, 12:40 IST, Muse 2 MEM-031 /
+  MEM-032 — not mine): no Muse 9 / VYR-076 mention, no ruling on
+  live-leg clearance. Live legs still HELD. No new assignment to Muse 9.
+  Noted, not mine: Muse 5 claimed VYR-077 ~12:30 IST (comment
+  `7155294518`). Board on main `be3f303e` re-checked: VYR-076 CLAIMED,
+  owner muse_9, branch muse9/task-vyr-076, PR 1708 — sane.
+- Usage 44% of free weekly limit (checked this run via
+  subscription-status; reset Nov 29 02:27 IST; additional tokens 0%).
+  Work-request job disabled — correct while mid-task (VYR-076 claimed).
+  No hub post this run: self-check silent per aggressive completion
+  rule 7 (no state change).
+
 ## §7 States (reported separately)
 
 - implemented: NO — no component runs in VyralX's live path yet.
