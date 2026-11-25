@@ -91,3 +91,33 @@ VERIFIED only with IG-INF-03 evidence or the provider's own
 published free-tier terms — and the dispute notes move with it,
 so a later reader sees both the claim and what was said against
 it.
+
+## 4. Live verdicts (TASK-INF-042, 2026-11-25)
+
+Every row in §2 was checked live against the vendor's own
+pricing/terms page by Muse 4 on 2026-11-25. The machine-readable
+record is `config/free_tier_routes.json`; the full evidence
+(method, per-route findings with quotes, re-check triggers) is
+`docs/collaboration/TASK-INF-042-FREE-TIER-ROUTE-CATALOGUE.md`.
+No account was created, no key provisioned, no payment made.
+A route counts as verified-free API capacity only if the
+vendor's own published terms state a standing $0 API tier.
+One-off signup/trial credits, consumer-app free use, and
+reseller credit hosts are not API capacity.
+
+| Free alternative (claimed) | Live verdict 2026-11-25 | What the vendor's own page says |
+|---|---|---|
+| Sora 2 | **REJECTED — discontinued** | OpenAI shut the Sora app 2026-04-26 and the Videos API + all `sora-2` snapshots 2026-09-24, no replacement. The live deprecations page no longer lists it (the row aged off after shutdown). No free tier, no paid tier, no route at any price. |
+| MiniMax | **PAID-ONLY** | `platform.minimax.io/docs/pricing/overview`, read live: no free tier and no free credits stated anywhere; pay-as-you-go deducted from a funded balance. M3 $0.30/$1.20, M3.1-Flash $0.15/$0.60 per 1M tokens; TTS $60–$100/M chars; Audio Packages from $5/mo. **MiniMax is NOT wired** — the TASK-INF-042 condition "wired if verified free" fails. The candidate spec stays `BLOCKED_NO_CREDENTIALS`, spec-only, no provider adapter. |
+| NanoBanana | **PAID-ONLY** | Gemini Developer API pricing page, read live: Free Tier "Not available" for `gemini-2.5-flash-image` on every tab; $0.039/image. The model is deprecated, shutdown 2027-03-15. Free only inside Google's consumer apps (Gemini app / Flow / AI Studio), not the API. |
+| Wan 2.6 | **PAID-ONLY** | Alibaba hosted-only, no public weights for 2.6. Model Studio API $0.10/s (720p) / $0.15/s (1080p) in Singapore, with a 50-second new-user trial quota per model, valid 90 days — a trial, not a standing free tier. `wan.video` Free $0 plan is daily check-in credits with a watermark, testing-only, no commercial licence. (Direct `wan.video` read failed — JS page; figures are dated third-party reads of Alibaba's own pages, 2026-10-02 / 2026-10-25 / 2026-11-03.) |
+| SadTalker | **VERIFIED-FREE (software) — not a route** | Open-source, Apache 2.0 per the README (GitHub's licence detector reports NOASSERTION — discrepancy recorded), runs offline, no hosted service, no API. A local-GPU pipeline component would need its own evaluation; it cannot be wired as an Inference provider. |
+| Gamma AI | **VERIFIED-FREE (consumer plan) — not a route** | `gamma.app/pricing`, read live: Free $0 plan, no credit card required, up to 10 slides per prompt, import/export. API access is a Pro feature ($18/mo), so there is no free API tier; presentations are outside Inference's provider pool in any case. |
+
+Net reading after the live check: **0 of 6 routes verify as free
+API capacity.** The carousel's $0 column is, as §2 already
+suspected, entirely unusable as routing. The two verified-free
+entries are not API routes, so nothing in this catalogue enters
+routing — every entry in `config/free_tier_routes.json` has
+`wired: false`, and `tests/test_inf042_free_tier_routes.py`
+fails if that ever changes without a new dated first-party read.

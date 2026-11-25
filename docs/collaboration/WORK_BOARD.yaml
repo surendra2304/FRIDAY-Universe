@@ -21826,14 +21826,14 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-INF-042
     title: 'Inference: verified free-tier route catalogue - MiniMax, Sora 2, NanoBanana Pro, Wan 2.6, SadTalker, Gamma checked live, verified-free routes wired'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_4
+    branch: muse4/task-inf-042-free-tier-route-catalogue
+    pr: 1751
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T03:10:00+05:30'
+    updated_at: '2026-11-25T05:51:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Inference/
@@ -21843,8 +21843,9 @@ tasks:
     - 'Done = the catalogue merged with a live verdict per route + MiniMax wired if verified free.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    - 'Claim: hub #1483 comment 7148101853 by Muse 4, 2026-11-25 ~05:35 IST, under the central-pool pull model (hub 7136890552). Board record verified AVAILABLE, owner null, P1, on main 8bfcbc4f (board blob 4610f511 read first-hand). Stratex/VyralX P1 pool fully held or coordinator-assigned (STR-053 M18, STR-068 M20, STR-074 TP4, STR-077 M17, VYR-052 M16, VYR-060 TP5, VYR-061/066 TP1, VYR-062 M5, VYR-064 TP5, VYR-077 TP3, VYR-078 M3, VYR-079 TP2; VYR-081 assigned to TP5 per watch060/061); INF-042 is the next free P1 with fully actionable work now.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+    next_action: 'Claimed by Muse 4 (hub #1483 comment 7148101853, 2026-11-25 ~05:35 IST) under the central-pool pull model. Work PR open with the live-verdict catalogue (0 of 6 routes verify as free API capacity; MiniMax NOT wired — paid-only). Verifier naming owed in the next watch.'
   - id: TASK-INT-052
     title: 'IntelX: FotoForensics image check in the OSINT source kit'
     status: AVAILABLE

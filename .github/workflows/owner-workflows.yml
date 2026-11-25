@@ -204,7 +204,8 @@ jobs:
             Inference/tests/test_inf030_apinex_fallback.py \
             Inference/tests/test_inf008_failover_drill.py \
             Inference/tests/test_key_inventory_report.py \
-            Inference/tests/test_universal_task_and_waterfall.py
+            Inference/tests/test_universal_task_and_waterfall.py \
+            Inference/tests/test_inf042_free_tier_routes.py
       - name: Futuris health-capability contracts (TASK-REL-067)
         env:
           PYTHONPATH: Futuris
