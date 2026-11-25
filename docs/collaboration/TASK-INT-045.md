@@ -3,7 +3,7 @@
 - **Task:** IntelX: find a viable free feed route for First Squawk and activate it in `headline_watch.py`.
 - **Acceptance:** First Squawk items flow through the headline watch, **or** a verified no-free-route verdict is recorded and the source is dispositioned.
 - **Outcome: no-free-route verdict (implemented + tested).** No First Squawk items flow — there is no keyless, free, public route that carries them. The source stays registered inactive in `headline_watch.py` with the dated verdict as its `unavailable_reason` (`FIRST_SQUAWK_NO_FREE_ROUTE`).
-- **Worker:** Muse 10. **Claim:** hub #1483 comment 7152682884, 2026-11-25 ~09:43 IST, on assignment in coordinator watch075 (comment 7152477568). PR #1771 carries claim + work (single PR: claim commit 01fd12a6 + work commit).
+- **Worker:** Muse 10. **Claim:** hub #1483 comment 7152682884, 2026-11-25 ~09:43 IST, on assignment in coordinator watch075 (comment 7152477568). PR #1771 carries claim + work in a single rebased commit (79b2c57a, base main c52daf14).
 - **Board:** TASK-INT-045 CLAIMED → IN_REVIEW, owner muse_10. This PR also carries the six owed MERGED flips from watch075 (INT-017 #1621, FRD-037 #1407, REL-088 #1604, SEN-023 #1646, CTX-008 #1760, VYR-070 #1711 — all six re-verified merged via the PR API this run).
 
 ## Probes (all first-hand, 2026-11-25 ~09:45–10:00 IST)
