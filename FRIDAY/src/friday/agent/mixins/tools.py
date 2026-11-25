@@ -173,6 +173,7 @@ from friday.tools.builtin import (
     WriteCodeFileTool,
     YouTubeTool,
 )
+from friday.tools.base import BaseTool
 from friday.tools.registry import ToolRegistry
 from friday.vision.actions import ActionType
 from friday.vision.computer_control import ComputerActionExecutor
@@ -524,6 +525,27 @@ class ToolExecutionMixin:
             )
             return synthesized
 
+    def _effective_tool_timeout(self, tool: Any | None, timeout: float | None = None) -> float:
+        """Timeout for one tool call: explicit > tool-declared > agent default.
+
+        TASK-IG-FRD-006-FIX-01: the agent used to pass its own default (30s)
+        explicitly for every call, which shadowed the per-tool timeout in the
+        registry — intelx_research declares 125s but was killed at 30.0s on
+        FRIDAY-Server while its IntelX dispatch was still in flight. A tool
+        timeout equal to BaseTool's class default (30) carries no override,
+        so only a value different from the default counts as declared.
+        """
+        if timeout is not None:
+            return float(timeout)
+        declared = getattr(tool, "timeout", None)
+        if declared:
+            try:
+                if float(declared) != float(BaseTool.timeout):
+                    return float(declared)
+            except (TypeError, ValueError):
+                pass
+        return float(self.tool_timeout)
+
     def _execute_single_tool_call_internal(self, tc: ToolCall, timeout: float | None = None) -> ToolResult:
             """Internal helper handling validation, authorization, and execution of a single tool call."""
             # Replay prevention within turn
@@ -602,7 +624,10 @@ class ToolExecutionMixin:
             )
 
             # 4. Execution happens ONLY after explicit authorization capability
-            effective_timeout = timeout if timeout is not None else self.tool_timeout
+            # TASK-IG-FRD-006-FIX-01: honor the tool's declared timeout
+            # (e.g. intelx_research: 125s) instead of always passing the
+            # agent default, which shadowed it in the registry.
+            effective_timeout = self._effective_tool_timeout(tool, timeout)
             if auth_resp.decision == AuthorizationDecision.APPROVED:
                 return self.tools.execute(
                     name=tc.name,
@@ -655,8 +680,12 @@ class ToolExecutionMixin:
             return result
 
     def _execute_single_tool_call_with_timeout(
-            self, tc: ToolCall, timeout: float = 30.0
+            self, tc: ToolCall, timeout: float | None = None
         ) -> ToolResult:
-            """Execute a single tool call through ToolRegistry's shared worker pool and timeout mechanism."""
+            """Execute a single tool call through ToolRegistry's shared worker pool and timeout mechanism.
+
+            A None timeout honors the tool's declared timeout (or the agent
+            default); an explicit value still overrides it.
+            """
             return self._execute_single_tool_call(tc, timeout=timeout)
 

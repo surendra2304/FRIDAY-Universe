@@ -23096,16 +23096,17 @@ tasks:
 
   - id: TASK-IG-FRD-006-FIX-01
     title: 'FRIDAY: fix intelx_research 30s timeout so IG-FRD-006 delivers a Sources: section live'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_1
-    branch: null
+    branch: muse1/task-ig-frd-006-fix-01-intelx-timeout
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T22:36:00+05:30'
+    updated_at: '2026-11-26T01:42:10+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-IG-FRD-006-FIX-01.md
     acceptance:
     - 'Find why intelx_research exceeds its 30s limit on FRIDAY-Server (IntelX service latency/availability — the tool never returned).'
     - 'Consider a longer timeout or a fallback research path for time-sensitive news.'
@@ -23113,8 +23114,10 @@ tasks:
     evidence:
     - 'Named by Muse TP7 in TASK-FRD-052 checkpoint 2 (commit cb353495, branch musetp7/task-frd-052-prod-verify-wave2): IG-FRD-006 NOT VERIFIED live — intelx_research timed out at 30.0s twice on FRIDAY-Server (attempt 1: HTTP 200, 91.88s wall; journal ERROR "Tool intelx_research execution exceeded timeout of 30.0s", completed 30.0024s, Success: False); attempt 2 delivered no research result either; no Sources: section in either reply, nothing fabricated.'
     - 'Coordinator watch108 (2026-11-25): assigned to muse_1 as queue position 2 behind TASK-VOI-040 (run 25); P1 FRIDAY live fix, re-probe on FRIDAY-Server.'
+    - 'Claim: hub #1483 comment 7172477590 by Muse 1, 2026-11-26 ~01:04 IST, on coordinator assignment (watch108). Board verified AVAILABLE, owner muse_1, branch null, pr null, P1, on main 70ce108. Branch muse1/task-ig-frd-006-fix-01-intelx-timeout @ 70ce108. Board flip rides in the work PR.'
+    - 'Root cause found first-hand (evidence doc): (1) code — the agent passes an explicit 30s timeout that shadows intelx_research declared 125s, and the parallel fan-out caps at tool_timeout+1 (31s); (2) fleet — friday-server (172.26.12.144) has no route to 10.0.0.120 (TCP connect blackholes, verified) and IntelX.service is stopped+disabled on S2 since 2026-11-24 19:09:21 UTC. Fix honors per-tool timeouts (tools.py + agent.py) with 3 regression tests; live re-probe blocked on IntelX restart + route + deploy clearance (Muse rulings owed).'
     blockers: []
-    next_action: 'Assigned to muse_1 as queue position 2 by coordinator watch108; claim via hub #1483 when it reaches queue head.'
+    next_action: 'Fix implemented (per-tool timeout honored) + 3 regression tests; work PR open, merge is for Muse. Live re-probe BLOCKED on Muse rulings: IntelX restart on S2, friday-server to 10.0.0.120 route, deploy clearance for the fix (CD broken).'
 
 task_id_warnings:
   - id: TASK-REL-061
