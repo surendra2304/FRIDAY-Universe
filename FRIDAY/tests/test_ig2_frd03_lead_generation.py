@@ -128,6 +128,33 @@ def test_clean_phone_rejects_dates_and_fragments():
     assert _clean_phone("+1 555 000 0001") == "+1 555 000 0001"
 
 
+def test_clean_phone_rejects_live_probe_garbage_shapes():
+    # Digit runs harvested from JaRanks inline JSON on the live probe
+    # (2026-11-25): epoch timestamps, long IDs, digit-dash fragments.
+    for junk in ("26947469-800", "133146406741", "1739935912555",
+                 "221-0821-41", "19-9181-9", "922-6365-4", "6-8223-50"):
+        assert _clean_phone(junk) == "", junk
+    # Shape-valid numbers still pass.
+    assert _clean_phone("413-4894") == "413-4894"  # 7-digit local
+    assert _clean_phone("876-765-0100") == "876-765-0100"
+    assert _clean_phone("+18767650100") == "+18767650100"
+    assert _clean_phone("8765550100") == "8765550100"
+
+
+def test_script_json_never_becomes_a_contact():
+    # Inline JSON (IDs, epoch timestamps) must not yield a "phone".
+    html = ('<html><body><div class="listing-card"><h3>Acme</h3>'
+            '<script type="application/json">{"id": 133146406741, '
+            '"ts": 1739935912555, "phone": "26947469-800"}</script>'
+            '<p>Call 876-555-0100</p></div>'
+            '<div class="listing-card"><h3>Script Only Co</h3>'
+            '<script>{"ts": 1739935912555}</script>'
+            '<p>No contact here.</p></div></body></html>')
+    leads, _ = parse_listing_page(html, "https://dir.example/cat", "general")
+    assert [lead.name for lead in leads] == ["Acme"]
+    assert leads[0].phone == "876-555-0100"
+
+
 _JARANKS_LIST = """
 <html><body>
 <header><div class="nav-item"><a href="/about">JaRanks</a></div>

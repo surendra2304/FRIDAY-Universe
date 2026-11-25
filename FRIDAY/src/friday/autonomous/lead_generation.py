@@ -58,10 +58,14 @@ _ALLOWED_PORTS = {80, 443}
 def _clean_phone(raw: str) -> str:
     """Normalise a phone candidate, or "" when it is not a usable phone.
 
-    Guards the two junk classes the bare regex admits: too-short fragments
-    (extensions, list numbers) and ISO dates (``2026-11-25`` matches the
-    digit/dash shape but is not a phone). A real contact number has 7-15
-    digits and is not an 8-digit YYYYMMDD date.
+    Guards the junk classes the bare regex admits on real pages (live
+    JaRanks probe, 2026-11-25): ISO dates (``2026-11-25``), epoch-millis
+    timestamps (``1739935912555``), long IDs (``133146406741``) and
+    digit-dash fragments (``26947469-800``, ``221-0821-41``) harvested
+    from inline JSON. A real contact number has 7-15 digits and a phone
+    shape: a lone digit run is accepted only as a 7-digit local number,
+    a 10-digit NANP number, or an explicit ``+`` international number;
+    a separated number must end in a 4-digit subscriber group.
     """
     text = (raw or "").strip()
     if not text:
@@ -70,6 +74,13 @@ def _clean_phone(raw: str) -> str:
     if len(digits) < 7 or len(digits) > 15:
         return ""
     if re.fullmatch(r"(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])", digits):
+        return ""
+    groups = [g for g in re.split(r"\D+", text) if g]
+    if len(groups) == 1:
+        if text.startswith("+") or len(digits) in (7, 10):
+            return text
+        return ""
+    if len(groups[-1]) != 4:
         return ""
     return text
 
@@ -172,10 +183,20 @@ class _ListingParser(HTMLParser):
         self._current: dict | None = None
         self._depth = 0
         self._chrome_depth = 0
+        self._skip_depth = 0
         self.next_url = ""
         self.page_text: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list) -> None:
+        # Script/style bodies are code, not visible content: inline JSON
+        # (IDs, epoch timestamps, counters) must never become a lead name,
+        # phone or email. Skipped before any other bookkeeping so the
+        # block depth stays balanced (both tags return early).
+        if tag in ("script", "style"):
+            self._skip_depth += 1
+            return
+        if self._skip_depth:
+            return
         attr = dict(attrs)
         classes = f"{attr.get('class', '')} {attr.get('id', '')}".lower()
         # Pagination lives in <nav> on most directories — the "next" link is
@@ -211,6 +232,11 @@ class _ListingParser(HTMLParser):
                 self._current["href"] = href
 
     def handle_endtag(self, tag: str) -> None:
+        if tag in ("script", "style"):
+            self._skip_depth = max(0, self._skip_depth - 1)
+            return
+        if self._skip_depth:
+            return
         if tag in self._CHROME_TAGS:
             self._chrome_depth = max(0, self._chrome_depth - 1)
             return
@@ -223,7 +249,7 @@ class _ListingParser(HTMLParser):
                 self._current = None
 
     def handle_data(self, data: str) -> None:
-        if self._chrome_depth:
+        if self._skip_depth or self._chrome_depth:
             return
         text = data.strip()
         if text:
@@ -260,6 +286,7 @@ class _HeadingParser(HTMLParser):
         self._in_heading = False
         self._chars = 0
         self._chrome_depth = 0
+        self._skip_depth = 0
 
     def _close(self) -> None:
         if self._current is not None:
@@ -269,6 +296,11 @@ class _HeadingParser(HTMLParser):
         self._chars = 0
 
     def handle_starttag(self, tag: str, attrs: list) -> None:
+        if tag in ("script", "style"):
+            self._skip_depth += 1
+            return
+        if self._skip_depth:
+            return
         if tag in _ListingParser._CHROME_TAGS:
             self._chrome_depth += 1
             return
@@ -296,6 +328,11 @@ class _HeadingParser(HTMLParser):
                 self._current["href"] = href
 
     def handle_endtag(self, tag: str) -> None:
+        if tag in ("script", "style"):
+            self._skip_depth = max(0, self._skip_depth - 1)
+            return
+        if self._skip_depth:
+            return
         if tag in _ListingParser._CHROME_TAGS:
             self._chrome_depth = max(0, self._chrome_depth - 1)
             return
@@ -305,7 +342,7 @@ class _HeadingParser(HTMLParser):
             self._in_heading = False
 
     def handle_data(self, data: str) -> None:
-        if self._chrome_depth:
+        if self._skip_depth or self._chrome_depth:
             return
         text = data.strip()
         if not text or self._current is None:
@@ -330,11 +367,16 @@ def _extract_contacts_from_html(html_text: str) -> tuple[str, str]:
 
     ``tel:``/``mailto:`` hrefs first (the page means them as contacts),
     then the visible-text regexes. Used to enrich listing blocks whose own
-    block carries no contact signal (editorial list pages).
+    block carries no contact signal (editorial list pages). Script/style
+    bodies are stripped first: inline JSON must never yield a "phone".
     """
     from urllib.parse import unquote
 
     html_text = html_text or ""
+    html_text = re.sub(r"<script\b[^>]*>.*?</script>", " ", html_text,
+                       flags=re.S | re.I)
+    html_text = re.sub(r"<style\b[^>]*>.*?</style>", " ", html_text,
+                       flags=re.S | re.I)
     tel = re.search(r"""href=["']tel:([^"']+)""", html_text, re.I)
     mail = re.search(r"""href=["']mailto:([^"'?]+)""", html_text, re.I)
     text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html_text)).strip()
