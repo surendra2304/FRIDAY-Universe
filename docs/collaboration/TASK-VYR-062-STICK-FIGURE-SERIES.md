@@ -35,7 +35,7 @@ code files verified are byte-identical on `f6d1e665`, `8415199b` and
 
 ## What changed (3 files + this doc + board flip)
 
-1. `VyralX/app/services/series_automation.py` (+59/-10, `SERIES_VERSION`
+1. `VyralX/app/services/series_automation.py` (+61/-14, `SERIES_VERSION`
    `ig-vyr04-1` → `ig-vyr04-2`, stdlib-only preserved — `format_templates`
    imports only json/pathlib plus the compliance gate):
    - `validate_series` accepts an optional `template_id`: it must resolve
