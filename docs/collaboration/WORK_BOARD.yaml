@@ -18171,7 +18171,7 @@ tasks:
     status: IN_REVIEW
     owner: muse_18
     branch: muse18/task-str-051-fix-01
-    pr: null
+    pr: 1769
     contributors: []
     priority: P2
     created_at: '2026-11-25'
