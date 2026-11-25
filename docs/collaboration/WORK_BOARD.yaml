@@ -19988,32 +19988,39 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-FRG-022
     title: 'Forge: adopt the Agency repo''s Reality Checker and AI Code Auditor roles as workflow passes'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_15
+    branch: muse15/task-frg-022-reality-checker-auditor
+    pr: 1777
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T11:00:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - Forge/workflow_passes/
+    - Forge/tests/test_frg022_workflow_passes.py
+    - Forge/scripts/frg022_live_proof.py
+    - docs/collaboration/TASK-FRG-022-REALITY-CHECKER-AUDITOR.md
+    - .github/workflows/owner-workflows.yml
     acceptance:
     - 'Two named passes exist, coordinated by an agents-orchestrator pattern: Reality Checker (blocks the ship until it is proven to work) and AI Code Auditor (hardcoded keys, injection holes), adopted from the 250-agent open-source Agency repo role definitions.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 11 (watch record Df9NFPKivh7, @madiyarbegenov ''The Agency'' carousel). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Claimed by Muse 15 (hub #1483 comment 7153272332, 2026-11-25 ~10:24 IST, in the TASK-INF-034 completion post): board AVAILABLE / owner null on main 55027430; branch muse15/task-frg-022-reality-checker-auditor.'
+    - 'Done with live evidence (evidence: docs/collaboration/TASK-FRG-022-REALITY-CHECKER-AUDITOR.md): Reality Checker + AI Code Auditor as Forge/workflow_passes/, coordinated by AgentsOrchestrator; tests 29/29 local (Forge/tests/test_frg022_workflow_passes.py, in owner-workflows.yml Forge list); live proof driver Forge/scripts/frg022_live_proof.py run 2026-11-25 ~10:45 IST - DIRTY ship BLOCKED at audit (1 critical CWE-798 + 1 high CWE-1426), RESCAN resolved 1/1, CLEAN ship READY_TO_SHIP.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Work PR #1777 open, awaiting coordinator review/merge. No production consumer by design (workflow passes for Forge; the live proof is the driver run).'
   - id: TASK-INF-034
     title: 'Inference: evaluate the AWS/Berkeley ''Infinity'' scale-to-zero agent runtime'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-inf-034-infinity-evaluation
     pr: 1773
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T10:09:00+05:30'
+    updated_at: '2026-11-25T11:00:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-034-INFINITY-EVALUATION.md
@@ -20024,8 +20031,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 12 (watch record De9or1Jienw, @itisjiwan, AWS + UC Berkeley ''Infinity''). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     - 'Claimed by Muse 15 (hub #1483 comment 7152147326, 2026-11-25 ~09:10 IST): board AVAILABLE / owner null on main c4267ca1; branch muse15/task-inf-034-infinity-evaluation.'
     - 'Done with live evidence (evidence: docs/collaboration/TASK-INF-034-INFINITY-EVALUATION.md): verdict DO NOT ADOPT; WATCH. 100 KB/agent and 75,000-in-8GB verified as AWS benchmark (simulated model, in-memory stores); zero CPU/RAM while waiting verified as design property; wake under 2 ms NOT verified in AWS material - traces to the @itisjiwan reel only. Fleet RAM: S1 live 0.93 GB for 6 agents; 10 agents x 100 KB = ~1 MB idle; reference deployment is paid AWS (conflicts FREE ONLY); Rust vs Python fleet; early research release. No local execution: no Rust toolchain in the sandbox.'
+    - 'Merged by Surendra (PR #1773, merge db6d175f, 2026-11-25 10:27:53 IST); board flip rides in PR #1777 (TASK-FRG-022).'
     blockers: []
-    next_action: 'Work PR #1773 open, awaiting coordinator review/merge. No production consumer by design (evaluation only).'
+    next_action: 'Merged (PR #1773, merge db6d175f, 2026-11-25 10:27:53 IST, by Surendra). No production consumer by design (evaluation only).'
   - id: TASK-FRG-023
     title: 'Forge: evaluate Antigravity remote-SSH mode as a fleet dev workflow'
     status: AVAILABLE
