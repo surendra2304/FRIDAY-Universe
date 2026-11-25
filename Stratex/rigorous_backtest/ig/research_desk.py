@@ -24,7 +24,24 @@ The "agents" here are deterministic role functions, not LLM calls:
                     clean-data re-test, >=50 trades, drawdown-vs-return
                     gate, tiny-size incubation, repainting warning, bot
                     provenance)
+  chaos_lens()    — Chaos Theory frame (TASK-STR-079): sensitivity of
+                    the current move to small inputs (spread of forward
+                    outcomes across similar past windows) and the
+                    probability-shift conditions present
+  game_theory_lens() — Game Theory frame (TASK-STR-079): which side is
+                    crowded, where stops cluster, and what move traps
+                    the crowded side
+  fractals_lens() — Fractals frame (TASK-STR-079): multi-scale
+                    self-similarity of structure — same direction at
+                    5 / 10 / 30 / 60 bars, and where it breaks
   run_desk()      — run the chain and produce ONE structured memo
+
+FRAMEWORK_LENSES — the three named framework lenses of stratex
+package S-02/S-03/S-04 (IG corpus item DUYHoUdD5vk, one comment
+thread in three parts), stored with provenance. Each lens is a
+defined report section with its own question set. These are analysis
+frames, NOT strategies: a lens answers questions about the chart, it
+changes no scan, no plan, no checklist, and no trading behaviour.
 
 PROMPT_LIBRARY — the three verbatim trading prompts of stratex
 package S-21 (IG corpus item DRSGKJXDAU4), stored verbatim-derived
@@ -80,6 +97,68 @@ PROMPT_LIBRARY = {
         "source": "stratex package S-21, IG corpus item DRSGKJXDAU4",
         "board_task": "TASK-STR-080",
         "implements": "risk_manager_pass",
+    },
+}
+
+# Framework lenses — TASK-STR-079.
+# Source: stratex package S-02/S-03/S-04, IG corpus item DUYHoUdD5vk
+# (one comment thread in three parts, filed in the Instagram adoption
+# re-audit, batch 3). The source video text is not in the repo, so the
+# framing below is derived from the board acceptance of TASK-STR-079,
+# with provenance on each entry; if the coordinator's watch record
+# carries fuller wording these entries should be corrected to match
+# it. Each lens is an analysis frame, NOT a strategy.
+FRAMEWORK_LENSES = {
+    "chaos": {
+        "id": "chaos",
+        "title": "Chaos Theory",
+        "framing": ("Markets are deterministic but unpredictable: "
+                    "nonlinear, so small inputs can produce huge "
+                    "outcomes. The lens asks how sensitive the current "
+                    "move is to small inputs, and under what conditions "
+                    "the probabilities shift."),
+        "questions": [
+            "How sensitive is the current move to small inputs?",
+            "Under what conditions do the probabilities shift?",
+            "How often do outsized (tail) moves occur in the window?",
+        ],
+        "source": "stratex package S-02, IG corpus item DUYHoUdD5vk",
+        "board_task": "TASK-STR-079",
+        "implements": "chaos_lens",
+    },
+    "game_theory": {
+        "id": "game_theory",
+        "title": "Game Theory",
+        "framing": ("The market is a game between positioned players: "
+                    "who is crowded, where are their stops clustered, "
+                    "and what move traps them. The lens names the "
+                    "crowded side and the incentive trap, it does not "
+                    "pick a side."),
+        "questions": [
+            "Which side is crowded?",
+            "Where are stops likely clustered?",
+            "What move traps the crowded side?",
+        ],
+        "source": "stratex package S-03, IG corpus item DUYHoUdD5vk",
+        "board_task": "TASK-STR-079",
+        "implements": "game_theory_lens",
+    },
+    "fractals": {
+        "id": "fractals",
+        "title": "Fractals",
+        "framing": ("Market structure repeats at every scale: the "
+                    "same patterns appear on the 5-bar chart and the "
+                    "60-bar chart. The lens asks whether the structure "
+                    "is self-similar across scales, and where it "
+                    "breaks."),
+        "questions": [
+            "Is the structure self-similar across scales?",
+            "Where does the structure break across scales?",
+            "What does the smallest scale say versus the largest?",
+        ],
+        "source": "stratex package S-04, IG corpus item DUYHoUdD5vk",
+        "board_task": "TASK-STR-079",
+        "implements": "fractals_lens",
     },
 }
 
@@ -461,6 +540,376 @@ def risk_manager_pass(setup, equity, risk_per_trade_pct, rr_target=3.0):
     return result
 
 
+def chaos_lens(candles, window=30):
+    """Chaos Theory frame (TASK-STR-079, S-02).
+
+    Markets are deterministic but unpredictable: nonlinear, so small
+    inputs can produce huge outcomes. The lens answers its question
+    set from the candles, deterministically:
+
+    * Sensitivity — the spread of forward outcomes across the most
+      similar past windows (via pattern_match(), window 10, forward
+      10): similar starts that went very different ways mean the
+      current move is highly sensitive to small inputs. Spread under
+      2pp is low, under 6pp moderate, above that high. With fewer
+      than 2 similar windows the sensitivity is unknown, not guessed.
+    * Probability-shift conditions — volatility expansion (mean
+      |daily move| over the last 10 bars more than 1.5x the prior 20
+      bars), range break (last close outside the prior 29-bar range),
+      trend flip (EMA-slope sign now vs 10 bars ago). Each condition
+      is named present/absent with its evidence.
+    * Tail moves — bars in the window whose |daily move| exceeds
+      twice the window's mean |daily move|.
+
+    Research surface only — a lens answers questions, it is not a
+    signal. With fewer than `window` candles the result says
+    `insufficient_history` instead of guessing."""
+    result = {"status": "ok", "window": window, "sensitivity": None,
+              "tail_moves": None, "probability_shift_conditions": [],
+              "questions": [], "evidence": {}}
+    if len(candles) < window:
+        result["status"] = "insufficient_history"
+        result["reason"] = ("need at least %d candles for the chaos "
+                            "window, got %d" % (window, len(candles)))
+        return result
+    closes = [c["close"] for c in candles[-window:]]
+    rets = [closes[i + 1] / closes[i] - 1.0 if closes[i] else 0.0
+            for i in range(len(closes) - 1)]
+    abs_rets = [abs(r) for r in rets]
+    mean_abs = sum(abs_rets) / len(abs_rets) if abs_rets else 0.0
+    tail_threshold = 2.0 * mean_abs
+    tail_count = sum(1 for r in abs_rets if r > tail_threshold)
+    # Sensitivity: spread of forward outcomes of similar past windows.
+    pm = pattern_match(candles, "long", window=10, forward=10,
+                       lookback_days=180)
+    fwd = [m["forward_return_pct"] for m in pm["matches"]]
+    if len(fwd) >= 2:
+        spread = max(fwd) - min(fwd)
+        label = ("low" if spread < 2.0 else
+                 "moderate" if spread < 6.0 else "high")
+        sensitivity = {"label": label, "spread_pct": spread,
+                       "similar_windows": len(fwd),
+                       "forward_returns_pct": fwd}
+    else:
+        sensitivity = {"label": "unknown",
+                       "spread_pct": None,
+                       "similar_windows": len(fwd),
+                       "forward_returns_pct": fwd,
+                       "reason": "fewer than 2 similar past windows"}
+    result["sensitivity"] = sensitivity
+    result["tail_moves"] = {"count": tail_count,
+                            "threshold_pct": tail_threshold * 100.0,
+                            "mean_abs_daily_pct": mean_abs * 100.0}
+    # Probability-shift conditions.
+    conditions = []
+    recent = abs_rets[-10:]
+    prior = abs_rets[:-10] if len(abs_rets) > 10 else []
+    recent_mean = sum(recent) / len(recent) if recent else 0.0
+    prior_mean = sum(prior) / len(prior) if prior else 0.0
+    # Expansion is a ratio when the prior has any movement at all;
+    # from a dead-flat prior, any new movement is an expansion.
+    vol_exp = recent_mean > 1.5 * prior_mean
+    ratio = (recent_mean / prior_mean) if prior_mean > 0 else None
+    conditions.append({
+        "name": "volatility_expansion", "present": vol_exp,
+        "evidence": ("mean |daily move| last 10 bars %.2f%% vs prior "
+                     "%d bars %.2f%% (ratio %s, gate 1.5)"
+                     % (recent_mean * 100.0, len(prior),
+                        prior_mean * 100.0,
+                        ("%.2f" % ratio) if ratio is not None
+                        else "n/a — prior flat"))})
+    highs = [c["high"] for c in candles[-window:-1]]
+    lows = [c["low"] for c in candles[-window:-1]]
+    last_close = closes[-1]
+    broke_high = last_close > max(highs) if highs else False
+    broke_low = last_close < min(lows) if lows else False
+    conditions.append({
+        "name": "range_break", "present": broke_high or broke_low,
+        "evidence": ("last close %.2f vs prior %d-bar range "
+                     "[%.2f, %.2f]: %s"
+                     % (last_close, window - 1,
+                        min(lows) if lows else 0.0,
+                        max(highs) if highs else 0.0,
+                        "broke above the high" if broke_high else
+                        "broke below the low" if broke_low else
+                        "inside the range"))})
+    def _slope(series):
+        fast = _ema(series, 10)
+        slow = _ema(series, 30)
+        return (fast - slow) / slow if slow else 0.0
+    slope_now = _slope(closes)
+    slope_then = _slope(closes[:-10]) if len(closes) > 10 else 0.0
+    def _sign(x):
+        return 1 if x > 0 else (-1 if x < 0 else 0)
+    flipped = _sign(slope_now) != _sign(slope_then) and \
+        _sign(slope_now) != 0 and _sign(slope_then) != 0
+    conditions.append({
+        "name": "trend_flip", "present": flipped,
+        "evidence": ("EMA slope now %+.4f vs 10 bars ago %+.4f"
+                     % (slope_now, slope_then))})
+    result["probability_shift_conditions"] = conditions
+    result["evidence"] = {
+        "mean_abs_daily_pct": mean_abs * 100.0,
+        "tail_threshold_pct": tail_threshold * 100.0,
+        "sensitivity_spread_pct": sensitivity["spread_pct"],
+        "conditions_present": [c["name"] for c in conditions
+                               if c["present"]],
+    }
+    sens_answer = ("sensitivity %s (forward-outcome spread %s across "
+                   "%d similar windows)"
+                   % (sensitivity["label"],
+                      ("%.2fpp" % sensitivity["spread_pct"])
+                      if sensitivity["spread_pct"] is not None
+                      else "unknown",
+                      sensitivity["similar_windows"]))
+    present = [c["name"] for c in conditions if c["present"]]
+    shift_answer = ("probabilities shift under: %s"
+                    % ", ".join(present) if present else
+                    "no probability-shift condition is present in "
+                    "this window")
+    result["questions"] = [
+        {"question": FRAMEWORK_LENSES["chaos"]["questions"][0],
+         "answer": sens_answer,
+         "evidence": sensitivity},
+        {"question": FRAMEWORK_LENSES["chaos"]["questions"][1],
+         "answer": shift_answer,
+         "evidence": conditions},
+        {"question": FRAMEWORK_LENSES["chaos"]["questions"][2],
+         "answer": ("%d tail moves in %d bars (threshold %.2f%%)"
+                    % (tail_count, window, tail_threshold * 100.0)),
+         "evidence": result["tail_moves"]},
+    ]
+    return result
+
+
+def game_theory_lens(candles, setup=None, window=30):
+    """Game Theory frame (TASK-STR-079, S-03).
+
+    The market is a game between positioned players. The lens answers
+    its question set from the candles, deterministically:
+
+    * Crowded side — where the last close sits in the window's range:
+      above 0.80 the longs are crowded near the highs, below 0.20 the
+      shorts are crowded near the lows, otherwise neither side is
+      crowded.
+    * Stop clusters — the recent high (shorts' stops cluster above
+      it) and the recent low (longs' stops cluster below it), each
+      with its distance from the last close.
+    * The trap — the move that punishes the crowded side: a break
+      below the recent low traps crowded longs, a break above the
+      recent high traps crowded shorts. With no crowded side there is
+      no trap to name.
+    * When a setup is supplied, the lens also notes whether its entry
+      chases beyond the trap level and whether its invalidation sits
+      beyond a stop-cluster level (a stop placed where stops already
+      cluster).
+
+    Research surface only — naming a trap is not taking a side. With
+    fewer than `window` candles the result says
+    `insufficient_history` instead of guessing."""
+    result = {"status": "ok", "window": window, "crowded_side": None,
+              "stop_clusters": [], "trap": None, "questions": [],
+              "evidence": {}}
+    if len(candles) < window:
+        result["status"] = "insufficient_history"
+        result["reason"] = ("need at least %d candles for the game "
+                            "theory window, got %d"
+                            % (window, len(candles)))
+        return result
+    win = candles[-window:]
+    highs = [c["high"] for c in win]
+    lows = [c["low"] for c in win]
+    hi, lo = max(highs), min(lows)
+    close = win[-1]["close"]
+    pos = None if hi == lo else (close - lo) / (hi - lo)
+    if pos is None:
+        crowded = "neither"
+    elif pos > 0.80:
+        crowded = "longs"
+    elif pos < 0.20:
+        crowded = "shorts"
+    else:
+        crowded = "neither"
+    result["crowded_side"] = crowded
+    result["stop_clusters"] = [
+        {"level": hi, "side": "shorts",
+         "note": "stops of trapped shorts cluster above the recent high",
+         "distance_pct": ((hi - close) / close * 100.0
+                          if close else 0.0)},
+        {"level": lo, "side": "longs",
+         "note": "stops of trapped longs cluster below the recent low",
+         "distance_pct": ((close - lo) / close * 100.0
+                          if close else 0.0)},
+    ]
+    if crowded == "longs":
+        trap = {"trigger": lo, "trapped_side": "longs",
+                "move_pct": ((lo - close) / close * 100.0
+                             if close else 0.0),
+                "mechanism": ("a break below the recent low triggers "
+                              "long stops and forces selling into the "
+                              "move")}
+    elif crowded == "shorts":
+        trap = {"trigger": hi, "trapped_side": "shorts",
+                "move_pct": ((hi - close) / close * 100.0
+                             if close else 0.0),
+                "mechanism": ("a break above the recent high triggers "
+                              "short stops and forces buying into the "
+                              "move")}
+    else:
+        trap = None
+    result["trap"] = trap
+    result["evidence"] = {
+        "range_position": pos,
+        "window_high": hi, "window_low": lo,
+        "last_close": close,
+    }
+    crowd_answer = {"longs": "longs crowded near the highs",
+                    "shorts": "shorts crowded near the lows",
+                    "neither": "neither side crowded"}[crowded]
+    if pos is not None:
+        crowd_answer += " (range position %.2f)" % pos
+    cluster_answer = ("short stops above %.2f (+%.2f%%), long stops "
+                      "below %.2f (-%.2f%%)"
+                      % (hi, result["stop_clusters"][0]["distance_pct"],
+                         lo, result["stop_clusters"][1]["distance_pct"]))
+    trap_answer = ("break below %.2f traps crowded longs (%+.2f%%)"
+                   % (trap["trigger"], trap["move_pct"])
+                   if trap and trap["trapped_side"] == "longs" else
+                   "break above %.2f traps crowded shorts (%+.2f%%)"
+                   % (trap["trigger"], trap["move_pct"])
+                   if trap else
+                   "no crowded side to trap")
+    questions = [
+        {"question": FRAMEWORK_LENSES["game_theory"]["questions"][0],
+         "answer": crowd_answer,
+         "evidence": {"crowded_side": crowded,
+                      "range_position": pos}},
+        {"question": FRAMEWORK_LENSES["game_theory"]["questions"][1],
+         "answer": cluster_answer,
+         "evidence": result["stop_clusters"]},
+        {"question": FRAMEWORK_LENSES["game_theory"]["questions"][2],
+         "answer": trap_answer,
+         "evidence": trap},
+    ]
+    if setup is not None:
+        entry = setup.get("entry_ref")
+        inv = setup.get("invalidation")
+        notes = []
+        if entry is not None and trap is not None:
+            beyond = ((entry < trap["trigger"])
+                      if trap["trapped_side"] == "longs" else
+                      (entry > trap["trigger"]))
+            notes.append(("entry %s the trap level %.2f"
+                          % ("chases beyond" if beyond else
+                             "sits inside of", trap["trigger"])))
+        if inv is not None:
+            beyond_hi = inv > hi
+            beyond_lo = inv < lo
+            if beyond_hi or beyond_lo:
+                notes.append(("invalidation sits beyond a stop-cluster "
+                              "level (%.2f)" % inv))
+            else:
+                notes.append("invalidation sits inside the range")
+        questions.append({
+            "question": "What does this mean for the setup on the desk?",
+            "answer": "; ".join(notes) if notes else "no setup levels given",
+            "evidence": {"entry_ref": entry, "invalidation": inv},
+        })
+    result["questions"] = questions
+    return result
+
+
+def fractals_lens(candles, scales=(5, 10, 30, 60)):
+    """Fractals frame (TASK-STR-079, S-04).
+
+    Market structure repeats at every scale. The lens answers its
+    question set by measuring the net return and direction at each
+    scale in `scales` (default 5 / 10 / 30 / 60 bars), deterministically:
+
+    * Self-similarity — every scale shares the majority direction
+      (up: net > +0.5%, down: net < -0.5%, else flat). Agreement is
+      the share of scales matching the majority direction.
+    * Breaks — the scales whose direction differs from the majority,
+      each with its net return.
+    * Smallest vs largest — the 5-bar net against the 60-bar net.
+
+    Research surface only — a scale disagreement is a fact about the
+    chart, not a signal. With fewer than max(scales) candles the
+    result says `insufficient_history` instead of guessing."""
+    result = {"status": "ok", "scales": list(scales),
+              "self_similar": None, "agreement": None,
+              "majority_direction": None, "directions": {},
+              "breaks": [], "questions": [], "evidence": {}}
+    need = max(scales)
+    if len(candles) < need:
+        result["status"] = "insufficient_history"
+        result["reason"] = ("need at least %d candles for the largest "
+                            "fractal scale, got %d"
+                            % (need, len(candles)))
+        return result
+    closes = [c["close"] for c in candles]
+    directions = {}
+    for scale in scales:
+        start = closes[-scale - 1] if len(closes) > scale else closes[0]
+        end = closes[-1]
+        net = end / start - 1.0 if start else 0.0
+        direction = ("up" if net > 0.005 else
+                     "down" if net < -0.005 else "flat")
+        directions[scale] = {"net_return_pct": net * 100.0,
+                             "direction": direction}
+    result["directions"] = directions
+    counts = {}
+    for d in directions.values():
+        counts[d["direction"]] = counts.get(d["direction"], 0) + 1
+    majority = max(counts.items(), key=lambda kv: (kv[1], kv[0]))[0]
+    agreement = counts[majority] / len(scales)
+    breaks = [s for s, d in directions.items()
+              if d["direction"] != majority]
+    result["majority_direction"] = majority
+    result["agreement"] = agreement
+    result["self_similar"] = len(breaks) == 0
+    result["breaks"] = [{"scale": s,
+                         "direction": directions[s]["direction"],
+                         "net_return_pct":
+                             directions[s]["net_return_pct"]}
+                        for s in breaks]
+    result["evidence"] = {
+        "directions": {s: d["direction"]
+                       for s, d in directions.items()},
+        "net_returns_pct": {s: d["net_return_pct"]
+                            for s, d in directions.items()},
+    }
+    smallest = directions[scales[0]]
+    largest = directions[scales[-1]]
+    result["questions"] = [
+        {"question": FRAMEWORK_LENSES["fractals"]["questions"][0],
+         "answer": ("self-similar across all %d scales (majority %s, "
+                    "agreement %.0f%%)" % (len(scales), majority,
+                                           agreement * 100.0)
+                    if result["self_similar"] else
+                    "not self-similar (majority %s, agreement %.0f%%)"
+                    % (majority, agreement * 100.0)),
+         "evidence": result["evidence"]},
+        {"question": FRAMEWORK_LENSES["fractals"]["questions"][1],
+         "answer": ("no break — every scale agrees with %s"
+                    % majority if not breaks else
+                    "breaks at scales %s"
+                    % ", ".join(str(b["scale"]) for b in result["breaks"])),
+         "evidence": result["breaks"]},
+        {"question": FRAMEWORK_LENSES["fractals"]["questions"][2],
+         "answer": ("%d-bar net %+.2f%% (%s) vs %d-bar net %+.2f%% (%s)"
+                    % (scales[0], smallest["net_return_pct"],
+                       smallest["direction"], scales[-1],
+                       largest["net_return_pct"],
+                       largest["direction"])),
+         "evidence": {"smallest_scale": scales[0],
+                      "smallest_net_pct": smallest["net_return_pct"],
+                      "largest_scale": scales[-1],
+                      "largest_net_pct": largest["net_return_pct"]}},
+    ]
+    return result
+
+
 def risk_checklist(plan_draft, setup, max_risk_pct, min_rr=1.5,
                    evidence=None, min_trades=50, max_dd_to_return=0.5):
     """Stage 4 — fail-closed checklist. `passed` requires every item.
@@ -575,7 +1024,8 @@ def run_desk(setups, contexts, candles_by_symbol, equity,
              min_adv_quote=None, max_spread_bps=None,
              pattern_window=10, pattern_forward=10,
              pattern_lookback_days=180, backtest_evidence=None,
-             scenario_window=30, rr_target=3.0):
+             scenario_window=30, rr_target=3.0,
+             chaos_window=30, fractal_scales=(5, 10, 30, 60)):
     """Run the full desk chain and return one structured memo dict.
 
     `backtest_evidence` (optional) maps a setup symbol to the backtest
@@ -584,10 +1034,13 @@ def run_desk(setups, contexts, candles_by_symbol, equity,
     unevaluated, named in the checklist's ``unevaluated`` list).
     `scenario_window` (TASK-STR-080, prompt 1) is the lookback for the
     3-scenario analysis; `rr_target` (TASK-STR-080, prompt 3) is the
-    R:R target of the risk-manager pass."""
+    R:R target of the risk-manager pass. `chaos_window` (TASK-STR-079)
+    is the lookback for the Chaos Theory lens; `fractal_scales`
+    (TASK-STR-079) are the bar counts of the Fractals lens."""
     stage1 = scan(setups, contexts, min_adv_quote, max_spread_bps)
     analyses, plans, checks, patterns = {}, [], [], {}
     scenarios, risk_passes = {}, {}
+    framework_lenses = {}
     for s in stage1["kept"]:
         candles = candles_by_symbol.get(s["symbol"], [])
         analyses[s["symbol"]] = analyse(s, candles)
@@ -605,6 +1058,14 @@ def run_desk(setups, contexts, candles_by_symbol, equity,
             candles, window=scenario_window)
         risk_passes[s["symbol"]] = risk_manager_pass(
             s, equity, risk_per_trade_pct, rr_target=rr_target)
+        # TASK-STR-079: framework-lens sections (analysis frames only
+        # — they change no scan, plan, checklist, or trading behaviour).
+        framework_lenses[s["symbol"]] = {
+            "chaos": chaos_lens(candles, window=chaos_window),
+            "game_theory": game_theory_lens(candles, s,
+                                            window=chaos_window),
+            "fractals": fractals_lens(candles, scales=fractal_scales),
+        }
     return {
         "type": "memo",
         "desk": "stratex-research-desk",
@@ -618,6 +1079,7 @@ def run_desk(setups, contexts, candles_by_symbol, equity,
         "pattern_matches": patterns,
         "scenario_analyses": scenarios,
         "risk_manager_passes": risk_passes,
+        "framework_lenses": framework_lenses,
         "summary": {
             "setups_in": len(setups),
             "plans_drafted": len(plans),
@@ -628,5 +1090,9 @@ def run_desk(setups, contexts, candles_by_symbol, equity,
                 sym: sc.get("commit") for sym, sc in scenarios.items()},
             "risk_passes_passed": sum(
                 1 for rp in risk_passes.values() if rp.get("passed")),
+            "framework_lenses_issued": sum(
+                1 for lenses in framework_lenses.values()
+                if all(lens.get("status") == "ok"
+                       for lens in lenses.values())),
         },
     }
