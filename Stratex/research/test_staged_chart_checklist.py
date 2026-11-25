@@ -29,7 +29,9 @@ from staged_chart_checklist import (  # noqa: E402
     add_indicators,
     check_min_rr,
     direction_from_regime,
+    fetch_for_venue,
     fetch_klines,
+    fetch_klines_kraken,
     klines_to_frame,
     run_pipeline,
     stage_data_quality,
@@ -262,6 +264,136 @@ class TestFetchKlines(unittest.TestCase):
                 return b'{"code": 0, "msg": "Service unavailable"}'
         with self.assertRaises(RuntimeError):
             fetch_klines("BTCUSDT", "1h", opener=lambda u, timeout=None: Resp())
+
+
+class TestFetchKlinesKraken(unittest.TestCase):
+    def _kraken_resp(self, rows, last=1795608000):
+        payload = {"error": [], "result": {"XXBTZUSD": rows, "last": last}}
+        body = json.dumps(payload).encode("utf-8")
+
+        class Resp:
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+            def read(self): return body
+        return lambda url, timeout=None: Resp()
+
+    def _kraken_rows(self, n=3, interval_min=60, end_at=None):
+        # Last row opens one interval before `end_at` so it is closed.
+        end = (end_at or NOW) - timedelta(minutes=interval_min)
+        rows = []
+        for i in range(n):
+            ts = int((end - (n - 1 - i) * timedelta(minutes=interval_min))
+                     .timestamp())
+            price = 80000.0 + i * 10.0
+            rows.append([ts, f"{price:.1f}", f"{price + 5:.1f}",
+                         f"{price - 5:.1f}", f"{price:.1f}",
+                         f"{price:.1f}", "1.5", 10])
+        return rows
+
+    def test_parses_ohlc_rows(self):
+        rows = fetch_klines_kraken(
+            "BTCUSDT", "1h", opener=self._kraken_resp(self._kraken_rows()),
+            now=NOW)
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(rows[0]["close"], 80000.0)
+        self.assertEqual(rows[-1]["close"], 80020.0)
+        # close_time is open + interval - 1ms (closed-candle convention).
+        self.assertEqual(
+            rows[0]["close_time"],
+            rows[0]["timestamp"] + timedelta(minutes=60)
+            - timedelta(milliseconds=1))
+
+    def test_forming_candle_dropped(self):
+        rows = self._kraken_rows(n=3)
+        # Append a still-forming candle opening at NOW.
+        rows.append([int(NOW.timestamp()), "80030.0", "80035.0", "80025.0",
+                     "80030.0", "80030.0", "0.5", 5])
+        got = fetch_klines_kraken(
+            "BTCUSDT", "1h", opener=self._kraken_resp(rows), now=NOW)
+        self.assertEqual(len(got), 3)
+        self.assertEqual(got[-1]["close"], 80020.0)
+
+    def test_limit_keeps_last_closed_rows(self):
+        rows = self._kraken_rows(n=5)
+        got = fetch_klines_kraken(
+            "BTCUSDT", "1h", limit=2,
+            opener=self._kraken_resp(rows), now=NOW)
+        self.assertEqual(len(got), 2)
+        self.assertEqual(got[0]["close"], 80030.0)
+
+    def test_error_envelope_surfaces(self):
+        payload = {"error": ["EGeneral:Internal error"], "result": {}}
+        body = json.dumps(payload).encode("utf-8")
+
+        class Resp:
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+            def read(self): return body
+        with self.assertRaises(RuntimeError) as ctx:
+            fetch_klines_kraken("BTCUSDT", "1h",
+                                opener=lambda u, timeout=None: Resp())
+        self.assertIn("EGeneral", str(ctx.exception))
+
+    def test_unmapped_symbol_fails_closed(self):
+        with self.assertRaises(RuntimeError) as ctx:
+            fetch_klines_kraken("ETHUSDT", "1h",
+                                opener=self._kraken_resp([]))
+        self.assertIn("no Kraken pair", str(ctx.exception))
+
+    def test_unsupported_interval_fails_closed(self):
+        with self.assertRaises(RuntimeError):
+            fetch_klines_kraken("BTCUSDT", "15m",
+                                opener=self._kraken_resp([]))
+
+    def test_http_error_surfaces_status(self):
+        def opener(url, timeout=None):
+            raise urllib.error.HTTPError(
+                url, 500, "Internal Server Error", {},
+                io.BytesIO(b'{"error":["EGeneral"]}'))
+        with self.assertRaises(RuntimeError) as ctx:
+            fetch_klines_kraken("BTCUSDT", "1h", opener=opener)
+        self.assertIn("500", str(ctx.exception))
+
+
+class TestVenueDispatch(unittest.TestCase):
+    def test_unknown_venue_rejected(self):
+        with self.assertRaises(ValueError):
+            fetch_for_venue("coinbase")
+        with self.assertRaises(ValueError):
+            run_pipeline("BTCUSDT", fetch_fn=lambda s, i, limit=250: [],
+                         venue="coinbase")
+
+    def test_kraken_venue_label_recorded(self):
+        def synthetic_fetch(symbol, interval, limit=250):
+            end_at = datetime.now(timezone.utc) - timedelta(
+                minutes=STEP_MIN[interval])
+            return make_rows(n=limit, interval=interval, drift=0.0005,
+                             end_at=end_at)
+        with tempfile.TemporaryDirectory() as tmp:
+            report = run_pipeline("BTCUSDT", fetch_fn=synthetic_fetch,
+                                  out_dir=tmp, venue="kraken")
+            self.assertIn("kraken", report["input_note"])
+            self.assertIn("kraken", report["sections"]["data_quality"]
+                          ["details"]["venue"])
+            self.assertEqual(
+                report["sections"]["fundamentals"]["details"]
+                ["available_facts"]["contract_type"],
+                "spot (Kraken XBTUSD)")
+
+    def test_demo_fapi_venue_label_unchanged(self):
+        def synthetic_fetch(symbol, interval, limit=250):
+            end_at = datetime.now(timezone.utc) - timedelta(
+                minutes=STEP_MIN[interval])
+            return make_rows(n=limit, interval=interval, drift=0.0005,
+                             end_at=end_at)
+        with tempfile.TemporaryDirectory() as tmp:
+            report = run_pipeline("BTCUSDT", fetch_fn=synthetic_fetch,
+                                  out_dir=tmp)
+            self.assertIn("demo-fapi", report["input_note"])
+            self.assertEqual(
+                report["sections"]["fundamentals"]["details"]
+                ["available_facts"]["contract_type"],
+                "USDT-M perpetual (Binance USD-margined futures)")
 
 
 class TestPipeline(unittest.TestCase):
