@@ -1523,7 +1523,7 @@ class FastPathMixin:
                     event_type="action",
                     tags=["desktop_action", intent.action_type.value],
                 )
-                memora_client.learn_from_outcome_async(
+                memora_client.report_task_outcome_async(
                     agent_name="friday",
                     task_name=intent.action_type.value,
                     status="success" if success else "failure",
@@ -1763,7 +1763,7 @@ class FastPathMixin:
                     event_type="fast_path_action",
                     tags=["fast_path", action_key],
                 )
-                memora_client.learn_from_outcome_async(
+                memora_client.report_task_outcome_async(
                     agent_name="friday",
                     task_name=action_key,
                     status="success" if success else "failure",

@@ -3466,6 +3466,19 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             _reply = "I couldn't identify one unique fact to correct, Boss. Tell me the exact earlier memory before I change anything."
         else:
             _reply = "I couldn't confirm the correction outcome, Boss. Check memory history before repeating it; I won't claim it is unsaved or retry automatically."
+        if _st in {"corrected", "stored_new_only"}:
+            # TASK-MEM-029: an applied owner correction is also a standing
+            # rule in the user model — the model's production write path.
+            # Only applied corrections are recorded: a refused or
+            # unconfirmed correction must not become a standing rule.
+            try:
+                _memora.record_owner_correction_async(
+                    field="owner_correction",
+                    value=_CORRECTION_TEXT,
+                    source_ref="owner-correction:memory-fast-path",
+                )
+            except Exception as _e:
+                logger.warning(f"Memora user-model correction skipped: {_e}")
         return {"reply": _reply, "metadata": {
             "fast_path": True, "conversational": True, "memory_correction": True,
             "correction_status": _st, "fact": _CORRECTION_TEXT,

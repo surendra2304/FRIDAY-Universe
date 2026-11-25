@@ -502,15 +502,16 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
         recalled_messages: list[Message] = []
 
         # Recall persistent long-term memories and self-upgraded operational guidelines from Memora
-        # TASK-FRD-003 (2026-11-15): the two Memora context legs are
+        # TASK-FRD-003 (2026-11-15): the Memora context legs are
         # independent reads (memory recall, 15s timeout; experience recall,
-        # 3.5s timeout) but ran SERIALLY before the first LLM call, so every
-        # cognitive turn paid both round trips end to end. They now run
+        # 3.5s timeout; user-model render, 3.5s timeout — TASK-MEM-029)
+        # but ran SERIALLY before the first LLM call, so every
+        # cognitive turn paid every round trip end to end. They now run
         # concurrently; block content and prompt ordering are unchanged
-        # (context block first, self-upgrade block second), each leg stays
-        # fail-open exactly as before, and per-leg timings ride out in the
-        # response metadata ("latency") so the saving is measurable in
-        # production, not just in tests.
+        # (context block first, self-upgrade block second, user-model
+        # block last), each leg stays fail-open exactly as before, and
+        # per-leg timings ride out in the response metadata ("latency")
+        # so the saving is measurable in production, not just in tests.
         memora_latency: dict[str, float] = {}
         try:
             from friday.memory.memora_client import memora_client
@@ -527,7 +528,7 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                 finally:
                     _leg_seconds[name] = round(time.perf_counter() - _leg_t0, 3)
 
-            with ThreadPoolExecutor(max_workers=2, thread_name_prefix="frd003-memora") as _pool:
+            with ThreadPoolExecutor(max_workers=3, thread_name_prefix="frd003-memora") as _pool:
                 _ctx_future = _pool.submit(
                     _timed_leg, "context",
                     lambda: memora_client.build_context_block("friday", goal),
@@ -536,17 +537,29 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                     _timed_leg, "self_upgrade",
                     lambda: memora_client.build_self_upgrade_context("friday", goal, domain="tool_execution"),
                 )
+                # TASK-MEM-029: the user-model consult — the model's
+                # production read path. Standing rules render here on
+                # every turn, so a recorded correction reaches the next
+                # prompt without a separate fetch.
+                _model_future = _pool.submit(
+                    _timed_leg, "user_model",
+                    lambda: memora_client.fetch_user_model_render("friday"),
+                )
                 memora_context = _ctx_future.result()
                 self_upgrade_context = _upgrade_future.result()
+                user_model_render = _model_future.result()
             memora_latency = {
                 "memora_context_wall_seconds": round(time.perf_counter() - _memora_t0, 3),
                 "memora_context_leg_seconds": _leg_seconds.get("context", 0.0),
                 "memora_self_upgrade_leg_seconds": _leg_seconds.get("self_upgrade", 0.0),
+                "memora_user_model_leg_seconds": _leg_seconds.get("user_model", 0.0),
             }
             if memora_context:
                 recalled_blocks.append(memora_context)
             if self_upgrade_context:
                 recalled_blocks.append(self_upgrade_context)
+            if user_model_render:
+                recalled_blocks.append(user_model_render)
             local_memories = (context or {}).get("recalled_memories", [])
             if isinstance(local_memories, list) and local_memories:
                 memory_limit = max(1, min(20, int(getattr(self.settings, "max_recalled_memories", 3))))
