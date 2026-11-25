@@ -636,10 +636,12 @@ class ToolExecutionMixin:
                 f"(Success: {not result.is_error})"
             )
             # Automatic Experience Learning & Self-Upgrading into Memora
+            # TASK-MEM-029: report_task_outcome_async fans the same event
+            # out to the skill-learning loop as well (pattern = tool name).
             try:
                 from friday.memory.memora_client import memora_client
                 if result.is_error:
-                    memora_client.learn_from_outcome_async(
+                    memora_client.report_task_outcome_async(
                         agent_name="friday",
                         task_name=tc.name,
                         status="failure",

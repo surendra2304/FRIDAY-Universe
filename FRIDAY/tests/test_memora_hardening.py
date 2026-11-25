@@ -25,7 +25,11 @@ def test_memora_cloud_is_default_when_friday_agent_key_is_configured(monkeypatch
 def test_memora_interaction_writes_cloud_before_local_fallback(monkeypatch):
     import json
 
-    captured = {}
+    # TASK-MEM-029: record_interaction now makes TWO cloud calls — the
+    # record-interaction POST first, then the session-capture POST
+    # (/v1/capture/events). Record every call so the assertions below
+    # check the record call, not whichever call happened last.
+    calls = []
 
     class Response:
         status = 201
@@ -37,9 +41,13 @@ def test_memora_interaction_writes_cloud_before_local_fallback(monkeypatch):
             return b'{"status":"success","recorded_count":1}'
 
     def fake_urlopen(request, timeout):
-        captured["url"] = request.full_url
-        captured["headers"] = request.headers
-        captured["payload"] = json.loads(request.data.decode())
+        calls.append(
+            {
+                "url": request.full_url,
+                "headers": request.headers,
+                "payload": json.loads(request.data.decode()),
+            }
+        )
         return Response()
 
     monkeypatch.setenv("FRIDAY_API_KEY", "friday-test-key")
@@ -50,9 +58,11 @@ def test_memora_interaction_writes_cloud_before_local_fallback(monkeypatch):
     result = client.record_interaction("friday", "hello", "hi")
 
     assert result["status"] == "success"
-    assert captured["url"].endswith("/v1/memories/record-interaction")
-    assert captured["headers"]["Authorization"] == "Bearer friday-test-key"
-    assert captured["payload"]["user_text"] == "hello"
+    assert len(calls) == 2
+    assert calls[0]["url"].endswith("/v1/memories/record-interaction")
+    assert calls[0]["headers"]["Authorization"] == "Bearer friday-test-key"
+    assert calls[0]["payload"]["user_text"] == "hello"
+    assert calls[1]["url"].endswith("/v1/capture/events")
 
 
 def test_memora_event_poll_uses_friday_key_and_cursor(monkeypatch):

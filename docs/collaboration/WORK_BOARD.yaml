@@ -17470,14 +17470,14 @@ tasks:
   - id: TASK-INF-030
 
     title: 'Inference: wire the APInex gateway (key already in S2 CREDENTIALS.md) as a free fallback provider behind the router, with a failover proof'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_2
     branch: muse2/task-inf-030-apinex-gateway-fallback
     pr: 1620
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T09:46:33+05:30'
+    updated_at: '2026-11-25T08:23:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17488,8 +17488,9 @@ tasks:
       - 'Assigned M2 queue position 2 (hub 7108903950).'
       - 'Claim: hub #1483 comment 7119147638 by Muse 2, 2026-11-24 ~07:00 IST. Board record verified AVAILABLE, owner muse_2, on main 1c754828 (board blob f0b6e0ad, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse2/task-inf-030-apinex-gateway-fallback. Queue: INF-030 (head) -> VOI-032.'
       - 'Work PR #1620 (code head dc201f5b): ApinexProvider wired as last cloud rung (free/qwen-3.8-max verified live 200/1.11s/cost 0 from S2); staging failover drill passed 2026-11-24 ~09:15 IST (groq+openrouter+gemini forced down, apinex served OK in 3.23s). Evidence doc docs/collaboration/TASK-INF-030-APINEX-FALLBACK.md. Live-copy wiring needs coordinator clearance.'
+      - 'Merged 2026-11-24 10:01 IST by Surendra (merge 3db55adf); work PR #1620, CI 10/10 green on head d54b2bbd. Board flip rides in TASK-MEM-029 work PR #1765.'
     blockers: []
-    next_action: 'Review work PR #1620; deploy + live proof need coordinator clearance.'
+    next_action: 'Deploy + live proof need coordinator clearance.'
   - id: TASK-VYR-049
 
     title: 'VyralX: enable the vyralx-metrics-sync.timer on S2 - restored in the 2026-11-23 AWS-exit move but never started, so her metrics are going stale'
@@ -17559,14 +17560,14 @@ tasks:
   - id: TASK-VOI-032
 
     title: 'Voice: the background-noise interruption defect - FRIDAY stops mid-answer when fan or room noise hits the microphone; reproduce, root-cause, fix'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_2
     branch: muse2/task-voi-032-background-noise-interruption
     pr: 1630
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T11:22:00+05:30'
+    updated_at: '2026-11-25T08:23:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17576,8 +17577,9 @@ tasks:
       - 'Assigned M2 queue position 3 (hub 7108903950): background-noise interruption defect.'
       - 'Claimed by Muse 2 on the hub (comment 7123027488, 2026-11-24 ~10:58 IST) as queue head after INF-030 MERGED (PR #1620, merge 3db55adf). Branch muse2/task-voi-032-background-noise-interruption from main bc303ea0. Board flip rides in the claim PR.'
       - 'Work PR #1630 (work commit 8e34a6c9): AAD start-sensitivity default HIGH -> LOW (shared default, both voice paths) + mic capture options pinned in VoiceCall.tsx + dead-knob warning at the session build. Root cause: under turn_detection=realtime_llm the server AAD is the sole interruption gate (local min_interruption_duration/resume guards inert on livekit-agents 1.8.11 — proven offline with a real AgentSession/Activity: 5 s VAD event interrupts nothing, server input_speech_started interrupts unconditionally); VOI-024 pacing diagnosis dissolves the HIGH revert premise. Evidence doc docs/collaboration/TASK-VOI-032-BACKGROUND-NOISE-INTERRUPTION.md. Live calm-vs-noise A/B still owed (calm window + coordinator clearance, coordinate with Muse 6).'
+      - 'Merged 2026-11-24 14:27 IST by Surendra (merge 421fee87); work PR #1630, CI 11/11 green on head 5cc2f3c1. Board flip rides in TASK-MEM-029 work PR #1765.'
     blockers: []
-    next_action: 'Merge review; live calm-vs-noise A/B owed after merge + deploy clearance (coordinate with Muse 6; keep distinct from the VOI-028 greeting-onset re-probe).'
+    next_action: 'Live calm-vs-noise A/B owed after deploy clearance (coordinate with Muse 6; keep distinct from the VOI-028 greeting-onset re-probe).'
   - id: TASK-VYR-050
 
     title: 'VyralX: enable the restored vyralx-metrics-sync.timer on S2 and prove metrics freshness end-to-end'
@@ -18418,14 +18420,14 @@ tasks:
 
   - id: TASK-VOI-036
     title: 'FRIDAY voice: acceptance run 21 - next calm-window run after VOI-035 (run 20); per-probe latency filed'
-    status: CLAIMED
-    owner: muse_2
-    branch: muse2/task-voi-036-acceptance-run-21
+    status: AVAILABLE
+    owner: null
+    branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T14:44:00+05:30'
+    updated_at: '2026-11-25T08:23:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18434,8 +18436,9 @@ tasks:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; sequel to VOI-035 (run 20, Muse 13 queue pos 3). Pool floor refill.'
       - 'Assigned to Muse 2 queue position 3 by coordinator watch 2026-11-24 ~06:55 IST (hub #1483) - after INF-030 + VOI-032. Claim it when it reaches the head.'
       - 'Claim: hub #1483 comment 7127132406 by Muse 2, 2026-11-24 ~14:44 IST. Board record verified AVAILABLE, owner muse_2, on main 421fee87 (board blob 415bcf6d, 18,764 lines, verified against the true main blob before editing). Branch muse2/task-voi-036-acceptance-run-21. Queue head after INF-030 MERGED (PR #1620) and VOI-032 MERGED (PR #1630). Work-request cycle stands down while claimed.'
+      - 'Released 2026-11-24 22:40 IST per coordinator ruling 7137935600 (21:37 watch): run leg held under the owner stop order with no sequencing ruling that lets it execute; blocked-head rule applies. Board flip rides in TASK-MEM-029 work PR #1765.'
     blockers: []
-    next_action: 'Claimed; calm-window probe pending - run 21 in the next calm window, per-probe latency vs the 8s greeting-onset bar; run 22 (VOI-037, Muse 9) follows.'
+    next_action: 'Available in the pool; re-pullable if the freeze lifts and run 21 is sequenced.'
 
   - id: TASK-VYR-054
     title: 'VyralX: supervised cycle 5 candidate pool - most-popular discovery + machine QA gates'
@@ -19608,14 +19611,14 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-MEM-029
     title: 'Memora: production callers for the three shipped-but-never-invoked services'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_2
+    branch: muse2/task-mem-029-production-callers
+    pr: 1765
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T08:23:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19623,8 +19626,10 @@ tasks:
     - 'One evidenced cycle each: a learned skill, a user-model update, a captured session.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-MEM-WIRE (IG package ME-02 + ME-D1, audit-confirmed zero production callers). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Claim: hub #1483 comment 7150521485 by Muse 2, 2026-11-25 ~07:50 IST. Board record verified AVAILABLE, owner null, on main 72f5a7ae (board blob 067e47f3, 22,497 lines, verified against the true main blob before editing). Branch muse2/task-mem-029-production-callers.'
+    - 'Work PR #1765 (code head 6ca296fb): FRIDAY MemoraClient production callers - skill outcomes fan out from every learn-outcome site, owner corrections land as user-model standing rules + model renders every turn, every turn captured as a session event with compress at session end. 21 new tests (FRIDAY/tests/test_mem029_production_callers.py, stub Memora), file runs in the FRIDAY CI step. Evidence doc docs/collaboration/TASK-MEM-029-PRODUCTION-CALLERS.md. Live proof gated by the owner stop order; deploy needs coordinator clearance.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Peer merge review of work PR #1765; deploy + live proof need coordinator clearance (owner stop order in force).'
   - id: TASK-MEM-030
     title: 'Memora: Obsidian-vault second-brain presentation plus nightly per-agent work summaries'
     status: AVAILABLE
