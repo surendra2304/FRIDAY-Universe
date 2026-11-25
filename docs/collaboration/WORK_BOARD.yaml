@@ -18453,16 +18453,17 @@ tasks:
 
   - id: TASK-VOI-036
     title: 'FRIDAY voice: acceptance run 21 - next calm-window run after VOI-035 (run 20); per-probe latency filed'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_1
+    branch: muse1/task-voi-036-acceptance-run-21
+    pr: 1802
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T08:23:00+05:30'
+    updated_at: '2026-11-25T13:52:06+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-VOI-036-ACCEPTANCE-RUN-21.md
     acceptance:
       - 'Per-probe latency filed with a pass/fail verdict on the 8s greeting-onset bar.'
     evidence:
@@ -18470,8 +18471,10 @@ tasks:
       - 'Assigned to Muse 2 queue position 3 by coordinator watch 2026-11-24 ~06:55 IST (hub #1483) - after INF-030 + VOI-032. Claim it when it reaches the head.'
       - 'Claim: hub #1483 comment 7127132406 by Muse 2, 2026-11-24 ~14:44 IST. Board record verified AVAILABLE, owner muse_2, on main 421fee87 (board blob 415bcf6d, 18,764 lines, verified against the true main blob before editing). Branch muse2/task-voi-036-acceptance-run-21. Queue head after INF-030 MERGED (PR #1620) and VOI-032 MERGED (PR #1630). Work-request cycle stands down while claimed.'
       - 'Released 2026-11-24 22:40 IST per coordinator ruling 7137935600 (21:37 watch): run leg held under the owner stop order with no sequencing ruling that lets it execute; blocked-head rule applies. Board flip rides in TASK-MEM-029 work PR #1765.'
+      - 'Claim: hub #1483 comment 7156377968 by Muse 1, 2026-11-25 ~13:24 IST, on coordinator watch086 assignment (7156322977). Board verified AVAILABLE, owner null, branch null, pr null, P1, on main 2c6f913. Branch muse1/task-voi-036-acceptance-run-21. Board flip rides in the work PR.'
+      - 'Acceptance run 21 done 2026-11-25 ~13:34-13:46 IST on FRIDAY-Server (room friday-frd005-20261125-080422, provider gemini-realtime:gemini-3.8-live): greeting onset 0.68s vs 8s bar PASS; all 7 turns inside silence limits. Overall scorer FAIL on content (order-based fallback attribution); first-hand journal read: clock/recall/goodbye/followup answers WERE given (teal recall at 08:13:55 UTC verifies the Memora read path, second run in a row); delegation figures ARE in the journal this run (balance 10,444.12, 30 open, 82 closed at 08:08:59 UTC) — the run-20 genuine gap is closed. Evidence: docs/collaboration/TASK-VOI-036-ACCEPTANCE-RUN-21.md.'
     blockers: []
-    next_action: 'Available in the pool; re-pullable if the freeze lifts and run 21 is sequenced.'
+    next_action: 'Run filed; work PR open, merge is for Muse. Next assignment per coordinator watch.'
 
   - id: TASK-VYR-054
     title: 'VyralX: supervised cycle 5 candidate pool - most-popular discovery + machine QA gates'
@@ -19969,6 +19972,7 @@ tasks:
     updated_at: '2026-11-25T14:26:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-069-WHAT-IF-STORY-TEMPLATE.md
     acceptance:
     - 'The what-if format is a validated registry template: one counterfactual premise, single narrator, chaptered escalation, cliffhanger ending, episode series - alongside the stick-figure template (TASK-VYR-062).'
     evidence:
