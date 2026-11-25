@@ -22846,7 +22846,7 @@ tasks:
     status: IN_REVIEW
     owner: muse_1
     branch: muse1/task-voi-043-zero-dropped-fragments-no-arbitrary-cancellation
-    pr: null
+    pr: 1856
     contributors: []
     priority: P0
     created_at: '2026-11-25T16:06:00+05:30'
@@ -22864,7 +22864,7 @@ tasks:
     - 'Filed by coordinator watch094 (2026-11-25, hub #1483) from the owner live-test P0 post 7159737257: owner verdict ''It is not understanding anything''; journal 10:24-10:25 UTC shows fragments answered, English transcribed in Hindi/Telugu script, one dropped fragment never dispatched, her speech cut mid-answer. Assigned as P0 head to Muse 7, preempting queue (VOI-040/VYR-058/INF-032/INT-038 paused, owners unchanged); Muse 1 takes (a)+(b) under VOI-042. Voice status in ALL reporting is now NOT WORKING until the owner re-tests and accepts.'
     - 'Coordinator watch097 (2026-11-25): re-slotted Muse 7 to Muse 1 - M7 never claimed (no hub claim, no branch) ~75 min after the P0 assignment despite nudge + directive demand; M7 keeps VOI-040/VYR-058. Queue position 2 for Muse 1 behind FRD-053.'
     - 'CLAIMED by Muse 1 2026-11-25 ~18:55 IST (hub 7163799902, WATCH097 re-slot M7 to M1). Branch muse1/task-voi-043-zero-dropped-fragments-no-arbitrary-cancellation.'
-    - 'P0 legs (c)+(d) implemented: (c) fragment path is script-aware (non-Latin finals recover) + a cancelled bridge call settles its flight so suspects become due; (d) activity handling NO_INTERRUPTION by default (env FRIDAY_VOICE_AAD_ACTIVITY_HANDLING restores barge-in); 14 new tests, 1 pin deliberately replaced (VOI-032 activity handling). Evidence: docs/collaboration/TASK-VOI-043-ZERO-DROPPED-FRAGMENTS-NO-ARBITRARY-CANCELLATION.md. Live leg BLOCKED on Muse hub clearance + owner re-test; voice NOT WORKING until accepted. Board flips in this work PR: VOI-043 AVAILABLE to IN_REVIEW + FRD-053 IN_REVIEW to MERGED (work PR #1833 merged 1d7e9592).'
+    - 'P0 legs (c)+(d) implemented: (c) fragment path is script-aware (non-Latin finals recover) + a cancelled bridge call settles its flight so suspects become due; (d) activity handling NO_INTERRUPTION by default (env FRIDAY_VOICE_AAD_ACTIVITY_HANDLING restores barge-in); 14 new tests, 1 pin deliberately replaced (VOI-032 activity handling). Evidence: docs/collaboration/TASK-VOI-043-ZERO-DROPPED-FRAGMENTS-NO-ARBITRARY-CANCELLATION.md. Live leg BLOCKED on Muse hub clearance + owner re-test; voice NOT WORKING until accepted. Board flips in this work PR #1856: VOI-043 AVAILABLE to IN_REVIEW + FRD-053 IN_REVIEW to MERGED (work PR #1833 merged 1d7e9592).'
     blockers: []
     next_action: 'Queue position 2 for Muse 1 behind FRD-053 (coordinator watch097): P0 re-slot from Muse 7. Fix (c) then (d); file journal + live-test evidence per fix. Owner re-test is the acceptance verdict.'
   - id: TASK-IG2-FRD-03-FIX-01
