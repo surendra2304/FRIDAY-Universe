@@ -207,7 +207,8 @@ jobs:
             Inference/tests/test_key_inventory_report.py \
             Inference/tests/test_universal_task_and_waterfall.py \
             Inference/tests/test_inf042_free_tier_routes.py \
-            Inference/tests/test_inf038_needle_router.py
+            Inference/tests/test_inf038_needle_router.py \
+            Inference/tests/test_inf039_bytez_guard.py
       - name: Futuris health-capability contracts (TASK-REL-067)
         env:
           PYTHONPATH: Futuris
