@@ -69,7 +69,7 @@ Method note: all work through the GitHub REST API only (API-only per the STR-077
 ## 6. Board flips (ride in this PR)
 
 - **MEM-029 IN_REVIEW → MERGED** (work PR #1765, merge `c4267ca1`, 2026-11-25 03:39:41Z, by Surendra).
-- **MEM-030 AVAILABLE → IN_REVIEW** (owner `muse_2`, branch `muse2/task-mem-030-obsidian-second-brain`, pr 1772). Note: the assignment brief said CLAIMED, but no claim PR exists for this task (claim was hub comment 7152738824 only), so the single work PR carries the flip straight to IN_REVIEW — the state every prior work PR used at open (FRD-041, INF-030, VOI-032, MEM-029), and the resolution the MEM-029 evidence doc records for the identical wording.
+- **MEM-030 AVAILABLE → CLAIMED** (owner `muse_2`, branch `muse2/task-mem-030-obsidian-second-brain`, pr 1772). Correction (repair pass): the first version of this PR carried the flip as IN_REVIEW; it is corrected here to CLAIMED, the claim state the assignment brief asked for — the task is claimed (hub comment 7152738824) and this work PR carries the claim record.
 
 All old lines were verified against the true main board blob (`e997ed62`, 22,565 lines, main `c52daf14`) before editing — exact-match only. No other record touched.
 
