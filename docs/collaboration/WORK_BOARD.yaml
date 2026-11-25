@@ -18072,14 +18072,14 @@ tasks:
 
   - id: TASK-FRD-043
     title: 'FRIDAY: deploy the FRD-041 OOM memory guard live with staged pressure proof and Telegram delivery'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_15
-    branch: null
+    branch: muse15/task-frd-043-oom-memory-guard
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T03:49:06+05:30'
+    updated_at: '2026-11-25T19:45:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18087,8 +18087,9 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; the deploy leg Muse 2 named as owed after PR #1548 merges (hub 7111030331). No live change until coordinator clearance is given. Pool floor refill.'
       - 'Assigned to Muse 15 by coordinator watch 2026-11-24 ~03:55 IST (hub #1483) — queue head, after STR-050; EARN-006 sits queue position 3. Claim it now (hub claim + branch push from main 107814b4).'
+      - 'Claimed by Muse 15 2026-11-25 ~18:25 IST (hub 7163026128) per WATCH099; HOLD STANDS per WATCH100 (7163804244) — no deploy clearance, fleet CD broken (repair needs owner word); no live change. Branch muse15/task-frd-043-oom-memory-guard at b9a4c8cf (behind current main — fast-forward owed when clearance lands).'
     blockers: []
-    next_action: 'After PR #1548 merges and clearance, deploy with staged proof, file the evidence.'
+    next_action: 'HOLD — deploy only on coordinator clearance + CD repair; branch stands ready.'
 
   - id: TASK-CTX-007
     title: 'Cortex: post-#1054 escalation ratio run 3 - fires vs messages actually sent over the last 48h of live logs'
@@ -22879,24 +22880,31 @@ tasks:
     next_action: 'Queue position 2 for Muse 1 behind FRD-053 (coordinator watch097): P0 re-slot from Muse 7. Fix (c) then (d); file journal + live-test evidence per fix. Owner re-test is the acceptance verdict.'
   - id: TASK-IG2-FRD-03-FIX-01
     title: 'FRIDAY fix: lead_generate (IG2-FRD-03) - capability router lead rule + FindYello/JaRanks source repair'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
+    branch: muse15/task-ig2-frd-03-fix-01
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T17:20:00+05:30'
+    updated_at: '2026-11-25T19:45:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-IG2-FRD-03-FIX-01-EVIDENCE.md
+    - FRIDAY/src/friday/routing/capability_router.py
+    - FRIDAY/src/friday/autonomous/lead_generation.py
+    - FRIDAY/tests/test_capability_routing.py
+    - FRIDAY/tests/test_ig2_frd03_lead_generation.py
+    - .github/workflows/friday-universe-ci.yml
     acceptance:
     - 'Natural lead requests reach the lead_generate tool (capability router gains a lead rule); explicit FindYello and JaRanks runs return real leads with phones/emails, not 403s or empty rows.'
     - 'Live evidence per source (FindYello, JaRanks) on the live FRIDAY path; a source that stays blocked gets a named replacement or a written verdict, not a silent pass.'
     evidence:
     - 'Named by Muse 15 in TASK-FRD-054 (work PR #1828, merged d15c82c9; hub 7160841834): IG2-FRD-03 NOT VERIFIED - natural requests never reach the tool (capability router has no lead rule; DIRECT_REASONING score -16.5, Avoided External: True); explicit FindYello run 403s; explicit JaRanks run returns 65 rows with 0 phones / 0 emails + nav junk.'
     - 'Coordinator watch097 (2026-11-25): filed + assigned to Muse 15 as queue position 3 behind FRD-045 and FRD-043 (same worker who found the failure).'
+    - 'Claimed by Muse 15 2026-11-25 ~19:01 IST (hub 7163894360), re-slotted from the pool per WATCH099 (FRD-043 hold stands). COMPLETE with live evidence (evidence docs/collaboration/TASK-IG2-FRD-03-FIX-01-EVIDENCE.md, work PR open): PARTIAL — router + parser VERIFIED live on FRIDAY-Server (59 tests green in the service venv; verbatim FRD-054 utterances route TOOL_EXECUTION/lead_generate; real JaRanks page yields 16/16 providers + profile URLs, zero garbage phones); FindYello BLOCKED (Cloudflare JS challenge, site-wide, cf-ray SYD); JaRanks NOT a contact source (0/16 profiles publish a phone or email); end-to-end /api/chat leg owed on deploy (merge + CD repair or coordinator deploy ruling).'
     blockers: []
-    next_action: 'Queue position 3 for Muse 15 behind FRD-045 and FRD-043 (coordinator watch097): fix the router rule and the two sources, file live evidence per source. Claim via hub #1483 when FRD-043 closes.'
+    next_action: 'IN_REVIEW — work PR open for merge (Muse''s call); end-to-end /api/chat leg + replacement-directory decision owed on deploy.'
   - id: TASK-IG-FRD-010-RETEST-01
     title: 'FRIDAY: re-run the IG-FRD-010 lock leg with the owner laptop connected'
     status: AVAILABLE

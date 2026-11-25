@@ -303,6 +303,27 @@ class CapabilityRouter:
         "send a whatsapp message", "whatsapp message to",
         "message on whatsapp", "open the whatsapp chat",
     }
+    # TASK-IG2-FRD-03-FIX-01 (2026-11-25): keywords signaling a delegated
+    # lead-generation errand. The live failure (FRD-054, 2026-11-25): "Generate
+    # leads for me from this business directory page ..." routed to
+    # DIRECT_REASONING (score -16.5) and the LLM answered with a how-to-scrape
+    # guide — lead_generate NEVER EXECUTED. A lead request is a factual
+    # fetch-and-extract errand over a public directory: it must reach
+    # lead_generate (fetch -> parse -> dedupe -> contact table), never a
+    # conversational guess about the directory. Deliberately NARROW: bare
+    # "leads" (verb — "he leads the team") and bare "directory" / "scrape" /
+    # "contact list" (owner's own contacts, code tasks) do NOT fire it; the
+    # phrases below name the errand or its directory artifact. Source names
+    # (findyello, jaranks) are included: a request naming one of the
+    # directories IS a lead errand by construction of this tool's domain.
+    LEAD_KEYWORDS = {
+        "generate leads", "generate lead", "lead generation",
+        "lead_generate", "find leads", "find me leads", "get leads",
+        "get me leads", "leads for", "leads from", "lead list",
+        "business directory", "directory listing", "directory page",
+        "business contacts", "find businesses", "list businesses",
+        "scrape the directory", "scrape leads", "findyello", "jaranks",
+    }
 
     # TASK-ORCH-001 (2026-11-10): keyword checks use whole-word/phrase boundaries.
     # The previous substring matching misrouted live traffic: "run a quick research
@@ -360,6 +381,7 @@ class CapabilityRouter:
         "DICTIONARY_KEYWORDS",
         "GMAIL_DRAFT_KEYWORDS",
         "WHATSAPP_OPEN_KEYWORDS",
+        "LEAD_KEYWORDS",
     )
 
     def deterministic_match_count(self, text: str) -> int:
@@ -417,6 +439,7 @@ class CapabilityRouter:
             or self._matches(clean_input, self.DICTIONARY_KEYWORDS)
             or self._matches(clean_input, self.GMAIL_DRAFT_KEYWORDS)
             or self._matches(clean_input, self.WHATSAPP_OPEN_KEYWORDS)
+            or self._matches(clean_input, self.LEAD_KEYWORDS)
         )
         # Checklist C12 (batch 3): chained instructions ("research X, then
         # draft the script about it") are multi-stage dispatches, never plain
@@ -429,7 +452,7 @@ class CapabilityRouter:
         except Exception:
             chained = False
         is_conversational = is_conversational and not chained
-        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS) or self._matches(clean_input, self.FORECAST_KEYWORDS) or self._matches(clean_input, self.SCRIPT_KEYWORDS) or self._matches(clean_input, self.WEB_OPS_KEYWORDS) or self._matches(clean_input, self.MEMORA_OP_KEYWORDS) or self._matches(clean_input, self.FETCH_SUMMARIZE_KEYWORDS) or (self._matches(clean_input, self.RENDER_KEYWORDS) or self._matches(clean_input, self.PROJECT_KEYWORDS)) or self._matches(clean_input, self.PUBLISH_KEYWORDS) or self._matches(clean_input, self.ALERT_KEYWORDS) or self._matches(clean_input, self.DICTIONARY_KEYWORDS) or self._matches(clean_input, self.GMAIL_DRAFT_KEYWORDS) or self._matches(clean_input, self.WHATSAPP_OPEN_KEYWORDS)):
+        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS) or self._matches(clean_input, self.FORECAST_KEYWORDS) or self._matches(clean_input, self.SCRIPT_KEYWORDS) or self._matches(clean_input, self.WEB_OPS_KEYWORDS) or self._matches(clean_input, self.MEMORA_OP_KEYWORDS) or self._matches(clean_input, self.FETCH_SUMMARIZE_KEYWORDS) or (self._matches(clean_input, self.RENDER_KEYWORDS) or self._matches(clean_input, self.PROJECT_KEYWORDS)) or self._matches(clean_input, self.PUBLISH_KEYWORDS) or self._matches(clean_input, self.ALERT_KEYWORDS) or self._matches(clean_input, self.DICTIONARY_KEYWORDS) or self._matches(clean_input, self.GMAIL_DRAFT_KEYWORDS) or self._matches(clean_input, self.WHATSAPP_OPEN_KEYWORDS) or self._matches(clean_input, self.LEAD_KEYWORDS)):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.DIRECT_REASONING,
                 estimated_cost_usd=0.0,
@@ -704,6 +727,25 @@ class CapabilityRouter:
                 is_local_deterministic=False,
                 required_tools=["open_whatsapp"],
                 rationale="WhatsApp open: launch the chat via the whatsapp tool (was registered but unrouted — I6 wired it).",
+            ))
+
+        # TASK-IG2-FRD-03-FIX-01: Evaluate Lead Generation — "generate leads
+        # from this business directory page ..." is a delegated fetch-and-
+        # extract errand over a public directory, not a conversation. The
+        # live FRD-054 failure routed exactly this class to DIRECT_REASONING
+        # (score -16.5) and the LLM answered with a how-to-scrape guide while
+        # lead_generate never executed. It must reach lead_generate (fetch ->
+        # parse -> dedupe -> contact table, no outreach).
+        if self._matches(clean_input, self.LEAD_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=5000.0,
+                confidence=0.92,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=False,
+                required_tools=["lead_generate"],
+                rationale="Lead-generation errand: fetch the named business directory, extract structured contacts, deliver the table (no outreach).",
             ))
 
         # 3. Evaluate Local Computation (e.g. system time or simple arithmetic)

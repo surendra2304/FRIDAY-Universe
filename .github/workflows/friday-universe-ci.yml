@@ -178,6 +178,11 @@ jobs:
       # TASK-FRD-045: tests/test_ig_frd_001_goal_loop.py (uncollected since
       # it landed) and tests/test_frd_045_woop.py ride in this invocation
       # for the same REL-068 reason; both run in this venv.
+      # TASK-IG2-FRD-03-FIX-01: tests/test_capability_routing.py (uncollected
+      # since it landed; this PR's router change surfaced it) and
+      # tests/test_ig2_frd03_lead_generation.py (new in this PR) ride in this
+      # invocation for the same REL-068 reason; both run in this venv
+      # (stdlib + friday.core imports only).
       # FRIDAY/requirements.txt + pytest + pytest-asyncio (the suite uses
       # @pytest.mark.asyncio; requirements.txt lacks the plugin). Proven
       # locally on current main: 86 passed, 0 failed, 0 deselects - see
@@ -201,7 +206,8 @@ jobs:
             tests/test_frd044_spotify_voice_control.py \
             tests/test_laptop_bridge_lap001.py \
             tests/test_mem029_production_callers.py \
-            tests/test_ig_frd_001_goal_loop.py tests/test_frd_045_woop.py
+            tests/test_ig_frd_001_goal_loop.py tests/test_frd_045_woop.py \
+            tests/test_capability_routing.py tests/test_ig2_frd03_lead_generation.py
 
       # TASK-REL-088: Memora tier-1 tests. Same venv pattern as the vector
       # step above, plus pytest + pytest-asyncio; same env, but a separate

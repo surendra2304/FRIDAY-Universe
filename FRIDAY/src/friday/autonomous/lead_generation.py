@@ -33,9 +33,56 @@ from urllib.parse import urljoin, urlparse
 
 MAX_PAGES = 5
 MAX_LEADS = 200
+# TASK-IG2-FRD-03-FIX-01: detail-page enrichment budget. Editorial list
+# pages (JaRanks) carry names + descriptions but no contacts in the listing
+# block — the phone/email live on the listing's own detail page. Leads that
+# lack both are enriched from their same-host detail link, bounded here.
+MAX_DETAIL_FETCHES = 20
 _EMAIL_RE = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
 _PHONE_RE = re.compile(r"\+?\d[\d\s\-()]{6,}\d")
+# Browser-like request headers (TASK-IG2-FRD-03-FIX-01). The live failure
+# (FRD-054): FindYello 403'd the fetcher's "FRIDAY-LeadGen/1.0" User-Agent
+# (bot protection). A delegated fetch of a public directory sends what a
+# browser sends; the tool still reports honestly when a site refuses it.
+_BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+}
 _ALLOWED_PORTS = {80, 443}
+
+
+def _clean_phone(raw: str) -> str:
+    """Normalise a phone candidate, or "" when it is not a usable phone.
+
+    Guards the junk classes the bare regex admits on real pages (live
+    JaRanks probe, 2026-11-25): ISO dates (``2026-11-25``), epoch-millis
+    timestamps (``1739935912555``), long IDs (``133146406741``) and
+    digit-dash fragments (``26947469-800``, ``221-0821-41``) harvested
+    from inline JSON. A real contact number has 7-15 digits and a phone
+    shape: a lone digit run is accepted only as a 7-digit local number,
+    a 10-digit NANP number, or an explicit ``+`` international number;
+    a separated number must end in a 4-digit subscriber group.
+    """
+    text = (raw or "").strip()
+    if not text:
+        return ""
+    digits = re.sub(r"\D", "", text)
+    if len(digits) < 7 or len(digits) > 15:
+        return ""
+    if re.fullmatch(r"(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])", digits):
+        return ""
+    groups = [g for g in re.split(r"\D+", text) if g]
+    if len(groups) == 1:
+        if text.startswith("+") or len(digits) in (7, 10):
+            return text
+        return ""
+    if len(groups[-1]) != 4:
+        return ""
+    return text
 
 
 class LeadGenError(ValueError):
@@ -95,27 +142,79 @@ class _ListingParser(HTMLParser):
     ``card``, ``result``) — its text, ``tel:``/``mailto:`` links and first
     outbound link become one Lead. Pages with no hinted blocks fall back
     to contact-detail extraction from the whole page text.
+
+    TASK-IG2-FRD-03-FIX-01: two tightenings, from the live JaRanks failure
+    (FRD-054: 65 rows, 0 phones/emails, nav junk as leads). (1) Chrome
+    exclusion — blocks are never opened inside ``<nav>``/``<header>``/
+    ``<footer>`` (the "JaRanks", "Home", "How we chose", "Profile" rows
+    were header/nav/footer items whose classes hint at a listing). (2) The
+    name is the first text chunk with a real word in it, so a bare list
+    number ("1.") never becomes the business name.
     """
 
-    _HINTS = ("listing", "business", "company", "card", "result", "item")
+    _HINTS = ("listing", "business", "company", "card", "result", "results",
+               "item")
+    _CHROME_TAGS = ("nav", "header", "footer")
+    # Void elements have no end tag: counting them in the block depth would
+    # leave the depth permanently elevated, so a block opened before an
+    # <img> would swallow every following sibling until the page ends
+    # (found via the JaRanks logo <img> inside a "rounded-card" div).
+    _VOID_TAGS = frozenset({
+        "area", "base", "br", "col", "embed", "hr", "img", "input", "link",
+        "meta", "param", "source", "track", "wbr",
+    })
+
+    @staticmethod
+    def _hinted(classes: str) -> bool:
+        """Whole-token hint match on a class/id string.
+
+        TASK-IG2-FRD-03-FIX-01: substring matching false-fires on Tailwind
+        utilities — "item" inside "items-center" opened a block per tag row
+        (the spurious "Motor" leads). Tokens are split on whitespace,
+        hyphens and underscores, so "listing-card" still matches ("listing",
+        "card") while "items-center" ("items", "center") does not.
+        """
+        tokens = re.split(r"[\s\-_]+", classes.lower())
+        return any(h in tokens for h in _ListingParser._HINTS)
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.blocks: list[dict] = []
         self._current: dict | None = None
         self._depth = 0
+        self._chrome_depth = 0
+        self._skip_depth = 0
         self.next_url = ""
         self.page_text: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list) -> None:
+        # Script/style bodies are code, not visible content: inline JSON
+        # (IDs, epoch timestamps, counters) must never become a lead name,
+        # phone or email. Skipped before any other bookkeeping so the
+        # block depth stays balanced (both tags return early).
+        if tag in ("script", "style"):
+            self._skip_depth += 1
+            return
+        if self._skip_depth:
+            return
         attr = dict(attrs)
         classes = f"{attr.get('class', '')} {attr.get('id', '')}".lower()
-        if self._current is None and any(h in classes for h in self._HINTS):
+        # Pagination lives in <nav> on most directories — the "next" link is
+        # read before the chrome exclusion below, or pagination breaks.
+        if tag == "a" and "next" in re.split(r"[\s\-_]+", classes):
+            self.next_url = attr.get("href", "")
+        if tag in self._CHROME_TAGS:
+            self._chrome_depth += 1
+            return
+        if self._chrome_depth:
+            return
+        if self._current is None and self._hinted(classes):
             self._current = {"text": [], "tel": "", "mailto": "", "href": ""}
             self._depth = 1
             return
         if self._current is not None:
-            self._depth += 1
+            if tag not in self._VOID_TAGS:
+                self._depth += 1
             href = attr.get("href", "")
             if href.startswith("tel:") and not self._current["tel"]:
                 self._current["tel"] = href[4:]
@@ -123,10 +222,26 @@ class _ListingParser(HTMLParser):
                 self._current["mailto"] = href[7:]
             elif href.startswith(("http://", "https://")) and not self._current["href"]:
                 self._current["href"] = href
-        if tag == "a" and "next" in classes:
-            self.next_url = attr.get("href", "")
+            # TASK-IG2-FRD-03-FIX-01: relative links are the norm on modern
+            # directories (JaRanks profile links are "/profile/...") — capture
+            # the first usable href of any shape; parse_listing_page joins it
+            # against the page URL. Fragments and javascript: links are not
+            # detail pages.
+            elif (href and not href.startswith(("#", "javascript:"))
+                    and not self._current["href"]):
+                self._current["href"] = href
 
     def handle_endtag(self, tag: str) -> None:
+        if tag in ("script", "style"):
+            self._skip_depth = max(0, self._skip_depth - 1)
+            return
+        if self._skip_depth:
+            return
+        if tag in self._CHROME_TAGS:
+            self._chrome_depth = max(0, self._chrome_depth - 1)
+            return
+        if self._chrome_depth:
+            return
         if self._current is not None:
             self._depth -= 1
             if self._depth <= 0:
@@ -134,6 +249,8 @@ class _ListingParser(HTMLParser):
                 self._current = None
 
     def handle_data(self, data: str) -> None:
+        if self._skip_depth or self._chrome_depth:
+            return
         text = data.strip()
         if text:
             self.page_text.append(text)
@@ -141,26 +258,189 @@ class _ListingParser(HTMLParser):
                 self._current["text"].append(text)
 
 
-def parse_listing_page(html_text: str, page_url: str, category: str = "") -> tuple[list[Lead], str]:
-    """Parse one listing page -> (leads, next_page_url_or_empty)."""
+def _pick_name(chunks: list[str]) -> str:
+    """First chunk with a real word in it (skips bare list numbers)."""
+    for chunk in chunks:
+        if len(re.sub(r"\W", "", chunk)) >= 3:
+            return chunk[:120]
+    return (chunks[0][:120] if chunks else "")
+
+
+class _HeadingParser(HTMLParser):
+    """Fallback listing extraction for pages with no hinted blocks.
+
+    Modern directories (JaRanks, live 2026-11-25) use Tailwind utility
+    classes — no ``listing``/``business``/``card`` hook exists anywhere in
+    the markup, so the hint parser finds zero providers. The structure that
+    DOES survive is the heading: each provider is an ``<h2>``/``<h3>``
+    carrying a link to its own profile page, followed by its description
+    and meta rows. A section is one heading plus the text up to the next
+    heading; the heading link becomes the detail-page URL. Parsed alongside
+    the hint blocks (union, not either/or) and deduped downstream.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.blocks: list[dict] = []
+        self._current: dict | None = None
+        self._in_heading = False
+        self._chars = 0
+        self._chrome_depth = 0
+        self._skip_depth = 0
+
+    def _close(self) -> None:
+        if self._current is not None:
+            self.blocks.append(self._current)
+            self._current = None
+        self._in_heading = False
+        self._chars = 0
+
+    def handle_starttag(self, tag: str, attrs: list) -> None:
+        if tag in ("script", "style"):
+            self._skip_depth += 1
+            return
+        if self._skip_depth:
+            return
+        if tag in _ListingParser._CHROME_TAGS:
+            self._chrome_depth += 1
+            return
+        if self._chrome_depth:
+            return
+        if tag in ("h2", "h3"):
+            self._close()
+            self._current = {"text": [], "tel": "", "mailto": "", "href": "",
+                             "heading": []}
+            self._in_heading = True
+            return
+        if self._current is not None and tag == "a" and self._in_heading:
+            # Only links INSIDE the heading are the section's detail link.
+            # A link collected from the section body (e.g. a footer
+            # "newsletter" link trailing the last section) would send the
+            # enrichment fetch to the wrong page and misattribute its
+            # contacts to this heading.
+            href = dict(attrs).get("href", "")
+            if href.startswith("tel:") and not self._current["tel"]:
+                self._current["tel"] = href[4:]
+            elif href.startswith("mailto:") and not self._current["mailto"]:
+                self._current["mailto"] = href[7:]
+            elif (href and not href.startswith(("#", "javascript:"))
+                    and not self._current["href"]):
+                self._current["href"] = href
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in ("script", "style"):
+            self._skip_depth = max(0, self._skip_depth - 1)
+            return
+        if self._skip_depth:
+            return
+        if tag in _ListingParser._CHROME_TAGS:
+            self._chrome_depth = max(0, self._chrome_depth - 1)
+            return
+        if self._chrome_depth:
+            return
+        if tag in ("h2", "h3"):
+            self._in_heading = False
+
+    def handle_data(self, data: str) -> None:
+        if self._skip_depth or self._chrome_depth:
+            return
+        text = data.strip()
+        if not text or self._current is None:
+            return
+        # Sections are provider blurbs, not essays: cap the collected text
+        # so the LAST section cannot swallow the footer (and inherit its
+        # phone number) when no further heading closes it.
+        if self._chars >= 2000:
+            return
+        self._chars += len(text)
+        if self._in_heading:
+            self._current["heading"].append(text)
+        self._current["text"].append(text)
+
+    def close(self) -> None:  # noqa: D102 - flush the last section
+        super().close()
+        self._close()
+
+
+def _extract_contacts_from_html(html_text: str) -> tuple[str, str]:
+    """Best-effort (phone, email) from a detail page's HTML.
+
+    ``tel:``/``mailto:`` hrefs first (the page means them as contacts),
+    then the visible-text regexes. Used to enrich listing blocks whose own
+    block carries no contact signal (editorial list pages). Script/style
+    bodies are stripped first: inline JSON must never yield a "phone".
+    """
+    from urllib.parse import unquote
+
+    html_text = html_text or ""
+    html_text = re.sub(r"<script\b[^>]*>.*?</script>", " ", html_text,
+                       flags=re.S | re.I)
+    html_text = re.sub(r"<style\b[^>]*>.*?</style>", " ", html_text,
+                       flags=re.S | re.I)
+    tel = re.search(r"""href=["']tel:([^"']+)""", html_text, re.I)
+    mail = re.search(r"""href=["']mailto:([^"'?]+)""", html_text, re.I)
+    text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html_text)).strip()
+    phone_match = _PHONE_RE.search(text)
+    email_match = _EMAIL_RE.search(text)
+    phone = _clean_phone(unquote(tel.group(1)) if tel else
+                         (phone_match.group(0) if phone_match else ""))
+    email = (unquote(mail.group(1)).strip() if mail else
+             (email_match.group(0) if email_match else ""))
+    return phone, email
+
+
+def parse_listing_page(html_text: str, page_url: str, category: str = "",
+                       require_contact: bool = True) -> tuple[list[Lead], str]:
+    """Parse one listing page -> (leads, next_page_url_or_empty).
+
+    With ``require_contact`` (default) a block becomes a lead only when it
+    carries a contact signal — a phone or an email, from a ``tel:``/
+    ``mailto:`` link or the block text. Name-only blocks (nav junk, section
+    heads) are dropped, never delivered as leads. ``run_lead_generation``
+    passes ``require_contact=False`` so it can enrich contact-less blocks
+    from their detail pages before the same filter is applied. Blocks come
+    from BOTH the hint parser and the heading parser (union); duplicates
+    merge in ``dedupe_leads``.
+    """
     parser = _ListingParser()
     parser.feed(html_text or "")
+    # Empty blocks (image-only containers such as a "rounded-card" logo div)
+    # do not count as listings.
+    hint_blocks = [b for b in parser.blocks if " ".join(b["text"]).strip()]
+    # TASK-IG2-FRD-03-FIX-01 (v3): UNION, not either/or. On the live JaRanks
+    # page the hint parser finds two junk non-empty blocks ("Rank", "The
+    # JaRanks newsletter") and zero providers — an either/or fallback keyed
+    # on "any hint block" would never reach the headings that DO carry the
+    # 16 providers. Both sources are parsed; duplicates merge in dedupe and
+    # junk dies in the contact filter below.
+    heading_parser = _HeadingParser()
+    heading_parser.feed(html_text or "")
+    heading_parser.close()
+    blocks = hint_blocks + heading_parser.blocks
     leads: list[Lead] = []
-    for block in parser.blocks:
+    for block in blocks:
         text = " ".join(block["text"])
         if not text:
             continue
-        name = block["text"][0][:120]
+        name = _pick_name(block["text"])
         phone_match = _PHONE_RE.search(text)
         email_match = _EMAIL_RE.search(text)
-        leads.append(Lead(
+        lead = Lead(
             name=name,
-            phone=block["tel"] or (phone_match.group(0).strip() if phone_match else ""),
+            phone=_clean_phone(block["tel"]) or _clean_phone(
+                phone_match.group(0) if phone_match else ""),
             email=block["mailto"] or (email_match.group(0) if email_match else ""),
-            website=block["href"],
+            website=urljoin(page_url, block["href"]) if block["href"] else "",
             category=category,
             source_url=page_url,
-        ))
+        )
+        if require_contact and not (lead.phone or lead.email):
+            continue
+        leads.append(lead)
+    # The union parses each listing twice (hint block + heading section);
+    # merge those duplicates here so callers never see a doubled table.
+    # (dedupe_leads is defined below; resolved at call time.)
+    leads = dedupe_leads(leads)
     next_url = urljoin(page_url, parser.next_url) if parser.next_url else ""
     return leads, next_url
 
@@ -227,14 +507,23 @@ def _default_fetcher(url: str) -> str:
     import httpx  # fleet dependency, imported lazily
 
     with httpx.Client(timeout=15.0, follow_redirects=True) as client:
-        resp = client.get(url, headers={"User-Agent": "FRIDAY-LeadGen/1.0"})
+        resp = client.get(url, headers=_BROWSER_HEADERS)
     resp.raise_for_status()
     return resp.text
 
 
 def run_lead_generation(start_url: str, category: str = "", *,
                         fetcher=None, max_pages: int = MAX_PAGES) -> LeadGenResult:
-    """Run the errand: fetch -> parse -> dedupe -> table-ready result."""
+    """Run the errand: fetch -> parse -> dedupe -> table-ready result.
+
+    TASK-IG2-FRD-03-FIX-01: listing blocks without a contact signal are
+    enriched from their same-host detail page (bounded by
+    MAX_DETAIL_FETCHES) before the contact filter runs — editorial list
+    pages carry names but no contacts in the block. The contact filter
+    runs AFTER dedupe, so a name-only relisting still merges into (and
+    fills the website of) the contactful first listing. A lead with no
+    phone and no email after enrichment is dropped, never delivered.
+    """
     reason = check_url_allowed(start_url)
     if reason:
         raise LeadGenError(f"refused: {reason}")
@@ -242,6 +531,7 @@ def run_lead_generation(start_url: str, category: str = "", *,
     result = LeadGenResult(start_url=start_url, category=category)
     url = start_url
     start_host = urlparse(start_url).hostname
+    detail_fetches = 0
     for _ in range(min(max_pages, MAX_PAGES)):
         if not url:
             break
@@ -249,13 +539,31 @@ def run_lead_generation(start_url: str, category: str = "", *,
             break  # pagination never leaves the directory's own host
         html_text = fetch(url)
         result.pages_fetched += 1
-        leads, next_url = parse_listing_page(html_text, url, category)
+        leads, next_url = parse_listing_page(html_text, url, category,
+                                             require_contact=False)
+        for lead in leads:
+            if (lead.phone or lead.email) or not lead.website:
+                continue
+            if urlparse(lead.website).hostname != start_host:
+                continue  # detail pages never leave the directory's host
+            if check_url_allowed(lead.website) is not None:
+                continue
+            if detail_fetches >= MAX_DETAIL_FETCHES:
+                break
+            try:
+                detail_fetches += 1
+                phone, email = _extract_contacts_from_html(fetch(lead.website))
+            except Exception:
+                continue  # a dead detail page drops the lead, never the run
+            lead.phone = lead.phone or phone
+            lead.email = lead.email or email
         result.leads.extend(leads)
         if len(result.leads) >= MAX_LEADS:
             result.leads = result.leads[:MAX_LEADS]
             break
         url = next_url
     result.leads = dedupe_leads(result.leads)
+    result.leads = [lead for lead in result.leads if lead.phone or lead.email]
     return result
 
 
