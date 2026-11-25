@@ -203,3 +203,77 @@ def test_other_completion_refusals_are_not_retried():
     with pytest.raises(m.GroundedCompletionError):
         asyncio.run(m.synthesize_grounded("How are quoted commas handled?", DOCS, gateway))
     assert calls["n"] == 1
+
+
+# TASK-INT-053: an entailment failure must name its failing leg, and gets
+# one retry with a fresh draft — the gateway routes across providers/models
+# per call (REL-007), so a second draw is genuinely different text. The
+# retry relaxes no gate: the fresh draft passes the quote gate and the
+# entailment screen unchanged, and a second entailment failure is final.
+
+def failing_result(entity="Zanzibar"):
+    # The statement is drawn from the source's own tokens except for one
+    # named entity the source never mentions, so it fails exactly the
+    # entity leg with unsupported_entity:<entity>; the quote is verbatim.
+    return m.GroundedDraft(findings=[m.GroundedFinding(
+        statement=f'Fields containing delimiters are enclosed by a quote character, preserving a comma inside a quoted field, announced by {entity}.',
+        source_id='public-one', quote=TEXT)], insufficient_evidence=False)
+
+
+def _sequenced_gateway(*parsed_list):
+    calls = {"n": 0}
+
+    async def complete(**kwargs):
+        parsed = parsed_list[min(calls["n"], len(parsed_list) - 1)]
+        calls["n"] += 1
+        return SimpleNamespace(provider="inference", parsed=parsed)
+
+    return SimpleNamespace(complete=complete), calls
+
+
+def test_entailment_failure_records_per_finding_reason():
+    d, gateway = run(failing_result())
+    assert d["status"] == "DEGRADED"
+    assert d["error"] == "synthesis_entailment_unverified"
+    assert d["entailment_failures"] == [{"source_id": "public-one", "reason": "unsupported_entity:Zanzibar"}]
+    # The same failing draft is drawn again once, then the failure is final.
+    assert gateway.complete.await_count == 2
+    assert d["findings"] and all(f["status"] == "source_excerpt" for f in d["findings"])
+
+
+def test_entailment_failure_retried_once_and_can_succeed():
+    gateway, calls = _sequenced_gateway(failing_result(), result())
+    d = asyncio.run(m.synthesize_grounded("How are quoted commas handled?", DOCS, gateway))
+    assert d["status"] == "SUCCESS"
+    assert d["findings"][0]["entailment_verified"] is True
+    assert calls["n"] == 2
+
+
+def test_entailment_failure_retry_is_bounded():
+    gateway, calls = _sequenced_gateway(failing_result(), failing_result())
+    d = asyncio.run(m.synthesize_grounded("How are quoted commas handled?", DOCS, gateway))
+    assert d["status"] == "DEGRADED"
+    assert d["error"] == "synthesis_entailment_unverified"
+    assert d["entailment_failures"] == [{"source_id": "public-one", "reason": "unsupported_entity:Zanzibar"}]
+    assert calls["n"] == 2
+
+
+def test_quote_failure_is_not_retried():
+    d, gateway = run(result(quote='This invented quotation was never present in any fetched source document.'))
+    assert d["status"] == "DEGRADED"
+    assert d["error"] == "synthesis_quote_unverified"
+    assert gateway.complete.await_count == 1
+
+
+def test_entailment_failures_lists_every_failing_finding():
+    draft = m.GroundedDraft(findings=[
+        m.GroundedFinding(statement=failing_result().findings[0].statement, source_id='public-one', quote=TEXT),
+        m.GroundedFinding(statement=failing_result("Quixotic").findings[0].statement, source_id='public-one', quote=TEXT[0:60]),
+    ], insufficient_evidence=False)
+    d, gateway = run(draft)
+    assert d["status"] == "DEGRADED"
+    assert d["entailment_failures"] == [
+        {"source_id": "public-one", "reason": "unsupported_entity:Zanzibar"},
+        {"source_id": "public-one", "reason": "unsupported_entity:Quixotic"},
+    ]
+    assert gateway.complete.await_count == 2

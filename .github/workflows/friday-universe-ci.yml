@@ -212,7 +212,7 @@ jobs:
             tests/test_laptop_bridge_lap001.py \
             tests/test_mem029_production_callers.py \
             tests/test_ig_frd_001_goal_loop.py tests/test_frd_045_woop.py \
-            tests/test_capability_routing.py tests/test_ig2_frd03_lead_generation.py \
+            tests/test_capability_routing.py tests/test_ig2_frd03_lead_generation.py tests/test_ig_frd_061_lead_verification.py \
             tests/test_reliability.py \
             --deselect tests/test_reliability.py::test_retry_on_network_failure \
             --deselect tests/test_reliability.py::test_retry_on_rate_limit \
