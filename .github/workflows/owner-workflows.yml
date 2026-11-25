@@ -274,7 +274,8 @@ jobs:
             Stratex/tests/test_str076_repo_implement_wave1.py \
             Stratex/tests/test_daily_fill_ledger_reconciliation.py \
             Stratex/tests/test_str081_emotion_journal.py \
-            Stratex/tests/test_pairs_trading_str068.py
+            Stratex/tests/test_pairs_trading_str068.py \
+            Stratex/tests/test_g1_reconcile.py
       - name: Install ffmpeg for VyralX real-render contracts
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Review-required project persistence and worker boundaries
