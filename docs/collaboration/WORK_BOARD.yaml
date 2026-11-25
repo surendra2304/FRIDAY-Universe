@@ -19271,14 +19271,14 @@ tasks:
 
   - id: TASK-REL-099
     title: 'Git-style incremental fleet backup for Oracle Cloud (owner order 2026-11-26): only modified files stored, versioned snapshots with enforced retention, no duplicated VyralX media piling up on Oracle Server 2'
-    status: CLAIMED
+    status: IN_PROGRESS
     owner: muse_12
     branch: muse12/task-rel-099-incremental-fleet-backup
     pr: 1887
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T01:04:05+05:30'
+    updated_at: '2026-11-26T01:40:24+05:30'
     files:
       - scripts/backup_fleet_databases.py
       - tests/test_rel096_backup_fleet_state.py
@@ -19298,6 +19298,7 @@ tasks:
       - 'DESIGN NOTE (coordinator, 2026-11-26) — three mechanisms sized against the fleet constraints (Oracle boxes ~956 MB RAM with 8 GiB swap, 49G disk on Oracle Server 2, bridge-only server access; store contents include DB logical dumps, configs, per-agent .env snapshots, fleet CREDENTIALS.md, VyralX renders + data): (1) restic — content-defined chunking dedupes at sub-file level, so a regenerated DB dump or a slightly changed large file stores only its changed chunks; unchanged renders cost zero extra bytes across snapshots, ending the media pile-up without dropping coverage; snapshots + retention (forget/prune) are built in; the store is encrypted, which suits a set containing credential env files; single static binary with a small RAM footprint. RECOMMENDED. (2) rsync --link-dest hardlink snapshots — no new dependency (rsync is already the fleet transport in the unify job) and each snapshot browses like a full tree, but granularity is whole-file: any regenerated dump and any touched render is stored whole again, so the daily growth shrinks but does not end. FALLBACK if restic cannot be installed. (3) A bare git repo with scheduled commits — matches the owner wording literally and versions text well, but 2.2 GB of binary renders bloat the object store, garbage collection/repack on a ~1 GB RAM box is a real OOM risk, and secrets committed once stay in git history forever. NOT recommended as the store; the owner requirement is the git behaviour (incremental, versioned, bounded), not the git binary. First implementation step either way: confirm the chosen tool on both Oracle servers via the bridge, then keep the TASK-REL-096 manifest + verify + restore-drill harness as the acceptance gate around the new store.'
       - 'Filed by Muse (coordinator) 2026-11-26 in this board PR. No TASK-REL-099 record exists on main 93409b9f (verified: REL-098 is the highest REL id on the board). This filing changes nothing on the servers and does not alter the running backup schedule; implementation follows the normal claim flow.'
       - 'Coordinator watch114 (2026-11-26): assigned to muse_12 as queue head; M12 queue was empty after SEN-034 merged and the STR-077 ruling returned that task to M17. Verified AVAILABLE / owner null on main 14a72d15. P1, owner-ordered; substantial multi-step task (incremental store, retention cap, restore drill).'
+      - 'Checkpoint 1 merged via PR 1887 - coordinator watch116 full-diff review, CI green. Muse 12 building the git-style incremental backup.'
     blockers: []
     next_action: 'Assigned to muse_12 as queue head by coordinator watch114 (2026-11-26, hub #1483): git-style incremental fleet backup for Oracle Cloud (owner order 2026-11-26); claim via hub #1483.'
 
@@ -21295,14 +21296,14 @@ tasks:
 
   - id: TASK-VYR-078
     title: 'REPO-IMPLEMENT: VyralX repos - P(doom) Video (reference-only), PDoomVideo (reference-only), LaunchVideo / shipv... (wave 1)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_tp6
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T14:26:00+05:30'
+    updated_at: '2026-11-26T01:40:24+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -21313,6 +21314,7 @@ tasks:
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Assigned to Muse TP6 as queue position 1 by coordinator watch088 (2026-11-25 ~14:26 IST, hub #1483); verified AVAILABLE / owner null on main a0a9f1ba.'
+    - 'Coordinator watch115 ruling (2026-11-26): task to Muse TP6 - Muse 3 held it about 23h with zero commits; TP6 is owner of record and claims as queue head.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
 
@@ -21365,14 +21367,14 @@ tasks:
 
   - id: TASK-FRD-055
     title: 'REPO-IMPLEMENT: FRIDAY repos - Hermes Agent (reference-only), Herald OS (reference-only), OpenClaw (reference-o... (wave 2)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_8
     branch: muse8/task-frd-055
     pr: 1884
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-26T00:22:44+05:30'
+    updated_at: '2026-11-26T01:40:24+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -21383,19 +21385,20 @@ tasks:
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Assigned to Muse 8 as queue position 2 by coordinator watch100 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main f216e1ba. P1 FRIDAY repos wave 2 (Hermes, Herald OS, OpenClaw, NOMAD, Agentic Inbox).'
+    - 'Merged via PR 1884 (merge 70ce1089) - coordinator watch115 full-diff review, CI green. Live legs follow-up per STR-047 ruling.'
     blockers: []
     next_action: 'Assigned to muse_8 as queue position 2 by coordinator watch100 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
 
   - id: TASK-FRD-056
     title: 'REPO-IMPLEMENT: FRIDAY repos - Locally Uncensored (reference-only), Jarvis / vierisid (reference-only), Awesome... (wave 2)'
-    status: AVAILABLE
-    owner: null
+    status: CLAIMED
+    owner: muse_tp6
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-26T00:12:00+05:30'
+    updated_at: '2026-11-26T01:40:24+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -21407,6 +21410,7 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Assigned to Muse TP10 as queue position 1 by coordinator watch102 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 14181d3c. Head of TP10 queue; TP10 claimed it (hub 7163604370). Live legs ruled in watch101 (7164435710).'
     - 'Coordinator watch113 (2026-11-26): released to the pool. Watch111 demand (hub 7170527287, 2026-11-25 23:39 IST) required implementation plus checkpoint 1 or release by the next run; branch musetp10/task-frd-056 still f216e1b, 0 commits, no PR, no post since the demand. Four consecutive hourly checks with zero code evidence.'
+    - 'Coordinator watch116 (2026-11-26): FRD-056 first-claim ruling to Muse TP6 after TP10 stall and pool release in watch113.'
     blockers: []
     next_action: 'Released to the pool by coordinator watch113 (2026-11-26, hub #1483): TP10 stalled with zero code evidence across four hourly checks; watch111 demand unanswered. Claim via hub #1483 when a slot frees.'
 
