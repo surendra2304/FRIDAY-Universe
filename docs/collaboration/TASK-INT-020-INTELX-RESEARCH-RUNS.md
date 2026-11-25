@@ -2,7 +2,7 @@
 
 **Worker:** Muse 13. **Claim:** hub #1483 comment 7161993563, 2026-11-25 ~17:45 IST, on coordinator assignment in WATCH097 (7161378423) — queue head after TASK-INF-037 merged; VOI-030 stays blocked-head skipped. **Branch:** `muse13/task-int-020-intelx-research-runs` @ main e0373ced. **Usage at claim:** 37% of free weekly limit, reset Nov 29 6:09 PM IST.
 
-**Status of this document:** CHECKPOINT 1 + RUN 1 ATTEMPTED — run 1 blocked at the FRIDAY webchat owner-key gate (no brief produced, count 0/3). Block posted on #1483 (comment 7162173741); direction requested from Muse. See §6.
+**Status of this document:** CHECKPOINT 2 — RUN 1 ATTEMPTED THREE TIMES VIA THE LOOPBACK ROUTE, ALL THREE FAILED HONESTLY (count 0/3). The webchat owner-key gate (§6) was resolved by coordinator ruling WATCH099 (7162851838): run via loopback `/api/chat` on FRIDAY-Server. All three loopback attempts failed at the same synthesis stage — `synthesis_entailment_unverified` — two topics, three stored DEGRADED runs. A fix task for the synthesis/entailment stage is owed; no further attempts until it lands. See §7.
 
 ## 1. Acceptance (board record, verbatim substance)
 
@@ -45,15 +45,15 @@ No config changed, no restart, no key read, no service touched. Read-only recon 
 
 ## 4. Run plan
 
-- **Route:** FRIDAY webchat (`https://friday-universe.duckdns.org/friday/` — the owner's path, same route Muse 7 used for runs 1–2), driven through the live browser. One research brief per run; the full verbatim reply is captured with its sources and timing.
-- **Run 1 brief (chosen):** "research the latest AI model releases and give me the highlights with sources" — the same topic as INF-028's green bus re-probe, so a webchat failure would isolate the chat route rather than the research path.
-- **Run 2/3 briefs:** fresh current topics, chosen at run time (no repeats of a failed brief verbatim).
-- **Trace per run (filed in this doc):** request text + timestamp, routing (webchat → FRIDAY → IntelX), agent evidence (IntelX run id + archive status, synthesis status, findings/sources counts), verbatim reply (or its honest failure), wall time. A run passes only if the reply carries real sourced highlights; a wrong answer presented as success, a dropped result, or a fabricated status resets the count to 0.
-- **Known risk:** the webchat may require a sign-in the detached browser run cannot complete — if so, that is reported as a blocker with evidence, not worked around by switching to the dispatch-bus path (the bus path is a different route from the acceptance's "through FRIDAY chat").
+- **Route (revised by WATCH099 ruling, 7162851838):** loopback `POST /api/chat` on FRIDAY-Server (server 3) — `curl http://127.0.0.1:10000/api/chat` with `{"message": "..."}`, no credential (loopback callers stay keyless per the D-023 gate; the deployed code is behind main but the loopback route was proven live by Muse 1's FRD-053 legs the same day). That IS the FRIDAY chat surface; the webchat owner-key gate is a UI-layer gate, not the chat route. No key invented, no credential read, no dispatch-bus route. The webchat route (§6) is superseded.
+- **Run 1 brief (chosen):** "research the latest AI model releases and give me the highlights with sources" — the same topic as INF-028's green bus re-probe, so a failure isolates the chat route / synthesis stage rather than the research path.
+- **Run 2/3 briefs:** fresh current topics, chosen at run time (no repeats of a failed brief verbatim — except a same-brief retry to test flakiness, recorded as an attempt, not a pass).
+- **Trace per run (filed in this doc):** request text + timestamp, routing (loopback /api/chat → FRIDAY → IntelX), agent evidence (IntelX run id + archive status, synthesis status, findings/sources counts), verbatim reply (or its honest failure), wall time. A run passes only if the reply carries real sourced highlights; a wrong answer presented as success, a dropped result, or a fabricated status resets the count to 0.
+- **Known risk (now realised):** the synthesis stage fails live on the chat route — see §7.
 
 ## 5. Five states
 
-Implemented n/a (proof task, no code) / tested — / merged NO / deployed n/a / production-verified NO — 0/3 runs; run 1 blocked at the owner-key gate (see §6).
+Implemented n/a (proof task, no code) / tested — / merged NO / deployed n/a / production-verified NO — 0/3 runs; three loopback attempts failed honestly at the synthesis stage (§7). A synthesis/entailment fix task is owed before further attempts.
 
 ## 6. Run log
 
@@ -69,5 +69,39 @@ Implemented n/a (proof task, no code) / tested — / merged NO / deployed n/a / 
 - **Wall time:** under 1 s to the gate reply.
 - **Verdict:** BLOCKED, not a pass or a fail of the research path. The gate is new since Muse 7's runs (Nov 22 the webchat answered without a key). No key invented or supplied; no switch to the dispatch-bus or any other route (acceptance requires "through FRIDAY chat").
 - **Direction requested** on #1483 (comment 7162173741): (a) owner key through a secure channel for this run, (b) dispatch-bus path accepted as the run route, or (c) another route Muse names. The live path underneath is verified healthy (§3 + INF-028's green bus re-probe) — the block is the chat gate only.
+- **Answered by WATCH099 (7162851838, ~18:15 IST):** "run it via loopback /api/chat on FRIDAY-Server — the same route Muse 1 used for FRD-053's 8 live legs (real FRIDAY replies, journal proof). That IS the FRIDAY chat surface; the webchat owner-key gate is a UI-layer gate, not the chat route. No key invented, no credential read, no route change to the dispatch bus. Proceed with runs 1-3 and file traces." The webchat route is superseded; §7 is the loopback record.
+
+## 7. Loopback attempts — run 1, three honest failures (count stays 0/3)
+
+Route for all three: bridge `run_shell` server 3 (FRIDAY-Server), `curl -s -m 420 POST http://127.0.0.1:10000/api/chat -H 'Content-Type: application/json' -d '{"message": "..."}'`. No credential used, none read. FRIDAY.service active throughout (MainPID 40483); journal shows each turn processed and `POST /api/chat` from 127.0.0.1 → 200. IntelX on IntelX-Server did real research each time (Tavily + Google News RSS 200, source fetches, synthesis call to Inference 200) and persisted a DEGRADED run. All three replies are verbatim-identical; no highlights were fabricated in any attempt. No reset: an honest failure does not reset the count — only a wrong answer presented as success would.
+
+### Attempt 1a — AI model releases (2026-11-25 ~19:14 IST / 13:14 UTC)
+
+- **Request:** "Friday, research the latest AI model releases and give me the highlights with sources."
+- **Result:** HTTP 200, 70.9 s wall (dispatch 67.4 s). **Reply (verbatim):** "IntelX could not complete that research: sourced_findings_unverified. That is the real outcome — no highlights were fabricated." Metadata: `task_state: FAILED`, `probe_success: false`, `intelx: null`, `sources: []`, `research_dispatch: true`.
+- **Stored run:** `lr_c5f08d9c5b2e4320be6d31d6` (IntelX `live_research_runs`, read back via the service's own `fetch_live_research`): status DEGRADED, synthesis_status **failed**, answer_kind `unsynthesised_raw_findings`. Summary: "Retrieved 5 source document(s); synthesis failed (synthesis_entailment_unverified) — returning 15 unsynthesised raw finding(s) (verbatim source excerpts), not a synthesised brief." Receipt: None.
+- **Journal (IntelX-Server, 13:14 UTC):** Tavily search 200, Google News RSS 200, source fetches incl. one 403 (`/releases/model`) and one robots ConnectTimeout (labla.org, fetch denied until retried); synthesis POST to Inference 200; "live research persisted run_id=lr_c5f08d9c5b2e4320be6d31d6 status=DEGRADED".
+
+### Attempt 1b — same brief, flakiness retry (~19:20 IST / 13:20 UTC)
+
+- **Request:** same brief verbatim (retry to test whether 1a was flaky).
+- **Result:** HTTP 200, 55.6 s wall (dispatch 53.2 s). **Reply (verbatim):** identical to 1a. Metadata identical in substance (`task_state: FAILED`, `sources: []`).
+- **Stored run:** `lr_365e94dd989243e296c64915`: DEGRADED, synthesis **failed**, `unsynthesised_raw_findings`. Summary identical in substance: 5 source documents, synthesis failed (`synthesis_entailment_unverified`), 15 unsynthesised raw findings.
+- **Verdict:** not flaky on this brief — same verdict twice.
+
+### Attempt 1c — different brief, SpaceX Starship (~19:25 IST / 13:22 UTC)
+
+- **Request:** "Friday, research the latest SpaceX Starship test flight news and give me the highlights with sources."
+- **Result:** HTTP 200, 34.8 s wall (dispatch 32.5 s). **Reply (verbatim):** identical to 1a/1b. Metadata identical in substance (`task_state: FAILED`, `sources: []`).
+- **Stored run:** `lr_b10f970668fa4fd78519d441`: DEGRADED, synthesis **failed**, `unsynthesised_raw_findings`. Summary: "Retrieved 1 source document(s); synthesis failed (synthesis_entailment_unverified) — returning 3 unsynthesised raw finding(s)."
+- **Verdict:** not topic-specific — the synthesis stage fails on a second, unrelated brief with a different source set.
+
+### Diagnosis
+
+- The failure is in the **synthesis/entailment stage** (`synthesis_entailment_unverified`), not retrieval: sources are retrieved and fetched (5 docs / 15 findings in 1a–1b, 1 doc / 3 findings in 1c), the synthesis call to Inference returns 200, but entailment verification fails and the run degrades to raw excerpts — which FRIDAY then honestly refuses to present as a brief.
+- This is the **same verdict INT-033 was filed to fix** (11/11 live runs DEGRADED before the fix; fix = false-negative-only tokenisation repairs in `grounded_live_research.py`, merged PR #1511, deployed, INF-028 bus re-probe green 2026-11-24 01:43 IST, run `lr_70c54f7c36604cbeb9922c8b`). The deployed file on IntelX-Server carries exactly the INF-028-verified hash (§3), so the fix IS live — yet the verdict persists on the chat route.
+- **Open question (not adjudicated here):** why the bus re-probe passed on 2026-11-24 (S2 IntelX) while the chat route fails on 2026-11-25 (IntelX-Server). Candidates: the route (chat vs bus) reaches a different synthesis path/model; the IntelX home move (S2 → server 6) changed something the hash check does not cover (env, model, synthesis budget); or the entailment check still false-negatives on statement shapes outside INT-033's three repairs. No cause is claimed — the evidence above is what the live systems returned.
+- **Follow-up owed:** a fix task for the synthesis/entailment stage on the live chat route (INT-033 follow-up), assigned by the coordinator. Further INT-020 attempts are held until it lands — three identical failures are enough evidence; more retries would burn usage without new information.
+- **Note:** FRIDAY's chat reply labels the failure `sourced_findings_unverified`, while the stored IntelX run records `synthesis_entailment_unverified`. Both describe the same DEGRADED outcome; the label mismatch is recorded, not resolved.
 
 — Muse 13
