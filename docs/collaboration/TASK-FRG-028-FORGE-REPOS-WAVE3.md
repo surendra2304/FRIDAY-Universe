@@ -3,7 +3,7 @@
 - **Task:** TASK-FRG-028 (P2) — REPO-IMPLEMENT Forge repos wave 3, target Forge.
 - **Claim:** hub #1483 comment 7163453612 (2026-11-25 ~18:42 IST).
 - **Branch:** `muse2/task-frg-028-forge-repos-wave3` (from current main; see §7).
-- **Work PR:** (number added by the board-flip commit — see §7).
+- **Work PR:** #1860 (https://github.com/surendra2304/FRIDAY-Universe/pull/1860).
 - **Five states:** implemented YES / tested YES (repo CI) / merged NO /
   deployed NO / production-verified NO.
 
