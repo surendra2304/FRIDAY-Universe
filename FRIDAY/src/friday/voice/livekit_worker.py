@@ -131,6 +131,7 @@ import ssl
 import sys
 import threading
 import time
+import unicodedata
 import wave
 from array import array
 from concurrent.futures import ThreadPoolExecutor
@@ -1534,10 +1535,40 @@ def _realtime_input_config():
       between fan noise and a truncated answer (activity_handling
       below is unchanged, and prefix padding keeps the first
       syllable of a genuine barge-in).
-    - activity_handling START_OF_ACTIVITY_INTERRUPTS: stated
-      explicitly (it is the API default) so the interrupt contract
-      does not drift with plugin/API defaults: detected user activity
-      interrupts the model's turn.
+    - activity_handling NO_INTERRUPTION (FRIDAY_VOICE_AAD_ACTIVITY_HANDLING):
+      TASK-VOI-043 (P0, same owner live test). The pre-fix value was
+      START_OF_ACTIVITY_INTERRUPTS, stated explicitly: detected user
+      activity interrupted the model's turn. That is the arbitrary-
+      cancellation path, traced first-hand in the deployed pins
+      (livekit-agents 1.8.11 + livekit-plugins-google 1.8.11):
+      Gemini emits server_content.interrupted on start of activity
+      -> the plugin's _handle_input_speech_started emits
+      input_speech_started -> AgentActivity._on_input_speech_started
+      calls self.interrupt(source="audio_activity") unconditionally
+      (the overlapping-speech escape is closed: the Gemini model does
+      not declare supports_overlapping_speech) -> SpeechHandle
+      allows 5.0 s (hardcoded INTERRUPTION_TIMEOUT) for the speech to
+      wind down, then force-cancels its tasks and logs "speech not
+      done in time after interruption, cancelling the speech
+      arbitrarily". The wind-down cannot fit in 5 s whenever a bridge
+      tool call is in flight (foreground budget 60 s, shielded), so
+      ANY interruption during a bridge call deterministically ends in
+      the arbitrary cancel — in the owner session the user's own
+      continuation ("Stratex", 10:24:53 UTC) cut her fragment-1 answer
+      off mid-sentence. The worker cannot gate the interrupt per turn:
+      it fires on start-of-activity, before any transcript exists, and
+      the local interruption knobs are inert under realtime_llm
+      (VOI-032). So the server-side switch is flipped: with
+      NO_INTERRUPTION her response is never cut by user activity; a
+      new user turn is still transcribed and finalized and is answered
+      after she finishes the current response — no turn is lost, and
+      (with VOI-042's 1.2 s finalization) a continuation no longer
+      arrives while she is answering a fragment of the same sentence.
+      Trade-off, stated plainly: a genuine barge-in ("Friday, stop")
+      no longer cuts her off mid-sentence either — she finishes the
+      sentence, then takes the new turn. Env override restores the
+      old behaviour in one var (start_of_activity_interrupts); any
+      other value falls back to NO_INTERRUPTION.
     - prefix_padding_ms 200 (FRIDAY_VOICE_AAD_PREFIX_PADDING_MS): the
       documented clean-mic value; shorter risks clipping the first
       syllable of a barge-in.
@@ -1571,9 +1602,7 @@ def _realtime_input_config():
         )
         return genai_types.RealtimeInputConfig(
             automatic_activity_detection=aad,
-            activity_handling=(
-                genai_types.ActivityHandling.START_OF_ACTIVITY_INTERRUPTS
-            ),
+            activity_handling=_activity_handling(),
         )
     except Exception as exc:
         logger.warning(
@@ -1582,6 +1611,23 @@ def _realtime_input_config():
             exc,
         )
         return None
+
+
+def _activity_handling():
+    """The server-side activity-handling switch (TASK-VOI-043).
+
+    Default NO_INTERRUPTION: user activity never cuts her response
+    off — see the _realtime_input_config docstring for the
+    arbitrary-cancellation chain this closes and the barge-in
+    trade-off. FRIDAY_VOICE_AAD_ACTIVITY_HANDLING restores the old
+    behaviour (start_of_activity_interrupts); any other value falls
+    back to NO_INTERRUPTION. Caller guarantees genai_types exists.
+    """
+    raw = (os.getenv("FRIDAY_VOICE_AAD_ACTIVITY_HANDLING") or "").strip().lower()
+    if raw in ("start_of_activity_interrupts", "interrupts",
+               "barge_in", "barge-in", "bargein"):
+        return genai_types.ActivityHandling.START_OF_ACTIVITY_INTERRUPTS
+    return genai_types.ActivityHandling.NO_INTERRUPTION
 
 
 def _build_realtime_model(key: str, instructions: str):
@@ -1742,6 +1788,69 @@ def _distinctive_tokens(text: str) -> "tuple[set[str], set[str]]":
     return numbers, words
 
 
+def _fragment_tokens(text: str) -> "tuple[set[str], set[str]]":
+    """(number tokens, content-word tokens) for the dropped-fragment
+    path only — _dispatch_followed and _fragment_recovery_due.
+
+    TASK-VOI-043: _distinctive_tokens is ASCII-Latin only
+    ([a-z]{5,}), so a final transcribed in Devanagari/Telugu script
+    carries ZERO tokens — the recovery pass reads that as "no
+    distinctive substance" and the fragment is never recovered,
+    however substantive it is. That is the owner-session shape: the
+    2026-11-25 live test's fragments were transcribed in Hindi/Telugu
+    script and the dropped one never dispatched (repro: the Hindi
+    final "ए, पड़को।" yields (set(), set()) and is never due).
+    Fragment tokens keep the Latin rule byte-identical (>= 5 Latin
+    letters, same stopwords) and add non-Latin letter runs (>= 3 code
+    points: a Devanagari/Telugu content word carries its meaning in
+    few code points because of combining marks, while a 1-2
+    code-point run is a particle or interjection — the same
+    "Okay."-class the Latin rule excludes). Runs are letter +
+    combining-mark sequences (unicodedata categories L/M), NOT
+    ``\\w`` runs: a Devanagari word such as "पड़को" is one run only
+    when its nukta and vowel sign stay attached — a ``\\w`` split
+    shreds it into 1-code-point pieces and the fragment reads as
+    contentless again. Numbers use the same figure rule as
+    _distinctive_tokens. _distinctive_tokens itself is untouched:
+    the FRD-012/018 verbalized checks keep their pinned Latin
+    behaviour."""
+    numbers = {
+        _figure_key(n) for n in re.findall(r"\d[\d,]*(?:\.\d+)?", text or "")
+    }
+    words = set()
+    for run in _fragment_word_runs(text or ""):
+        low = run.lower()
+        if low in _VERBALIZED_STOPWORDS:
+            continue
+        if run.isascii():
+            if len(run) >= 5:
+                words.add(low)
+        elif len(run) >= 3:
+            words.add(low)
+    return numbers, words
+
+
+def _fragment_word_runs(text: str) -> "list[str]":
+    """Maximal runs of Unicode letters + combining marks in ``text``.
+
+    One spoken word per run, in the script's own shaping: punctuation,
+    whitespace, symbols and digits break runs, while combining marks
+    (nukta, vowel signs) stay attached to their base letter, so a
+    Devanagari word is one run and a Latin word is one run.
+    """
+    runs: list[str] = []
+    current: list[str] = []
+    for ch in text:
+        if unicodedata.category(ch)[0] in ("L", "M"):
+            current.append(ch)
+        elif current:
+            runs.append("".join(current))
+            current = []
+    if current:
+        runs.append("".join(current))
+    return runs
+
+
 def _distinctive_figures(numbers) -> "set[str]":
     """The figures in a settled reply that ARE its payload: four or
     more digits (a balance, a long count, an identifier). A one- or
@@ -1868,12 +1977,15 @@ def _dispatch_followed(state: dict, suspect: dict) -> bool:
     """A bridge call started after the suspect final landed and its
     composed request carries the final's substance (a shared figure,
     or at least two shared content words) — the model acted on the
-    fragment after all, so it was not dropped."""
-    s_numbers, s_words = _distinctive_tokens(suspect.get("text"))
+    fragment after all, so it was not dropped. TASK-VOI-043: uses
+    the script-aware _fragment_tokens, so a Devanagari/Telugu-script
+    final can match a dispatch (figures, or a shared Latin word such
+    as the fleet name) instead of matching nothing by construction."""
+    s_numbers, s_words = _fragment_tokens(suspect.get("text"))
     for dispatch in state["dispatches"]:
         if dispatch["ts"] < suspect["ts"]:
             continue
-        d_numbers, d_words = _distinctive_tokens(dispatch["request"])
+        d_numbers, d_words = _fragment_tokens(dispatch["request"])
         if s_numbers and (s_numbers & d_numbers):
             return True
         if len(s_words & d_words) >= 2:
@@ -1996,10 +2108,13 @@ def _fragment_recovery_due(state: dict, now: float) -> list:
             continue
         if now - float(suspect.get("ts") or now) > _FRAGMENT_RECOVERY_MAX_AGE_S:
             continue
-        s_numbers, s_words = _distinctive_tokens(suspect.get("text"))
+        s_numbers, s_words = _fragment_tokens(suspect.get("text"))
         if not s_numbers and not s_words:
             # No distinctive substance (a bare "Okay." that landed
             # mid-flight): nothing was stranded, nothing to recover.
+            # TASK-VOI-043: _fragment_tokens is script-aware, so this
+            # leg now only skips genuinely contentless finals — a
+            # Devanagari/Telugu-script fragment carries tokens here.
             continue
         if _dispatch_followed(state, suspect):
             continue
@@ -2007,7 +2122,7 @@ def _fragment_recovery_due(state: dict, now: float) -> list:
         for dispatch in state.get("dispatches") or []:
             if dispatch.get("turn_id") not in during:
                 continue
-            d_numbers, d_words = _distinctive_tokens(
+            d_numbers, d_words = _fragment_tokens(
                 dispatch.get("request"))
             # The same coverage rule _dispatch_followed applies to
             # later dispatches: a shared figure, or >= 2 shared

@@ -49,16 +49,34 @@ only gate between fan noise and a truncated answer. The browser
 mic additionally pins noise suppression / echo cancellation /
 auto gain control explicitly at both enable sites (defence in
 depth — best-effort browser processing, not the decider).
-Genuine barge-in is untouched: activity handling stays
-START_OF_ACTIVITY_INTERRUPTS, prefix padding 200 ms, end
-sensitivity HIGH, silence 500 ms. Rollback stays one env var
+TASK-VOI-042 (P0, owner live test 2026-11-25) then raised the
+silence to 1200 ms (was 500): the owner's sentences were split
+into finals at a half-second pause and she answered the fragments.
+TASK-VOI-043 (P0, same live test) flips activity handling to
+NO_INTERRUPTION (was START_OF_ACTIVITY_INTERRUPTS): the
+`interrupted` signal itself is the arbitrary-cancellation path —
+a bridge call in flight can never meet SpeechHandle's hardcoded
+5.0 s wind-down, so any interruption during a bridge call ends in
+"speech not done in time after interruption, cancelling the speech
+arbitrarily", and in the owner session the user's own continuation
+cut her fragment-1 answer off mid-sentence. With NO_INTERRUPTION
+her response is never cut by user activity; a new turn is still
+transcribed, finalized and answered after she finishes — no turn
+is lost. Trade-off, stated plainly: a genuine barge-in ("Friday,
+stop") no longer cuts her off mid-sentence either — she finishes
+the sentence, then takes the new turn. Rollback stays one env var
 away: FRIDAY_VOICE_AAD_START_SENSITIVITY=high (worker) /
-FRIDAY_VOICE_VAD_START_SENSITIVITY=high (session path).
+FRIDAY_VOICE_VAD_START_SENSITIVITY=high (session path) for
+sensitivity, FRIDAY_VOICE_AAD_ACTIVITY_HANDLING=
+start_of_activity_interrupts to restore barge-in.
 
 LIVE PROOF STILL OWED: the calm-vs-noise A/B (she finishes her
-answers under fan noise, real barge-in still cuts in, transcripts
-healthy under LOW) needs a calm window on S1 and coordinator
-clearance — it is NOT claimed by this suite.
+answers under fan noise, transcripts healthy under LOW) needs a
+calm window on S1 and coordinator clearance — it is NOT claimed
+by this suite. The VOI-043 leg needs the same window plus the
+owner re-test: a continuation spoken mid-answer must not cut her
+off, and a genuinely new turn spoken mid-answer must be answered
+after she finishes the current response, not lost.
 """
 
 import sys
@@ -133,15 +151,56 @@ def test_env_low_selects_low(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# Real barge-in and reply speed are NOT traded away
+# Activity handling: barge-in IS traded away (TASK-VOI-043) — see the
+# module docstring. Her response is never cut by user activity now;
+# a new turn is answered after she finishes, not lost.
 # ---------------------------------------------------------------------------
 
 
-def test_activity_handling_still_interrupts(monkeypatch):
-    """Real speech still interrupts: only the EVIDENCE BAR for what
-    counts as speech onset moved."""
+def test_activity_handling_defaults_to_no_interruption(monkeypatch):
+    """TASK-VOI-043 (P0, owner live test 2026-11-25): the
+    arbitrary-cancellation chain ends here. With
+    START_OF_ACTIVITY_INTERRUPTS, Gemini's `interrupted` on start of
+    user activity became a plugin input_speech_started event, which
+    AgentActivity turns into interrupt(source="audio_activity")
+    unconditionally — and SpeechHandle allows the interrupted speech
+    5.0 s (hardcoded INTERRUPTION_TIMEOUT) to wind down before
+    force-cancelling it ("cancelling the speech arbitrarily"). A
+    bridge call in flight (60 s foreground budget) can never meet
+    that wind-down, so ANY interruption during a bridge call ended
+    in the arbitrary cancel — in the owner session the user's own
+    continuation ("Stratex") cut her fragment-1 answer off
+    mid-sentence. The worker cannot gate the interrupt per turn (it
+    fires before any transcript exists; the local knobs are inert
+    under realtime_llm), so the server-side switch is
+    NO_INTERRUPTION: her response is never cut by user activity.
+    Trade-off: a genuine barge-in ("Friday, stop") no longer cuts
+    her off mid-sentence either; she finishes the sentence, then
+    takes the new turn. Rollback stays one env var away."""
+    monkeypatch.delenv("FRIDAY_VOICE_AAD_ACTIVITY_HANDLING", raising=False)
+    cfg = w._realtime_input_config()
+    assert cfg is not None
+    assert cfg.activity_handling == (_TYPES.ActivityHandling.NO_INTERRUPTION)
+
+
+def test_activity_handling_env_restores_barge_in(monkeypatch):
+    """Rollback stays one env var away:
+    start_of_activity_interrupts restores the pre-VOI-043 value
+    exactly."""
+    monkeypatch.setenv(
+        "FRIDAY_VOICE_AAD_ACTIVITY_HANDLING", "start_of_activity_interrupts")
     cfg = w._realtime_input_config()
     assert cfg.activity_handling == (_TYPES.ActivityHandling.START_OF_ACTIVITY_INTERRUPTS)
+
+
+def test_activity_handling_unknown_value_falls_back_to_no_interruption(
+        monkeypatch):
+    """A typo'd override must land on the default side —
+    NO_INTERRUPTION — never silently re-enable the arbitrary
+    cancellation path."""
+    monkeypatch.setenv("FRIDAY_VOICE_AAD_ACTIVITY_HANDLING", "bogus")
+    cfg = w._realtime_input_config()
+    assert cfg.activity_handling == (_TYPES.ActivityHandling.NO_INTERRUPTION)
 
 
 def test_prefix_padding_keeps_first_syllable(monkeypatch):
