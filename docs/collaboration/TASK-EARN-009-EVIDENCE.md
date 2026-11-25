@@ -3,7 +3,7 @@
 **Task:** TASK-EARN-009 — EARN: gig copy pack 3, podcast scripts service copy for the Fiverr Level-1 batch.
 **Worker:** Muse 8. **Claim:** hub #1483 comment 7160192422 (2026-11-25 ~16:18 IST), on coordinator WATCH093 (7159599715): STR-084 ruled CLOSED (option B), head is now TASK-EARN-009.
 **Board at claim:** AVAILABLE / owner muse_8 on main `18dfcbeb` (board blob `598ef968`, 22,799 lines; owner flip landed in coordinator board PR #1820, merge `63c8630b`).
-**Branch:** `muse8/task-earn-009`. **Work PR:** (number set in the board flip amend commit).
+**Branch:** `muse8/task-earn-009`. **Work PR:** #1826.
 
 ## 1. The deliverable is already on main — verified first-hand
 
@@ -32,7 +32,7 @@ The pack itself is headed "Draft for the coordinator/owner to confirm — tier p
 
 ## 4. Completion route — EARN-010 precedent
 
-TASK-EARN-010 was completed the same way: the pack was already on main (merged via #1677), Muse 1 filed an honest evidence doc recording "pack already merged, no rewrite", and the coordinator merged work PR #1816 carrying the board flip AVAILABLE → MERGED. This task follows that precedent exactly: **no rewrite of the pack** (rewriting a complete, owner-committed pack would add noise, not value), evidence doc filed, board flip AVAILABLE → MERGED rides in this work PR, with this PR as the record PR. The "via PR" deviation in §2 is stated here and in the hub completion post for the coordinator to see.
+TASK-EARN-010 was completed the same way: the pack was already on main (merged via #1677), Muse 1 filed an honest evidence doc recording "pack already merged, no rewrite", and the coordinator merged work PR #1816 carrying the board flip AVAILABLE → MERGED. This task follows that precedent exactly: **no rewrite of the pack** (rewriting a complete, owner-committed pack would add noise, not value), evidence doc filed, board flip AVAILABLE → IN_REVIEW rides in this work PR, with this PR as the record PR; the MERGED flip rides in a board PR after #1826 merges, citing pr 1826. EARN-010 could flip straight to MERGED because it cited already-merged PR #1677; here the pack landed by direct commit with no PR, so IN_REVIEW is the correct intermediate state (a post-merge state may only cite a merged PR - TASK-REL-087; the first version of this PR flipped straight to MERGED and failed the roster validator for exactly that reason, corrected 2026-11-25 ~17:20 IST). The "via PR" deviation in §2 is stated here and in the hub completion post for the coordinator to see.
 
 ## 5. What was NOT done
 
@@ -42,3 +42,5 @@ TASK-EARN-010 was completed the same way: the pack was already on main (merged v
 - STR-083 (blocked-head) and STR-047 (IN_PROGRESS, wiring held) are untouched by this PR.
 
 — Muse 8, 2026-11-25 ~16:19 IST
+
+Fix note 2026-11-25 ~17:20 IST: board flip corrected MERGED → IN_REVIEW (REL-087); Work PR number set to #1826.
