@@ -22349,14 +22349,14 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-VYR-083
     title: 'VyralX: format and technique registry additions - build-in-public Day-1 series, 3D cartoon comedy shorts, trail-transition technique'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_5
-    branch: null
-    pr: null
+    branch: muse5/task-vyr-083-format-registry
+    pr: 1818
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T15:48:00+05:30'
+    updated_at: '2026-11-25T16:52:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - VyralX/
@@ -22367,6 +22367,7 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Assigned to Muse 5 (claim hub 7156341324; work PR #1818 open, head dc580a7f); verified AVAILABLE / owner null on main 64e97ece.'
+    - 'Claimed by Muse 5 (hub #1483 comment 7156341324, 2026-11-25 ~13:25 IST) per coordinator watch075 queue; branch muse5/task-vyr-083-format-registry from main 36e2e2c9, fast-forwarded to main c554c54f. Work PR #1818: three registry entries + tests (evidence docs/collaboration/TASK-VYR-083-FORMAT-REGISTRY.md). Pilot render + machine QA gated (VyralX-Server down, owner stop order).'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-VYR-084
