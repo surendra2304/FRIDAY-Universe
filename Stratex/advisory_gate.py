@@ -7,6 +7,13 @@ CRITICAL INVARIANTS:
 3. Hardcoded validation bounds cannot be overridden from environment variables.
 4. Bounded recommendations require 8 explicit fields and are held in PENDING_AUTHORIZATION
    until separately and explicitly authorized.
+5. S-11 creator hard rules (TASK-STR-082, source item DaFKBDwJlLZ) are
+   part of the rule set: (a) retail traders cannot control the market,
+   only their own risk — enforced structurally by invariants 1-3
+   (advisory only, risk limits immutable); (b) don't take debt for
+   trading — enabling a margin/borrowing parameter is rejected, and
+   leverage may only decrease; (c) learn first, then put money in —
+   enforced by MIN_REQUIRED_TRADES (insufficient data rejects).
 """
 
 import datetime
@@ -29,6 +36,20 @@ MANDATORY_BOUNDED_FIELDS = {
     "expiry",
     "authorization_required"
 }
+
+
+def _is_enabling(value: Any) -> bool:
+    """True when a parameter value switches a feature ON.
+
+    Used by the S-11 creator hard rule "don't take debt for trading":
+    enabling a margin/borrowing parameter is rejected, disabling one
+    is allowed.
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    return str(value).strip().lower() in {"true", "yes", "enabled", "on", "1"}
 
 
 @dataclass
@@ -121,6 +142,27 @@ class AdvisoryGate:
         "testnet_enabled"
     }
 
+    # S-11 creator hard rules (TASK-STR-082, source item DaFKBDwJlLZ),
+    # quoted verbatim from the board acceptance. Rule (a) is enforced
+    # structurally by the advisory-only invariant and FORBIDDEN_PARAMS;
+    # rule (b) by DEBT_ENABLING_PARAMS below plus the leverage rule
+    # (leverage may only decrease); rule (c) by MIN_REQUIRED_TRADES.
+    CREATOR_HARD_RULES: tuple[str, ...] = (
+        "Retail traders cannot control the market, only their own risk.",
+        "Don't take debt for trading.",
+        "Learn first, then put money in.",
+    )
+
+    # Parameters that switch margin/borrowed-money trading on. Enabling
+    # any of them violates creator hard rule (b); disabling one is fine.
+    DEBT_ENABLING_PARAMS: frozenset = frozenset({
+        "margin_enabled",
+        "borrow_enabled",
+        "use_margin",
+        "margin_trading_enabled",
+        "leverage_enabled",
+    })
+
     # Identifying parameter families
     POSITION_SIZE_KEYWORDS: set[str] = {
         "trade_qty",
@@ -164,7 +206,8 @@ class AdvisoryGate:
             "forbidden_params": list(self.FORBIDDEN_PARAMS),
             "max_telemetry_staleness_sec": self.MAX_TELEMETRY_STALENESS_SECONDS,
             "min_required_trades": self.MIN_REQUIRED_TRADES,
-            "max_drawdown_cutoff_pct": self.MAX_DRAWDOWN_CUTOFF_PCT
+            "max_drawdown_cutoff_pct": self.MAX_DRAWDOWN_CUTOFF_PCT,
+            "creator_hard_rules": list(self.CREATOR_HARD_RULES)
         }
 
         # Check: Inconsistent State (e.g. panic active or position reconciliation mismatch)
@@ -317,6 +360,15 @@ class AdvisoryGate:
 
             if target_value is None:
                 rejected_changes.append({"change": item, "reason": "Missing target proposed_value or new_value"})
+                continue
+
+            # Check: S-11 creator hard rule — don't take debt for trading.
+            if param_name in self.DEBT_ENABLING_PARAMS and _is_enabling(target_value):
+                reason = (
+                    f"Parameter '{param_name}' would enable debt-funded trading "
+                    f"(S-11 creator hard rule: {self.CREATOR_HARD_RULES[1]})"
+                )
+                rejected_changes.append({"change": item, "reason": reason})
                 continue
 
             # Check bounded recommendation attributes if present
@@ -517,5 +569,12 @@ class AdvisoryGate:
         param = str(raw["parameter"]).strip().lower()
         if param in self.FORBIDDEN_PARAMS or any(f in param for f in self.FORBIDDEN_PARAMS):
             return False, f"Parameter '{param}' is in forbidden safety list.", raw
+
+        # 8. Check S-11 creator hard rule: don't take debt for trading.
+        if param in self.DEBT_ENABLING_PARAMS and _is_enabling(raw["proposed_value"]):
+            return False, (
+                f"Parameter '{param}' would enable debt-funded trading "
+                f"(S-11 creator hard rule: {self.CREATOR_HARD_RULES[1]})"
+            ), raw
 
         return True, "Valid bounded recommendation.", raw
