@@ -18080,14 +18080,14 @@ tasks:
 
   - id: TASK-CTX-007
     title: 'Cortex: post-#1054 escalation ratio run 3 - fires vs messages actually sent over the last 48h of live logs'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_12
     branch: muse12/task-ctx-007-escalation-ratio-run-3
     pr: 1636
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T12:02:49+05:30'
+    updated_at: '2026-11-25T13:03:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18098,8 +18098,9 @@ tasks:
       - 'Re-slotted by the coordinator 2026-11-24 ~07:53 IST (Muse 19 claimed ~04:25 IST, no work artifact ~3.5h; Muse 12 takes it as queue head).'
       - 'Claimed by Muse 12 2026-11-24 ~08:59 IST (hub #1483 comment 7121141082); branch muse12/task-ctx-007-escalation-ratio-run-3.'
       - 'Run 3 filed by Muse 12 2026-11-24 ~12:03 IST (work PR #1636): 3,651 fires : 1 delivered over 32.30h covered; journal leg under watch 7123397267 grant.'
+      - 'MERGED 2026-11-24 (work PR #1636, merge commit 89635755ed18fac3718c594cfaa949f139952f24, verified via the Pulls API); board flip filed by Muse 12 in work PR #1794.'
     blockers: []
-    next_action: 'Work PR #1636 open for review; merge is Muse''s.'
+    next_action: 'Done — merged.'
 
   - id: TASK-VOI-034
     title: 'Voice: acceptance run 19 - calm-window probes after VOI-033, per-probe latency filed'
@@ -18453,16 +18454,17 @@ tasks:
 
   - id: TASK-VOI-036
     title: 'FRIDAY voice: acceptance run 21 - next calm-window run after VOI-035 (run 20); per-probe latency filed'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: MERGED
+    owner: muse_1
+    branch: muse1/task-voi-036-acceptance-run-21
+    pr: 1802
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T08:23:00+05:30'
+    updated_at: '2026-11-25T15:20:30+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-VOI-036-ACCEPTANCE-RUN-21.md
     acceptance:
       - 'Per-probe latency filed with a pass/fail verdict on the 8s greeting-onset bar.'
     evidence:
@@ -18470,8 +18472,11 @@ tasks:
       - 'Assigned to Muse 2 queue position 3 by coordinator watch 2026-11-24 ~06:55 IST (hub #1483) - after INF-030 + VOI-032. Claim it when it reaches the head.'
       - 'Claim: hub #1483 comment 7127132406 by Muse 2, 2026-11-24 ~14:44 IST. Board record verified AVAILABLE, owner muse_2, on main 421fee87 (board blob 415bcf6d, 18,764 lines, verified against the true main blob before editing). Branch muse2/task-voi-036-acceptance-run-21. Queue head after INF-030 MERGED (PR #1620) and VOI-032 MERGED (PR #1630). Work-request cycle stands down while claimed.'
       - 'Released 2026-11-24 22:40 IST per coordinator ruling 7137935600 (21:37 watch): run leg held under the owner stop order with no sequencing ruling that lets it execute; blocked-head rule applies. Board flip rides in TASK-MEM-029 work PR #1765.'
+      - 'Claim: hub #1483 comment 7156377968 by Muse 1, 2026-11-25 ~13:24 IST, on coordinator watch086 assignment (7156322977). Board verified AVAILABLE, owner null, branch null, pr null, P1, on main 2c6f913. Branch muse1/task-voi-036-acceptance-run-21. Board flip rides in the work PR.'
+      - 'Acceptance run 21 done 2026-11-25 ~13:34-13:46 IST on FRIDAY-Server (room friday-frd005-20261125-080422, provider gemini-realtime:gemini-3.8-live): greeting onset 0.68s vs 8s bar PASS; all 7 turns inside silence limits. Overall scorer FAIL on content (order-based fallback attribution); first-hand journal read: clock/recall/goodbye/followup answers WERE given (teal recall at 08:13:55 UTC verifies the Memora read path, second run in a row); delegation figures ARE in the journal this run (balance 10,444.12, 30 open, 82 closed at 08:08:59 UTC) — the run-20 genuine gap is closed. Evidence: docs/collaboration/TASK-VOI-036-ACCEPTANCE-RUN-21.md.'
+      - 'MERGED 2026-11-25 15:14:23 IST: work PR #1802 merged by the owner (merge c554c54f, head b9f7bf92, CI 9/9 green). Flip filed by Muse 1 in the EARN-010 board-correction PR.'
     blockers: []
-    next_action: 'Available in the pool; re-pullable if the freeze lifts and run 21 is sequenced.'
+    next_action: 'Closed - run 21 PASS (greeting onset 0.68s vs 8s bar), evidence filed. Next: EARN-010 per watch082.'
 
   - id: TASK-VYR-054
     title: 'VyralX: supervised cycle 5 candidate pool - most-popular discovery + machine QA gates'
@@ -18496,13 +18501,13 @@ tasks:
   - id: TASK-FUT-028
     title: 'Futuris: forecast accuracy scoring run 3 - score the next unscored forecast cohort'
     status: AVAILABLE
-    owner: muse_12
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T06:56:23+05:30'
+    updated_at: '2026-11-25T13:03:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18510,8 +18515,9 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; follow-up to FUT-027 (scoring run 2, Muse 5 queue pos 3). Pool floor refill.'
       - 'Assigned to Muse 12 queue position 3 by coordinator watch 2026-11-24 ~06:55 IST (hub #1483) - after VAL-014 + FUT-026. Claim it when it reaches the head.'
+      - 'Released to the central pool by Muse 12 2026-11-25 ~13:05 IST (work PR #1794): blocked, cohort empty, ruling owed; Muse 12 queue is INT-044 -> SEN-030 -> SEN-031.'
     blockers: []
-    next_action: 'Muse 12 pos 3 (queue VAL-014 -> FUT-026 -> FUT-028).'
+    next_action: 'In the central pool; claim via hub #1483.'
 
   - id: TASK-INT-039
     title: 'IntelX: fast-lane live proof run 3 - one real alert end-to-end after INT-038'
@@ -18536,13 +18542,13 @@ tasks:
   - id: TASK-EARN-009
     title: 'EARN: gig copy pack 3 - podcast scripts service copy for the Fiverr Level-1 batch'
     status: AVAILABLE
-    owner: null
+    owner: muse_8
     branch: null
     pr: null
     contributors: []
     priority: P3
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T14:31:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18551,6 +18557,7 @@ tasks:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; earning lane (Gig Pack #2: podcast scripts/show notes). New-seller gig limit is 4 total; Level 1 raises it to 10. Pool floor refill.'
       - 'Assigned to Muse 18 as queue position 3 by coordinator watch088 (2026-11-25 ~14:26 IST, hub #1483); verified AVAILABLE / owner null on main a0a9f1ba.'
       - 'Watch089 amend (coordinator): watch088 assignment to Muse 18 WITHDRAWN - EARN-009 is Muse 8 queue position 3 (claim of record hub 7155163914). Owner back to null. NOTE: a branch muse20/task-earn-009 exists - Muse 20 to confirm it holds no EARN-009 work.'
+      - 'Assigned to Muse 8 queue (position 3, now head after STR-084 void) by coordinator watch089 amend (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 64e97ece. NOTE: a branch muse20/task-earn-009 exists - Muse 20 to confirm it holds no EARN-009 work (board note carried).'
     blockers: []
     next_action: 'Draft the podcast-scripts gig copy pack and file it under earning/ via PR.'
 
@@ -18625,14 +18632,14 @@ tasks:
 
   - id: TASK-STR-054
     title: 'Stratex: forward-window fills audit run 4 - reconcile the daemon fill ledger against venue history for the new window'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_12
     branch: muse12/task-str-054-forward-window-fills-audit-run-4
     pr: 1658
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T16:15:00+05:30'
+    updated_at: '2026-11-25T13:03:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18642,8 +18649,9 @@ tasks:
       - 'Assigned to Muse 12 as queue position 3 by coordinator watch 2026-11-24 ~07:53 IST (board PR watch010; hub #1483): queue CTX-007 -> FUT-028 -> STR-054.'
       - 'Claimed by Muse 12 2026-11-24 ~13:05 IST (hub #1483 comment 7125156712); branch muse12/task-str-054-forward-window-fills-audit-run-4.'
       - 'Run 4 filed by Muse 12 2026-11-24 ~16:15 IST (work PR #1658): window has 0 ledger closes, 1 venue close (ALGOUSDT -10.6622 at 14:41:54 IST, no ledger row - daemon dead since 13:42 IST); venue RECONCILED, residual -0.0001.'
+      - 'MERGED 2026-11-24 (work PR #1658, merge commit ff072e33b46615d25fb37ad68b52867cf9582557, verified via the Pulls API); board flip filed by Muse 12 in work PR #1794.'
     blockers: []
-    next_action: 'Work PR #1658 open for review; merge is Muse''s.'
+    next_action: 'Done — merged.'
 
   - id: TASK-VOI-037
     title: 'FRIDAY voice: acceptance run 22 - next calm-window run after VOI-036 (run 21); per-probe latency filed'
@@ -18714,22 +18722,26 @@ tasks:
 
   - id: TASK-EARN-010
     title: 'EARN: gig copy pack 4 - lead-magnet eBook service copy for the Fiverr Level-1 batch'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: MERGED
+    owner: muse_20
+    branch: muse20/task-earn-010
+    pr: 1677
     contributors: []
     priority: P3
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T06:56:23+05:30'
+    updated_at: '2026-11-25T15:20:30+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - earning/TASK-EARN-010-LEAD-MAGNET-EBOOK-COPY-PACK.md
+      - docs/collaboration/TASK-EARN-010-GIG-COPY-PACK-4.md
     acceptance:
       - 'A complete lead-magnet eBook service copy pack (3 tiers, FAQ, requirements) committed under earning/, ready for the owner to approve.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~06:55 IST; Level-1 queue brief (fiverr-gig-pack-2.md). Pool floor refill.'
+      - 'Claim: hub #1483 comment 7135670375 by Muse 20, 2026-11-24 ~20:43 IST, under the blocked-head rule. Work PR #1677 merged 2026-11-24 21:12:07 IST (merge b2374d2a, head c7ed4294, merged by surendra2304): earning/TASK-EARN-010-LEAD-MAGNET-EBOOK-COPY-PACK.md, +97/-0, 1 file.'
+      - 'Claim: hub #1483 comment 7158767088 by Muse 1, 2026-11-25 ~15:15 IST, on coordinator watch082 queue (VOI-035 -> VOI-036 -> EARN-010). First-hand check found the pack already merged via PR #1677 (board record stale AVAILABLE - #1677 carried no board flip); no rewrite - verification + board correction filed instead. Evidence: docs/collaboration/TASK-EARN-010-GIG-COPY-PACK-4.md.'
     blockers: []
-    next_action: 'Draft the eBook service copy pack; keep it free-only, no paid tools.'
+    next_action: 'Closed - pack on main, owner/coordinator to confirm [VERIFY] prices, delivery times and category before publishing.'
 
   - id: TASK-STR-056
     title: 'Stratex: verify resting stops are actually armed for every open position (BNB sleeve position first); file per-position evidence'
@@ -19366,19 +19378,20 @@ tasks:
   - id: TASK-FRD-045
     title: 'FRIDAY: WOOP goal-setting template inside FRIDAY''s goal loop'
     status: AVAILABLE
-    owner: null
+    owner: muse_15
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - An owner goal created by voice/chat is structured as a WOOP record (Wish, Outcome, Obstacle, Plan) that the goal loop (TASK-IG-FRD-001) works against.
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-FRD-WOOP (IG package F-05). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Assigned to Muse 15 as queue position 3 by coordinator watch093 (2026-11-25, hub #1483); verified AVAILABLE / owner null / no branch on main 64e97ece. P2 WOOP goal-setting template inside FRIDAY goal loop (repo-side; head FRD-054 blocked on live-leg target, FRD-043 next).'
     blockers: []
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-FRD-046
@@ -19458,19 +19471,20 @@ tasks:
   - id: TASK-VYR-061
     title: 'VyralX: best-take selection plus blank-frame self-verification for renders'
     status: AVAILABLE
-    owner: null
+    owner: muse_tp8
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - The pipeline picks the best take among candidates and self-verifies that no blank frames survive into a held render.
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-VYR-BESTTAKE (IG package audit gap B121). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Assigned to Muse TP8 (claim hub 7156178088; checkpoint 2 hub 7156309604; branch musetp8/task-vyr-061-best-take-selection @ 768e18da); verified AVAILABLE / owner null on main 64e97ece. NOTE: a stale branch musetp1/task-vyr-061-best-take-selection exists - Muse TP1 to confirm it holds no VYR-061 work.'
     blockers: []
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-VYR-062
@@ -19606,24 +19620,28 @@ tasks:
     next_action: 'Claimed by Muse 14 (hub #1483 comment 7150251910, ~07:35 IST 2026-11-25; first claim of record, confirmed by coordinator watch080 ruling 7154044918). Scope doc + wiring tests 15/15 pass. Live leg gated by the owner stop order; repo leg first, live leg when the freeze lifts.'
   - id: TASK-INT-044
     title: 'IntelX: production-implementation tracker for the scouted-repos registry (102 entries)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: MERGED
+    owner: muse_12
+    branch: muse12/task-int-044-production-tracker
+    pr: 1794
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:25:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INT-044-PRODUCTION-TRACKER.md
     acceptance:
     - 'A filed, evidence-linked status line exists for all 102 registry entries.'
     - 'The 46 adopt/adapt entries each carry a live production implementation status: implemented + production-verified, or explicitly not-yet with the blocking reason.'
     - 'The 46 reference-only dispositions are re-verified against the live agents, and the 10 reject entries are proven absent from every production path.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); scope CORRECTED the same evening: a coordinator audit verified from origin/main that the scouted_repos registry already holds all 102 cards (expanded 32 -> 102 via PR #771, recorded in TASK-IG-INT-06 board evidence), so the original GAP-LIST draft premise (TASK-INT-REGISTRY-102, IG package X-06 - incorporate the 70 wave-2 cards) was stale and is NOT the task. Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Claimed by Muse 12 2026-11-25 ~11:55 IST (hub #1483 comment 7154794782; watch080/081); branch muse12/task-int-044-production-tracker @ main 01e49d30, rebased to be3f303e for checkpoint 1.'
+    - 'Checkpoint 1 filed 2026-11-25 ~13:05 IST (work PR #1794, head f1d9b104): tracker docs/collaboration/TASK-INT-044-PRODUCTION-TRACKER.md — registry inventory verified (102 entries, fit counts match pinned counts); all 6 adopt entries verified repo-side implemented on main be3f303e; live leg NOT YET (owner stop order, no lift in watches 082-085).'
+    - 'MERGED 2026-11-25 (work PR #1794, merge 76fc7dda, coordinator watch092; CI 9/9 green on head 9bd325c2; full-diff reviewed: production tracker, 102 entries). Board flips CTX-007/STR-054/FUT-028 rode in the PR itself.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Done - tracker merged (PR #1794); adapt-40 repo-side batch is follow-up work for a new task.'
 
   - id: TASK-INT-045
     title: 'IntelX: find a viable free feed route for First Squawk and activate it in headline_watch.py'
@@ -19821,19 +19839,20 @@ tasks:
   - id: TASK-SEN-030
     title: 'Sentinel: DNS-hygiene and Android Private DNS checks in the owner-device posture evaluator'
     status: AVAILABLE
-    owner: null
+    owner: muse_12
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - The posture report (TASK-IG-SEN-02 evaluator) states the device's Private DNS setting and resolver hygiene; both checks are included in the output.
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-SEN-DNS (IG package F-24 + F-25). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Assigned to Muse 12 as queue head by coordinator watch093 (2026-11-25, hub #1483); verified AVAILABLE / owner null / no branch on main 64e97ece. Queue INT-044 (merged) -> SEN-030 -> SEN-031 per watch072/watch076 and PR #1794 evidence.'
     blockers: []
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-FUT-030
@@ -19969,6 +19988,7 @@ tasks:
     updated_at: '2026-11-25T14:26:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-069-WHAT-IF-STORY-TEMPLATE.md
     acceptance:
     - 'The what-if format is a validated registry template: one counterfactual premise, single narrator, chaptered escalation, cliffhanger ending, episode series - alongside the stick-figure template (TASK-VYR-062).'
     evidence:
@@ -20226,13 +20246,13 @@ tasks:
   - id: TASK-STR-074
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG2-STR-09, IG2-STR-10, IG2-STR-11, IG2-STR-12, IG2-STR-13 - live extreme-condition verification (wave 1)'
     status: AVAILABLE
-    owner: null
+    owner: muse_tp4
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20242,6 +20262,7 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Assigned to Muse TP4 (claim of record; branch musetp4/task-str-074-production-verify-wave1 @ 1c3481a9); verified AVAILABLE / owner null on main 64e97ece.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
 
@@ -20479,7 +20500,7 @@ tasks:
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20489,19 +20510,20 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Muse TP7 claim of record (branch musetp7/task-frd-052-prod-verify-wave2 @ 514740ce); owner flip HELD by coordinator watch093 - muse_tp7 is not registered in TEAM_ROSTER.yaml yet (roster PR #1795 open, conflicted; rebase owed). Flip rides in the board PR after #1795 merges. Live legs re-target to FRIDAY-Server per watch093 ruling (S1 FRIDAY retired by design).'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
 
   - id: TASK-FRD-053
     title: 'PRODUCTION-VERIFY: FRIDAY corpus items IG-FRD-010, IG-FRD-011, IG2-FRD-01, IG2-FRD-02 - live extreme-condition verification (wave 2)'
     status: AVAILABLE
-    owner: null
+    owner: muse_1
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20511,19 +20533,20 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Assigned to Muse 1 as queue position 2 by coordinator watch093 (2026-11-25, hub #1483); verified AVAILABLE / owner null / no branch on main 64e97ece. P1 FRIDAY corpus IG-FRD-010/011/IG2-FRD-01/02 live extreme-condition verification wave 2.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
 
   - id: TASK-FRD-054
     title: 'PRODUCTION-VERIFY: FRIDAY corpus items IG2-FRD-03, IG2-FRD-04, IG2-FRD-05, IG2-FRD-06 - live extreme-condition verification (wave 2)'
     status: AVAILABLE
-    owner: null
+    owner: muse_15
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T15:24:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20533,19 +20556,20 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Assigned to Muse 15 as queue head by coordinator watch091 (2026-11-25, hub #1483 post 7158754888); verified AVAILABLE / owner null / no branch on main 31403969. P1 production-verify FRIDAY IG2-FRD-03..06.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
 
   - id: TASK-VOI-042
     title: 'PRODUCTION-VERIFY: voice corpus items IG-VOI-01..05 + IG2-VOI-01 - cold production voice verification (wave 2)'
     status: AVAILABLE
-    owner: null
+    owner: muse_1
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20555,6 +20579,7 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Assigned to Muse 1 as queue head by coordinator watch093 (2026-11-25, hub #1483); verified AVAILABLE / owner null / no branch on main 64e97ece. P1 cold production voice verification wave 2.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
 
@@ -20648,14 +20673,14 @@ tasks:
 
   - id: TASK-INF-035
     title: 'PRODUCTION-VERIFY: Inference corpus items IG-INF-01, IG-INF-02, IG-INF-03, IG-INF-04 - live load + failover verification (wave 3)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-inf-035-production-verify
     pr: 1789
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T12:36:00+05:30'
+    updated_at: '2026-11-25T15:24:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-035-PRODUCTION-VERIFY.md
@@ -20668,19 +20693,20 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Claimed by Muse 15 (hub #1483 comment 7154078708, 2026-11-25 ~11:13 IST, in the TASK-FRG-022 completion post); coordinator watch081 (comment 7154336804) confirms the claim stands. Branch muse15/task-inf-035-production-verify.'
     - 'Done with live evidence (evidence: docs/collaboration/TASK-INF-035-PRODUCTION-VERIFY.md; probes 2026-11-25 ~12:07-12:45 IST via bridge run_shell on S2 -> ssh to S1 -> tunnel to AWS Inference 15.134.130.145): PARTIAL. IG-INF-01 fit disclosure verified live (selection path: estimated_context_tokens 134885, context_window 131072, context_overflow true) but fit routing guarantee NOT verified (auto bypasses selection; health overlay precedes fit filter) - fix task TASK-IG-INF-01-FIX-01 named. IG-INF-02 VERIFIED no-op-unset (/v1/models 8 models, zero custom). IG-INF-03 VERIFIED (evaluate_candidate.py both specs exit 2 BLOCKED_NO_CREDENTIALS live on S1). IG-INF-04 VERIFIED (needle pilot + assessment present live; pilot NOT RUN on S1, no live fast-path). Key live correction: S1 Inference.service is dead; :8001 is an ssh tunnel to AWS - the live gateway is AWS-hosted, not S1 code.'
+    - 'MERGED 2026-11-25 (work PR #1789, merge 2a1204b8, coordinator watch090; CI 9/9 green on head 14e3b3b9 after M15 rebase; full-diff reviewed).'
     blockers: []
     next_action: 'Work PR #1789 open, IN_REVIEW. Verdict PARTIAL (evidence: docs/collaboration/TASK-INF-035-PRODUCTION-VERIFY.md): IG-INF-02/03/04 verified on their live legs; IG-INF-01 PARTIAL (fit disclosure verified, routing guarantee not) with fix task TASK-IG-INF-01-FIX-01 named. Closure is Muse''s call; next queue item TASK-INF-036.'
 
   - id: TASK-INF-036
     title: 'PRODUCTION-VERIFY: Inference corpus items IG-INF-05, IG-INF-06, IG2-INF-01, IG2-INF-02 - live load + failover verification (wave 3)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-inf-036-production-verify
     pr: 1809
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T14:20:00+05:30'
+    updated_at: '2026-11-25T15:24:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-036-PRODUCTION-VERIFY.md
@@ -20693,6 +20719,7 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Claimed by Muse 15 as claim-and-next (hub #1483 comment 7155723900, 2026-11-25 12:48 IST): queue position 2 behind TASK-INF-035. Coordinator watch085 first assigned it to Muse 17 in error - corrected in the same run; board PR #1791 amended.'
     - 'Done with live evidence (evidence: docs/collaboration/TASK-INF-036-PRODUCTION-VERIFY.md; probes 2026-11-25 ~14:05-14:09 IST via bridge run_shell on S2 -> ssh to S1 -> tunnel to AWS Inference 15.134.130.145): PARTIAL. IG-INF-05 VERIFIED (record present on S1, md5-identical to main; zero grey-market routes wired; pooled first-party tiers + failover ladder live). IG-INF-06 PARTIAL (discipline present live, changelog baseline-only, zero prompt-text changes since it landed - not exercised; no fix task). IG2-INF-01 PARTIAL (adapter present, rung OFF live - named Bytez model served by gemini-3.6-flash, Bytez never attempted; quota probe harness runs live but verdict no_attempts, no BYTEZ_API_KEY anywhere - NOT RUN; no fix task, key provisioning is a coordinator decision). IG2-INF-02 PARTIAL (vault code present + wired into gateway startup, but vault_configured() False live on S1, no vault file, no master key, keys plaintext env names; AWS-side adoption not observable) - fix task TASK-IG2-INF-02-FIX-01 named. Load: 5x concurrent auto 5/5 HTTP 200. S1 Inference.service still dead; :8001 is the AWS tunnel.'
+    - 'MERGED 2026-11-25 (work PR #1809, merge 31403969, coordinator watch091; CI 9/9 green on head 14271d07; evidence doc 110 lines, PARTIAL verdict).'
     blockers: []
     next_action: 'Work PR #1809 open, IN_REVIEW. Verdict PARTIAL (evidence: docs/collaboration/TASK-INF-036-PRODUCTION-VERIFY.md): IG-INF-05 VERIFIED; IG-INF-06 PARTIAL (discipline present, never exercised - no prompt change since it landed); IG2-INF-01 PARTIAL (rung OFF live; quota probe NOT RUN - no Bytez key); IG2-INF-02 PARTIAL (vault wired but unused live on the observable host) with fix task TASK-IG2-INF-02-FIX-01 named. PR #1789 (INF-035) verified still open at filing time, so INF-035 untouched. Closure is Muse''s call; next queue item TASK-INF-037 (owner muse_13).'
 
@@ -20791,13 +20818,13 @@ tasks:
   - id: TASK-SEN-031
     title: 'PRODUCTION-VERIFY: Sentinel corpus items IG-SEN-01, IG-SEN-02, IG-SEN-03, IG-SEN-04, IG2-SEN-01 - live approval-path verification (wave 3)'
     status: AVAILABLE
-    owner: null
+    owner: muse_12
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20807,6 +20834,7 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Assigned to Muse 12 as queue position 3 by coordinator watch093 (2026-11-25, hub #1483); verified AVAILABLE / owner null / no branch on main 64e97ece. Queue INT-044 (merged) -> SEN-030 -> SEN-031 per watch076 top-up.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
 
@@ -20860,13 +20888,13 @@ tasks:
   - id: TASK-FRG-025
     title: 'PRODUCTION-VERIFY: Forge corpus items IG-FRG-07, IG-FRG-08, IG2-FRG-01, IG2-FRG-02, IG2-FRG-03, IG2-FRG-04 - live build-task verification (wave 3)'
     status: AVAILABLE
-    owner: null
+    owner: muse_20
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20876,6 +20904,7 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Assigned to Muse 20 as queue position 2 by coordinator watch092 (2026-11-25, hub #1483 post 7159054713); verified AVAILABLE / owner null / no branch on main 76fc7dda, no hub claim in watch075-091 logs. Flip rides in watch093 board PR.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
 
@@ -21260,13 +21289,13 @@ tasks:
   - id: TASK-FRG-028
     title: 'REPO-IMPLEMENT: Forge repos - Karpathy Skill (adopt), Graphify (adopt), Open Code Review (adopt), ECC... (wave 3)'
     status: AVAILABLE
-    owner: null
+    owner: muse_2
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -21276,6 +21305,7 @@ tasks:
     - 'real build task for another agent executed end-to-end through Forge and its output actually used by that agent in production, per item'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Assigned to Muse 2 as queue position 3 by coordinator watch092 (2026-11-25, hub #1483 post 7159054713); verified AVAILABLE / owner null / no branch on main 76fc7dda, no hub claim in watch075-091 logs. Flip rides in watch093 board PR.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
 
@@ -21372,13 +21402,13 @@ tasks:
   - id: TASK-SEN-033
     title: 'REPO-IMPLEMENT: Sentinel repos - PentAGI, Anthropic Cybersecurity Skills (wave 3)'
     status: AVAILABLE
-    owner: null
+    owner: muse_20
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -21388,6 +21418,7 @@ tasks:
     - 'real approval path exercised on the live Sentinel service: one low-risk auto-approve + one high-risk Telegram prompt, each exactly once, per item where the item touches the approval path; otherwise the item''s own live security check run against the real surface'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Assigned to Muse 20 as queue position 3 by coordinator watch092 (2026-11-25, hub #1483 post 7159054713); verified AVAILABLE / owner null / no branch on main 76fc7dda, no hub claim in watch075-091 logs. Flip rides in watch093 board PR.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
 
@@ -21512,13 +21543,13 @@ tasks:
   - id: TASK-EARN-028
     title: 'EARN: websites-for-local-businesses lane - AI-built mockup sites for Google Maps/Justdial leads (clinics first), pitch pack, owner sends and closes'
     status: AVAILABLE
-    owner: null
+    owner: muse_1
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T02:30:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -21530,6 +21561,7 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
     - 'RENUMBERED 2026-11-25 by Muse (coordinator): this record was filed as TASK-EARN-017 in PR #1727, but a parallel earning-lane filing reached main first using TASK-EARN-017 for different content; renumbered to TASK-EARN-028 to restore unique task IDs. Content unchanged.'
+    - 'Assigned to Muse 1 as queue position 3 (earning lane) by coordinator watch093 (2026-11-25, hub #1483); verified AVAILABLE / owner null / no branch on main 64e97ece. P1 websites-for-local-businesses lane, clinics first.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
   - id: TASK-EARN-029
@@ -21988,14 +22020,14 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-INF-041
     title: 'Inference: automated discovery feed - new model/tool releases filed as candidate records automatically'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: MERGED
+    owner: muse_13
+    branch: muse13/task-inf-041-discovery-feed
+    pr: 1806
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T03:10:00+05:30'
+    updated_at: '2026-11-25T15:24:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Inference/
@@ -22005,6 +22037,7 @@ tasks:
     - 'Done = the feed running on schedule with the six seed records filed + the first automatically-filed new candidate.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    - 'MERGED 2026-11-25 (work PR #1806, merge 25de32df, coordinator watch092; CI 10/10 green on head b6c6e517; full-diff reviewed: discovery feed script + tests + docs + daily workflow, no secrets in code).'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-INF-042
@@ -22170,14 +22203,14 @@ tasks:
     next_action: 'Work PR #1764 open; awaiting coordinator merge + paired-verifier verdict.'
   - id: TASK-STR-082
     title: 'Stratex: sizing governance additions - scale-up gate, Kelly paper study, creator hard rules in the advisory gate'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_20
-    branch: null
-    pr: null
+    branch: muse20/task-str-082-sizing-governance
+    pr: 1811
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T12:54:00+05:30'
+    updated_at: '2026-11-25T14:43:08+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Stratex/
@@ -22215,14 +22248,14 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-STR-084
     title: 'Stratex: indicator-ranking evaluation - Order Flow, Volume Profile, Liquidity Sweeps, Anchored VWAP vs the RSI/MACD baseline (the open S-20 gap)'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: CLOSED
+    owner: muse_8
+    branch: muse8/task-str-084
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T14:31:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Stratex/
@@ -22234,8 +22267,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Assigned to Muse 2 as queue position 2 by coordinator watch088 (2026-11-25 ~14:26 IST, hub #1483); verified AVAILABLE / owner null on main a0a9f1ba.'
     - 'Watch089 amend (coordinator): watch088 assignment to Muse 2 WITHDRAWN - STR-084 is Muse 8 queue position 2 (claim of record hub 7155163914). Owner back to null; task stays AVAILABLE in the pool.'
+    - 'CLOSED 2026-11-25 (coordinator watch093 ruling, option B): duplicate of the prior SKIP disposition under TASK-IG-STR-18 (board CLOSED, owner muse_ai, PR #792; disposition doc Stratex/rigorous_backtest/ig/S20_INDICATOR_RANKING_DISPOSITION.md, sha b2c89d92, 2026-11-16) - the reel states no mechanical rules; any rule set would be invented and falsely attributed (SRS #742 / Box Theory #729 standard). Muse 8 scoping (hub 7158868425; scope doc commit 61e5b217 on branch muse8/task-str-084) verified the disposition first-hand. Reopen only if a source states mechanical sweep rules.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+    next_action: 'Closed as duplicate of the IG2-STR-18 SKIP disposition. Do not re-run; reopen only if a source states mechanical sweep rules.'
   - id: TASK-STR-085
     title: 'Stratex: SK System confluence - pre-declared RD candidate (Fib zone plus broken structure entry)'
     status: CLOSED
@@ -22262,13 +22296,13 @@ tasks:
   - id: TASK-STR-086
     title: 'Stratex: staged chart-analysis checklist in the research desk - the 7-stage screenshot pipeline'
     status: AVAILABLE
-    owner: muse_20
-    branch: null
+    owner: muse_tp6
+    branch: musetp6/task-str-086
     pr: null
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T14:26:00+05:30'
+    updated_at: '2026-11-25T15:24:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Stratex/
@@ -22279,18 +22313,19 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Assigned to Muse 20 as queue position 2 by coordinator watch088 (2026-11-25 ~14:26 IST, hub #1483); verified AVAILABLE / owner null on main a0a9f1ba.'
+    - 'Owner corrected watch092: TASK-STR-086 belongs to Muse TP6, NOT Muse 20. TP6 claim of record hub 7157064327 (~14:00 IST) + checkpoint 1 hub 7157143111; TP6 status 7158757742 confirms it is NOT released and branch musetp6/task-str-086 head 5ccdf991 stands. Watch090 treated it as released per a TP6 free request - that reading is withdrawn. Muse 20 queue position-2 replacement still owed.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-VYR-082
     title: 'VyralX: layered marketing architecture - the seven-layer growth system on top of channel_operator'
     status: AVAILABLE
-    owner: null
+    owner: muse_tp5
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T03:10:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - VyralX/
@@ -22300,18 +22335,19 @@ tasks:
     - 'Done = the loop runs one real weekly cycle and produces a channel growth plan from live channel data.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    - 'Assigned to Muse TP5 (claim of record; checkpoint 1 hub #1483); verified AVAILABLE / owner null on main 64e97ece, branch musetp5/task-vyr-082-layered-marketing @ 25ef0b44.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-VYR-083
     title: 'VyralX: format and technique registry additions - build-in-public Day-1 series, 3D cartoon comedy shorts, trail-transition technique'
     status: AVAILABLE
-    owner: null
+    owner: muse_5
     branch: null
     pr: null
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T03:10:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - VyralX/
@@ -22321,6 +22357,7 @@ tasks:
     - 'Done = three registry entries + one pilot render in one of the formats passing machine QA.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    - 'Assigned to Muse 5 (claim hub 7156341324; work PR #1818 open, head dc580a7f); verified AVAILABLE / owner null on main 64e97ece.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-VYR-084
@@ -22495,13 +22532,13 @@ tasks:
   - id: TASK-DB-004
     title: 'DB: Back up Stratex live state files on Stratex-Server (S4) - newest state backup 2026-11-14'
     status: AVAILABLE
-    owner: null
+    owner: muse_6
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T06:06:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
@@ -22509,6 +22546,7 @@ tasks:
     - 'Back up the live Stratex state files on Stratex-Server (server 4): Stratex/state/*.jsonl + *.json (fill ledger, equity snapshots, forward scorecard, position tags, reconciliation). Newest state backup found in the audit is 2026-11-14; the Nov 22 fleet backup holds only the 4 empty ADB tables. Prove with a dated backup + a restore/read-back check. Do not change the live daemon.'
     evidence:
     - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): Stratex live state files (S4): newest backup 2026-11-14; fleet backup holds only 4 empty tables. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
+    - 'Assigned to Muse 6 (claim of record; checkpoint 1 hub 7158782364, branch muse6/task-db-004-stratex-state-backup @ c92dfa3c); verified AVAILABLE / owner null on main 64e97ece.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-DB-005
@@ -22672,13 +22710,13 @@ tasks:
   - id: TASK-IG-INF-01-FIX-01
     title: 'Inference: fix long-context fit routing - auto path bypass + health overlay precedes fit filter (IG-INF-01 fix)'
     status: AVAILABLE
-    owner: null
+    owner: muse_13
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T14:26:00+05:30'
+    updated_at: '2026-11-25T15:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-035-PRODUCTION-VERIFY.md
@@ -22688,8 +22726,30 @@ tasks:
     - 'Re-probe live: an oversized long-document request on auto AND on the selection path is served by a model whose declared window holds prompt + reserved output, with provenance showing estimated_context_tokens / context_window / context_overflow: false; and a request above every window still discloses context_overflow: true. Do not mark IG-INF-01 verified until then.'
     evidence:
     - 'Filed by coordinator watch088 2026-11-25 from TASK-INF-035 production-verify (PR #1789, evidence docs/collaboration/TASK-INF-035-PRODUCTION-VERIFY.md): IG-INF-01 PARTIAL - fit disclosure verified live (L4: estimated_context_tokens 134885, context_window 131072, context_overflow true) but fit routing guarantee NOT verified (auto bypasses selection; health overlay precedes fit filter; oversized serve via ladder luck).'
+    - 'Assigned to Muse 13 as queue position 3 by coordinator watch093 (2026-11-25, hub #1483); verified AVAILABLE / owner null / no branch on main 64e97ece. P1 fix named by INF-035 evidence: fit routing must cover the auto path and the health overlay must not precede the fit filter.'
     blockers: []
     next_action: 'Available in the central pool; claim via hub #1483. Do not mark IG-INF-01 verified until the fix lands and is re-probed live.'
+  - id: TASK-STR-087
+    title: 'Stratex: fix LumibotBacktest.run() never trading - signal list/dict indexing defect'
+    status: CLAIMED
+    owner: muse_18
+    branch: muse18/fix-lumibot-backtest-never-trades
+    pr: 1815
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T15:24:00+05:30'
+    files:
+    - Stratex/app/agents/real_lumibot.py
+    - Stratex/tests/test_str078_lumibot_backtest.py
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'One-line fix in Stratex/app/agents/real_lumibot.py:240 plus regression tests proving LumibotBacktest.run() now trades; CI fully green; merged by coordinator after full-diff review.'
+    evidence:
+    - 'Filed by coordinator watch092 (2026-11-25, hub #1483): defect found by Muse 18 during STR-078 checkpoint-1 handover verification (branch muse18/task-str-078-repo-implement @ ddd3c61b); standalone PR #1815 opened from fresh branch (head acf32277, base c554c54f, 2 files +50/-1; 4/4 regression tests pass locally, py_compile clean; M18 status hub 7158794311).'
+    - 'CI on head acf32277 at watch092 check: contracts job FAILED, test + workflow-syntax + fleet-layout jobs still in progress - fix owed before any merge. Do NOT merge on this CI state.'
+    blockers: []
+    next_action: 'Muse 18 fixes the contracts failure on PR #1815, then coordinator reviews + merges on fully green CI.'
 task_id_warnings:
   - id: TASK-REL-061
 
