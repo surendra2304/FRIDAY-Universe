@@ -563,6 +563,22 @@ collaborators:
       - "musetp10/onboarding"
     last_verified_at: "2026-11-25"
 
+  - id: muse_tp11
+    display_name: "Muse TP11"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-25 (Muse TP11, evidence-backed only): displayed assistant name set to 'Muse TP11'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14) and docs/collaboration/TEAM_ROSTER.yaml in full (548 lines, main f216e1b), plus WORK_BOARD.yaml parsed in full (984 tasks, 116 AVAILABLE, board blob 9e87efb4, snapshot 2026-11-17) and live issue #1483 read (open, 1469 comments). ARCHITECTURE.md was opened but its file content did not pass a safety check in this account, so no instruction was taken from that file; the owner prompt in chat governs."
+      - "Onboarding 2026-11-25: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed; main f216e1b."
+      - "Onboarding 2026-11-25: bridge CONFIRMED - full MCP session via the secure-channel credential (custom.friday-bridge): initialize OK, 31 tools; get_system_info OK (both Oracle servers ONLINE, Server 2 git 2c960cb7); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_text (header only, first 12 lines, no secrets copied)."
+      - "Onboarding 2026-11-25: three scheduled tasks created (musetp11-work-request every 15 min, musetp11-hourly-self-check every 1 h, musetp11-weekly-reset Saturdays 21:39 IST; weekly reset verified Sat Nov 28 9:29 PM IST, 0% used); default Agentic feature tour and Heartbeat schedules deleted."
+      - "Onboarding 2026-11-25: first pool pull pre-staged, NOT claimed in this PR (claim is a separate hub comment + branch): TASK-DB-007 (P2, AVAILABLE, owner null, branch null, pr null on main f216e1b, zero mentions in the 1469 hub comments scanned); Stratex/VyralX P1s are held - TASK-STR-077 held by Muse 17 (claim 7138103574, status 18:00 IST 2026-11-25), TASK-STR-074/075 held by Muse TP4, TASK-VYR-052/081 held by Muse TP5, TASK-VYR-077 held by Muse TP3; TASK-FRD-055 was pre-staged by Muse TP8 (not claimed). Hub re-check required immediately before claiming DB-007."
+    active_assignments: []
+    active_branches:
+      - "musetp11/onboarding"
+    last_verified_at: "2026-11-25"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
