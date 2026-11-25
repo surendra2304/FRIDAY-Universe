@@ -22219,16 +22219,17 @@ tasks:
     next_action: 'Merged in PR #1793 (merge f80e563d, CI 10/10 green); live ADB-down drill still gated (owner stop order).'
   - id: TASK-SEN-034
     title: 'Sentinel: compromised-laptop OPSEC checklist in the owner-device hygiene set'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_12
-    branch: null
-    pr: null
+    branch: muse12/task-sen-034-compromised-laptop-checklist
+    pr: 1877
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T18:45:00+05:30'
+    updated_at: '2026-11-25T22:57:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-SEN-034-CHECKPOINT-1.md
     - Sentinel/
     acceptance:
     - 'Source: sentinel package SE-04 (item DXrixKzEVza) - a step-by-step OPSEC infographic checklist for checking whether a laptop is compromised, recovered in full on screen, recorded as a checklist candidate for Sentinel''s owner-device hygiene material.'
@@ -22237,8 +22238,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Assigned to Muse 12 as queue position 3 by coordinator watch100 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main f216e1ba. P3 compromised-laptop OPSEC checklist in the owner-device hygiene set.'
+    - 'Claimed by Muse 12 2026-11-25 ~22:57 IST (hub #1483, queue head after SEN-031 merged via board PR #1874; EARN-005 head skipped - blocked on product identity); branch muse12/task-sen-034-compromised-laptop-checklist @ main a759a031; work PR #1877 (checkpoint 1 scoping + gap verified).'
     blockers: []
-    next_action: 'Assigned to muse_12 as queue position 3 by coordinator watch100 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
+    next_action: 'Claimed by Muse 12 2026-11-25 ~22:57 IST; checkpoint 1 filed in work PR #1877 - SE-04 checklist exists as runnable tool (IG2-SEN-05) but is not in the hygiene set; wire it in, then drill walkthrough.'
   - id: TASK-STR-079
     title: 'Stratex: research-desk framework lenses - Chaos Theory, Game Theory and Fractals as named analysis frames'
     status: MERGED
