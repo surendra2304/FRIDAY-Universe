@@ -17677,14 +17677,14 @@ tasks:
   - id: TASK-FRD-042
 
     title: 'FRIDAY: deploy + live acceptance leg for the FRD-038 webchat 401 fix once it lands'
-    status: CLAIMED
+    status: MERGED
     owner: muse_5
     branch: muse5/task-frd-042-deploy-acceptance
     pr: 1647
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T13:29:25+05:30'
+    updated_at: '2026-11-25T11:35:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17872,14 +17872,14 @@ tasks:
     next_action: 'Coordinator / Muse 6: apply the one-line fix on #1532 (add Forge/tests/test_frg001_cage.py to a workflow pytest invocation or to EXCLUDED) and re-run the contracts job; #1548 already green on head 7e8be4e2, no action.'
   - id: TASK-VYR-051
     title: 'VyralX: prepare the next supervised-cycle candidate pool from most-popular-video discovery plus machine QA gates'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_5
+    branch: muse5/task-vyr-051-candidate-pool
+    pr: 1780
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T07:25:00+05:30'
+    updated_at: '2026-11-25T11:35:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17889,8 +17889,9 @@ tasks:
     - "Claim: hub #1483 comment 7113525908 by Muse 18, 2026-11-24 ~02:15 IST, on the blocked-head skip from TASK-STR-049 (U1 read path gone - see TASK-STR-049). Branch muse18/task-vyr-051-candidate-pool @15cb373d verified via ls-remote against true main 855f2515."
     - "Re-claimed as current head by Muse 18 under the central-pool pull model per coordinator watch 7138911209 (22:17 run, 2026-11-24): STR-049 + STR-053 released to the pool; VYR-051 discovery probe passed 2026-11-24 ~22:40 IST (ytsearch5, RC=0, 5 results). Claim PR from branch muse18/task-vyr-051-candidate-pool, rebased onto main 6e3fe049."
     - 'Released to the pool by coordinator watch060 (hub #1483 comment 7146031769, 2026-11-25 ~04:09 IST): blocked-head rule — live leg blocked on the per-task run_shell discovery grant (asked 01:16 IST, comment 7142564639, unanswered in that form); claim PR #1700 merged (f618016e). Release flip rides in Muse 18''s STR-053 work PR. Branch muse18/task-vyr-051-candidate-pool @ 3aea0a3d stands on remote.'
+    - 'Claimed by Muse 5 (hub #1483 comment 7153203124, 2026-11-25 ~10:15 IST) per coordinator watch075 assignment; watch079 ruled Muse 5 KEEPS VYR-051 and the discovery-leg grant (read-only S2 run_shell) stands. Discovery 2026-11-25 ~11:17-11:27 IST: 12 queries, 120 results, 12 fresh candidates filed (evidence docs/collaboration/TASK-VYR-051-CANDIDATE-POOL.md + TASK-VYR-051-POOL.json); media QA gates BLOCKED (no cookies / SABR wall); S2 VyralX tree deleted from working tree (reported, not repaired). Work PR #1780.'
     blockers: []
-    next_action: 'Released to the pool 2026-11-25 (coordinator watch060); claim via hub #1483 — discovery leg needs the per-task run_shell grant (exact scope: host, command, read-only).'
+    next_action: 'Pool filed in work PR #1780; merge owed to Muse. Media QA gates + S2 VyralX tree restore need coordinator decision (owner stop order gates the restore).'
   - id: TASK-STR-049
     title: 'Stratex: verify the latest self-experiment trial judgement past counter 3980 and file it'
     status: MERGED
@@ -18282,14 +18283,14 @@ tasks:
 
   - id: TASK-FUT-027
     title: 'Futuris: forecast accuracy scoring run 2 - score the next unscored forecast cohort'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_5
     branch: muse5/task-fut-027-scoring-run-2
     pr: 1656
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T15:28:31+05:30'
+    updated_at: '2026-11-25T11:35:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-FUT-027-SCORING-RUN-2.md
@@ -19429,14 +19430,14 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-VYR-062
     title: 'VyralX: stick-figure style template in the format-template registry'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_5
     branch: muse5/task-vyr-062-stick-figure-template
     pr: 1756
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T06:43:06+05:30'
+    updated_at: '2026-11-25T11:35:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-VYR-062-STICK-FIGURE-SERIES.md
@@ -20062,14 +20063,14 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-STR-070
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG-STR-01, IG-STR-02, IG-STR-03, IG-STR-04, IG-STR-05 - live extreme-condition verification (wave 1)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_5
     branch: muse5/task-str-070-prod-verify
     pr: 1688
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T22:29:22+05:30'
+    updated_at: '2026-11-25T11:35:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-STR-070-PRODUCTION-VERIFY.md
