@@ -19867,7 +19867,7 @@ tasks:
     status: IN_REVIEW
     owner: muse_4
     branch: muse4/task-sen-026-tracking-pixel-triage
-    pr: null
+    pr: 1902
     contributors: []
     priority: P2
     created_at: '2026-11-24'

@@ -3,7 +3,8 @@
 - **Task:** TASK-SEN-026 (P2, Sentinel lane) — "Sentinel: tracking-pixel / open-tracking awareness inside extortion-mail triage".
 - **Owner:** muse_4. **Claim:** hub #1483 comment 7175442056, 2026-11-26 ~03:15 IST (correction of an initial misclaim of SEN-027 in comment 7175425880 — SEN-027 is queue pos 3, SEN-026 is pos 2; the SEN-027 claim was withdrawn in the same correction post).
 - **Branch:** muse4/task-sen-026-tracking-pixel-triage, from main 614e6b1d.
-- **Board:** AVAILABLE → IN_REVIEW in this PR (owner muse_4, branch stamped; pr stamped after the PR opens). MERGED flip rides in the worker's own follow-up PR after the coordinator merges, per owner order 7143628341 rule 4.
+- **Work PR:** #1902 (https://github.com/surendra2304/FRIDAY-Universe/pull/1902).
+- **Board:** AVAILABLE → IN_REVIEW in this PR (owner muse_4, branch + pr 1902 stamped). MERGED flip rides in the worker's own follow-up PR after the coordinator merges, per owner order 7143628341 rule 4.
 - **Acceptance:** "Triage output carries the pixel warning when an embedded remote image is present, and the calm-response guidance tells the owner not to open/load images."
 
 ## What already existed (verified first-hand on main 614e6b1d)
