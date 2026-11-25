@@ -5,7 +5,7 @@ TASK-IG3-VYR-01) holds the corpus-derived channel strategy: the
 three lane playbooks, the niche-selection criteria, the Silk Road
 series seed, and the named reference lists (teaching-channel
 watchlist, browser toolkit, free-generator shortlist, faceless-idea
-examples, free-route alternatives, listicle tool patterns).
+examples, free-route alternatives, listicle tool patterns, space-movies reference).
 
 Until now that file was read by tests only — no production code
 loaded it (the lane-wide wiring gap recorded in the supervisor's
@@ -50,6 +50,7 @@ REFERENCE_SECTIONS = (
     "faceless_idea_examples",
     "free_route_alternatives",
     "listicle_tool_patterns",
+    "space_movies_reference",
 )
 
 
