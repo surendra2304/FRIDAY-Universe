@@ -59,6 +59,18 @@ this sensitivity as the only gate between fan noise and a
 truncated answer. HIGH stays available as the explicit env
 override (FRIDAY_VOICE_AAD_START_SENSITIVITY=high) if
 transcripts ever regress; the calm-vs-noise A/B is the proof.
+
+TASK-VOI-043 (2026-11-25) CHANGES the activity-handling default to
+NO_INTERRUPTION — the pins below now assert the new contract.
+Reason: the owner's live test showed her answer cut mid-sentence
+by her own continuation ("Stratex") — with
+START_OF_ACTIVITY_INTERRUPTS, Gemini's `interrupted` on start of
+user activity became a plugin input_speech_started event that the
+worker cannot gate per turn, and the 5.0 s wind-down always ended
+in an arbitrary cancel during a bridge call. Barge-in is now
+opt-in via FRIDAY_VOICE_AAD_ACTIVITY_HANDLING=
+start_of_activity_interrupts; the default, env-restore and
+junk-fallback pins live in test_voice_noise_interruption_voi032.py.
 """
 
 import sys
@@ -119,16 +131,26 @@ def test_junk_env_value_falls_back_to_low(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# The barge-in case: genuine owner speech must still interrupt her
+# The barge-in case: opt-in since TASK-VOI-043 (d) — the default no
+# longer interrupts her mid-answer; genuine barge-in is restored by
+# FRIDAY_VOICE_AAD_ACTIVITY_HANDLING=start_of_activity_interrupts
+# (pinned in test_voice_noise_interruption_voi032.py).
 # ---------------------------------------------------------------------------
 
 
-def test_activity_handling_still_interrupts(monkeypatch):
-    """Real speech still interrupts: activity handling is unchanged —
-    only the EVIDENCE BAR for what counts as speech onset moved."""
+def test_activity_handling_defaults_to_no_interruption_voi043(monkeypatch):
+    """TASK-VOI-043 (P0, owner live test 2026-11-25): the default
+    activity handling is NO_INTERRUPTION — her answer is never cut
+    by user activity. The pre-VOI-043 pin (START_OF_ACTIVITY_
+    INTERRUPTS) is deliberately replaced: with interrupts on, the
+    owner's own continuation cut her fragment-1 answer off
+    mid-sentence and the 5.0 s wind-down always ended in an
+    arbitrary cancel during a bridge call. Barge-in returns only
+    via the env override (see test_voice_noise_interruption_
+    voi032.py)."""
     cfg = w._realtime_input_config()
     assert cfg.activity_handling == (
-        _TYPES.ActivityHandling.START_OF_ACTIVITY_INTERRUPTS
+        _TYPES.ActivityHandling.NO_INTERRUPTION
     )
 
 

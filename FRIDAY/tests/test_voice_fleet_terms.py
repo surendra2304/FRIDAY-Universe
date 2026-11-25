@@ -13,7 +13,9 @@ Stray Kids for me", delegation grounded on the mishearing):
   pinned explicitly (start LOW, end HIGH, prefix 200 ms, silence
   1200 ms — TASK-VOI-042 raised it from 500 ms so a mid-sentence
   pause stops splitting utterances into answered fragments,
-  START_OF_ACTIVITY_INTERRUPTS) instead of the API-surface
+  activity handling NO_INTERRUPTION — TASK-VOI-043 (d) replaced
+  START_OF_ACTIVITY_INTERRUPTS so her answer is never cut by user
+  activity) instead of the API-surface
   defaults, with None (pass nothing) as the degradation.
 - ``_correct_fleet_terms``: the conservative post-STT correction map
   for the text the WORKER consumes (watchdog re-ask + rebuilt-session
@@ -200,8 +202,13 @@ def test_realtime_config_pins_aad(monkeypatch):
     # fragments (2026-11-25 live test). FRIDAY_VOICE_AAD_SILENCE_MS
     # still overrides (see test_realtime_config_env_overrides).
     assert aad.silence_duration_ms == 1200
+    # TASK-VOI-043 (d): NO_INTERRUPTION is the deliberate default —
+    # START_OF_ACTIVITY_INTERRUPTS let the owner's own continuation
+    # cut her answer off mid-sentence. Barge-in is restored only via
+    # FRIDAY_VOICE_AAD_ACTIVITY_HANDLING=start_of_activity_interrupts
+    # (pinned in test_voice_noise_interruption_voi032.py).
     assert cfg.activity_handling == (
-        genai_types_real.ActivityHandling.START_OF_ACTIVITY_INTERRUPTS
+        genai_types_real.ActivityHandling.NO_INTERRUPTION
     )
 
 
