@@ -1105,6 +1105,15 @@ MODEL_CONTEXT_WINDOWS: dict[str, int] = {
 #: off; above it, only the long-window models can hold the request.
 _CONTEXT_FIT_FLOOR_TOKENS = 131072
 
+#: TASK-IG-INF-01-FIX-01: fit-routed oversized requests get a longer
+#: end-to-end route deadline. The TASK-INF-035 live probes showed a
+#: fit-routed Gemini first attempt needs more than the standard 60 s
+#: budget (L3A hit the 60 s budget; L4 served in 60.03 s). The
+#: multiplier applies ONLY when best-suitable selection actually ran
+#: with fit accounting — the "auto" path keeps the standard budget,
+#: because the gateway ladder, not this route, chooses there.
+_FIT_ROUTED_TIMEOUT_MULTIPLIER = 2.0
+
 
 def _estimate_context_tokens(req: ChatCompletionRequest) -> int:
     """Estimated total context a request needs: prompt plus reserved output.
@@ -1266,24 +1275,32 @@ def _ranked_suitable_models(
 ) -> list[str]:
     """Ranked verified-catalogue candidates for a task type, best first.
 
-    Exclusions (already-tried models) are dropped first; models whose
-    provider is currently unhealthy are dropped next. If health filtering
-    would empty the list, the unfiltered ranking is returned instead —
-    health is advisory, the gateway's own ladder remains the backstop,
-    and a half-open probe may still succeed. Selection never returns a
-    model outside the verified catalogue.
+    Exclusions (already-tried models) are dropped first. TASK-IG-INF-01's
+    context-window fit filter runs next: when ``required_tokens`` is
+    positive, candidates whose declared context window cannot hold the
+    request are dropped; if NO candidate can hold it, the pool is
+    returned ordered by window size, largest first — the caller gets the
+    best possible holder, and _select_best_suitable discloses the
+    overflow instead of letting the provider truncate in silence.
+
+    TASK-IG-INF-01-FIX-01: fit runs BEFORE the availability overlays.
+    Before this fix it ran last, so a provider-health verdict could
+    drop every long-window model before fit ever saw them (TASK-INF-035
+    L4: route-level health judged Gemini unhealthy, the fit filter then
+    ran over 131k-window models only, and the request was served by
+    ladder luck, not by the fit choice). The availability overlays now
+    filter within the fitting set instead: models whose provider is
+    currently unhealthy are dropped, and if health filtering would
+    empty the list, the fitting ranking is returned instead — health is
+    advisory, the gateway's own ladder remains the backstop, and a
+    half-open probe may still succeed. Selection never returns a model
+    outside the verified catalogue.
 
     TASK-REL-049 adds the model-level counterpart of the provider
     filter: servability quarantine (see
     app.providers.model_servability) drops a model that has stopped
     serving even while its provider stays healthy, under the same
-    never-empty fallback discipline. TASK-IG-INF-01's context-window
-    fit filter runs last: when ``required_tokens`` is positive,
-    candidates whose declared context window cannot hold the request
-    are dropped; if NO candidate can hold it, the pool is returned
-    ordered by window size, largest first — the caller gets the best
-    possible holder, and _select_best_suitable discloses the overflow
-    instead of letting the provider truncate in silence.
+    never-empty fallback discipline.
 
     TASK-INF-012 adds the Groq size-guard overlay: when
     ``groq_over_limit`` is set, the request's estimated prompt exceeds
@@ -1302,6 +1319,27 @@ def _ranked_suitable_models(
         for model_id in ranked
         if model_id.lower() not in excluded and model_id.lower() in _CATALOG_PROVIDERS
     ]
+    # TASK-IG-INF-01-FIX-01: context-window fit filter FIRST, before
+    # the availability overlays — a long-window model must not be
+    # removed before fit runs (see the docstring; TASK-INF-035 L4).
+    # When nothing fits, the overflow fallback returns the pool ordered
+    # by window size, largest first, and the availability overlays are
+    # skipped: with nothing fitting, the choice is the largest holder
+    # either way, and the overflow is disclosed by the caller.
+    if required_tokens > 0 and pool:
+        fitting = [
+            model_id
+            for model_id in pool
+            if MODEL_CONTEXT_WINDOWS.get(model_id.lower(), 0) >= required_tokens
+        ]
+        if fitting:
+            pool = fitting
+        else:
+            return sorted(
+                pool,
+                key=lambda model_id: MODEL_CONTEXT_WINDOWS.get(model_id.lower(), 0),
+                reverse=True,
+            )
     healthy = [
         model_id
         for model_id in pool
@@ -1326,7 +1364,7 @@ def _ranked_suitable_models(
         keep = set(visible) | set(probes)
         pool = [m for m in pool if m in keep]
     # TASK-INF-012: Groq size-guard overlay. Runs after the
-    # availability overlays and before the fit filter, so the fit
+    # availability overlays, within the fitting set, so the fit
     # filter's overflow fallback still orders the surviving pool.
     if groq_over_limit and pool:
         non_groq = [
@@ -1336,22 +1374,6 @@ def _ranked_suitable_models(
         ]
         if non_groq:
             pool = non_groq
-    # TASK-IG-INF-01: context-window fit filter, applied after both
-    # availability overlays so its overflow fallback still returns the
-    # best available holder rather than refusing service.
-    if required_tokens > 0 and pool:
-        fitting = [
-            model_id
-            for model_id in pool
-            if MODEL_CONTEXT_WINDOWS.get(model_id.lower(), 0) >= required_tokens
-        ]
-        if fitting:
-            return fitting
-        return sorted(
-            pool,
-            key=lambda model_id: MODEL_CONTEXT_WINDOWS.get(model_id.lower(), 0),
-            reverse=True,
-        )
     return pool
 
 
@@ -1590,6 +1612,20 @@ async def chat_completions(req: ChatCompletionRequest):
                     req.model
                 )
 
+    # TASK-IG-INF-01-FIX-01: fit accounting for "auto" too. The default
+    # path never runs best-suitable selection, so an oversized "auto"
+    # request was served with no fit fields in provenance at all
+    # (TASK-INF-035 L2: a 400k-char doc served with no fit accounting).
+    # The fit record is computed for disclosure ONLY — the serve path is
+    # untouched: "auto" still delegates the model choice to the gateway
+    # ladder (that is its contract), and this record never selects a
+    # model. It is attached to provenance below when fit accounting
+    # applies (estimated size above the standard-tier floor); below the
+    # floor it stays None and the "auto" path is byte-identical.
+    auto_fit: dict[str, Any] | None = None
+    if req.model == "auto" and _estimate_context_tokens(req) > _CONTEXT_FIT_FLOOR_TOKENS:
+        auto_fit = _select_best_suitable(req)
+
     async def _execute_custom_once(model: str, provider: str, timeout_s: float | None = None) -> UnifiedExecutionResponse:
         """TASK-IG-INF-02: serve a custom-endpoint model via the gateway.
 
@@ -1742,7 +1778,18 @@ async def chat_completions(req: ChatCompletionRequest):
     # this 503 (FRD-005 re-run evidence), and a 43.9s repro in which the
     # retry's fresh primary slice alone burned 36.1s on a hanging provider.
     # Each attempt now receives only the budget that remains.
-    route_deadline = time.monotonic() + float(settings.REQUEST_TIMEOUT or 60.0)
+    # TASK-IG-INF-01-FIX-01: a fit-routed oversized request gets a
+    # longer end-to-end budget. TASK-INF-035 measured a fit-routed
+    # Gemini first attempt at 60.03 s against this 60 s budget — the
+    # route cut off a servable request. The extension applies only when
+    # best-suitable selection ran with fit accounting (the "auto" path
+    # keeps the standard budget; see above). The bounded policy retry
+    # shares the same deadline, so the extension covers it too.
+    fit_routed = selection is not None and "estimated_context_tokens" in selection
+    route_timeout = float(settings.REQUEST_TIMEOUT or 60.0)
+    if fit_routed:
+        route_timeout *= _FIT_ROUTED_TIMEOUT_MULTIPLIER
+    route_deadline = time.monotonic() + route_timeout
 
     def _remaining_budget() -> float:
         return route_deadline - time.monotonic()
@@ -1882,6 +1929,11 @@ async def chat_completions(req: ChatCompletionRequest):
                 ]
                 body["provenance"]["context_window"] = selection["context_window"]
                 body["provenance"]["context_overflow"] = selection["context_overflow"]
+                if fit_routed:
+                    # TASK-IG-INF-01-FIX-01: the extended route budget
+                    # this fit-routed request ran under, so the live
+                    # re-probe can see the extension applied.
+                    body["provenance"]["route_timeout_seconds"] = route_timeout
 
             # TASK-REL-049: the servability state behind the choice —
             # the chosen model's own state, whether it is a half-open
@@ -1897,6 +1949,26 @@ async def chat_completions(req: ChatCompletionRequest):
                 body["provenance"]["servability"]["redirected_from_quarantined"] = selection[
                     "redirected_from_quarantined"
                 ]
+    # TASK-IG-INF-01-FIX-01: "auto" fit disclosure. The ladder chose
+    # the model (that is the "auto" contract), but the provenance still
+    # says whether the request fit the window of the model the policy
+    # would have picked. Runs whether or not a substitution was
+    # recorded — the fit accounting is about the request size, not
+    # about which provider answered. "fit_selected_model" names the
+    # model whose window the accounting describes; unlike
+    # "selected_model" above, nothing was selected for execution here.
+    if auto_fit is not None and "estimated_context_tokens" in auto_fit:
+        provenance = body.setdefault(
+            "provenance",
+            {
+                "requested_model": req.model,
+                "requested_provider": exec_provider,
+            },
+        )
+        provenance["estimated_context_tokens"] = auto_fit["estimated_context_tokens"]
+        provenance["context_window"] = auto_fit["context_window"]
+        provenance["context_overflow"] = auto_fit["context_overflow"]
+        provenance["fit_selected_model"] = auto_fit["model"]
     return body
 
 
