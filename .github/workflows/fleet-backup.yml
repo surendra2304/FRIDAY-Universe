@@ -279,9 +279,9 @@ jobs:
             cd /opt/friday_universe
             exec > >(tee /tmp/rel096-unify-s1.log) 2>&1
             ROOT=/var/backups/friday-universe
-            SSHOPT="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
+            SSHOPT="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -i /home/ubuntu/.ssh/Oracle-Cloud-x-AWS-Key"
             SET=$(sudo ls -1d $ROOT/[0-9]*/ | sort | tail -1)
-            REMOTE=$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${{ secrets.SERVER2_HOST }} "sudo ls -1d $ROOT/[0-9]*/ | grep -v fleetstate | sort | tail -1; sudo ls -1d $ROOT/*-fleetstate/ | sort | tail -1")
+            REMOTE=$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -i /home/ubuntu/.ssh/Oracle-Cloud-x-AWS-Key ubuntu@${{ secrets.SERVER2_HOST }} "sudo ls -1d $ROOT/[0-9]*/ | grep -v fleetstate | sort | tail -1; sudo ls -1d $ROOT/*-fleetstate/ | sort | tail -1")
             MEDIA_SET=$(echo "$REMOTE" | sed -n '1p')
             BUNDLE=$(echo "$REMOTE" | sed -n '2p')
             echo "Unifying set $SET with media $MEDIA_SET and bundle $BUNDLE"
@@ -307,8 +307,8 @@ jobs:
             cd /opt/friday_universe
             exec > >(tee /tmp/rel096-unify-s2.log) 2>&1
             ROOT=/var/backups/friday-universe
-            SSHOPT="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
-            SET_NAME=$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${{ secrets.SERVER1_HOST }} "sudo ls -1d $ROOT/[0-9]*/ | sort | tail -1 | xargs -n1 basename")
+            SSHOPT="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -i /home/ubuntu/.ssh/Oracle-Cloud-x-AWS-Key"
+            SET_NAME=$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -i /home/ubuntu/.ssh/Oracle-Cloud-x-AWS-Key ubuntu@${{ secrets.SERVER1_HOST }} "sudo ls -1d $ROOT/[0-9]*/ | sort | tail -1 | xargs -n1 basename")
             BUNDLE=$(sudo ls -1d $ROOT/*-fleetstate/ | sort | tail -1)
             MEDIA_SET=$(sudo ls -1d $ROOT/[0-9]*/ | grep -v fleetstate | sort | tail -1)
             echo "Mirroring unified set $SET_NAME from Server 1"
