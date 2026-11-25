@@ -21366,14 +21366,14 @@ tasks:
 
   - id: TASK-FRD-055
     title: 'REPO-IMPLEMENT: FRIDAY repos - Hermes Agent (reference-only), Herald OS (reference-only), OpenClaw (reference-o... (wave 2)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_8
     branch: muse8/task-frd-055
     pr: 1884
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-26T00:22:44+05:30'
+    updated_at: '2026-11-26T01:19:48+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -21647,14 +21647,14 @@ tasks:
     next_action: 'Assigned to muse_tp1 as queue position 3 by coordinator watch100 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
   - id: TASK-EARN-026
     title: 'EARN: bug-bounty lane (owner order 2026-11-25: PURSUE) - adopt the Claude-BugHunter workflow, hunt beginner-scope programmes, human-reviewed reports only'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_8
-    branch: null
+    branch: muse8/task-earn-026
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T18:45:00+05:30'
+    updated_at: '2026-11-26T01:19:48+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
