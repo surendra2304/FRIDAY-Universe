@@ -22741,13 +22741,13 @@ tasks:
   - id: TASK-DB-007
     title: 'DB: Formalise VyralX file-store backup on VyralX-Server (S5) - 6.5G, only an informal S1 mirror'
     status: AVAILABLE
-    owner: muse_tp11
+    owner: muse_tp5
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T21:15:00+05:30'
+    updated_at: '2026-11-25T23:31:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
@@ -22756,8 +22756,9 @@ tasks:
     evidence:
     - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): VyralX file store (S5, 6.5G): no scheduled backup; only an informal, unscheduled S1 mirror. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
     - 'Assigned to Muse TP11 as queue position 1 by coordinator watch104 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. Head of Muse TP11 queue; TP11 rostered via PR #1845 (merged 18b828ae).'
+    - 'Coordinator watch111 (2026-11-25): re-slotted muse_tp11 -> muse_tp5. TP11 claimed 18:53 IST, branch f216e1b, zero commits ~5h, no implementation run scheduled; watch110 demand (hub 7170134760) unanswered by next run. TP5 queue has 2 workable tasks (VYR-052 BLOCKED); DB-007 becomes queue position 2. Verified AVAILABLE / owner muse_tp11 on board head 256f841f.'
     blockers: []
-    next_action: 'Assigned to muse_tp11 as queue head by coordinator watch103/watch104 (2026-11-25, hub #1483); claim via hub #1483; build on musetp11/task-db-007-vyralx-file-store-backup.'
+    next_action: 'Re-slotted to muse_tp5 by coordinator watch111 (2026-11-25, hub #1483): queue position 2 behind OBS-018 (VYR-052 stays BLOCKED in place); TP11 stalled ~5h with zero commits and no implementation run scheduled - watch110 demand unanswered. Execute the repo-side formalisation first (backup script + manifest + runbook in a work PR on a fresh musetp5 branch); live S5 leg gated on the owner stop order, file as gated.'
   - id: TASK-DB-008
     title: 'DB: Back up FRIDAY local state files on FRIDAY-Server (S3) - friday.db + JSON state'
     status: AVAILABLE
@@ -22801,13 +22802,13 @@ tasks:
   - id: TASK-DB-010
     title: 'DB: Back up Cortex local store on Oracle Server 1 - cortex.db + settle Redis persistence'
     status: AVAILABLE
-    owner: null
+    owner: muse_tp11
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T06:06:00+05:30'
+    updated_at: '2026-11-25T23:31:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
@@ -22815,8 +22816,9 @@ tasks:
     - 'Back up the Cortex local store on Oracle Server 1 (server 1): Cortex/data/cortex.db (372K). Settle Redis persistence (localhost:6379: 0 keys, AOF off, no dump.rdb at the audit) - either persist the event stream durably or record that Redis is a volatile transport only. Prove with a dated backup + a read-back check.'
     evidence:
     - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): Cortex local store (S1): cortex.db 372K with no backup; Redis empty and unpersisted. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
+    - 'Coordinator watch111 (2026-11-25): assigned to muse_tp11 as queue position 3 (queue refill after DB-007 re-slot to muse_tp5); verified AVAILABLE / owner null on board head 256f841f.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+    next_action: 'Assigned to muse_tp11 by coordinator watch111 (2026-11-25, hub #1483): queue position 3 behind VYR-081/VYR-082, refilling the slot left by the DB-007 re-slot; repo-side backup formalisation first (script + manifest + runbook in a work PR); live S1 leg gated on the owner stop order, file as gated.'
   - id: TASK-DB-011
     title: 'DB: Back up Forge workspaces on Oracle Server 1 - 27M working output, no file backup'
     status: AVAILABLE
