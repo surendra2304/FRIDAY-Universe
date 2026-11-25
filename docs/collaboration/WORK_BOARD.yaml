@@ -16854,13 +16854,13 @@ tasks:
   - id: TASK-VOI-031
     title: 'Voice: diagnose greeting onset missing the 8s bar on a calm box (acceptance run 16, both arms) - first-audio latency root cause plus fix'
     status: AVAILABLE
-    owner: null
+    owner: muse_15
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-25T05:21:00+05:30'
+    updated_at: '2026-11-25T21:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16869,8 +16869,9 @@ tasks:
     - 'Drafted by the coordinator 2026-11-23 ~15:45 IST (watch refill, pool floor 10): Acceptance run 16 (2026-11-19): greeting onset missed the 8s bar on a calm box in both arms - a separate defect from the send-cadence collapse that run convicted. Unassigned - the coordinator watch assigns it to the next free worker.'
     - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Muse 2 zero evidence (self-admitted stall; newest tip 19:11 IST on the already-re-slotted INF-028) - owner muse_2 -> muse_6 (voice queue consolidation with VOI-027)."
     - 'Released back to the pool 2026-11-24 22:08 IST per central-pool pull model (owner directive 7136890552, watch 7137288514); diagnosis parked on a calm-box production run (run-16 per-stage numbers not in repo). Board flip to AVAILABLE filed in the TASK-DB-001 work PR per coordinator ruling (watch060, rule 4).'
+    - 'Assigned to Muse 15 as queue position 2 by coordinator watch104 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. P1 greeting-onset diagnosis from run 16.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+    next_action: 'Assigned to muse_15 as queue position 2 by coordinator watch104 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
   - id: TASK-OBS-020
     title: 'Fleet: bring the S2 checkout onto main and re-verify the OBS-013 live-leg preconditions'
     status: MERGED
@@ -18881,21 +18882,22 @@ tasks:
   - id: TASK-VOI-039
     title: 'FRIDAY voice: acceptance run 24 - next calm-window run after VOI-038 (run 23); per-probe latency filed'
     status: AVAILABLE
-    owner: null
+    owner: muse_15
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T07:53:56+05:30'
+    updated_at: '2026-11-25T21:15:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Per-probe latency + pass/fail filed on the 8s greeting-onset bar for run 24.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~07:53 IST; sequel to VOI-038 (run 23). Pool floor refill.'
+      - 'Assigned to Muse 15 as queue position 1 by coordinator watch104 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. Head of Muse 15 queue; P1 acceptance run 24, sequel to VOI-038 (run 23).'
     blockers: []
-    next_action: 'Run the probes in the next calm window; file per-probe latency + pass/fail.'
+    next_action: 'Assigned to muse_15 as queue head by coordinator watch104 (2026-11-25, hub #1483); claim via hub #1483; run the probes in the next calm window; file per-probe latency + pass/fail.'
 
   - id: TASK-VOI-040
     title: 'FRIDAY voice: acceptance run 25 - next calm-window run after VOI-039 (run 24); per-probe latency filed'
@@ -20172,14 +20174,14 @@ tasks:
     next_action: 'Merged (PR #1773, merge db6d175f, 2026-11-25 10:27:53 IST, by Surendra). No production consumer by design (evaluation only).'
   - id: TASK-FRG-023
     title: 'Forge: evaluate Antigravity remote-SSH mode as a fleet dev workflow'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_tp9
     branch: musetp9/task-frg-023
     pr: 1857
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T20:10:00+05:30'
+    updated_at: '2026-11-25T21:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-FRG-023-EVALUATION.md
@@ -20188,8 +20190,9 @@ tasks:
     - 'The evaluation records the setup gotchas from the full watch: AllowTcpForwarding required including on jump hosts, and glibc-only (Alpine/musl fails).'
     evidence:
     - 'Evaluation DONE by Muse TP9 2026-11-25 (claim hub #1483 comment 7164985301): docs/collaboration/TASK-FRG-023-EVALUATION.md. Verdict RECOMMENDED with conditions (supervised trial on FRIDAY-Server first, sshd -T confirmation, two fleet rules). Official docs https://antigravity.google/docs/ssh/ read first-hand (v2.33.0+, glibc 2.26+, AllowTcpForwarding host + ProxyJump, agents keep running on close/sleep). Fleet hosts checked live read-only via Friday Bridge: all 6 Ubuntu LTS (22.04 Oracle S1/S2, 24.04 FRIDAY/Stratex/VyralX/IntelX), glibc 2.35/2.39, AllowTcpForwarding at OpenSSH default yes (drop-in checked on servers 1 and 3 only). NOT live-tested: no Antigravity install, no live IDE SSH session; arch/effective forwarding/outbound HTTPS unproven — 5-step trial plan in the doc. PR #1857, merge-base main 14181d3c, head 0b668a73e87b.'
+    - 'PR #1857 merged 2026-11-25 (merge 462b7dde); board flip IN_REVIEW -> MERGED by coordinator watch105 (2026-11-25, hub #1483). Evaluation RECOMMENDED with conditions (supervised trial on FRIDAY-Server first, sshd -T confirmation, two fleet rules); live trial NOT run.'
     blockers: []
-    next_action: 'Merge PR #1857 (peer); live trial on FRIDAY-Server per the doc section 5 when Muse clears it.'
+    next_action: 'Merged via PR #1857 (merge 462b7dde) 2026-11-25; evaluation RECOMMENDED with conditions - supervised trial on FRIDAY-Server first when clearance lands.'
   - id: TASK-STR-070
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG-STR-01, IG-STR-02, IG-STR-03, IG-STR-04, IG-STR-05 - live extreme-condition verification (wave 1)'
     status: MERGED
@@ -20594,14 +20597,14 @@ tasks:
 
   - id: TASK-FRD-054
     title: 'PRODUCTION-VERIFY: FRIDAY corpus items IG2-FRD-03, IG2-FRD-04, IG2-FRD-05, IG2-FRD-06 - live extreme-condition verification (wave 2)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-frd-054-production-verify
     pr: 1828
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T16:36:46+05:30'
+    updated_at: '2026-11-25T21:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-FRD-054-PRODUCTION-VERIFY.md
@@ -20614,8 +20617,9 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Assigned to Muse 15 as queue head by coordinator watch091 (2026-11-25, hub #1483 post 7158754888); verified AVAILABLE / owner null / no branch on main 31403969. P1 production-verify FRIDAY IG2-FRD-03..06.'
     - 'Production-verify PARTIAL 2/4 (evidence docs/collaboration/TASK-FRD-054-PRODUCTION-VERIFY.md, PR #1828): FRD-04 + FRD-06 VERIFIED live on FRIDAY-Server; FRD-03 NOT VERIFIED (fix task TASK-IG2-FRD-03-FIX-01); FRD-05 NOT VERIFIED (mic-blocked, retest owed); injection HELD per WATCH093.'
+    - 'PR #1828 merged 2026-11-25 (merge d15c82c9); board flip IN_REVIEW -> MERGED by coordinator watch105 (2026-11-25, hub #1483). Live extreme-condition verification evidence (wave 2) merged; production-verify leg follows per acceptance.'
     blockers: []
-    next_action: 'Fix task TASK-IG2-FRD-03-FIX-01 (router rule + fetcher + parser) + FRD-05 mic-capable retest; failure injection HELD (owner clearance, WATCH093).'
+    next_action: 'Merged via PR #1828 (merge d15c82c9) 2026-11-25; post-merge production verification leg follows per acceptance.'
 
   - id: TASK-VOI-042
     title: 'PRODUCTION-VERIFY: voice corpus items IG-VOI-01..05 + IG2-VOI-01 - cold production voice verification (wave 2)'
@@ -22414,13 +22418,13 @@ tasks:
   - id: TASK-VYR-082
     title: 'VyralX: layered marketing architecture - the seven-layer growth system on top of channel_operator'
     status: AVAILABLE
-    owner: muse_tp5
+    owner: muse_tp11
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T15:48:00+05:30'
+    updated_at: '2026-11-25T21:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - VyralX/
@@ -22431,8 +22435,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Assigned to Muse TP5 (claim of record; checkpoint 1 hub #1483); verified AVAILABLE / owner null on main 64e97ece, branch musetp5/task-vyr-082-layered-marketing @ 25ef0b44.'
+    - 'Re-slotted muse_tp5 -> muse_tp11 by coordinator watch101 (2026-11-25, hub #1483 7164435710), reaffirmed watch104: TP5 unstarted ~4h after checkpoint 1 (branch musetp5/task-vyr-082-layered-marketing @ 25ef0b44, 1 commit, implementation not started). TP11 rostered via PR #1845 (merged 18b828ae), so the flip rides now. Muse TP11 queue position 2 behind DB-007. Verified AVAILABLE / owner muse_tp5 on main 0eeaa43a.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+    next_action: 'Assigned to muse_tp11 as queue position 2 by coordinator watch101/watch104 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
   - id: TASK-VYR-083
     title: 'VyralX: format and technique registry additions - build-in-public Day-1 series, 3D cartoon comedy shorts, trail-transition technique'
     status: MERGED
@@ -22690,13 +22695,13 @@ tasks:
   - id: TASK-DB-007
     title: 'DB: Formalise VyralX file-store backup on VyralX-Server (S5) - 6.5G, only an informal S1 mirror'
     status: AVAILABLE
-    owner: null
+    owner: muse_tp11
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T06:06:00+05:30'
+    updated_at: '2026-11-25T21:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
@@ -22704,8 +22709,9 @@ tasks:
     - 'Give the VyralX 6.5G file store (VyralX-Server, server 5: renders 221 files, media 702 files, data 403M) a scheduled backup; verify the Oracle Server 1 mirror (counts identical, 1 render md5-identical in the audit) as the second copy or replace it. Prove with a dated backup + a restore/read-back check. VyralX stays FILES ONLY - no database.'
     evidence:
     - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): VyralX file store (S5, 6.5G): no scheduled backup; only an informal, unscheduled S1 mirror. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
+    - 'Assigned to Muse TP11 as queue position 1 by coordinator watch104 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. Head of Muse TP11 queue; TP11 rostered via PR #1845 (merged 18b828ae).'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+    next_action: 'Assigned to muse_tp11 as queue head by coordinator watch103/watch104 (2026-11-25, hub #1483); claim via hub #1483; build on musetp11/task-db-007-vyralx-file-store-backup.'
   - id: TASK-DB-008
     title: 'DB: Back up FRIDAY local state files on FRIDAY-Server (S3) - friday.db + JSON state'
     status: AVAILABLE
