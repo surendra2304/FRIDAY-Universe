@@ -49,6 +49,7 @@ from friday.tools.builtin.meeting_followup_tools import (
     MeetingFollowUpListTool,
 )
 from friday.tools.builtin.browser_tool import BrowserAutomationTool
+from friday.tools.builtin.rsvp_tools import ControlRSVPSessionTool, CreateRSVPSessionTool
 from friday.tools.builtin.fleet_dispatch import FleetDispatchTool
 from friday.tools.builtin.fleet_status import FleetStatusTool
 from friday.tools.builtin.forge_code_task import ForgeCodeTool
@@ -227,6 +228,8 @@ __all__ = [
     "SwipeScreenTool",
     "TapScreenTool",
     "BrowserAutomationTool",
+    "ControlRSVPSessionTool",
+    "CreateRSVPSessionTool",
     "CalculatorTool",
     "CloseApplicationTool",
     "ControlLightTool",
