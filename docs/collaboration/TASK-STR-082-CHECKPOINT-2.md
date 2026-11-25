@@ -72,6 +72,18 @@
   the re-audit. If a source record contradicts any encoded rule, the
   rule comes out.
 
+## CI guard fix (same run, after the PR opened)
+- The first CI run failed the `contracts` check: the REL-068
+  collection guard reported both new test files uncollected by any
+  PR-triggered workflow. Repaired in the same run: the two files are
+  now named in the Stratex tier-1 pytest invocation in
+  `.github/workflows/friday-universe-ci.yml` (commit `477f80f3`),
+  following the established pattern (cf. VYR-075 / INT-045 comments
+  in the same file). The guard's own matching logic was verified
+  locally against the edited workflow: both files resolve as covered.
+- CI re-run pending at the time this checkpoint was filed; the `test`
+  job (Stratex tier-1) is the run that proves both new test files.
+
 ## Known non-blockers
 - Disabling a debt flag via a boolean True→False change is still
   rejected by the pre-existing generic ±20% numeric rule (a boolean flip
