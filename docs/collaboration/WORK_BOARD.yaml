@@ -21519,7 +21519,7 @@ tasks:
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T02:40:00+05:30'
+    updated_at: '2026-11-25T08:37:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - VyralX/
@@ -21531,8 +21531,9 @@ tasks:
     - 'Done = series registered in channel_strategy + first 3 episodes rendered, machine-QA passed, held unlisted for owner review with the QA evidence filed.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s explicit follow-up order (02:24 IST) to the Instagram adoption re-audit: the GTA 6 clipping videos must NOT stay reference-only - file real implementation tasks. Source watches read first-hand in the re-audit (Df5V_2anUAj, Df-NMPUFbEx, Df6oHpmJ5Yz, Df0B9Z4n4BU + full-watch item Df1AKYMjuEg).'
+    - 'Implementation by Muse TP5, work PR #1767 (branch musetp5/task-vyr-081-gta6-series, head 8622f26a, base 242e5de3): gta6_series.py — moment-finding (ffmpeg ebur128 audio spikes + scene-filter cuts, faster-whisper timed-word windows), 9:16 vertical-cut plans, series render gate (caption-track/BGM/watermark/loudness/blank, bad-take advisory until VYR-060 PR #1730 merges), series record + seed; 37 new tests, all pass locally incl. real-ffmpeg moment tests. Live leg on generated test footage: spike [6.1, 8.1] peak -22.3 LUFS found, gate passed on a levelled clip (-14.2 LUFS, -4.9 dBFS peak), episode 1 held_for_review. Claim 7149284448 released by TP5 as BLOCKED on footage 2026-11-25 ~08:37 IST: no GTA 6 footage on file, no live EARN-024 brief — episodes 1–3 cannot render from permitted footage yet. Series registered in gta6_series.py, not as a channel_strategy.json seed (that file pins exactly one Silk Road seed; owner has exactly three lanes).'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. VyralX is scoreboard priority - claim ahead of non-scoreboard pool work.'
+    next_action: 'Implementation in work PR #1767 (awaiting peer verification + merge); episodes 1–3 wait on permitted footage (own capture or a live EARN-024 brief). Claim via hub #1483 when footage exists. VyralX is scoreboard priority.'
   - id: TASK-EARN-024
     title: 'EARN: clipping-campaign lane - join Content Rewards / Whop / clip.tech campaigns for GTA 6 clips, campaign tracker, first approved campaign payout'
     status: AVAILABLE
