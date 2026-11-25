@@ -6297,6 +6297,12 @@ class VoiceSpeakRequest(BaseModel):
     lang: str | None = None
 
 
+class SignalBriefRequest(BaseModel):
+    """Coverage window for one on-demand Daily Signal Brief."""
+
+    hours: int | None = None
+
+
 _VOICE_CATALOGUE = [
     {"id": "en-IN-NeerjaNeural", "language": "en-IN", "label": "English (India) — Neerja", "gender": "Female"},
     {"id": "en-IN-PrabhatNeural", "language": "en-IN", "label": "English (India) — Prabhat", "gender": "Male"},
@@ -6376,6 +6382,27 @@ async def voice_speak(
         media_type="audio/mpeg",
         headers={"Cache-Control": "no-store", "X-FRIDAY-Voice": voice},
     )
+
+
+# --- TASK-FRD-060: Daily Signal Brief (on-demand only) ---
+# No routine cron produces this brief (owner removed routine briefings
+# 2026-11-23). It is generated only when asked, from live IntelX
+# standing-watch data, in the adopted F-40 format.
+
+
+@app.post("/api/signal-brief")
+async def generate_signal_brief(
+    req: SignalBriefRequest,
+    _: None = Depends(_require_control_access),
+) -> Any:
+    """Generate the Daily Signal Brief on demand from live IntelX data."""
+    from friday.workflows import signal_brief as brief_workflow
+
+    hours = req.hours if isinstance(req.hours, int) and req.hours > 0 else brief_workflow.DEFAULT_WINDOW_HOURS
+    result = brief_workflow.generate_brief(hours=hours)
+    if not result.get("ok"):
+        raise HTTPException(status_code=502, detail=result.get("error", "Could not read IntelX watch data"))
+    return result
 
 
 # --- Enhanced Autonomous Controller Integration ---
