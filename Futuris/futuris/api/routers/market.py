@@ -1,5 +1,6 @@
 """Market forecasting: Stratex telemetry, IntelX context and Memora persistence."""
 
+import asyncio
 from datetime import datetime, timedelta, timezone
 UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Annotated, Any
@@ -24,6 +25,11 @@ from futuris.core.hashing import content_hash_of
 from futuris.core.schemas import Driver, EvidenceRef, Forecast
 from futuris.ecosystem.adapters import ecosystem_adapter
 from futuris.evaluation.calibration import CalibrationAnalyzer
+from futuris.features.calendar_context import (
+    CalendarFeed,
+    build_calendar_context,
+    format_headline,
+)
 from futuris.features.event_context import build_event_context, headline_event
 from futuris.infra.audit import AuditLogger
 from futuris.infra.auth import AllowAnonymousHeavyRead, AllowAnonymousRead, RequireAnalyst
@@ -50,6 +56,10 @@ class MarketForecastRequest(BaseModel):
     )
     horizons: list[str] = Field(default_factory=lambda: ["24h"], description="Forecast horizons")
     include_intelx: bool = Field(default=True, description="Enrich with IntelX exogenous research")
+    include_calendar: bool = Field(
+        default=True,
+        description="Enrich with the economic-calendar feed (TASK-FUT-030)",
+    )
     include_inference: bool = Field(
         default=True, description="Ground with multi-agent Inference Gateway"
     )
@@ -120,6 +130,36 @@ class EventContextPayload(BaseModel):
     events: list[MarketEventPayload] = Field(default_factory=list)
 
 
+class CalendarEventPayload(BaseModel):
+    """One high-impact event from the economic-calendar feed (TASK-FUT-030).
+    The event is the feed's own record, cited verbatim -- never paraphrased
+    or invented."""
+
+    date: str
+    time: str = ""
+    name: str
+    kind: str  # "macro" | "earnings"
+    impact: str  # "high" | "medium" | "low"
+    country: str = ""
+    symbol: str = ""
+    forecast: str = ""
+    previous: str = ""
+    actual: str = ""
+
+
+class CalendarContextPayload(BaseModel):
+    """Calendar context block. Status is one of available / none_upcoming /
+    source_unavailable / not_requested -- stated, never filled in."""
+
+    status: str = "not_requested"
+    events: list[CalendarEventPayload] = Field(default_factory=list)
+    headline: CalendarEventPayload | None = None
+    store_path: str | None = None
+    store_mtime: str | None = None
+    last_refresh_ok: bool | None = None
+    refresh_attempted: bool = False
+
+
 class MarketForecastResponse(BaseModel):
     status: str = "OK"
     symbol: str
@@ -144,6 +184,12 @@ class MarketForecastResponse(BaseModel):
     # source report. Explanatory only -- it moves no number above.
     event_context: EventContextPayload = Field(
         default_factory=lambda: EventContextPayload(status="not_requested")
+    )
+    # TASK-FUT-030: economic-calendar context from the IG2-STR-11 feed
+    # (Stratex/research/economic_calendar.py), each event cited to the
+    # feed's own record. Explanatory only -- it moves no number above.
+    calendar_context: CalendarContextPayload = Field(
+        default_factory=lambda: CalendarContextPayload(status="not_requested")
     )
     # TASK-FUT-008: plain-language presentation — horizon in words, the
     # method named as the deterministic telemetry rule it is, and the
@@ -214,14 +260,25 @@ async def _market_confidence(
     )
 
 
+# TASK-FUT-030: default for _generate_market_prediction's calendar_feed --
+# build the real IG2-STR-11 feed lazily. An explicit None means the feed is
+# unavailable (source_unavailable); a passed feed object is used as-is (tests).
+_CALENDAR_AUTO: Any = object()
+
+
 async def _generate_market_prediction(
     symbol: str,
     horizon_hours: int = 24,
     include_intelx: bool = True,
+    include_calendar: bool = True,
     include_inference: bool = True,
     forecast_repo: ForecastRepository | None = None,
     intelx_catalyst: tuple[str, str] | None = None,
     actor_label: str = "system",
+    # TASK-FUT-030: injectable calendar feed for tests. The default
+    # (_CALENDAR_AUTO) builds the real feed lazily; an explicit None
+    # means "feed unavailable" and yields source_unavailable.
+    calendar_feed: Any = _CALENDAR_AUTO,
 ) -> MarketForecastResponse:
     """Combine Stratex telemetry, IntelX research and Inference into a market forecast."""
     clean_sym = symbol.upper().strip() if symbol else "BTCUSDT"
@@ -314,6 +371,53 @@ async def _generate_market_prediction(
             )
             for event in event_context_model.events
         ],
+    )
+
+    # TASK-FUT-030: economic-calendar context from the IG2-STR-11 feed
+    # (Stratex/research/economic_calendar.py). The feed is consumed
+    # directly -- its own module, classification and store -- so the
+    # outlook can name the macro release / earnings date it opens on.
+    # Explanatory only: no forecast number reads this block, and an
+    # unreadable feed is reported as source_unavailable rather than
+    # backfilled.
+    feed_obj: CalendarFeed | None = None
+    if calendar_feed is _CALENDAR_AUTO:
+        try:
+            feed_obj = CalendarFeed(
+                module_path=settings.ECON_CALENDAR_MODULE_PATH,
+                store_path=settings.ECON_CALENDAR_STORE_PATH,
+                refresh_max_age_hours=settings.ECON_CALENDAR_REFRESH_MAX_AGE_HOURS,
+            )
+        except (FileNotFoundError, ImportError) as exc:
+            logger.warning(
+                "econ_calendar_feed_unavailable", error=type(exc).__name__
+            )
+            feed_obj = None
+    elif calendar_feed is not None:
+        feed_obj = calendar_feed
+    if include_calendar and feed_obj is not None:
+        # The refresh is synchronous (Nasdaq calls via requests); keep
+        # it off the event loop. It only runs when the store is stale
+        # (missing or older than the configured max age).
+        await asyncio.to_thread(feed_obj.refresh_if_stale)
+    calendar_context_model = build_calendar_context(
+        feed_obj, requested=include_calendar
+    )
+    calendar_context = CalendarContextPayload(
+        status=calendar_context_model.status,
+        events=[
+            CalendarEventPayload(**event.model_dump())
+            for event in calendar_context_model.events
+        ],
+        headline=(
+            CalendarEventPayload(**calendar_context_model.headline.model_dump())
+            if calendar_context_model.headline is not None
+            else None
+        ),
+        store_path=calendar_context_model.store_path,
+        store_mtime=calendar_context_model.store_mtime,
+        last_refresh_ok=calendar_context_model.last_refresh_ok,
+        refresh_attempted=calendar_context_model.refresh_attempted,
     )
 
     # 2. Ingest Stratex Market Telemetry
@@ -421,6 +525,12 @@ async def _generate_market_prediction(
             f" Event context [{headline.category}]: {headline.title} "
             f"(IntelX, {headline.published_at.date().isoformat()})."
         )
+
+    # TASK-FUT-030: when a high-impact calendar release sits inside the
+    # outlook window, the rationale names it -- the feed's own record,
+    # its kind/impact, and its date, so a CPI/FOMC-driven move reads as one.
+    if calendar_context_model.headline is not None:
+        rationale += " " + format_headline(calendar_context_model.headline)
 
     # 6. Qualitative Grounding with Multi-Agent Inference Gateway
     inference_grounded = False
@@ -608,6 +718,7 @@ async def _generate_market_prediction(
         ),
         intelx_context_included=bool(intelx_reports),
         event_context=event_context,
+        calendar_context=calendar_context,
         inference_grounded=inference_grounded,
         forecast_id=str(persisted_forecast.forecast_id if persisted_forecast else forecast_id),
         timestamp=now.isoformat(),
@@ -668,6 +779,7 @@ async def post_market_forecast(
         symbol=target_symbol,
         horizon_hours=24,
         include_intelx=req.include_intelx if req else True,
+        include_calendar=req.include_calendar if req else True,
         include_inference=req.include_inference if req else True,
         forecast_repo=forecast_repo,
         actor_label=user.label,
@@ -698,6 +810,7 @@ async def get_market_forecast(
         symbol=symbol,
         horizon_hours=24,
         include_intelx=True,
+        include_calendar=True,
         include_inference=True,
         forecast_repo=forecast_repo,
         actor_label="anonymous_read",
