@@ -366,7 +366,7 @@ class AdvisoryGate:
             if param_name in self.DEBT_ENABLING_PARAMS and _is_enabling(target_value):
                 reason = (
                     f"Parameter '{param_name}' would enable debt-funded trading "
-                    "(S-11 creator hard rule: don't take debt for trading)."
+                    f"(S-11 creator hard rule: {self.CREATOR_HARD_RULES[1]})"
                 )
                 rejected_changes.append({"change": item, "reason": reason})
                 continue
@@ -574,7 +574,7 @@ class AdvisoryGate:
         if param in self.DEBT_ENABLING_PARAMS and _is_enabling(raw["proposed_value"]):
             return False, (
                 f"Parameter '{param}' would enable debt-funded trading "
-                "(S-11 creator hard rule: don't take debt for trading)."
+                f"(S-11 creator hard rule: {self.CREATOR_HARD_RULES[1]})"
             ), raw
 
         return True, "Valid bounded recommendation.", raw
