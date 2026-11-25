@@ -22882,6 +22882,7 @@ tasks:
     - FRIDAY/src/friday/autonomous/lead_generation.py
     - FRIDAY/tests/test_capability_routing.py
     - FRIDAY/tests/test_ig2_frd03_lead_generation.py
+    - .github/workflows/friday-universe-ci.yml
     acceptance:
     - 'Natural lead requests reach the lead_generate tool (capability router gains a lead rule); explicit FindYello and JaRanks runs return real leads with phones/emails, not 403s or empty rows.'
     - 'Live evidence per source (FindYello, JaRanks) on the live FRIDAY path; a source that stays blocked gets a named replacement or a written verdict, not a silent pass.'

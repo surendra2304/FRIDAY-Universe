@@ -163,6 +163,17 @@ active/running throughout (verified at probe start).
 - production-verified: PARTIAL (router + parser verified live on the host;
   sources verdict'd; end-to-end chat leg owed on deploy)
 
+## CI follow-up (same run, ~19:55 IST)
+
+First CI run on PR #1859: the `contracts` job failed at the REL-068
+collection guard — both shipped test files were uncollected by any
+PR-triggered workflow (`test_capability_routing.py` uncollected since it
+landed; `test_ig2_frd03_lead_generation.py` new). Fixed in this PR:
+both files added to the FRIDAY tier-1 invocation in
+`.github/workflows/friday-universe-ci.yml` (same pattern as FRD-044 /
+FRD-045). `scripts/ci_test_collection_audit.py` passes locally against
+main 14181d3c (2 files checked, both collected).
+
 ## Schedules / usage
 
 - `muse15-work-request`: cancelled on claim; to be re-armed on completion
