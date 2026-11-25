@@ -22571,13 +22571,13 @@ tasks:
   - id: TASK-EARN-025
     title: 'EARN: Upwork lane - profile completion pack plus first-proposal drafts for the owner''s own sending'
     status: AVAILABLE
-    owner: null
+    owner: muse_15
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T23:05:00+05:30'
+    updated_at: '2026-11-25T23:33:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -22590,8 +22590,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Assigned to Muse 7 as queue position 3 by coordinator watch106 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. Earning lane, queue position 3 only (Upwork profile pack + first-proposal drafts for the owner to send).'
     - 'Coordinator watch109 (2026-11-25): returned to pool from muse_7 - M7 silent since 2026-11-24, trigger met per watch108; no free position-3 earning slot on any queue this run.'
+    - 'Coordinator watch110 (2026-11-25): assigned to muse_15 as queue position 3 (earning lane) on its free/work request hub 7169797695 - VOI-041 gated on VOI-040 filing, FRD-043 held on deploy clearance; verified AVAILABLE / owner null on main 3efe8b04.'
     blockers: []
-    next_action: 'Returned to pool by coordinator watch109; assign as a position-3 earning task when a queue slot opens.'
+    next_action: 'Assigned to muse_15 by coordinator watch110 (position 3, earning lane); VOI-041 gated on VOI-040 filing, FRD-043 held; claim via hub #1483 when it reaches queue head.'
   - id: TASK-DB-001
     title: 'DB: Stratex MySQL production-usage verification - prove live research runs actually persist to MySQL HeatWave, fix any gap found'
     status: BLOCKED
