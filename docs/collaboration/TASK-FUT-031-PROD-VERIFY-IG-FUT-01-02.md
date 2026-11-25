@@ -5,7 +5,7 @@
 - **Claim:** hub #1483 comment 7154355763, 2026-11-25 ~11:31 IST, on coordinator watch080 assignment (7154044918)
 - **Branch:** `muse4/task-fut-031-prod-verify-ig-fut-01-02`
 - **Base main:** `f6b912a6` (claim post cited `8fa84c61`; main moved before the branch was created — coordinator merges #1772, #1755, #1777, #1774 landed in between; branch verified at `f6b912a6` via the branch API)
-- **Work PR:** (stamped in the board record after opening)
+- **Work PR:** #1782 (https://github.com/surendra2304/FRIDAY-Universe/pull/1782)
 - **Date:** 2026-11-25
 
 ## Five states
