@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FRIDAY — RSVP Reader</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #05070d; color: #e8eef7;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  header { width: 100%; max-width: 900px; padding: 20px 20px 0; }
+  h1 { font-size: 18px; margin: 0 0 4px; letter-spacing: 0.04em; }
+  #title { color: #8fa3bd; font-size: 14px; min-height: 20px; }
+  #stage {
+    flex: 1; width: 100%; max-width: 900px; display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #word {
+    font-size: clamp(48px, 10vw, 110px); font-weight: 600; letter-spacing: 0.01em;
+    text-align: center; line-height: 1.1; word-break: break-word;
+  }
+  #word .pivot { color: #5cc8ff; }
+  #word .done { color: #8fa3bd; font-size: 0.5em; }
+  #progress-wrap { width: 100%; max-width: 900px; padding: 0 20px; }
+  #bar { height: 6px; background: #1a2436; border-radius: 3px; overflow: hidden; }
+  #fill { height: 100%; width: 0%; background: #5cc8ff; }
+  #status { display: flex; justify-content: space-between; color: #8fa3bd; font-size: 13px; padding: 8px 0 0; }
+  #controls {
+    width: 100%; max-width: 900px; padding: 16px 20px 28px;
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center;
+  }
+  button {
+    background: #16233a; color: #e8eef7; border: 1px solid #2a3a55; border-radius: 8px;
+    padding: 10px 16px; font-size: 15px; cursor: pointer;
+  }
+  button:hover { background: #1e2f4d; }
+  button.primary { background: #0e4a6b; border-color: #2a7ba8; }
+  #wpm-label { color: #8fa3bd; font-size: 14px; min-width: 90px; text-align: center; }
+  input[type="range"] { width: 180px; accent-color: #5cc8ff; }
+  #paste { width: 100%; max-width: 900px; padding: 0 20px 28px; display: none; }
+  #paste textarea {
+    width: 100%; min-height: 120px; background: #0b1220; color: #e8eef7;
+    border: 1px solid #2a3a55; border-radius: 8px; padding: 12px; font-size: 15px;
+  }
+  #paste .row { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
+  #paste input[type="text"] {
+    flex: 1; background: #0b1220; color: #e8eef7; border: 1px solid #2a3a55;
+    border-radius: 8px; padding: 10px 12px; font-size: 15px;
+  }
+  #error { color: #ff9a9a; padding: 0 20px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>FRIDAY &middot; RSVP Reader</h1>
+  <div id="title"></div>
+</header>
+<div id="stage"><div id="word">Loading&hellip;</div></div>
+<div id="progress-wrap">
+  <div id="bar"><div id="fill"></div></div>
+  <div id="status"><span id="pos">—</span><span id="wpm-now">—</span></div>
+</div>
+<div id="controls">
+  <button id="pause" class="primary">Pause</button>
+  <button id="slower">&minus; 50 WPM</button>
+  <button id="faster">+ 50 WPM</button>
+  <input id="wpm" type="range" min="50" max="1000" step="10" value="250" aria-label="Words per minute">
+  <span id="wpm-label">250 WPM</span>
+  <button id="restart">Restart</button>
+</div>
+<div id="paste">
+  <p style="color:#8fa3bd">No session yet — paste text or an article URL to start reading.</p>
+  <textarea id="paste-text" placeholder="Paste text here, or an article URL (https://…)"></textarea>
+  <div class="row">
+    <input id="paste-title" type="text" placeholder="Title (optional)">
+    <button id="paste-start" class="primary">Start reading</button>
+  </div>
+</div>
+<div id="error"></div>
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var sessionId = params.get("session") || "";
+  var words = [], pos = 0, wpm = 250, paused = false, timer = null, title = "";
+  var wordEl = document.getElementById("word");
+  var titleEl = document.getElementById("title");
+  var fillEl = document.getElementById("fill");
+  var posEl = document.getElementById("pos");
+  var wpmNowEl = document.getElementById("wpm-now");
+  var pauseBtn = document.getElementById("pause");
+  var wpmSlider = document.getElementById("wpm");
+  var wpmLabel = document.getElementById("wpm-label");
+  var errorEl = document.getElementById("error");
+
+  function showError(msg) { errorEl.textContent = msg; }
+  function orpIndex(word) {
+    // Optimal recognition point: roughly the middle letter.
+    if (word.length <= 1) return 0;
+    if (word.length <= 3) return 1;
+    return Math.floor(word.length / 2) - 1;
+  }
+  function render() {
+    if (!words.length) { wordEl.textContent = "No words loaded."; return; }
+    if (pos >= words.length) {
+      wordEl.innerHTML = '<span class="done">Done — ' + words.length + ' words</span>';
+      pauseBtn.textContent = "Restart";
+    } else {
+      var w = words[pos], i = orpIndex(w);
+      wordEl.innerHTML = esc(w.slice(0, i)) + '<span class="pivot">' + esc(w.slice(i, i + 1)) + '</span>' + esc(w.slice(i + 1));
+    }
+    var pct = words.length ? (100 * Math.min(pos, words.length) / words.length) : 0;
+    fillEl.style.width = pct.toFixed(1) + "%";
+    posEl.textContent = "Word " + Math.min(pos + 1, words.length) + " of " + words.length + " (" + pct.toFixed(0) + "%)";
+    wpmNowEl.textContent = wpm + " WPM" + (paused ? " · paused" : "");
+    wpmLabel.textContent = wpm + " WPM";
+    wpmSlider.value = wpm;
+    pauseBtn.textContent = paused ? "Resume" : "Pause";
+  }
+  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function tick() {
+    if (paused || !words.length) return;
+    if (pos < words.length - 1) { pos += 1; render(); schedule(); }
+    else { pos = words.length; render(); }
+  }
+  function schedule() {
+    clearTimeout(timer);
+    if (!paused && pos < words.length) timer = setTimeout(tick, 60000 / wpm);
+  }
+  function postControl(body) {
+    return fetch("/api/rsvp/session/" + encodeURIComponent(sessionId) + "/control", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    }).then(function (r) { return r.json(); }).catch(function () { return null; });
+  }
+  function applyState(s) {
+    if (!s) return;
+    var changed = false;
+    if (typeof s.wpm === "number" && s.wpm !== wpm) { wpm = s.wpm; changed = true; }
+    if (typeof s.paused === "boolean" && s.paused !== paused) { paused = s.paused; changed = true; }
+    if (typeof s.position === "number" && s.position !== pos) { pos = s.position; changed = true; }
+    if (changed) { render(); schedule(); }
+  }
+  function poll() {
+    if (!sessionId) return;
+    fetch("/api/rsvp/session/" + encodeURIComponent(sessionId))
+      .then(function (r) { return r.json(); })
+      .then(function (s) { if (s && s.words) applyState(s); })
+      .catch(function () {});
+  }
+  function load() {
+    if (!sessionId) {
+      document.getElementById("paste").style.display = "block";
+      wordEl.textContent = "Paste text below to start.";
+      return;
+    }
+    fetch("/api/rsvp/session/" + encodeURIComponent(sessionId))
+      .then(function (r) { return r.json(); })
+      .then(function (s) {
+        if (!s || s.error || !s.words) { showError(s && s.error ? s.error : "Session not found."); return; }
+        words = s.words; title = s.title || ""; wpm = s.wpm || 250; paused = !!s.paused; pos = s.position || 0;
+        titleEl.textContent = title;
+        render(); schedule();
+        setInterval(poll, 1000);
+      })
+      .catch(function (e) { showError("Could not load the session: " + e); });
+  }
+  pauseBtn.addEventListener("click", function () {
+    if (pos >= words.length) { pos = 0; paused = false; }
+    else paused = !paused;
+    postControl({ paused: paused, position: pos }).then(function () { render(); schedule(); });
+    render(); schedule();
+  });
+  document.getElementById("slower").addEventListener("click", function () {
+    wpm = Math.max(50, wpm - 50); postControl({ wpm: wpm }); render(); schedule();
+  });
+  document.getElementById("faster").addEventListener("click", function () {
+    wpm = Math.min(1000, wpm + 50); postControl({ wpm: wpm }); render(); schedule();
+  });
+  wpmSlider.addEventListener("input", function () {
+    wpm = parseInt(wpmSlider.value, 10); postControl({ wpm: wpm }); render(); schedule();
+  });
+  document.getElementById("restart").addEventListener("click", function () {
+    pos = 0; paused = false; postControl({ position: 0, paused: false }); render(); schedule();
+  });
+  document.getElementById("paste-start").addEventListener("click", function () {
+    var text = document.getElementById("paste-text").value.trim();
+    var t = document.getElementById("paste-title").value.trim();
+    if (!text) { showError("Paste some text or an article URL first."); return; }
+    fetch("/api/rsvp/session", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text, title: t || undefined })
+    }).then(function (r) { return r.json(); }).then(function (s) {
+      if (!s || s.error || !s.session_id) { showError(s && s.error ? s.error : "Could not create a session."); return; }
+      location.search = "?session=" + encodeURIComponent(s.session_id);
+    }).catch(function (e) { showError("Could not create a session: " + e); });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
+    if (e.code === "Space") { e.preventDefault(); pauseBtn.click(); }
+    else if (e.code === "ArrowUp") { e.preventDefault(); document.getElementById("faster").click(); }
+    else if (e.code === "ArrowDown") { e.preventDefault(); document.getElementById("slower").click(); }
+    else if (e.code === "ArrowLeft") { pos = Math.max(0, pos - 1); render(); }
+    else if (e.code === "ArrowRight") { pos = Math.min(words.length - 1, pos + 1); render(); }
+  });
+  load();
+})();
+</script>
+</body>
+</html>
