@@ -17648,14 +17648,14 @@ tasks:
   - id: TASK-INT-037
 
     title: 'IntelX: root-cause and fix the Futuris cursor 401s so scheduled research cycles stop failing auth'
-    status: CLAIMED
-    owner: muse_3
-    branch: muse3/task-int-037-futuris-cursor-401s
+    status: AVAILABLE
+    owner: null
+    branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:15:00+05:30'
+    updated_at: '2026-11-26T03:39:52+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17664,8 +17664,9 @@ tasks:
       - 'Drafted by the coordinator enforcement round 2026-11-23 ~22:40 IST: Futuris cursor 401s were flagged as a next-pool candidate on 2026-11-23 and nobody owns them. Pool floor refill.'
       - 'Assigned Muse 3 queue head (hub 7109363715, 2026-11-23 ~23:24 IST); claim branch muse3/task-int-037-futuris-cursor-401s pushed @13cdf268 (base, no commits yet at 2026-11-23 ~23:37 IST). Board flip rides in the coordinator consolidated board PR 2026-11-24 ~00:15 IST.'
       - 'Merged by coordinator watch 2026-11-24 ~04:45 IST: PR #1574 merged (merge cae99f6c5a76faf4df7f0fb06d3cfa01f3f9161b, head 7f3c448f); CI 9/9 complete first-hand (7 success, 2 skipped, 0 failed). Restart actor PROVEN: GitHub Actions CD workflow on push to main.'
+      - 'Re-slotted to the pool by coordinator watch121 (2026-11-26, hub #1483): Muse 3 did not post status/usage by the usage-truth directive deadline (watch120 enforcement, hub 7175741873); no PR filed. Prior branch muse3/task-int-037-futuris-cursor-401s preserved on the remote - a new owner starts from that branch or files fresh. No new assignment to Muse 3 until it reports.'
     blockers: []
-    next_action: 'Start from the live IntelX/Futuris logs on S2: find the first cursor 401, name the rejecting check, then fix and prove three clean cycles.'
+    next_action: 'Available in the pool; claim via hub #1483 (hub comment + branch push). Prior branch muse3/task-int-037-futuris-cursor-401s exists on the remote.'
   - id: TASK-OBS-022
 
     title: 'OBS: identify the FRIDAY.service restart actor - 3 clean restarts on S1 (20:00 / 20:10 / 21:28 IST, PID changes, no OOM kill)'
@@ -21716,14 +21717,14 @@ tasks:
     next_action: 'Assigned to muse_8 as queue position 3 by coordinator watch100 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
   - id: TASK-EARN-027
     title: 'EARN: AI voice/chat agent service for local businesses - build free-tier demos (OmniDimension + Voiceflow patterns), package as a CometWorks service, owner does outreach'
-    status: CLAIMED
-    owner: muse_10
-    branch: muse10/task-earn-027-voice-chat-demos
+    status: AVAILABLE
+    owner: null
+    branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T11:18:00+05:30'
+    updated_at: '2026-11-26T03:39:52+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -21741,8 +21742,9 @@ tasks:
     - 'OWNER CLARIFICATION 2026-11-25 ~09:30 IST, recorded by Muse (coordinator): supersedes the ~03:10 IST joint FRIDAY + Cortex framing - the business voice agents are IN Cortex. Cortex is the CRM platform and the voice agents live there: a business''s customers talk to its agent in Cortex, and the leads, customers, and follow-ups are Cortex''s. TASK-EARN-027''s primary home is Cortex; acceptance reworded to match.'
     - 'Cross-reference: TASK-FRD-062 (CRM workspace surface by voice+chat) is the related CRM surface work.'
     - 'Claim: issue #1483 comment 7154152260 by Muse 10, 2026-11-25 ~11:18 IST, on direct assignment by Muse (Head Manager) in comment 7153645967 (~10:55 IST). Board record verified AVAILABLE, owner null, on main 8fa84c61 (board blob 46233d12, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-earn-027-voice-chat-demos. Work-request cycle stands down while claimed.'
+    - 'Re-slotted to the pool by coordinator watch121 (2026-11-26, hub #1483): Muse 10 did not post status/usage by the usage-truth directive deadline (watch120 enforcement, hub 7175741873); no PR filed on the board record - work PR #1801 stays open on branch muse10/task-earn-027-voice-chat-demos. No new assignment to Muse 10 until it reports.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+    next_action: 'Available in the pool; claim via hub #1483. Prior work: branch muse10/task-earn-027-voice-chat-demos, open work PR #1801 (unmerged).'
   - id: TASK-EARN-028
     title: 'EARN: websites-for-local-businesses lane - AI-built mockup sites for Google Maps/Justdial leads (clinics first), pitch pack, owner sends and closes'
     status: AVAILABLE
@@ -22558,13 +22560,13 @@ tasks:
   - id: TASK-VYR-082
     title: 'VyralX: layered marketing architecture - the seven-layer growth system on top of channel_operator'
     status: AVAILABLE
-    owner: muse_tp11
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T21:15:00+05:30'
+    updated_at: '2026-11-26T03:39:52+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - VyralX/
@@ -22576,8 +22578,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Assigned to Muse TP5 (claim of record; checkpoint 1 hub #1483); verified AVAILABLE / owner null on main 64e97ece, branch musetp5/task-vyr-082-layered-marketing @ 25ef0b44.'
     - 'Re-slotted muse_tp5 -> muse_tp11 by coordinator watch101 (2026-11-25, hub #1483 7164435710), reaffirmed watch104: TP5 unstarted ~4h after checkpoint 1 (branch musetp5/task-vyr-082-layered-marketing @ 25ef0b44, 1 commit, implementation not started). TP11 rostered via PR #1845 (merged 18b828ae), so the flip rides now. Muse TP11 queue position 2 behind DB-007. Verified AVAILABLE / owner muse_tp5 on main 0eeaa43a.'
+    - 'Re-slotted to the pool by coordinator watch121 (2026-11-26, hub #1483): Muse TP11 claimed it on the hub (7175318163) but after ~4h still no branch, no commits, no PR (verified via git ls-remote 2026-11-26 ~03:45 IST); the queue slot returns to the pool.'
     blockers: []
-    next_action: 'Assigned to muse_tp11 as queue position 2 by coordinator watch101/watch104 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
+    next_action: 'Available in the pool; claim via hub #1483 (hub comment + branch push).'
   - id: TASK-VYR-083
     title: 'VyralX: format and technique registry additions - build-in-public Day-1 series, 3D cartoon comedy shorts, trail-transition technique'
     status: MERGED
@@ -23209,13 +23212,13 @@ tasks:
   - id: TASK-REL-100
     title: 'Oracle Server 2 disk pressure: reconcile the conflicting readings (86-91%) and reclaim / bound the growth before a live service is hit'
     status: AVAILABLE
-    owner: null
+    owner: muse_tp11
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T03:17:00+05:30'
+    updated_at: '2026-11-26T03:39:52+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-REL-100-EVIDENCE.md
@@ -23226,8 +23229,9 @@ tasks:
     - 'Done = reconciled readings + top consumers named + before/after evidence filed; no live service disrupted.'
     evidence:
     - 'Filed by Muse (coordinator) watch120 (2026-11-26, hub #1483): TP8 self-check (hub #1638) reported Oracle Server 2 disk at 86%; watch119 carried conflicting readings of 86-91% with no reconciled figure. No open board task covers it (verified first-hand on main 614e6b1d).'
+    - 'Assigned to Muse TP11 as queue position 3 by coordinator watch121 (2026-11-26, hub #1483): TP11 at 4% burn; pairs with its DB-010 VyralX file-store backup work (disk-adjacent).'
     blockers: []
-    next_action: 'In the pool - claim via hub #1483 when assigned.'
+    next_action: 'Queue for muse_tp11 (coordinator watch121): queue position 3 behind DB-010 / VYR-081. Claim via hub #1483 when it reaches queue head.'
 
 task_id_warnings:
   - id: TASK-REL-061
