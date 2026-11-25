@@ -388,6 +388,8 @@ jobs:
       # CI. They run in the same lock venv as the tier-1 set.
       # TASK-VYR-058: test_vyr058_reddit_discovery.py is collected here
       # for the same reason (REL-068 guard).
+      # TASK-VYR-059: test_ig2_vyr10_creative_audit.py is collected here
+      # for the same reason (REL-068 guard).
       # TASK-VYR-075: install ffmpeg explicitly (same step as the
       # contracts job) — the hyperframes render and format-clone tests
       # encode/probe real media and must not depend on whatever the
@@ -412,7 +414,7 @@ jobs:
             tests/test_vyr075_claude_ads_e2e.py tests/test_vyr075_format_clone_e2e.py \
             tests/test_vyr075_hyperframes_render.py tests/test_vyr075_ltx2_reject.py \
             tests/test_vyr075_operator_cycle.py tests/test_vyr075_studio_reference.py \
-            tests/test_vyr058_reddit_discovery.py
+            tests/test_vyr058_reddit_discovery.py tests/test_ig2_vyr10_creative_audit.py
 
       - name: Start API server and run HTTP tests
         run: |
