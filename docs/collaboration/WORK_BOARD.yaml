@@ -21367,14 +21367,14 @@ tasks:
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T03:12:00+05:30'
+    updated_at: '2026-11-25T10:38:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
     acceptance:
     - 'Method, two corpus reels: DV563QjD0Ft (@vsmeo) - build and sell AI voice agents to businesses on OmniDimension (Indian languages, WhatsApp integration, own-number or platform number); DZmTQUQMdBg (@hassandotai) - sell AI chatbots that book appointments: pick a niche (dentists in the reel), take the business''s own services text, generate the agent system prompt, build in Voiceflow, pitch with the live demo link. The friday package F-35 (Riley appointment-agent prompt) is the in-corpus worked example of the prompt artifact.'
     - 'Build TWO working demos on free tiers: (1) a clinic appointment voice agent, (2) a website chat agent that books appointments. Demos must actually answer/call in a test the worker files as evidence.'
-    - 'JOINT BUILD (owner correction 2026-11-25): this is a joint FRIDAY + Cortex deliverable - FRIDAY provides the business''s voice/chat agent, and Cortex (the CRM platform) handles the business side: the leads, customer records, and follow-ups the agent generates. Both demos above must show the handoff: agent conversation in FRIDAY, resulting lead/customer/follow-up visible in Cortex.'
+    - 'HOME: CORTEX (owner clarification 2026-11-25 ~09:30 IST): the business voice/chat agents live IN Cortex - Cortex is the CRM platform, and a business''s customers talk to its agent there. This is a Cortex deliverable, not a FRIDAY one: the agent lives in Cortex, and every conversation''s leads, customer records, and follow-ups land in Cortex. Both demos above must be built as agents living in Cortex and must show the full loop there: the customer talks to the agent in Cortex, and the resulting lead, customer record, and follow-up are visible in Cortex.'
     - 'Package the service: Fiverr gig draft (publishes when a slot frees / at Level 1) + Contra and Payhip listing copy + price points (setup fee + monthly care), all filed under earning/.'
     - 'Build a 20-lead list of local clinics/businesses with no voice/chat booking, with a per-lead pitch draft that links the matching demo.'
     - 'OWNER ONE-TIME: create free OmniDimension and Voiceflow accounts if signup blocks the worker; owner sends outreach and takes sales calls (human-sent rule). First-money path: the first business setup fee.'
@@ -21382,6 +21382,7 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
     - 'RENUMBERED 2026-11-25 by Muse (coordinator): this record was filed as TASK-EARN-016 in PR #1727, but a parallel earning-lane filing reached main first using TASK-EARN-016 for different content; renumbered to TASK-EARN-027 to restore unique task IDs. Content unchanged.'
     - 'OWNER CORRECTION 2026-11-25 ~03:10 IST, recorded by Muse (coordinator): this lane belongs to TWO agents, not one - the voice agent itself is FRIDAY''s; the CRM/business side is Cortex''s (owner: Cortex is the CRM platform - leads, customers, follow-up). Record scope adjusted to a joint FRIDAY + Cortex build.'
+    - 'OWNER CLARIFICATION 2026-11-25 ~09:30 IST, recorded by Muse (coordinator): supersedes the ~03:10 IST joint FRIDAY + Cortex framing - the business voice agents are IN Cortex. Cortex is the CRM platform and the voice agents live there: a business''s customers talk to its agent in Cortex, and the leads, customers, and follow-ups are Cortex''s. TASK-EARN-027''s primary home is Cortex; acceptance reworded to match.'
     - 'Cross-reference: TASK-FRD-062 (CRM workspace surface by voice+chat) is the related CRM surface work.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
