@@ -16854,14 +16854,14 @@ tasks:
     next_action: 'Muse 5 pos 3 (queue VYR-040 -> WF-003 -> VYR-045); coordinator assignment 2026-11-23 ~18:30 IST.'
   - id: TASK-VOI-031
     title: 'Voice: diagnose greeting onset missing the 8s bar on a calm box (acceptance run 16, both arms) - first-audio latency root cause plus fix'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-voi-031-greeting-onset-diagnosis
     pr: 1872
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-25T22:10:00+05:30'
+    updated_at: '2026-11-25T23:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -16872,8 +16872,9 @@ tasks:
     - 'Released back to the pool 2026-11-24 22:08 IST per central-pool pull model (owner directive 7136890552, watch 7137288514); diagnosis parked on a calm-box production run (run-16 per-stage numbers not in repo). Board flip to AVAILABLE filed in the TASK-DB-001 work PR per coordinator ruling (watch060, rule 4).'
     - 'Assigned to Muse 15 as queue position 2 by coordinator watch104 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. P1 greeting-onset diagnosis from run 16.'
     - 'COMPLETE 2026-11-25 ~22:10 IST (Muse 15): root cause filed (VOI-026: listening-gate cap stretches with session build); fix VOI-028 verified live on FRIDAY-Server (proof-model reuse + loop yields in running worker); per-stage onset on calm box 0.52s (run 24) / 0.70s (run 18) vs 8s bar, gate LISTENING after 0.00s both jobs; evidence doc docs/collaboration/TASK-VOI-031-GREETING-ONSET-DIAGNOSIS.md.'
+    - 'Coordinator watch110 (2026-11-25): work PR #1872 merged in watch109 (merge 3efe8b04), CI 9/9 green, full-diff reviewed first-hand; greeting-onset diagnosis complete.'
     blockers: []
-    next_action: 'IN_REVIEW - work PR open; merge is the coordinator''s after full-diff review + green CI.'
+    next_action: 'MERGED - greeting-onset diagnosis complete (PR #1872); VOI-039 merged; run 25 (VOI-040, Muse 1) next in calm window.'
   - id: TASK-OBS-020
     title: 'Fleet: bring the S2 checkout onto main and re-verify the OBS-013 live-leg preconditions'
     status: MERGED
@@ -17729,14 +17730,14 @@ tasks:
   - id: TASK-EARN-005
 
     title: 'EARN: sales page copy pack for the 19-dollar digital product'
-    status: AVAILABLE
-    owner: muse_12
+    status: BLOCKED
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P3
     created_at: '2026-11-23'
-    updated_at: '2026-11-25T16:30:00+05:30'
+    updated_at: '2026-11-25T23:20:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - earning/TASK-EARN-005-GROUNDING.md
@@ -17746,8 +17747,9 @@ tasks:
       - 'Drafted by the coordinator watch 2026-11-23 ~23:10 IST (hub 7108903950): pool floor 10.'
       - 'Claimed by Muse 19 ~11:22 IST (hub comment 7123360586); claim stands per coordinator Ruling 1, watch 7124945395; checkpoint 1 grounding filed in work PR 1645.'
       - 'RE-SLOT 2026-11-25 (coordinator watch095): owner muse_19 -> muse_12. Muse 19 silent since ~04:25 IST; watch094 demand (hub 7160012424) unanswered. Checkpoint-1 PR #1645 already merged 2026-11-24 (grounding on main); Muse 12 starts a fresh branch and files its own work PR - do not touch muse19/task-earn-005. Earning lane, queue position 3 behind SEN-030/SEN-031.'
+      - 'Coordinator watch110 (2026-11-25): BLOCKED per Muse 12 status hub 7169683753 - the $19 product cannot be identified from board, repo, or any watch through WATCH108; owner answer owed since 2026-11-24 ~12:20 IST; no copy written (inventing a product is not the work). Returned to pool as BLOCKED.'
     blockers: []
-    next_action: 'Re-slotted to Muse 12 by coordinator watch095 (2026-11-25, hub #1483): queue position 3 behind SEN-030/SEN-031. Start a fresh branch; the checkpoint-1 grounding is on main (PR #1645 merged 2026-11-24). Write the sales page copy for the 19-dollar product; free-only, no paid promotion.'
+    next_action: 'BLOCKED - do not claim until the owner names the $19 product; owner answer owed since 2026-11-24.'
   - id: TASK-EARN-006
 
     title: 'EARN: resume/LinkedIn pack - service copy for the next Fiverr gig batch'
@@ -17981,14 +17983,14 @@ tasks:
 
   - id: TASK-VYR-052
     title: 'VyralX: supervised cycle 3 execution on the VYR-051 candidate pool once machine QA passes'
-    status: AVAILABLE
+    status: BLOCKED
     owner: muse_tp5
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T18:15:00+05:30'
+    updated_at: '2026-11-25T23:20:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17998,8 +18000,9 @@ tasks:
       - 'Assigned to Muse 16 as queue position 3 by coordinator watch 2026-11-24 ~05:20 IST (board PR watch006; hub #1483): queue VYR-048 -> INT-019 -> VYR-052.'
       - 'Claim: hub #1483 comment 7120152433 by Muse 16, 2026-11-24 ~07:57 IST, on TASK-INT-019 MERGED (work PR #1610, merge 8f8796cf, 07:47 IST). Board record verified AVAILABLE, owner muse_16 (pre-assigned), on main 8f8796cf (board blob 3e3d44ff, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse16/task-vyr-052-cycle-3-candidate-pool. Queue: VYR-052 (head); VYR-046 retained blocked-head. Input dependency: runs on the VYR-051 candidate pool (Muse 18, CLAIMED, pool not yet filed) once machine QA passes.'
       - 'Coordinator watch099 (2026-11-25): assigned to muse_tp5 - queue position 3 behind VYR-082 and VYR-081. Verified AVAILABLE / owner null on main c4b64284.'
+      - 'Coordinator watch110 (2026-11-25) RULING: machine-QA precondition cannot pass in the current state - VYR-056 CLOSED as unachievable (yt-dlp n-challenge, no newer deno/EJS), VYR-051 gates PENDING/BLOCKED, S2 VyralX tree restore gated by the owner stop order. TP5 proceeds to EARN-024 (queue head by blocked-head skip, directed watch107/108).'
     blockers: []
-    next_action: 'Queue for muse_tp5 (coordinator watch099): queue position 3 behind VYR-082 and VYR-081. Claim via hub #1483.'
+    next_action: 'BLOCKED - machine-QA gate unachievable in current state (see VYR-056); re-open when machine QA passes or the owner lifts the stop order. TP5 works EARN-024 meanwhile.'
 
   - id: TASK-INF-032
     title: 'Inference: wire the INF-031 routing deadline into the live routing path and prove it timed'
@@ -20058,14 +20061,14 @@ tasks:
     next_action: 'Merged in PR #1774 (2026-11-25 ~11:27 IST); what-if template in the registry.'
   - id: TASK-FRD-047
     title: 'FRIDAY: Nod-style one-page pre-call brief from Gmail + Calendar'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_tp7
-    branch: null
+    branch: musetp7/task-frd-047-pre-call-brief
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T16:46:00+05:30'
+    updated_at: '2026-11-25T23:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20074,8 +20077,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 7 (watch record Df59TEyS_Yu, @talagana.rajesh, n8n ''Nod''). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     - 'Coordinator watch096 (2026-11-25): owner null to muse_tp7 - queue position 2 behind FRD-052; larger multi-hour task for the 2% burn chat per the lag-hunt rule.'
+    - 'Coordinator watch110 (2026-11-25): claim flip - hub claim 7169685491 (Muse TP7); true branch musetp7/task-frd-047-pre-call-brief verified via ls-remote at 2f77de04 (claim post carried the bridge-masked short name); no competing claim in hub 1553-1573.'
     blockers: []
-    next_action: 'Queue position 2 for Muse TP7 behind FRD-052 (coordinator watch096): Nod-style pre-call brief, substantial FRIDAY work for the 2% burn chat. Claim via hub #1483 when FRD-052 closes.'
+    next_action: 'Claimed by muse_tp7 (hub 7169685491); repo-side leg first - map Gmail + Calendar read paths; no live move until coordinator clearance.'
   - id: TASK-FRD-048
     title: 'FRIDAY: evaluate Fish Audio voice plus push-to-talk against the current Gemini Live setup'
     status: AVAILABLE
@@ -21134,13 +21138,13 @@ tasks:
   - id: TASK-STR-077
     title: 'REPO-IMPLEMENT: Stratex repos - Freqtrade (reference-only), VectorBT (adapt), Backtrader (reference-only), Hummi... (wave 1)'
     status: AVAILABLE
-    owner: null
+    owner: muse_12
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T23:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -21150,8 +21154,9 @@ tasks:
     - 'live demo-daemon cycle on Stratex-Server on real market data + failure injection (venue disconnect, stale feed) + full-allowlist load scan; results filed from the live ledger'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Coordinator watch110 (2026-11-25): assigned to muse_12 as replacement for blocked TASK-EARN-005 (queue position 2 behind SEN-034, ahead of FRG-029); verified AVAILABLE / owner null on main 3efe8b04.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'Assigned to muse_12 by coordinator watch110; queue position 2 behind SEN-034; claim via hub #1483 when it reaches queue head.'
 
   - id: TASK-STR-078
     title: 'REPO-IMPLEMENT: Stratex repos - FinRL (reference-only), Lumibot (reference-only), Vibe-Trading (adapt), AutoHedg... (wave 1)'
@@ -21787,13 +21792,13 @@ tasks:
   - id: TASK-EARN-023
     title: 'EARN: Swiggy Builders Club option (corpus reel DYg_b2ZTK70) - prototype agent concept + application pack drafted; owner submits the application'
     status: AVAILABLE
-    owner: null
+    owner: muse_tp6
     branch: null
     pr: null
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T02:30:00+05:30'
+    updated_at: '2026-11-25T23:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -21803,8 +21808,9 @@ tasks:
     - 'OWNER ONE-TIME: submit the application form himself (his details, his call). First-money path is indirect and unproven - this task buys an option on the programme, it does not promise income. If Swiggy declines or never replies, close the task with that verdict recorded.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
+    - 'Coordinator watch110 (2026-11-25): assigned to muse_tp6 as queue position-3 earning top-up (queue VYR-084 -> VYR-078 -> EARN-023); verified AVAILABLE / owner null on main 3efe8b04.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+    next_action: 'Assigned to muse_tp6 by coordinator watch110 (position 3, earning lane); claim via hub #1483 when it reaches queue head.'
   - id: TASK-VYR-081
     title: 'VyralX: GTA 6 content series in her existing model - short excerpts, her English narration, subtitles, BGM, unlisted review-first (growth play, NOT a YouTube-revenue play)'
     status: AVAILABLE
@@ -22565,13 +22571,13 @@ tasks:
   - id: TASK-EARN-025
     title: 'EARN: Upwork lane - profile completion pack plus first-proposal drafts for the owner''s own sending'
     status: AVAILABLE
-    owner: null
+    owner: muse_15
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T23:05:00+05:30'
+    updated_at: '2026-11-25T23:33:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -22584,8 +22590,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Assigned to Muse 7 as queue position 3 by coordinator watch106 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. Earning lane, queue position 3 only (Upwork profile pack + first-proposal drafts for the owner to send).'
     - 'Coordinator watch109 (2026-11-25): returned to pool from muse_7 - M7 silent since 2026-11-24, trigger met per watch108; no free position-3 earning slot on any queue this run.'
+    - 'Coordinator watch110 (2026-11-25): assigned to muse_15 as queue position 3 (earning lane) on its free/work request hub 7169797695 - VOI-041 gated on VOI-040 filing, FRD-043 held on deploy clearance; verified AVAILABLE / owner null on main 3efe8b04.'
     blockers: []
-    next_action: 'Returned to pool by coordinator watch109; assign as a position-3 earning task when a queue slot opens.'
+    next_action: 'Assigned to muse_15 by coordinator watch110 (position 3, earning lane); VOI-041 gated on VOI-040 filing, FRD-043 held; claim via hub #1483 when it reaches queue head.'
   - id: TASK-DB-001
     title: 'DB: Stratex MySQL production-usage verification - prove live research runs actually persist to MySQL HeatWave, fix any gap found'
     status: BLOCKED
@@ -22734,13 +22741,13 @@ tasks:
   - id: TASK-DB-007
     title: 'DB: Formalise VyralX file-store backup on VyralX-Server (S5) - 6.5G, only an informal S1 mirror'
     status: AVAILABLE
-    owner: muse_tp11
+    owner: muse_tp5
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T21:15:00+05:30'
+    updated_at: '2026-11-25T23:50:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
@@ -22749,8 +22756,9 @@ tasks:
     evidence:
     - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): VyralX file store (S5, 6.5G): no scheduled backup; only an informal, unscheduled S1 mirror. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
     - 'Assigned to Muse TP11 as queue position 1 by coordinator watch104 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. Head of Muse TP11 queue; TP11 rostered via PR #1845 (merged 18b828ae).'
+    - 'Coordinator watch111 (2026-11-25): re-slotted muse_tp11 -> muse_tp5. TP11 claimed 18:53 IST, branch f216e1b, zero commits ~5h, no implementation run scheduled; watch110 demand (hub 7170134760) unanswered by next run. TP5 queue has 2 workable tasks (VYR-052 BLOCKED); DB-007 becomes queue position 3 (after blocked VYR-052 and EARN-024), ahead of OBS-018. Verified AVAILABLE / owner muse_tp11 on board head 256f841f.'
     blockers: []
-    next_action: 'Assigned to muse_tp11 as queue head by coordinator watch103/watch104 (2026-11-25, hub #1483); claim via hub #1483; build on musetp11/task-db-007-vyralx-file-store-backup.'
+    next_action: 'Re-slotted to muse_tp5 by coordinator watch111 (2026-11-25, hub #1483): queue position 3 (after blocked VYR-052 and EARN-024), ahead of OBS-018; TP11 stalled ~5h with zero commits and no implementation run scheduled - watch110 demand unanswered. Execute the repo-side formalisation first (backup script + manifest + runbook in a work PR on a fresh musetp5 branch); live S5 leg gated on the owner stop order, file as gated.'
   - id: TASK-DB-008
     title: 'DB: Back up FRIDAY local state files on FRIDAY-Server (S3) - friday.db + JSON state'
     status: AVAILABLE
@@ -22794,13 +22802,13 @@ tasks:
   - id: TASK-DB-010
     title: 'DB: Back up Cortex local store on Oracle Server 1 - cortex.db + settle Redis persistence'
     status: AVAILABLE
-    owner: null
+    owner: muse_tp11
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T06:06:00+05:30'
+    updated_at: '2026-11-25T23:31:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
@@ -22808,8 +22816,9 @@ tasks:
     - 'Back up the Cortex local store on Oracle Server 1 (server 1): Cortex/data/cortex.db (372K). Settle Redis persistence (localhost:6379: 0 keys, AOF off, no dump.rdb at the audit) - either persist the event stream durably or record that Redis is a volatile transport only. Prove with a dated backup + a read-back check.'
     evidence:
     - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): Cortex local store (S1): cortex.db 372K with no backup; Redis empty and unpersisted. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
+    - 'Coordinator watch111 (2026-11-25): assigned to muse_tp11 as queue position 3 (queue refill after DB-007 re-slot to muse_tp5); verified AVAILABLE / owner null on board head 256f841f.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+    next_action: 'Assigned to muse_tp11 by coordinator watch111 (2026-11-25, hub #1483): queue position 3 behind VYR-081/VYR-082, refilling the slot left by the DB-007 re-slot; repo-side backup formalisation first (script + manifest + runbook in a work PR); live S1 leg gated on the owner stop order, file as gated.'
   - id: TASK-DB-011
     title: 'DB: Back up Forge workspaces on Oracle Server 1 - 27M working output, no file backup'
     status: AVAILABLE
