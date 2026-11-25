@@ -198,4 +198,7 @@ may close them on this evidence.
   0% used.
 - Queue: VOI-031 done; FRD-043 stays HELD (no deploy clearance; fleet
   CD broken, owner stop order). No next task of mine is available —
-  free, requesting work; work-request cron re-armed on completion.
+  free, requesting work; work-request cron re-arm OWED but NOT done in
+  this run (the archived definition read did not pass a safety check,
+  so its body was not copied into a live schedule — re-creation needs
+  a trusted path).
