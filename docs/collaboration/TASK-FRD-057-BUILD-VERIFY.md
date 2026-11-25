@@ -80,11 +80,15 @@ tier-1 CI invocation (REL-068).
   FRIDAY's own Gemini pool for every page, and the honest-failure +
   install path is the cleaner contract.
 - **Spoken read-out is NOT wired in this task.** The acceptance calls
-  it optional, and there is no Telugu TTS path on the server to wire:
-  NativeTTS is Windows SAPI, English-only, and no `speak_text` exists
-  anywhere in FRIDAY/src. The saved page file is what the voice lane
-  reads when the owner asks FRIDAY in a voice session to read it aloud.
-  That is a follow-up, not a silent gap.
+  it optional. CORRECTION (2026-11-25): a Telugu TTS path DOES exist on
+  the server — `POST /api/voice/speak` synthesises English or Telugu
+  via edge-tts (Microsoft neural voices) and returns audio/mpeg. An
+  earlier draft of this record wrongly claimed no Telugu TTS path
+  existed (NativeTTS is Windows SAPI, English-only, and no `speak_text`
+  exists in FRIDAY/src — both true, but the API speak endpoint is the
+  server-side path). Wiring a "read aloud" button for a saved page is
+  a follow-up: POST the page's Telugu text to /api/voice/speak and play
+  the returned audio.
 
 ## Live checks done 2026-11-25
 
