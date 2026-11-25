@@ -303,7 +303,8 @@ jobs:
             VyralX/tests/test_vyr064_pd_whitelist.py \
             VyralX/tests/test_vyr074_mapping.py \
             VyralX/tests/test_vyr065_niche_guard.py \
-            VyralX/tests/test_vyr062_stick_figure_series.py
+            VyralX/tests/test_vyr062_stick_figure_series.py \
+            VyralX/tests/test_vyr081_gta6_series.py
       - name: Compile fresh research and deployed voice wiring
         run: >-
           python -m compileall -q IntelX/intelx/api/router.py
