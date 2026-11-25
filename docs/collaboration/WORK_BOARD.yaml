@@ -17856,14 +17856,14 @@ tasks:
     next_action: 'Coordinator / Muse 6: apply the one-line fix on #1532 (add Forge/tests/test_frg001_cage.py to a workflow pytest invocation or to EXCLUDED) and re-run the contracts job; #1548 already green on head 7e8be4e2, no action.'
   - id: TASK-VYR-051
     title: 'VyralX: prepare the next supervised-cycle candidate pool from most-popular-video discovery plus machine QA gates'
-    status: CLAIMED
-    owner: muse_18
-    branch: muse18/task-vyr-051-candidate-pool
+    status: AVAILABLE
+    owner: null
+    branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T23:19:00+05:30'
+    updated_at: '2026-11-25T07:25:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17872,8 +17872,9 @@ tasks:
     - 'Drafted by the coordinator 2026-11-24 ~00:15 IST (standing backlog item (iii)): the VYR-034 watch passed and the next supervised cycle needs a fresh candidate pool from most-popular discovery with the machine QA gates applied first. Pool floor refill.'
     - "Claim: hub #1483 comment 7113525908 by Muse 18, 2026-11-24 ~02:15 IST, on the blocked-head skip from TASK-STR-049 (U1 read path gone - see TASK-STR-049). Branch muse18/task-vyr-051-candidate-pool @15cb373d verified via ls-remote against true main 855f2515."
     - "Re-claimed as current head by Muse 18 under the central-pool pull model per coordinator watch 7138911209 (22:17 run, 2026-11-24): STR-049 + STR-053 released to the pool; VYR-051 discovery probe passed 2026-11-24 ~22:40 IST (ytsearch5, RC=0, 5 results). Claim PR from branch muse18/task-vyr-051-candidate-pool, rebased onto main 6e3fe049."
+    - 'Released to the pool by coordinator watch060 (hub #1483 comment 7146031769, 2026-11-25 ~04:09 IST): blocked-head rule — live leg blocked on the per-task run_shell discovery grant (asked 01:16 IST, comment 7142564639, unanswered in that form); claim PR #1700 merged (f618016e). Release flip rides in Muse 18''s STR-053 work PR. Branch muse18/task-vyr-051-candidate-pool @ 3aea0a3d stands on remote.'
     blockers: []
-    next_action: 'Run most-popular discovery per category, apply the machine QA gates, file the ranked pool.'
+    next_action: 'Released to the pool 2026-11-25 (coordinator watch060); claim via hub #1483 — discovery leg needs the per-task run_shell grant (exact scope: host, command, read-only).'
   - id: TASK-STR-049
     title: 'Stratex: verify the latest self-experiment trial judgement past counter 3980 and file it'
     status: MERGED
@@ -18387,24 +18388,29 @@ tasks:
 
   - id: TASK-STR-053
     title: 'Stratex: forward-window fills audit run 3 - reconcile the daemon fill ledger against venue history for the new window'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: IN_REVIEW
+    owner: muse_18
+    branch: muse18/task-str-053-fills-audit-3
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T23:19:00+05:30'
+    updated_at: '2026-11-25T07:25:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-STR-053-FILLS-AUDIT-RUN-3.md
+      - docs/collaboration/TASK-STR-053-FILLS-AUDIT-3-CHECKPOINT.md
     acceptance:
       - 'Fills, closes and net P&L filed for the new window with venue reconciliation.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; sequel to STR-051 (audit run 2, Muse 8 queue). Pool floor refill.'
       - 'Assigned to Muse 18 queue position 3 by coordinator watch 2026-11-24 ~06:55 IST (hub #1483) - after STR-049 (blocked) + VYR-051 (blocked). Both heads blocked: claim STR-053 now per the blocked-head rule.'
       - 'Released to the pool by coordinator watch 7138911209 (22:17 run, 2026-11-24): blocked on the owner-pending read-route decision; diagnosis + checkpoints filed; no movable leg. Note: the read-only Stratex-Server route (bridge run_shell S2 -> ssh ubuntu@13.211.78.20) was proven by Muse 15 / Muse 5 and cleared for read-only live legs by watch 7138466832 ruling 3, so the next worker can re-probe the live fill ledger via that route.'
+      - 'Claim: hub #1483 comment 7145393234 by Muse 18, 2026-11-25 ~03:16 IST, per coordinator watch059 (7145228662) — VYR-051 skipped per the blocked-head rule, STR-053 pulled as new head. Board verified AVAILABLE, owner null, P1, on main e54da6b0; no prior hub claim. Branch muse18/task-str-053-fills-audit-3.'
+      - 'Grant received (watch065, hub #1483 comment 7148346753, run scheduled 04:57 IST): read-only run_shell on Oracle Server 2, server 4 (AWS Stratex-Server) — ls/cat/tail/wc -l/sha256sum on Stratex/state/fill_ledger.jsonl only; no writes, no service touches, no deploys, no credential reads.'
+      - 'Live leg read 2026-11-25 ~06:15 IST (hub #1483 comment 7148886291): ledger 82 lines, 39,796 bytes, mtime Nov 24 15:17, sha256 08a1fb4c...f518; lines 21-82 (62 records) — 11 strategies, all binance_futures, all SL_TP_BROKER; window 2026-11-19 07:37 UTC to 2026-11-24 15:17 UTC; net PnL -77.06 USDT, fees 3.24 USDT. Finding 1: strategy_dow_effect batch (21 rows) all gross_pnl 0.0 / fees 0.0 with empty order_id/entry_order_id/signal_id despite entry != exit — PnL never computed. Finding 2: ALL 62 rows empty order_id — no broker order linkage anywhere in the window. Gaps: lines 1-20 unretrieved (bridge output clipping); venue reconciliation NOT done (outside the grant). Audit doc filed; work PR open.'
     blockers: []
-    next_action: 'Released to the pool 2026-11-24 (watch 7138911209); next worker re-probes the live fill ledger via the proven read-only Stratex-Server route.'
+    next_action: 'Work PR open for review; merge is Muse''s. Gaps owed: ledger lines 1-20 (needs a head/sed extension to the grant) and venue reconciliation (outside the grant scope).'
 
   - id: TASK-VOI-036
     title: 'FRIDAY voice: acceptance run 21 - next calm-window run after VOI-035 (run 20); per-probe latency filed'
@@ -22439,6 +22445,31 @@ tasks:
     - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): Forge workspaces (S1, 27M): no file backup; ADB schema backup covers the schema only. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-VYR-056
+    title: 'VyralX: unblock the media QA gates — yt-dlp download broken, n-challenge + SABR-only; evaluate fix options, implement, prove one real download + full machine-QA pass'
+    status: CLOSED
+    owner: muse_18
+    branch: muse18/task-vyr-056-media-qa-gates
+    pr: 1710
+    contributors: []
+    priority: P2
+    created_at: '2026-11-24'
+    updated_at: '2026-11-25T07:25:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-056-MEDIA-QA-GATES-CHECKPOINT.md
+    acceptance:
+    - 'One real download proved on VyralX-Server plus a full machine-QA pass, or the leg closed with the decisive evidence that no fix exists.'
+    evidence:
+    - 'Drafted by the coordinator 2026-11-24; assigned to Muse 18 (watch 7131647996, 17:34 IST); claimed 2026-11-24 ~18:09 IST (hub #1483 comment 7131991645). No board record existed before this filing — this record is created here, CLOSED, by this PR.'
+    - 'Diagnosis (checkpoint 1, 2026-11-24 ~22:45 IST): the code fix pre-exists and is deployed (VyralX/app/services/ytdlp_support.py line 81, remote_components ejs:github at all 4 YoutubeDL call sites); metadata fetch works; the failure is only the n-challenge solve step.'
+    - 'Failed proof (one real download, target OfEaVD7TtXM, RC=1): deno 2.9.8 + EJS solver crash "a.addOnDisposeCallback is not a function" at getFromPrepared; identical across default, node-hidden and ejs:npm variants; SABR-only fallback leaves only images.'
+    - 'Failed pin step A: yt-dlp-ejs 0.8.0 installed, identical crash. Decisive check: latest deno IS v2.9.8 (2026-10-21), latest EJS IS 0.8.0 (2026-03-17) — no newer release of either exists.'
+    - 'Leg CLOSED as unachievable per coordinator ruling 4 (watch 7140957093, run scheduled 2026-11-24 23:37 IST); no further pin attempts. Evidence PR #1710 merged 2026-11-25 01:01:04 IST (merge dc9b66b7).'
+    - 'Priority P2 set by Muse 18 when filing this record: no prior board record existed to carry one; P2 matches the dependent TASK-VYR-051.'
+    blockers: []
+    next_action: 'Closed — leg CLOSED as unachievable per coordinator ruling 4 (watch 7140957093); no further pin attempts. VYR-051 discovery probe passed on the same granted route.'
+
 task_id_warnings:
   - id: TASK-REL-061
 
