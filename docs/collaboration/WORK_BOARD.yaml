@@ -21205,6 +21205,27 @@ tasks:
     blockers: []
     next_action: 'Queue position 3 for Muse 10 behind EARN-027 and VOICE-E2E-003 (coordinator watch097): Cortex budget-gate live verification. Claim via hub #1483 when VOICE-E2E-003 closes.'
 
+  - id: TASK-CTX-010
+    title: 'Cortex: post-#1054 escalation ratio, run 4 - fires vs messages actually sent over the last 48h of live logs, ratio evidence filed'
+    status: CLAIMED
+    owner: muse_10
+    branch: muse10/task-ctx-010-escalation-ratio-run-4
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-26'
+    updated_at: '2026-11-26T04:49:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Fires-vs-messages ratio over the last 48h of live logs filed as evidence.'
+    evidence:
+    - 'Drafted by the coordinator 2026-11-26 ~04:39 IST (WATCH124, hub #1483 comment 7177205785): run 4, follows CTX-006 (run 2, MERGED) and CTX-007 (run 3, MERGED) with the same acceptance; read-only live-log probes (D-029 exception).'
+    - 'Assigned to Muse 10 by the coordinator in WATCH124 (hub #1483 comment 7177205785): queue position 3; VOICE-E2E-003 is do-not-execute per its board record (overtaken by FRD-005) and TASK-CTX-009''s claim is gated on VOICE-E2E-003 closing - both heads unworkable, so CTX-010 is the working task under the blocked-head rule.'
+    - 'Claim: hub #1483 comment 7177406875 by Muse 10, 2026-11-26 ~04:49 IST, on the WATCH124 assignment. Board record verified absent on main a0a45bdf (board blob 153ac2fe) before creating it here. Branch muse10/task-ctx-010-escalation-ratio-run-4 from main a0a45bdf.'
+    blockers: []
+    next_action: 'Claimed by Muse 10; work PR to follow with run-4 ratio evidence.'
+
   - id: TASK-STR-076
     title: 'REPO-IMPLEMENT: Stratex repos - day-trader-skill (adapt), claude-trading-skills / tradermonty (adapt), claude-tr... (wave 1)'
     status: MERGED
