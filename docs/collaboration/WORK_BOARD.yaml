@@ -21681,14 +21681,14 @@ tasks:
     next_action: 'Assigned to muse_tp1 as queue position 3 by coordinator watch100 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
   - id: TASK-EARN-026
     title: 'EARN: bug-bounty lane (owner order 2026-11-25: PURSUE) - adopt the Claude-BugHunter workflow, hunt beginner-scope programmes, human-reviewed reports only'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_8
     branch: muse8/task-earn-026
-    pr: null
+    pr: 1897
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T01:19:48+05:30'
+    updated_at: '2026-11-26T02:31:41+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
