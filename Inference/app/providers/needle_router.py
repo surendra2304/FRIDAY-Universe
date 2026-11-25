@@ -381,22 +381,26 @@ class CactusNeedleEngine:
                 "set NEEDLE_FAST_PATH_ENABLED=true."
             ) from exc
         self._lock = threading.Lock()
-        self._agent: Any = None
-        self._agent_key: tuple[Any, ...] | None = None
+        # NOTE: the cached agent must NOT be named _agent — the method below
+        # is also called _agent, and an instance attribute of the same name
+        # shadows it (CI caught this: engine._agent(...) raised
+        # "TypeError: 'NoneType' object is not callable").
+        self._cached_agent: Any = None
+        self._cached_agent_key: tuple[Any, ...] | None = None
 
     def _agent(self, tools: tuple[ToolSpec, ...], system_instruction: str) -> Any:
         key = (tuple((t.name, t.description) for t in tools), system_instruction)
         with self._lock:
-            if self._agent is None or self._agent_key != key:
+            if self._cached_agent is None or self._cached_agent_key != key:
                 # cactus dict schemas carry no executables: complete() only
                 # routes; the caller executes the tool call.
-                self._agent = self._cactus.Cactus(
+                self._cached_agent = self._cactus.Cactus(
                     tools=_tool_schemas(tools),
                     system=system_instruction,
                     stateless=True,
                 )
-                self._agent_key = key
-            return self._agent
+                self._cached_agent_key = key
+            return self._cached_agent
 
     def new_session(self) -> NeedleSession:
         return _CactusSession(self)
@@ -404,8 +408,8 @@ class CactusNeedleEngine:
     def close(self) -> None:
         """Close the shared agent (process shutdown only)."""
         with self._lock:
-            agent, self._agent = self._agent, None
-            self._agent_key = None
+            agent, self._cached_agent = self._cached_agent, None
+            self._cached_agent_key = None
         if agent is not None:
             try:
                 agent.close()
