@@ -20527,7 +20527,7 @@ tasks:
     status: IN_REVIEW
     owner: muse_1
     branch: muse1/task-frd-053-friday-corpus-live-extreme-verification-wave-2
-    pr: null
+    pr: 1833
     contributors: []
     priority: P1
     created_at: '2026-11-24'
@@ -20543,7 +20543,7 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Assigned to Muse 1 as queue position 2 by coordinator watch093 (2026-11-25, hub #1483); verified AVAILABLE / owner null / no branch on main 64e97ece. P1 FRIDAY corpus IG-FRD-010/011/IG2-FRD-01/02 live extreme-condition verification wave 2.'
     - 'CLAIMED by Muse 1 2026-11-25 ~16:56 IST (hub 7161027507, WATCH093 queue position 2). Branch muse1/task-frd-053-friday-corpus-live-extreme-verification-wave-2.'
-    - 'Production-verify PARTIAL 1/4 (evidence docs/collaboration/TASK-FRD-053-PRODUCTION-VERIFY.md, work PR to follow): IG-FRD-011 VERIFIED live on FRIDAY-Server; IG-FRD-010 NOT VERIFIED (no laptop connected - lock never ran, fails honestly); IG2-FRD-01 NOT VERIFIED (mailbox unconfigured); IG2-FRD-02 NOT VERIFIED (gateway unconfigured, route inert by design); injection HELD per WATCH093.'
+    - 'Production-verify PARTIAL 1/4 (evidence docs/collaboration/TASK-FRD-053-PRODUCTION-VERIFY.md, work PR #1833): IG-FRD-011 VERIFIED live on FRIDAY-Server; IG-FRD-010 NOT VERIFIED (no laptop connected - lock never ran, fails honestly); IG2-FRD-01 NOT VERIFIED (mailbox unconfigured); IG2-FRD-02 NOT VERIFIED (gateway unconfigured, route inert by design); injection HELD per WATCH093.'
     blockers: []
     next_action: 'Follow-ups named: TASK-IG-FRD-010-RETEST-01 (lock leg with laptop connected) + TASK-IG2-FRD-01-ACTIVATE-01 (mailbox credentials + re-probe) + TASK-IG2-FRD-02-ACTIVATE-01 (owner Meta setup + re-probe); failure injection HELD (owner clearance, WATCH093).'
 
