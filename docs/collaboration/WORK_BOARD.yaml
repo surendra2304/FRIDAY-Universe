@@ -19611,14 +19611,14 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-MEM-029
     title: 'Memora: production callers for the three shipped-but-never-invoked services'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_2
     branch: muse2/task-mem-029-production-callers
     pr: 1765
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T08:23:00+05:30'
+    updated_at: '2026-11-25T10:13:18+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19627,19 +19627,20 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-MEM-WIRE (IG package ME-02 + ME-D1, audit-confirmed zero production callers). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     - 'Claim: hub #1483 comment 7150521485 by Muse 2, 2026-11-25 ~07:50 IST. Board record verified AVAILABLE, owner null, on main 72f5a7ae (board blob 067e47f3, 22,497 lines, verified against the true main blob before editing). Branch muse2/task-mem-029-production-callers.'
+    - 'Merged 2026-11-25 03:39:41Z by Surendra (merge c4267ca1); work PR #1765, CI 10/10 green on head 8c5876bb. Board flip rides in TASK-MEM-030 work PR #1772.'
     - 'Work PR #1765 (code head 6ca296fb): FRIDAY MemoraClient production callers - skill outcomes fan out from every learn-outcome site, owner corrections land as user-model standing rules + model renders every turn, every turn captured as a session event with compress at session end. 21 new tests (FRIDAY/tests/test_mem029_production_callers.py, stub Memora), file runs in the FRIDAY CI step. Evidence doc docs/collaboration/TASK-MEM-029-PRODUCTION-CALLERS.md. Live proof gated by the owner stop order; deploy needs coordinator clearance.'
     blockers: []
-    next_action: 'Peer merge review of work PR #1765; deploy + live proof need coordinator clearance (owner stop order in force).'
+    next_action: 'Deploy + live proof need coordinator clearance (owner stop order in force).'
   - id: TASK-MEM-030
     title: 'Memora: Obsidian-vault second-brain presentation plus nightly per-agent work summaries'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_2
+    branch: muse2/task-mem-030-obsidian-second-brain
+    pr: 1772
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T10:13:18+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19647,8 +19648,10 @@ tasks:
     - One nightly summary cycle from every agent is evidenced in the vault.
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-MEM-VAULT (IG package ME-01). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Claim: hub #1483 comment 7152738824 by Muse 2, 2026-11-25 ~09:50 IST. Board record verified AVAILABLE, owner null, on main c52daf14 (board blob e997ed62, 22,565 lines, verified against the true main blob before editing). Branch muse2/task-mem-030-obsidian-second-brain.'
+    - 'Work PR #1772 (code head 427ec8237f): Obsidian-vault builder over Memora's store (seven folders, per-agent hub notes, root index) + nightly per-agent summaries into Daily Logs from the MEM-029 capture-event stream + nightly_vault.py CLI over memora_export.py memory_records.jsonl. 39 new tests (Memora/tests/test_mem030_obsidian_vault.py), file runs in the Memora tier-1 CI step. Evidence doc docs/collaboration/TASK-MEM-030-OBSIDIAN-SECOND-BRAIN.md. Live legs gated by the owner stop order; deploy needs coordinator clearance.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Peer merge review of work PR #1772; deploy + live proof need coordinator clearance (owner stop order in force).'
   - id: TASK-FRG-021
     title: 'Forge: per-interface binding in the parallel range-chunk downloader'
     status: AVAILABLE
