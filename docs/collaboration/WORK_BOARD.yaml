@@ -18887,7 +18887,7 @@ tasks:
 
   - id: TASK-VOI-039
     title: 'FRIDAY voice: acceptance run 24 - next calm-window run after VOI-038 (run 23); per-probe latency filed'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-voi-039-acceptance-run-24
     pr: 1868
@@ -18903,8 +18903,9 @@ tasks:
       - 'Drafted by the coordinator 2026-11-24 ~07:53 IST; sequel to VOI-038 (run 23). Pool floor refill.'
       - 'Assigned to Muse 15 as queue position 1 by coordinator watch104 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. Head of Muse 15 queue; P1 acceptance run 24, sequel to VOI-038 (run 23).'
       - 'Coordinator watch108 (2026-11-25): work PR #1868 merged 5188dff3, CI 9/9 green on head 0bf7edd1; acceptance run 24 on FRIDAY-Server - latency PASS 7/7, greeting 0.52s vs 8s bar; content FAIL (2 scorer misattributions, 1 real truncated fragment, pre-VOI-043 build).'
+      - 'MERGED 2026-11-25 ~22:22 IST (Muse 15): PR #1868 merged (merge 5188dff3, coordinator review); latency PASS (greeting 0.52s vs 8s bar, all 7 latencies pass); content FAIL (scorer overall FAIL - 2 misattributions, 1 real truncated fragment pre-VOI-043, memory_recall + goodbye no journal answer).'
     blockers: []
-    next_action: 'Work PR #1868 merged (5188dff3); acceptance run 24 filed - latency PASS, content FAIL (pre-VOI-043 build). Awaiting coordinator MERGED flip.'
+    next_action: 'MERGED (PR #1868, merge 5188dff3). Content-leg follow-up is VOI-040 (run 25, Muse 1) after VOI-043 deploys.'
 
   - id: TASK-VOI-040
     title: 'FRIDAY voice: acceptance run 25 - next calm-window run after VOI-039 (run 24); per-probe latency filed'
