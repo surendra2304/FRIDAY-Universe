@@ -592,3 +592,87 @@ class LiveResearchRun(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, nullable=False, index=True
     )
+
+
+# ---------------------------------------------------------------------------
+# TASK-DB-002 — watch / seen-store tables (Autonomous DB #2, "IntelX DB").
+#
+# The seen-store and the watch-envelope outbox lived in JSON files only
+# (``IntelX/intelx/watches/engine.py``: ``state.json`` + ``outbox.jsonl``).
+# These two models give them a durable home in the INTELX schema so the
+# watch poller can write/read them in ADB #2 with the JSON files kept as
+# the fail-closed fallback (see ``intelx/watches/db_seen_store.py``).
+# Created in ADB #2 by Alembic migration 0003_watch_tables; the lifespan
+# ``create_all`` bootstrap also creates them (belt-and-braces, same
+# definitions — see decision D2 in the TASK-DB-002 evidence doc).
+# ---------------------------------------------------------------------------
+
+
+class WatchSeen(Base):
+    """One row per (watch, seen item) — the DB-backed seen-store.
+
+    Mirrors the JSON ``state.json`` record for one fingerprinted item:
+    which watch saw it, its URL/title fingerprints, the status the poller
+    assigned (``alerted`` / ``suppressed_budget`` / ``below_threshold`` /
+    ``excluded`` / ``baseline``), and when it was first seen and (if
+    alerted) fired. ``first_seen`` is preserved on re-mark: the row
+    records first contact, it is not a last-updated timestamp.
+    """
+
+    __tablename__ = "watch_seen"
+
+    watch_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), primary_key=True)
+    title_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    first_seen: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    fired_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    __table_args__ = (
+        Index("ix_watch_seen_watch_status_seen", "watch_id", "status", "first_seen"),
+    )
+
+
+class WatchEnvelope(Base):
+    """One row per fired watch alert envelope — the DB-backed outbox history.
+
+    Mirrors the JSONL outbox envelope (``intelx.watch_alert/1``) verbatim
+    in ``envelope_json``; the scalar columns are the fields the poller,
+    the drainer (TASK-PRO-001) and the retention job query on.
+    ``dedupe_key`` is unique: it is the idempotency guard that replaces
+    "already in the file" — inserting the same key twice must yield one
+    row. ``envelope_id`` is sha256(watch_id + ":" + url fingerprint),
+    exactly as ``build_envelope`` computes it.
+    """
+
+    __tablename__ = "watch_envelopes"
+
+    envelope_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    watch_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    dedupe_key: Mapped[str] = mapped_column(
+        String(128), unique=True, nullable=False, index=True
+    )
+    title: Mapped[str | None] = mapped_column(Text, nullable=True)
+    summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    publisher: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    published_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    fired_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    score_reasons: Mapped[list[str] | None] = mapped_column(TolerantJSON, nullable=True)
+    alert_class: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    severity: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    envelope_json: Mapped[dict[str, Any] | None] = mapped_column(
+        TolerantJSON, nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )

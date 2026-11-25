@@ -22574,14 +22574,14 @@ tasks:
     next_action: 'BLOCKED on the live leg (no MySQL client on S1 or S2; owner freeze forbids install). File load-gate evidence plus post-freeze install proposal; the live leg waits, it does not sit silent.'
   - id: TASK-DB-002
     title: 'DB: IntelX DB wiring - IntelX research records and Futuris forecasts + scores write/read in Autonomous DB #2 (IntelX DB), proven live'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_16
-    branch: null
-    pr: null
+    branch: muse16/task-db-002-intelx-db-wiring
+    pr: 1861
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T16:30:00+05:30'
+    updated_at: '2026-11-25T20:15:24+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - IntelX/
@@ -22597,6 +22597,7 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s database-wiring order (~02:56 IST) and his second decision (~02:59 IST: ''All the research works of IntelX and Futuris should go to the Autonomous DB 2, named as IntelX DB''). This task supersedes the earlier formalisation-only scope for IntelX + Futuris. Verified against the live board at main 7277dcdb: no TASK-DB-* records existed; DB-001/002/003 are clash-free.'
     - 'Coordinator watch095 (2026-11-25): owner flip null -> muse_16 applied - DB-002 is Muse 16''s head per watch094 log (STR-065 re-slotted away); the flip was owed since watch094 and missing from the board.'
+    - 'Repo-side leg (Muse 16, work PR #1861, head 959f50e9): watch_seen + watch_envelopes models, Alembic 0003 migration, DB-backed SeenStore (DbSeenStore, D1(a)) with observable file fallback, tests 1-5/12-13 written for CI (not yet run — CI is the test runner), evidence doc skeleton. Live proof NOT done: gated on bridge approval 7113152293 + ADB #2 DSN/logins (G1) + Futuris live-path ruling (G4) + DurableResearchStore status (G5) + soak timer (G6).'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Live-fleet work: coordinator hub clearance required before any production change (standing rule).'
   - id: TASK-DB-003
