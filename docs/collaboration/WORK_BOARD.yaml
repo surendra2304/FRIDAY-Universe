@@ -17924,13 +17924,13 @@ tasks:
   - id: TASK-VOI-033
     title: 'Voice: acceptance run 18 - calm-window probes after VOI-030 lands, per-probe latency filed'
     status: AVAILABLE
-    owner: muse_15
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T03:49:06+05:30'
+    updated_at: '2026-11-25T06:15:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -17938,6 +17938,7 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~01:00 IST; follow-up to VOI-027 (Muse 6, calm-window wait) and VOI-030 (Muse 13, acceptance run 17). Pool floor refill.'
       - 'Assigned to Muse 15 queue position 2 by coordinator watch 2026-11-24 ~03:55 IST (hub #1483) — after FRD-043, before EARN-006.'
+      - 'Released to the pool by Muse 15 in the TASK-STR-066 claim post 7146070918 (2026-11-25 ~03:45 IST); owner cleared in the TASK-STR-067 work PR.'
     blockers: []
     next_action: 'Run the probes in the next calm window, file per-probe latency and the verdict.'
 
@@ -19071,14 +19072,14 @@ tasks:
 
   - id: TASK-REL-097
     title: 'CI canary for the voice-regression test files: prove CI collects every shipped voice test file, incl. the VOI-032 set'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-rel-097-ci-canary-voice-tests
-    pr: null
+    pr: 1674
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T19:19:00+05:30'
+    updated_at: '2026-11-25T06:15:00+05:30'
     files:
       - .github/workflows/friday-universe-ci.yml
       - FRIDAY/tests/test_voice_greeting_recall.py
@@ -19095,7 +19096,7 @@ tasks:
       - 'Gap verified first-hand with the REL-068 guard (--full, main 404f5014): 44 shipped test_voice_*.py, 27 collected, 17 collected by none (200 def test_ lines). The 17 are now named in the voice-regressions job of friday-universe-ci.yml; guard re-run: 361 covered (was 344), 0 uncollected voice files, 0 stale references.'
       - 'Local run of the 17 files first showed 8 failures — all stale-test drift against deliberate implementation changes (VOI-020 TTL 240 -> 1800 s; VOI-028 multi-line _make_session call; channel="voice" on process_message), fixed in the 4 test files. Re-run: 205 passed. Full voice-regressions job list locally: 688 passed, 0 failed in 50.73 s. Full evidence: docs/collaboration/TASK-REL-097-CI-CANARY-VOICE-TESTS.md.'
     blockers: []
-    next_action: 'Work PR open, awaiting Muse merge. First CI execution of the 17 files happens on the next PR touching a voice path (the job is path-gated and skips on this PR).'
+    next_action: 'Merged (work PR #1674, 2026-11-24T14:18:06Z). First CI execution of the 17 files happens on the next PR touching a voice path (the job is path-gated).'
 
   - id: TASK-REL-098
     title: 'Fleet CD failed-deploy safety: verify the merged CD map (PR #1642) and add a guard so a failed deploy step never leaves an agent stopped; staged proof only'
@@ -19214,25 +19215,30 @@ tasks:
     - 'Done with live proof (evidence: docs/collaboration/TASK-STR-066-PDOC-LEVELS.md): annotate_levels() in Stratex/rigorous_backtest/ig/levels.py adds PDO/PDC records (kind pdo/pdc, origin prev_day) + S/R levels recomputed from today''s 5m candles (timeframe 5m); find_levels() untouched. Tests 12/12 local (7 new); test_levels.py added to the Stratex tier-1 CI pytest invocation. Live run 2026-11-25 ~03:57 IST on real Deribit BTC-PERPETUAL candles: 101 x 1h bars (last close 59,934.5), prev-day daily open 61,386.0 / close 60,345.0, 270 x 5m bars today -> 22 records (13 base S/R + PDO + PDC + 7 5m).'
     - 'Merged via PR 1740 (merge 07c72f72, head 45284099) - coordinator watch066 consolidated board PR, verified on main f6d1e665.'
     blockers: []
-    next_action: 'Work PR open, awaiting coordinator review/merge. No production consumer by design (annotation aid only); production-verified = live-data run above.'
+    next_action: 'Merged (work PR #1740, merge 07c72f72). No production consumer by design (annotation aid only); production-verified = live-data run in the evidence doc.'
   - id: TASK-STR-067
     title: 'Stratex: add the pattern-comparison step to the multi-agent research desk'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_15
+    branch: muse15/task-str-067-pattern-comparison
+    pr: 1754
     contributors: []
     priority: P3
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T06:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-STR-067-PATTERN-COMPARISON.md
+    - Stratex/rigorous_backtest/ig/research_desk.py
+    - Stratex/rigorous_backtest/ig/tests/test_research_desk.py
+    - .github/workflows/friday-universe-ci.yml
     acceptance:
     - 'Research-desk output includes a pattern-match section: current price action compared with the last 3 similar patterns in 6 months, what happened after each, and the historical success rate. Research surface only.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-STR-PROMPT2 (IG package S-21 prompt 2). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Claimed by Muse 15 (hub #1483 comment 7146973743, 2026-11-25 ~04:33 IST): board AVAILABLE / owner null on main 8aea4275; no competing claim; branch muse15/task-str-067-pattern-comparison. Done with live proof (evidence: docs/collaboration/TASK-STR-067-PATTERN-COMPARISON.md): pattern_match() in Stratex/rigorous_backtest/ig/research_desk.py adds the pattern-match section to the desk memo; tests 10/10 local (5 new); test_research_desk.py added to the Stratex tier-1 CI pytest invocation. Live run 2026-11-25 ~06:05 IST on real Deribit BTC-PERPETUAL daily candles: 201 x 1d bars (last close 59,511.5), current 10-day window net -8.34% -> 3 matches in 6 months (similarities 0.880/0.869/0.845), forward -1.72%/+1.96%/+11.02% -> success rate 1/3 for the short direction.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Work PR open, awaiting coordinator review/merge. No production consumer by design (research surface only); production-verified = live-data run in the evidence doc.'
   - id: TASK-FRD-044
     title: 'FRIDAY: Spotify playback control by voice (play/pause/skip/search-and-play)'
     status: MERGED
@@ -20104,14 +20110,14 @@ tasks:
 
   - id: TASK-STR-075
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG2-STR-14, IG2-STR-16, IG2-STR-17, IG2-STR-18, IG2-STR-19 - live extreme-condition verification (wave 1)'
-    status: CLAIMED
-    owner: muse_6
-    branch: muse6/task-str-075-prod-verify
+    status: AVAILABLE
+    owner: null
+    branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T23:15:00+05:30'
+    updated_at: '2026-11-25T06:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20123,7 +20129,7 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Claim: hub #1483 comment 7138192201 by Muse 6, 2026-11-24 ~22:08 IST, under the central-pool pull model (owner directive 7136890552). Branch muse6/task-str-075-prod-verify from main 4e2a14be, rebased to 6e3fe04. Checkpoint 1 (this PR): repo-side mapping of all 5 items to merged artefacts on main 6e3fe04 - IG2-STR-14 VERIFIED, declared run FAIL, family CLOSED; IG2-STR-16 research-only module, live daemon does not import it; IG2-STR-17 docs-only concept note; IG2-STR-18 CLOSED as SKIP; IG2-STR-19 VERIFIED, declared run FAIL, family CLOSED. Finding: no live-agent leg exists for any of the 5 items as specified; failure-injection + load-scan legs out of scope per coordinator ruling 4 (22:17 watch 7138911209, STR-070 precedent). Ruling requested from the coordinator: re-scope to artefact verification or release STR-075 to the pool.'
     blockers: []
-    next_action: 'Checkpoint 1 filed (work PR): all 5 items mapped to merged artefacts; no live leg exists for any item as specified. Awaiting coordinator ruling: re-scope to artefact verification or release to the pool. No live moves attempted (owner stop order in force).'
+    next_action: 'Released to the pool per watch062 re-scope ruling (M6''s merged checkpoint #1698 proves no live leg as specified); release flip carried in Muse 15''s TASK-STR-067 work PR. No live moves attempted (owner stop order in force).'
 
   - id: TASK-VYR-070
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG-VYR-01, IG-VYR-02, IG-VYR-03, IG-VYR-04, IG-VYR-05 - live extreme-condition verification (wave 1)'

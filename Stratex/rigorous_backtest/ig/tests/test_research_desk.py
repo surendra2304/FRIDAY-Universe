@@ -4,7 +4,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from ig.research_desk import analyse, plan, risk_checklist, run_desk, scan
+from ig.research_desk import (analyse, pattern_match, plan,
+                              risk_checklist, run_desk, scan)
 
 SETUP = {"symbol": "BTCUSDT", "timeframe": "4h", "direction": "long",
          "entry_ref": 100.0, "invalidation": 95.0, "target": 112.5}
@@ -71,7 +72,91 @@ def test_run_desk_memo_shape():
                     max_risk_pct=0.001, min_adv_quote=1e6,
                     max_spread_bps=20.0)
     assert memo["type"] == "memo" and memo["research_only"] is True
-    assert memo["summary"] == {"setups_in": 1, "plans_drafted": 1,
-                               "checklists_passed": 1}
+    assert memo["summary"]["setups_in"] == 1
+    assert memo["summary"]["plans_drafted"] == 1
+    assert memo["summary"]["checklists_passed"] == 1
+    assert memo["summary"]["pattern_matches_found"] == \
+        memo["pattern_matches"]["BTCUSDT"]["matches_found"]
     assert memo["plans"][0]["status"].startswith("DRAFT")
     assert memo["plans"][0]["equity"] == 10000.0
+
+
+# --- TASK-STR-067: pattern comparison -------------------------------
+
+_SHAPE = [1.00, 1.01, 1.02, 1.03, 1.04, 1.05, 1.045, 1.04, 1.035, 1.03]
+_DAY = 86400
+_EPOCH = 1778000000  # fixed base so timestamps are deterministic
+
+
+def _planted_candles(n=200):
+    """200 daily candles, flat at 100 except three planted windows that
+    copy the current window's shape at other levels, each followed by a
+    known 10-bar forward move: +3% (j=20), -3% (j=80), +3% (j=140).
+    Current window = last 10 bars, same shape at level 100."""
+    closes = [100.0] * n
+    for j, level in ((20, 90.0), (80, 110.0), (140, 95.0)):
+        for k, mult in enumerate(_SHAPE):
+            closes[j + k] = level * mult
+        end = closes[j + 9]
+        drift = 0.03 if j != 80 else -0.03
+        for k in range(1, 11):
+            closes[j + 9 + k] = end * (1 + drift * k / 10.0)
+    for k, mult in enumerate(_SHAPE):
+        closes[n - 10 + k] = 100.0 * mult
+    return [{"high": c, "low": c, "close": c,
+             "time": _EPOCH + i * _DAY} for i, c in enumerate(closes)]
+
+
+def test_pattern_match_finds_planted_patterns():
+    out = pattern_match(_planted_candles(), "long")
+    assert out["status"] == "ok"
+    assert out["lookback_applied"] is True
+    assert out["matches_found"] == 3
+    by_start = {m["start_index"]: m for m in out["matches"]}
+    assert sorted(by_start) == [20, 80, 140]
+    assert out["current_window"]["start_index"] == 190
+    # every match's outcome window ends before the current window starts
+    for m in out["matches"]:
+        assert m["end_index"] + 10 <= 190
+        assert m["similarity"] > 0.99
+    assert abs(by_start[20]["forward_return_pct"] - 3.0) < 1e-9
+    assert abs(by_start[80]["forward_return_pct"] + 3.0) < 1e-9
+    assert by_start[20]["forward_direction"] == "up"
+    assert by_start[80]["forward_direction"] == "down"
+    assert by_start[20]["success"] is True
+    assert by_start[80]["success"] is False
+    assert out["successes"] == 2
+    assert abs(out["success_rate"] - 2 / 3) < 1e-12
+
+
+def test_pattern_match_short_direction_flips_success():
+    out = pattern_match(_planted_candles(), "short")
+    assert out["successes"] == 1
+    assert abs(out["success_rate"] - 1 / 3) < 1e-12
+
+
+def test_pattern_match_lookback_excludes_old_windows():
+    out = pattern_match(_planted_candles(), "long", lookback_days=60)
+    starts = [m["start_index"] for m in out["matches"]]
+    assert 140 in starts
+    assert 20 not in starts and 80 not in starts
+    assert all(s >= 130 for s in starts)
+
+
+def test_pattern_match_insufficient_history():
+    few = [{"high": 100.0, "low": 100.0, "close": 100.0}
+           for _ in range(25)]
+    out = pattern_match(few, "long")
+    assert out["status"] == "insufficient_history"
+    assert out["matches"] == [] and out["success_rate"] is None
+    assert "reason" in out
+
+
+def test_run_desk_pattern_section():
+    memo = run_desk([SETUP], CTX, {"BTCUSDT": _planted_candles()},
+                    equity=10000.0, risk_per_trade_pct=0.001,
+                    max_risk_pct=0.001)
+    pm = memo["pattern_matches"]["BTCUSDT"]
+    assert pm["matches_found"] == 3
+    assert abs(pm["success_rate"] - 2 / 3) < 1e-12
+    assert memo["summary"]["pattern_matches_found"] == 3
