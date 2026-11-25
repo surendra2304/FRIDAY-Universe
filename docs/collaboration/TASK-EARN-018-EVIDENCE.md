@@ -19,17 +19,17 @@ the listing copy were already filed in PR #1726 and are unchanged.
 | chapter-05-draft.md — tools setup | 2,746 | ~2,500 |
 | chapter-06-draft.md — first 50 subscribers | 4,277 | ~3,500 |
 | chapter-07-draft.md — 50 to 100 + rhythm | 3,481 | ~3,000 |
-| chapter-08-draft.md — first offer | 2,859 | ~2,500 |
+| chapter-08-draft.md — first offer | 2,866 | ~2,500 |
 | appendix-a.md — worksheets/templates | 1,361 | ~1,500 |
 | appendix-b.md — 30-day calendar | 542 | ~500 |
-| **Manuscript total (intro + ch. 1–8 + appendices)** | **28,712** | **~25,000** |
+| **Manuscript total (intro + ch. 1–8 + appendices)** | **28,719** | **~25,000** |
 
 ## Corrections stated plainly
 
 - **Chapter 1 is 1,163 words, not ~2,300.** The outline and Chapter 1's own
   footer claim ~2,300 words; `wc -w` on the filed file gives 1,163. The
   manuscript total above uses the real count.
-- **Total runs ~15% over the ~25,000-word target** (28,712 words), driven
+- **Total runs ~15% over the ~25,000-word target** (28,719 words), driven
   mainly by Chapters 6 (+777) and 7 (+481). Accepted, not trimmed: the extra
   words are the outline-briefed content (launch kit, weekly rhythm), not
   padding. No chapter was cut to hit the target.

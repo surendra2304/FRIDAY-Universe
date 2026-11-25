@@ -19063,19 +19063,31 @@ tasks:
     next_action: 'Owner creates the free Adobe Stock Contributor account. Team then generates batch 1 from the briefs and hands the owner the upload-ready set with this record updated.'
   - id: TASK-EARN-018
     title: 'EARN: KDP ebook - Your First 100 Subscribers (manuscript completion, then owner KDP account + upload)'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-earn-018-kdp-manuscript-chapters
+    pr: 1904
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T01:58:39+05:30'
+    updated_at: '2026-11-26T03:32:27+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/kdp/manuscript-outline.md
     - earning/kdp/chapter-01-draft.md
     - earning/kdp/kdp-listing-copy.md
+    - earning/kdp/introduction.md
+    - earning/kdp/chapter-02-draft.md
+    - earning/kdp/chapter-03-draft.md
+    - earning/kdp/chapter-04-draft.md
+    - earning/kdp/chapter-05-draft.md
+    - earning/kdp/chapter-06-draft.md
+    - earning/kdp/chapter-07-draft.md
+    - earning/kdp/chapter-08-draft.md
+    - earning/kdp/appendix-a.md
+    - earning/kdp/appendix-b.md
+    - earning/kdp/cover.jpg
+    - docs/collaboration/TASK-EARN-018-EVIDENCE.md
     acceptance:
     - 'KDP pack is filed under earning/kdp/ in PR #1726: full manuscript outline (about 25,000 words, expanded from the CometWorks 7-Day Email List Starter Kit material), the complete Chapter 1 draft as tone benchmark, and full listing copy (title, subtitle, description, 7 keyword slots, categories, $4.99 price, KDP Select, AI-assisted disclosure step).'
     - 'Team leg remaining: draft chapters 2-8 plus appendices to the Chapter 1 standard and produce a cover with free tools; this record is the tracker for that leg (earning lane, one EARN task per worker queue).'
@@ -19085,8 +19097,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 ~02:30 IST under the owner order 2026-11-25 ~02:16 IST: implement all earning lanes, KDP included.'
     - 'Deliverable PR #1726 (branch muse/earn-kdp-ebook-pack): 3 files under earning/kdp/. Source topic is the strongest existing CometWorks material: the email-list starter kit already drafted as the EARN-004/EARN-010 lead-magnet pack.'
     - 'Assigned to Muse 15 as queue position 3 (earning lane) by coordinator watch117 (2026-11-26, hub #1483); KDP manuscript chapters 2-8 leg.'
+    - 'Completed by Muse 15 2026-11-26 ~03:32 IST: full manuscript filed in work PR #1904 (content head e468ac87; board flip follows on the same branch) — Introduction + chapters 2-8 + appendices A-B + cover (1280x1920); manuscript total 28,719 words vs ~25,000 target; Chapter 1 corrected to 1,163 words (not ~2,300); Ch. 8 / Appendix B offer timing aligned to Week 3; cover force-added over the blanket *.jpg gitignore as the named deliverable. Evidence: docs/collaboration/TASK-EARN-018-EVIDENCE.md.'
     blockers: []
-    next_action: 'Assigned to muse_15 as queue position 3 (earning lane) by coordinator watch117 (2026-11-26, hub #1483); claim via hub #1483 when it reaches queue head.'
+    next_action: 'IN_REVIEW — work PR #1904 open (head e468ac87); merge owed; owner steps (KDP account + tax + bank, then paste listing copy, AI-assisted disclosure, publish) remain owner-only.'
   - id: TASK-EARN-019
     title: 'EARN: bug-bounty lane - 30-day legal practice plan, then first programme (owner accounts step only)'
     status: AVAILABLE
