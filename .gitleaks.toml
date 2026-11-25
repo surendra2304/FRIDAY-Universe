@@ -30,13 +30,25 @@
 # line as a labeled digest would also be suppressed. Project docs never
 # co-locate credential literals with digests, and committing real secrets is
 # forbidden by fleet policy regardless of scanner behavior.
+#
+# Second entry (TASK-FRG-028, 2026-11-25, Muse 2):
+#   Forge/tests/test_frg028_build_run.py carries a shield-gate test whose
+#   fixture is a FAKE credential, "api_key = 'sk-live-1234567890abcdef'"
+#   (sequential hex — a synthetic value, not a real key). gitleaks'
+#   generic-api-key rule flags the literal. The test now assembles the
+#   value at runtime, but gitleaks scans the whole PR commit range, so the
+#   literal in the PR's first commit still trips the scan — hence this
+#   allowlist entry for exactly that one fixture string. Any other sk-live
+#   value (real or fake) is still flagged: the regex is the literal string,
+#   not a pattern. Pinned by tests/test_gitleaks_config.py.
 
 [extend]
 useDefault = true
 
 [allowlist]
-  description = "Labeled SHA-256 content digests (verification receipts, source inventories, package checksums) are project artifacts, not credentials"
+  description = "Labeled SHA-256 content digests (verification receipts, source inventories, package checksums) are project artifacts, not credentials; plus one fake test-credential fixture (TASK-FRG-028)"
   regexTarget = "line"
   regexes = [
     '''(?i)\bsha-?256\b['"` ]*\s*[:=]\s*['"`]?[0-9a-fA-F]{64}''',
+    '''sk-live-1234567890abcdef''',
   ]
