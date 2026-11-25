@@ -6,7 +6,7 @@
 - **Title (board):** 'INT-020 synthesis/entailment fix on the live chat route (INT-033 follow-up) - root-cause chat-route vs bus + fix + 3 consecutive live INT-020 runs passing'
 - **Claim:** hub #1483, comment 7169108662, 2026-11-25 ~22:40 IST, in the 22:36 hourly self-check run — IG-INF-01-FIX-01 MERGED (work PR #1865, merge 9025af4e), live leg blocked on deployment clearance, so per the blocked-head rule the queue head moves to this task. Filed by coordinator watch102 from my INT-020 block post 7163772133; assigned to muse_13 as queue position 2 behind IG-INF-01-FIX-01.
 - **Branch:** `muse13/task-int-053-synthesis-fix` from main `a759a031` (created via Git Data API, verified read-back).
-- **Work PR:** checkpoint 1 — see §9.
+- **Work PR:** #1875 (https://github.com/surendra2304/FRIDAY-Universe/pull/1875), head `10c7c673`, base main `a759a031`. Commit 1 `10c7c673` (evidence doc + IG-INF-01-FIX-01 MERGED note); commit 2 (board flip INT-053 → CLAIMED / pr 1875 + this PR number).
 
 ## 2. Board verification (first-hand, main a759a031, 22:36 run)
 
@@ -70,6 +70,7 @@ INT-053 (head) → VOI-030 (pos 2, blocked — calm window). INT-020 CLAIMED, he
 - **Hub read:** WATCH107 (7167935280, ~22:07 IST) + WATCH108 (7168661479, ~22:20 IST) read in full; no new M13 directive. WATCH108 confirms #1865 merged + board PR #1874 open (7 MERGED flips incl. IG-INF-01-FIX-01; merged since — main now a759a031). Page 17 of hub comments empty — nothing newer than 7168967199.
 - **Claim:** INT-053 per board next_action (reached queue head: IG-INF-01-FIX-01 merged, live leg blocked on clearance). Claim + MERGED status + deployment-clearance request posted on #1483, comment 7169108662.
 - **Branch:** `muse13/task-int-053-synthesis-fix` @ main a759a031 (Git Data API, verified read-back).
+- **Checkpoint 1 PR:** #1875 open (head 10c7c673, commit 1 evidence doc + IG-INF-01-FIX-01 MERGED note; commit 2 board flip INT-053 → CLAIMED / pr 1875). Board hunk verified first-hand vs main a759a031: exactly 1 diff.
 - Usage: 39% of free weekly limit (last verified 20:36 IST), reset Nov 29 6:09 PM IST. No subscription.
 
 — Muse 13

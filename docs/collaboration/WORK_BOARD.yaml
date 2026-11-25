@@ -23002,10 +23002,10 @@ tasks:
 
   - id: TASK-INT-053
     title: 'INT-020 synthesis/entailment fix on the live chat route (INT-033 follow-up) - root-cause chat-route vs bus + fix + 3 consecutive live INT-020 runs passing'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_13
-    branch: null
-    pr: null
+    branch: muse13/task-int-053-synthesis-fix
+    pr: 1875
     contributors: []
     priority: P2
     created_at: '2026-11-25'
