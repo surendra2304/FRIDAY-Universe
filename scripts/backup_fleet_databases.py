@@ -339,8 +339,14 @@ FLEET_STATE_SOURCES = (
     ), True),
     ("server6", "32.236.185.237", (
         "/opt/friday_universe/IntelX/data", "/opt/friday_universe/Futuris/data",
-        "/opt/friday_universe/Futuris/.data",
     ), True),
+    # Futuris/.data does not exist on IntelX-Server (live collect, run
+    # 45589775802: every other source pulled, this one reported
+    # "missing" and single-handedly marked the bundle incomplete).
+    # Optional: covered whenever it exists, never blocking.
+    ("server6", "32.236.185.237", (
+        "/opt/friday_universe/Futuris/.data",
+    ), False),
 )
 FLEET_STATE_SUDO_SOURCES = (
     ("server6-soak", "32.236.185.237", ("/var/lib/friday-universe/intelx-soak",), False),
