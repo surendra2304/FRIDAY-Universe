@@ -22225,14 +22225,14 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Live-fleet work: coordinator hub clearance required before any production change (standing rule).'
   - id: TASK-DB-003
     title: 'DB: Fleet storage audit - one live-verified table of every agent''s storage and backup state, including the VyralX file-store formalisation'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_13
+    branch: muse13/task-db-003-fleet-storage-audit
+    pr: 1752
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T03:02:00+05:30'
+    updated_at: '2026-11-25T06:06:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
@@ -22246,8 +22246,162 @@ tasks:
     - 'Completion = the table is filed via PR and spot-verified: coordinator or paired verifier re-reads at least 3 rows against the live boxes and confirms they match.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s database-wiring order (~02:56 IST), as corrected ~02:59 IST (VyralX file-based, no DB; Autonomous DB #2 becomes the IntelX DB for IntelX + Futuris research). Verified against the live board at main 7277dcdb: no TASK-DB-* records existed; DB-001/002/003 are clash-free.'
+    - 'Claim: coordinator watch 7147595568 (queue head under the blocked-head rule); hub #1483 comment 7148234290; branch muse13/task-db-003-fleet-storage-audit from main c6254208; work PR #1752.'
+    - 'Sweep 2026-11-25 05:43-06:06 IST via the Bridge (servers 1-6), read-only: ONE table, all 10 agents + Inference + Bridge, filed as docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md. Fleet ADB backup runs Nov 16/18/22 (complete, verify 188 ok) but has NO schedule. 8 unbacked stores flagged; follow-ups DB-004..DB-011 filed in this PR. Disagreements D1-D9 recorded (IntelX/Futuris local files not DB #2; Stratex HeatWave unreachable from S4; BGM shelf on S5 not S2; Inference has a live ADB schema; Cortex Redis empty/unpersisted). Autonomous DB #2 display name ''IntelX DB'' NOT evidenced live (no OCI CLI on any box) - rename pending, DB-002.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. This is a read-only audit sweep; no production changes.'
+    next_action: 'Work PR #1752 open; completion needs coordinator/verifier spot-verification of >=3 rows against the live boxes.'
+  - id: TASK-DB-004
+    title: 'DB: Back up Stratex live state files on Stratex-Server (S4) - newest state backup 2026-11-14'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T06:06:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
+    acceptance:
+    - 'Back up the live Stratex state files on Stratex-Server (server 4): Stratex/state/*.jsonl + *.json (fill ledger, equity snapshots, forward scorecard, position tags, reconciliation). Newest state backup found in the audit is 2026-11-14; the Nov 22 fleet backup holds only the 4 empty ADB tables. Prove with a dated backup + a restore/read-back check. Do not change the live daemon.'
+    evidence:
+    - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): Stratex live state files (S4): newest backup 2026-11-14; fleet backup holds only 4 empty tables. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-DB-005
+    title: 'DB: Back up IntelX local research files on IntelX-Server (S6) - watches + raw, no backup'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T06:06:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
+    acceptance:
+    - 'Back up the IntelX local research files on IntelX-Server (server 6): IntelX/data/watches/state.json + IntelX/data/raw/. Prove with a dated backup + a restore/read-back check. (DB-002 wiring to Autonomous DB #2 may subsume this; the coordinator rules if it does.)'
+    evidence:
+    - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): IntelX local research files (S6): live writes to local files, no backup; ADB schema backup covers the schema only. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-DB-006
+    title: 'DB: Back up Futuris local forecast files on IntelX-Server (S6) - data/storage parquet, no backup'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T06:06:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
+    acceptance:
+    - 'Back up the Futuris local forecast files on IntelX-Server (server 6): Futuris/data/storage/ (parquet snapshots, 54M, 805 snapshot dirs). Prove with a dated backup + a restore/read-back check. (DB-002 wiring may subsume this; the coordinator rules if it does.)'
+    evidence:
+    - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): Futuris local forecast files (S6): live writes to local parquet, no backup; ADB schema backup covers the schema only. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-DB-007
+    title: 'DB: Formalise VyralX file-store backup on VyralX-Server (S5) - 6.5G, only an informal S1 mirror'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T06:06:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
+    acceptance:
+    - 'Give the VyralX 6.5G file store (VyralX-Server, server 5: renders 221 files, media 702 files, data 403M) a scheduled backup; verify the Oracle Server 1 mirror (counts identical, 1 render md5-identical in the audit) as the second copy or replace it. Prove with a dated backup + a restore/read-back check. VyralX stays FILES ONLY - no database.'
+    evidence:
+    - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): VyralX file store (S5, 6.5G): no scheduled backup; only an informal, unscheduled S1 mirror. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-DB-008
+    title: 'DB: Back up FRIDAY local state files on FRIDAY-Server (S3) - friday.db + JSON state'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T06:06:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
+    acceptance:
+    - 'Back up the FRIDAY local state files on FRIDAY-Server (server 3): FRIDAY/data/friday.db + gemini_pool_state.json + voice_worker_status.json + FRIDAY/state/. Prove with a dated backup + a restore/read-back check.'
+    evidence:
+    - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): FRIDAY local state files (S3): FRIDAY/backups empty, .backups newest 2026-11-04; ADB schema backup covers the schema only. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-DB-009
+    title: 'DB: Back up Sentinel local audit ledger on Oracle Server 1 - audit.jsonl, 33 entries'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T06:06:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
+    acceptance:
+    - 'Back up the Sentinel local audit ledger on Oracle Server 1 (server 1): Sentinel/logs/audit.jsonl (33 entries at the audit). Cross-check the file against the API-served ledger and the SENTINEL ADB schema (17 rows @ Nov 22) and record which is authoritative. Prove with a dated backup + a read-back check.'
+    evidence:
+    - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): Sentinel local audit ledger (S1): 33 entries, no backup; not in the fleet script file globs. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-DB-010
+    title: 'DB: Back up Cortex local store on Oracle Server 1 - cortex.db + settle Redis persistence'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T06:06:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
+    acceptance:
+    - 'Back up the Cortex local store on Oracle Server 1 (server 1): Cortex/data/cortex.db (372K). Settle Redis persistence (localhost:6379: 0 keys, AOF off, no dump.rdb at the audit) - either persist the event stream durably or record that Redis is a volatile transport only. Prove with a dated backup + a read-back check.'
+    evidence:
+    - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): Cortex local store (S1): cortex.db 372K with no backup; Redis empty and unpersisted. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+  - id: TASK-DB-011
+    title: 'DB: Back up Forge workspaces on Oracle Server 1 - 27M working output, no file backup'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T06:06:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
+    acceptance:
+    - 'Back up the Forge workspaces on Oracle Server 1 (server 1): Forge/workspaces/ (27M). Prove with a dated backup + a read-back check. (Coordinator may close as not-needed if workspaces are regenerable output; the audit flags the gap, this task settles it.)'
+    evidence:
+    - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): Forge workspaces (S1, 27M): no file backup; ADB schema backup covers the schema only. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
+    blockers: []
+    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
 task_id_warnings:
   - id: TASK-REL-061
 
