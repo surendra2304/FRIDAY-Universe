@@ -223,7 +223,13 @@ jobs:
             Futuris/tests/api/test_health.py \
             Futuris/tests/api/test_hostile_inputs.py \
             Futuris/tests/test_fut030_calendar_context.py \
-            Futuris/tests/api/test_market_calendar_context.py
+            Futuris/tests/api/test_market_calendar_context.py \
+            Futuris/tests/test_fut031_reference_only_guardrail.py \
+            Futuris/tests/market_data/test_backbone.py \
+            Futuris/tests/market_data/test_providers.py \
+            Futuris/tests/market_data/test_api.py \
+            Futuris/tests/features/test_event_context.py \
+            Futuris/tests/api/test_market_event_context.py
       - name: IntelX health-capability contracts (TASK-REL-067)
         env:
           PYTHONPATH: IntelX
