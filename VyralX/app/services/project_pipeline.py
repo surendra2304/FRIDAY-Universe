@@ -26,7 +26,7 @@ from app.services.thumbnail import extract_thumbnail
 from app.services.rights import is_project_scene_publishable
 from app.services.project_quality import build_project_quality_report
 from app.services.media_quality import analyze_media_signals
-from app.services.take_verification import verify_render_signals
+from app.services.take_verification import detect_bad_takes, verify_render_signals
 from app.services.intelx import normalize_intelx_reports
 from app.services.voiceover import synthesize_voiceover, synthesize_voiceover_with_captions
 from app.services.forced_alignment import ForcedAlignmentError, align_word_timestamps
@@ -1051,6 +1051,16 @@ def execute_project_pipeline(project_id: int, db: Session) -> None:
             signal_analysis.get("black_intervals")
             if signal_analysis.get("status") == "analyzed" else None,
             duration_s=actual_duration,
+        )
+        # TASK-VYR-060: automatic bad-take detection per render
+        # segment — black / silence overlap per caption cue, plus
+        # timed-word delivery where carried, judged by
+        # take_verification.detect_bad_takes over the signal scan
+        # above. An unavailable scan records passed=None, never
+        # a pass; loudness / clipping ride as whole-render
+        # context, never as per-segment judgements.
+        qa_report["bad_take_detection"] = detect_bad_takes(
+            segments, signal_analysis,
         )
         pack["production_qa"] = qa_report
         content_record.pack_json = json.dumps(pack, ensure_ascii=False)

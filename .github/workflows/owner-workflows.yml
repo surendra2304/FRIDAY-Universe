@@ -273,7 +273,8 @@ jobs:
             Stratex/tests/test_rel_071_stratex_health_path.py \
             Stratex/tests/test_str076_repo_implement_wave1.py \
             Stratex/tests/test_daily_fill_ledger_reconciliation.py \
-            Stratex/tests/test_str081_emotion_journal.py
+            Stratex/tests/test_str081_emotion_journal.py \
+            Stratex/tests/test_pairs_trading_str068.py
       - name: Install ffmpeg for VyralX real-render contracts
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Review-required project persistence and worker boundaries
@@ -301,10 +302,12 @@ jobs:
             VyralX/tests/test_vyr057_pool.py \
             VyralX/tests/test_vyr055_refresh3_pool.py \
             VyralX/tests/test_vyr061_best_take_gate.py \
+            VyralX/tests/test_vyr060_bad_take_detection.py \
             VyralX/tests/test_vyr064_pd_whitelist.py \
             VyralX/tests/test_vyr074_mapping.py \
             VyralX/tests/test_vyr065_niche_guard.py \
-            VyralX/tests/test_vyr062_stick_figure_series.py
+            VyralX/tests/test_vyr062_stick_figure_series.py \
+            VyralX/tests/test_vyr081_gta6_series.py
       - name: Compile fresh research and deployed voice wiring
         run: >-
           python -m compileall -q IntelX/intelx/api/router.py

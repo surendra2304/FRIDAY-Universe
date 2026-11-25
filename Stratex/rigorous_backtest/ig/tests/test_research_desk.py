@@ -4,8 +4,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from ig.research_desk import (analyse, pattern_match, plan,
-                              risk_checklist, run_desk, scan)
+from ig.research_desk import (PROMPT_LIBRARY, analyse, pattern_match,
+                              plan, risk_checklist, risk_manager_pass,
+                              run_desk, scan, scenario_analysis)
 
 SETUP = {"symbol": "BTCUSDT", "timeframe": "4h", "direction": "long",
          "entry_ref": 100.0, "invalidation": 95.0, "target": 112.5}
@@ -160,3 +161,205 @@ def test_run_desk_pattern_section():
     assert pm["matches_found"] == 3
     assert abs(pm["success_rate"] - 2 / 3) < 1e-12
     assert memo["summary"]["pattern_matches_found"] == 3
+
+
+# --- TASK-STR-069: hardened checklist -------------------------------
+
+_GOOD_EVIDENCE = {
+    "clean_data_retest": True,
+    "trade_count": 120,
+    "max_drawdown_pct": 8.0,
+    "total_return_pct": 24.0,
+    "tiny_size_incubated": True,
+    "repainting": False,
+    "bot_built_by_us": True,
+}
+_HARDENED = ["clean_data_retest", "min_trades", "drawdown_vs_return",
+             "tiny_size_incubation", "repainting_check", "bot_provenance"]
+
+
+def test_hardened_checklist_no_evidence_unevaluated():
+    # Pre-STR-069 behaviour is preserved: a plan with no backtest
+    # evidence still passes, and the six items are named unevaluated
+    # instead of being guessed at.
+    p = plan(SETUP, 10000.0, 0.001)
+    out = risk_checklist(p, SETUP, max_risk_pct=0.001)
+    assert out["passed"] is True
+    assert out["unevaluated"] == _HARDENED
+    assert all(i["evaluated"] for i in out["items"]
+               if i["name"] not in _HARDENED)
+
+
+def test_hardened_checklist_good_evidence_passes():
+    p = plan(SETUP, 10000.0, 0.001)
+    out = risk_checklist(p, SETUP, max_risk_pct=0.001,
+                         evidence=_GOOD_EVIDENCE)
+    assert out["passed"] is True
+    assert out["unevaluated"] == []
+
+
+def test_hardened_checklist_each_item_fails():
+    p = plan(SETUP, 10000.0, 0.001)
+    cases = [
+        ("clean_data_retest", {"clean_data_retest": False}),
+        ("min_trades", {"trade_count": 49}),
+        ("drawdown_vs_return",
+         {"max_drawdown_pct": 13.0, "total_return_pct": 24.0}),
+        ("tiny_size_incubation", {"tiny_size_incubated": False}),
+        ("repainting_check", {"repainting": True}),
+        ("bot_provenance", {"bot_built_by_us": False}),
+    ]
+    for name, ev in cases:
+        out = risk_checklist(p, SETUP, max_risk_pct=0.001, evidence=ev)
+        assert out["passed"] is False, name
+        assert any(i["name"] == name and not i["ok"]
+                   for i in out["items"]), name
+
+
+def test_hardened_checklist_boundaries():
+    p = plan(SETUP, 10000.0, 0.001)
+    # Exactly 50 trades passes; drawdown exactly half the return passes.
+    out = risk_checklist(p, SETUP, max_risk_pct=0.001,
+                         evidence={"trade_count": 50,
+                                   "max_drawdown_pct": 12.0,
+                                   "total_return_pct": 24.0})
+    assert out["passed"] is True
+    # Zero return fails the robustness gate: nothing to be robust against.
+    out2 = risk_checklist(p, SETUP, max_risk_pct=0.001,
+                          evidence={"max_drawdown_pct": 5.0,
+                                    "total_return_pct": 0.0})
+    assert out2["passed"] is False
+
+
+def test_run_desk_threads_backtest_evidence():
+    memo = run_desk([SETUP], CTX, {"BTCUSDT": _uptrend_candles()},
+                    equity=10000.0, risk_per_trade_pct=0.001,
+                    max_risk_pct=0.001,
+                    backtest_evidence={"BTCUSDT": _GOOD_EVIDENCE})
+    assert memo["checklists"][0]["passed"] is True
+    assert memo["checklists"][0]["unevaluated"] == []
+    memo2 = run_desk([SETUP], CTX, {"BTCUSDT": _uptrend_candles()},
+                     equity=10000.0, risk_per_trade_pct=0.001,
+                     max_risk_pct=0.001,
+                     backtest_evidence={"BTCUSDT": {"trade_count": 10}})
+    assert memo2["checklists"][0]["passed"] is False
+    assert "min_trades" not in memo2["checklists"][0]["unevaluated"]
+
+
+# --- TASK-STR-080: prompt set completion (prompts 1 + 3) -----------
+
+def _downtrend_candles(n=40):
+    return [{"high": 123 - i * 0.6, "low": 122 - i * 0.6,
+             "close": 122.5 - i * 0.6} for i in range(n)]
+
+
+def _flat_candles(n=40):
+    return [{"high": 100.0, "low": 100.0, "close": 100.0}
+            for _ in range(n)]
+
+
+def test_prompt_library_has_all_three_prompts():
+    assert sorted(PROMPT_LIBRARY) == ["prompt_1", "prompt_2", "prompt_3"]
+    for key, entry in PROMPT_LIBRARY.items():
+        assert entry["id"] == key
+        for field in ("title", "verbatim_derived", "source",
+                      "board_task", "implements"):
+            assert entry[field], "%s missing %s" % (key, field)
+        assert "DRSGKJXDAU4" in entry["source"]
+    assert PROMPT_LIBRARY["prompt_1"]["board_task"] == "TASK-STR-080"
+    assert PROMPT_LIBRARY["prompt_2"]["board_task"] == "TASK-STR-067"
+    assert PROMPT_LIBRARY["prompt_3"]["board_task"] == "TASK-STR-080"
+    import ig.research_desk as desk
+    for entry in PROMPT_LIBRARY.values():
+        assert callable(getattr(desk, entry["implements"]))
+
+
+def test_scenario_analysis_commits():
+    up = scenario_analysis(_uptrend_candles())
+    assert up["status"] == "ok" and up["commit"] == "bullish"
+    assert up["scenarios"]["bullish"]["share"] == 1.0
+    assert up["close_call"] is False and up["margin"] == 1.0
+    down = scenario_analysis(_downtrend_candles())
+    assert down["commit"] == "bearish"
+    assert down["scenarios"]["bearish"]["share"] == 1.0
+    flat = scenario_analysis(_flat_candles())
+    assert flat["commit"] == "sideways"
+    assert flat["scenarios"]["sideways"]["share"] == 1.0
+    assert flat["evidence"]["net_return_pct"] == 0.0
+
+
+def test_scenario_analysis_shares_sum_to_one_and_flag_tracks_margin():
+    for series in (_uptrend_candles(), _downtrend_candles(),
+                   _flat_candles()):
+        out = scenario_analysis(series)
+        shares = [s["share"] for s in out["scenarios"].values()]
+        assert abs(sum(shares) - 1.0) < 1e-12
+        ranked = sorted(shares, reverse=True)
+        assert abs(out["margin"] - (ranked[0] - ranked[1])) < 1e-12
+        assert out["close_call"] is (out["margin"] < 0.05)
+
+
+def test_scenario_analysis_insufficient_history():
+    out = scenario_analysis(_flat_candles(10))
+    assert out["status"] == "insufficient_history"
+    assert out["commit"] is None
+    assert "reason" in out
+
+
+def test_risk_manager_pass_one_to_three_long():
+    out = risk_manager_pass(SETUP, equity=10000.0,
+                            risk_per_trade_pct=0.001)
+    assert out["status"] == "ok" and out["passed"] is True
+    assert out["stop_loss"] == 95.0
+    assert out["take_profit"] == 115.0  # 100 + 3 * (100 - 95)
+    assert abs(out["rr_ratio"] - 3.0) < 1e-12
+    assert out["risk_amount"] == 10.0
+    assert abs(out["units"] - 2.0) < 1e-12  # 10 / 5, same as plan()
+    assert [c["name"] for c in out["checks"]] == [
+        "stop_on_correct_side", "target_beyond_entry", "rr_is_target",
+        "sizing_positive"]
+    assert all(c["ok"] for c in out["checks"])
+
+
+def test_risk_manager_pass_short_mirror_and_custom_rr():
+    short = {**SETUP, "direction": "short", "invalidation": 105.0,
+             "target": 87.5}
+    out = risk_manager_pass(short, equity=10000.0,
+                            risk_per_trade_pct=0.001)
+    assert out["passed"] is True
+    assert out["stop_loss"] == 105.0
+    assert out["take_profit"] == 85.0  # 100 - 3 * (105 - 100)
+    assert abs(out["rr_ratio"] - 3.0) < 1e-12
+    two = risk_manager_pass(SETUP, 10000.0, 0.001, rr_target=2.0)
+    assert two["take_profit"] == 110.0
+    assert abs(two["rr_ratio"] - 2.0) < 1e-12
+
+
+def test_risk_manager_pass_rejects_bad_setups():
+    wrong_side = risk_manager_pass(
+        {**SETUP, "invalidation": 105.0}, 10000.0, 0.001)
+    assert wrong_side["status"] == "invalid_setup"
+    assert wrong_side["passed"] is False
+    assert wrong_side["stop_loss"] is None
+    zero_risk = risk_manager_pass(
+        {**SETUP, "invalidation": 100.0}, 10000.0, 0.001)
+    assert zero_risk["status"] == "invalid_setup"
+    bad_dir = risk_manager_pass(
+        {**SETUP, "direction": "sideways"}, 10000.0, 0.001)
+    assert bad_dir["status"] == "invalid_setup"
+    bad_equity = risk_manager_pass(SETUP, 0.0, 0.001)
+    assert bad_equity["status"] == "invalid_setup"
+
+
+def test_run_desk_scenario_and_risk_sections():
+    memo = run_desk([SETUP], CTX, {"BTCUSDT": _uptrend_candles()},
+                    equity=10000.0, risk_per_trade_pct=0.001,
+                    max_risk_pct=0.001)
+    sc = memo["scenario_analyses"]["BTCUSDT"]
+    assert sc["commit"] == "bullish"
+    assert memo["summary"]["scenario_commits"] == {"BTCUSDT": "bullish"}
+    rp = memo["risk_manager_passes"]["BTCUSDT"]
+    assert rp["passed"] is True
+    assert rp["take_profit"] == 115.0
+    assert abs(rp["rr_ratio"] - 3.0) < 1e-12
+    assert memo["summary"]["risk_passes_passed"] == 1
