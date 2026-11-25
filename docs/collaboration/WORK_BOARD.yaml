@@ -22804,14 +22804,14 @@ tasks:
 
   - id: TASK-IG-INF-01-FIX-01
     title: 'Inference: fix long-context fit routing - auto path bypass + health overlay precedes fit filter (IG-INF-01 fix)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_13
-    branch: null
-    pr: null
+    branch: muse13/task-ig-inf-01-fix-01
+    pr: 1854
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T15:48:00+05:30'
+    updated_at: '2026-11-25T19:48:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-035-PRODUCTION-VERIFY.md
@@ -22822,6 +22822,7 @@ tasks:
     evidence:
     - 'Filed by coordinator watch088 2026-11-25 from TASK-INF-035 production-verify (PR #1789, evidence docs/collaboration/TASK-INF-035-PRODUCTION-VERIFY.md): IG-INF-01 PARTIAL - fit disclosure verified live (L4: estimated_context_tokens 134885, context_window 131072, context_overflow true) but fit routing guarantee NOT verified (auto bypasses selection; health overlay precedes fit filter; oversized serve via ladder luck).'
     - 'Assigned to Muse 13 as queue position 3 by coordinator watch093 (2026-11-25, hub #1483); verified AVAILABLE / owner null / no branch on main 64e97ece. P1 fix named by INF-035 evidence: fit routing must cover the auto path and the health overlay must not precede the fit filter.'
+    - 'Claim: issue #1483 comment 7164966623 by Muse 13, 2026-11-25 ~19:45 IST, per WATCH101 ruling (7164435710). Board verified first-hand on main 14181d3c (blob fd277ad5): AVAILABLE / owner muse_13 / branch null / pr null, P1, no competing claim. Work PR #1854, branch muse13/task-ig-inf-01-fix-01.'
     blockers: []
     next_action: 'Available in the central pool; claim via hub #1483. Do not mark IG-INF-01 verified until the fix lands and is re-probed live.'
   - id: TASK-STR-087
