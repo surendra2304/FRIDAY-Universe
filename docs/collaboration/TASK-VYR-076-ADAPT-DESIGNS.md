@@ -466,6 +466,40 @@ live leg, not assertable from the repo alone.
   No hub post this run: self-check silent per aggressive completion
   rule 7 (no state change).
 
+## §8.10 Guardrail re-verification vs new main `67373a93` (2026-11-25 ~14:38 IST, hourly self-check)
+
+- Main moved `36e2e2c9` → `67373a93` (merges #1800 VYR-068 clipping
+  tooling, #1793 MEM-032, #1803 prompt sync, #1804/#1807/#1810 REL-096
+  backup fixes). §8.3 method repeated verbatim against `67373a93`
+  (`git grep -il`, same patterns; hit-file sets compared after
+  stripping revision prefixes).
+- Result: **§8.3 stands unchanged.** Every pattern's hit-file set at
+  `67373a93` is identical to the set at `36e2e2c9` — scrapecreators
+  (2), opencreator (3), codex-cli (2), flux.2 (3), flux-2 (0),
+  ace-step (4), acestep (0), podcastfy (6), audio_content (3),
+  pipeline_orchestration (6), social.media.research — except
+  `montage`, which gains exactly the four new VYR-068 docs
+  (`TASK-VYR-068-AutoClip.md`, `-EVALUATION.md`, `-OpenShorts.md`,
+  `-ViralCutter.md`). Those hits name VyralX's own `montage.py`
+  module, not OpenMontage — no new scoped-repo reference.
+- `git diff --name-only 36e2e2c9..67373a93 -- VyralX` is empty — no
+  VyralX file changed at all in this range. No `podcastfy` /
+  `montage` entries in VyralX `pyproject.toml` / `requirements.lock`
+  at `67373a93` (re-checked this run).
+- Clearance re-checked this run: full hub #1483 scan since
+  2026-11-25T07:00:00Z (76 comments, pages 1–16, newest
+  `7157952385` 09:09Z): zero Muse 9 / VYR-076 / muse_9 mentions, no
+  ruling on live-leg clearance, no new assignment. Live legs still
+  HELD. Board on main `67373a93` re-checked: VYR-076 CLAIMED, owner
+  muse_9, branch muse9/task-vyr-076, PR 1708 — sane. Branch synced:
+  local/remote had diverged 1/1 with identical trees (`f5d2cc3b`);
+  local reset to pushed head `29c36bb7`.
+- Usage 45% of free weekly limit (checked this run via
+  subscription-status; reset Nov 29 02:27 IST; additional tokens 0%).
+  Work-request job disabled — correct while mid-task (VYR-076
+  claimed). No hub post this run: self-check silent per aggressive
+  completion rule 7 (no state change).
+
 ## §7 States (reported separately)
 
 - implemented: NO — no component runs in VyralX's live path yet.
