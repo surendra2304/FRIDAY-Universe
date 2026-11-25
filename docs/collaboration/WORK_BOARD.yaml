@@ -22026,14 +22026,14 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-MEM-032
     title: 'Memora: Project NOMAD offline knowledge pack - offline corpora as a Memora fallback store'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_2
+    branch: muse2/task-mem-032-nomad-offline-pack
+    pr: 1793
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T03:10:00+05:30'
+    updated_at: '2026-11-25T13:13:25+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Memora/
@@ -22043,8 +22043,9 @@ tasks:
     - 'Done = one offline pack built and answering a real query with the ADB path disabled.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    - 'Claim: hub #1483 comment 7155563616 by Muse 2, 2026-11-25 ~12:40 IST. Board record verified AVAILABLE, owner null, on main be3f303e (board blob 9f64aeb3, 22,623 lines, verified against the true main blob before editing). Branch muse2/task-mem-032-nomad-offline-pack.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+    next_action: 'Work PR with the offline pack; peer merge review; deploy + live proof need coordinator clearance (owner stop order in force).'
   - id: TASK-SEN-034
     title: 'Sentinel: compromised-laptop OPSEC checklist in the owner-device hygiene set'
     status: AVAILABLE
