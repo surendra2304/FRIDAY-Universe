@@ -19775,22 +19775,26 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-FUT-030
     title: 'Futuris: Futuris-side economic-calendar module for outlook generation'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_4
+    branch: muse4/task-fut-030-econ-calendar-outlook
+    pr: 1776
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T10:56:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - Futuris outlook generation consumes the economic-calendar feed directly (the feed TASK-IG2-STR-11 built Stratex-primary), evidenced in one outlook.
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-FUT-CAL (ig-fullwatch futuris package cross-reference). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'PR #1766 opened for Muse review: https://github.com/surendra2304/FRIDAY-Universe/pull/1766 (branch muse1/task-fut-030-econ-calendar-outlook, base main d2a40a6d). Change: Futuris-side economic-calendar module (calendar_context.py) + market router wiring + 17 new tests (22 green incl. 4 event-context regression); live Nasdaq refresh (453 events, 78 high-impact) + one outlook evidenced in TASK-FUT-030-ECON-CALENDAR-OUTLOOK.md.'
+    - 'Re-slot claim (Muse 4): hub #1483 comment 7153341361, 2026-11-25 ~10:30 IST -- pool-head re-slot per coordinator watch076 (7152691227); board verified AVAILABLE/owner-null on main 55027430; cherry-picked Muse 1 commits d745198b + 4943a42c (PR #1766 head 4943a42c) onto fresh branch muse4/task-fut-030-econ-calendar-outlook from main 55027430; PR #1766 superseded (Muse 1 to close when this replacement PR opens); CI-list fix adds both new test files to the Futuris contracts step.'
+    - 'Replacement PR #1776 opened for Muse review: https://github.com/surendra2304/FRIDAY-Universe/pull/1776 (branch muse4/task-fut-030-econ-calendar-outlook, base main 55027430). Change: Muse 1 implementation cherry-picked verbatim (calendar_context.py + market router wiring + 18 new tests) + CI-list fix (both new test files into the Futuris contracts step) + STR-081 MERGED flip; re-run 51 passed in the CI-listed set, 4 event-context regression green.'
+    - 'Claim: hub #1483 comment 7150603395 by Muse 1, 2026-11-25 ~07:50 IST, on direct assignment by Muse (coordinator) in watch069 comment 7150299573 (~07:35 IST). Board record verified AVAILABLE, owner null, branch null, pr null, on main 72f5a7ae (board blob 067e47f3) at claim time; re-verified AVAILABLE on main 242e5de3 (blob 9d829aad) and main d2a40a6d (blob 4d50314c) at PR time; no prior claim, branch or PR. Branch muse1/task-fut-030-econ-calendar-outlook created at main 72f5a7ae, rebased to 242e5de3 after coordinator board PR #1763 merged (FUT-029 -> MERGED) and to d2a40a6d after PR #1758 merged; no work lost, the branch held no commits at rebase time.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'In review by Muse (coordinator); merge is Muse''s. Deploy + live production outlook need hub clearance.'
   - id: TASK-STR-068
     title: 'Stratex: new pairs-trading / stat-arb research family (Engle-Granger, OU half-life, Kalman hedge, z-score)'
     status: IN_REVIEW
@@ -22027,14 +22031,14 @@ tasks:
     next_action: 'Merged (PR #1758, merge d2a40a6d, 2026-11-25T02:56:14Z). No production consumer by design (research surface only); production-verified = live-data run in the evidence doc.'
   - id: TASK-STR-081
     title: 'Stratex: emotion-aware trade journal - emotion/pattern/risk analysis over imported trades'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-str-081-emotion-aware-trade-journal
     pr: 1764
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T08:09:37+05:30'
+    updated_at: '2026-11-25T10:35:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Stratex/
@@ -22047,6 +22051,7 @@ tasks:
     - 'Claim: hub #1483 comment 7150306624 by Muse 4, 2026-11-25 ~07:35 IST, under the central-pool pull model (hub 7136890552). Board record verified AVAILABLE, owner null, P2, on main 72f5a7ae (board blob 067e47f36f1eb302f180141669e54d4043cb6662, 22,498 lines); no competing claim, branch or PR (537 branches / 39 open PRs checked). Branch muse4/task-str-081-emotion-aware-trade-journal from main 72f5a7ae.'
     - 'Repo-side legs (single work PR, owner order 7143628341 rule 1): new stdlib-only journal engine Stratex/journal/emotion.py (import, per-trade emotion tags, pattern detection, per-period risk summary + Markdown); 18 tests in Stratex/tests/test_str081_emotion_journal.py (18/18 local via stdlib pytest shim; CI gate on this PR); evidence doc docs/collaboration/TASK-STR-081-EMOTION-AWARE-TRADE-JOURNAL.md.'
     - 'Live evidence (one real journal period, checked-in demo ledger, 64 fills 2026-09-09..2026-09-26): net +22.71, win rate 26.6%, profit factor 1.47; risk HIGH - 13-event loss episode 2026-09-10, 10 fee-dominated losses that day, DOGEUSDT 5-chase, ATOMUSDT fixation 18/64 net -7.72; 17 patterns, 31 tagged trades. Full summary in the evidence doc.'
+    - 'MERGED 2026-11-25 ~09:31 IST: PR #1764 merged by Muse (merge e3985fc0, head fb5f86d9, CI 10/10: 8 success + 2 skipped, contracts guard green); coordinator full-diff review watch075 (7152477568) + audit watch076 (7152691227). MERGED flip carried in Muse 4 TASK-FUT-030 work PR per owner order 7143628341 rule 4 (owed-flips list, watch075/076).'
     blockers: []
     next_action: 'Work PR #1764 open; awaiting coordinator merge + paired-verifier verdict.'
   - id: TASK-STR-082
