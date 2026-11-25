@@ -1,3 +1,4 @@
+# Memora/core/memory/capture_service.py sha=338e9d19bccbd202e6df229002c74fec99ae57c4 bytes=17029
 """
 Capture → compress → inject session memory for Memora (TASK-IG2-MEM-01).
 
@@ -31,6 +32,19 @@ as a Memora service over Memora's own write pipeline and hybrid search:
 
 Everything returns plain dicts and never raises into the caller: a
 capture failure is reported in the result, not hidden and not fatal.
+
+TASK-MEM-031 wires two upstream adaptations into this loop:
+
+- claude-mem needles (core/memory/session_needles.py): every captured
+  event is classified into claude-mem's needle taxonomy and the kind is
+  stored in provenance; ``build_session_context`` prepends the token-
+  costed L0 session index over the actor's past sessions.
+- agentmemory confidence (core/memory/confidence_reinforcement.py):
+  ``build_session_context`` re-sorts hits by confidence-weighted score,
+  and a digest whose promotion was just granted bumps its source
+  events' stored confidence — the events proved useful enough to pass
+  the evidence gate. The bump runs only when promotion was granted in
+  this call, never on the idempotent repeat.
 """
 
 from __future__ import annotations
@@ -41,8 +55,10 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
+from core.memory.confidence_reinforcement import confidence_weighted_sort, reinforce_compressed_events
 from core.memory.pipeline.secret_scanner import SecretScanner
 from core.memory.pipeline.write_service import MemoryWriteService
+from core.memory.session_needles import classify_needle, list_actor_sessions, render_index
 from storage.relational.models import LifecycleState, MemoryRecord, MemoryType
 
 logger = logging.getLogger(__name__)
@@ -110,6 +126,11 @@ class SessionCaptureService:
                 actor_name, residual,
             )
             return {"stored": False, "reason": "unscrubbable_secret", "secret_types": residual}
+        # TASK-MEM-031 (claude-mem): classify the scrubbed content into
+        # the needle taxonomy and store the kind in provenance. The
+        # caller-supplied ``kind`` bucket is untouched; the needle is
+        # additive metadata the session index and timeline read.
+        needle_kind = classify_needle(cleaned)
         try:
             result = MemoryWriteService.execute_pipeline(
                 db,
@@ -123,6 +144,7 @@ class SessionCaptureService:
                     "pattern": PATTERN_TAG,
                     "session_id": session_id,
                     "event_kind": kind,
+                    "needle_kind": needle_kind,
                     "scrubbed_secret_types": matched,
                 },
                 importance=0.5,
@@ -137,6 +159,7 @@ class SessionCaptureService:
             "duplicate": bool(result.is_duplicate),
             "scrubbed_secret_types": matched,
             "kind": kind,
+            "needle_kind": needle_kind,
             "session_id": session_id,
         }
 
@@ -279,12 +302,22 @@ class SessionCaptureService:
             # inside promote_to_semantic and degrades to
             # promoted_to_semantic: False, never to an exception.
             promoted = existing.memory_type == MemoryType.SEMANTIC
+            promotion_just_granted = False
             if not promoted:
                 promoted = cls._attempt_promotion(
                     db,
                     digest_id=existing.id,
                     actor_name=actor_name,
                     event_ids=event_ids,
+                )
+                promotion_just_granted = promoted
+            if promotion_just_granted:
+                # TASK-MEM-031 (agentmemory): the digest just passed the
+                # evidence gate, so its source events proved useful —
+                # reinforce them. Best-effort and never fatal; the
+                # reinforcement helper never raises.
+                reinforce_compressed_events(
+                    db, event_ids=event_ids, actor_name=actor_name, tenant_id=tenant_id
                 )
             return {
                 "compressed": True,
@@ -338,6 +371,12 @@ class SessionCaptureService:
             actor_name=actor_name,
             event_ids=event_ids,
         )
+        if promoted:
+            # TASK-MEM-031 (agentmemory): same reinforcement as the
+            # idempotent branch — the events survived the promotion gate.
+            reinforce_compressed_events(
+                db, event_ids=event_ids, actor_name=actor_name, tenant_id=tenant_id
+            )
         return {
             "compressed": True,
             "id": digest_id,
@@ -371,7 +410,21 @@ class SessionCaptureService:
             tenant_id=tenant_id or "default",
             limit=limit,
         )
+        # TASK-MEM-031 (agentmemory): confidence moves order at inject
+        # time — re-sort by confidence-weighted score before rendering.
+        hits = confidence_weighted_sort(hits)
         lines = [f"Relevant memory for: {query}"]
+        # TASK-MEM-031 (claude-mem): prepend the L0 session index over
+        # the actor's past sessions, token-costed, so the session opens
+        # with what exists before any detail is read. Fail-soft: an
+        # index failure must never break the injection pack.
+        sessions: List[Dict[str, Any]] = []
+        try:
+            sessions = list_actor_sessions(db, actor_name=actor_name, tenant_id=tenant_id, limit=5)
+        except Exception as exc:  # pragma: no cover - index is additive
+            logger.warning("[CAPTURE] session index failed for %s: %s", actor_name, exc)
+        if sessions:
+            lines.append(render_index(sessions))
         dicts = []
         for hit in hits:
             data = hit.to_dict()
@@ -380,7 +433,7 @@ class SessionCaptureService:
             lines.append(f"- [{data.get('memory_type')} · score {data.get('final_score')}] {text}")
         if not hits:
             lines.append("(no relevant memory found — nothing was invented to fill this)")
-        return {"context": "\n".join(lines), "hits": dicts, "hit_count": len(hits)}
+        return {"context": "\n".join(lines), "hits": dicts, "hit_count": len(hits), "session_index": sessions}
 
     @classmethod
     def handoff(
@@ -401,3 +454,4 @@ class SessionCaptureService:
             db, actor_name=actor_name, query=next_query, tenant_id=tenant_id
         )
         return {"compression": compression, "context": context}
+
