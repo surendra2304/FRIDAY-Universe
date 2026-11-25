@@ -106,6 +106,7 @@ jobs:
           script: |
             set -e
             cd /opt/friday_universe
+            exec > >(tee /tmp/rel096-backup.log) 2>&1
             echo "=== Fleet backup $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
             FREE_KB=$(df --output=avail -k /var | tail -1 | tr -d ' ')
             if [ "$FREE_KB" -lt 2097152 ]; then
@@ -161,6 +162,7 @@ jobs:
           script: |
             set -e
             cd /opt/friday_universe
+            exec > >(tee /tmp/rel096-media.log) 2>&1
             echo "=== Media backup $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
             FREE_KB=$(df --output=avail -k /var | tail -1 | tr -d ' ')
             if [ "$FREE_KB" -lt 2097152 ]; then
@@ -181,6 +183,7 @@ jobs:
           script: |
             set -e
             cd /opt/friday_universe
+            exec > >(tee /tmp/rel096-media-verify.log) 2>&1
             LATEST=$(sudo ls -1d /var/backups/friday-universe/[0-9]*/ | sort | tail -1)
             echo "Verifying manifest completeness: $LATEST"
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
@@ -219,6 +222,7 @@ jobs:
           script: |
             set -e
             cd /opt/friday_universe
+            exec > >(tee /tmp/rel096-fleet-state.log) 2>&1
             echo "=== Fleet-state collection $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
             FREE_KB=$(df --output=avail -k /var | tail -1 | tr -d ' ')
             if [ "$FREE_KB" -lt 2097152 ]; then
@@ -265,6 +269,7 @@ jobs:
           script: |
             set -e
             cd /opt/friday_universe
+            exec > >(tee /tmp/rel096-unify-s1.log) 2>&1
             ROOT=/var/backups/friday-universe
             SSHOPT="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
             SET=$(sudo ls -1d $ROOT/[0-9]*/ | sort | tail -1)
@@ -291,6 +296,7 @@ jobs:
           script: |
             set -e
             cd /opt/friday_universe
+            exec > >(tee /tmp/rel096-unify-s2.log) 2>&1
             ROOT=/var/backups/friday-universe
             SSHOPT="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
             SET_NAME=$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${{ secrets.SERVER1_HOST }} "sudo ls -1d $ROOT/[0-9]*/ | sort | tail -1 | xargs -n1 basename")
