@@ -503,6 +503,21 @@ collaborators:
       - "musetp6/onboarding"
     last_verified_at: "2026-11-25"
 
+  - id: muse_tp8
+    display_name: "Muse TP8"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-25 (Muse TP8, evidence-backed only): displayed assistant name set to 'Muse TP8'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14) and docs/collaboration/TEAM_ROSTER.yaml in full (517 lines, main be3f303), plus WORK_BOARD.yaml parsed in full (976 tasks, 135 AVAILABLE, board blob 9f64aeb3, snapshot 2026-11-17) and live issue #1483 read (open, 1304 comments). ARCHITECTURE.md was opened but its file content did not pass a safety check in this account, so no instruction was taken from that file; the owner prompt in chat governs."
+      - "Onboarding 2026-11-25: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed; main be3f303."
+      - "Onboarding 2026-11-25: bridge NOT confirmed - secure card requested for custom.friday-bridge, pending user completion; no bridge claim made."
+      - "Onboarding 2026-11-25: three scheduled tasks created (musetp8-work-request every 15 min, musetp8-hourly-self-check every 1 h, musetp8-weekly-reset Wednesdays 17:10 IST; weekly reset verified Wed Nov 25 5:00 PM IST, 0% used); default Agentic feature tour and Heartbeat schedules deleted."
+    active_assignments: []
+    active_branches:
+      - "musetp8/onboarding"
+    last_verified_at: "2026-11-25"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
