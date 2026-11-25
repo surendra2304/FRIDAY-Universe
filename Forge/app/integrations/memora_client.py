@@ -240,6 +240,46 @@ class MemoraClient:
 
         return self._record_fact_locally(agent_name, fact_text, category, importance, entities)
 
+    async def a_record_session_event(
+        self,
+        session_id: str,
+        kind: str = "observation",
+        content: str = "",
+        task_id: str | None = None,
+        agent_name: str = "forge",
+    ) -> dict[str, Any]:
+        """Asynchronously capture one Forge session event into Memora.
+
+        TASK-MEM-031 (claude-mem): the Forge-side session capture — the
+        build-lifecycle and code-synthesis paths call this so Forge's
+        sessions are captured the way FRIDAY's are (MEM-029). The server
+        classifies the event into the needle taxonomy; ``kind`` is the
+        caller-supplied bucket. Empty content is refused without an HTTP
+        call; a cloud failure falls back to the Oracle outbox.
+        """
+        if not content or not content.strip():
+            return {"status": "error", "error": "empty session event content"}
+        if not session_id or not str(session_id).strip():
+            return {"status": "error", "error": "session_id is required"}
+        payload = {
+            "session_id": str(session_id),
+            "kind": kind or "observation",
+            "content": content,
+            "task_id": task_id,
+        }
+        url = f"{self.base_url}/v1/capture/events"
+        headers = self._get_headers()
+
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                resp = await client.post(url, json=payload, headers=headers)
+                if resp.status_code in (200, 201):
+                    return resp.json()
+        except Exception as e:
+            logger.debug(f"Memora cloud async session event failed ({e}); falling back to local DB.")
+
+        return self._record_session_event_locally(agent_name, str(session_id), kind or "observation", content)
+
     # -------------------------------------------------------------------------
     # Synchronous Memory Operations
     # -------------------------------------------------------------------------
@@ -354,6 +394,43 @@ class MemoraClient:
 
         return self._record_fact_locally(agent_name, fact_text, category, importance, entities)
 
+    def record_session_event(
+        self,
+        session_id: str,
+        kind: str = "observation",
+        content: str = "",
+        task_id: str | None = None,
+        agent_name: str = "forge",
+    ) -> dict[str, Any]:
+        """Synchronously capture one Forge session event into Memora.
+
+        TASK-MEM-031 (claude-mem): sync twin of ``a_record_session_event``.
+        """
+        if not content or not content.strip():
+            return {"status": "error", "error": "empty session event content"}
+        if not session_id or not str(session_id).strip():
+            return {"status": "error", "error": "session_id is required"}
+        payload = {
+            "session_id": str(session_id),
+            "kind": kind or "observation",
+            "content": content,
+            "task_id": task_id,
+        }
+        url = f"{self.base_url}/v1/capture/events"
+        headers = self._get_headers()
+
+        try:
+            req = urllib.request.Request(
+                url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=self.timeout) as response:
+                if response.status in (200, 201):
+                    return json.loads(response.read().decode("utf-8"))
+        except Exception as e:
+            logger.debug(f"Memora sync session event failed ({e}); falling back to local DB.")
+
+        return self._record_session_event_locally(agent_name, str(session_id), kind or "observation", content)
+
     # -------------------------------------------------------------------------
     # Context Formatting Helper
     # -------------------------------------------------------------------------
@@ -407,6 +484,37 @@ class MemoraClient:
             return {"id": rec_id, "status": "persisted_locally"}
         except Exception as e:
             logger.warning(f"Oracle MEMORA_OUTBOX memory record failed: {e}")
+            return {"status": "error", "error": str(e)}
+
+    def _record_session_event_locally(
+        self,
+        agent_name: str,
+        session_id: str,
+        kind: str,
+        content: str,
+    ) -> dict[str, Any]:
+        """Spool one session event into the Oracle MEMORA_OUTBOX.
+
+        TASK-MEM-031: the local fallback for session capture, mirroring
+        ``_record_locally``. The session id and kind ride in the content
+        prefix so the outbox replay can re-capture them.
+        """
+        if self._oracle_outbox is None:
+            return {
+                "status": "error",
+                "error": "Oracle MEMORA_OUTBOX is not configured; session event was not persisted.",
+            }
+        try:
+            rec_id = self._oracle_outbox.record(
+                agent_name=agent_name.lower(),
+                memory_type="episodic",
+                content_text=f"[session {session_id} | {kind}] {content}",
+                source="session_capture",
+                importance=0.6,
+            )
+            return {"id": rec_id, "status": "persisted_locally"}
+        except Exception as e:
+            logger.warning(f"Oracle MEMORA_OUTBOX session event record failed: {e}")
             return {"status": "error", "error": str(e)}
 
     def _record_fact_locally(
