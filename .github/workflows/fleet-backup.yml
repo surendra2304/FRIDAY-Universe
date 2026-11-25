@@ -83,6 +83,15 @@ concurrency:
 env:
   GH_REPO: surendra2304/FRIDAY-Universe
 
+# TASK-REL-096 (fix round 3): every job downloads the backup script
+# pinned to the triggering commit (${{ github.sha }}) instead of running
+# the copy in a server's repo checkout. The fleet checkouts are SHARED
+# with worker crews via the FRIDAY Universe Bridge and their branch
+# state is not deterministic (Server 2's sat on a worker branch, then
+# diverged; `git pull --ff-only` failed in live runs 45571246565 and
+# 45577921552). A pinned raw download is deterministic and touches no
+# checkout. The script itself only uses absolute paths.
+
 jobs:
   backup:
     name: Backup fleet databases on Server 1
@@ -106,7 +115,8 @@ jobs:
             ARGS="--keep 4"
             if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="--dry-run"; fi
             if [ -n "${{ inputs.agents }}" ]; then ARGS="$ARGS --agents ${{ inputs.agents }}"; fi
-            sudo /opt/friday_universe/venv/bin/python scripts/backup_fleet_databases.py $ARGS
+            sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
+            sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py $ARGS
             echo "=== Latest backups ==="
             sudo ls -lt /var/backups/friday-universe | head -5
 
@@ -121,7 +131,8 @@ jobs:
             cd /opt/friday_universe
             LATEST=$(sudo ls -1d /var/backups/friday-universe/[0-9]*/ | sort | tail -1)
             echo "Verifying manifest completeness: $LATEST"
-            sudo /opt/friday_universe/venv/bin/python scripts/backup_fleet_databases.py --verify --from-dir "$LATEST"
+            sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
+            sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py --verify --from-dir "$LATEST"
 
       - name: Alert on failure (never silent again)
         if: failure()
@@ -150,14 +161,14 @@ jobs:
           script: |
             set -e
             cd /opt/friday_universe
-            sudo git pull --ff-only
             echo "=== Media backup $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
             FREE_KB=$(df --output=avail -k /var | tail -1 | tr -d ' ')
             if [ "$FREE_KB" -lt 2097152 ]; then
               echo "::error::Less than 2 GB free on /var — aborting backup to protect the server."
               exit 1
             fi
-            sudo /opt/friday_universe/venv/bin/python scripts/backup_fleet_databases.py --media-only --keep 4
+            sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
+            sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py --media-only --keep 4
             echo "=== Latest backups ==="
             sudo ls -lt /var/backups/friday-universe | head -5
 
@@ -172,7 +183,8 @@ jobs:
             cd /opt/friday_universe
             LATEST=$(sudo ls -1d /var/backups/friday-universe/[0-9]*/ | sort | tail -1)
             echo "Verifying manifest completeness: $LATEST"
-            sudo /opt/friday_universe/venv/bin/python scripts/backup_fleet_databases.py --verify --from-dir "$LATEST"
+            sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
+            sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py --verify --from-dir "$LATEST"
 
       - name: Alert on failure (never silent again)
         if: failure()
@@ -207,7 +219,6 @@ jobs:
           script: |
             set -e
             cd /opt/friday_universe
-            sudo git pull --ff-only
             echo "=== Fleet-state collection $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
             FREE_KB=$(df --output=avail -k /var | tail -1 | tr -d ' ')
             if [ "$FREE_KB" -lt 2097152 ]; then
@@ -221,7 +232,8 @@ jobs:
               sudo python3 -m venv /var/tmp/rel096-tooling
               sudo /var/tmp/rel096-tooling/bin/pip install -q pymysql
             fi
-            sudo /var/tmp/rel096-tooling/bin/python scripts/backup_fleet_databases.py --fleet-state-only
+            sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
+            sudo /var/tmp/rel096-tooling/bin/python /tmp/rel096-backup-script.py --fleet-state-only
             echo "=== Latest bundles ==="
             sudo ls -lt /var/backups/friday-universe | head -5
 
@@ -265,7 +277,8 @@ jobs:
             sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER2_HOST }}:${MEDIA_SET}manifest.json" /tmp/rel096-media-set/
             sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER2_HOST }}:${MEDIA_SET}VYRALX_MEDIA" /tmp/rel096-media-set/
             sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER2_HOST }}:${BUNDLE}" /tmp/rel096-bundle/
-            sudo /opt/friday_universe/venv/bin/python scripts/backup_fleet_databases.py \
+            sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
+            sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py \
               --finalize --from-dir "$SET" --bundle-dir /tmp/rel096-bundle \
               --merge-from /tmp/rel096-media-set
 
@@ -278,7 +291,6 @@ jobs:
           script: |
             set -e
             cd /opt/friday_universe
-            sudo git pull --ff-only
             ROOT=/var/backups/friday-universe
             SSHOPT="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
             SET_NAME=$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${{ secrets.SERVER1_HOST }} "sudo ls -1d $ROOT/[0-9]*/ | sort | tail -1 | xargs -n1 basename")
@@ -286,7 +298,8 @@ jobs:
             MEDIA_SET=$(sudo ls -1d $ROOT/[0-9]*/ | grep -v fleetstate | sort | tail -1)
             echo "Mirroring unified set $SET_NAME from Server 1"
             sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER1_HOST }}:$ROOT/$SET_NAME/" "$ROOT/$SET_NAME/"
-            sudo /opt/friday_universe/venv/bin/python scripts/backup_fleet_databases.py \
+            sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
+            sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py \
               --finalize --from-dir "$ROOT/$SET_NAME" --bundle-dir "$BUNDLE"
             # The media-only set was an intermediate: its content now lives
             # inside the unified set, so the standalone copy is removed to
@@ -295,7 +308,7 @@ jobs:
               echo "Removing merged media-only intermediate $MEDIA_SET"
               sudo rm -rf "$MEDIA_SET"
             fi
-            sudo /opt/friday_universe/venv/bin/python scripts/backup_fleet_databases.py \
+            sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py \
               --prune-only --out $ROOT --keep 3
             echo "=== Server 2 backup root ==="
             sudo ls -lt $ROOT | head -8
