@@ -225,6 +225,7 @@ jobs:
             --job "test" \
             -- .venv-memora-ci/bin/python -m pytest -q \
             tests/test_tier1_resilience_contracts.py \
+            tests/test_mem030_obsidian_vault.py \
             --deselect tests/test_tier1_resilience_contracts.py::test_health_probe_contract \
             --deselect tests/test_tier1_resilience_contracts.py::test_ready_probe_contract
 
