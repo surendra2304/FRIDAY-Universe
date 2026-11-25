@@ -134,23 +134,38 @@ _JARANKS_LIST = """
 <div class="menu-item"><a href="/">Home</a></div></header>
 <nav><a class="nav-item" href="/how">How we chose</a></nav>
 <main>
-<article class="listing-card"><h2>British Caribbean Insurance Company Ltd. (BCIC)</h2>
-<p>BCIC offers motor, property and liability insurance.</p>
-<a href="https://jaranks.example/profiles/bcic">View profile</a></article>
-<article class="listing-card"><h2>Covenant Insurance Brokers</h2>
-<p>Motor, home and product liability insurance.</p>
-<a href="https://jaranks.example/profiles/covenant">View profile</a></article>
+<div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-4 border-b border-hairline py-8 md:gap-x-8 md:py-10">
+<div class="inline-block w-[1.24em] text-left whitespace-nowrap">1.</div>
+<div class="min-w-0 flex-1"><div class="flex items-start justify-between gap-4">
+<div class="min-w-0 flex-1">
+<h2 class="font-display text-subheading font-bold text-ink md:text-heading [text-wrap:balance]"><a class="underline-offset-[0.18em] hover:underline" href="/profile/british-caribbean-insurance-company-ltd-bcic">British Caribbean Insurance Company Ltd. (BCIC)</a></h2>
+<div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-body-sm text-slate"><span>Kingston</span></div>
+</div></div>
+<div class="mt-4 max-w-[64ch] text-body text-ink">BCIC offers motor, property and liability insurance.</div>
+<div class="mt-5 flex flex-wrap items-center gap-2"><span>Motor</span></div>
+</div></div>
+<div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-4 border-b border-hairline py-8 md:gap-x-8 md:py-10">
+<div class="inline-block w-[1.24em] text-left whitespace-nowrap">2.</div>
+<div class="min-w-0 flex-1"><div class="flex items-start justify-between gap-4">
+<div class="min-w-0 flex-1">
+<h2 class="font-display text-subheading font-bold text-ink md:text-heading [text-wrap:balance]"><a class="underline-offset-[0.18em] hover:underline" href="/profile/covenant-insurance-brokers">Covenant Insurance Brokers</a></h2>
+<div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-body-sm text-slate"><span>Kingston</span></div>
+</div></div>
+<div class="mt-4 max-w-[64ch] text-body text-ink">Motor, home and product liability insurance.</div>
+<div class="mt-5 flex flex-wrap items-center gap-2"><span>Motor</span></div>
+</div></div>
 </main>
+<h2>How we chose</h2><p>JaRanks orders this list editorially.</p>
 <footer><div class="footer-item"><a href="/newsletter">The JaRanks newsletter</a></div></footer>
 </body></html>"""
 
 _JARANKS_DETAIL = {
-    "https://jaranks.example/profiles/bcic": (
+    "https://jaranks.example/profile/british-caribbean-insurance-company-ltd-bcic": (
         "<html><body><h1>BCIC</h1>"
         "<a href=\"tel:+18767650100\">876-765-0100</a>"
         "<a href=\"mailto:info@bcic.example\">info@bcic.example</a>"
         "</body></html>"),
-    "https://jaranks.example/profiles/covenant": (
+    "https://jaranks.example/profile/covenant-insurance-brokers": (
         "<html><body><h1>Covenant</h1><p>Phone: 876-765-0200</p></body></html>"),
 }
 
@@ -175,9 +190,55 @@ def test_run_enriches_contactless_leads_from_detail_pages(monkeypatch):
     assert result.leads[0].email == "info@bcic.example"
     assert result.leads[1].phone == "876-765-0200"
     assert "Home" not in names and "JaRanks" not in names
-    # both detail pages were fetched, both on the directory's host
-    assert "https://jaranks.example/profiles/bcic" in seen
-    assert "https://jaranks.example/profiles/covenant" in seen
+    assert "How we chose" not in names
+    # both detail pages were fetched, both on the directory's host, and the
+    # relative profile links were joined to absolute URLs
+    assert "https://jaranks.example/profile/british-caribbean-insurance-company-ltd-bcic" in seen
+    assert "https://jaranks.example/profile/covenant-insurance-brokers" in seen
+    assert result.leads[0].website == "https://jaranks.example/profile/british-caribbean-insurance-company-ltd-bcic"
+
+
+def test_parse_joins_relative_detail_links():
+    html = ('<div class="listing-card"><h3>Acme</h3><p>+971 4 000 0001</p>'
+            '<a href="/profiles/acme">Profile</a></div>')
+    leads, _ = parse_listing_page(html, "https://dir.example/cat", "general")
+    assert leads[0].website == "https://dir.example/profiles/acme"
+
+
+def test_parse_void_elements_do_not_swallow_siblings():
+    # An <img> inside a listing block has no end tag: it must not inflate
+    # the block depth, or the block swallows every following sibling.
+    html = ('<div class="listing-card"><h3>Acme</h3><img src="/x.png">'
+            '<p>Call 876-555-0100</p></div><div class="listing-card"><h3>Beta</h3>'
+            '<p>Call 876-555-0200</p></div>')
+    leads, _ = parse_listing_page(html, "https://dir.example/cat", "general")
+    assert [lead.name for lead in leads] == ["Acme", "Beta"]
+    assert leads[0].phone == "876-555-0100" and leads[1].phone == "876-555-0200"
+
+
+def test_heading_fallback_runs_when_only_empty_image_blocks_exist():
+    # A "rounded-card" logo div opens an (empty) hinted block; the heading
+    # fallback must still run for the real listings.
+    html = ('<html><body>'
+            '<div class="relative block rounded-card"><img src="/logo.png"></div>'
+            '<h2><a href="/profile/acme">Acme Insurance</a></h2>'
+            '<p>Call 876-555-0100 for quotes</p>'
+            '</body></html>')
+    leads, _ = parse_listing_page(html, "https://dir.example/cat", "general")
+    assert [lead.name for lead in leads] == ["Acme Insurance"]
+    assert leads[0].phone == "876-555-0100"
+    assert leads[0].website == "https://dir.example/profile/acme"
+
+
+def test_heading_sections_do_not_adopt_trailing_body_links():
+    # A footer link trailing the last heading section is not that
+    # section's detail link — only links inside the heading itself count.
+    html = ('<html><body><h2>How we chose</h2><p>Editorial note.</p>'
+            '<footer><a href="/newsletter">Newsletter</a></footer></body></html>')
+    leads, _ = parse_listing_page(html, "https://dir.example/cat", "general",
+                                  require_contact=False)
+    assert [lead.name for lead in leads] == ["How we chose"]
+    assert leads[0].website == ""
 
 
 def test_run_never_follows_off_host_detail_links(monkeypatch):

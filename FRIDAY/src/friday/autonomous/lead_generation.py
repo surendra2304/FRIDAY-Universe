@@ -141,8 +141,30 @@ class _ListingParser(HTMLParser):
     number ("1.") never becomes the business name.
     """
 
-    _HINTS = ("listing", "business", "company", "card", "result", "item")
+    _HINTS = ("listing", "business", "company", "card", "result", "results",
+               "item")
     _CHROME_TAGS = ("nav", "header", "footer")
+    # Void elements have no end tag: counting them in the block depth would
+    # leave the depth permanently elevated, so a block opened before an
+    # <img> would swallow every following sibling until the page ends
+    # (found via the JaRanks logo <img> inside a "rounded-card" div).
+    _VOID_TAGS = frozenset({
+        "area", "base", "br", "col", "embed", "hr", "img", "input", "link",
+        "meta", "param", "source", "track", "wbr",
+    })
+
+    @staticmethod
+    def _hinted(classes: str) -> bool:
+        """Whole-token hint match on a class/id string.
+
+        TASK-IG2-FRD-03-FIX-01: substring matching false-fires on Tailwind
+        utilities — "item" inside "items-center" opened a block per tag row
+        (the spurious "Motor" leads). Tokens are split on whitespace,
+        hyphens and underscores, so "listing-card" still matches ("listing",
+        "card") while "items-center" ("items", "center") does not.
+        """
+        tokens = re.split(r"[\s\-_]+", classes.lower())
+        return any(h in tokens for h in _ListingParser._HINTS)
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -158,25 +180,34 @@ class _ListingParser(HTMLParser):
         classes = f"{attr.get('class', '')} {attr.get('id', '')}".lower()
         # Pagination lives in <nav> on most directories — the "next" link is
         # read before the chrome exclusion below, or pagination breaks.
-        if tag == "a" and "next" in classes:
+        if tag == "a" and "next" in re.split(r"[\s\-_]+", classes):
             self.next_url = attr.get("href", "")
         if tag in self._CHROME_TAGS:
             self._chrome_depth += 1
             return
         if self._chrome_depth:
             return
-        if self._current is None and any(h in classes for h in self._HINTS):
+        if self._current is None and self._hinted(classes):
             self._current = {"text": [], "tel": "", "mailto": "", "href": ""}
             self._depth = 1
             return
         if self._current is not None:
-            self._depth += 1
+            if tag not in self._VOID_TAGS:
+                self._depth += 1
             href = attr.get("href", "")
             if href.startswith("tel:") and not self._current["tel"]:
                 self._current["tel"] = href[4:]
             elif href.startswith("mailto:") and not self._current["mailto"]:
                 self._current["mailto"] = href[7:]
             elif href.startswith(("http://", "https://")) and not self._current["href"]:
+                self._current["href"] = href
+            # TASK-IG2-FRD-03-FIX-01: relative links are the norm on modern
+            # directories (JaRanks profile links are "/profile/...") — capture
+            # the first usable href of any shape; parse_listing_page joins it
+            # against the page URL. Fragments and javascript: links are not
+            # detail pages.
+            elif (href and not href.startswith(("#", "javascript:"))
+                    and not self._current["href"]):
                 self._current["href"] = href
 
     def handle_endtag(self, tag: str) -> None:
@@ -207,6 +238,78 @@ def _pick_name(chunks: list[str]) -> str:
         if len(re.sub(r"\W", "", chunk)) >= 3:
             return chunk[:120]
     return (chunks[0][:120] if chunks else "")
+
+
+class _HeadingParser(HTMLParser):
+    """Fallback listing extraction for pages with no hinted blocks.
+
+    Modern directories (JaRanks, live 2026-11-25) use Tailwind utility
+    classes — no ``listing``/``business``/``card`` hook exists anywhere in
+    the markup, so the hint parser finds zero blocks. The structure that
+    DOES survive is the heading: each provider is an ``<h2>``/``<h3>``
+    carrying a link to its own profile page, followed by its description
+    and meta rows. A section is one heading plus the text up to the next
+    heading; the heading link becomes the detail-page URL. Only used when
+    the hint parser found nothing, so hinted pages are untouched.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.blocks: list[dict] = []
+        self._current: dict | None = None
+        self._in_heading = False
+        self._chars = 0
+
+    def _close(self) -> None:
+        if self._current is not None:
+            self.blocks.append(self._current)
+            self._current = None
+        self._in_heading = False
+        self._chars = 0
+
+    def handle_starttag(self, tag: str, attrs: list) -> None:
+        if tag in ("h2", "h3"):
+            self._close()
+            self._current = {"text": [], "tel": "", "mailto": "", "href": "",
+                             "heading": []}
+            self._in_heading = True
+            return
+        if self._current is not None and tag == "a" and self._in_heading:
+            # Only links INSIDE the heading are the section's detail link.
+            # A link collected from the section body (e.g. a footer
+            # "newsletter" link trailing the last section) would send the
+            # enrichment fetch to the wrong page and misattribute its
+            # contacts to this heading.
+            href = dict(attrs).get("href", "")
+            if href.startswith("tel:") and not self._current["tel"]:
+                self._current["tel"] = href[4:]
+            elif href.startswith("mailto:") and not self._current["mailto"]:
+                self._current["mailto"] = href[7:]
+            elif (href and not href.startswith(("#", "javascript:"))
+                    and not self._current["href"]):
+                self._current["href"] = href
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in ("h2", "h3"):
+            self._in_heading = False
+
+    def handle_data(self, data: str) -> None:
+        text = data.strip()
+        if not text or self._current is None:
+            return
+        # Sections are provider blurbs, not essays: cap the collected text
+        # so the LAST section cannot swallow the footer (and inherit its
+        # phone number) when no further heading closes it.
+        if self._chars >= 2000:
+            return
+        self._chars += len(text)
+        if self._in_heading:
+            self._current["heading"].append(text)
+        self._current["text"].append(text)
+
+    def close(self) -> None:  # noqa: D102 - flush the last section
+        super().close()
+        self._close()
 
 
 def _extract_contacts_from_html(html_text: str) -> tuple[str, str]:
@@ -244,8 +347,18 @@ def parse_listing_page(html_text: str, page_url: str, category: str = "",
     """
     parser = _ListingParser()
     parser.feed(html_text or "")
+    # Empty blocks (image-only containers such as a "rounded-card" logo div)
+    # do not count: if every hinted block is empty, the page is really a
+    # heading-structured page and the fallback must still run.
+    blocks = [b for b in parser.blocks if " ".join(b["text"]).strip()]
+    if not blocks:
+        # No hinted blocks (Tailwind/modern markup): fall back to headings.
+        heading_parser = _HeadingParser()
+        heading_parser.feed(html_text or "")
+        heading_parser.close()
+        blocks = heading_parser.blocks
     leads: list[Lead] = []
-    for block in parser.blocks:
+    for block in blocks:
         text = " ".join(block["text"])
         if not text:
             continue
@@ -257,7 +370,7 @@ def parse_listing_page(html_text: str, page_url: str, category: str = "",
             phone=_clean_phone(block["tel"]) or _clean_phone(
                 phone_match.group(0) if phone_match else ""),
             email=block["mailto"] or (email_match.group(0) if email_match else ""),
-            website=block["href"],
+            website=urljoin(page_url, block["href"]) if block["href"] else "",
             category=category,
             source_url=page_url,
         )
