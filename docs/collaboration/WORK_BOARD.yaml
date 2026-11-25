@@ -18913,14 +18913,14 @@ tasks:
 
   - id: TASK-VOI-040
     title: 'FRIDAY voice: acceptance run 25 - next calm-window run after VOI-039 (run 24); per-probe latency filed'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-voi-040-acceptance-run-25
     pr: 1879
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T23:20:02+05:30'
+    updated_at: '2026-11-26T00:55:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-VOI-040-ACCEPTANCE-RUN-25.md
@@ -18932,19 +18932,20 @@ tasks:
       - 'Re-slotted muse_7 -> muse_1 by coordinator watch102 (2026-11-25, hub #1483): Muse 7 silent through 4 demands (no hub post, no claim progress since 2026-11-24); run 25 still unrun. Muse 1 queue position 3 behind VOI-043 and VOI-033. Verified CLAIMED / owner muse_7 on main 14181d3c.'
       - 'Claim: hub #1483 comment 7169589169 by Muse 1, 2026-11-25 ~23:00 IST, on coordinator assignment. Board verified AVAILABLE, owner muse_1, branch null, pr null, P1, on main 2f77de04. Branch muse1/task-voi-040-acceptance-run-25 (rebased from a759a031). Board flip rides in the work PR.'
       - 'Acceptance run 25 done 2026-11-25 ~23:03-23:15 IST on FRIDAY-Server (room friday-frd005-20261125-173321, provider gemini-realtime:gemini-3.8-live): greeting onset 0.70s vs 8s bar PASS; all 7 turns inside silence limits. Overall scorer UNVERIFIED on one content leg only (context_followup attribution, followup_count=82 delegation_count=None); first-hand journal read: clock (2:40 AM JST, 17:40:44 UTC), teal recall at 17:42:53 UTC verifying the Memora read path, goodbye and followup answers WERE given; delegation figures ARE in the journal (balance 10,454.02, 30 open, 82 closed at 17:38:19 UTC) - fourth clean delegation PASS in a row. Evidence: docs/collaboration/TASK-VOI-040-ACCEPTANCE-RUN-25.md.'
+      - 'Coordinator watch114 (2026-11-26): PR #1879 merged 984398d0, CI 9/9 green on head ada01d53; full diff verified first-hand vs merge-base 2f77de04 (evidence doc +202, board AVAILABLE -> IN_REVIEW); true branch muse1/task-voi-040-acceptance-run-25 verified via git. Status IN_REVIEW -> MERGED.'
     blockers: []
-    next_action: 'Run filed; work PR open, merge is for Muse. Next assignment per coordinator watch.'
+    next_action: 'Merged in PR #1879 (merge 984398d0, CI 9/9 green). M1 queue advances.'
 
   - id: TASK-VOI-041
     title: 'FRIDAY voice: acceptance run 26 - next calm-window run after VOI-040 (run 25); per-probe latency filed'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-voi-041-acceptance-run-26
     pr: 1881
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T23:52:00+05:30'
+    updated_at: '2026-11-26T00:55:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-VOI-041-ACCEPTANCE-RUN-26.md
@@ -18960,8 +18961,9 @@ tasks:
       - 'Coordinator watch109 (2026-11-25): re-slotted from muse_7 to muse_15 - M7 silent since 2026-11-24 with no report by this run, trigger met per watch108; M15 requested work in hub #1562. Run 26 follows M1 VOI-040 run 25.'
       - 'Claim: hub #1483 comment 7170221048 by Muse 15, 2026-11-25 ~23:26 IST, on WATCH109 assignment (7169671316). Board verified AVAILABLE, owner muse_15, branch null, pr null, P1, on main 3efe8b04. Gate opened by VOI-040 filing (work PR #1879). Branch muse15/task-voi-041-acceptance-run-26. Board flip rides in the work PR.'
       - 'Acceptance run 26 done 2026-11-25 ~23:30-23:42 IST on FRIDAY-Server (room friday-frd005-20261125-180043, provider gemini-realtime:gemini-3.8-live): greeting onset 5.54s vs 8s bar PASS (up from 0.70s run 25 - agent join ~5.4s, worker-side onset unchanged at 0.30s); all 7 turns inside silence limits. Overall scorer FAIL on attribution legs + one real truncated fragment ("Understood, Boss. Just let" - VOI-043 symptom, pre-VOI-043 build); first-hand journal read: clock (3:08 AM JST, 18:08:12 UTC), teal recall at 18:10:19 UTC verifying the Memora read path, goodbye and followup answers WERE given; delegation figures ARE in the journal (balance 10,454.33, 30 open, 82 closed at 18:05:22 UTC) - fifth clean delegation PASS in a row. Evidence: docs/collaboration/TASK-VOI-041-ACCEPTANCE-RUN-26.md.'
+      - 'Coordinator watch114 (2026-11-26): PR #1881 merged 7f1a3f9d, CI 9/9 green at merge; diff verified first-hand vs merge-base fb086e16 (evidence doc +210, board AVAILABLE -> IN_REVIEW); true branch muse15/task-voi-041-acceptance-run-26 verified via git. Run 26 verdict: latency PASS, scorer FAIL on attribution, delegation 5th clean PASS. Status IN_REVIEW -> MERGED.'
     blockers: []
-    next_action: 'Run filed; work PR open, merge is for Muse. Next assignment per coordinator watch.'
+    next_action: 'Merged in PR #1881 (merge 7f1a3f9d, CI 9/9 green). Run 26: greeting 5.54s vs 8s bar PASS. M15 queue advances to EARN-025.'
   - id: TASK-EARN-014
     title: 'EARN: gig copy pack 8 - Fiverr Level-1 batch service copy pack (Gig 8, Sales & Landing Page Copy)'
     status: IN_REVIEW
@@ -19271,13 +19273,13 @@ tasks:
   - id: TASK-REL-099
     title: 'Git-style incremental fleet backup for Oracle Cloud (owner order 2026-11-26): only modified files stored, versioned snapshots with enforced retention, no duplicated VyralX media piling up on Oracle Server 2'
     status: AVAILABLE
-    owner: null
+    owner: muse_12
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T00:12:00+05:30'
+    updated_at: '2026-11-26T00:55:00+05:30'
     files:
       - scripts/backup_fleet_databases.py
       - tests/test_rel096_backup_fleet_state.py
@@ -19296,8 +19298,9 @@ tasks:
       - 'Cost verified 2026-11-25/26: the unified set 20261125T165942Z is 2.7 GB, of which VyralX renders are 2.2 GB and VyralX data 403 MB, copied from VyralX-Server where the originals live; Oracle Server 2 has a 49G disk at 95% used with 2.8G free, worsening since the daily full-set schedule began (92% / 4.2G free one day earlier).'
       - 'DESIGN NOTE (coordinator, 2026-11-26) — three mechanisms sized against the fleet constraints (Oracle boxes ~956 MB RAM with 8 GiB swap, 49G disk on Oracle Server 2, bridge-only server access; store contents include DB logical dumps, configs, per-agent .env snapshots, fleet CREDENTIALS.md, VyralX renders + data): (1) restic — content-defined chunking dedupes at sub-file level, so a regenerated DB dump or a slightly changed large file stores only its changed chunks; unchanged renders cost zero extra bytes across snapshots, ending the media pile-up without dropping coverage; snapshots + retention (forget/prune) are built in; the store is encrypted, which suits a set containing credential env files; single static binary with a small RAM footprint. RECOMMENDED. (2) rsync --link-dest hardlink snapshots — no new dependency (rsync is already the fleet transport in the unify job) and each snapshot browses like a full tree, but granularity is whole-file: any regenerated dump and any touched render is stored whole again, so the daily growth shrinks but does not end. FALLBACK if restic cannot be installed. (3) A bare git repo with scheduled commits — matches the owner wording literally and versions text well, but 2.2 GB of binary renders bloat the object store, garbage collection/repack on a ~1 GB RAM box is a real OOM risk, and secrets committed once stay in git history forever. NOT recommended as the store; the owner requirement is the git behaviour (incremental, versioned, bounded), not the git binary. First implementation step either way: confirm the chosen tool on both Oracle servers via the bridge, then keep the TASK-REL-096 manifest + verify + restore-drill harness as the acceptance gate around the new store.'
       - 'Filed by Muse (coordinator) 2026-11-26 in this board PR. No TASK-REL-099 record exists on main 93409b9f (verified: REL-098 is the highest REL id on the board). This filing changes nothing on the servers and does not alter the running backup schedule; implementation follows the normal claim flow.'
+      - 'Coordinator watch114 (2026-11-26): assigned to muse_12 as queue head; M12 queue was empty after SEN-034 merged and the STR-077 ruling returned that task to M17. Verified AVAILABLE / owner null on main 14a72d15. P1, owner-ordered; substantial multi-step task (incremental store, retention cap, restore drill).'
     blockers: []
-    next_action: 'AVAILABLE in the central pool: claim via hub #1483, then implement per the design note in the evidence (restic preferred, rsync --link-dest fallback) and prove it with two consecutive runs, the run-over-run stored-bytes report, and a restore drill at the TASK-REL-096 bar.'
+    next_action: 'Assigned to muse_12 as queue head by coordinator watch114 (2026-11-26, hub #1483): git-style incremental fleet backup for Oracle Cloud (owner order 2026-11-26); claim via hub #1483.'
 
   - id: TASK-INT-040
     title: 'S2->S1 envelope shipper: repair the IntelX watch outbox transfer path so fired alert envelopes reach S1'
@@ -21176,13 +21179,13 @@ tasks:
   - id: TASK-STR-077
     title: 'REPO-IMPLEMENT: Stratex repos - Freqtrade (reference-only), VectorBT (adapt), Backtrader (reference-only), Hummi... (wave 1)'
     status: AVAILABLE
-    owner: muse_12
+    owner: muse_17
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T23:20:00+05:30'
+    updated_at: '2026-11-26T00:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -21193,8 +21196,9 @@ tasks:
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Coordinator watch110 (2026-11-25): assigned to muse_12 as replacement for blocked TASK-EARN-005 (queue position 2 behind SEN-034, ahead of FRG-029); verified AVAILABLE / owner null on main 3efe8b04.'
+    - 'Coordinator watch114 (2026-11-26): STR-077 owner muse_12 -> muse_17 by ruling. Verified first-hand via git: branch muse17/str-077 @ daa14f28, evidence doc docs/collaboration/TASK-STR-077-REPO-IMPLEMENT.md blob 465b62b0, commits show Backtrader + Hummingbot verified live on S2 and Freqtrade PARTIAL honestly labelled. Status stays AVAILABLE; claim flip rides in M17 deferred work PR.'
     blockers: []
-    next_action: 'Assigned to muse_12 by coordinator watch110; queue position 2 behind SEN-034; claim via hub #1483 when it reaches queue head.'
+    next_action: 'RULED to muse_17 by coordinator watch114 (2026-11-26, hub #1483): M17 claim confirmed first-hand (branch muse17/str-077 @ daa14f28, evidence doc blob 465b62b0, WATCH098 ruling 4); WATCH110 assignment to M12 made from board state that did not show the claim. M17: file the work PR when the execution-risk flag clears; M12 released to TASK-REL-099.'
 
   - id: TASK-STR-078
     title: 'REPO-IMPLEMENT: Stratex repos - FinRL (reference-only), Lumibot (reference-only), Vibe-Trading (adapt), AutoHedg... (wave 1)'
@@ -21362,14 +21366,14 @@ tasks:
 
   - id: TASK-FRD-055
     title: 'REPO-IMPLEMENT: FRIDAY repos - Hermes Agent (reference-only), Herald OS (reference-only), OpenClaw (reference-o... (wave 2)'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_8
-    branch: null
-    pr: null
+    branch: muse8/task-frd-055
+    pr: 1884
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T18:45:00+05:30'
+    updated_at: '2026-11-26T00:22:44+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -22280,14 +22284,14 @@ tasks:
     next_action: 'Merged in PR #1793 (merge f80e563d, CI 10/10 green); live ADB-down drill still gated (owner stop order).'
   - id: TASK-SEN-034
     title: 'Sentinel: compromised-laptop OPSEC checklist in the owner-device hygiene set'
-    status: CLAIMED
+    status: MERGED
     owner: muse_12
     branch: muse12/task-sen-034-compromised-laptop-checklist
     pr: 1877
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T22:57:00+05:30'
+    updated_at: '2026-11-26T00:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-SEN-034-CHECKPOINT-1.md
@@ -22300,8 +22304,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Assigned to Muse 12 as queue position 3 by coordinator watch100 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main f216e1ba. P3 compromised-laptop OPSEC checklist in the owner-device hygiene set.'
     - 'Claimed by Muse 12 2026-11-25 ~22:57 IST (hub #1483, queue head after SEN-031 merged via board PR #1874; EARN-005 head skipped - blocked on product identity); branch muse12/task-sen-034-compromised-laptop-checklist @ main a759a031; work PR #1877 (checkpoint 1 scoping + gap verified).'
+    - 'Coordinator watch114 (2026-11-26): PR #1877 merged ff0bba89, CI 9/9 green at merge; full diff verified first-hand vs merge-base a759a031 (checkpoint doc +56, board AVAILABLE -> CLAIMED); true branch muse12/task-sen-034-compromised-laptop-checklist verified via git. Status CLAIMED -> MERGED.'
     blockers: []
-    next_action: 'Claimed by Muse 12 2026-11-25 ~22:57 IST; checkpoint 1 filed in work PR #1877 - SE-04 checklist exists as runnable tool (IG2-SEN-05) but is not in the hygiene set; wire it in, then drill walkthrough.'
+    next_action: 'Merged in PR #1877 (merge ff0bba89, CI 9/9 green). M12 queue advances to TASK-REL-099.'
   - id: TASK-STR-079
     title: 'Stratex: research-desk framework lenses - Chaos Theory, Game Theory and Fractals as named analysis frames'
     status: MERGED
