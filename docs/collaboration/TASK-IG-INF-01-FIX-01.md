@@ -8,6 +8,7 @@
 - **Branch:** `muse13/task-ig-inf-01-fix-01` from main `14181d3c` (created via Git Data API, verified read-back).
 - **Work PR:** #1854 (https://github.com/surendra2304/FRIDAY-Universe/pull/1854), head 2172886e, base main 14181d3c. Checkpoint 1: commit 1 `1bde103e` (evidence doc), commit 2 `6e94dd8d` (board flip), commit 3 `2172886e` (head-pointer correction). **MERGED 2026-11-25 ~20:20 IST by the coordinator flow (merge 7871150c, CI 9/9 green on head 2172886e — WATCH103, hub 7165911052).** Board flip landed: IG-INF-01-FIX-01 → CLAIMED/muse_13/pr 1854 on main (verified first-hand on main 5c901138, §2 below).
 - **Implementation branch:** `muse13/task-ig-inf-01-fix-01-impl` from main `0eeaa43a` (checkpoint 2 — see §9).
+- **Implementation PR:** #1865 (https://github.com/surendra2304/FRIDAY-Universe/pull/1865), head `2f5aa24c`, base main `0eeaa43a`. Commit 1 `2f5aa24c` (code + tests + evidence doc); commit 2 (board flip + PR number) to follow on the same branch.
 
 ## 2. Board verification (first-hand, main 14181d3c — checkpoint 1; re-verified on main 5c901138, 20:36 run)
 
@@ -67,7 +68,7 @@ Live-leg notes: the live Inference gateway is the AWS host reached via the S1 tu
 
 ## 7. Five states
 
-Implemented YES / tested NO (pending CI — see §9 checkpoint 2) / merged NO / deployed NO / production-verified NO — checkpoint 1 merged (PR #1854, merge 7871150c, CI 9/9 green); implementation filed as checkpoint 2 (work PR opened after commit 1; number + head in commit 2 below). Live re-probe still needs Muse's deployment clearance after the code lands.
+Implemented YES / tested NO (pending CI — see §9 checkpoint 2) / merged NO / deployed NO / production-verified NO — checkpoint 1 merged (PR #1854, merge 7871150c, CI 9/9 green); implementation filed as checkpoint 2 (work PR #1865, head 2f5aa24c, base main 0eeaa43a; board flip in commit 2). Live re-probe still needs Muse's deployment clearance after the code lands.
 
 ## 8. Queue
 
@@ -94,7 +95,7 @@ IG-INF-01-FIX-01 (head) → INT-053 (pos 2, filed on main via coordinator board 
 - **Tests** (`Inference/tests/test_ig_inf01_long_context_routing.py`, 12 → 18 tests): the old `test_overflow_with_big_windows_unavailable_picks_largest_remaining` expectation is replaced — it pinned the defective order (health before fit); the new `test_fit_runs_before_health_so_unhealthy_long_window_models_still_serve` pins the fix (Gemini unhealthy → gemini-3.8-flash still chosen, overflow False). Added: ranking-level fit-before-health pin, overflow-with-unhealthy-long-windows largest-holder pin, quarantine-still-applies-within-fitting-set (servability fixture, REL-049 pattern), auto route provenance test (ladder stub serves gemini-3.6-flash; executed request still `model=None`), fit-routed deadline test (first-attempt timeout in (100, 120], provenance `route_timeout_seconds` 120.0) + standard-deadline control (timeout in (50, 60], no extension disclosed). No other test file uses `required_tokens` (checked test_rel043 / test_inf012 / test_inf016 / test_v1_auto_fastlane first-hand) — only this file's expectations change.
 - **Validation:** both files `py_compile` clean; expected ranking values cross-checked by a standalone simulation of the new order against the real catalogue data (fit-before-health trio, quarantine pair, overflow largest-holder, token estimates 308,716 / 4,616,408). **No local test run:** a scratch repo clone was created for a local pytest run but the run was stopped by an execution-risk check on the cloned content, and the clone was removed; the suite runs in CI on the work PR instead — **tested state stays NO until CI is green, verified first-hand in the next run.**
 - **Known gap (not in this fix):** the streaming path (`stream_model` default `openai/gpt-oss-120b` for `"auto"`) has no provenance surface and is unchanged — an oversized `"auto"` stream still routes to the 131k default. Follow-up owed, not acceptance-blocking (acceptance is about the non-stream route + provenance).
-- **Work PR:** opened after commit 1 (number + head recorded in commit 2 with the board flip: IG-INF-01-FIX-01 → IN_PROGRESS / new pr). Branch `muse13/task-ig-inf-01-fix-01-impl` from main `0eeaa43a` (re-based forward from the 5c901138 verification base — both source files verified byte-identical on 0eeaa43a before branching).
+- **Work PR #1865** (https://github.com/surendra2304/FRIDAY-Universe/pull/1865), head `2f5aa24c`, base main `0eeaa43a`, 1 commit, +294/−40, 3 files, open; mergeable_state unknown at opening (GitHub computing). Commit 2 on the same branch adds the board flip (IG-INF-01-FIX-01 → IN_PROGRESS / pr 1865) + this PR number in the doc.
 - Usage: 38% of free weekly limit (19:36 run; re-check owed next run), reset Nov 29 6:09 PM IST. No subscription.
 
 — Muse 13
