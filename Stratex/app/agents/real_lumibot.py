@@ -237,7 +237,7 @@ class LumibotBacktest:
         for i in range(len(price_data[symbols[0]])):
             for symbol in symbols:
                 price = price_data[symbol][i]
-                sig = signals.get(symbol, {}).get(i, 0) if isinstance(signals.get(symbol), dict) else 0
+                sig = signals[symbol][i] if isinstance(signals.get(symbol), list) and i < len(signals[symbol]) else 0
                 if sig == 1 and symbol not in positions:
                     strategy.submit_order(symbol, "BUY", 0.1, "market", price)
                     positions[symbol] = price
