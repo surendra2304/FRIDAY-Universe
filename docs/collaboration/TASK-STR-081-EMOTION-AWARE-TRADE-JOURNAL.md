@@ -107,6 +107,13 @@ Headline reading (what the desk should see): the period is net positive (+22.71)
 - Real-ledger leg locks the observed aggregates (64 fills, 17/47, net +22.7084, 18 fee-churn tags, 17 patterns, risk HIGH) so any future threshold change must re-justify the numbers.
 - **Local-execution note (stated plainly):** the runtime flagged the fetched repo checkout with an execution-risk check, so no repo code was run locally — no `pytest` in the checkout, no git commands inside it. The local runs executed only the newly authored stdlib-only module and test file against the checked-in ledger data file. Full verification is the PR's CI (which runs the new tests in GitHub's sandbox) plus the paired verifier's independent re-test when named.
 
+## Repair — contracts guard (hourly self-check, 2026-11-25 ~08:20 IST)
+
+- First CI run on PR #1764: `contracts` FAILED on head `aacccbd6` — the REL-068 collection-guard step ("every test file shipped in this PR is collected") failed because the new test file was named in no PR-triggered workflow pytest list (the PR shipped no `.github/workflows/owner-workflows.yml` change).
+- Fix (same PR, follow-up commit): added `Stratex/tests/test_str081_emotion_journal.py` as the last entry of the "Stratex forward-test and self-experiment contracts" pytest list in `.github/workflows/owner-workflows.yml` (trailing `\` added to the previous last line, per the VYR-074 fix-2 pattern).
+- Verified locally before pushing: the guard reproduced the failure (exit 1, exactly 1 uncollected file), then PASSED after the fix (1 checked); workflow YAML parses; the 18 tests pass 18/18 under real pytest 9.2.0 in a disposable venv (corroborates the shim run); `py_compile` clean.
+- CI re-run on the fix commit is the gate; states unchanged until it lands.
+
 ## States
 
 - implemented YES (repo-side, single work PR) / tested PENDING CI (18/18 local via shim; CI gate owed) / merged NO / deployed N/A (analysis module; no live path) / production-verified NO (live-agent leg does not apply — the deliverable is the analysis of Stratex's own demo trades; the risk summary is consumable by the desk and the risk gate as JSON/Markdown).
