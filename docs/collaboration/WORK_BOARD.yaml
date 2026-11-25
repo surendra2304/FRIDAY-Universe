@@ -21977,7 +21977,7 @@ tasks:
     status: CLAIMED
     owner: muse_2
     branch: muse2/task-mem-032-nomad-offline-pack
-    pr: null
+    pr: 1793
     contributors: []
     priority: P3
     created_at: '2026-11-25'
