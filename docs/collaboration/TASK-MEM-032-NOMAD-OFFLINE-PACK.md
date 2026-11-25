@@ -171,32 +171,41 @@ integrity, corrupt-pack-fails-loudly, and empty-query cases).
   checks a FIXED list of 21 files and does not list MEM-030/MEM-031
   either; no gate change is needed.
 - Repo CI verdict on the work PR is the authoritative check for the
-  in-repo run (conftest imports the full app); it is verified first-hand
-  after the PR opens and reported in the hub completion post — not
-  claimed here in advance.
+  in-repo run (conftest imports the full app). First head f42beedd47:
+  **10/10 green (8 success, 2 skipped, 0 failed) — verified first-hand
+  via the check-runs API** (roster-validator, secrets scan, test,
+  contracts all success). CI re-runs on the merge commit that brings
+  main in; its verdict is reported in the hub completion post.
 
-## 6. Board flips (ride in this PR)
+## 6. Board flips
 
-- TASK-MEM-031 CLAIMED → MERGED. Work PR #1784, merged 2026-11-25
-  12:31:34 IST by Surendra (merge `581f0d1d`, head `7942efa1`, CI 11/11
-  green — 9 success + 2 skipped, 0 failed) — verified first-hand via
-  the PR API; coordinator watch084 (comment 7155464602) confirms the
-  same merge.
+- TASK-MEM-031 CLAIMED → MERGED — landed on main via the coordinator's
+  board PR #1791 (watch085), NOT via this PR: while this PR was open,
+  main moved (merges #1791 + #1788) and the coordinator's flip already
+  recorded the merge (merge `581f0d1d`, head `7942efa1`, CI 11/11 green;
+  merged 2026-11-25 12:31:34 IST by Surendra) with its own evidence
+  line. The merge commit of this branch keeps main's MEM-031 record
+  byte-identical; no duplicate flip is added here. (Correction to the
+  first commit's message, which said the flip rode in this PR — true
+  when written, superseded by main's move.)
 - TASK-MEM-032 AVAILABLE → CLAIMED (owner `muse_2`, branch
-  `muse2/task-mem-032-nomad-offline-pack`, claim hub #1483 comment
-  7155563616). Board record verified AVAILABLE, owner null, on main
-  be3f303e (board blob 9f64aeb3, 22,623 lines, verified against the
-  true main blob before editing).
-- Board validation: the edited board was checked with a local
+  `muse2/task-mem-032-nomad-offline-pack`, work PR #1793, claim hub
+  #1483 comment 7155563616). Board record verified AVAILABLE, owner
+  null, on main be3f303e (board blob 9f64aeb3, 22,623 lines, verified
+  against the true main blob before editing); the flip is re-applied
+  onto the current main board (blob 1aec989c, 22,650 lines) in the
+  merge commit, with main's other board changes kept intact.
+- Board validation: the final merged board was checked with a local
   re-implementation of the repo validator's rules (duplicate-key scan
   via `yaml.compose`, per-task evidence counts vs raw text, post-merge
   PR-citation rule for MEM-031, owner/status validity) — all pass. The
   repo's own roster-validator runs in CI on this PR
   (`.github/workflows/collaboration-registry.yml`, triggered by the
-  `docs/collaboration/**` path); its verdict is reported with the CI
-  result. Note: no local clone was used for this task (execution-risk
-  check on the stale local clone); all reads/writes went through the
-  GitHub REST API, and verification rests on repo CI, as with MEM-031.
+  `docs/collaboration/**` path); it reported success on the first head
+  and re-runs on the merge commit. Note: no local clone was used for
+  this task (execution-risk check on the stale local clone); all
+  reads/writes went through the GitHub REST API, and verification rests
+  on repo CI, as with MEM-031.
 
 ## 7. Files changed
 
@@ -205,7 +214,7 @@ integrity, corrupt-pack-fails-loudly, and empty-query cases).
 - `Memora/core/memory/nomad_pack/corpus.jsonl` (new)
 - `Memora/tests/test_mem032_nomad_offline_pack.py` (new)
 - `docs/collaboration/TASK-MEM-032-NOMAD-OFFLINE-PACK.md` (new, this file)
-- `docs/collaboration/WORK_BOARD.yaml` (board flips: MEM-031 → MERGED, MEM-032 → CLAIMED)
+- `docs/collaboration/WORK_BOARD.yaml` (MEM-032 → CLAIMED; MEM-031 kept as MERGED by coordinator PR #1791)
 - `.github/workflows/friday-universe-ci.yml` (Memora tier-1 step lists the new test file)
 
 ## 8. Five states

@@ -519,7 +519,9 @@ jobs:
             tests/test_voice_language_profiles.py \
             tests/test_voice_surface_contract.py \
             src/friday/voice/dictation.py \
+            src/friday/voice/place_finder.py \
             tests/test_voice_dictation.py \
+            tests/test_voice_place_finder.py \
             tests/test_ux_and_cli.py
       # TASK-REL-097: the pytest list below now names all 44 shipped
       # FRIDAY/tests/test_voice_*.py — the 17 FRD/greeting/routing files the
@@ -576,7 +578,8 @@ jobs:
             tests/test_voice_greeting_single_owner.py \
             tests/test_voice_greeting_trigger.py \
             tests/test_voice_instant_routing.py \
-            tests/test_voice_session_build_overlap.py
+            tests/test_voice_session_build_overlap.py \
+            tests/test_voice_place_finder.py
 
   docker:
     runs-on: ubuntu-latest
