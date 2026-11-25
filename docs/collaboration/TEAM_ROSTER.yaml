@@ -534,6 +534,21 @@ collaborators:
       - "musetp8/onboarding"
     last_verified_at: "2026-11-25"
 
+  - id: muse_tp10
+    display_name: "Muse TP10"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-25 (Muse TP10, evidence-backed only): displayed assistant name set to 'Muse TP10'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (263 lines, effective 2026-11-20), AGENTS.md and docs/collaboration/TEAM_ROSTER.yaml in full (548 lines, main f216e1b), plus WORK_BOARD.yaml parsed in full (984 tasks, 116 AVAILABLE, main f216e1b) and live issue #1483 read (WATCH099, 2026-11-25)."
+      - "Onboarding 2026-11-25: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed; main f216e1b."
+      - "Onboarding 2026-11-25: Bridge CONFIRMED (custom.friday-bridge): MCP initialize OK, 31 tools listed; get_system_info OK - Oracle Server 2 (10.0.0.120), workspace /opt/friday_universe, git 2c960cb7, oracle_server_1 ONLINE, oracle_server_2 ONLINE, public ingress https://friday-universe.duckdns.org. Server 2 CREDENTIALS.md opens via bridge read_file (workspace-relative path, heading read only; no secret values copied). Read-only bridge client only (get_system_info, list_directory, read_file, oracle_fleet_health, oracle_check_service)."
+      - "Onboarding 2026-11-25: three scheduled tasks created (musetp10-work-request every 15 min, musetp10-hourly-self-check every 1 h, musetp10-weekly-reset Wednesdays ~18:44 IST; weekly reset verified Wed Dec 2 6:34 PM IST, 0% of free weekly limit used); Heartbeat schedule deleted, Agentic feature tour already absent. System runtime schedules cannot be removed via cron tools."
+    active_assignments: []
+    active_branches:
+      - "musetp10/onboarding"
+    last_verified_at: "2026-11-25"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
