@@ -280,6 +280,11 @@ def test_fixture_regex_matches_fake_credential_line():
 
 def test_fixture_regex_does_not_match_other_keys():
     """Only the exact fixture is allowed — any other sk-live value stays flagged."""
+    # The other keys are assembled from fragments, like the fixture itself:
+    # a realistic-looking key literal here would be a NEW gitleaks finding
+    # (the pinning test's own negative cases tripped the scan in round 2).
     rx = _fixture_regex()
-    assert not rx.search('api_key = "sk-live-9f2c41ab77e0d3f5a1b8c6d2e4f0a9b8"')
-    assert not rx.search('api_key = "sk-live-1234567890abcdeg"')
+    other_a = "sk-live-" + "9f2c41ab77e0d3f5" + "a1b8c6d2e4f0a9b8"
+    other_b = "sk-live-" + "1234567890" + "abcdeg"
+    assert not rx.search(f'api_key = "{other_a}"')
+    assert not rx.search(f'api_key = "{other_b}"')
