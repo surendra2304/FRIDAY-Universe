@@ -1,0 +1,22 @@
+{
+  "claim": "New model microsoft/Aion-1.0-Instruct-2.3B published on Hugging Face by microsoft (text-generation), 5476 downloads",
+  "date": "2026-11-18",
+  "discovered_at": "2026-11-25",
+  "evaluation": "pending \u2014 IG-INF-03 gate (benchmarks/evaluate_candidate.py); not admitted, not routed",
+  "filed_by": "discovery-feed",
+  "id": "huggingface-microsoft-aion-1-0-instruct-2-3b",
+  "kind": "model",
+  "name": "microsoft/Aion-1.0-Instruct-2.3B",
+  "provenance": "Filed automatically by the Inference discovery feed (TASK-INF-041) from huggingface on 2026-11-25. Source listing only \u2014 no serve-check, no bench, no free-tier verification has been run on this record.",
+  "route": {
+    "api_key_env": "",
+    "base_url": "",
+    "model_id": "microsoft/Aion-1.0-Instruct-2.3B",
+    "provider": "huggingface"
+  },
+  "schema": "inference.discovery-record/v1",
+  "source": "huggingface",
+  "source_url": "https://huggingface.co/microsoft/Aion-1.0-Instruct-2.3B",
+  "status": "filed",
+  "verification": "pending \u2014 source listing only; not evaluated"
+}

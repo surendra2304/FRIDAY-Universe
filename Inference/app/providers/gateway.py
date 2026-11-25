@@ -660,6 +660,25 @@ class ModelGateway:
         # time inside every fallback rung.
         request.deadline_monotonic = deadline
 
+        # TASK-INF-038: needle fast path (cactus-compute Needle, IG-INF-04
+        # §6) — an optional pre-routing stage for single-command requests.
+        # When enabled and a local needle engine routes the command to one
+        # of the fixed FRIDAY device-safe tools, the gateway answers with
+        # the tool call and spends no cloud round trip; anything else
+        # (disabled, multi-message, no-call, engine error) falls through
+        # to the normal ladder exactly as before. A fast-path failure must
+        # never break serving.
+        try:
+            from app.providers.needle_router import try_fast_path
+
+            fast_resp = await try_fast_path(request)
+            if fast_resp is not None:
+                return fast_resp
+        except Exception:  # noqa: BLE001 - fast path must never break serving
+            logger.warning(
+                "GATEWAY: Needle fast path failed; continuing to the provider ladder."
+            )
+
         prov_name = provider_name.lower().strip()
         if prov_name == "litellm":
             from app.providers.gateway_litellm import execute_via_litellm

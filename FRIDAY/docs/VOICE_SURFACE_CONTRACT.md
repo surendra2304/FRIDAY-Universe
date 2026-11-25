@@ -29,7 +29,7 @@ the dock. Schema (additive-only — consumers must ignore unknown keys):
 | `provider` | string | yes | serving provider identity, or `pending`/`none` |
 | `model` | string | yes | Gemini Live model name (may be empty pre-build) |
 | `voice` | string | yes | configured Gemini voice name (e.g. `Aoede`) |
-| `language` | string | yes | configured language profile code (TASK-IG-VOI-03); empty = native mirroring |
+| `language` | string | yes | effective session language code (TASK-IG-VOI-03 + TASK-VOI-042); `en-IN` by default, the configured profile when FRIDAY_VOICE_LANGUAGE is set — never empty on a live session |
 | `detail` | string | yes | human-readable last transition note |
 | `pid` | int | yes | worker process id |
 | `updated_at` | string | yes | local timestamp of the last write |
@@ -108,10 +108,11 @@ fast system feel slow, nor a slow one feel fast:
   surface may show a dictating indicator driven by the model's own
   replies; it must not offer a separate "send" button that bypasses
   the spoken control word — the spoken word is the consent.
-- **Language (TASK-IG-VOI-03).** The active profile (status-file
-  `language`, empty = mirroring) may be displayed; a surface must not
-  offer a language switcher that implies mid-call reconfiguration —
-  profiles apply at session build.
+- **Language (TASK-IG-VOI-03 + TASK-VOI-042).** The effective
+  session language (status-file `language`, `en-IN` by default)
+  may be displayed; a surface must not offer a language switcher
+  that implies mid-call reconfiguration — profiles apply at
+  session build.
 
 ## 5. AURA candidate mapping (reference)
 

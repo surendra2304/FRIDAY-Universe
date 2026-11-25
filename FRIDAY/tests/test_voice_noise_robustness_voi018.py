@@ -144,14 +144,18 @@ def test_prefix_padding_keeps_first_syllable(monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_end_sensitivity_and_silence_unchanged(monkeypatch):
-    """Turn finalization (reply speed) is NOT traded for noise
-    robustness: end sensitivity stays HIGH, silence stays 500 ms."""
+def test_end_sensitivity_and_silence_voi042(monkeypatch):
+    """TASK-VOI-042 (P0, owner live test 2026-11-25): silence is
+    1200 ms (was 500) — the owner's sentences were split into
+    finals at a half-second pause and answered as fragments. End
+    sensitivity stays HIGH; the speed trade is ordered by the P0
+    directive and reversible in one env var
+    (FRIDAY_VOICE_AAD_SILENCE_MS=500)."""
     aad = _aad(monkeypatch)
     assert aad.end_of_speech_sensitivity == (
         _TYPES.EndSensitivity.END_SENSITIVITY_HIGH
     )
-    assert aad.silence_duration_ms == 500
+    assert aad.silence_duration_ms == 1200
 
 
 def test_env_high_selects_high(monkeypatch):

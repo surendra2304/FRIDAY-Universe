@@ -87,6 +87,31 @@ AGENT_ENV_DIRS = {
 }
 
 
+#: Where the fleet's repo tree is installed on the servers. Used when
+#: this script runs from OUTSIDE the checkout (TASK-REL-096 fix round 7).
+FLEET_INSTALLED_ROOT = Path("/opt/friday_universe")
+
+
+def _fleet_repo_root() -> Path:
+    """Repo root for fleet-file lookups (per-agent .env, agent state).
+
+    Normally the checkout containing this script (``scripts/..``). The
+    Fleet Backup workflow downloads this script to /tmp (a stale or
+    worker-shared checkout must never poison a backup), where the
+    script-relative root is meaningless — fall back to the fleet's
+    installed root. Run 45587046488 proved the need: from /tmp, the
+    per-agent .env lookup silently found nothing and STRATEX, INTELX
+    and FORGE dumped nothing ("no Oracle credentials found"), while
+    the config/state snapshots silently covered nothing.
+    """
+    here = Path(__file__).resolve().parents[1]
+    if any((here / d).is_dir() for d in AGENT_ENV_DIRS.values()):
+        return here
+    if FLEET_INSTALLED_ROOT.is_dir():
+        return FLEET_INSTALLED_ROOT
+    return here
+
+
 def agent_runtime_env(agent: str, repo_root: Path | None = None) -> dict:
     """Load the agent's own .env (its systemd EnvironmentFile) as a dict.
 
@@ -94,7 +119,7 @@ def agent_runtime_env(agent: str, repo_root: Path | None = None) -> dict:
     /etc/friday-universe files are consulted by oracle_db.resolve_target
     separately. Values stay in memory only.
     """
-    root = repo_root or Path(__file__).resolve().parents[1]
+    root = repo_root or _fleet_repo_root()
     env_dir = AGENT_ENV_DIRS.get(agent.upper())
     if not env_dir:
         return {}
@@ -237,7 +262,7 @@ def snapshot_configs(dest: Path, log=print, repo_root: Path | None = None) -> li
             copied.append(str(target))
         log(f"[CONFIG] copied {len(unit_files)} systemd unit files (mode 600)")
     if repo_root is None:
-        repo_root = Path(__file__).resolve().parents[1]
+        repo_root = _fleet_repo_root()
     copied.extend(snapshot_agent_state(dest, repo_root, log=log))
     return copied
 
@@ -255,7 +280,7 @@ def snapshot_agent_envs(dest: Path, repo_root: Path | None = None, log=print) ->
     each server snapshots the env files of the agents it actually hosts.
     """
     if repo_root is None:
-        repo_root = Path(__file__).resolve().parents[1]
+        repo_root = _fleet_repo_root()
     copied: list[str] = []
     seen_dirs: set[str] = set()
     for agent, env_dir_name in sorted(AGENT_ENV_DIRS.items()):
@@ -287,8 +312,13 @@ def snapshot_agent_envs(dest: Path, repo_root: Path | None = None, log=print) ->
 # unchanged: file contents are never logged; manifests record paths, sizes
 # and SHA-256 only. MySQL credentials are parsed in memory from the fleet
 # record (CREDENTIALS.md, itself inside the bundle) and never printed.
+#: The fleet's universal key (padlock on all six servers). The collect
+#: runs under sudo in the workflow, and root has no keys of its own —
+#: run 45587046488 failed EVERY pull with default identity lookup.
+#: The absolute path works for root and for the ubuntu owner alike.
+UNIVERSAL_KEY_PATH = "/home/ubuntu/.ssh/Oracle-Cloud-x-AWS-Key"
 FLEET_STATE_SSH = ("ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new "
-                   "-o ConnectTimeout=15")
+                   f"-o ConnectTimeout=15 -i {UNIVERSAL_KEY_PATH}")
 FLEET_STATE_SOURCES = (
     # (label, ssh host, absolute paths, required)
     ("server1", "140.245.208.100", (
@@ -309,8 +339,14 @@ FLEET_STATE_SOURCES = (
     ), True),
     ("server6", "32.236.185.237", (
         "/opt/friday_universe/IntelX/data", "/opt/friday_universe/Futuris/data",
-        "/opt/friday_universe/Futuris/.data",
     ), True),
+    # Futuris/.data does not exist on IntelX-Server (live collect, run
+    # 45589775802: every other source pulled, this one reported
+    # "missing" and single-handedly marked the bundle incomplete).
+    # Optional: covered whenever it exists, never blocking.
+    ("server6", "32.236.185.237", (
+        "/opt/friday_universe/Futuris/.data",
+    ), False),
 )
 FLEET_STATE_SUDO_SOURCES = (
     ("server6-soak", "32.236.185.237", ("/var/lib/friday-universe/intelx-soak",), False),

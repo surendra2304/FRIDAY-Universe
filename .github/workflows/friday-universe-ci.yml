@@ -235,6 +235,11 @@ jobs:
       # Stratex/requirements.txt + pytest + pytest-asyncio. One deselect is
       # a pre-existing failure proven on current main - see the evidence
       # doc: /health returns 503, expects 200 (same signature as Memora).
+      # TASK-STR-082: tests/test_str082_scale_up_gate.py and
+      # tests/test_str082_creator_rules.py are collected here so the
+      # REL-068 collection guard passes — a PR test must run in PR CI.
+      # TASK-STR-078: tests/test_str078_lumibot_backtest.py is collected
+      # here for the same reason (PR #1815 contracts-guard fix).
       - name: Run Stratex tier-1 tests
         working-directory: Stratex
         run: |
@@ -250,9 +255,12 @@ jobs:
             --job "test" \
             -- .venv-stratex-ci/bin/python -m pytest -q \
             tests/test_tier1_resilience_and_contracts.py \
+            tests/test_str078_lumibot_backtest.py \
             rigorous_backtest/ig/tests/test_mispricing_scan.py \
             rigorous_backtest/ig/tests/test_levels.py \
             rigorous_backtest/ig/tests/test_research_desk.py \
+            tests/test_str082_scale_up_gate.py \
+            tests/test_str082_creator_rules.py \
             --deselect tests/test_tier1_resilience_and_contracts.py::TestStandardizedContracts::test_health_includes_service_metadata
 
       # TASK-REL-088: Forge tier-1 tests. Own venv from
@@ -311,7 +319,7 @@ jobs:
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
             -- .venv-inference-ci/bin/python -m pytest -q \
-            tests/test_health_security.py tests/test_module_importability.py tests/test_monitoring_health_evidence.py
+            tests/test_health_security.py tests/test_module_importability.py tests/test_monitoring_health_evidence.py tests/test_discovery_feed.py
 
       # TASK-REL-088: Sentinel tier-1 set (health-contract + durability +
       # foundation core files; no tier-1-named suite exists). Own venv

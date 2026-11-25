@@ -149,12 +149,17 @@ def test_prefix_padding_keeps_first_syllable(monkeypatch):
     assert aad.prefix_padding_ms == 200
 
 
-def test_end_sensitivity_and_silence_unchanged(monkeypatch):
-    """Turn finalization (reply speed) is NOT traded for noise
-    robustness: end sensitivity stays HIGH, silence stays 500 ms."""
+def test_end_sensitivity_and_silence_voi042(monkeypatch):
+    """TASK-VOI-042 (P0, owner live test 2026-11-25): turn
+    finalization IS traded now — deliberately, by owner order. End
+    sensitivity stays HIGH, but silence is 1200 ms (was 500): the
+    owner's sentences were split into finals at a half-second pause
+    and she answered the fragments, so a complete sentence waits
+    out a mid-sentence beat. FRIDAY_VOICE_AAD_SILENCE_MS=500
+    restores the old value in one var if replies ever feel slow."""
     aad = _aad(monkeypatch)
     assert aad.end_of_speech_sensitivity == (_TYPES.EndSensitivity.END_SENSITIVITY_HIGH)
-    assert aad.silence_duration_ms == 500
+    assert aad.silence_duration_ms == 1200
 
 
 # ---------------------------------------------------------------------------
@@ -180,16 +185,13 @@ def _activity(monkeypatch):
     monkeypatch.delenv("FRIDAY_VOICE_AAD_START_SENSITIVITY", raising=False)
     model = w._build_realtime_model("dummy-key-for-offline-probe", "You are FRIDAY.")
     assert model is not None
+    # TASK-VOI-042: the session under test carries the worker's own
+    # turn kwargs (min endpointing 1.0 s), not a hardcoded copy —
+    # the interruption behaviour below is proven on the live values.
     session = w._build_session(
         llm=model,
         loop=asyncio.new_event_loop(),
-        turn_detection="realtime_llm",
-        min_endpointing_delay=0.5,
-        max_endpointing_delay=3.0,
-        allow_interruptions=True,
-        min_interruption_duration=0.8,
-        resume_false_interruption=True,
-        false_interruption_timeout=1.0,
+        **w._session_turn_kwargs(),
     )
     agent = agents.Agent(instructions="You are FRIDAY.")
     from livekit.agents.voice.agent_activity import AgentActivity
