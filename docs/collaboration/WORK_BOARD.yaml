@@ -21479,14 +21479,14 @@ tasks:
 
   - id: TASK-INT-051
     title: 'REPO-IMPLEMENT: IntelX repos - Agent Reach, Camofox Browser, Local Deep Research, Helix, Robin, OpenDirectory Finder (wave 3)'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_2
-    branch: null
-    pr: null
+    branch: muse2/task-int-051-intelx-repos-wave3
+    pr: 1880
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T17:20:00+05:30'
+    updated_at: '2026-11-25T23:47:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
