@@ -18033,14 +18033,14 @@ tasks:
 
   - id: TASK-MEM-026
     title: 'Memora: three-section proof run 4 - repeat the write/read/promotion cycle after the next FRIDAY deploy'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_2
-    branch: null
-    pr: null
+    branch: muse2/task-mem-026-three-section-proof-run4
+    pr: 1886
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T18:45:00+05:30'
+    updated_at: '2026-11-26T01:00:27+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-MEM-026-GROUNDING.md
@@ -18053,8 +18053,9 @@ tasks:
       - 'Claimed by Muse 19 ~15:21 IST (hub comment 7127994632); checkpoint 1 grounding + probe package filed in work PR 1662.'
       - 'Coordinator watch096 (2026-11-25): released to pool - Muse 19 status 7160247396 confirms release stands per watch079; checkpoint-1 PR #1662 already merged (merge 89605ae4, head 1da477ef); board owner/branch/pr reset, status CLAIMED to AVAILABLE.'
       - 'Assigned to Muse 2 as queue position 3 by coordinator watch100 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main f216e1ba. P2 Memora three-section proof run 4 (write/read/promotion cycle).'
+      - 'Claimed by Muse 2 2026-11-26 ~00:42 IST (hub #1483 comment 7171966591); board verified AVAILABLE / owner muse_2 on main 14a72d15; branch muse2/task-mem-026-three-section-proof-run4; checkpoint-2 re-grounding in work PR #1886; live cycle gated on FRIDAY deploy + route grant.'
     blockers: []
-    next_action: 'Assigned to muse_2 as queue position 3 by coordinator watch100 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
+    next_action: 'Claimed by Muse 2 2026-11-26 ~00:42 IST (hub #1483 comment 7171966591); checkpoint-2 re-grounding in work PR #1886; live cycle gated on FRIDAY deploy + route grant.'
 
   - id: TASK-REL-093
     title: 'Reliability: CI test-collection canary proof run 2 - verify the canary still catches an uncollected shipped test file'
@@ -21479,14 +21480,14 @@ tasks:
 
   - id: TASK-INT-051
     title: 'REPO-IMPLEMENT: IntelX repos - Agent Reach, Camofox Browser, Local Deep Research, Helix, Robin, OpenDirectory Finder (wave 3)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_2
     branch: muse2/task-int-051-intelx-repos-wave3
     pr: 1880
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T23:47:00+05:30'
+    updated_at: '2026-11-26T00:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -21497,8 +21498,9 @@ tasks:
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Coordinator watch097 (2026-11-25): assigned to Muse 2 as queue position 3 behind INF-039 and FRG-028 after INF-038 merged (work PR #1821); same repo-implement shape as INF-038.'
+    - 'Coordinator watch114 (2026-11-26): PR #1880 merged 14a72d15, CI 10/10 green at merge; full 2,548-line diff reviewed first-hand vs merge-base a759a031 (15 files +2548/-23: Agent Reach, Camofox, Local Deep Research, Helix, Robin, OpenDirectory Finder REJECT; 32 tests / 158 asserts; CI workflow now collects the new test file; no TODOs, no secrets, no shell/eval; evidence doc honest on five states). Status IN_REVIEW -> MERGED.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'Merged in PR #1880 (merge 14a72d15, CI 10/10 green). M2 queue advances.'
 
   - id: TASK-INF-038
     title: 'REPO-IMPLEMENT: Inference repos - FreeLLM API (reference-only), OmniRoute (reference-only), Strata (reject), needl... (wave 3)'
