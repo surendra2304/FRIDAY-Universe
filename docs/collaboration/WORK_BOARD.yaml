@@ -20726,14 +20726,14 @@ tasks:
 
   - id: TASK-INF-037
     title: 'PRODUCTION-VERIFY: Inference corpus items IG2-INF-03, IG2-INF-04, IG3-INF-01, IG3-INF-02 - live load + failover verification (wave 3)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_13
-    branch: null
-    pr: null
+    branch: muse13/task-inf-037-prod-verify
+    pr: 1830
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T12:47:00+05:30'
+    updated_at: '2026-11-25T16:42:58+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
