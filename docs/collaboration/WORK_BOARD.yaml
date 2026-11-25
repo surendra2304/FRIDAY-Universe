@@ -20510,14 +20510,14 @@ tasks:
 
   - id: TASK-VYR-072
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG2-VYR-01, IG2-VYR-02, IG2-VYR-03, IG2-VYR-04, IG2-VYR-05 - live extreme-condition verification (wave 1)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_14
     branch: muse14/task-vyr-072-live-leg
     pr: 1891
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-26T01:49:38+05:30'
+    updated_at: '2026-11-26T02:19:53+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20530,19 +20530,20 @@ tasks:
     - 'Claimed by Muse 14, hub #1483 comment 7138526997, 2026-11-24 ~22:26 IST, per central pool pull model (hub 7136890552). Board verified AVAILABLE, owner null on main ca6de826; branch muse14/task-vyr-072 created at ca6de826.'
     - 'Checkpoint 1: work PR #1712 (head 333da740) — repo-side legs verified first-hand: IG2-VYR-01..05 modules present + compile OK, 32 unit tests pass; no repo-side gap; G1 live leg gated (VyralX-Server route decision awaited, stop order in force).'
     - 'LIVE LEG (work PR #1891, branch muse14/task-vyr-072-live-leg @ b9d6aff3, clearance WATCH113 hub #1483 comment 7171357668): all five items ran live in the live tree on VyralX-Server (13.211.162.71, md5-verified = main) — audio job (10 turns, Edge TTS), full 9-stage pipeline run to complete, shorts job + batch of 3, faster-whisper transcript (55 words) + real ffmpeg 9:16 render (1080x1920, 30.0s, rc 0), film + film.html + studio edits; every failure case raised correctly live. 32/32 unit tests re-run on main b9d6aff3. Held-render QA: loudness PASS (-13.6 LUFS), BGM unmeasured per design, watermark absent, caption track doubled in held render framed--bh5VGbrbLI-5970f1 (multiple_caption_tracks:2, FIX-01 filed). Metrics-sync NOT run: YouTube credentials not configured (G2). Evidence: docs/collaboration/TASK-VYR-072-LIVE-LEG.md. Board flip to MERGED follows once PR #1891 merges (registry validator: post-merge states must cite a merged PR).'
+    - 'Merged with work PR #1891 (merge 8abf3a94, 2026-11-26, coordinator watch118): live leg - all five items production-verified live on VyralX-Server (13.211.162.71, md5-verified = main); evidence docs/collaboration/TASK-VYR-072-LIVE-LEG.md; CI 7 success + 2 skipped on head bbcece0f; FIX-01 filed for the doubled-caption held render; metrics-sync (G2) awaits YouTube credentials.'
     blockers: []
-    next_action: 'Live leg complete in work PR #1891 (open): all five items production-verified live; FIX-01 filed for the doubled-caption held render; metrics-sync (G2) awaits YouTube credentials. MERGED flip follows once #1891 merges.'
+    next_action: 'Done - all five items production-verified live; FIX-01 open for the doubled-caption held render; metrics-sync (G2) awaits YouTube credentials.'
 
   - id: TASK-VYR-072-FIX-01
     title: 'Held render framed--bh5VGbrbLI-5970f1 carries doubled captions (multiple_caption_tracks:2): repair or re-render the caption track to a single track and re-run held-render QA to pass'
     status: AVAILABLE
-    owner: null
+    owner: muse_14
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T01:45:41+05:30'
+    updated_at: '2026-11-26T02:19:53+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-VYR-072-LIVE-LEG.md
@@ -20552,8 +20553,9 @@ tasks:
     - 'The doubled-caption defect is NOT fixed by editing the QA gate or the .ass parser; the render caption track itself is repaired.'
     evidence:
     - 'Filed by Muse 14 from the TASK-VYR-072 live leg (docs/collaboration/TASK-VYR-072-LIVE-LEG.md section 4b, work PR #1891): live on VyralX-Server 2026-11-26, the render .ass has 20 speech events with overlapping pairs (0.0-1.0 vs 0.0-3.34, 0.0-3.34 vs 1.0-2.0 and 2.0-3.56, 25.28-27.28 vs 25.34-29.23) — caption_track_gate returns multiple_caption_tracks:2.'
+    - 'Assigned to Muse 14 as next queue item by coordinator watch118 (2026-11-26, hub #1483); M14 filed it from its own VYR-072 live leg (doubled captions in held render framed--bh5VGbrbLI-5970f1).'
     blockers: []
-    next_action: 'AVAILABLE in the pool: claim via hub #1483, then repair/re-render the caption track and re-run held-render QA.'
+    next_action: 'Assigned to muse_14 by coordinator watch118 (2026-11-26, hub #1483); claim via hub #1483 when it reaches queue head.'
 
   - id: TASK-VYR-073
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG2-VYR-06, IG2-VYR-07, IG2-VYR-08, IG2-VYR-09, IG2-VYR-10 - live extreme-condition verification (wave 1)'
@@ -20806,13 +20808,13 @@ tasks:
   - id: TASK-LAP-002
     title: 'PRODUCTION-VERIFY: laptop/phone corpus items IG-LAP-01..04 + IG2-LAP-01 - real device verification (wave 2)'
     status: AVAILABLE
-    owner: null
+    owner: muse_7
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-26T02:19:53+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20822,8 +20824,9 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Assigned to Muse 7 as queue head by coordinator watch118 (2026-11-26, hub #1483); P1 production-verify laptop/phone corpus wave 2. M7 silent since 2026-11-24 - status report demanded in the same hub post; tasks return to the pool if no report/claim by the next run (watch108 precedent).'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'Assigned to muse_7 as queue head by coordinator watch118 (2026-11-26, hub #1483); claim via hub #1483.'
 
   - id: TASK-INF-035
     title: 'PRODUCTION-VERIFY: Inference corpus items IG-INF-01, IG-INF-02, IG-INF-03, IG-INF-04 - live load + failover verification (wave 3)'
@@ -21781,13 +21784,13 @@ tasks:
   - id: TASK-EARN-030
     title: 'EARN: Contra lane start (owner order 2026-11-25: implement all) - owner creates the account, Muse builds the full CometWorks profile + services'
     status: AVAILABLE
-    owner: null
+    owner: muse_7
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T02:30:00+05:30'
+    updated_at: '2026-11-26T02:19:53+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -21798,8 +21801,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
     - 'RENUMBERED 2026-11-25 by Muse (coordinator): this record was filed as TASK-EARN-019 in PR #1727, but a parallel earning-lane filing reached main first using TASK-EARN-019 for different content; renumbered to TASK-EARN-030 to restore unique task IDs. Content unchanged. This lane was also filed as TASK-EARN-015 by the parallel filing - work them as one lane.'
+    - 'Assigned to Muse 7 as queue position 3 (earning lane) by coordinator watch118 (2026-11-26, hub #1483); Contra lane - owner creates the account, Muse builds the profile pack.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
+    next_action: 'Assigned to muse_7 as queue position 3 (earning lane) by coordinator watch118 (2026-11-26, hub #1483); claim via hub #1483 when it reaches queue head.'
   - id: TASK-EARN-020
     title: 'EARN: itch.io Direct second product (owner order 2026-11-25: implement all) - owner account + tax interview, product page live from existing packs'
     status: AVAILABLE
@@ -23076,13 +23080,13 @@ tasks:
   - id: TASK-IG2-FRD-01-ACTIVATE-01
     title: 'FRIDAY: activate the IG2-FRD-01 mailbox and re-probe triage + drafts live'
     status: AVAILABLE
-    owner: null
+    owner: muse_7
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T18:15:00+05:30'
+    updated_at: '2026-11-26T02:19:53+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -23090,19 +23094,20 @@ tasks:
     evidence:
     - 'Named by Muse 1 in TASK-FRD-053 (work PR #1833, merged 1d7e9592): IG2-FRD-01 NOT VERIFIED - mailbox unconfigured on FRIDAY-Server; both tools execute live and fail honestly in ~2-5 ms; nothing sent.'
     - 'Coordinator watch099 (2026-11-25): filed from the FRD-053 follow-up.'
+    - 'Assigned to Muse 7 as queue position 2 by coordinator watch118 (2026-11-26, hub #1483); P1 FRIDAY mailbox activation, credentials-file flow only.'
     blockers: []
-    next_action: 'Available in the pool; claim via hub #1483 when a slot frees. Mailbox setup is an owner step.'
+    next_action: 'Assigned to muse_7 as queue position 2 by coordinator watch118 (2026-11-26, hub #1483); claim via hub #1483 when it reaches queue head.'
 
   - id: TASK-IG2-FRD-02-ACTIVATE-01
     title: 'FRIDAY: activate the IG2-FRD-02 WhatsApp gateway and re-probe live'
     status: AVAILABLE
-    owner: null
+    owner: muse_13
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T18:15:00+05:30'
+    updated_at: '2026-11-26T02:19:53+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -23110,19 +23115,20 @@ tasks:
     evidence:
     - 'Named by Muse 1 in TASK-FRD-053 (work PR #1833, merged 1d7e9592): IG2-FRD-02 NOT VERIFIED - gateway unconfigured, route returns the designed 404; boot log confirms gateway stays off; owner Meta setup owed.'
     - 'Coordinator watch099 (2026-11-25): filed from the FRD-053 follow-up.'
+    - 'Assigned to Muse 13 as queue position 3 by coordinator watch118 (2026-11-26, hub #1483); P1 FRIDAY WhatsApp gateway activation, credentials-file flow only. M13 advances INT-053 (merged) -> VOI-030 (blocked, skip) -> INT-020 (head).'
     blockers: []
-    next_action: 'Available in the pool; claim via hub #1483 when a slot frees. Meta setup is an owner step.'
+    next_action: 'Assigned to muse_13 as queue position 3 by coordinator watch118 (2026-11-26, hub #1483); claim via hub #1483 when it reaches queue head.'
 
   - id: TASK-INT-053
     title: 'INT-020 synthesis/entailment fix on the live chat route (INT-033 follow-up) - root-cause chat-route vs bus + fix + 3 consecutive live INT-020 runs passing'
-    status: IN_PROGRESS
+    status: MERGED
     owner: muse_13
     branch: muse13/task-int-053-synthesis-fix
     pr: 1875
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T01:12:00+05:30'
+    updated_at: '2026-11-26T02:19:53+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -23131,8 +23137,9 @@ tasks:
     evidence:
     - 'Filed by coordinator watch102 (2026-11-25, hub #1483) from Muse 13 block post 7163772133: INT-020 BLOCKED + HELD (0/3 at synthesis). Assigned to muse_13 as queue position 2 behind IG-INF-01-FIX-01; VOI-030 stays position 3 (blocked).'
     - 'Checkpoint 3 (2026-11-26, work PR #1875): (a) per-finding statement_support reasons persisted in the degraded result and carried into the stored run; (b) one retry on entailment failure with a fresh draft, same gates. Local pytest 24 + 23 pass; CI pending; live legs gated on deployment clearance.'
+    - 'Merged with work PR #1875 (merge 227f4acb, 2026-11-26, coordinator watch117): checkpoint 3 - per-finding statement_support reasons persisted + one entailment-only retry; CI 10/10 green on head 91b89466; live re-probe still gated on deployment clearance (owner stop order stands).'
     blockers: []
-    next_action: 'Implementation filed in work PR #1875 (checkpoint 3, 2026-11-26): reason persistence + entailment retry; live re-probe still gated on deployment clearance (owner stop order stands).'
+    next_action: 'Done - checkpoint-3 fix merged; live re-probe + 3 INT-020 runs await deployment clearance.'
 
   - id: TASK-IG-FRD-006-FIX-01
     title: 'FRIDAY: fix intelx_research 30s timeout so IG-FRD-006 delivers a Sources: section live'
