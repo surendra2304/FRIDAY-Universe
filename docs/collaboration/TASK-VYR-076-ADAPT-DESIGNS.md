@@ -500,6 +500,54 @@ live leg, not assertable from the repo alone.
   claimed). No hub post this run: self-check silent per aggressive
   completion rule 7 (no state change).
 
+## §8.11 Guardrail re-verification vs new main `a5de35d7` (2026-11-25 ~15:43 IST, hourly self-check)
+
+- Main moved `67373a93` → `a5de35d7` (merges #1814/#1813/#1812
+  REL-096 backup fixes, #1794 INT-044 production tracker, #1806
+  INF-041 discovery feed, #1802 VOI-036 run 21, #1809 INF-036,
+  #1796 TP8 onboarding, #1789 INF-035, #1808 board watch088). §8.3
+  method repeated verbatim against `a5de35d7` (`git grep -il`, same
+  patterns; hit-file sets compared after stripping revision
+  prefixes).
+- Result: **§8.3 stands unchanged.** The only new hit-file across
+  every pattern is `docs/collaboration/TASK-INT-044-PRODUCTION-TRACKER.md`
+  (Muse 12, merged via #1794): scrapecreators 2→3, opencreator 3→4,
+  ace-step 4→5, podcastfy 6→7, audio_content 3→4,
+  pipeline_orchestration 6→7, social.media.research 3→4, montage
+  47→48. codex-cli (2), flux.2 (3), flux-2 (0), flux_2 (0), acestep
+  (0) identical. The tracker hits are disposition-table rows
+  (lines 94–100) that corroborate §8.3: both reference-only repos
+  "DISPOSITION CONFIRMED — no code hits outside the
+  registry/docs/board", ACE-Step "ABSENT CONFIRMED", Podcastfy /
+  OpenMontage "REPO-SIDE IMPLEMENTED" via the §8.2 IG2 modules with
+  live production-verification "NOT YET — live leg gated by the
+  owner stop order". No new VyralX production hit, import, or
+  wiring.
+- `git diff --name-only 67373a93..a5de35d7 -- VyralX` is empty — no
+  VyralX file changed at all in this range. VyralX prod-path hits
+  for scrapecreators / opencreator / `codex-cli` re-checked: 0
+  each. No `podcastfy` / `montage` entries in VyralX
+  `pyproject.toml` / `requirements.lock` at `a5de35d7` (re-checked
+  this run). IG2 imports remain only in the two IG2 test files
+  (`test_ig2_vyr01_audio_content.py`, `test_ig2_vyr02_pipeline_orchestration.py`).
+- Clearance re-checked this run: hub #1483 scanned pages 264–278
+  (~13:15–15:40 IST, newest `7159309330` 10:09Z): zero Muse 9 /
+  VYR-076 / muse_9 mentions, no ruling on live-leg clearance, no
+  new assignment. Issue #35 remains frozen at 2500 comments (last
+  updated 2026-11-23) — hub is #1483. Live legs still HELD. Board
+  on main `a5de35d7` re-checked: VYR-076 CLAIMED, owner muse_9,
+  branch muse9/task-vyr-076, PR 1708 — sane; INT-023 IN_REVIEW,
+  owner muse_9, PR 1680 — unchanged, final compilation due
+  2026-11-27 still BLOCKED. Branch synced before this commit:
+  local = remote `55d72577`, clean tree, no open PR for the branch
+  (checkpoint-1 PR #1708 merged 2026-11-24, merge `50802799`).
+- Usage 45% of free weekly limit (checked this run via
+  subscription-status; reset Nov 29 02:27 IST; additional tokens
+  0%). Work-request job disabled — correct while mid-task (VYR-076
+  claimed). No pending approval cards. No hub post this run:
+  self-check silent per aggressive completion rule 7 (no state
+  change).
+
 ## §7 States (reported separately)
 
 - implemented: NO — no component runs in VyralX's live path yet.
