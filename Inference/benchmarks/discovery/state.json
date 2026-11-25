@@ -1,0 +1,33 @@
+{
+  "filed": [
+    "openrouter-inclusionai-ling-3-2-flash-free",
+    "huggingface-microsoft-aion-1-0-instruct-2-3b"
+  ],
+  "last_run": "2026-11-25",
+  "schema": "inference.discovery-state/v1",
+  "seen": {
+    "huggingface:NousResearch/Arete-27B": "2026-11-06",
+    "huggingface:microsoft/Aion-1.0-Instruct-2.3B": "2026-11-18",
+    "huggingface:nvidia/BioReason-Pro-2-9B-RL": "2026-11-09",
+    "huggingface:nvidia/BioReason-Pro-2-9B-SFT": "2026-11-09",
+    "huggingface:nvidia/C-RADIOv4-H-AV": "2026-10-28",
+    "huggingface:nvidia/MetricTrail": "2026-11-05",
+    "huggingface:nvidia/Nemotron-Labs-Sigma-distill-3B-nfe16": "2026-11-09",
+    "huggingface:nvidia/Nemotron-Labs-Sigma-distill-3B-nfe2": "2026-11-09",
+    "huggingface:nvidia/Nemotron-Labs-Sigma-distill-3B-nfe4": "2026-11-09",
+    "huggingface:nvidia/Nemotron-Labs-Sigma-distill-3B-nfe8": "2026-11-09",
+    "huggingface:nvidia/Nemotron-Labs-Sigma-distill-8B-nfe16": "2026-11-09",
+    "huggingface:nvidia/Nemotron-Labs-Sigma-distill-8B-nfe2": "2026-11-09",
+    "huggingface:nvidia/Nemotron-Labs-Sigma-distill-8B-nfe4": "2026-11-09",
+    "huggingface:nvidia/Nemotron-Labs-Sigma-distill-8B-nfe8": "2026-11-09",
+    "huggingface:nvidia/Nemotron-Labs-Sigma-distill-spec-3B": "2026-11-09",
+    "huggingface:nvidia/Nemotron-Labs-Sigma-distill-spec-8B": "2026-11-09",
+    "huggingface:nvidia/Qwen3.8-27B-NVFP4-QAD": "2026-10-26",
+    "openrouter:baidu/ernie-5.5-flash-preview:free": "2026-11-10",
+    "openrouter:inclusionai/ling-3.2-flash:free": "2026-11-13",
+    "openrouter:liquid/lfm-3-1.7b:free": "2026-11-06",
+    "openrouter:particle-ai/particle-1:free": "2026-10-28"
+  },
+  "version": 1,
+  "window_days": 14
+}

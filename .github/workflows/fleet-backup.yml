@@ -90,7 +90,10 @@ env:
 # state is not deterministic (Server 2's sat on a worker branch, then
 # diverged; `git pull --ff-only` failed in live runs 45571246565 and
 # 45577921552). A pinned raw download is deterministic and touches no
-# checkout. The script itself only uses absolute paths.
+# checkout. The script itself only uses absolute paths — but it
+# imports its sibling scripts/oracle_db.py via its own directory, so
+# BOTH files are downloaded (fix round 6; runs 45580798008+ died with
+# ModuleNotFoundError: oracle_db before this).
 
 jobs:
   backup:
@@ -106,6 +109,7 @@ jobs:
           script: |
             set -e
             cd /opt/friday_universe
+            exec > >(tee /tmp/rel096-backup.log) 2>&1
             echo "=== Fleet backup $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
             FREE_KB=$(df --output=avail -k /var | tail -1 | tr -d ' ')
             if [ "$FREE_KB" -lt 2097152 ]; then
@@ -116,6 +120,7 @@ jobs:
             if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="--dry-run"; fi
             if [ -n "${{ inputs.agents }}" ]; then ARGS="$ARGS --agents ${{ inputs.agents }}"; fi
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
+            sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
             sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py $ARGS
             echo "=== Latest backups ==="
             sudo ls -lt /var/backups/friday-universe | head -5
@@ -132,6 +137,7 @@ jobs:
             LATEST=$(sudo ls -1d /var/backups/friday-universe/[0-9]*/ | sort | tail -1)
             echo "Verifying manifest completeness: $LATEST"
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
+            sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
             sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py --verify --from-dir "$LATEST"
 
       - name: Alert on failure (never silent again)
@@ -161,6 +167,7 @@ jobs:
           script: |
             set -e
             cd /opt/friday_universe
+            exec > >(tee /tmp/rel096-media.log) 2>&1
             echo "=== Media backup $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
             FREE_KB=$(df --output=avail -k /var | tail -1 | tr -d ' ')
             if [ "$FREE_KB" -lt 2097152 ]; then
@@ -168,6 +175,7 @@ jobs:
               exit 1
             fi
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
+            sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
             sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py --media-only --keep 4
             echo "=== Latest backups ==="
             sudo ls -lt /var/backups/friday-universe | head -5
@@ -181,9 +189,11 @@ jobs:
           script: |
             set -e
             cd /opt/friday_universe
+            exec > >(tee /tmp/rel096-media-verify.log) 2>&1
             LATEST=$(sudo ls -1d /var/backups/friday-universe/[0-9]*/ | sort | tail -1)
             echo "Verifying manifest completeness: $LATEST"
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
+            sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
             sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py --verify --from-dir "$LATEST"
 
       - name: Alert on failure (never silent again)
@@ -219,6 +229,7 @@ jobs:
           script: |
             set -e
             cd /opt/friday_universe
+            exec > >(tee /tmp/rel096-fleet-state.log) 2>&1
             echo "=== Fleet-state collection $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
             FREE_KB=$(df --output=avail -k /var | tail -1 | tr -d ' ')
             if [ "$FREE_KB" -lt 2097152 ]; then
@@ -233,6 +244,7 @@ jobs:
               sudo /var/tmp/rel096-tooling/bin/pip install -q pymysql
             fi
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
+            sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
             sudo /var/tmp/rel096-tooling/bin/python /tmp/rel096-backup-script.py --fleet-state-only
             echo "=== Latest bundles ==="
             sudo ls -lt /var/backups/friday-universe | head -5
@@ -265,10 +277,11 @@ jobs:
           script: |
             set -e
             cd /opt/friday_universe
+            exec > >(tee /tmp/rel096-unify-s1.log) 2>&1
             ROOT=/var/backups/friday-universe
-            SSHOPT="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
+            SSHOPT="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -i /home/ubuntu/.ssh/Oracle-Cloud-x-AWS-Key"
             SET=$(sudo ls -1d $ROOT/[0-9]*/ | sort | tail -1)
-            REMOTE=$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${{ secrets.SERVER2_HOST }} "sudo ls -1d $ROOT/[0-9]*/ | grep -v fleetstate | sort | tail -1; sudo ls -1d $ROOT/*-fleetstate/ | sort | tail -1")
+            REMOTE=$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -i /home/ubuntu/.ssh/Oracle-Cloud-x-AWS-Key ubuntu@${{ secrets.SERVER2_HOST }} "sudo ls -1d $ROOT/[0-9]*/ | grep -v fleetstate | sort | tail -1; sudo ls -1d $ROOT/*-fleetstate/ | sort | tail -1")
             MEDIA_SET=$(echo "$REMOTE" | sed -n '1p')
             BUNDLE=$(echo "$REMOTE" | sed -n '2p')
             echo "Unifying set $SET with media $MEDIA_SET and bundle $BUNDLE"
@@ -278,6 +291,7 @@ jobs:
             sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER2_HOST }}:${MEDIA_SET}VYRALX_MEDIA" /tmp/rel096-media-set/
             sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER2_HOST }}:${BUNDLE}" /tmp/rel096-bundle/
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
+            sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
             sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py \
               --finalize --from-dir "$SET" --bundle-dir /tmp/rel096-bundle \
               --merge-from /tmp/rel096-media-set
@@ -291,14 +305,16 @@ jobs:
           script: |
             set -e
             cd /opt/friday_universe
+            exec > >(tee /tmp/rel096-unify-s2.log) 2>&1
             ROOT=/var/backups/friday-universe
-            SSHOPT="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
-            SET_NAME=$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${{ secrets.SERVER1_HOST }} "sudo ls -1d $ROOT/[0-9]*/ | sort | tail -1 | xargs -n1 basename")
+            SSHOPT="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -i /home/ubuntu/.ssh/Oracle-Cloud-x-AWS-Key"
+            SET_NAME=$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -i /home/ubuntu/.ssh/Oracle-Cloud-x-AWS-Key ubuntu@${{ secrets.SERVER1_HOST }} "sudo ls -1d $ROOT/[0-9]*/ | sort | tail -1 | xargs -n1 basename")
             BUNDLE=$(sudo ls -1d $ROOT/*-fleetstate/ | sort | tail -1)
             MEDIA_SET=$(sudo ls -1d $ROOT/[0-9]*/ | grep -v fleetstate | sort | tail -1)
             echo "Mirroring unified set $SET_NAME from Server 1"
             sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER1_HOST }}:$ROOT/$SET_NAME/" "$ROOT/$SET_NAME/"
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
+            sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
             sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py \
               --finalize --from-dir "$ROOT/$SET_NAME" --bundle-dir "$BUNDLE"
             # The media-only set was an intermediate: its content now lives

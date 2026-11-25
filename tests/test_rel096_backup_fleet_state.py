@@ -279,3 +279,49 @@ def test_finalize_merges_bundle_and_agents(tmp_path):
             / "Stratex" / "state" / "forward_scorecard.json").is_file()
     ok, failed = backup_mod.verify_backup(set_dir, merged, log=lambda *a: None)
     assert failed == 0 and ok >= 3
+
+
+# ---------------------------------------------------------------------------
+# Fix round 7 regressions (live run 45587046488)
+# ---------------------------------------------------------------------------
+
+def test_fleet_state_ssh_pins_the_universal_key():
+    # The collect runs under sudo; root has no default SSH identities,
+    # so the rsync ssh string must name the fleet's universal key.
+    assert "-i /home/ubuntu/.ssh/Oracle-Cloud-x-AWS-Key" in backup_mod.FLEET_STATE_SSH
+    argv = backup_mod.fleet_state_rsync_argv("203.0.113.9", "/srv/x", Path("/tmp/d"))
+    assert backup_mod.UNIVERSAL_KEY_PATH in " ".join(argv)
+
+
+def test_fleet_repo_root_falls_back_to_installed_root(tmp_path, monkeypatch):
+    # Script downloaded outside the checkout (its own root has no agent
+    # dirs): fleet-file lookups must resolve to the installed root.
+    bare = tmp_path / "bare"
+    (bare / "scripts").mkdir(parents=True)
+    installed = tmp_path / "installed"
+    (installed / "Stratex").mkdir(parents=True)
+    monkeypatch.setattr(backup_mod, "__file__", str(bare / "scripts" / "backup_fleet_databases.py"))
+    monkeypatch.setattr(backup_mod, "FLEET_INSTALLED_ROOT", installed)
+    assert backup_mod._fleet_repo_root() == installed
+
+
+def test_fleet_repo_root_prefers_the_checkout_when_present(tmp_path, monkeypatch):
+    checkout = tmp_path / "checkout"
+    (checkout / "scripts").mkdir(parents=True)
+    (checkout / "Stratex").mkdir()
+    monkeypatch.setattr(backup_mod, "__file__", str(checkout / "scripts" / "backup_fleet_databases.py"))
+    monkeypatch.setattr(backup_mod, "FLEET_INSTALLED_ROOT", tmp_path / "elsewhere")
+    assert backup_mod._fleet_repo_root() == checkout
+
+
+def test_agent_runtime_env_loads_from_installed_root(tmp_path, monkeypatch):
+    bare = tmp_path / "bare"
+    (bare / "scripts").mkdir(parents=True)
+    installed = tmp_path / "installed"
+    env_dir = backup_mod.AGENT_ENV_DIRS["STRATEX"]
+    (installed / env_dir).mkdir(parents=True)
+    (installed / env_dir / ".env").write_text("STRATEX_DATABASE_URL=oracle+oracledb://u:p@dsn\n")
+    monkeypatch.setattr(backup_mod, "__file__", str(bare / "scripts" / "backup_fleet_databases.py"))
+    monkeypatch.setattr(backup_mod, "FLEET_INSTALLED_ROOT", installed)
+    env = backup_mod.agent_runtime_env("STRATEX")
+    assert env.get("STRATEX_DATABASE_URL") == "oracle+oracledb://u:p@dsn"
