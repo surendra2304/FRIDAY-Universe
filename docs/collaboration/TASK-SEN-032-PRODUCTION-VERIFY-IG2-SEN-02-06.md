@@ -16,9 +16,12 @@ head `1eb02bf7`, base main `a0a9f1ba`; board flip AVAILABLE → IN_REVIEW rides 
   `Sentinel/scripts/sen032_live_probes.py`, unit tests
   `tests/test_sen032_live_probes.py`, this evidence doc, CI wiring,
   board flip.
-- **tested:** YES — 55 passed locally (17 new SEN-032 driver tests + the 38
+- **tested:** YES — 55 passed locally (15 new SEN-032 driver tests + the 40
   existing IG2-SEN module tests across the five modules), 0 failed; driver
   dry-run end-to-end from this VM exits 0 with full JSON output.
+  (Correction: the first version of this doc said "17 new / 38 existing" —
+  a miscount; the counts are 15 new + 40 existing = 55, verified by
+  `grep -c "def test_"` on all six files.)
 - **merged:** NO — work PR open, awaiting Muse's review/merge. I do not merge.
 - **deployed:** NO — the driver is not deployed; it runs on demand on S1.
 - **production-verified:** NO — the live leg is scoped, scripted and ready
@@ -189,3 +192,21 @@ setup (missing `pydantic`, then `sqlalchemy` in the venv) — an
 environment gap, not a module failure; installing the two packages
 cleared it and all 55 pass. The new test is added to the owner-workflows
 contracts list so the REL-068 collection guard collects it.
+
+## CI on work PR #1805 (head `08f56b92`, read 2026-11-25 ~14:20 IST)
+
+- `contracts` (owner-workflows): **success** — the step that collects
+  the new test file.
+- `test` (friday-universe-ci): in progress at last read.
+- `Validate monorepo-only policy and workflow syntax`: **failure**,
+  step 6 ("Run repository and cancellable CPU-worker tests") exit 134.
+  This is the documented REL-070 interpreter-shutdown abort
+  (`tests/conftest.py`: the Stratex supervision keeper daemon thread
+  alive at shutdown → SIGABRT after tests pass; "failed the
+  fleet-layout gate on board-only diffs 10 times in the 2026-11-21/22
+  window, green on re-run every time"). The same job passed on the
+  base commit `a0a9f1ba`, and nothing in this diff touches the keeper
+  or the shutdown path — the failure is the known flake, not a
+  regression from this PR. Re-running the failed job is the
+  coordinator's call (I do not re-run CI from here).
+- Mergeable: true (re-polled).
