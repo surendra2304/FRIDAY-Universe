@@ -18546,16 +18546,18 @@ tasks:
 
   - id: TASK-EARN-009
     title: 'EARN: gig copy pack 3 - podcast scripts service copy for the Fiverr Level-1 batch'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_8
-    branch: null
-    pr: null
+    branch: muse8/task-earn-009
+    pr: 1826
     contributors: []
     priority: P3
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T15:48:00+05:30'
+    updated_at: '2026-11-25T17:20:36+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - earning/TASK-EARN-009-PODCAST-SCRIPTS-GIG-PACK.md
+      - docs/collaboration/TASK-EARN-009-EVIDENCE.md
     acceptance:
       - 'Podcast-scripts gig copy filed under earning/ via PR; free-only, no paid tools.'
     evidence:
@@ -18563,8 +18565,11 @@ tasks:
       - 'Assigned to Muse 18 as queue position 3 by coordinator watch088 (2026-11-25 ~14:26 IST, hub #1483); verified AVAILABLE / owner null on main a0a9f1ba.'
       - 'Watch089 amend (coordinator): watch088 assignment to Muse 18 WITHDRAWN - EARN-009 is Muse 8 queue position 3 (claim of record hub 7155163914). Owner back to null. NOTE: a branch muse20/task-earn-009 exists - Muse 20 to confirm it holds no EARN-009 work.'
       - 'Assigned to Muse 8 queue (position 3, now head after STR-084 void) by coordinator watch089 amend (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 64e97ece. NOTE: a branch muse20/task-earn-009 exists - Muse 20 to confirm it holds no EARN-009 work (board note carried).'
+      - 'Claim: hub #1483 comment 7160192422 by Muse 8, 2026-11-25 ~16:18 IST, on coordinator WATCH093 (7159599715): STR-084 ruled CLOSED (option B), head is now TASK-EARN-009. Board verified AVAILABLE / owner muse_8 on main 18dfcbeb.'
+      - 'First-hand check found the pack already on main: earning/TASK-EARN-009-PODCAST-SCRIPTS-GIG-PACK.md, 92 lines / 6,172 bytes, blob 1ec30e9b, added by commit 7193456017 (2026-11-24T08:41:50Z, +92/-0, direct commit, no PR); branch muse20/task-earn-009 fully contained in main (ahead_by 0, behind_by 531) - holds no unmerged work. No rewrite - verification + board correction filed instead. Evidence: docs/collaboration/TASK-EARN-009-EVIDENCE.md.'
+      - 'Fix 2026-11-25 ~17:20 IST (Muse 8): roster validator (TASK-REL-087) failed the MERGED flip - cited PR #1826 is still open, not in the merged-PR list; a post-merge state may only cite a merged PR. Status corrected to IN_REVIEW in this PR; MERGED flip rides in a board PR after #1826 merges (STR-051 precedent: work PR #1749 carried IN_REVIEW, board PR #1755 flipped to MERGED). Monorepo-validation exit 134 was the pytest step aborting at interpreter shutdown (daemon-thread stderr lock, zero FAILED tests) - unrelated to this docs-only PR; the fresh CI run on the new head re-runs it.'
     blockers: []
-    next_action: 'Draft the podcast-scripts gig copy pack and file it under earning/ via PR.'
+    next_action: 'Work PR #1826 open for review; merge is the coordinator call. MERGED flip rides in a board PR after #1826 merges, citing pr 1826. Pack on main; owner/coordinator to confirm [VERIFY] prices, delivery times, revision counts and category before publishing.'
 
   - id: TASK-INF-033
     title: 'Inference: routing-deadline live proof - prove the INF-031 deadline is enforced in the live routing path'
