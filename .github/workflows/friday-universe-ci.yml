@@ -200,6 +200,11 @@ jobs:
           # deselects are pre-existing failures proven on unmodified main
           # 70ce108 in this same venv: the httpx-mocked provider tests fail
           # with httpx.InvalidURL on the mocked post, unrelated to this PR.
+          # TASK-LAP-004: tests/test_ig2_lap01_escrcpy.py rides in this
+          # invocation so the REL-068 guard sees it collected (uncollected
+          # since IG2-LAP-01 landed; stdlib + friday.* imports only, runs in
+          # this venv). Escrcpy upstream pinned to v3.3.1 — see
+          # docs/collaboration/TASK-LAP-004-CHECKPOINT-1.md.
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
             --check "test-job" \
@@ -214,7 +219,7 @@ jobs:
             tests/test_mem029_production_callers.py \
             tests/test_ig_frd_001_goal_loop.py tests/test_frd_045_woop.py \
             tests/test_capability_routing.py tests/test_ig2_frd03_lead_generation.py tests/test_ig_frd_061_lead_verification.py \
-            tests/test_reliability.py \
+            tests/test_reliability.py tests/test_ig2_lap01_escrcpy.py \
             --deselect tests/test_reliability.py::test_retry_on_network_failure \
             --deselect tests/test_reliability.py::test_retry_on_rate_limit \
             --deselect tests/test_reliability.py::test_no_retry_on_auth_error
