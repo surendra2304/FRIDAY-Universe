@@ -95,7 +95,9 @@ def test_malformed_template_rejected():
     bad_shares["structure"] = [
         {**b, "share": 0.10} for b in template["structure"]]
     problems = ft.validate_template(bad_shares)
-    assert any("shares sum to" in p for p in problems)
+    # Registry message (format_templates.validate_template): "structure
+    # shares must sum to 1.0 (got 0.5)" — the word "must" is in it.
+    assert any("shares must sum to" in p for p in problems)
     bad_gate = {**template, "name": "What-if movie night"}
     problems = ft.validate_template(bad_gate)
     assert any("gate-excluded token" in p for p in problems)
