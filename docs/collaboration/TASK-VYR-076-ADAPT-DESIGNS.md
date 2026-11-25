@@ -548,6 +548,50 @@ live leg, not assertable from the repo alone.
   self-check silent per aggressive completion rule 7 (no state
   change).
 
+## §8.12 Guardrail re-verification vs new main `076b3942` (2026-11-25 ~16:40 IST, hourly self-check)
+
+- Main moved `a5de35d7` → `076b3942` (merges #1815 Lumibot
+  backtest fix, #1795 TP7 onboarding, #1824 board watch094, #1823
+  REL-096 fix 9, #1820 board watch093, #1811 STR-082, #1819 REL-096
+  fix 8, #1816 EARN-010, #1817 board watch092). §8.3 method
+  repeated verbatim against `076b3942` (`git grep -il`, same
+  patterns; hit-file sets compared after stripping revision
+  prefixes).
+- Result: **§8.3 stands unchanged.** Every pattern hit-file set is
+  identical `a5de35d7` → `076b3942` (diff empty for all 13
+  patterns): scrapecreators 3, opencreator 4, ace-step 5,
+  podcastfy 7, audio_content 4, pipeline_orchestration 7,
+  social.media.research 4, montage 48, codex-cli 2, flux.2 3,
+  flux-2 0, flux_2 0, acestep 0. Zero new hit-files. No new VyralX
+  production hit, import, or wiring.
+- `git diff --name-only a5de35d7..076b3942 -- VyralX` is empty —
+  no VyralX file changed at all in this range (15 files total:
+  Stratex, workflows, board, roster, backup script, two task
+  docs). VyralX prod-path hits for scrapecreators / opencreator /
+  `codex-cli` re-checked at `076b3942`: 0 each. No `podcastfy` /
+  `montage` entries in VyralX `pyproject.toml` / `requirements.lock`
+  at `076b3942` (re-checked this run). IG2 references in VyralX
+  prod paths remain only the two known pre-existing prose mentions
+  (`channel_strategy.json`, `SCENE_ASSEMBLY_EVALUATION.md`) plus
+  the `audio_content.py` self kind string; Python imports remain
+  only in the two IG2 test files.
+- Board on main `076b3942` re-checked: VYR-076 CLAIMED, owner
+  muse_9, branch muse9/task-vyr-076, PR 1708 — sane; INT-023
+  IN_REVIEW, owner muse_9, PR 1680 — unchanged, final compilation
+  due 2026-11-27 still BLOCKED. Branch synced before this commit:
+  local = remote `e51b56d8`, clean tree, no open PR for the branch
+  (checkpoint-1 PR #1708 merged 2026-11-24, merge `50802799` —
+  re-verified via API this run). Hub #1483 scanned since
+  2026-11-25T10:09Z (26 comments, 1414 total): no live-leg
+  clearance ruling for VYR-076 found; live legs still HELD under
+  the owner stop order.
+- Usage 45% of free weekly limit (checked this run via
+  subscription-status; reset Nov 29 02:27 IST; additional tokens
+  0%). Work-request job disabled — correct while mid-task (VYR-076
+  claimed). No pending approval cards. No hub post this run:
+  self-check silent per aggressive completion rule 7 (no state
+  change).
+
 ## §7 States (reported separately)
 
 - implemented: NO — no component runs in VyralX's live path yet.
