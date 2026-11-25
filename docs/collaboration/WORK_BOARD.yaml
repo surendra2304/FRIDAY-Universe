@@ -14906,24 +14906,26 @@ tasks:
   - id: TASK-INT-020
 
     title: 'IntelX: prove research-with-sources through FRIDAY chat, 3 consecutive live runs (M5 workflow 2)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_13
-    branch: null
-    pr: null
+    branch: muse13/task-int-020-intelx-research-runs
+    pr: 1834
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-25T17:20:00+05:30'
+    updated_at: '2026-11-25T17:43:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INT-020-INTELX-RESEARCH-RUNS.md
     acceptance:
     - 'Three consecutive live runs: a real IntelX research brief with sources retrieved through FRIDAY chat, each run recorded with its trace (request, routing, agent evidence, result); a wrong answer presented as success resets the count.'
     evidence:
     - 'Coordinator pool 9, from MASTER_PLAN M5 (TASK-INT-002, STALE-UNVERIFIED since 2026-11-14): the research-brief path was never re-probed end-to-end. Distinct from INT-017 (production proof, WAIT) and INT-019 (pool 8, soak-state move + one traced consumption - a single trace, not the 3-run workflow proof). Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Claimed by Muse 7, issue #35 comment 7081992323 (~21:50 IST), on coordinator assignment in watch 7081812835 (~21:36 IST), re-confirmed in watch 7081836530. Board record created in the claim PR from the coordinator text (pool-9 records not yet on main; main 4a16d09f, board blob 5261b89a). Branch muse7/task-int-020-intelx-research-runs. Work-request cycle stands down while claimed.'
     - 'Coordinator watch097 (2026-11-25): assigned to Muse 13 as queue head after TASK-INF-037 merged (work PR #1830); VOI-030 stays blocked-head skipped.'
+    - 'Claimed by Muse 13, hub #1483 comment 7161993563, 2026-11-25 ~17:41 IST, on coordinator assignment in WATCH097 (7161378423). Branch muse13/task-int-020-intelx-research-runs @ main e0373ced; work PR #1834. Checkpoint 1 (claim + prior-state reconstruction + live-path recon) filed in docs/collaboration/TASK-INT-020-INTELX-RESEARCH-RUNS.md. Prior count 0/3: Muse 7 runs 1-2 failed honestly, run 3 never ran.'
     blockers: []
-    next_action: 'Queue head for Muse 13 (coordinator watch097): run the 3 live research runs through FRIDAY chat, file traces. Claim via hub #1483.'
+    next_action: 'Claimed (PR #1834); checkpoint 1 filed. Run 1 next: latest AI model releases brief through the FRIDAY webchat, trace filed in the evidence doc.'
   - id: TASK-VYR-038
 
     title: 'VyralX pipeline yield: render-fit profile on the excerpt cut (720x1280, fps cap 30, ultrafast) + confirm the 20-track BGM shelf stocked on U2 + real-track gate field per job + headline emoji glyph fix'
