@@ -19380,22 +19380,27 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-VYR-062
     title: 'VyralX: stick-figure style template in the format-template registry'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_5
+    branch: muse5/task-vyr-062-stick-figure-template
+    pr: 1756
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T06:43:06+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-062-STICK-FIGURE-SERIES.md
+    - VyralX/app/services/series_automation.py
+    - VyralX/tests/test_vyr062_stick_figure_series.py
+    - .github/workflows/owner-workflows.yml
     acceptance:
     - Stick-figure style is a validated registry template usable by the faceless-series automation (TASK-IG-VYR-04).
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-VYR-STICKFIG (IG package audit gap B112). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Claim: hub #1483 comment 7147880361 by Muse 5, 2026-11-25 ~05:20 IST. Branch muse5/task-vyr-062-stick-figure-template from main 07c526bf, rebased onto main 6fbc9b3b. Work PR #1756: series_automation template wiring + 8 new tests (23/23 pass with neighbours); registry leg already on main via TASK-IG3-VYR-02. Live leg gated by the owner stop order.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Work PR #1756 open; awaiting Muse merge. Live leg gated by the owner stop order (verifier re-tests live when the gate lifts).'
   - id: TASK-VYR-063
     title: 'VyralX: record the three corpus named lists into channel_strategy.json'
     status: AVAILABLE
@@ -20175,14 +20180,14 @@ tasks:
 
   - id: TASK-VYR-071
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG-VYR-06, IG-VYR-07, IG-VYR-08, IG-VYR-09, IG-VYR-10 - live extreme-condition verification (wave 1)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_5
     branch: muse5/task-vyr-071-prod-verify
     pr: 1738
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T03:26:40+05:30'
+    updated_at: '2026-11-25T06:43:06+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-VYR-071-REPO-LEG-EVIDENCE.md
@@ -20196,8 +20201,9 @@ tasks:
     - 'Claim: hub #1483 comment 7142669865 by Muse 5, 2026-11-25 ~01:15 IST. Branch muse5/task-vyr-071-prod-verify from main ce3c817f, rebased onto main 3c118b77.'
     - 'Repo-side evidence (Muse 5, 2026-11-25 ~02:30 IST, pytest local, no server execution): IG-VYR-07 6/6, IG-VYR-08 6/6, IG-VYR-09 9/9, IG-VYR-10 3/3 — 24/24 pass. IG-VYR-06 has no code on main (previs.py + test 404, retired by TASK-VYR-033 with no successor); filed as TASK-VYR-071-FIX-01 in this PR per coordinator ruling in watch 7145228662.'
     - 'Live leg BLOCKED (owed, not a failure): VyralX-Server probe run by the coordinator in watch058 — VyralX.service active running, port 8010 HTTP 200, route proven. Live leg gated by the owner stop order only, same posture as VYR-074. No item marked production-verified on repo-side evidence alone.'
+    - 'MERGED: work PR #1738 merged 2026-11-25 05:01 IST (merge 07c526bf, head fd71359a, CI 9/9 green) on M9 verifier PASS (hub 7147333628) + coordinator full-diff review (watch 7147595568). Live leg never ran (owner stop order) — merged, NOT production-verified.'
     blockers: []
-    next_action: 'Awaiting Muse merge of work PR #1738; verifier M9 verifies when the PR opens. Live leg resumes only when the owner stop order lifts (coordinator call).'
+    next_action: 'MERGED (work PR #1738, merge 07c526bf, 2026-11-25 05:01 IST). Repo-side 24/24; live leg never ran — gated by the owner stop order; no item production-verified. Live leg resumes only when the stop order lifts (coordinator call).'
 
   - id: TASK-VYR-071-FIX-01
     title: 'IG-VYR-06 has no live implementation: previs.py was retired by TASK-VYR-033 with no successor named - decide: retire IG-VYR-06 from the verification programme or specify a replacement module, then verify it live'
