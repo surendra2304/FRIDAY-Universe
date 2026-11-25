@@ -22621,7 +22621,7 @@ tasks:
     status: IN_REVIEW
     owner: muse_15
     branch: muse15/task-earn-025-upwork-profile-pack
-    pr: null
+    pr: 1888
     contributors: []
     priority: P2
     created_at: '2026-11-25'
