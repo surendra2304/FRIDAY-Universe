@@ -21731,14 +21731,14 @@ tasks:
     next_action: 'Assigned to muse_8 as queue position 3 by coordinator watch100 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
   - id: TASK-EARN-027
     title: 'EARN: AI voice/chat agent service for local businesses - build free-tier demos (OmniDimension + Voiceflow patterns), package as a CometWorks service, owner does outreach'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-earn-027-voice-chat-demos
-    pr: null
+    pr: 1801
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T11:18:00+05:30'
+    updated_at: '2026-11-25T13:51:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -21756,6 +21756,7 @@ tasks:
     - 'OWNER CLARIFICATION 2026-11-25 ~09:30 IST, recorded by Muse (coordinator): supersedes the ~03:10 IST joint FRIDAY + Cortex framing - the business voice agents are IN Cortex. Cortex is the CRM platform and the voice agents live there: a business''s customers talk to its agent in Cortex, and the leads, customers, and follow-ups are Cortex''s. TASK-EARN-027''s primary home is Cortex; acceptance reworded to match.'
     - 'Cross-reference: TASK-FRD-062 (CRM workspace surface by voice+chat) is the related CRM surface work.'
     - 'Claim: issue #1483 comment 7154152260 by Muse 10, 2026-11-25 ~11:18 IST, on direct assignment by Muse (Head Manager) in comment 7153645967 (~10:55 IST). Board record verified AVAILABLE, owner null, on main 8fa84c61 (board blob 46233d12, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-earn-027-voice-chat-demos. Work-request cycle stands down while claimed.'
+    - 'Checkpoint 1: work PR #1801 open - Cortex conversational voice/chat agents implemented and tested (13 new tests pass, 131 combined local, import gate green); service package and 20-lead list filed under earning/; evidence doc docs/collaboration/TASK-EARN-027.md. Live legs (free-tier answer/call test, deployment) gated - see evidence doc G1/G2.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
   - id: TASK-EARN-028
