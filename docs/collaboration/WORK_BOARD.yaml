@@ -19264,6 +19264,37 @@ tasks:
     blockers: []
     next_action: 'Work PR open, awaiting Muse merge. Live proof of the guard on a real CD failure needs a coordinator ruling under the owner stop order.'
 
+  - id: TASK-REL-099
+    title: 'Git-style incremental fleet backup for Oracle Cloud (owner order 2026-11-26): only modified files stored, versioned snapshots with enforced retention, no duplicated VyralX media piling up on Oracle Server 2'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-26'
+    updated_at: '2026-11-26T00:12:00+05:30'
+    files:
+      - scripts/backup_fleet_databases.py
+      - tests/test_rel096_backup_fleet_state.py
+      - .github/workflows/fleet-backup.yml
+      - .github/workflows/backup-watchdog.yml
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'INCREMENTAL (owner requirement 1): a second consecutive Fleet Backup run stores only what changed since the previous snapshot, proven by a run-over-run stored-bytes report filed as evidence; a no-change run must be dramatically smaller than the current 2.7 GB full set (target: under 150 MB newly stored).'
+      - 'VERSIONED + BOUNDED (owner requirement 1): the store keeps git-style version history — list snapshots, restore any retained snapshot, show what changed between two snapshots; retention is a stated rule enforced by the backup job itself (proposal: keep 7 daily + 4 weekly snapshots) with a hard cap on the Oracle Server 2 backup footprint (proposal: 6 GB total) and a post-prune free-space check in every run log.'
+      - 'NO MEDIA PILE-UP (owner requirement 2): VyralX renders and data are deduplicated by content — an unchanged render is stored exactly once across all snapshots (originals live on VyralX-Server; the Oracle copy is the safety copy, not a second pile); the TASK-REL-096 exclusion of VyralX/media source clips (3.9 GB, re-obtainable) stays.'
+      - 'RESTORE DRILL PASSES from the incremental store at the TASK-REL-096 bar (drill of 2026-11-25): Memora restore with ZERO empty string values (the REL-089 defect class), VyralX manifests parse, Stratex forward_scorecard.json parses and fill_ledger.jsonl parses line-complete, the MySQL stratex_research dump restores, fleet CREDENTIALS.md present in the restored tree.'
+      - 'NO COVERAGE REGRESSION vs TASK-REL-096 and the daily full-set growth stops (owner requirement 3): all 11 agent schemas + the VyralX media schema, the MySQL Stratex DB logical dump, configs + per-agent .env snapshots, fleet CREDENTIALS.md, and the fleet-state files from all six servers are all still captured; both Oracle servers hold a restorable copy; the Backup Watchdog freshness alert still fires on a missed run; the old per-run full-set directories are retired by a stated migration step once the new store has passed its first drill.'
+    evidence:
+      - 'Owner order 2026-11-26 ~00:07 IST: "Implement git in my Oracle Cloud" — with the three requirements stated plainly: backups must add only the modified files, just like git; not all the videos need to sit in Oracle Cloud; and the backup must stop deleting the old set and creating a whole new one every day. Same message: code belongs in GitHub — the /opt/friday_universe checkouts on the Oracle servers are Bridge/deployer working copies and are not the backup problem; the backup store under /var/backups/friday-universe is.'
+      - 'Starting state verified 2026-11-26 against origin/main 93409b9f8d0f7806444d868f9a29f96121f15224 (board blob ec846ec7a28fa99493129fff2d4634c490ace44d, hash-verified): scripts/backup_fleet_databases.py writes a complete new timestamped set on every run; .github/workflows/fleet-backup.yml runs it DAILY (cron 30 3 * * *) and on pushes touching agent trees, then unifies the set onto BOTH Oracle servers; retention only prunes whole sets after the fact (Oracle Server 2 --keep 3, Oracle Server 1 keep 4), so every run still writes the full set first.'
+      - 'Cost verified 2026-11-25/26: the unified set 20261125T165942Z is 2.7 GB, of which VyralX renders are 2.2 GB and VyralX data 403 MB, copied from VyralX-Server where the originals live; Oracle Server 2 has a 49G disk at 95% used with 2.8G free, worsening since the daily full-set schedule began (92% / 4.2G free one day earlier).'
+      - 'DESIGN NOTE (coordinator, 2026-11-26) — three mechanisms sized against the fleet constraints (Oracle boxes ~956 MB RAM with 8 GiB swap, 49G disk on Oracle Server 2, bridge-only server access; store contents include DB logical dumps, configs, per-agent .env snapshots, fleet CREDENTIALS.md, VyralX renders + data): (1) restic — content-defined chunking dedupes at sub-file level, so a regenerated DB dump or a slightly changed large file stores only its changed chunks; unchanged renders cost zero extra bytes across snapshots, ending the media pile-up without dropping coverage; snapshots + retention (forget/prune) are built in; the store is encrypted, which suits a set containing credential env files; single static binary with a small RAM footprint. RECOMMENDED. (2) rsync --link-dest hardlink snapshots — no new dependency (rsync is already the fleet transport in the unify job) and each snapshot browses like a full tree, but granularity is whole-file: any regenerated dump and any touched render is stored whole again, so the daily growth shrinks but does not end. FALLBACK if restic cannot be installed. (3) A bare git repo with scheduled commits — matches the owner wording literally and versions text well, but 2.2 GB of binary renders bloat the object store, garbage collection/repack on a ~1 GB RAM box is a real OOM risk, and secrets committed once stay in git history forever. NOT recommended as the store; the owner requirement is the git behaviour (incremental, versioned, bounded), not the git binary. First implementation step either way: confirm the chosen tool on both Oracle servers via the bridge, then keep the TASK-REL-096 manifest + verify + restore-drill harness as the acceptance gate around the new store.'
+      - 'Filed by Muse (coordinator) 2026-11-26 in this board PR. No TASK-REL-099 record exists on main 93409b9f (verified: REL-098 is the highest REL id on the board). This filing changes nothing on the servers and does not alter the running backup schedule; implementation follows the normal claim flow.'
+    blockers: []
+    next_action: 'AVAILABLE in the central pool: claim via hub #1483, then implement per the design note in the evidence (restic preferred, rsync --link-dest fallback) and prove it with two consecutive runs, the run-over-run stored-bytes report, and a restore drill at the TASK-REL-096 bar.'
+
   - id: TASK-INT-040
     title: 'S2->S1 envelope shipper: repair the IntelX watch outbox transfer path so fired alert envelopes reach S1'
     status: MERGED
