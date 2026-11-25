@@ -1326,6 +1326,15 @@ class DeveloperRole(BaseAgent):
                     "fallback_files": fallback_files,
                 },
             )
+            # TASK-MEM-031 (claude-mem): capture the synthesis outcome as
+            # a session event; a fallback-stub synthesis is a bugfix needle.
+            await memora_client.a_record_session_event(
+                session_id=f"forge-build-{task_id}",
+                kind="bugfix" if fallback_files else "observation",
+                content=f"Synthesized files: {written} (fallback: {fallback_files})",
+                task_id=str(task_id),
+                agent_name="forge",
+            )
         except Exception:
             pass
 
