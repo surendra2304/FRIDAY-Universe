@@ -410,6 +410,14 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
                 # Keep the extractive findings; they are labelled
                 # unsynthesised below and the result stays DEGRADED.
                 synthesis_failure = {"reason": str(draft.get("error") or "synthesis_unverified")}
+                # TASK-INT-053: carry the per-finding entailment reasons
+                # into the stored run — synthesis_error and source_failures
+                # ride the envelope into the archive — so the next failure
+                # names its failing leg instead of only the generic code.
+                # The reason string itself is untouched: contract tests pin
+                # it, and the spoken summary quotes it.
+                if isinstance(draft.get("entailment_failures"), list) and draft["entailment_failures"]:
+                    synthesis_failure["entailment_failures"] = draft["entailment_failures"]
                 failures.append(dict(synthesis_failure))
             else:
                 extractive_findings = findings
