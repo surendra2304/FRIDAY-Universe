@@ -75,6 +75,10 @@ ALLOWED_LAPTOP_COMMANDS = frozenset(
         "hotkey",
         "storage_check",
         "storage_repair",
+        # TASK-FRD-044: Spotify playback control by voice — media keys
+        # plus the session read-back that proves playback changed.
+        "media_key",
+        "media_status",
     }
 )
 

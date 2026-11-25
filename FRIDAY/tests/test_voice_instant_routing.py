@@ -56,6 +56,25 @@ class TestClassifyInstantCommand:
         assert agent.classify_instant_command("open calculator") in ("open_calculator", "semantic_ui", None)
         assert agent.classify_instant_command("move mouse cursor to center of screen") == "deterministic"
 
+    def test_spotify_media_routes_locally(self):
+        agent = _make_agent()
+        assert agent.classify_instant_command("pause spotify") == "spotify_media"
+        assert agent.classify_instant_command("skip this song") == "spotify_media"
+        assert agent.classify_instant_command("next track") == "spotify_media"
+        assert agent.classify_instant_command("play Bohemian Rhapsody on Spotify") == "spotify_media"
+        assert agent.classify_instant_command("play my workout playlist") == "spotify_media"
+
+    def test_ambiguous_spotify_play_does_not_route_locally(self):
+        agent = _make_agent()
+        for phrase in (
+            "play",
+            "play something",
+            "play some music",
+            "play a song",
+            "play chess",
+        ):
+            assert agent.classify_instant_command(phrase) is None, phrase
+
     def test_conversation_does_not_route_locally(self):
         agent = _make_agent()
         for phrase in (

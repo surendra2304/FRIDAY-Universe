@@ -1100,6 +1100,16 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
         r"^\s*(?:please\s+)?(?P<action>mute|unmute)(?:\s+the\s+volume)?[\.\!]?\s*$",
         re.IGNORECASE,
     )
+    # TASK-FRD-044: Spotify playback control by voice. The pattern is
+    # deliberately broad — the handler (_parse_spotify_media_command in
+    # fast_paths.py) is what decides whether the utterance is fully
+    # specified; a track-less "play" never fast-paths, it falls through
+    # to the model + confirmation gate instead.
+    _SPOTIFY_MEDIA_PATTERN = re.compile(
+        r"^\s*(?:please\s+)?(?P<action>play|pause|resume|skip|next|previous|stop)"
+        r"(?:\s+(?P<object>.+?))?\s*[\.\!]?\s*$",
+        re.IGNORECASE,
+    )
     _BATTERY_PATTERN = re.compile(
         r"^\s*(?:please\s+)?"
         r"(?:what(?:'s|\s+is)\s+(?:my\s+)?battery(?:\s+(?:level|percentage|status))?"

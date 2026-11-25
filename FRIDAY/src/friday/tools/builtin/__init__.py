@@ -118,11 +118,14 @@ from friday.tools.builtin.laptop_control import (
     LaptopClickTool,
     LaptopListDevicesTool,
     LaptopLockTool,
+    LaptopMediaKeyTool,
+    LaptopMediaStatusTool,
     LaptopOpenAppTool,
     LaptopOpenUrlTool,
     LaptopRunCommandTool,
     LaptopScreenshotTool,
     LaptopTypeTextTool,
+    SpotifyControlTool,
 )
 from friday.tools.builtin.laptop_dictation import LaptopDictateTool
 from friday.tools.builtin.laptop_pc_care import (
@@ -270,6 +273,9 @@ __all__ = [
     "LaptopOpenUrlTool",
     "LaptopRunCommandTool",
     "LaptopLockTool",
+    "LaptopMediaKeyTool",
+    "LaptopMediaStatusTool",
+    "SpotifyControlTool",
     "LaptopDescribeScreenTool",
     "LaptopScreenshotTool",
     "LaptopDictateTool",

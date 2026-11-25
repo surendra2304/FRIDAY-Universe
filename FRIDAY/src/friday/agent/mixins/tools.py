@@ -93,6 +93,8 @@ from friday.tools.builtin import (
     LaptopHotkeyTool,
     LaptopListDevicesTool,
     LaptopLockTool,
+    LaptopMediaKeyTool,
+    LaptopMediaStatusTool,
     LaptopPcCleanupTool,
     LaptopPcHealthTool,
     LaptopStorageCheckTool,
@@ -103,6 +105,7 @@ from friday.tools.builtin import (
     LaptopScreenshotTool,
     LaptopTypeTextTool,
     LaptopDescribeScreenTool,
+    SpotifyControlTool,
     LaunchApplicationTool,
     ListSkillsTool,
     ListGitHubIssuesTool,
@@ -262,6 +265,11 @@ class ToolExecutionMixin:
             registry.register(LaptopRunCommandTool())
             # TASK-IG-FRD-010: lock the laptop screen (no unlock, by design).
             registry.register(LaptopLockTool())
+            # TASK-FRD-044: Spotify playback control by voice — media keys
+            # plus the session read-back that proves playback changed.
+            registry.register(LaptopMediaKeyTool())
+            registry.register(LaptopMediaStatusTool())
+            registry.register(SpotifyControlTool())
             # TASK-IG2-LAP-01: Escrcpy integration — launch plans and phone
             # automation over the scrcpy/ADB transport. Registered
             # 2026-11-16 (IG implementation wave): the tools were exported
