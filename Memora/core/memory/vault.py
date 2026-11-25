@@ -396,7 +396,7 @@ def build_vault(
         # memory note filed in Areas/ (a record id equal to an agent
         # handle would otherwise overwrite its hub note).
         (root / "Areas" / "Agents").mkdir(parents=True, exist_ok=True)
-        (root / "Areas" / "Agents" / agent + ".md").write_text(
+        (root / "Areas" / "Agents" / (agent + ".md")).write_text(
             render_agent_note(agent, agent_records), encoding="utf-8"
         )
         written.append("Areas/Agents/" + agent + ".md")
