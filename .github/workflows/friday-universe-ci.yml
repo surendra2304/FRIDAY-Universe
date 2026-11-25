@@ -363,6 +363,10 @@ jobs:
       # FUT-030 / PR-936 / INT-045), so the DP-012/DP-013 tests had never
       # run anywhere. Posture file proven locally: 13 passed, 0 failed;
       # tier-1 total re-proven by CI.
+      # TASK-SEN-026: tests/test_ig2_sen_extortion_mail_triage.py added —
+      # it was collected by no CI job (REL-068 --full: UNCOLLECTED), so
+      # the SE-01 pixel tests had never run in PR CI. Triage file proven
+      # locally: 11 passed, 0 failed; tier-1 total with it: 37 passed.
       - name: Run Sentinel tier-1 tests
         working-directory: Sentinel
         run: |
@@ -377,7 +381,7 @@ jobs:
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
             -- .venv-sentinel-ci/bin/python -m pytest -q \
-            tests/security/test_health_readiness.py tests/security/test_health_durability_truthfulness.py tests/unit/test_foundation.py tests/unit/test_ig_sen_device_posture.py
+            tests/security/test_health_readiness.py tests/security/test_health_durability_truthfulness.py tests/unit/test_foundation.py tests/unit/test_ig_sen_device_posture.py tests/test_ig2_sen_extortion_mail_triage.py
 
       # TASK-REL-088: IntelX tier-1 set (health-contract core files; no
       # tier-1-named suite exists). Own venv from IntelX/requirements.txt
