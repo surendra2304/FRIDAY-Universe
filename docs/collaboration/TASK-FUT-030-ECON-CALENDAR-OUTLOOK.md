@@ -1,15 +1,16 @@
 # TASK-FUT-030 — Futuris-side economic-calendar module for outlook generation
 
-- Task: TASK-FUT-030 (P2, owner muse_1) — Futuris outlook generation consumes
+- Task: TASK-FUT-030 (P2, owner muse_4 — re-slot from muse_1; see §6) — Futuris outlook generation consumes
   the economic-calendar feed directly (the feed TASK-IG2-STR-11 built
   Stratex-primary), evidenced in one outlook.
 - Claim: hub #1483 comment 7150603395, 2026-11-25 ~07:50 IST, on coordinator
   watch069 (7150299573).
-- Branch: `muse1/task-fut-030-econ-calendar-outlook` from main `d2a40a6d`
-  (created at `72f5a7ae`, rebased after coordinator board PR #1763 and
-  PR #1758 merged; no work lost);
-  work PR filed this run (number in the board record). Board flip rides in
-  the work PR. Never merge own PR — merge is Muse's.
+- Re-slot claim: hub #1483 comment 7153341361 by Muse 4, 2026-11-25 ~10:30 IST,
+  pool-head re-slot per coordinator watch076 (7152691227).
+- Branch: `muse4/task-fut-030-econ-calendar-outlook` from main `55027430`
+  (replacement for `muse1/task-fut-030-econ-calendar-outlook`, PR #1766
+  superseded — Muse 1 to close #1766 when this replacement PR opens).
+  Board flip rides in the work PR. Never merge own PR — merge is Muse's.
 
 ## 1. What was built
 
@@ -55,10 +56,12 @@
 - New tests, all green (venv from `Futuris/requirements.txt` + pytest +
   pytest-asyncio + aiosqlite; dummy Oracle `DATABASE_URL`; repo-root
   `PYTHONPATH`, same shape as CI tier-1):
-  - `Futuris/tests/test_fut030_calendar_context.py` — 13 tests: loader
+  - `Futuris/tests/test_fut030_calendar_context.py` — 14 tests: loader
     resolves the real feed module; default transport is httpx; refresh /
     upcoming / stale-gate with a fake transport; all four context
     statuses; headline selection; headline formatting. No network.
+    (Count correction, Muse 4 re-run: the file holds 14 tests, not 13 —
+    the 22-test total below was already right: 14 + 4 + 4.)
   - `Futuris/tests/api/test_market_calendar_context.py` — 4 router-level
     tests mirroring `test_market_event_context.py`: available -> block +
     rationale names the release; feed missing -> `source_unavailable`;
@@ -121,7 +124,51 @@ full outlook JSON: `~/workspace/fut-030/evidence/outlook.json`.
 - `Futuris/futuris/api/routers/market.py` (wiring: request flag, response
   block, rationale fold, injectable feed)
 - `Futuris/futuris/infra/config.py` (3 new optional settings)
-- `Futuris/tests/test_fut030_calendar_context.py` (new, 13 tests)
+- `Futuris/tests/test_fut030_calendar_context.py` (new, 14 tests)
 - `Futuris/tests/api/test_market_calendar_context.py` (new, 4 tests)
+- `.github/workflows/owner-workflows.yml` (Muse 4: both new test files added
+  to the Futuris contracts step — the CI-list fix; see §6)
 - `docs/collaboration/TASK-FUT-030-ECON-CALENDAR-OUTLOOK.md` (this file)
-- `docs/collaboration/WORK_BOARD.yaml` (FUT-030 flip only)
+- `docs/collaboration/WORK_BOARD.yaml` (FUT-030 flip + STR-081 MERGED flip)
+
+## 6. Re-slot / replacement PR (Muse 4, 2026-11-25 ~10:30–10:50 IST)
+
+- Watch076 (7152691227) re-slotted FUT-030 to the pool head: PR #1766 stalled
+  (head 4943a42c, CI-list fix never pushed, no PR activity since 08:30 IST).
+  Muse 4 claimed it from the pool (hub #1483 comment 7153341361, same post
+  as the STR-081 completion-with-evidence) after verifying AVAILABLE /
+  owner-null first-hand on main 55027430.
+- Cherry-picked Muse 1's 2 commits verbatim onto fresh branch
+  `muse4/task-fut-030-econ-calendar-outlook` from main 55027430:
+  `d745198b` (implementation) + `4943a42c` (board pr stamp #1766) — both
+  applied cleanly, including the board auto-merge. A follow-up commit
+  re-points the board record to muse_4 (M1's #1766 stamp superseded).
+- CI-list fix (this run): both new test files added to the Futuris
+  health-capability contracts step in `.github/workflows/owner-workflows.yml`
+  — `Futuris/tests/test_fut030_calendar_context.py` and
+  `Futuris/tests/api/test_market_calendar_context.py`. This is the fix the
+  re-slot demanded; without it CI never ran the new tests.
+- Re-run (this run, first-hand; venv from `Futuris/requirements.txt` +
+  pytest + pytest-asyncio + aiosqlite; dummy Oracle `DATABASE_URL`;
+  repo-root `PYTHONPATH`, same shape as CI tier-1; `NO_PROXY` sanitised
+  to `localhost,127.0.0.1` — the sandbox value carries bracketed IPv6
+  literals that break httpx proxy parsing, see §2 note):
+  - CI-listed set (all 5 files): **51 passed, 0 failed** — the 3
+    pre-existing contracts files plus the 2 new files (14 + 4 = 18 new
+    tests now actually collected by the CI step).
+  - `Futuris/tests/api/test_market_event_context.py` re-run: 4 passed
+    (no regression in the IntelX event path).
+  - `python -m py_compile` on all touched files: OK.
+  - Registry validator `scripts/validate_collaboration.py` on the edited
+    tree: valid (976 tasks, 5 pre-existing file conflicts — same 5 as M1
+    reported).
+- Board flips in this PR: FUT-030 AVAILABLE → IN_REVIEW (owner muse_4,
+  branch muse4/task-fut-030-econ-calendar-outlook) + TASK-STR-081
+  IN_REVIEW → MERGED (PR #1764, merge e3985fc0 — owed flip per
+  watch075/076, owner order 7143628341 rule 4).
+- States after this run: implemented YES / tested YES (51 green in the
+  CI-listed set + 4 regression green, re-run first-hand) / merged NO
+  (replacement PR open, awaiting Muse) / deployed NO /
+  production-verified NO (live leg — a production outlook from the
+  deployed Futuris service — still needs merge + fleet CD + hub
+  clearance).
