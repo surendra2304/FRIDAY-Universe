@@ -921,6 +921,60 @@ live leg, not assertable from the repo alone.
   Work-request job disabled — correct while mid-task (VYR-076
   claimed). No pending approval cards.
 
+## §8.20 Guardrail re-verification vs new main `489a1b3b` (2026-11-26 ~02:38 IST, hourly self-check)
+
+- Main moved `b9d6aff3` → `489a1b3b` (merges #1895 watch118
+  board, #1894 LAP-005 guidance bundle, #1892 IG-FRD-006-FIX-01
+  IntelX timeout, #1891 VYR-072 live leg, #1893 watch117 board,
+  #1889 FRD-055 board, #1875 INT-053 synthesis fix, #1888
+  EARN-025 Upwork pack, #1886 MEM-026 proof run4). §8.3 method
+  repeated verbatim against `489a1b3b` (`git grep -il`, same
+  patterns; hit-file sets compared after stripping revision
+  prefixes).
+- Result: **§8.3 stands unchanged.** Nine of 13 pattern hit-file
+  sets are identical `b9d6aff3` → `489a1b3b`: scrapecreators 3,
+  opencreator 4, ace-step 5, social.media.research 4,
+  codex-cli 2, flux.2 3, flux-2 0, flux_2 0, acestep 0. Four
+  differ by exactly one new file each — podcastfy 7→8,
+  audio_content 4→5, pipeline_orchestration 7→8, montage
+  48→49 — all four adding only
+  `docs/collaboration/TASK-VYR-072-LIVE-LEG.md`, whose mentions
+  cite the IG2 modules as "Podcastfy-pattern" /
+  "OpenMontage-pattern" lanes (docs only, re-checked this run).
+  No new VyralX production hit, import, or wiring.
+- `git diff --name-only b9d6aff3..489a1b3b -- VyralX` is empty
+  — no VyralX file changed at all in this range (19 files
+  total: FRIDAY agent/tools, IntelX research API + tests, CI
+  workflow, board, LAP-005 docs, task docs, EARN-025 pack).
+  VyralX prod-path hits for scrapecreators / opencreator /
+  `codex-cli` at `489a1b3b`: 0 each. No `podcastfy` / `montage`
+  entries in VyralX `pyproject.toml` / `requirements.lock` at
+  `489a1b3b` (re-checked this run). IG2 imports remain only in
+  the three test files (`test_ig2_vyr01_audio_content.py`,
+  `test_ig2_vyr02_pipeline_orchestration.py`,
+  `test_ig3_vyr10_scene_assembly_eval.py`) plus the known prose
+  mention in `channel_strategy.json`
+  (`pipeline_orchestration.select_provider`, pre-existing — not
+  an import). IG2 modules remain unwired (§8.2 stands).
+- Board on main `489a1b3b` re-checked: VYR-076 CLAIMED, owner
+  muse_9, branch muse9/task-vyr-076, PR 1708 — sane; INT-023
+  IN_REVIEW, owner muse_9, PR 1680 — unchanged, final
+  compilation due 2026-11-27 still BLOCKED. Branch synced
+  before this commit: local = remote `4a006b36`, clean tree,
+  no open PR for the branch (API open `[]` this run). Hub #1483
+  scanned (newest `7174729890`, 1660 total; last 40 comments
+  searched): zero Muse 9 / VYR-076 / INT-023 mentions, no
+  coordinator instruction, no overdue-report directive, no
+  ruling on live-leg clearance for VYR-076; live legs still
+  HELD under the owner stop order. Silent self-check per
+  AGGRESSIVE COMPLETION RULES (7) — no hub post.
+- Usage 48% of free weekly limit (checked this run via
+  subscription-status; reset Nov 29 02:27 IST; additional
+  tokens 0%) — under the Wed 20:00 IST 50% bar (rule 6 noted;
+  next-task scope doubling is the coordinator's call).
+  Work-request job disabled — correct while mid-task (VYR-076
+  claimed). No pending approval cards.
+
 ## §7 States (reported separately)
 
 - implemented: NO — no component runs in VyralX's live path yet.
