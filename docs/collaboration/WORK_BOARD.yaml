@@ -9656,8 +9656,9 @@ tasks:
       - "PR #447 (2 files) — new suite 12/12 passed locally; REL-043 suite at pristine-main baseline 12 passed / 3 pre-existing sandbox failures (ladder-breach family, identical on unmodified main)."
       - "MERGED on origin/main: 42be2200286031fe708e791a7773c44758a1d8b1 Merge pull request #635 from surendra2304/claude/repl-pr447 (board hygiene 2026-11-16, audit §2A: PR #635 already merged — status was stale IN_REVIEW)."
       - "DEPLOYED (board hygiene sweep #2 + flip-prep re-verification, 2026-11-17): all files listed in this entry verified present on origin/main 64ca017a; fleet S1 == S2 == main == 64ca017a (merge-866 crew verification, 2026-11-17 ~09:14 IST)."
+      - 'PRODUCTION-VERIFY 2026-11-25 (TASK-INF-035, PR #1789, evidence docs/collaboration/TASK-INF-035-PRODUCTION-VERIFY.md): PARTIAL. Live probes via the S1 tunnel to AWS Inference: auto + 400k-char doc served with NO fit fields (auto bypasses selection); selection path + oversized doc 503s or serves via ladder luck; fit disclosure verified on the selection path (L4). Fix task TASK-IG-INF-01-FIX-01 named; item stays DEPLOYED, not VERIFIED.'
     blockers: []
-    next_action: "Post-merge: pR #635 (replacement for #447) merged 42be2200 -> Fleet CD -> production probe (oversized long-document request to /v1/chat/completions shows provenance estimated_context_tokens/context_window/context_overflow) -> flip VERIFIED."
+    next_action: "PRODUCTION-VERIFY 2026-11-25 (TASK-INF-035, PR #1789): PARTIAL - fit/overflow disclosure verified live (selection path: estimated_context_tokens 134885, context_window 131072, context_overflow true) but fit routing guarantee NOT verified (auto bypasses selection; health overlay precedes fit filter). Fix task TASK-IG-INF-01-FIX-01 named in docs/collaboration/TASK-INF-035-PRODUCTION-VERIFY.md. Do not flip VERIFIED until the fix lands and is re-probed live."
   - id: TASK-IG-INF-02
 
     title: "Custom/third-party inference endpoints (INFERENCE_CUSTOM_ENDPOINTS, custom-<name> providers)"
@@ -16674,14 +16675,14 @@ tasks:
   - id: TASK-VYR-044
 
     title: 'VyralX: run the machine-QA gates (caption-track count, BGM presence, watermark, loudness) over the held-render pool and file the pass/fail table per render'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_tp5
     branch: musetp5/task-vyr-044-held-render-qa
     pr: 1778
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-25T11:20:00+05:30'
+    updated_at: '2026-11-25T12:36:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - VyralX/app/services/held_render_qa.py
@@ -16697,8 +16698,9 @@ tasks:
     - 'Live leg 2026-11-25 ~10:32-10:49 IST on VyralX-Server 13.211.162.71 via the Oracle bridge, read-only; all 11 held renders measured; results /tmp/vyr044_results.json on the server (written 10:48:43 IST; re-verified row-for-row 11:20 IST self-check). NO render passes all four gates; watermark absent on all 11; true-peak failures 803 (-0.6), 804 (-0.9), 824 (-0.2 dBFS).'
     - 'Work PR #1778 open; head 2443e3b7 (branch rebased onto main 0bd83e40; merge simulation clean). Tests 25/25 pass locally; CI 10/10 green on head 20282cef before the time-correction commit.'
     - 'CORRECTION 2026-11-25 ~11:20 IST (self-check): gate-run window first filed as "~10:55-11:45 IST", board updated_at 12:00 IST, completion post headed "~12:30 IST" — all wrong (post filed 11:05:31 IST; results file mtime 10:48:43 IST). Corrected in PR #1778 this run; table re-verified row-for-row against the server results file and unchanged.'
+    - 'Merged (PR #1778, verified via GitHub API: state closed, merged true); board flip rides in PR #1789 (TASK-INF-035, Muse 15).'
     blockers: []
-    next_action: 'Peer review + merge of PR #1778; verifier to be assigned by Muse for production verification. Follow-ons (new pool tasks): caption-gate refinement, watermark marking at produce time, 801 re-render decision, 803/804/824 true-peak fixes.'
+    next_action: 'Merged (PR #1778). Verifier to be assigned by Muse for production verification. Follow-ons (new pool tasks): caption-gate refinement, watermark marking at produce time, 801 re-render decision, 803/804/824 true-peak fixes.'
   - id: TASK-FRG-019
 
     title: 'Forge: first self-upgrade slice - Forge proposes + implements one small self-improvement from its own experiment log, with before/after live proof'
@@ -17893,7 +17895,7 @@ tasks:
     - 'Claimed by Muse 5 (hub #1483 comment 7153203124, 2026-11-25 ~10:15 IST) per coordinator watch075 assignment; watch079 ruled Muse 5 KEEPS VYR-051 and the discovery-leg grant (read-only S2 run_shell) stands. Discovery 2026-11-25 ~11:17-11:27 IST: 12 queries, 120 results, 12 fresh candidates filed (evidence docs/collaboration/TASK-VYR-051-CANDIDATE-POOL.md + TASK-VYR-051-POOL.json); media QA gates BLOCKED (no cookies / SABR wall); S2 VyralX tree deleted from working tree (reported, not repaired). Work PR #1780.'
     - 'MERGED 2026-11-25 11:54 IST by the owner (merge 01e49d30); work PR #1780 (head aec8c2fe). Board flip in coordinator board PR watch085.'
     blockers: []
-    next_action: 'Pool filed in work PR #1780; merge owed to Muse. Media QA gates + S2 VyralX tree restore need coordinator decision (owner stop order gates the restore).'
+    next_action: 'Merged (PR #1780). Media QA gates + S2 VyralX tree restore need coordinator decision (owner stop order gates the restore).'
   - id: TASK-STR-049
     title: 'Stratex: verify the latest self-experiment trial judgement past counter 3980 and file it'
     status: MERGED
@@ -20052,14 +20054,14 @@ tasks:
     next_action: 'Merged in PR #1788 (merge 768e18da, 2026-11-25 ~13:10 IST); live legs still owed per the record.'
   - id: TASK-FRG-022
     title: 'Forge: adopt the Agency repo''s Reality Checker and AI Code Auditor roles as workflow passes'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-frg-022-reality-checker-auditor
     pr: 1777
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T11:00:00+05:30'
+    updated_at: '2026-11-25T12:36:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Forge/workflow_passes/
@@ -20073,8 +20075,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 11 (watch record Df9NFPKivh7, @madiyarbegenov ''The Agency'' carousel). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     - 'Claimed by Muse 15 (hub #1483 comment 7153272332, 2026-11-25 ~10:24 IST, in the TASK-INF-034 completion post): board AVAILABLE / owner null on main 55027430; branch muse15/task-frg-022-reality-checker-auditor.'
     - 'Done with live evidence (evidence: docs/collaboration/TASK-FRG-022-REALITY-CHECKER-AUDITOR.md): Reality Checker + AI Code Auditor as Forge/workflow_passes/, coordinated by AgentsOrchestrator; tests 29/29 local (Forge/tests/test_frg022_workflow_passes.py, in owner-workflows.yml Forge list); live proof driver Forge/scripts/frg022_live_proof.py run 2026-11-25 ~10:45 IST - DIRTY ship BLOCKED at audit (1 critical CWE-798 + 1 high CWE-1426), RESCAN resolved 1/1, CLEAN ship READY_TO_SHIP.'
+    - 'Merged by Surendra (PR #1777, merge c9fea76a0d9792992854a51908b9624292aa295b, 2026-11-25T05:56:49Z); board flip rides in PR #1789 (TASK-INF-035).'
     blockers: []
-    next_action: 'Work PR #1777 open, awaiting coordinator review/merge. No production consumer by design (workflow passes for Forge; the live proof is the driver run).'
+    next_action: 'Merged (PR #1777, merge c9fea76a0d9792992854a51908b9624292aa295b, 2026-11-25T05:56:49Z, by Surendra). No production consumer by design (workflow passes for Forge; the live proof is the driver run).'
   - id: TASK-INF-034
     title: 'Inference: evaluate the AWS/Berkeley ''Infinity'' scale-to-zero agent runtime'
     status: MERGED
@@ -20368,7 +20371,7 @@ tasks:
     - 'CHECKPOINT 1 (Muse 20, 2026-11-25 ~11:35 IST, docs/collaboration/TASK-VYR-071-FIX-01-CHECKPOINT-1.md): DECISION — RETIRE IG-VYR-06. First-hand on main f6b912a6: previs.py 404; code search previs = 6 files, all docs/tests, zero live code; IG-VYR-06 = 1 file (VYR-071 repo-leg evidence doc); PR #1196 body names no successor; scene-assembly doc previs row is a retirement row (beat-level storyboarding no longer offered); programme doc PRODUCTION-VERIFICATION-PROGRAMME.md not locatable on main (7 reference-only hits). IG-VYR-06 marked not-applicable, NEVER verified on retired previs.py.'
     - 'MERGED 2026-11-25 11:55 IST by the owner (merge 0546311f); work PR #1781 (head 02bc3e17). Board flip in coordinator board PR watch085.'
     blockers: []
-    next_action: 'Work PR #1781 open (head 8af83103): checkpoint-1 doc + this board flip. Retirement edits done in-PR; peer merge after full-diff review + green CI.'
+    next_action: 'Merged (PR #1781, checkpoint-1 decision RETIRE IG-VYR-06 with retirement edits in-PR).'
 
   - id: TASK-VYR-072
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG2-VYR-01, IG2-VYR-02, IG2-VYR-03, IG2-VYR-04, IG2-VYR-05 - live extreme-condition verification (wave 1)'
@@ -20645,16 +20648,17 @@ tasks:
 
   - id: TASK-INF-035
     title: 'PRODUCTION-VERIFY: Inference corpus items IG-INF-01, IG-INF-02, IG-INF-03, IG-INF-04 - live load + failover verification (wave 3)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_15
+    branch: muse15/task-inf-035-production-verify
+    pr: 1789
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T12:36:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INF-035-PRODUCTION-VERIFY.md
     acceptance:
     - 'PRODUCTION-VERIFY (owner standard 2026-11-24: merged code is NOT implemented): live extreme-condition verification of TASK-IG-INF-01, TASK-IG-INF-02, TASK-IG-INF-03, TASK-IG-INF-04.'
     - 'Extreme-condition test: real prompts routed through live Inference on FRIDAY-Server under load (long-context, concurrent) + provider-failure failover case per item'
@@ -20662,8 +20666,10 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Claimed by Muse 15 (hub #1483 comment 7154078708, 2026-11-25 ~11:13 IST, in the TASK-FRG-022 completion post); coordinator watch081 (comment 7154336804) confirms the claim stands. Branch muse15/task-inf-035-production-verify.'
+    - 'Done with live evidence (evidence: docs/collaboration/TASK-INF-035-PRODUCTION-VERIFY.md; probes 2026-11-25 ~12:07-12:45 IST via bridge run_shell on S2 -> ssh to S1 -> tunnel to AWS Inference 15.134.130.145): PARTIAL. IG-INF-01 fit disclosure verified live (selection path: estimated_context_tokens 134885, context_window 131072, context_overflow true) but fit routing guarantee NOT verified (auto bypasses selection; health overlay precedes fit filter) - fix task TASK-IG-INF-01-FIX-01 named. IG-INF-02 VERIFIED no-op-unset (/v1/models 8 models, zero custom). IG-INF-03 VERIFIED (evaluate_candidate.py both specs exit 2 BLOCKED_NO_CREDENTIALS live on S1). IG-INF-04 VERIFIED (needle pilot + assessment present live; pilot NOT RUN on S1, no live fast-path). Key live correction: S1 Inference.service is dead; :8001 is an ssh tunnel to AWS - the live gateway is AWS-hosted, not S1 code.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'Work PR #1789 open, IN_REVIEW. Verdict PARTIAL (evidence: docs/collaboration/TASK-INF-035-PRODUCTION-VERIFY.md): IG-INF-02/03/04 verified on their live legs; IG-INF-01 PARTIAL (fit disclosure verified, routing guarantee not) with fix task TASK-IG-INF-01-FIX-01 named. Closure is Muse''s call; next queue item TASK-INF-036.'
 
   - id: TASK-INF-036
     title: 'PRODUCTION-VERIFY: Inference corpus items IG-INF-05, IG-INF-06, IG2-INF-01, IG2-INF-02 - live load + failover verification (wave 3)'
