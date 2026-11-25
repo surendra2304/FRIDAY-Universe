@@ -20506,14 +20506,14 @@ tasks:
 
   - id: TASK-VYR-072
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG2-VYR-01, IG2-VYR-02, IG2-VYR-03, IG2-VYR-04, IG2-VYR-05 - live extreme-condition verification (wave 1)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_14
-    branch: muse14/task-vyr-072
-    pr: 1712
+    branch: muse14/task-vyr-072-live-leg
+    pr: 1891
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T01:14:03+05:30'
+    updated_at: '2026-11-26T01:45:41+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20525,8 +20525,31 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Claimed by Muse 14, hub #1483 comment 7138526997, 2026-11-24 ~22:26 IST, per central pool pull model (hub 7136890552). Board verified AVAILABLE, owner null on main ca6de826; branch muse14/task-vyr-072 created at ca6de826.'
     - 'Checkpoint 1: work PR #1712 (head 333da740) — repo-side legs verified first-hand: IG2-VYR-01..05 modules present + compile OK, 32 unit tests pass; no repo-side gap; G1 live leg gated (VyralX-Server route decision awaited, stop order in force).'
+    - 'LIVE LEG (work PR #1891, branch muse14/task-vyr-072-live-leg @ b9d6aff3, clearance WATCH113 hub #1483 comment 7171357668): all five items ran live in the live tree on VyralX-Server (13.211.162.71, md5-verified = main) — audio job (10 turns, Edge TTS), full 9-stage pipeline run to complete, shorts job + batch of 3, faster-whisper transcript (55 words) + real ffmpeg 9:16 render (1080x1920, 30.0s, rc 0), film + film.html + studio edits; every failure case raised correctly live. 32/32 unit tests re-run on main b9d6aff3. Held-render QA: loudness PASS (-13.6 LUFS), BGM unmeasured per design, watermark absent, caption track doubled in held render framed--bh5VGbrbLI-5970f1 (multiple_caption_tracks:2, FIX-01 filed). Metrics-sync NOT run: YouTube credentials not configured (G2). Evidence: docs/collaboration/TASK-VYR-072-LIVE-LEG.md.'
     blockers: []
-    next_action: 'Checkpoint 1 filed (work PR #1712): repo-side legs done, 32 tests pass; live leg gated on VyralX-Server route decision (G1).'
+    next_action: 'MERGED via work PR #1891 (live leg): all five items production-verified live; FIX-01 filed for the doubled-caption held render; metrics-sync (G2) awaits YouTube credentials.'
+
+  - id: TASK-VYR-072-FIX-01
+    title: 'Held render framed--bh5VGbrbLI-5970f1 carries doubled captions (multiple_caption_tracks:2): repair or re-render the caption track to a single track and re-run held-render QA to pass'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-26'
+    updated_at: '2026-11-26T01:45:41+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-072-LIVE-LEG.md
+    acceptance:
+    - 'The render framed--bh5VGbrbLI-5970f1 (or its re-render) passes the held-render QA caption_track gate: exactly one caption track (single_caption_track).'
+    - 'Frame-visible confirmation via the vision sampler is part of the fix verification (the live leg measured the track from the render .ass only).'
+    - 'The doubled-caption defect is NOT fixed by editing the QA gate or the .ass parser; the render caption track itself is repaired.'
+    evidence:
+    - 'Filed by Muse 14 from the TASK-VYR-072 live leg (docs/collaboration/TASK-VYR-072-LIVE-LEG.md section 4b, work PR #1891): live on VyralX-Server 2026-11-26, the render .ass has 20 speech events with overlapping pairs (0.0-1.0 vs 0.0-3.34, 0.0-3.34 vs 1.0-2.0 and 2.0-3.56, 25.28-27.28 vs 25.34-29.23) — caption_track_gate returns multiple_caption_tracks:2.'
+    blockers: []
+    next_action: 'AVAILABLE in the pool: claim via hub #1483, then repair/re-render the caption track and re-run held-render QA.'
 
   - id: TASK-VYR-073
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG2-VYR-06, IG2-VYR-07, IG2-VYR-08, IG2-VYR-09, IG2-VYR-10 - live extreme-condition verification (wave 1)'
