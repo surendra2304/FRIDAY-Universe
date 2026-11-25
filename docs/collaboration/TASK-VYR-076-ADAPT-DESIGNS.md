@@ -352,6 +352,41 @@ live leg, not assertable from the repo alone.
   No hub post this run: self-check silent per aggressive completion
   rule 7 (no state change).
 
+## §8.7 Guardrail re-verification vs new main `f6b912a6` (2026-11-25 ~11:38 IST, hourly self-check)
+
+- Main moved `6fbc9b3b` → `f6b912a6` (merges #1774 VYR-069 what-if story
+  template, #1777 FRG-022 reality-checker auditor, #1755 STR-051 board,
+  #1772 MEM-030 Obsidian second brain, #1776 FUT-030 econ calendar).
+  §8.3 method repeated verbatim against `f6b912a6` (`git grep`, same
+  patterns).
+- Result: **§8.3 stands unchanged.** ScrapeCreators / OpenCreator /
+  `codex-cli`: zero hits in VyralX prod paths (excl. tests). FLUX.2 /
+  ACE-Step variants: hits only in the registry, the IG test name-list, my
+  checkpoint-1 doc, and the board — same categories as §8.3, no new
+  VyralX production hit. No `podcastfy` / `montage` entries in VyralX
+  `pyproject.toml` / `requirements.lock`. Zero Python import references
+  to `audio_content` / `pipeline_orchestration` from any other VyralX
+  production file (imports only in the two IG2 test files); the two known
+  prose mentions (`channel_strategy.json`, `SCENE_ASSEMBLY_EVALUATION.md`)
+  unchanged.
+- New merges introduced **zero** references to any of the six repos or to
+  the IG2 modules: the `podcastfy`/`montage`, FLUX.2, ACE-Step, and
+  ScrapeCreators/OpenCreator hit-file sets at `f6b912a6` are identical to
+  the sets at `6fbc9b3b` (diff empty after stripping revision prefixes).
+- Clearance re-checked this run through coordinator watch080
+  (`7154044918`, ~11:11 IST) + watch081 (`7154336804`, ~11:29 IST) +
+  addendum (`7154366688`, ~11:31 IST) and latest hub comments (newest
+  `7154497656`, 11:39 IST, Muse 2 MEM-030/MEM-031 — not mine): no Muse 9
+  / VYR-076 mention, no ruling on live-leg clearance. Live legs still
+  HELD. No new assignment to Muse 9. Board on main `f6b912a6` re-checked:
+  VYR-076 CLAIMED, owner muse_9, branch muse9/task-vyr-076, PR 1708 —
+  sane.
+- Usage 44% of free weekly limit (checked this run via
+  subscription-status; reset Nov 29 02:27 IST; additional tokens 0%).
+  Work-request job disabled — correct while mid-task (VYR-076 claimed).
+  No hub post this run: self-check silent per aggressive completion
+  rule 7 (no state change).
+
 ## §7 States (reported separately)
 
 - implemented: NO — no component runs in VyralX's live path yet.
@@ -359,7 +394,7 @@ live leg, not assertable from the repo alone.
 - merged: NO — no work PR open (checkpoint-1 PR #1708 merged pre-rules).
 - deployed: NO.
 - production-verified: NO.
-- Usage: 43% of free weekly limit (checked this run; reset Nov 29 02:27 IST;
+- Usage: 44% of free weekly limit (checked this run; reset Nov 29 02:27 IST;
   additional tokens 0%). Under the Wed 20:00 IST 50% bar — next task scope
   doubles per rule 6 unless usage rises.
 - INT-023 final compilation (due 2026-11-27) remains mine but BLOCKED
