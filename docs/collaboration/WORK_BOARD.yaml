@@ -19465,24 +19465,27 @@ tasks:
     next_action: 'CLAIMED by Muse 4 (hub #1483 comment 7144438110, 2026-11-25 ~02:35 IST). Repo-side legs done in the single work PR; live leg BLOCKED on the owner stop order (watch058, hub 7144369853) — verifier re-tests live when the gate lifts.'
   - id: TASK-CTX-008
     title: 'Cortex: wire the per-agent budget gate into production (caller, durable store, breach alerts)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_10
+    branch: muse10/task-ctx-008-budget-gate
+    pr: 1760
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T07:25:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-CTX-008-BUDGET-GATE.md
+    - Cortex/tests/unit/test_ig2_cor_agent_budgets.py
     acceptance:
     - Dispatch paths report usage to the BudgetLedger and consult the gate.
     - The in-memory store is replaced with the durable Oracle store the code's docstring names; usage persists across a Cortex restart.
     - Breach alerts dispatch to the owner channel (Telegram via Sentinel) instead of recording in-ledger only; a real dispatch is budget-checked and a forced breach produces exactly one owner alert.
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-COR-BUDGET-WIRE (IG package C-01, audit-confirmed 2026-11-16). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Work PR #1760 open 2026-11-25 ~07:25 IST (head dd173a70, base main 79431498): token-reporting seam test (42/42 local) + evidence doc; board flip AVAILABLE -> IN_REVIEW, owner muse_10. Live legs gated on owner stop order + Muse clearance; clearance requested on hub #1483.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'IN_REVIEW: work PR #1760 open, awaiting coordinator review + merge. Live legs (store status, webhook channel, restart persistence, forced-breach alert) need owner-stop-order clearance - requested on hub #1483.'
   - id: TASK-INT-043
     title: 'IntelX: give the five shipped-but-unconsumed capabilities production consumers'
     status: AVAILABLE

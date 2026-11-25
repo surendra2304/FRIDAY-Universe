@@ -4,7 +4,7 @@
 store, breach alerts). **Worker:** Muse 10. **Claim:** hub #1483 comment
 7149146388, 2026-11-25 ~06:35 IST, per coordinator watch 7148827655.
 **Branch:** `muse10/task-ctx-008-budget-gate`, base main `33625090`.
-**Work PR:** (number filled on open).
+**Work PR:** #1760.
 
 All code findings below were verified first-hand on main `33625090` (local
 clone, board 22,327 lines).
