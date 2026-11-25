@@ -245,12 +245,12 @@ class _HeadingParser(HTMLParser):
 
     Modern directories (JaRanks, live 2026-11-25) use Tailwind utility
     classes — no ``listing``/``business``/``card`` hook exists anywhere in
-    the markup, so the hint parser finds zero blocks. The structure that
+    the markup, so the hint parser finds zero providers. The structure that
     DOES survive is the heading: each provider is an ``<h2>``/``<h3>``
     carrying a link to its own profile page, followed by its description
     and meta rows. A section is one heading plus the text up to the next
-    heading; the heading link becomes the detail-page URL. Only used when
-    the hint parser found nothing, so hinted pages are untouched.
+    heading; the heading link becomes the detail-page URL. Parsed alongside
+    the hint blocks (union, not either/or) and deduped downstream.
     """
 
     def __init__(self) -> None:
@@ -259,6 +259,7 @@ class _HeadingParser(HTMLParser):
         self._current: dict | None = None
         self._in_heading = False
         self._chars = 0
+        self._chrome_depth = 0
 
     def _close(self) -> None:
         if self._current is not None:
@@ -268,6 +269,11 @@ class _HeadingParser(HTMLParser):
         self._chars = 0
 
     def handle_starttag(self, tag: str, attrs: list) -> None:
+        if tag in _ListingParser._CHROME_TAGS:
+            self._chrome_depth += 1
+            return
+        if self._chrome_depth:
+            return
         if tag in ("h2", "h3"):
             self._close()
             self._current = {"text": [], "tel": "", "mailto": "", "href": "",
@@ -290,10 +296,17 @@ class _HeadingParser(HTMLParser):
                 self._current["href"] = href
 
     def handle_endtag(self, tag: str) -> None:
+        if tag in _ListingParser._CHROME_TAGS:
+            self._chrome_depth = max(0, self._chrome_depth - 1)
+            return
+        if self._chrome_depth:
+            return
         if tag in ("h2", "h3"):
             self._in_heading = False
 
     def handle_data(self, data: str) -> None:
+        if self._chrome_depth:
+            return
         text = data.strip()
         if not text or self._current is None:
             return
@@ -343,20 +356,25 @@ def parse_listing_page(html_text: str, page_url: str, category: str = "",
     ``mailto:`` link or the block text. Name-only blocks (nav junk, section
     heads) are dropped, never delivered as leads. ``run_lead_generation``
     passes ``require_contact=False`` so it can enrich contact-less blocks
-    from their detail pages before the same filter is applied.
+    from their detail pages before the same filter is applied. Blocks come
+    from BOTH the hint parser and the heading parser (union); duplicates
+    merge in ``dedupe_leads``.
     """
     parser = _ListingParser()
     parser.feed(html_text or "")
     # Empty blocks (image-only containers such as a "rounded-card" logo div)
-    # do not count: if every hinted block is empty, the page is really a
-    # heading-structured page and the fallback must still run.
-    blocks = [b for b in parser.blocks if " ".join(b["text"]).strip()]
-    if not blocks:
-        # No hinted blocks (Tailwind/modern markup): fall back to headings.
-        heading_parser = _HeadingParser()
-        heading_parser.feed(html_text or "")
-        heading_parser.close()
-        blocks = heading_parser.blocks
+    # do not count as listings.
+    hint_blocks = [b for b in parser.blocks if " ".join(b["text"]).strip()]
+    # TASK-IG2-FRD-03-FIX-01 (v3): UNION, not either/or. On the live JaRanks
+    # page the hint parser finds two junk non-empty blocks ("Rank", "The
+    # JaRanks newsletter") and zero providers — an either/or fallback keyed
+    # on "any hint block" would never reach the headings that DO carry the
+    # 16 providers. Both sources are parsed; duplicates merge in dedupe and
+    # junk dies in the contact filter below.
+    heading_parser = _HeadingParser()
+    heading_parser.feed(html_text or "")
+    heading_parser.close()
+    blocks = hint_blocks + heading_parser.blocks
     leads: list[Lead] = []
     for block in blocks:
         text = " ".join(block["text"])
@@ -377,6 +395,10 @@ def parse_listing_page(html_text: str, page_url: str, category: str = "",
         if require_contact and not (lead.phone or lead.email):
             continue
         leads.append(lead)
+    # The union parses each listing twice (hint block + heading section);
+    # merge those duplicates here so callers never see a doubled table.
+    # (dedupe_leads is defined below; resolved at call time.)
+    leads = dedupe_leads(leads)
     next_url = urljoin(page_url, parser.next_url) if parser.next_url else ""
     return leads, next_url
 

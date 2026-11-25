@@ -241,6 +241,19 @@ def test_heading_sections_do_not_adopt_trailing_body_links():
     assert leads[0].website == ""
 
 
+def test_parse_unions_hint_and_heading_blocks_without_doubling():
+    # A page with a hinted card AND a heading listing returns both, once
+    # each — the heading duplicate of the card merges in parse.
+    html = ('<html><body>'
+            '<div class="listing-card"><h3>Hinted Co</h3><p>Call 876-555-0100</p></div>'
+            '<h2><a href="/profile/headed">Headed Co</a></h2>'
+            '<p>Call 876-555-0200 for quotes</p>'
+            '</body></html>')
+    leads, _ = parse_listing_page(html, "https://dir.example/cat", "general")
+    assert [lead.name for lead in leads] == ["Hinted Co", "Headed Co"]
+    assert leads[1].website == "https://dir.example/profile/headed"
+
+
 def test_run_never_follows_off_host_detail_links(monkeypatch):
     monkeypatch.setattr(
         "friday.autonomous.lead_generation.check_url_allowed", lambda url: None)
