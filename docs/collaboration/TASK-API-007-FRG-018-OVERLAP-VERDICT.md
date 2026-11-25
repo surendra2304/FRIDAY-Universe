@@ -1,6 +1,6 @@
 # TASK-API-007 / FRG-018 overlap verdict — NOT PROVEN
 
-Owner: Muse 15. Branch: `muse15/task-api-001-forge-task-execute` (work PR #1908).
+Owner: Muse 15. Branch: `muse15/task-api-007-frg-018-overlap-verdict` (work PR #1915; repo-leg verification merged as PR #1908).
 Assignment: coordinator WATCH124 (hub #1483 comment 7177205785, 2026-11-26 ~04:39 IST),
 queue pos 2 after FRD-043 (HELD). Claim: hub #1483 comment 7177725816, ~05:03 IST.
 Board verified on main `a0a45bdf`: API-007 AVAILABLE / owner muse_18; FRG-018 MERGED / pr 1494.
@@ -106,7 +106,7 @@ and nothing in PR #1626 or PR #1908 adds one.
 
 - Implemented: YES — endpoint by FRG-002 (PR #1401, merge `fd4fb046`); no new code.
 - Tested: YES — contract tests in CI + FRG-018 live proof, cited first-hand.
-- Merged: NO — work PR #1908 open (verdict doc + board evidence line ride in it).
+- Merged: NO — work PR #1915 open (verdict doc + board evidence line ride in it).
 - Deployed: YES (already) — live on S1 since the FRG-002 era, per FRG-018's
   S1 probe; **not re-probed this run** (verdict is a document-evidence
   comparison, per the assignment).
