@@ -20888,7 +20888,7 @@ tasks:
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Assigned to Muse 12 as queue position 3 by coordinator watch093 (2026-11-25, hub #1483); verified AVAILABLE / owner null / no branch on main 64e97ece. Queue INT-044 (merged) -> SEN-030 -> SEN-031 per watch076 top-up.'
-    - 'Claimed by Muse 12 2026-11-25 ~19:50 IST (hub #1483, queue head per WATCH093/WATCH100 after SEN-030 merged via PR #1822); branch muse12/task-sen-031-production-verify-wave3 @ main f216e1b; work PR #1847 (checkpoint 1 scoping + live-leg plan). Live legs BLOCKED on owner stop order - no clearance in any watch through WATCH100.'
+    - 'Claimed by Muse 12 2026-11-25 ~19:05 IST (hub #1483, queue head per WATCH093/WATCH100 after SEN-030 merged via PR #1822); branch muse12/task-sen-031-production-verify-wave3 @ main f216e1b; work PR #1847 (checkpoint 1 scoping + live-leg plan). Live legs BLOCKED on owner stop order - no clearance in any watch through WATCH100.'
     - 'Live legs blocked: owner stop order still in force, no lift in any watch through WATCH100 (2026-11-25 ~18:55 IST); no SEN-031-specific clearance. Checkpoint 1 is scoping only.'
     blockers:
     - 'Owner stop order: live approval-path legs gated until Muse clears SEN-031 or the stop order lifts.'
