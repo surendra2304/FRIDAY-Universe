@@ -4,9 +4,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from ig.research_desk import (PROMPT_LIBRARY, analyse, pattern_match,
-                              plan, risk_checklist, risk_manager_pass,
-                              run_desk, scan, scenario_analysis)
+from ig.research_desk import (FRAMEWORK_LENSES, PROMPT_LIBRARY, analyse,
+                              chaos_lens, fractals_lens,
+                              game_theory_lens, pattern_match, plan,
+                              risk_checklist, risk_manager_pass, run_desk,
+                              scan, scenario_analysis)
 
 SETUP = {"symbol": "BTCUSDT", "timeframe": "4h", "direction": "long",
          "entry_ref": 100.0, "invalidation": 95.0, "target": 112.5}
@@ -363,3 +365,182 @@ def test_run_desk_scenario_and_risk_sections():
     assert rp["take_profit"] == 115.0
     assert abs(rp["rr_ratio"] - 3.0) < 1e-12
     assert memo["summary"]["risk_passes_passed"] == 1
+
+
+# --- TASK-STR-079: framework lenses (Chaos / Game Theory / Fractals) ---
+
+def test_framework_lenses_library():
+    assert sorted(FRAMEWORK_LENSES) == ["chaos", "fractals",
+                                        "game_theory"]
+    for key, entry in FRAMEWORK_LENSES.items():
+        assert entry["id"] == key
+        for field in ("title", "framing", "questions", "source",
+                      "board_task", "implements"):
+            assert entry[field], "%s missing %s" % (key, field)
+        assert len(entry["questions"]) == 3
+        assert "DUYHoUdD5vk" in entry["source"]
+        assert entry["board_task"] == "TASK-STR-079"
+    assert FRAMEWORK_LENSES["chaos"]["source"].startswith(
+        "stratex package S-02")
+    assert FRAMEWORK_LENSES["game_theory"]["source"].startswith(
+        "stratex package S-03")
+    assert FRAMEWORK_LENSES["fractals"]["source"].startswith(
+        "stratex package S-04")
+    import ig.research_desk as desk
+    for entry in FRAMEWORK_LENSES.values():
+        assert callable(getattr(desk, entry["implements"]))
+
+
+def test_chaos_lens_flat_series_is_calm():
+    out = chaos_lens(_flat_candles())
+    assert out["status"] == "ok"
+    assert out["sensitivity"]["label"] == "low"
+    assert out["sensitivity"]["spread_pct"] == 0.0
+    assert out["tail_moves"]["count"] == 0
+    assert out["evidence"]["conditions_present"] == []
+    assert len(out["questions"]) == 3
+    assert all(q["question"] and q["answer"] and "evidence" in q
+               for q in out["questions"])
+
+
+def test_chaos_lens_planted_series_is_highly_sensitive():
+    # The planted series has three similar windows whose forwards are
+    # +3% / -3% / +3%: similar starts, divergent outcomes.
+    out = chaos_lens(_planted_candles())
+    assert out["status"] == "ok"
+    assert out["sensitivity"]["similar_windows"] == 3
+    assert abs(out["sensitivity"]["spread_pct"] - 6.0) < 1e-9
+    assert out["sensitivity"]["label"] == "high"
+
+
+def _break_candles():
+    """40 daily candles: 30 flat at 100, then a violent 10-bar tail
+    ending at a new low — volatility expansion + range break."""
+    closes = [100.0] * 30 + [102.0, 98.0, 102.0, 98.0, 102.0,
+                             98.0, 102.0, 98.0, 102.0, 96.0]
+    return [{"high": c, "low": c, "close": c} for c in closes]
+
+
+def test_chaos_lens_names_probability_shift_conditions():
+    out = chaos_lens(_break_candles())
+    assert out["status"] == "ok"
+    by_name = {c["name"]: c
+               for c in out["probability_shift_conditions"]}
+    assert by_name["volatility_expansion"]["present"] is True
+    assert by_name["range_break"]["present"] is True
+    assert "broke below the low" in by_name["range_break"]["evidence"]
+    assert set(out["evidence"]["conditions_present"]) == {
+        "volatility_expansion", "range_break"}
+    assert out["tail_moves"]["count"] > 0
+
+
+def test_chaos_lens_insufficient_history():
+    out = chaos_lens(_flat_candles(10))
+    assert out["status"] == "insufficient_history"
+    assert out["sensitivity"] is None
+    assert "reason" in out
+
+
+def test_game_theory_lens_crowded_longs_and_trap():
+    out = game_theory_lens(_uptrend_candles(), SETUP)
+    assert out["status"] == "ok"
+    assert out["crowded_side"] == "longs"
+    assert out["trap"]["trapped_side"] == "longs"
+    # Window is the last 30 bars (i=10..39): low 105.0, high 123.4.
+    assert out["trap"]["trigger"] == 105.0
+    assert out["trap"]["move_pct"] < 0
+    clusters = {c["side"]: c for c in out["stop_clusters"]}
+    assert clusters["shorts"]["level"] == 123.4
+    assert clusters["longs"]["level"] == 105.0
+    # The setup question: entry 100 chases beyond the trap level
+    # 105.0, and invalidation 95 sits beyond a stop-cluster level.
+    assert len(out["questions"]) == 4
+    assert "chases beyond the trap level" in out["questions"][3]["answer"]
+    assert "invalidation sits beyond a stop-cluster level" in \
+        out["questions"][3]["answer"]
+
+
+def test_game_theory_lens_crowded_shorts():
+    out = game_theory_lens(_downtrend_candles())
+    assert out["crowded_side"] == "shorts"
+    assert out["trap"]["trapped_side"] == "shorts"
+    # Window is the last 30 bars (i=10..39): high 117.0, low 98.6.
+    assert out["trap"]["trigger"] == 117.0
+    assert out["trap"]["move_pct"] > 0
+    assert len(out["questions"]) == 3  # no setup supplied
+
+
+def test_game_theory_lens_flat_is_uncrowded():
+    out = game_theory_lens(_flat_candles())
+    assert out["crowded_side"] == "neither"
+    assert out["trap"] is None
+    assert "no crowded side to trap" in out["questions"][2]["answer"]
+
+
+def test_game_theory_lens_insufficient_history():
+    out = game_theory_lens(_flat_candles(10))
+    assert out["status"] == "insufficient_history"
+    assert out["crowded_side"] is None
+    assert "reason" in out
+
+
+def test_fractals_lens_uptrend_is_self_similar():
+    out = fractals_lens(_uptrend_candles(100))
+    assert out["status"] == "ok"
+    assert out["self_similar"] is True
+    assert out["agreement"] == 1.0
+    assert out["majority_direction"] == "up"
+    assert out["breaks"] == []
+    assert all(d["direction"] == "up"
+               for d in out["directions"].values())
+
+
+def _mixed_scale_candles():
+    """100-bar uptrend whose last 5 bars fall ~0.4%/bar: the 5-bar
+    scale turns down while 10/30/60 stay up."""
+    candles = _uptrend_candles(100)
+    base = candles[95]["close"]
+    for k in range(5):
+        c = base * (1 - 0.004 * k)
+        candles[95 + k] = {"high": c, "low": c, "close": c}
+    return candles
+
+
+def test_fractals_lens_mixed_scales_break():
+    out = fractals_lens(_mixed_scale_candles())
+    assert out["status"] == "ok"
+    assert out["self_similar"] is False
+    assert out["majority_direction"] == "up"
+    assert abs(out["agreement"] - 0.75) < 1e-12
+    assert [b["scale"] for b in out["breaks"]] == [5]
+    assert out["directions"][5]["direction"] == "down"
+    assert out["directions"][60]["direction"] == "up"
+    smallest = out["questions"][2]
+    assert "5-bar net" in smallest["answer"]
+    assert "60-bar net" in smallest["answer"]
+
+
+def test_fractals_lens_insufficient_history():
+    out = fractals_lens(_uptrend_candles(40))
+    assert out["status"] == "insufficient_history"
+    assert out["self_similar"] is None
+    assert "reason" in out
+
+
+def test_run_desk_framework_lens_sections():
+    memo = run_desk([SETUP], CTX, {"BTCUSDT": _planted_candles()},
+                    equity=10000.0, risk_per_trade_pct=0.001,
+                    max_risk_pct=0.001)
+    lenses = memo["framework_lenses"]["BTCUSDT"]
+    assert sorted(lenses) == ["chaos", "fractals", "game_theory"]
+    assert all(lens["status"] == "ok" for lens in lenses.values())
+    assert lenses["chaos"]["sensitivity"]["label"] == "high"
+    # The planted series is up at 10/30/60 bars but down at 5 bars
+    # (the current window's shape dips at its end) — a real break.
+    assert lenses["fractals"]["self_similar"] is False
+    assert lenses["fractals"]["majority_direction"] == "up"
+    assert [b["scale"] for b in lenses["fractals"]["breaks"]] == [5]
+    assert memo["summary"]["framework_lenses_issued"] == 1
+    # The lenses change nothing else: same plan + checklist as before.
+    assert memo["summary"]["plans_drafted"] == 1
+    assert memo["summary"]["checklists_passed"] == 1
