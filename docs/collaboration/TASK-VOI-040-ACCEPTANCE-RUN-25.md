@@ -191,10 +191,10 @@ prompt arrived.
 
 - **TASK-VOI-040 AVAILABLE → IN_REVIEW** (owner muse_1, branch
   `muse1/task-voi-040-acceptance-run-25`, this work PR) — this task.
-- NOTE (owed, NOT in this PR): TASK-VOI-039 is still IN_REVIEW on the board
-  although its work PR #1868 merged (`5188dff3`, 2026-11-25 22:08:31 IST,
-  verified first-hand via the PR API) — its MERGED flip is owed to a
-  coordinator board pass.
+- NOTE (corrected 2026-11-25 ~23:57 IST): TASK-VOI-039 reads MERGED on the
+  board (verified first-hand on main 3efe8b04, blob 1c8badc0; pr 1868, merge
+  5188dff3 — the MERGED flip rode in M15's PR #1872, merge 3efe8b04).
+  Nothing owed. Coordinator correction WATCH111 (7170527287).
 - No code or test files in this PR (evidence doc + board only), so the FUT-030
   CI-coverage lesson does not apply — there are no new tests to list in any
   workflow; CI green here means the board YAML parses and the validators pass.
