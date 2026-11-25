@@ -207,7 +207,7 @@ jobs:
             tests/test_laptop_bridge_lap001.py \
             tests/test_mem029_production_callers.py \
             tests/test_ig_frd_001_goal_loop.py tests/test_frd_045_woop.py \
-            tests/test_capability_routing.py tests/test_ig2_frd03_lead_generation.py
+            tests/test_capability_routing.py tests/test_ig2_frd03_lead_generation.py tests/test_ig_frd_058_rsvp.py
 
       # TASK-REL-088: Memora tier-1 tests. Same venv pattern as the vector
       # step above, plus pytest + pytest-asyncio; same env, but a separate
