@@ -144,6 +144,10 @@ jobs:
           # names + log tail into the check-run summary — this is the step
           # that runs test_f3_peer_transport_exponential_backoff, the test
           # REL-080 repair run 4 could not name from the summary.
+          # TASK-VYR-059: tests/unit/test_ig2_cor_agent_budgets.py rides in
+          # this invocation so the REL-068 guard sees it collected (CTX-008
+          # shipped it uncollected; it blocked this PR's contracts check).
+          # Proven locally in the same venv: 14 passed.
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
             --check "test-job" \
@@ -152,6 +156,7 @@ jobs:
             --job "test" \
             -- .venv-cortex-ci/bin/python -m pytest -q \
             tests/unit/test_e2e_tier1.py tests/e2e/test_e2e_tier1.py \
+            tests/unit/test_ig2_cor_agent_budgets.py \
             --deselect tests/unit/test_e2e_tier1.py::test_f16_readme_contains_env_vars_table \
             --deselect tests/unit/test_e2e_tier1.py::test_f16_env_example_contains_all_core_settings \
             --deselect tests/e2e/test_e2e_tier1.py::test_f16_readme_contains_env_vars_table \
