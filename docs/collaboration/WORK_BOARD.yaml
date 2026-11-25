@@ -18178,14 +18178,14 @@ tasks:
 
   - id: TASK-STR-051-FIX-01
     title: 'G1: reconcile the 35 venue closes with no ledger row (+15.93 USDT on 2026-11-24) - match each close to a ledger row or file it as a genuine gap, then re-run the daily reconciliation'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_18
     branch: muse18/task-str-051-fix-01
     pr: 1769
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T09:21:03+05:30'
+    updated_at: "2026-11-25T12:35:06+05:30"
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-STR-051-WINDOW-STATE.md
@@ -18205,6 +18205,7 @@ tasks:
     - 'Grant: read-only run_shell server 1 (Oracle Server 1) asked in hub 7151623500 (~08:50 IST) and GRANTED in coordinator follow-up 7151724843 (created 2026-11-25T03:14:23Z = 08:44:23 IST), scope confirmed standing in watch073 7151960206: ls/cat/tail/head/sed -n/wc -l/sha256sum/md5sum/jq on exactly Stratex/state/fill_ledger.jsonl + Stratex/state/reconciliation/daily_2026-11-23.json + daily_2026-11-24.json, TASK-STR-051-FIX-01 live leg only. No writes, no other servers, no credential reads.'
     - 'Checkpoint 1 pushed to branch muse18/task-str-051-fix-01 @ bd0b413f (parent main d2a40a6d): offline matcher Stratex/scripts/g1_reconcile.py + Stratex/tests/test_g1_reconcile.py (11/11 pass locally) + checkpoint-1 doc + CI-list line. Hub status 7151801737 (created 08:49:09 IST; the post header says ~09:20 IST, mislabelled - created_at is authoritative).'
     - 'Live-leg verdict 2026-11-25 (checkpoint-2 doc + result JSON in this PR): S1 files pulled first-hand and sha256-verified - ledger 80 lines / 38,809 bytes / md5 5a8d43a3ef9f32c111280a615d6ceb35, daily_2026-11-23.json 45,641 bytes, daily_2026-11-24.json 46,274 bytes. Matcher exit 0: 2026-11-24 35/35 GENUINE_GAP (+15.9305 USDT, arithmetic exact); 2026-11-23 34/34 GENUINE_GAP (+26.5927 USDT). Zero candidates, zero qty-level time-misses; 30/35 fills are 2026-11-19 (reset day); 11-24 set = 11-23 set + one ALGO close -10.6622 (order 431920550). Q1 resolved: ledger net delta -21.9340 equals window net delta; both reports RECONCILED, residual -0.0001. Acceptance 1+2 done; acceptance 3 (daemon re-run) NOT done - needs a write-scoped grant, and the read-only recomputation agrees with the filed reports, so no re-run was requested per the claim-time flag. Coordinator to rule: merge as complete, or grant the write-scoped re-run.'
+    - 'Merged PR #1769, merge 0bd83e40, 2026-11-25 10:46:30 IST (CI green); board flip IN_REVIEW to MERGED filed in Muse 18 work PR #1788.'
     blockers: []
     next_action: 'Work PR open for review; merge is Muse. Acceptance 3 (daemon re-run) owed only on a write-scoped grant - coordinator to rule (merge as complete, or grant the re-run).'
 
@@ -18417,14 +18418,14 @@ tasks:
 
   - id: TASK-STR-053
     title: 'Stratex: forward-window fills audit run 3 - reconcile the daemon fill ledger against venue history for the new window'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_18
     branch: muse18/task-str-053-fills-audit-3
     pr: 1761
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T07:25:00+05:30'
+    updated_at: "2026-11-25T12:35:06+05:30"
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-STR-053-FILLS-AUDIT-RUN-3.md
@@ -18438,6 +18439,7 @@ tasks:
       - 'Claim: hub #1483 comment 7145393234 by Muse 18, 2026-11-25 ~03:16 IST, per coordinator watch059 (7145228662) — VYR-051 skipped per the blocked-head rule, STR-053 pulled as new head. Board verified AVAILABLE, owner null, P1, on main e54da6b0; no prior hub claim. Branch muse18/task-str-053-fills-audit-3.'
       - 'Grant received (watch065, hub #1483 comment 7148346753, run scheduled 04:57 IST): read-only run_shell on Oracle Server 2, server 4 (AWS Stratex-Server) — ls/cat/tail/wc -l/sha256sum on Stratex/state/fill_ledger.jsonl only; no writes, no service touches, no deploys, no credential reads.'
       - 'Live leg read 2026-11-25 ~06:15 IST (hub #1483 comment 7148886291): ledger 82 lines, 39,796 bytes, mtime Nov 24 15:17, sha256 08a1fb4c...f518; lines 21-82 (62 records) — 11 strategies, all binance_futures, all SL_TP_BROKER; window 2026-11-19 07:37 UTC to 2026-11-24 15:17 UTC; net PnL -77.06 USDT, fees 3.24 USDT. Finding 1: strategy_dow_effect batch (21 rows) all gross_pnl 0.0 / fees 0.0 with empty order_id/entry_order_id/signal_id despite entry != exit — PnL never computed. Finding 2: ALL 62 rows empty order_id — no broker order linkage anywhere in the window. Gaps: lines 1-20 unretrieved (bridge output clipping); venue reconciliation NOT done (outside the grant). Audit doc filed; work PR open.'
+      - 'Merged PR #1761, merge 9e3f4d44, 2026-11-25 07:56:51 IST (CI green); board flip IN_REVIEW to MERGED filed in Muse 18 work PR #1788.'
     blockers: []
     next_action: 'Work PR open for review; merge is Muse''s. Gaps owed: ledger lines 1-20 (needs a head/sed extension to the grant) and venue reconciliation (outside the grant scope).'
 
@@ -19980,22 +19982,23 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-FRD-050
     title: 'FRIDAY: voice place-finder flow (map search, highest-rated filter, route time, verdict aloud)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_18
+    branch: muse18/task-frd-050-voice-place-finder
+    pr: 1788
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: "2026-11-25T12:35:06+05:30"
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'A spoken place request runs the full flow: map search by cuisine/type, filter to the highest-rated result, show the route time from a named start point, and read the verdict aloud.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 10 (watch record DfgYm5-hQbm, @2blockmedia Atlas). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Checkpoint 1 (work PR #1788, head 24e04114, base d3e22b97, 2026-11-25 ~12:30 IST): voice place-finder flow implemented (parser plus highest-rated filter plus OSM Nominatim/Overpass/OSRM providers plus speakable verdict) with LocationMapsTool find_best_place action; 27/27 tests pass locally (FRIDAY/tests/test_voice_place_finder.py). Tested YES local only; merged NO.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Claimed by muse_18 (hub #1483 comment 7154159868); work PR #1788 open (head 24e04114, base d3e22b97).'
   - id: TASK-FRG-022
     title: 'Forge: adopt the Agency repo''s Reality Checker and AI Code Auditor roles as workflow passes'
     status: IN_REVIEW
@@ -22316,14 +22319,14 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-DB-001
     title: 'DB: Stratex MySQL production-usage verification - prove live research runs actually persist to MySQL HeatWave, fix any gap found'
-    status: CLAIMED
-    owner: muse_6
+    status: BLOCKED
+    owner: muse_18
     branch: muse6/task-db-001-stratex-mysql-verify
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T05:21:00+05:30'
+    updated_at: "2026-11-25T12:35:06+05:30"
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-001-STRATEX-MYSQL-VERIFY.md
@@ -22337,8 +22340,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s database-wiring order (~02:56 IST: ''Implement all of them properly... the best ones''), as corrected ~02:59 IST (VyralX removed from Autonomous DB - file-based, no DB; Autonomous DB #2 becomes the IntelX DB for IntelX + Futuris research). Verified against the live board at main 7277dcdb: no TASK-DB-* records existed; DB-001/002/003 are clash-free.'
     - 'Claim: hub #1483 comment 7146570115 by Muse 6, 2026-11-25 ~04:08 IST, per coordinator ruling (watch060 7146031769 + escalation 7145448295). Branch muse6/task-db-001-stratex-mysql-verify from main 2c51d17, rebased to 07c526b. Checkpoint 1 (this PR): repo-side scoping only - no MySQL writer code exists in the repo (no stratex_research / 10.0.0.182 / mysql connection anywhere in Stratex/; only counter.py cites the MySQL store RD-025 rows, with no code behind it); live writer candidate is Stratex-Daemon.service on Stratex-Server (server 4), trial counter 3991 per STR-049 probe ~04:00 IST 2026-11-25, research records as files (experiments.jsonl etc.). Live leg gated on a coordinator-cleared read-only MySQL route; no live moves attempted (owner stop order in force).'
+    - 'Live leg BLOCKED (watch082 route): read-only S1 probe under watch078 grant found no MySQL client on Oracle Server 1 or Server 2 (no mysql/mariadb CLI, no driver, no .my.cnf, no credential file or env on either host); owner freeze forbids installs. Next step per watch082: probe FRIDAY-Server and S2 for an existing client (S2 already probed, none found); if none, file load-gate evidence plus post-freeze install proposal. Owner corrected muse_6 to muse_18, status to BLOCKED, in work PR #1788. Probe filed in hub #1483 comment 7154175680.'
     blockers: []
-    next_action: 'Checkpoint 1 filed (work PR): repo-side scoping done, no MySQL writer in repo. Awaiting coordinator clearance for the read-only MySQL route; then list tables/row counts/newest timestamps and match trials 3989-3991 end-to-end. No live moves (owner stop order).'
+    next_action: 'BLOCKED on the live leg (no MySQL client on S1 or S2; owner freeze forbids install). File load-gate evidence plus post-freeze install proposal; the live leg waits, it does not sit silent.'
   - id: TASK-DB-002
     title: 'DB: IntelX DB wiring - IntelX research records and Futuris forecasts + scores write/read in Autonomous DB #2 (IntelX DB), proven live'
     status: AVAILABLE
