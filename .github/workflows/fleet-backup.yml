@@ -293,9 +293,9 @@ jobs:
             echo "Unifying set $SET with media $MEDIA_SET and bundle $BUNDLE"
             sudo rm -rf /tmp/rel096-media-set /tmp/rel096-bundle
             sudo mkdir -p /tmp/rel096-media-set /tmp/rel096-bundle
-            sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER2_HOST }}:${MEDIA_SET}manifest.json" /tmp/rel096-media-set/
-            sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER2_HOST }}:${MEDIA_SET}VYRALX_MEDIA" /tmp/rel096-media-set/
-            sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER2_HOST }}:${BUNDLE}" /tmp/rel096-bundle/
+            sudo rsync -az --rsync-path="sudo rsync" -e "$SSHOPT" "ubuntu@${{ secrets.SERVER2_HOST }}:${MEDIA_SET}manifest.json" /tmp/rel096-media-set/
+            sudo rsync -az --rsync-path="sudo rsync" -e "$SSHOPT" "ubuntu@${{ secrets.SERVER2_HOST }}:${MEDIA_SET}VYRALX_MEDIA" /tmp/rel096-media-set/
+            sudo rsync -az --rsync-path="sudo rsync" -e "$SSHOPT" "ubuntu@${{ secrets.SERVER2_HOST }}:${BUNDLE}" /tmp/rel096-bundle/
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
             sudo /opt/friday_universe/venv/bin/python -u /tmp/rel096-backup-script.py \
@@ -319,7 +319,7 @@ jobs:
             BUNDLE=$(sudo ls -1d $ROOT/*-fleetstate/ | sort | tail -1)
             MEDIA_SET=$(sudo ls -1d $ROOT/[0-9]*/ | grep -v fleetstate | sort | tail -1)
             echo "Mirroring unified set $SET_NAME from Server 1"
-            sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER1_HOST }}:$ROOT/$SET_NAME/" "$ROOT/$SET_NAME/"
+            sudo rsync -az --rsync-path="sudo rsync" -e "$SSHOPT" "ubuntu@${{ secrets.SERVER1_HOST }}:$ROOT/$SET_NAME/" "$ROOT/$SET_NAME/"
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
             sudo /opt/friday_universe/venv/bin/python -u /tmp/rel096-backup-script.py \
