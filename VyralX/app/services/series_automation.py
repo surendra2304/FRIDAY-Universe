@@ -19,10 +19,18 @@ This module is that planning layer:
   excluded categories (anime/gameplay/sports/Bollywood/movie
   compilations, re-uploads), and its topic seeds are screened for
   finance advice. Bad specs fail loudly with every problem listed.
+  A spec may name a ``template_id`` from the format-template
+  registry (TASK-VYR-062): it must resolve, and the template must
+  serve the series lane.
 * :func:`plan_episodes` — deterministic episode briefs (title,
   hook, three-beat outline) from the seed topics, skipping seeds
   whose normalised title collides with an existing episode or an
   earlier brief in the same plan. Skips are recorded, not silent.
+  With a ``template_id`` the brief is planned against that
+  template: its outline follows the template beats and it carries
+  the instantiated format plan (beat timings, hard rules), so the
+  faceless-series automation can produce episodes in a registered
+  style such as the stick-figure explainer.
 * :func:`daily_queue` — which briefs fall due on a given date
   under each series' cadence, deterministically.
 * :func:`enqueue_briefs` — briefs land in the VYR-004 review queue
@@ -39,9 +47,9 @@ import re
 from datetime import date, timedelta
 from typing import Any, Iterable
 
-from app.services import compliance_gate, remix_flow
+from app.services import compliance_gate, format_templates, remix_flow
 
-SERIES_VERSION = "ig-vyr04-1"
+SERIES_VERSION = "ig-vyr04-2"
 
 OWNER_LANES = ("space_science", "history", "tech_ai")
 
@@ -60,11 +68,12 @@ def _norm_title(text: str) -> str:
 # Validation
 # --------------------------------------------------------------------------- #
 def validate_series(series: dict[str, Any]) -> dict[str, Any]:
-    """Validate a series spec; returns {ok, problems, screened_seeds}.
+    """Validate a series spec; returns {ok, problems, screened_seeds, template}.
 
     ``screened_seeds`` are the topic seeds that survived the
     finance-advice screen — a seed that trips it is a problem AND is
-    excluded from planning.
+    excluded from planning. ``template`` is the resolved registry
+    template when the spec names a valid ``template_id``, else None.
     """
     problems: list[str] = []
     lane = str(series.get("lane") or "")
@@ -81,6 +90,23 @@ def validate_series(series: dict[str, Any]) -> dict[str, Any]:
         problems.append(
             f"declared lane/format contains excluded token(s) "
             f"{token_hits} (reused-content policy / Content ID)")
+    template: dict[str, Any] | None = None
+    template_id = series.get("template_id")
+    if template_id is not None:
+        if not isinstance(template_id, str) or not template_id.strip():
+            problems.append("template_id must be a non-empty string")
+        else:
+            try:
+                template = format_templates.get_template(template_id)
+            except ValueError:
+                problems.append(
+                    f"unknown format template: {template_id!r}")
+            else:
+                if lane in OWNER_LANES and lane not in template["lanes"]:
+                    problems.append(
+                        f"template {template_id!r} does not serve lane "
+                        f"{lane!r} (serves {template['lanes']})")
+                    template = None
     cadence = series.get("cadence_days")
     if not isinstance(cadence, int) or cadence < 1:
         problems.append("cadence_days must be a positive integer")
@@ -104,7 +130,7 @@ def validate_series(series: dict[str, Any]) -> dict[str, Any]:
     if seeds and not screened:
         problems.append("no topic seed survived screening")
     return {"ok": not problems, "problems": problems,
-            "screened_seeds": screened}
+            "screened_seeds": screened, "template": template}
 
 
 # --------------------------------------------------------------------------- #
@@ -117,13 +143,23 @@ def plan_episodes(series: dict[str, Any],
     Briefs are deterministic: seed topics cycle until
     ``episodes_planned`` briefs exist or the seeds run out (seeds
     are never silently repeated within a plan — a repeat would be
-    a duplicate episode, so planning stops and says so).
+    a duplicate episode, so planning stops and says so). When the
+    spec names a ``template_id``, each brief is planned against
+    that registry template: the outline follows the template beats
+    and the brief carries the instantiated format plan.
     """
     check = validate_series(series)
     if not check["ok"]:
         raise ValueError(
             "invalid series spec: " + "; ".join(check["problems"]))
     seeds = check["screened_seeds"]
+    template = check.get("template")
+    format_plan = None
+    if template is not None:
+        lo, hi = template["target_seconds"]
+        target_seconds = (float(lo) + float(hi)) / 2.0
+        format_plan = format_templates.instantiate(
+            template["id"], target_seconds)
     planned_total = int(series["episodes_planned"])
     seen = {_norm_title(t) for t in existing_titles}
     briefs: list[dict[str, Any]] = []
@@ -153,24 +189,35 @@ def plan_episodes(series: dict[str, Any],
                                       "existing episode"})
             continue
         seen.add(_norm_title(title))
-        briefs.append({
+        if template is not None:
+            outline = [f"{b['beat']}: {b.get('note', '')}"
+                       for b in template["structure"]]
+            format_name = series.get("format_name") or template["name"]
+        else:
+            outline = [
+                f"Open on the strongest documented moment of {seed}.",
+                f"Build the story of {seed} in three documented beats.",
+                f"Close with what {seed} changed — and what came next.",
+            ]
+            format_name = series.get("format_name") or "series_episode"
+        brief = {
             "series_id": series.get("series_id"),
             "episode_no": ep_no,
             "topic": seed,
             "title": title,
             "hook": (f"Episode {ep_no}: the part of {seed} nobody "
                      f"tells you first."),
-            "outline": [
-                f"Open on the strongest documented moment of {seed}.",
-                f"Build the story of {seed} in three documented beats.",
-                f"Close with what {seed} changed — and what came next.",
-            ],
+            "outline": outline,
             "lane": series.get("lane"),
-            "format_name": series.get("format_name") or "series_episode",
+            "format_name": format_name,
             "status": "pending_review",
             "requires_approval": True,
             "publish": False,
-        })
+        }
+        if template is not None:
+            brief["template_id"] = template["id"]
+            brief["format_plan"] = format_plan
+        briefs.append(brief)
     return {
         "series_id": series.get("series_id"),
         "briefs": briefs,
