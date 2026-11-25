@@ -35,7 +35,6 @@ import pytest
 
 import app.providers
 import app.providers.gateway as gateway_module
-from app.core.config import settings
 from app.providers.base import ProviderMessage, ProviderRequest, ProviderResponse
 from app.providers.bytez import BYTEZ_DEFAULT_MODEL, BYTEZ_SUPPORTED_MODELS, BytezProvider
 from app.providers.bytez_guard import (
@@ -460,9 +459,11 @@ async def test_generate_releases_slot_after_http_error(monkeypatch, status):
 
 
 async def test_generate_missing_key_never_takes_slot(monkeypatch):
+    # No settings patch: Settings has no BYTEZ_API_KEY field (the adapter
+    # reads it via getattr with a None default), so deleting the env vars
+    # is sufficient to leave the provider keyless.
     monkeypatch.delenv("BYTEZ_API_KEYS", raising=False)
     monkeypatch.delenv("BYTEZ_API_KEY", raising=False)
-    monkeypatch.setattr(settings, "BYTEZ_API_KEY", None, raising=False)
     client = _FakeClient()
     _install_client(monkeypatch, client)
     with pytest.raises(ValueError, match="not configured"):
