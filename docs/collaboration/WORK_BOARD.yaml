@@ -21947,35 +21947,37 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-STR-079
     title: 'Stratex: research-desk framework lenses - Chaos Theory, Game Theory and Fractals as named analysis frames'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_15
+    branch: muse15/task-str-079-framework-lenses
+    pr: 1768
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T03:10:00+05:30'
+    updated_at: '2026-11-25T08:58:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Stratex/
+    - docs/collaboration/TASK-STR-079-FRAMEWORK-LENSES.md
     acceptance:
     - 'Sources: stratex package S-02/S-03/S-04 (all from item DUYHoUdD5vk, one comment thread in three parts: Chaos Theory - markets deterministic but unpredictable, nonlinear, small inputs = huge outcomes, identify conditions where probabilities shift; Game Theory; Fractals) - recorded as research-framing only; the desk''s reports carry no named framework lenses today.'
     - 'Build: each framework becomes a defined section in research-desk reports with its own question set (chaos: sensitivity and probability-shift conditions; game theory: player positioning and incentive traps; fractals: multi-scale self-similarity of structure). These are analysis frames, NOT strategies - no trading behaviour changes.'
     - 'Done = one real research-desk report issued carrying all three frames.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    - 'Claimed by Muse 15 (hub #1483 comment 7151646047, 2026-11-25 ~08:40 IST): board AVAILABLE / owner null on main d2a40a6d; branch muse15/task-str-079-framework-lenses. Done with live proof (evidence: docs/collaboration/TASK-STR-079-FRAMEWORK-LENSES.md): FRAMEWORK_LENSES + chaos_lens() + game_theory_lens() + fractals_lens() in Stratex/rigorous_backtest/ig/research_desk.py; tests 36/36 local (13 new); test_research_desk.py already in Stratex tier-1 CI. Live run 2026-11-25 ~08:55 IST on real Deribit BTC-PERPETUAL daily candles: 211 x 1d bars (last close 59,499) -> chaos sensitivity high (12.74pp spread), game-theory shorts crowded (range position 0.17), fractals self-similar down at all 4 scales.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+    next_action: 'Work PR #1768 open, awaiting coordinator review/merge. No production consumer by design (research surface only); production-verified = live-data run in the evidence doc.'
   - id: TASK-STR-080
     title: 'Stratex: research-desk prompt set completion - verbatim prompt 1 (3-scenario analysis) and prompt 3 (risk manager) added'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-str-080-prompt-set-completion
     pr: 1758
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T07:22:00+05:30'
+    updated_at: '2026-11-25T08:58:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Stratex/
@@ -21988,7 +21990,7 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Claimed by Muse 15 (hub #1483 comment 7149657952, 2026-11-25 ~07:02 IST): board AVAILABLE / owner null on main 6fbc9b3b; branch muse15/task-str-080-prompt-set-completion. Done with live proof (evidence: docs/collaboration/TASK-STR-080-PROMPT-SET-COMPLETION.md): PROMPT_LIBRARY + scenario_analysis() + risk_manager_pass() in Stratex/rigorous_backtest/ig/research_desk.py; tests 18/18 local (8 new); test_research_desk.py already in Stratex tier-1 CI. Live run 2026-11-25 ~07:25 IST on real Deribit BTC-PERPETUAL daily candles: 202 x 1d bars (last close 59,154.5) -> scenario commit bearish, risk pass 1:3 (SL 66,111.5, TP 38,283.5, units 0.014374, risk $100).'
     blockers: []
-    next_action: 'Work PR open, awaiting coordinator review/merge. No production consumer by design (research surface only); production-verified = live-data run in the evidence doc.'
+    next_action: 'Merged (PR #1758, merge d2a40a6d, 2026-11-25T02:56:14Z). No production consumer by design (research surface only); production-verified = live-data run in the evidence doc.'
   - id: TASK-STR-081
     title: 'Stratex: emotion-aware trade journal - emotion/pattern/risk analysis over imported trades'
     status: AVAILABLE
