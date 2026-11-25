@@ -76,9 +76,12 @@ class DevicePostureReport(BaseModel):
     trusted_bluetooth: list[str] = Field(default_factory=list)
     private_dns_mode: str = ""
     """Android Private DNS setting: 'off', 'opportunistic' or 'strict';
-    empty when the companion does not report it (TASK-SEN-030)."""
+    empty when the companion does not report it. Android's system value
+    for strict is 'hostname'; the evaluator treats it as 'strict'
+    (TASK-SEN-030)."""
     private_dns_hostname: str = ""
-    """Private DNS provider hostname, reported when mode is 'strict'."""
+    """Private DNS provider hostname, reported when mode is 'strict'
+    (or the Android system value 'hostname')."""
     dns_servers: list[str] = Field(default_factory=list)
     """DNS resolver addresses the device is using, as reported."""
     trusted_dns_servers: list[str] = Field(default_factory=list)
@@ -270,7 +273,10 @@ class DevicePostureEvaluator:
             )
 
         # TASK-SEN-030: Private DNS + resolver hygiene.
-        if report.private_dns_mode == "off":
+        # Android reports strict mode as the system value "hostname"
+        # (Settings.Global.PRIVATE_DNS_MODE); treat it as "strict".
+        dns_mode = "strict" if report.private_dns_mode == "hostname" else report.private_dns_mode
+        if dns_mode == "off":
             add(
                 "DP-012",
                 "Private DNS off",
@@ -282,7 +288,7 @@ class DevicePostureEvaluator:
                 "Turn on Private DNS (Automatic, or a strict hostname).",
                 "private_dns_mode=off",
             )
-        elif report.private_dns_mode == "":
+        elif dns_mode == "":
             add(
                 "DP-012",
                 "Private DNS setting not reported",
@@ -292,7 +298,7 @@ class DevicePostureEvaluator:
                 "Include private_dns_mode in the posture report.",
                 "private_dns_mode missing",
             )
-        elif report.private_dns_mode not in PRIVATE_DNS_MODES:
+        elif dns_mode not in PRIVATE_DNS_MODES:
             add(
                 "DP-012",
                 "Private DNS mode unrecognised",
@@ -302,7 +308,7 @@ class DevicePostureEvaluator:
                 "Report private_dns_mode as off, opportunistic or strict.",
                 f"private_dns_mode={report.private_dns_mode!r}",
             )
-        elif report.private_dns_mode == "strict" and not report.private_dns_hostname:
+        elif dns_mode == "strict" and not report.private_dns_hostname:
             add(
                 "DP-012",
                 "Private DNS strict but no hostname reported",

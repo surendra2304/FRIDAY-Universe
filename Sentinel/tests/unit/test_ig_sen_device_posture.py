@@ -149,6 +149,25 @@ def test_private_dns_opportunistic_with_trusted_resolver_is_clean():
     assert findings == []
 
 
+def test_private_dns_hostname_mode_is_strict_and_clean():
+    # TASK-SEN-030: Android reports strict mode as the system value
+    # "hostname" (Settings.Global.PRIVATE_DNS_MODE); it is strict.
+    findings = DevicePostureEvaluator().evaluate(
+        clean_report(private_dns_mode="hostname"), now=NOW
+    )
+    assert findings == []
+
+
+def test_private_dns_hostname_without_hostname_is_info():
+    # TASK-SEN-030: "hostname" mode with no provider hostname reported
+    # is the same DP-012 INFO as strict-without-hostname.
+    findings = DevicePostureEvaluator().evaluate(
+        clean_report(private_dns_mode="hostname", private_dns_hostname=""), now=NOW
+    )
+    assert rules(findings) == ["DP-012"]
+    assert findings[0].severity == SeverityLevel.INFO
+
+
 def test_untrusted_resolver_flags_dp013():
     # TASK-SEN-030: a resolver outside the trusted set is a finding;
     # the trusted one is not flagged.
