@@ -19888,14 +19888,14 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-VYR-068
     title: 'VyralX: evaluate AutoClip / OpenShorts / ViralCutter clipping tooling for the own-content highlight pipeline'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: IN_REVIEW
+    owner: muse_tp6
+    branch: musetp6/task-vyr-068-clipping-tooling
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T13:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
