@@ -79,6 +79,54 @@ def test_first_squawk_registered_inactive_with_reason() -> None:
 
 
 # ---------------------------------------------------------------------------
+# TASK-INT-045: First Squawk free-route verdict
+# ---------------------------------------------------------------------------
+
+
+def test_first_squawk_no_free_route_verdict() -> None:
+    """The INT-045 verdict is recorded on the source, not just in a doc.
+
+    Probed first-hand 2026-11-25 (evidence doc
+    docs/collaboration/TASK-INT-045.md): no free route carries First Squawk
+    headlines — no site feed, dead blog RSS, paid-only products, no official
+    Telegram channel, dead X mirrors, paid-only X API. The source stays
+    registered inactive with the dated verdict as its reason, so the watch
+    reports WHY it is unavailable and never invents its headlines.
+    """
+    from intelx.ingestion.headline_watch import FIRST_SQUAWK_NO_FREE_ROUTE
+
+    by_id = {s.source_id: s for s in DEFAULT_SOURCES}
+    squawk = by_id["first_squawk_x"]
+    assert squawk.active is False
+    assert squawk.kind == "x_account"
+    assert squawk.handle == "FirstSquawk"
+    assert squawk.unavailable_reason == FIRST_SQUAWK_NO_FREE_ROUTE
+    # The verdict names the probe date and every route that was checked.
+    assert "2026-11-25" in squawk.unavailable_reason
+    assert "TASK-INT-045" in squawk.unavailable_reason
+    for route in (
+        "firstsquawk.com",
+        "blog/feed",
+        "2019-03-28",
+        "Telegram",
+        "FAKE",
+        "nitter",
+        "xcancel",
+        "X API",
+        "TASK-INT-045.md",
+    ):
+        assert route in squawk.unavailable_reason, route
+
+
+def test_first_squawk_stays_out_of_active_polls() -> None:
+    """An inactive source never yields headlines, even with a fake fetch."""
+    watch = HeadlineWatch(fetch_text=_fake_fetch)
+    fresh = asyncio.run(watch.poll_once())
+    assert all(h.source_id != "first_squawk_x" for h in fresh)
+    assert watch.status["first_squawk_x"].active is False
+
+
+# ---------------------------------------------------------------------------
 # Consumer path: /api/v1/feeds routes over the shared instances
 # ---------------------------------------------------------------------------
 

@@ -13577,14 +13577,14 @@ tasks:
   - id: TASK-INT-017
 
     title: "IntelX: TASK-INT-016 production proof - observe one real fast-lane alert end-to-end (kill switch stays OFF); if none occurs naturally, file the armed-state evidence and the wait state."
-    status: CLAIMED
+    status: MERGED
     owner: muse_10
     branch: muse3/task-int-017-intelx-production-proof
-    pr: null
+    pr: 1621
     contributors: []
     priority: P2
     created_at: "2026-11-21"
-    updated_at: '2026-11-23T22:40:00+05:30'
+    updated_at: '2026-11-25T10:15:00+05:30'
     files:
       - "docs/collaboration/WORK_BOARD.yaml"
     description: "Standing backlog item (xii), coordinator refill pool 2026-11-21. Production proof for the merged TASK-INT-016 instant-alert fast lane (PR #1068): observe one real fast-lane alert end-to-end with the kill switch OFF. If none occurs naturally, file the armed-state evidence and the wait state."
@@ -13592,6 +13592,7 @@ tasks:
       - "One real fast-lane alert observed end-to-end and filed with evidence, or the armed-state evidence + wait state filed if none occurs naturally."
       - "Kill switch stays OFF throughout."
     evidence:
+      - 'Work PR #1621 MERGED 2026-11-24 10:07 IST (merge bc303ea0), verified via PR API 2026-11-25; flip carried in work PR #1771 per coordinator watch075.'
       - "Coordinator standing backlog (follow-up watch refill pool, 2026-11-21 ~18:00 IST), item (xii). Assigned to Muse 3 (free since TASK-REL-065 MERGED, PR #1225) - direct coordinator assignment per the refill rule, one per free worker. Assignment: issue #35 comment 7065396261 (Muse, coordinator ~21:35 IST). TASK-INT-016 itself is already MERGED (PR #1068); this is the production-proof follow-up, next free INT id 017. Base: main 80df3d60 (board blob 938477fa, verified against the true main blob before editing). Batch-B deploy clearance is NOT given yet - it waits for Muse 2's Inference repoint verification (batch A)."
       - "Claim: issue #35 comment 7065772451 by Muse 3 before any editing. Base: main 9ef366a0d69a17b9a34104b3d33bf100d41dc67c (board blob c9fd231d, verified via git trees API + hash-object before editing)."
       - "Coordinator enforcement 2026-11-23 ~22:40 IST (owner order: all 16 workers working; verification hub comment 7107266665 set report-or-re-slot at this check): Muse 3 silent ~48h (newest branch tip 2026-11-21 22:07 IST, zero hub posts) - owner muse_3 -> muse_10. Muse 10 picks up from branch muse3/task-int-017-intelx-production-proof @af96cec1."
@@ -15334,20 +15335,21 @@ tasks:
   - id: TASK-FRD-037
 
     title: 'FRIDAY chat: prove M5 workflow 1, 3 consecutive live runs through FRIDAY chat'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_10
     branch: muse10/task-frd-037-chat-live-runs
     pr: 1407
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T12:28:00+05:30'
+    updated_at: '2026-11-25T10:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-FRD-037-CHAT-LIVE-RUNS.md
     acceptance:
     - 'Three consecutive live runs: a real chat conversation with FRIDAY (multi-turn, via the production chat path), each run recorded with its trace (request, routing, agent evidence, result); a wrong answer presented as success resets the count.'
     evidence:
+    - 'Work PR #1407 MERGED 2026-11-22 (merge 9b6f9458), verified via PR API 2026-11-25; flip carried in work PR #1771 per coordinator watch075.'
     - 'Coordinator pool 10, P1 (rule 1b, on work request 7083828691): M5 workflow 1 of 5, source MASTER_PLAN M5. Same live-proof family as the FRG-002 route work just shipped - no deploy needed for this one, the live chat path is the subject.'
     - 'Claim: issue #35 comment 7084019535 by Muse 10, 2026-11-23 ~00:29 IST, on direct assignment by Muse (coordinator) in comment 7083871277 (~00:17 IST). No board record existed on main (pool-10 filing rides in the next consolidated board PR); this record is created in the work PR. Branch muse10/task-frd-037-chat-live-runs, base main 0d79ec82 (board blob 081f6189, verified against the true main blob before editing). Work-request cycle stands down while claimed.'
     - 'Blocked 2026-11-23 ~01:10 IST (hub 7084601978); re-probe 02:06 IST FAILED, 401 identical (hub 7085500872). POST /friday/api/chat returns HTTP 401 "A valid FRIDAY control API key is required." on every send; console GET 200. Live runs 0/3. Coordinator follow-up 7084721822 grants bounded read-only diagnosis clearance and orders skip to TASK-MEM-018 on a failed re-probe; FRD-037 stays blocked-head. Checkpoint PR filed this run.'
@@ -17184,19 +17186,20 @@ tasks:
   - id: TASK-REL-088
 
     title: 'CI: the test job must collect the tier-1 tests of EVERY agent (generalize REL-080 beyond Cortex)'
-    status: CLAIMED
+    status: MERGED
     owner: muse_10
     branch: muse10/task-rel-088-ci-tier1-all-agents
-    pr: null
+    pr: 1604
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-23T21:21:01+05:30'
+    updated_at: '2026-11-25T10:15:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
       - 'Tier-1 suites for all 10 agents collected in CI; one deliberately-uncollected suite fails the gate as proof.'
     evidence:
+      - 'Work PR #1604 MERGED 2026-11-24 (merge 27f181e4), verified via PR API 2026-11-25; flip carried in work PR #1771 per coordinator watch075.'
       - 'Claim: issue #1483 comment 7106109864 by Muse 10, 2026-11-23 ~21:17 IST, queue head now that FUT-022 and OBS-017 are MERGED (OBS-017 work PR #1505, merge f6f1c21e, 20:31 IST; board MERGED flip rides in #1517). Board record verified AVAILABLE, owner muse_10, on main cfe211cf (board blob verified against the true main blob before editing). No prior claim, branch or PR. Branch muse10/task-rel-088-ci-tier1-all-agents. Work-request cycle stands down while claimed.'
       - 'Drafted by the coordinator 2026-11-23 ~18:30 IST (consolidated board PR; REL-080 / REL-068 lineage). Assigned to Muse 10 as queue pos 3 (FUT-022 -> OBS-017 -> REL-088).'
     blockers: []
@@ -17333,20 +17336,21 @@ tasks:
     next_action: 'Coordinator assigns to the next free worker; worker claims via hub comment + branch push.'
   - id: TASK-SEN-023
     title: 'Sentinel: live approval-path proof - one low-risk action auto-approved + one high-risk action prompting on Telegram, exactly once each, with evidence'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_10
     branch: muse10/task-sen-023-approval-path
     pr: 1646
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T13:27:00+05:30'
+    updated_at: '2026-11-25T10:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-SEN-023-APPROVAL-PATH-PROOF.md
     acceptance:
     - 'One low-risk action auto-approved with evidence; one high-risk action prompted on Telegram with evidence.'
     evidence:
+    - 'Work PR #1646 MERGED 2026-11-24 (merge f41dfa7f), verified via PR API 2026-11-25; flip carried in work PR #1771 per coordinator watch075.'
     - 'Drafted by the coordinator 2026-11-23 ~19:20 IST (consolidated board PR watch13; standing backlog pool-7 (ix) continuation). Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Claim: hub #1483 comment 7122802508 by Muse 10, 2026-11-24 ~10:47 IST, on direct assignment by Muse (coordinator) in watch 7122541986 (~10:30 IST; blocked-head skip past FRD-037, still 401). Board record verified AVAILABLE, owner muse_10, on main bc303ea0 (board blob 011793ad, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse10/task-sen-023-approval-path. Work-request cycle stands down while claimed.'
     - 'Work: live proof run 2026-11-24 ~13:15-13:23 IST by Muse 10 (work PR #1646): leg 1 auto-approved (appr_8e03073ea8ac, seq 32, chain OK); leg 2 prompted on Telegram (appr_fb597c9906d3, PENDING, expired un-actioned, approve link 409-dead); high-risk action did not execute. Evidence doc docs/collaboration/TASK-SEN-023-APPROVAL-PATH-PROOF.md.'
@@ -19494,14 +19498,14 @@ tasks:
     next_action: 'CLAIMED by Muse 4 (hub #1483 comment 7144438110, 2026-11-25 ~02:35 IST). Repo-side legs done in the single work PR; live leg BLOCKED on the owner stop order (watch058, hub 7144369853) — verifier re-tests live when the gate lifts.'
   - id: TASK-CTX-008
     title: 'Cortex: wire the per-agent budget gate into production (caller, durable store, breach alerts)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_10
     branch: muse10/task-ctx-008-budget-gate
     pr: 1760
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T07:25:00+05:30'
+    updated_at: '2026-11-25T10:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-CTX-008-BUDGET-GATE.md
@@ -19511,6 +19515,7 @@ tasks:
     - The in-memory store is replaced with the durable Oracle store the code's docstring names; usage persists across a Cortex restart.
     - Breach alerts dispatch to the owner channel (Telegram via Sentinel) instead of recording in-ledger only; a real dispatch is budget-checked and a forced breach produces exactly one owner alert.
     evidence:
+    - 'Work PR #1760 MERGED 2026-11-25 08:06 IST (merge 456dee04), verified via PR API 2026-11-25; flip carried in work PR #1771 per coordinator watch075.'
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-COR-BUDGET-WIRE (IG package C-01, audit-confirmed 2026-11-16). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     - 'Work PR #1760 open 2026-11-25 ~07:25 IST (head dd173a70, base main 79431498): token-reporting seam test (42/42 local) + evidence doc; board flip AVAILABLE -> IN_REVIEW, owner muse_10. Live legs gated on owner stop order + Muse clearance; clearance requested on hub #1483.'
     blockers: []
@@ -19557,19 +19562,21 @@ tasks:
 
   - id: TASK-INT-045
     title: 'IntelX: find a viable free feed route for First Squawk and activate it in headline_watch.py'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_10
+    branch: muse10/task-int-045-first-squawk-free-feed
+    pr: 1771
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T10:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - First Squawk items flow through the headline watch, or a verified no-free-route verdict is recorded and the source is dispositioned.
     evidence:
+    - 'Claim: issue #1483 comment 7152682884 by Muse 10, 2026-11-25 ~09:43 IST, on direct assignment by Muse (coordinator) in watch075 (comment 7152477568, run scheduled 09:17 IST): new queue INT-045 -> INT-048 -> INT-049, claim INT-045 now. Board record verified AVAILABLE, owner null, on main 15f08b93 (board blob 0df89b8e, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-int-045-first-squawk-free-feed. Work-request cycle stands down while claimed.'
+    - 'Work PR #1771 (this PR): no-free-route verdict implemented + tested (31 passed local incl. tier-1 list); evidence doc docs/collaboration/TASK-INT-045.md. Rebased onto main c52daf14 (PR #1770 landed first); claim + work in a single PR.'
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-INT-SQUAWK (IG package X-02). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     blockers: []
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
@@ -20168,14 +20175,14 @@ tasks:
 
   - id: TASK-VYR-070
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG-VYR-01, IG-VYR-02, IG-VYR-03, IG-VYR-04, IG-VYR-05 - live extreme-condition verification (wave 1)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_10
     branch: muse10/task-vyr-070-prod-verify-ig-vyr-01-05
     pr: 1711
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T09:34:26+05:30'
+    updated_at: '2026-11-25T10:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20184,6 +20191,7 @@ tasks:
     - 'For EACH item: run it in the live agent on a real task, file the live evidence (what ran, on which server, with what result, incl. the failure case). A code-only report is rejected - the task closes only on live evidence per item.'
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
+    - 'Work PR #1711 MERGED 2026-11-24 (merge dfbe6ce3), verified via PR API 2026-11-25; flip carried in work PR #1771 per coordinator watch075.'
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Claim: hub #1483 comment 7138194564 by Muse 10, 2026-11-24 ~22:19 IST, under the central-pool pull model (owner directive 7136890552; pool order 7137277063). Released TASK-VOI-041 to the pool in the same motion (blocked run leg). Branch muse10/task-vyr-070-prod-verify-ig-vyr-01-05 from main 4e2a14be; board flip rides in the claim PR.'
     - 'Checkpoint 1: work PR #1711 (head 05651684) — repo-side legs verified first-hand: IG-VYR-01/03/04/05 modules present + compile OK, 30 unit tests pass on Server 2; G1 IG-VYR-02 content_factory.py retired by TASK-VYR-033 (a5b205c6), no code to verify live; G2 live leg gated (VyralX.service inactive, stop order in force, no route decision).'

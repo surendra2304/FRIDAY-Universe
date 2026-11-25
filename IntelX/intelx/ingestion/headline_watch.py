@@ -72,6 +72,28 @@ X_ACCOUNT_REASON = (
     "never silently filled with invented headlines."
 )
 
+# TASK-INT-045 verdict (probed first-hand 2026-11-25, evidence doc
+# docs/collaboration/TASK-INT-045.md): no viable FREE route carries First
+# Squawk headlines into this watch. Checked: firstsquawk.com publishes no
+# feed (no RSS/Atom links; /feed, /rss.xml 404; the /blog/feed/ RSS is a dead
+# WordPress install, last build 2019-03-28, one "Hello world!" item); the
+# site's News link just points at that blog; all products are paid
+# ($100-$200/mo) and site headlines are for members; no official Telegram
+# channel exists (@firstsquawk is a contact account, not a channel — the only
+# lookalike channel is labelled FAKE); X mirrors are dead (nitter.net
+# offline, xcancel.com HTTP 451, twstalker unreachable); X API access needs
+# paid credentials. Disposition: keep registered inactive; re-probe only if
+# First Squawk publishes a public feed.
+FIRST_SQUAWK_NO_FREE_ROUTE = (
+    "No free feed route (verified 2026-11-25, TASK-INT-045): firstsquawk.com "
+    "publishes no RSS/Atom feed and its /blog/feed/ RSS is dead since "
+    "2019-03-28; site headlines are a paid members product ($100-$200/mo); "
+    "no official Telegram channel (only a FAKE impersonator); X mirrors dead "
+    "(nitter offline, xcancel HTTP 451); X API needs paid credentials. "
+    "Source stays registered inactive — never filled with invented "
+    "headlines. See docs/collaboration/TASK-INT-045.md."
+)
+
 DEFAULT_SOURCES: list[HeadlineSource] = [
     HeadlineSource(
         source_id="financialjuice_rss",
@@ -117,14 +139,17 @@ DEFAULT_SOURCES: list[HeadlineSource] = [
     ),
     # X-02 (IG full re-watch package, item DaFMj_es1SH comments): First
     # Squawk named as a headline-wire source alongside the accounts above.
-    # Same keyless-feed limit applies, so it registers inactive and honest.
+    # TASK-INT-045 (2026-11-25): no viable FREE feed route exists — probed
+    # first-hand, see docs/collaboration/TASK-INT-045.md. Verdict recorded
+    # here so the source stays registered, inactive, and honest; re-check
+    # only if First Squawk ever publishes a public feed.
     HeadlineSource(
         source_id="first_squawk_x",
         name="First Squawk (@FirstSquawk)",
         kind="x_account",
         handle="FirstSquawk",
         active=False,
-        unavailable_reason=X_ACCOUNT_REASON,
+        unavailable_reason=FIRST_SQUAWK_NO_FREE_ROUTE,
     ),
 ]
 
