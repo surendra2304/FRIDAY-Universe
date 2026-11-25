@@ -7936,8 +7936,9 @@ tasks:
       - "CODE: VyralX/app/services/previs.py (stdlib-only, previs ig-vyr06-1): split_beats, build_storyboard (catalogue matching over the three lane catalogues with overlap scoring; generated_via_intake and owner_upload strategies by caller declaration; unresolved otherwise), storyboard_summary (by-strategy counts, duration total, gap list), contact_sheet_plan (catalogue frames vs explicit placeholders), enqueue_storyboard (VYR-004 review queue, pending_review)."
       - "TESTS: VyralX/tests/test_ig_vyr06_previs.py — 5 tests, all pass locally under pytest (match + gap marking, duration summation, strategy declaration, contact-sheet honesty, queue wiring, input rejection)."
       - "MERGED on origin/main: 77923e1f2681811d201db2c3928ae63389304613 Merge pull request #481 from surendra2304/claude/task-ig-vyr-06 (board hygiene 2026-11-16, audit §2A: PR #481 already merged — status was stale IN_REVIEW)."
+      - "RETIRED from the verification programme per TASK-VYR-071-FIX-01 checkpoint 1 (Muse 20, 2026-11-25 ~11:35 IST, work PR #1781): previs.py + test_ig_vyr06_previs.py deleted by TASK-VYR-033 (PR #1196, merge 11cbe05f); no successor named or in the tree; code search previs = 0 live references. Item marked not-applicable, NEVER verified on the retired previs.py. Status stays MERGED (the implementation was merged, then retired from the tree); the retirement is recorded here, not by rewriting history."
     blockers: []
-    next_action: "Post-merge: coordinator: review/merge PR #481, splice this fragment, flip IN_REVIEW -> DONE on merge. NOT deployed (library code; next VyralX deploy). Pairs with TASK-IG-VYR-07 (generated-footage intake) for the generated_via_intake strategy."
+    next_action: "RETIRED (TASK-VYR-071-FIX-01, work PR #1781): no live implementation, no successor, no live leg. Do not re-verify; a replacement, if ever specified, is a new task."
   - id: TASK-IG-VYR-07
 
     title: "VyralX generated-footage intake (IG corpus): strict provenance intake for AI-generated clips — refusal of incomplete provenance, terms evaluation, registry recording; admission specced as a REMIX_POLICY decision, LTX-2.5 rejected on hardware"
@@ -20291,25 +20292,28 @@ tasks:
 
   - id: TASK-VYR-071-FIX-01
     title: 'IG-VYR-06 has no live implementation: previs.py was retired by TASK-VYR-033 with no successor named - decide: retire IG-VYR-06 from the verification programme or specify a replacement module, then verify it live'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_20
+    branch: muse20/task-vyr-071-fix-01
+    pr: 1781
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T03:26:40+05:30'
+    updated_at: '2026-11-25T11:36:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-VYR-071-REPO-LEG-EVIDENCE.md
+    - docs/collaboration/TASK-VYR-071-FIX-01-CHECKPOINT-1.md
     acceptance:
     - 'Decision recorded: either IG-VYR-06 is retired from the verification programme (programme doc + board updated, item marked not-applicable, never verified), or a replacement module is specified.'
     - 'If a replacement is specified: the replacement is implemented, its IG-VYR-06 tests pass, and it is verified live on VyralX-Server under the VYR-071 extreme-condition standard.'
     - 'IG-VYR-06 is NOT marked verified on the basis of the retired previs.py.'
     evidence:
     - 'Filed by Muse 5 from TASK-VYR-071 G1, per coordinator ruling in watch 7145228662 (hub #1483): previs.py retired by TASK-VYR-033 (PR #1196) with no successor named, so file this fix task.'
+    - 'Claim: hub #1483 comment 7152680883 by Muse 20, 2026-11-25 ~09:45 IST. Branch muse20/task-vyr-071-fix-01 @ f6b912a6 (current main, rebased this run).'
+    - 'CHECKPOINT 1 (Muse 20, 2026-11-25 ~11:35 IST, docs/collaboration/TASK-VYR-071-FIX-01-CHECKPOINT-1.md): DECISION — RETIRE IG-VYR-06. First-hand on main f6b912a6: previs.py 404; code search previs = 6 files, all docs/tests, zero live code; IG-VYR-06 = 1 file (VYR-071 repo-leg evidence doc); PR #1196 body names no successor; scene-assembly doc previs row is a retirement row (beat-level storyboarding no longer offered); programme doc PRODUCTION-VERIFICATION-PROGRAMME.md not locatable on main (7 reference-only hits). IG-VYR-06 marked not-applicable, NEVER verified on retired previs.py.'
     blockers: []
-    next_action: 'Central pool (owner pull model): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins.'
+    next_action: 'Work PR #1781 open (head 8af83103): checkpoint-1 doc + this board flip. Retirement edits done in-PR; peer merge after full-diff review + green CI.'
 
   - id: TASK-VYR-072
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG2-VYR-01, IG2-VYR-02, IG2-VYR-03, IG2-VYR-04, IG2-VYR-05 - live extreme-condition verification (wave 1)'
@@ -21396,14 +21400,14 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
   - id: TASK-EARN-027
     title: 'EARN: AI voice/chat agent service for local businesses - build free-tier demos (OmniDimension + Voiceflow patterns), package as a CometWorks service, owner does outreach'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: CLAIMED
+    owner: muse_10
+    branch: muse10/task-earn-027-voice-chat-demos
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T10:38:00+05:30'
+    updated_at: '2026-11-25T11:18:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -21420,6 +21424,7 @@ tasks:
     - 'OWNER CORRECTION 2026-11-25 ~03:10 IST, recorded by Muse (coordinator): this lane belongs to TWO agents, not one - the voice agent itself is FRIDAY''s; the CRM/business side is Cortex''s (owner: Cortex is the CRM platform - leads, customers, follow-up). Record scope adjusted to a joint FRIDAY + Cortex build.'
     - 'OWNER CLARIFICATION 2026-11-25 ~09:30 IST, recorded by Muse (coordinator): supersedes the ~03:10 IST joint FRIDAY + Cortex framing - the business voice agents are IN Cortex. Cortex is the CRM platform and the voice agents live there: a business''s customers talk to its agent in Cortex, and the leads, customers, and follow-ups are Cortex''s. TASK-EARN-027''s primary home is Cortex; acceptance reworded to match.'
     - 'Cross-reference: TASK-FRD-062 (CRM workspace surface by voice+chat) is the related CRM surface work.'
+    - 'Claim: issue #1483 comment 7154152260 by Muse 10, 2026-11-25 ~11:18 IST, on direct assignment by Muse (Head Manager) in comment 7153645967 (~10:55 IST). Board record verified AVAILABLE, owner null, on main 8fa84c61 (board blob 46233d12, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-earn-027-voice-chat-demos. Work-request cycle stands down while claimed.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
   - id: TASK-EARN-028
