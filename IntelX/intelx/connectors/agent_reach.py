@@ -38,14 +38,14 @@ import json
 import logging
 import re
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import quote, urlparse
 
 from intelx.connectors.social_links import SocialLinkDocument
 
 logger = logging.getLogger("intelx.agent_reach")
 
-UTC = timezone.utc
+UTC = UTC
 
 FetchBytes = tuple  # (status: int, final_url: str, body: bytes) per call
 
@@ -123,6 +123,13 @@ def _strip_tags(text: str) -> str:
     return html_mod.unescape(re.sub(r"\s+", " ", no_tags)).strip()
 
 
+def _element_text(element) -> str:
+    """All text under an element, including nested children (``<b>`` etc.)."""
+    if element is None:
+        return ""
+    return _strip_tags("".join(element.itertext()))
+
+
 def _parse_feed(body: bytes) -> tuple[str, list[dict]]:
     """Parse an RSS 2.0 or Atom feed; return (feed_title, items)."""
     try:
@@ -135,23 +142,21 @@ def _parse_feed(body: bytes) -> tuple[str, list[dict]]:
         channel = root.find("channel")
         title = ""
         if channel is not None:
-            title_el = channel.find("title")
-            title = (title_el.text or "").strip() if title_el is not None else ""
+            title = _element_text(channel.find("title"))
             for item in channel.findall("item")[:_MAX_FEED_ITEMS]:
                 title_el = item.find("title")
                 link_el = item.find("link")
                 desc_el = item.find("description")
                 items.append(
                     {
-                        "title": (title_el.text or "").strip() if title_el is not None else "",
+                        "title": _element_text(title_el),
                         "link": (link_el.text or "").strip() if link_el is not None else "",
-                        "text": _strip_tags(desc_el.text or "") if desc_el is not None else "",
+                        "text": _element_text(desc_el),
                     }
                 )
         return title, items
     if tag == "feed":
-        title_el = root.find("{http://www.w3.org/2005/Atom}title")
-        title = (title_el.text or "").strip() if title_el is not None else ""
+        title = _element_text(root.find("{http://www.w3.org/2005/Atom}title"))
         ns = "{http://www.w3.org/2005/Atom}"
         for entry in root.findall(f"{ns}entry")[:_MAX_FEED_ITEMS]:
             title_el = entry.find(f"{ns}title")
@@ -163,9 +168,9 @@ def _parse_feed(body: bytes) -> tuple[str, list[dict]]:
             summary_el = entry.find(f"{ns}summary")
             items.append(
                 {
-                    "title": (title_el.text or "").strip() if title_el is not None else "",
+                    "title": _element_text(title_el),
                     "link": link,
-                    "text": _strip_tags(summary_el.text or "") if summary_el is not None else "",
+                    "text": _element_text(summary_el),
                 }
             )
         return title, items
@@ -182,13 +187,15 @@ class AgentReachReader:
         channel = classify_reach_url(url)
         if channel == "login_gated":
             raise AgentReachUnavailable(
-                url, "login-gated channel is not adopted: Agent Reach logged-in "
-                "channels are never used with the owner's accounts"
+                url,
+                "login-gated channel is not adopted: Agent Reach logged-in "
+                "channels are never used with the owner's accounts",
             )
         if channel == "unsupported":
             raise AgentReachUnavailable(
-                url, "no Agent Reach no-login channel covers this URL "
-                "(YouTube / Reddit / Instagram are read by SocialLinkReader)"
+                url,
+                "no Agent Reach no-login channel covers this URL "
+                "(YouTube / Reddit / Instagram are read by SocialLinkReader)",
             )
         handler = {
             "github": self._read_github,
@@ -236,7 +243,9 @@ class AgentReachReader:
         try:
             data = json.loads(body.decode("utf-8"))
         except (ValueError, UnicodeDecodeError) as exc:
-            raise AgentReachUnavailable(url, f"GitHub API returned unparseable JSON: {exc}") from exc
+            raise AgentReachUnavailable(
+                url, f"GitHub API returned unparseable JSON: {exc}"
+            ) from exc
         if not isinstance(data, dict):
             raise AgentReachUnavailable(url, "GitHub API returned an unexpected shape")
         license_name = ""
@@ -372,7 +381,9 @@ class AgentReachReader:
         try:
             data = json.loads(body.decode("utf-8"))
         except (ValueError, UnicodeDecodeError) as exc:
-            raise AgentReachUnavailable(url, f"Bilibili API returned unparseable JSON: {exc}") from exc
+            raise AgentReachUnavailable(
+                url, f"Bilibili API returned unparseable JSON: {exc}"
+            ) from exc
         if not isinstance(data, dict) or data.get("code") != 0:
             raise AgentReachUnavailable(url, "Bilibili video not found or unavailable")
         video = data.get("data") or {}

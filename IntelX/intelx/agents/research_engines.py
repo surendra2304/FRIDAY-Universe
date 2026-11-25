@@ -37,8 +37,8 @@ import logging
 import re
 import urllib.parse
 import xml.etree.ElementTree as ET
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Awaitable, Callable
 
 import httpx
 
@@ -100,9 +100,7 @@ def arxiv_engine(transport: httpx.AsyncBaseTransport | None = None) -> EngineFn:
             raise ValueError(f"arXiv returned unparseable Atom: {exc}") from exc
         out: list[SearchResult] = []
         for entry in root.findall(f"{_ARXIV_NS}entry"):
-            title = _clean(
-                (entry.findtext(f"{_ARXIV_NS}title") or ""), 200
-            )
+            title = _clean((entry.findtext(f"{_ARXIV_NS}title") or ""), 200)
             summary = _clean(entry.findtext(f"{_ARXIV_NS}summary") or "")
             link = ""
             for link_el in entry.findall(f"{_ARXIV_NS}link"):
@@ -122,9 +120,15 @@ def pubmed_engine(transport: httpx.AsyncBaseTransport | None = None) -> EngineFn
     async def search(query: str, max_results: int) -> list[SearchResult]:
         base = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
         search_url = (
-            base + "/esearch.fcgi?" + urllib.parse.urlencode(
-                {"db": "pubmed", "term": query, "retmode": "json",
-                 "retmax": str(max(1, max_results))}
+            base
+            + "/esearch.fcgi?"
+            + urllib.parse.urlencode(
+                {
+                    "db": "pubmed",
+                    "term": query,
+                    "retmode": "json",
+                    "retmax": str(max(1, max_results)),
+                }
             )
         )
         async with httpx.AsyncClient(transport=transport, timeout=30.0) as client:
@@ -134,9 +138,10 @@ def pubmed_engine(transport: httpx.AsyncBaseTransport | None = None) -> EngineFn
             if not ids:
                 return []
             summary_url = (
-                base + "/esummary.fcgi?" + urllib.parse.urlencode(
-                    {"db": "pubmed", "id": ",".join(str(i) for i in ids),
-                     "retmode": "json"}
+                base
+                + "/esummary.fcgi?"
+                + urllib.parse.urlencode(
+                    {"db": "pubmed", "id": ",".join(str(i) for i in ids), "retmode": "json"}
                 )
             )
             summary = await client.get(summary_url)
@@ -281,7 +286,9 @@ class MultiEngineSearch:
         per_engine_cap = max_results_per_engine or self.max_results_per_engine
         result = MultiEngineResult(query=cleaned)
 
-        async def run_one(name: str, fn: EngineFn) -> tuple[str, list[SearchResult] | None, str | None]:
+        async def run_one(
+            name: str, fn: EngineFn
+        ) -> tuple[str, list[SearchResult] | None, str | None]:
             try:
                 found = await asyncio.wait_for(fn(cleaned, per_engine_cap), self.timeout_s)
                 return name, list(found)[:per_engine_cap], None
@@ -289,9 +296,7 @@ class MultiEngineSearch:
                 logger.warning("research engine %s failed: %s", name, exc)
                 return name, None, f"{type(exc).__name__}: {exc}"
 
-        gathered = await asyncio.gather(
-            *(run_one(name, fn) for name, fn in self.engines.items())
-        )
+        gathered = await asyncio.gather(*(run_one(name, fn) for name, fn in self.engines.items()))
         seen: set[str] = set()
         for name, found, error in gathered:
             if error is not None:

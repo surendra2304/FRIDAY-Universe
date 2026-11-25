@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from intelx.agents.base import BaseAgent
 from intelx.agents.scout import SourceCandidate
+from intelx.connectors.agent_reach import AgentReachReader, AgentReachUnavailable
 from intelx.connectors.files import FileConnector
 from intelx.connectors.social_links import (
     SocialLinkReader,
@@ -129,13 +130,34 @@ class RetrieverAgent(BaseAgent):
         this is its production seam in the retriever: YouTube / Reddit /
         Instagram candidates are extracted verbatim by the reader
         (oEmbed / old.reddit JSON / JSON-LD) instead of being scraped
-        as generic HTML. Returns None for non-social URLs and whenever
-        the reader cannot extract (blocked, removed, empty) — the
-        caller then falls back to the generic HTTP fetch path with its
-        own snippet/robots fallbacks. Never raises.
+        as generic HTML. TASK-INT-051 adds the Agent Reach no-login
+        channels (GitHub / RSS / V2EX / Bilibili) as the second reader
+        for URLs SocialLinkReader classifies as plain web. Returns None
+        for non-social URLs and whenever the readers cannot extract
+        (blocked, removed, empty) — the caller then falls back to the
+        generic HTTP fetch path with its own snippet/robots fallbacks.
+        Never raises.
         """
         if classify_social_url(location) == "web":
-            return None
+            # TASK-INT-051: Agent Reach no-login channels. The reader is
+            # GET-only and refuses login-gated hosts before any fetch; a
+            # URL it does not cover returns None here, exactly like the
+            # social reader's unavailable path below.
+            try:
+                doc = await AgentReachReader(fetch=self._reach_fetch).read(location)
+            except AgentReachUnavailable as exc:
+                logger.info(f"Agent Reach read unavailable for {location}: {exc.reason}")
+                return None
+            if not doc.text.strip():
+                return None
+            return IngestPlan(
+                location=location,
+                raw_bytes=doc.text.encode("utf-8"),
+                content_type="text/plain; format=agent-reach",
+                kind=SourceKind.WEB,
+                domain=domain,
+                title=doc.title or candidate.title,
+            )
         try:
             doc = await SocialLinkReader().read(location)
         except SocialLinkUnavailable as exc:
@@ -151,6 +173,11 @@ class RetrieverAgent(BaseAgent):
             domain=domain,
             title=doc.title or candidate.title,
         )
+
+    async def _reach_fetch(self, url: str) -> tuple[int, str, bytes]:
+        """Fetch adapter: this retriever's HTTP connector in FetchBytes shape."""
+        result = await self.http_connector.fetch(url)
+        return result.status_code, result.final_url, result.content
 
     async def _fetch_single(
         self,

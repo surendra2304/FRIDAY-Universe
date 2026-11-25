@@ -29,14 +29,14 @@ from __future__ import annotations
 import json
 import logging
 import re
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Awaitable, Callable
+from datetime import UTC, datetime
 from urllib.parse import quote_plus
 
 logger = logging.getLogger("intelx.camofox_macros")
 
-UTC = timezone.utc
+UTC = UTC
 
 _MAX_QUERY_CHARS = 500
 _VIDEO_ID_RE = re.compile(r"^[A-Za-z0-9_-]{6,20}$")

@@ -118,9 +118,7 @@ class InvestigationStore:
         )
         follow_terms = refine_query(cleaned).key_terms
         grounded = [
-            item
-            for item in saved.evidence
-            if relevance_score(item.wrapped_text, follow_terms) > 0
+            item for item in saved.evidence if relevance_score(item.wrapped_text, follow_terms) > 0
         ]
         return FollowUpResult(
             saved_id=investigation_id,

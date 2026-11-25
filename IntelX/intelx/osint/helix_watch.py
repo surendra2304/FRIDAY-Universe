@@ -21,13 +21,13 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from intelx.osint.helix_lookup import HelixReport
 
 logger = logging.getLogger("intelx.osint.helix_watch")
 
-UTC = timezone.utc
+UTC = UTC
 
 
 def diff_helix_reports(old: HelixReport | dict, new: HelixReport | dict) -> dict:
@@ -100,7 +100,7 @@ class HelixWatchStore:
         if not history:
             return {
                 "first_seen": True,
-                "added_platforms": sorted(h["platform"] for h in new_report.hits),
+                "added_platforms": sorted(h.platform for h in new_report.hits),
                 "removed_platforms": [],
                 "confidence_changes": [],
                 "newly_discarded": sorted(d["platform"] for d in new_report.discarded),
