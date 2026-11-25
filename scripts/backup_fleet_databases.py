@@ -21,6 +21,12 @@ Modes:
     --media        include the VyralX media schema (VYRALX_MEDIA)
     --media-only   only the VyralX media schema (for the Server 2 job,
                    TASK-SEN-009: the media credentials live on Server 2)
+    --fleet-state-only  only collect the TASK-REL-096 fleet-state bundle
+                   (live file state from all six servers + the MySQL
+                   'Stratex DB' dump; runs on Oracle Server 2)
+    --finalize     merge a fleet-state bundle (and optionally another
+                   set's agent dumps, --merge-from) into a backup set and
+                   re-verify it as the unified set (TASK-REL-096)
 
 TASK-SEN-009 additions: per-agent .env files join the config snapshot
 (``snapshot_agent_envs``); the manifest records ``complete`` and pruning
@@ -269,6 +275,296 @@ def snapshot_agent_envs(dest: Path, repo_root: Path | None = None, log=print) ->
     return copied
 
 
+# ---------------------------------------------------------------------------
+# TASK-REL-096 — fleet-state bundle: the live file state that no schema dump
+# can capture (Stratex ledgers + forward record, VyralX renders + data/,
+# IntelX/Futuris file stores, FRIDAY conversation state), collected from
+# every fleet server into one bundle that --finalize later merges into the
+# unified backup set held identically on both Oracle servers.
+#
+# The bundle builder runs on Oracle Server 2 (the bridge host — the host
+# with proven SSH routes to all six servers). Secrets discipline is
+# unchanged: file contents are never logged; manifests record paths, sizes
+# and SHA-256 only. MySQL credentials are parsed in memory from the fleet
+# record (CREDENTIALS.md, itself inside the bundle) and never printed.
+FLEET_STATE_SSH = ("ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new "
+                   "-o ConnectTimeout=15")
+FLEET_STATE_SOURCES = (
+    # (label, ssh host, absolute paths, required)
+    ("server1", "140.245.208.100", (
+        "/opt/friday_universe/Memora/data", "/opt/friday_universe/Memora/state",
+        "/opt/friday_universe/Forge/data", "/opt/friday_universe/Forge/state",
+        "/opt/friday_universe/Sentinel/data", "/opt/friday_universe/Sentinel/state",
+        "/opt/friday_universe/Cortex/data", "/opt/friday_universe/Cortex/state",
+    ), False),
+    ("server3", "15.134.130.145", (
+        "/opt/friday_universe/FRIDAY/data", "/opt/friday_universe/FRIDAY/state",
+        "/opt/friday_universe/Inference/data",
+    ), True),
+    ("server4", "13.211.78.20", (
+        "/opt/friday_universe/Stratex/state", "/opt/friday_universe/Stratex/data",
+    ), True),
+    ("server5", "13.211.162.71", (
+        "/opt/friday_universe/VyralX/data", "/opt/friday_universe/VyralX/renders",
+    ), True),
+    ("server6", "32.236.185.237", (
+        "/opt/friday_universe/IntelX/data", "/opt/friday_universe/Futuris/data",
+        "/opt/friday_universe/Futuris/.data",
+    ), True),
+)
+FLEET_STATE_SUDO_SOURCES = (
+    ("server6-soak", "32.236.185.237", ("/var/lib/friday-universe/intelx-soak",), False),
+)
+FLEET_STATE_LOCAL_FILES = ("/opt/friday_universe/CREDENTIALS.md",)
+# Named exclusion (owner rule: nothing is silently scoped out). VyralX's
+# media/ tree is ~3.9 GB of downloaded SOURCE clips (du -sh on VyralX-Server,
+# 2026-11-25) — re-obtainable from the origin URLs catalogued in the
+# VyralX/data manifests, which ARE in the bundle. Her produced work
+# (renders/, ~2.2 GB) and all of data/ (~403 MB) are included in full.
+FLEET_STATE_EXCLUDED = (
+    {"item": "VyralX/media (downloaded source clips) on VyralX-Server",
+     "size_evidence": "3.9 GB (du -sh /opt/friday_universe/VyralX/media, 2026-11-25)",
+     "reason": "source material re-obtainable from origin URLs recorded in the "
+               "backed-up VyralX/data manifests; produced renders and all "
+               "state are included"},
+)
+MYSQL_ENV_KEYS = ("MYSQL_HOST", "MYSQL_PORT", "MYSQL_STRATEX_USER",
+                  "MYSQL_STRATEX_PASSWORD", "MYSQL_STRATEX_DB")
+
+
+def fleet_state_rsync_argv(host: str, path: str, dest_dir: Path, *, sudo: bool = False) -> list:
+    """Build the rsync argv for one fleet-state source path (pure, testable)."""
+    argv = ["rsync", "-az", "--relative", "-e", FLEET_STATE_SSH]
+    if sudo:
+        argv.append("--rsync-path=sudo -n rsync")
+    argv += [f"ubuntu@{host}:{path}", str(dest_dir)]
+    return argv
+
+
+def parse_mysql_env(text: str) -> dict:
+    """Extract the MYSQL_* connection keys from fleet-record text.
+
+    Values are returned in memory only — callers must never log them.
+    """
+    out: dict = {}
+    for line in text.splitlines():
+        line = line.strip().lstrip("- ").strip()
+        if "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        key = key.strip()
+        if key in MYSQL_ENV_KEYS:
+            out[key] = val.strip().strip("`").strip()
+    return out
+
+
+def dump_mysql_stratex(bundle_dir: Path, *, creds_text: str | None = None, log=print) -> dict:
+    """Logical dump of the MySQL 'Stratex DB' (stratex_research) into the bundle.
+
+    Credentials are parsed in memory from the fleet record (CREDENTIALS.md)
+    — never logged, never written anywhere else. Tooling: mysqldump when
+    present, else pymysql. Any gap is recorded in the result, never silent.
+    """
+    dest_dir = bundle_dir / "mysql"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    if creds_text is None:
+        cred_path = Path("/opt/friday_universe/CREDENTIALS.md")
+        if not cred_path.is_file():
+            return {"status": "unavailable",
+                    "reason": "fleet record (CREDENTIALS.md) not found on this host"}
+        creds_text = cred_path.read_text(errors="replace")
+    env = parse_mysql_env(creds_text)
+    missing = [k for k in MYSQL_ENV_KEYS if not env.get(k)]
+    if missing:
+        return {"status": "unavailable",
+                "reason": f"fleet record lacks keys: {', '.join(missing)}"}
+    host = env["MYSQL_HOST"]
+    try:
+        port = int(env.get("MYSQL_PORT") or 3306)
+    except ValueError:
+        port = 3306
+    user, password, db = env["MYSQL_STRATEX_USER"], env["MYSQL_STRATEX_PASSWORD"], env["MYSQL_STRATEX_DB"]
+    dest = dest_dir / "STRATEX_MYSQL.sql.gz"
+    import subprocess
+
+    if shutil.which("mysqldump"):
+        run_env = dict(os.environ, MYSQL_PWD=password)
+        res = subprocess.run(
+            ["mysqldump", "-h", host, "-P", str(port), "-u", user,
+             "--single-transaction", "--skip-lock-tables", db],
+            capture_output=True, timeout=1800, env=run_env)
+        if res.returncode != 0:
+            return {"status": "failed", "reason": "mysqldump exited non-zero"}
+        with gzip.open(dest, "wb") as fh:
+            fh.write(res.stdout)
+    else:
+        try:
+            import pymysql
+        except ImportError:
+            return {"status": "unavailable",
+                    "reason": "no mysqldump binary and pymysql not importable on this host"}
+        conn = pymysql.connect(host=host, port=port, user=user, password=password, database=db)
+        try:
+            with conn.cursor() as cur, gzip.open(dest, "wt", encoding="utf-8") as fh:
+                fh.write(f"-- TASK-REL-096 MySQL logical dump of {db} at {utcnow()}\n")
+                cur.execute("SHOW TABLES")
+                tables = [r[0] for r in cur.fetchall()]
+                for table in tables:
+                    cur.execute(f"SHOW CREATE TABLE `{table}`")
+                    fh.write(cur.fetchone()[1] + ";\n")
+                    cur.execute(f"SELECT * FROM `{table}`")
+                    cols = [d[0] for d in cur.description]
+                    for row in cur.fetchall():
+                        vals = ",".join(
+                            "NULL" if v is None else
+                            (str(v) if isinstance(v, (int, float)) else
+                             "'" + str(v).replace("\\", "\\\\").replace("'", "\\'") + "'")
+                            for v in row)
+                        fh.write(f"INSERT INTO `{table}` ({','.join(cols)}) VALUES ({vals});\n")
+        finally:
+            conn.close()
+    os.chmod(dest, 0o600)
+    log(f"[FLEET-STATE] MySQL {db} dumped -> {dest.name}")
+    return {"status": "dumped", "file": str(dest.relative_to(bundle_dir)),
+            "sha256": sha256_file(dest), "bytes": dest.stat().st_size}
+
+
+def collect_fleet_state(bundle_dir: Path, *, runner=None, log=print) -> dict:
+    """Collect the fleet-state bundle into bundle_dir; returns its manifest."""
+    import subprocess
+
+    runner = runner or subprocess.run
+    files_root = bundle_dir / "files"
+    files_root.mkdir(parents=True, exist_ok=True)
+    source_results: list = []
+    failed_required: list = []
+
+    def do_source(label, host, paths, required, sudo=False):
+        for path in paths:
+            dest = files_root / label
+            dest.mkdir(parents=True, exist_ok=True)
+            try:
+                res = runner(fleet_state_rsync_argv(host, path, dest, sudo=sudo),
+                             capture_output=True, text=True, timeout=3600)
+                rc = res.returncode
+            except Exception as exc:  # noqa: BLE001 — recorded, never silent
+                source_results.append({"label": label, "path": path, "status": "failed",
+                                       "error": type(exc).__name__})
+                if required:
+                    failed_required.append(f"{label}:{path} (error)")
+                log(f"[FLEET-STATE] {label}:{path} -> error ({type(exc).__name__})")
+                continue
+            status = "ok" if rc == 0 else ("missing" if rc in (23, 24) else "failed")
+            source_results.append({"label": label, "path": path, "status": status})
+            if status == "failed" or (status == "missing" and required):
+                failed_required.append(f"{label}:{path} ({status})")
+            log(f"[FLEET-STATE] {label}:{path} -> {status}")
+
+    for label, host, paths, required in FLEET_STATE_SOURCES:
+        do_source(label, host, paths, required)
+    for label, host, paths, required in FLEET_STATE_SUDO_SOURCES:
+        do_source(label, host, paths, required, sudo=True)
+    for local_file in FLEET_STATE_LOCAL_FILES:
+        src = Path(local_file)
+        entry = {"label": "local", "path": local_file, "status": "missing"}
+        if src.is_file():
+            target = files_root / "local" / src.name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, target)
+            os.chmod(target, 0o600)
+            entry["status"] = "ok"
+        else:
+            failed_required.append(f"local:{local_file} (missing)")
+        source_results.append(entry)
+        log(f"[FLEET-STATE] local:{local_file} -> {entry['status']}")
+
+    mysql = dump_mysql_stratex(bundle_dir, log=log)
+    entries = []
+    for path in sorted(files_root.rglob("*")):
+        if path.is_file():
+            entries.append({"path": str(path.relative_to(bundle_dir)),
+                            "sha256": sha256_file(path), "bytes": path.stat().st_size})
+    if mysql.get("status") == "dumped":
+        entries.append({"path": mysql["file"], "sha256": mysql["sha256"],
+                        "bytes": mysql["bytes"]})
+    complete = not failed_required and mysql.get("status") == "dumped"
+    manifest = {"task": "TASK-REL-096", "created_at": utcnow(), "files": entries,
+                "sources": source_results, "mysql": mysql,
+                "excluded": list(FLEET_STATE_EXCLUDED), "complete": complete,
+                "failed_required": failed_required}
+    (bundle_dir / "bundle_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    os.chmod(bundle_dir / "bundle_manifest.json", 0o600)
+    log(f"[FLEET-STATE] bundle {'complete' if complete else 'INCOMPLETE'}: "
+        f"{len(entries)} files, failed_required={failed_required or 'none'}, "
+        f"mysql={mysql.get('status')}")
+    return manifest
+
+
+def _localize_manifest_paths(entries: list, set_dir: Path) -> list:
+    """Rewrite absolute config paths from another host's set dir to this one."""
+    out = []
+    for entry in entries or []:
+        parts = Path(entry).parts
+        if "configs" in parts:
+            idx = parts.index("configs")
+            out.append(str(set_dir.joinpath(*parts[idx:])))
+        else:
+            out.append(entry)
+    return out
+
+
+def finalize_unified_set(set_dir: Path, bundle_dir: Path, *, merge_from: Path | None = None,
+                         log=print) -> dict:
+    """Merge a fleet-state bundle (+ optionally another set's agent dumps)
+    into set_dir and re-verify/re-derive its manifest (TASK-REL-096)."""
+    manifest = json.loads((set_dir / "manifest.json").read_text())
+    if merge_from is not None:
+        other = json.loads((merge_from / "manifest.json").read_text())
+        have = {e.get("agent") for e in manifest.get("agents", [])}
+        for entry in other.get("agents", []):
+            if entry.get("agent") in have:
+                continue
+            for table_entry in entry.get("tables", []):
+                src = merge_from / table_entry["file"]
+                dst = set_dir / table_entry["file"]
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+                os.chmod(dst, 0o600)
+            manifest.setdefault("agents", []).append(entry)
+            log(f"[FINALIZE] merged agent {entry.get('agent')} from {merge_from}")
+    bundle_manifest = json.loads((bundle_dir / "bundle_manifest.json").read_text())
+    fs_dest = set_dir / "fleet-state"
+    if fs_dest.exists():
+        shutil.rmtree(fs_dest)
+    shutil.copytree(bundle_dir, fs_dest)
+    for path in fs_dest.rglob("*"):
+        if path.is_file():
+            os.chmod(path, 0o600)
+    fs_entries = [{**e, "path": f"fleet-state/{e['path']}"}
+                  for e in bundle_manifest.get("files", [])]
+    manifest["fleet_state"] = {
+        "complete": bundle_manifest.get("complete"),
+        "files": fs_entries,
+        "sources": bundle_manifest.get("sources"),
+        "mysql": bundle_manifest.get("mysql"),
+        "excluded": bundle_manifest.get("excluded"),
+        "bundled_at": bundle_manifest.get("created_at"),
+    }
+    manifest["configs"] = _localize_manifest_paths(manifest.get("configs") or [], set_dir)
+    manifest["agent_envs"] = _localize_manifest_paths(manifest.get("agent_envs") or [], set_dir)
+    ok, failed = verify_backup(set_dir, manifest, log=log)
+    manifest["verify"] = {"ok": ok, "failed": failed, "verified_at": utcnow()}
+    manifest["complete"], reasons = derive_manifest_complete(manifest)
+    if not manifest["complete"]:
+        for reason in reasons:
+            log(f"[FINALIZE] INCOMPLETE: {reason}")
+    (set_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    os.chmod(set_dir / "manifest.json", 0o600)
+    log(f"[FINALIZE] {set_dir}: complete={manifest['complete']} "
+        f"(verify {ok} OK / {failed} failed)")
+    return manifest
+
+
 def backup_agent(agent: str, out_dir: Path, *, env_file: str | None, media: bool,
                  dry_run: bool, log=print) -> dict:
     """Dump one agent schema. Returns the manifest entry (or inventory for dry-run)."""
@@ -331,6 +627,16 @@ def verify_backup(out_dir: Path, manifest: dict, log=print) -> tuple[int, int]:
             else:
                 log(f"[VERIFY-FAIL] {key} file missing: {cfg}")
                 failed += 1
+    for fentry in (manifest.get("fleet_state") or {}).get("files", []):
+        path = out_dir / fentry["path"]
+        if not path.is_file():
+            log(f"[VERIFY-FAIL] fleet-state file missing: {fentry['path']}")
+            failed += 1
+        elif sha256_file(path) != fentry["sha256"]:
+            log(f"[VERIFY-FAIL] fleet-state checksum mismatch: {fentry['path']}")
+            failed += 1
+        else:
+            ok += 1
     return ok, failed
 
 
@@ -383,6 +689,15 @@ def derive_manifest_complete(
     for entry in manifest.get("agents") or []:
         if not entry.get("tables"):
             reasons.append(f"{entry.get('agent')}: dumped 0 tables (wrong-schema resolution?)")
+    fleet = manifest.get("fleet_state")
+    if fleet is not None:
+        if not fleet.get("complete"):
+            reasons.append("fleet-state bundle incomplete (TASK-REL-096)")
+        if not fleet.get("files"):
+            reasons.append("fleet-state bundle recorded no files (TASK-REL-096)")
+        mysql = fleet.get("mysql") or {}
+        if mysql.get("status") != "dumped":
+            reasons.append(f"MySQL Stratex DB not dumped: {mysql.get('status')}")
     return (not reasons, reasons)
 
 
@@ -584,7 +899,41 @@ def main() -> int:
     ap.add_argument("--no-configs", action="store_true", help="skip config snapshot during DB dump")
     ap.add_argument("--env-file", default="", help="explicit credentials env file")
     ap.add_argument("--keep", type=int, default=0, help="prune, keeping only N newest backups")
+    ap.add_argument("--fleet-state-only", action="store_true",
+                    help="only collect the TASK-REL-096 fleet-state bundle (runs on Server 2)")
+    ap.add_argument("--finalize", action="store_true",
+                    help="merge a fleet-state bundle into the --from-dir backup set and re-verify")
+    ap.add_argument("--bundle-dir", default="", help="(finalize) fleet-state bundle directory")
+    ap.add_argument("--merge-from", default="",
+                    help="(finalize) another backup set whose agent dumps should be merged in")
+    ap.add_argument("--prune-only", action="store_true",
+                    help="only prune old backups under --out (with --keep)")
     args = ap.parse_args()
+    if args.prune_only:
+        prune_old_backups(Path(args.out), keep=args.keep or 4)
+        return 0
+    if args.fleet_state_only:
+        stamp = dt.datetime.now().strftime("%Y%m%dT%H%M%SZ")
+        bundle_dir = Path(args.out) / f"{stamp}-fleetstate"
+        bundle_dir.mkdir(parents=True, exist_ok=True)
+        os.chmod(bundle_dir, 0o700)
+        bundle_manifest = collect_fleet_state(bundle_dir)
+        # Bundles are staging for --finalize: keep only the newest two.
+        root = Path(args.out)
+        bundles = sorted((d for d in root.iterdir()
+                          if d.is_dir() and d.name.endswith("-fleetstate")), reverse=True)
+        for old in bundles[2:]:
+            shutil.rmtree(old)
+            print(f"[PRUNE] removed old fleet-state bundle {old}")
+        return 0 if bundle_manifest["complete"] else 1
+    if args.finalize:
+        if not args.from_dir or not args.bundle_dir:
+            print("FINALIZE-ABORT: --finalize needs --from-dir and --bundle-dir")
+            return 2
+        merged = finalize_unified_set(
+            Path(args.from_dir), Path(args.bundle_dir),
+            merge_from=Path(args.merge_from) if args.merge_from else None)
+        return 0 if merged["complete"] else 1
     if args.config_only:
         stamp = dt.datetime.now().strftime("%Y%m%dT%H%M%SZ")
         out_dir = Path(args.out) / stamp

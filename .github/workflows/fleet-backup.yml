@@ -20,6 +20,21 @@ name: Fleet Backup
 #     plaintext — the backup contains credential env files);
 #   * freshness between runs is guarded by the separate
 #     backup-watchdog.yml workflow (its own schedule).
+#
+# TASK-REL-096 overhaul (2026-11-25, owner order "fix the backup properly"):
+#   * DAILY schedule (was Sun+Wed), plus a run after big changes — pushes
+#     to main that touch agent trees or this backup machinery;
+#   * a fleet-state job on Server 2 collects the live file state from all
+#     six servers (Stratex ledgers + forward record, VyralX renders +
+#     data/, IntelX/Futuris stores, FRIDAY state) plus a logical dump of
+#     the MySQL "Stratex DB", via scripts/backup_fleet_databases.py
+#     --fleet-state-only;
+#   * a unify job then merges everything into ONE unified set and mirrors
+#     it so BOTH Oracle servers hold the full, identical set (verified by
+#     a whole-tree hash comparison), and the encrypted offsite copy is
+#     taken from the unified set;
+#   * retention on Server 2 is --keep 3 (its disk is the smaller one);
+#     Server 1 keeps 4.
 
 on:
   workflow_dispatch:
@@ -34,12 +49,30 @@ on:
         required: false
         default: ""
   schedule:
-    - cron: "30 3 * * 0"  # Sundays 03:30 UTC
-    - cron: "30 3 * * 3"  # Wednesdays 03:30 UTC (TASK-SEN-009 second slot)
+    - cron: "30 3 * * *"  # Daily 03:30 UTC (TASK-REL-096; was Sun+Wed)
+  push:
+    branches: [main]
+    paths:
+      - 'FRIDAY/**'
+      - 'Inference/**'
+      - 'Memora/**'
+      - 'Stratex/**'
+      - 'Futuris/**'
+      - 'IntelX/**'
+      - 'Forge/**'
+      - 'Sentinel/**'
+      - 'Cortex/**'
+      - 'VyralX/**'
+      - 'scripts/backup_fleet_databases.py'
+      - '.github/workflows/fleet-backup.yml'
 
 permissions:
   contents: read
   issues: write
+
+concurrency:
+  group: fleet-backup
+  cancel-in-progress: false
 
 # TASK-SEN-009: the alert steps below run `gh issue ...` on the runner,
 # which has no checkout — without GH_REPO, gh cannot resolve the repo and
@@ -89,49 +122,6 @@ jobs:
             LATEST=$(sudo ls -1d /var/backups/friday-universe/[0-9]*/ | sort | tail -1)
             echo "Verifying manifest completeness: $LATEST"
             sudo /opt/friday_universe/venv/bin/python scripts/backup_fleet_databases.py --verify --from-dir "/var/backups/friday-universe/$LATEST"
-
-      - name: Encrypt newest backup for the offsite copy (G3)
-        if: success()
-        uses: appleboy/ssh-action@v1.2.5
-        env:
-          BACKUP_ARTIFACT_PASSPHRASE: ${{ secrets.BACKUP_ARTIFACT_PASSPHRASE }}
-        with:
-          host: ${{ secrets.SERVER1_HOST }}
-          username: ubuntu
-          key: ${{ secrets.ORACLE_SSH_KEY }}
-          envs: BACKUP_ARTIFACT_PASSPHRASE
-          script: |
-            set -e
-            if [ -z "$BACKUP_ARTIFACT_PASSPHRASE" ]; then
-              echo "::warning::BACKUP_ARTIFACT_PASSPHRASE secret is not set — offsite copy SKIPPED (TASK-SEN-009 G3). Create the secret to enable encrypted offsite artifacts; plaintext is never uploaded."
-              exit 0
-            fi
-            cd /var/backups/friday-universe
-            LATEST=$(sudo ls -1d [0-9]*/ | sort | tail -1)
-            echo "Encrypting newest backup: $LATEST"
-            sudo tar czf - "$LATEST" | openssl enc -aes-256-cbc -salt -pbkdf2 \
-              -pass env:BACKUP_ARTIFACT_PASSPHRASE \
-              -out "$HOME/friday-backup-offsite.tar.gz.enc"
-            sha256sum "$HOME/friday-backup-offsite.tar.gz.enc"
-
-      - name: Download the encrypted offsite copy
-        if: success()
-        run: |
-          mkdir -p ~/.ssh
-          printf '%s' "${{ secrets.ORACLE_SSH_KEY }}" > ~/.ssh/offsite_key
-          chmod 600 ~/.ssh/offsite_key
-          scp -i ~/.ssh/offsite_key -o StrictHostKeyChecking=accept-new \
-            "ubuntu@${{ secrets.SERVER1_HOST }}:~/friday-backup-offsite.tar.gz.enc" ./ \
-            || echo "::warning::offsite copy not downloaded (encryption step skipped?)"
-
-      - name: Upload offsite copy as a workflow artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: fleet-backup-offsite
-          path: friday-backup-offsite.tar.gz.enc
-          retention-days: 90
-          if-no-files-found: warn
 
       - name: Alert on failure (never silent again)
         if: failure()
@@ -190,6 +180,185 @@ jobs:
         run: |
           TITLE="[BACKUP-ALERT] Fleet backup is failing or stale"
           BODY="Fleet Backup run ${{ github.run_id }} FAILED (job: Server 2 media backup). Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} — investigate before the next scheduled slot. (TASK-SEN-009: a failed backup must never be silent.)"
+          EXISTING=$(gh issue list --search "[BACKUP-ALERT] in:title state:open" --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY"
+          fi
+
+  fleet-state:
+    name: Collect fleet state + MySQL dump on Server 2 (TASK-REL-096)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect fleet-state bundle
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SERVER2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/friday_universe
+            echo "=== Fleet-state collection $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+            FREE_KB=$(df --output=avail -k /var | tail -1 | tr -d ' ')
+            if [ "$FREE_KB" -lt 2097152 ]; then
+              echo "::error::Less than 2 GB free on /var — aborting fleet-state collection to protect the server."
+              exit 1
+            fi
+            # Tooling venv (pymysql only) for the MySQL dump — deliberately
+            # OUTSIDE the fleet venv so the backup never mutates the
+            # production environment it protects.
+            if [ ! -x /var/tmp/rel096-tooling/bin/python ]; then
+              sudo python3 -m venv /var/tmp/rel096-tooling
+              sudo /var/tmp/rel096-tooling/bin/pip install -q pymysql
+            fi
+            sudo /var/tmp/rel096-tooling/bin/python scripts/backup_fleet_databases.py --fleet-state-only
+            echo "=== Latest bundles ==="
+            sudo ls -lt /var/backups/friday-universe | head -5
+
+      - name: Alert on failure (never silent again)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE="[BACKUP-ALERT] Fleet backup is failing or stale"
+          BODY="Fleet Backup run ${{ github.run_id }} FAILED (job: Server 2 fleet-state collection, TASK-REL-096). Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} — investigate before the next scheduled slot. (TASK-SEN-009: a failed backup must never be silent.)"
+          EXISTING=$(gh issue list --search "[BACKUP-ALERT] in:title state:open" --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY"
+          fi
+
+  unify:
+    name: Unify the set on both Oracle servers (TASK-REL-096)
+    needs: [backup, backup-media, fleet-state]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assemble + finalize the unified set on Server 1
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SERVER1_HOST }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/friday_universe
+            ROOT=/var/backups/friday-universe
+            SSHOPT="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
+            SET=$(sudo ls -1d $ROOT/[0-9]*/ | sort | tail -1)
+            REMOTE=$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${{ secrets.SERVER2_HOST }} "sudo ls -1d $ROOT/[0-9]*/ | sort | tail -1; sudo ls -1d $ROOT/*-fleetstate/ | sort | tail -1")
+            MEDIA_SET=$(echo "$REMOTE" | sed -n '1p')
+            BUNDLE=$(echo "$REMOTE" | sed -n '2p')
+            echo "Unifying set $SET with media $MEDIA_SET and bundle $BUNDLE"
+            sudo rm -rf /tmp/rel096-media-set /tmp/rel096-bundle
+            sudo mkdir -p /tmp/rel096-media-set /tmp/rel096-bundle
+            sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER2_HOST }}:${MEDIA_SET}manifest.json" /tmp/rel096-media-set/
+            sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER2_HOST }}:${MEDIA_SET}VYRALX_MEDIA" /tmp/rel096-media-set/
+            sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER2_HOST }}:${BUNDLE}" /tmp/rel096-bundle/
+            sudo /opt/friday_universe/venv/bin/python scripts/backup_fleet_databases.py \
+              --finalize --from-dir "$SET" --bundle-dir /tmp/rel096-bundle \
+              --merge-from /tmp/rel096-media-set
+
+      - name: Mirror the unified set to Server 2 + finalize there
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SERVER2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/friday_universe
+            ROOT=/var/backups/friday-universe
+            SSHOPT="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new"
+            SET_NAME=$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${{ secrets.SERVER1_HOST }} "sudo ls -1d $ROOT/[0-9]*/ | sort | tail -1 | xargs -n1 basename")
+            BUNDLE=$(sudo ls -1d $ROOT/*-fleetstate/ | sort | tail -1)
+            MEDIA_SET=$(sudo ls -1d $ROOT/[0-9]*/ | sort | tail -1)
+            echo "Mirroring unified set $SET_NAME from Server 1"
+            sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER1_HOST }}:$ROOT/$SET_NAME/" "$ROOT/$SET_NAME/"
+            sudo /opt/friday_universe/venv/bin/python scripts/backup_fleet_databases.py \
+              --finalize --from-dir "$ROOT/$SET_NAME" --bundle-dir "$BUNDLE"
+            # The media-only set was an intermediate: its content now lives
+            # inside the unified set, so the standalone copy is removed to
+            # keep Server 2's smaller disk for unified sets.
+            if [ "$MEDIA_SET" != "$ROOT/$SET_NAME/" ] && [ -n "$MEDIA_SET" ]; then
+              echo "Removing merged media-only intermediate $MEDIA_SET"
+              sudo rm -rf "$MEDIA_SET"
+            fi
+            sudo /opt/friday_universe/venv/bin/python scripts/backup_fleet_databases.py \
+              --prune-only --out $ROOT --keep 3
+            echo "=== Server 2 backup root ==="
+            sudo ls -lt $ROOT | head -8
+
+      - name: Verify both Oracle copies are identical
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s' "${{ secrets.ORACLE_SSH_KEY }}" > ~/.ssh/unify_key
+          chmod 600 ~/.ssh/unify_key
+          ROOT=/var/backups/friday-universe
+          SET_NAME=$(ssh -i ~/.ssh/unify_key -o StrictHostKeyChecking=accept-new ubuntu@${{ secrets.SERVER1_HOST }} "sudo ls -1d $ROOT/[0-9]*/ | sort | tail -1 | xargs -n1 basename")
+          echo "Comparing unified set $SET_NAME on both Oracle servers"
+          H1=$(ssh -i ~/.ssh/unify_key -o StrictHostKeyChecking=accept-new ubuntu@${{ secrets.SERVER1_HOST }} "sudo bash -c 'cd $ROOT/$SET_NAME && find . -type f ! -name manifest.json -exec sha256sum {} + | sort -k2 | sha256sum | cut -d\" \" -f1'")
+          H2=$(ssh -i ~/.ssh/unify_key -o StrictHostKeyChecking=accept-new ubuntu@${{ secrets.SERVER2_HOST }} "sudo bash -c 'cd $ROOT/$SET_NAME && find . -type f ! -name manifest.json -exec sha256sum {} + | sort -k2 | sha256sum | cut -d\" \" -f1'")
+          echo "Server 1 tree hash: $H1"
+          echo "Server 2 tree hash: $H2"
+          if [ "$H1" != "$H2" ]; then
+            echo "::error::Unified backup sets DIFFER between the two Oracle servers."
+            exit 1
+          fi
+          echo "Unified sets are identical on both Oracle servers."
+
+      - name: Encrypt newest unified backup for the offsite copy (G3)
+        if: success()
+        uses: appleboy/ssh-action@v1.2.5
+        env:
+          BACKUP_ARTIFACT_PASSPHRASE: ${{ secrets.BACKUP_ARTIFACT_PASSPHRASE }}
+        with:
+          host: ${{ secrets.SERVER1_HOST }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          envs: BACKUP_ARTIFACT_PASSPHRASE
+          script: |
+            set -e
+            if [ -z "$BACKUP_ARTIFACT_PASSPHRASE" ]; then
+              echo "::warning::BACKUP_ARTIFACT_PASSPHRASE secret is not set — offsite copy SKIPPED (TASK-SEN-009 G3). Create the secret to enable encrypted offsite artifacts; plaintext is never uploaded."
+              exit 0
+            fi
+            cd /var/backups/friday-universe
+            LATEST=$(sudo ls -1d [0-9]*/ | sort | tail -1)
+            echo "Encrypting newest unified backup: $LATEST"
+            sudo tar czf - "$LATEST" | openssl enc -aes-256-cbc -salt -pbkdf2 \
+              -pass env:BACKUP_ARTIFACT_PASSPHRASE \
+              -out "$HOME/friday-backup-offsite.tar.gz.enc"
+            sha256sum "$HOME/friday-backup-offsite.tar.gz.enc"
+
+      - name: Download the encrypted offsite copy
+        if: success()
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s' "${{ secrets.ORACLE_SSH_KEY }}" > ~/.ssh/offsite_key
+          chmod 600 ~/.ssh/offsite_key
+          scp -i ~/.ssh/offsite_key -o StrictHostKeyChecking=accept-new \
+            "ubuntu@${{ secrets.SERVER1_HOST }}:~/friday-backup-offsite.tar.gz.enc" ./ \
+            || echo "::warning::offsite copy not downloaded (encryption step skipped?)"
+
+      - name: Upload offsite copy as a workflow artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fleet-backup-offsite
+          path: friday-backup-offsite.tar.gz.enc
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Alert on failure (never silent again)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE="[BACKUP-ALERT] Fleet backup is failing or stale"
+          BODY="Fleet Backup run ${{ github.run_id }} FAILED (job: unify unified set, TASK-REL-096). Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} — investigate before the next scheduled slot. (TASK-SEN-009: a failed backup must never be silent.)"
           EXISTING=$(gh issue list --search "[BACKUP-ALERT] in:title state:open" --json number --jq '.[0].number')
           if [ -n "$EXISTING" ]; then
             gh issue comment "$EXISTING" --body "$BODY"
