@@ -6,6 +6,19 @@ YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEOS_URL = "https://www.googleapis.com/youtube/v3/videos"
 
 
+
+def discover_space_science_media(query: str, max_results: int = 10) -> list[dict]:
+    """TASK-VYR-064: space/science discovery via the public-domain whitelist lane.
+
+    Delegates to ``pd_whitelist.discover_pd_media`` (NASA, Wikimedia
+    CC0/PD live; NOAA, USGS as catalogue entries), licence recorded
+    per item, logo-guarded. No YouTube discovery is used here.
+    """
+    from app.services.pd_whitelist import discover_pd_media
+
+    return discover_pd_media(query, max_results=max_results)
+
+
 def discover_youtube_videos(query: str, max_results: int = 10, order: str = "viewCount") -> list[dict]:
     settings = get_settings()
     if not settings.youtube_data_api_key:
