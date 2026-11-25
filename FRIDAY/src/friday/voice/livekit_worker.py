@@ -577,11 +577,11 @@ def _write_status(
         # language lookup is a local import so this heartbeat can
         # never fail on module state.
         try:
-            from friday.voice.language_profiles import configured_language
+            from friday.voice.language_profiles import effective_language
 
-            _language = configured_language() or ""
+            _language = effective_language()
         except Exception:
-            _language = ""
+            _language = "en-IN"
         payload = {
             "state": state,
             "provider": provider,
@@ -692,17 +692,22 @@ def _voice_name() -> str:
     return (os.getenv("FRIDAY_VOICE_NAME") or "Aoede").strip()
 
 
-def _voice_language() -> "str | None":
-    """TASK-IG-VOI-03: the configured language profile's BCP-47 code
-    (FRIDAY_VOICE_LANGUAGE), or None — None is the default and means
-    exactly today's behaviour: no language is passed and Gemini Live
-    mirrors the caller's language natively."""
+def _voice_language() -> str:
+    """TASK-IG-VOI-03 + TASK-VOI-042: the session language's BCP-47
+    code. TASK-VOI-042 (P0, owner live test 2026-11-25 ~15:54 IST)
+    pins the default to en-IN: the owner's own session ran with no
+    language configured, Gemini auto-detected, and his English was
+    transcribed in Hindi and Telugu script. The explicit
+    FRIDAY_VOICE_LANGUAGE profile still wins when set; anything
+    else — unset, junk, or a failed import — lands on en-IN, never
+    on None (native mirroring is the failure mode, not the safe
+    fallback)."""
     try:
-        from friday.voice.language_profiles import configured_language
+        from friday.voice.language_profiles import effective_language
 
-        return configured_language()
+        return effective_language()
     except Exception:
-        return None
+        return "en-IN"
 
 
 BASE_INSTRUCTIONS = (
@@ -782,6 +787,32 @@ def _instructions(with_memory: bool = True, memory_block: str = "") -> str:
         if memory_block:
             prompt += "\n\n" + memory_block
     return prompt
+
+
+def _session_turn_kwargs() -> dict:
+    """The session-level turn-taking knobs (TASK-VOI-042).
+
+    One dict so the entrypoint and the tests read the same values:
+    turn_detection="realtime_llm" (the server finalizes turns), a
+    MINIMUM endpointing delay of 1.0 s — TASK-VOI-042 raised this
+    from 0.5 s with the AAD silence (500 ms -> 1200 ms): the owner's
+    sentences were split into finals and answered as fragments, so
+    the session now waits a full second of quiet before it treats
+    a turn as complete. Max 3.0 s bounds the wait. Interruptions
+    stay enabled (a real barge-in still cuts in; the VOI-032 note
+    that these knobs are inert under realtime_llm on the deployed
+    1.8.11 stands — the server-side AAD pin above is the gate that
+    actually moves, and this dict keeps the session side honest
+    with it)."""
+    return {
+        "turn_detection": "realtime_llm",
+        "min_endpointing_delay": 1.0,
+        "max_endpointing_delay": 3.0,
+        "allow_interruptions": True,
+        "min_interruption_duration": 0.8,
+        "resume_false_interruption": True,
+        "false_interruption_timeout": 1.0,
+    }
 
 
 def _build_session(**kwargs) -> AgentSession:
@@ -1339,8 +1370,15 @@ async def _gemini_best_key() -> "str | None":
 #     bare AudioTranscriptionConfig() — so supplying one is a drop-in.
 #     There is NO other phrase-hint surface on the Live API (speech
 #     contexts belong to Cloud Speech-to-Text, a different API), and
-#     language_codes stays unset: empty means auto-detect, and the
-#     owner mixes Telugu and English in one call.
+#     the owner mixes Telugu and English in one call. TASK-VOI-042
+#     (P0, owner live test 2026-11-25 ~15:54 IST) reverses that
+#     choice for the STT side: his English was transcribed in Hindi
+#     and Telugu script ("ए, पड़को।", "Stratex స్పష్టంగా తెలుసు.")
+#     while language_codes stayed unset, so the transcription config
+#     now pins language_codes to the effective session language
+#     (en-IN by default, FRIDAY_VOICE_LANGUAGE when set). A genai
+#     SDK too old to know language_codes degrades one rung — vocab
+#     without the pin, then a bare config — never to silence.
 # (2) INSTRUCTION PRIMING — the fleet roster + attested mishearings in
 #     BASE_INSTRUCTIONS (the model also HEARS the audio; priming steers
 #     how it interprets sound-alikes and what names it puts in tool
@@ -1363,15 +1401,30 @@ _FLEET_VOCABULARY: tuple = (
 
 
 def _input_transcription_config():
-    """AudioTranscriptionConfig carrying the fleet custom vocabulary.
+    """AudioTranscriptionConfig carrying the fleet custom vocabulary
+    AND the TASK-VOI-042 language pin (language_codes = the effective
+    session language, en-IN by default).
 
-    Returns a bare config when the installed genai SDK predates the
-    custom_vocabulary field, and None when no genai types are
-    importable at all (the caller then passes no kwarg and the plugin
-    default applies — identical to pre-VOI-012 behaviour).
+    Degradation ladder, newest rung first: vocab + language pin,
+    then vocab without the pin (an SDK that predates language_codes),
+    then a bare config, then None (no genai types at all — the caller
+    passes no kwarg and the plugin default applies). A build failure
+    here would mute the call (_build_realtime_model turns exceptions
+    into "no voice"), so every rung degrades instead of raising.
     """
     if genai_types is None:
         return None
+    try:
+        return genai_types.AudioTranscriptionConfig(
+            custom_vocabulary=list(_FLEET_VOCABULARY),
+            language_codes=[_voice_language()],
+        )
+    except Exception as exc:
+        logger.warning(
+            "genai SDK rejected the transcription language pin (%s); "
+            "transcription biasing degrades to vocabulary without it",
+            exc,
+        )
     try:
         return genai_types.AudioTranscriptionConfig(
             custom_vocabulary=list(_FLEET_VOCABULARY)
@@ -1488,13 +1541,19 @@ def _realtime_input_config():
     - prefix_padding_ms 200 (FRIDAY_VOICE_AAD_PREFIX_PADDING_MS): the
       documented clean-mic value; shorter risks clipping the first
       syllable of a barge-in.
-    - silence_duration_ms 500 (FRIDAY_VOICE_AAD_SILENCE_MS) with
-      end_of_speech_sensitivity HIGH: a half-second pause finalizes
-      the user's turn, so replies start sooner (the session-level
-      endpointing delays in _make_session still apply on top). The
-      accepted trade-off: a mid-sentence pause longer than ~0.5 s can
-      split one utterance into two turns; the FRD-005 evidence showed
-      multi-second dead air, never a clipped owner utterance.
+    - silence_duration_ms 1200 (FRIDAY_VOICE_AAD_SILENCE_MS) with
+      end_of_speech_sensitivity HIGH: a 1.2 s pause finalizes the
+      user's turn. TASK-VOI-042 (P0, owner live test 2026-11-25
+      ~15:54 IST) raised this from the VOI-012 value of 500 ms: the
+      owner's single sentences were split into finals ("Memora, hi,
+      hello, Friday," then bare "Stratex") and she answered the
+      fragments — a half-second pause is inside an ordinary
+      mid-sentence beat. The accepted trade-off, ordered by the P0
+      directive: replies start up to ~0.7 s later per turn, so a
+      complete sentence is answered instead of a fragment. The env
+      override still wins (500 restores the old value in one var).
+      The 500 ms value is kept by test only as the rollback, never
+      as the default.
 
     Returns None when the installed genai SDK lacks the realtime
     config types (caller passes no kwarg → pre-VOI-012 behaviour).
@@ -1508,7 +1567,7 @@ def _realtime_input_config():
                 genai_types.EndSensitivity.END_SENSITIVITY_HIGH
             ),
             prefix_padding_ms=_env_int("FRIDAY_VOICE_AAD_PREFIX_PADDING_MS", 200),
-            silence_duration_ms=_env_int("FRIDAY_VOICE_AAD_SILENCE_MS", 500),
+            silence_duration_ms=_env_int("FRIDAY_VOICE_AAD_SILENCE_MS", 1200),
         )
         return genai_types.RealtimeInputConfig(
             automatic_activity_detection=aad,
@@ -1545,9 +1604,10 @@ def _build_realtime_model(key: str, instructions: str):
                 async_client_args={"ssl": _SSL_CONTEXT},
             ),
         )
-        # TASK-IG-VOI-03: a configured language profile anchors the
-        # session language; unconfigured (the default) passes nothing
-        # and keeps today's native mirroring byte-for-byte.
+        # TASK-IG-VOI-03 + TASK-VOI-042: the session language is
+        # always pinned — en-IN by default, the configured profile
+        # when FRIDAY_VOICE_LANGUAGE is set. Unconfigured no longer
+        # means native mirroring (that was the 2026-11-25 failure).
         language = _voice_language()
         if language:
             kwargs["language"] = language
@@ -3637,13 +3697,7 @@ async def entrypoint(ctx: JobContext):
         # _realtime_input_config, not these. Do not re-trust them.
         session = _build_session(
             llm=model,
-            turn_detection="realtime_llm",
-            min_endpointing_delay=0.5,
-            max_endpointing_delay=3.0,
-            allow_interruptions=True,
-            min_interruption_duration=0.8,
-            resume_false_interruption=True,
-            false_interruption_timeout=1.0,
+            **_session_turn_kwargs(),
         )
         _register_frame_counters(session, counters)
         return session, agent
