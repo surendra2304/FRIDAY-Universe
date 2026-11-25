@@ -363,12 +363,21 @@ def _extractive_excerpts(supplied: dict[str, dict]) -> list[dict]:
     return excerpts
 
 
-def _degraded(error: str, supplied: dict[str, dict]) -> dict:
+def _degraded(error: str, supplied: dict[str, dict], entailment_failures: list[dict] | None = None) -> dict:
     """Explicit non-success that preserves the extractive excerpts."""
-    return {"status": "DEGRADED", "error": error,
-            "findings": _extractive_excerpts(supplied),
-            "answer_kind": "unsynthesised_raw_findings",
-            "question_answered": False}
+    result = {"status": "DEGRADED", "error": error,
+              "findings": _extractive_excerpts(supplied),
+              "answer_kind": "unsynthesised_raw_findings",
+              "question_answered": False}
+    if entailment_failures:
+        # TASK-INT-053: the per-finding statement_support reasons, so a
+        # failure names its failing leg (unsupported_entity:X,
+        # unsupported_number:N, low_content_coverage:a/b) instead of only
+        # the generic code. collect_live_brief carries this into the stored
+        # run; the error string itself stays the stable code (contract
+        # tests pin it).
+        result["entailment_failures"] = entailment_failures
+    return result
 
 
 async def synthesize_grounded(query: str, documents: list[dict], gateway: Any = None) -> dict:
@@ -438,49 +447,75 @@ async def synthesize_grounded(query: str, documents: list[dict], gateway: Any = 
         ],
         role="analyst", schema_model=GroundedDraft, temperature=0, max_tokens=2400,
     )
-    try:
-        response = await gateway.complete(**complete_kwargs)
-    except GroundedCompletionError as exc:
-        # TASK-REL-007 (2026-11-14): Inference routes completions across
-        # providers/models per call; a route can truncate the draft
-        # (finish_reason 'length' after ~125 chars observed live) while the
-        # next route serves it fully. One retry on incomplete_completion
-        # only — every other refusal (mock, invalid schema) stays final,
-        # and all grounding gates below apply unchanged to the retried draft.
-        if (getattr(exc, "public_details", {}) or {}).get("reason_code") != "incomplete_completion":
-            raise
-        response = await gateway.complete(**complete_kwargs)
-    # Defense in depth: no mock output qualifies even with a misconfigured caller.
-    if response.provider == "mock":
-        return _degraded("mock_synthesis_refused", supplied)
-    draft = response.parsed
-    if not isinstance(draft, GroundedDraft):
-        return _degraded("invalid_synthesis_shape", supplied)
-    if draft.insufficient_evidence or not draft.findings:
-        return _degraded("question_evidence_insufficient", supplied)
-    findings = []
-    for item in draft.findings:
-        source = supplied.get(item.source_id)
-        if (source is None or len(normalized(item.quote)) < 30 or len(normalized(item.statement)) < 20
-                or normalized(item.quote) not in normalized(source["text"])):
-            return _degraded("synthesis_quote_unverified", supplied)
-        # TASK-INT-005 verification pass: a verbatim quote establishes
-        # attribution only. The statement itself must also be supported by
-        # the cited source's text, or the whole draft degrades — the same
-        # fail-closed rule as the quote gate.
-        supported, _reason = statement_support(item.statement, source["text"])
-        if not supported:
-            return _degraded("synthesis_entailment_unverified", supplied)
-        findings.append({"statement": item.statement, "quote": item.quote,
-                         "status": "source_attributed_model_draft", "independently_verified": False,
-                         # TASK-INT-009: each draft finding cites exactly one
-                         # source by construction; surface that explicitly
-                         # instead of leaving it implicit in the payload
-                         # (INT-005 §6 item 4).
-                         "single_source": True,
-                         "quote_verified": True, "entailment_verified": True,
-                         "citations": [{"source_id": item.source_id, "source_title": source["title"], "source_url": source["url"]}]})
-    return {"status": "SUCCESS", "findings": findings,
-            "answer_kind": "source_attributed_model_draft", "question_answered": False,
-            "synthesis_provider": response.provider, "quotes_verified": True,
-            "semantic_entailment_verified": True}
+    # TASK-INT-053 (2026-11-26): one retry on entailment failure, with a
+    # fresh draft. The gateway routes across providers/models per call
+    # (REL-007), so a second draw is genuinely different text, not the same
+    # draft again: the three INT-020 chat-route runs failed entailment 0/3
+    # while the bus re-probe passed the same gate, which is consistent with
+    # draft variance across draws. The retry spends one more Inference call
+    # and relaxes no gate — the fresh draft passes through the quote gate
+    # and the entailment screen unchanged, and a second entailment failure
+    # is final. Quote failures, insufficient evidence, mock and shape
+    # refusals are NOT retried: only the entailment leg carries the
+    # variance-across-draws evidence.
+    for attempt in (1, 2):
+        try:
+            response = await gateway.complete(**complete_kwargs)
+        except GroundedCompletionError as exc:
+            # TASK-REL-007 (2026-11-14): Inference routes completions across
+            # providers/models per call; a route can truncate the draft
+            # (finish_reason 'length' after ~125 chars observed live) while the
+            # next route serves it fully. One retry on incomplete_completion
+            # only — every other refusal (mock, invalid schema) stays final,
+            # and all grounding gates below apply unchanged to the retried draft.
+            if (getattr(exc, "public_details", {}) or {}).get("reason_code") != "incomplete_completion":
+                raise
+            response = await gateway.complete(**complete_kwargs)
+        # Defense in depth: no mock output qualifies even with a misconfigured caller.
+        if response.provider == "mock":
+            return _degraded("mock_synthesis_refused", supplied)
+        draft = response.parsed
+        if not isinstance(draft, GroundedDraft):
+            return _degraded("invalid_synthesis_shape", supplied)
+        if draft.insufficient_evidence or not draft.findings:
+            return _degraded("question_evidence_insufficient", supplied)
+        findings = []
+        entailment_failures: list[dict] = []
+        for item in draft.findings:
+            source = supplied.get(item.source_id)
+            if (source is None or len(normalized(item.quote)) < 30 or len(normalized(item.statement)) < 20
+                    or normalized(item.quote) not in normalized(source["text"])):
+                return _degraded("synthesis_quote_unverified", supplied)
+            # TASK-INT-005 verification pass: a verbatim quote establishes
+            # attribution only. The statement itself must also be supported by
+            # the cited source's text, or the whole draft degrades — the same
+            # fail-closed rule as the quote gate.
+            supported, reason = statement_support(item.statement, source["text"])
+            if not supported:
+                # Record every failing finding, not just the first: the
+                # archive must name the failing leg for each finding, so the
+                # next failure is diagnosable without a live reproduction.
+                entailment_failures.append({"source_id": item.source_id, "reason": reason})
+                continue
+            findings.append({"statement": item.statement, "quote": item.quote,
+                             "status": "source_attributed_model_draft", "independently_verified": False,
+                             # TASK-INT-009: each draft finding cites exactly one
+                             # source by construction; surface that explicitly
+                             # instead of leaving it implicit in the payload
+                             # (INT-005 §6 item 4).
+                             "single_source": True,
+                             "quote_verified": True, "entailment_verified": True,
+                             "citations": [{"source_id": item.source_id, "source_title": source["title"], "source_url": source["url"]}]})
+        if entailment_failures:
+            if attempt == 1:
+                continue
+            return _degraded("synthesis_entailment_unverified", supplied,
+                             entailment_failures=entailment_failures)
+        return {"status": "SUCCESS", "findings": findings,
+                "answer_kind": "source_attributed_model_draft", "question_answered": False,
+                "synthesis_provider": response.provider, "quotes_verified": True,
+                "semantic_entailment_verified": True}
+    # Both attempts return above (SUCCESS, or a degraded verdict); this is
+    # unreachable, kept so the function can never fall through silently.
+    raise AssertionError("unreachable: synthesis attempts exhausted without a verdict")
+
