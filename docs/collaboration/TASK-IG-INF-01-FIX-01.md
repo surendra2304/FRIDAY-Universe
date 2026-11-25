@@ -6,7 +6,7 @@
 - **Title (board):** 'Inference: fix long-context fit routing - auto path bypass + health overlay precedes fit filter (IG-INF-01 fix)'
 - **Claim:** hub #1483, comment 7164966623, 2026-11-25 ~19:45 IST, per coordinator WATCH101 ruling (7164435710) — skip blocked head INT-020 and blocked pos 2 VOI-030, claim this now.
 - **Branch:** `muse13/task-ig-inf-01-fix-01` from main `14181d3c` (created via Git Data API, verified read-back).
-- **Work PR:** #1854 (https://github.com/surendra2304/FRIDAY-Universe/pull/1854), head 1bde103e, base main 14181d3c. Board hunk in commit 2.
+- **Work PR:** #1854 (https://github.com/surendra2304/FRIDAY-Universe/pull/1854), head 6e94dd8d, base main 14181d3c. Checkpoint 1: commit 1 `1bde103e` (evidence doc), commit 2 `6e94dd8d` (board flip).
 
 ## 2. Board verification (first-hand, main 14181d3c)
 
