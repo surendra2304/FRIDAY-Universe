@@ -100,6 +100,12 @@ class ProviderResponse(BaseModel):
     latency_seconds: float = 0.0
     finish_reason: str | None = "stop"
     raw_response: dict[str, Any] | None = None
+    # Tool calls routed by the needle fast path (TASK-INF-038): a list of
+    # OpenAI-shaped {"id", "type": "function", "function": {"name",
+    # "arguments"}} entries. None for ordinary completions; set only when
+    # finish_reason == "tool_calls". The gateway never executes tools — the
+    # caller executes them with its own executors.
+    tool_calls: list[dict[str, Any]] | None = None
 
 
 class BaseLLMProvider(ABC):
