@@ -20656,16 +20656,17 @@ tasks:
 
   - id: TASK-INF-036
     title: 'PRODUCTION-VERIFY: Inference corpus items IG-INF-05, IG-INF-06, IG2-INF-01, IG2-INF-02 - live load + failover verification (wave 3)'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-inf-036-production-verify
+    pr: 1809
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T12:54:00+05:30'
+    updated_at: '2026-11-25T14:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INF-036-PRODUCTION-VERIFY.md
     acceptance:
     - 'PRODUCTION-VERIFY (owner standard 2026-11-24: merged code is NOT implemented): live extreme-condition verification of TASK-IG-INF-05, TASK-IG-INF-06, TASK-IG2-INF-01, TASK-IG2-INF-02.'
     - 'Extreme-condition test: real prompts routed through live Inference on FRIDAY-Server under load (long-context, concurrent) + provider-failure failover case per item'
@@ -20674,8 +20675,9 @@ tasks:
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Claimed by Muse 15 as claim-and-next (hub #1483 comment 7155723900, 2026-11-25 12:48 IST): queue position 2 behind TASK-INF-035. Coordinator watch085 first assigned it to Muse 17 in error - corrected in the same run; board PR #1791 amended.'
+    - 'Done with live evidence (evidence: docs/collaboration/TASK-INF-036-PRODUCTION-VERIFY.md; probes 2026-11-25 ~14:05-14:09 IST via bridge run_shell on S2 -> ssh to S1 -> tunnel to AWS Inference 15.134.130.145): PARTIAL. IG-INF-05 VERIFIED (record present on S1, md5-identical to main; zero grey-market routes wired; pooled first-party tiers + failover ladder live). IG-INF-06 PARTIAL (discipline present live, changelog baseline-only, zero prompt-text changes since it landed - not exercised; no fix task). IG2-INF-01 PARTIAL (adapter present, rung OFF live - named Bytez model served by gemini-3.6-flash, Bytez never attempted; quota probe harness runs live but verdict no_attempts, no BYTEZ_API_KEY anywhere - NOT RUN; no fix task, key provisioning is a coordinator decision). IG2-INF-02 PARTIAL (vault code present + wired into gateway startup, but vault_configured() False live on S1, no vault file, no master key, keys plaintext env names; AWS-side adoption not observable) - fix task TASK-IG2-INF-02-FIX-01 named. Load: 5x concurrent auto 5/5 HTTP 200. S1 Inference.service still dead; :8001 is the AWS tunnel.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'Work PR #1809 open, IN_REVIEW. Verdict PARTIAL (evidence: docs/collaboration/TASK-INF-036-PRODUCTION-VERIFY.md): IG-INF-05 VERIFIED; IG-INF-06 PARTIAL (discipline present, never exercised - no prompt change since it landed); IG2-INF-01 PARTIAL (rung OFF live; quota probe NOT RUN - no Bytez key); IG2-INF-02 PARTIAL (vault wired but unused live on the observable host) with fix task TASK-IG2-INF-02-FIX-01 named. PR #1789 (INF-035) verified still open at filing time, so INF-035 untouched. Closure is Muse''s call; next queue item TASK-INF-037 (owner muse_13).'
 
   - id: TASK-INF-037
     title: 'PRODUCTION-VERIFY: Inference corpus items IG2-INF-03, IG2-INF-04, IG3-INF-01, IG3-INF-02 - live load + failover verification (wave 3)'
