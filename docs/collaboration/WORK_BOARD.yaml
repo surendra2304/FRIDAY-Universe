@@ -18168,17 +18168,22 @@ tasks:
 
   - id: TASK-STR-051-FIX-01
     title: 'G1: reconcile the 35 venue closes with no ledger row (+15.93 USDT on 2026-11-24) - match each close to a ledger row or file it as a genuine gap, then re-run the daily reconciliation'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_18
+    branch: muse18/task-str-051-fix-01
+    pr: 1769
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T05:21:02+05:30'
+    updated_at: '2026-11-25T09:21:03+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-STR-051-WINDOW-STATE.md
+    - docs/collaboration/TASK-STR-051-FIX-01.md
+    - docs/collaboration/TASK-STR-051-FIX-01-CHECKPOINT-2.md
+    - docs/collaboration/TASK-STR-051-FIX-01-RESULT.json
+    - Stratex/scripts/g1_reconcile.py
+    - Stratex/tests/test_g1_reconcile.py
     acceptance:
     - 'Each of the 35 venue closes is matched to a ledger row (symbol + side + qty + price + time; split fills via VWAP) or filed as a genuine gap with its realised P&L.'
     - 'The G1 figure (+15.93 USDT on 2026-11-24, 35 closes) is confirmed or corrected, and Q1 (daily_2026-11-23 net +160.6847 vs daily_2026-11-24 net +138.7507) is resolved from the report files.'
@@ -18186,8 +18191,12 @@ tasks:
     evidence:
     - 'Filed by Muse 8 from TASK-STR-051 G1, per coordinator ruling (a) ACCEPTED in watch 7147595568 (hub #1483, 2026-11-25 ~05:06 IST): the window state is accepted with G1 / G-trace / Q1 as known gaps; this task reconciles the 35 closes.'
     - 'Source: M13 S1 pull summary hub 7146269836 (80 ledger rows, net +138.75; G1 35 closes +15.93 USDT on 11-24, was 34 / +26.59 on 11-23); checkpoint doc docs/collaboration/TASK-STR-051-WINDOW-STATE.md section 4 (11-23 figure verified arithmetically, 11-24 move of -10.66 on one added close UNVERIFIED).'
+    - 'Claim: hub #1483 comment 7151603272 by Muse 18, 2026-11-25 ~08:40 IST, per coordinator watch 7151431137 (run scheduled 07:57 IST) - queue head STR-051-FIX-01, then FRD-050, then MEM-032. Board verified AVAILABLE, owner null, P2, on main d2a40a6d; no prior hub claim. Branch muse18/task-str-051-fix-01.'
+    - 'Grant: read-only run_shell server 1 (Oracle Server 1) asked in hub 7151623500 (~08:50 IST) and GRANTED in coordinator follow-up 7151724843 (created 2026-11-25T03:14:23Z = 08:44:23 IST), scope confirmed standing in watch073 7151960206: ls/cat/tail/head/sed -n/wc -l/sha256sum/md5sum/jq on exactly Stratex/state/fill_ledger.jsonl + Stratex/state/reconciliation/daily_2026-11-23.json + daily_2026-11-24.json, TASK-STR-051-FIX-01 live leg only. No writes, no other servers, no credential reads.'
+    - 'Checkpoint 1 pushed to branch muse18/task-str-051-fix-01 @ bd0b413f (parent main d2a40a6d): offline matcher Stratex/scripts/g1_reconcile.py + Stratex/tests/test_g1_reconcile.py (11/11 pass locally) + checkpoint-1 doc + CI-list line. Hub status 7151801737 (created 08:49:09 IST; the post header says ~09:20 IST, mislabelled - created_at is authoritative).'
+    - 'Live-leg verdict 2026-11-25 (checkpoint-2 doc + result JSON in this PR): S1 files pulled first-hand and sha256-verified - ledger 80 lines / 38,809 bytes / md5 5a8d43a3ef9f32c111280a615d6ceb35, daily_2026-11-23.json 45,641 bytes, daily_2026-11-24.json 46,274 bytes. Matcher exit 0: 2026-11-24 35/35 GENUINE_GAP (+15.9305 USDT, arithmetic exact); 2026-11-23 34/34 GENUINE_GAP (+26.5927 USDT). Zero candidates, zero qty-level time-misses; 30/35 fills are 2026-11-19 (reset day); 11-24 set = 11-23 set + one ALGO close -10.6622 (order 431920550). Q1 resolved: ledger net delta -21.9340 equals window net delta; both reports RECONCILED, residual -0.0001. Acceptance 1+2 done; acceptance 3 (daemon re-run) NOT done - needs a write-scoped grant, and the read-only recomputation agrees with the filed reports, so no re-run was requested per the claim-time flag. Coordinator to rule: merge as complete, or grant the write-scoped re-run.'
     blockers: []
-    next_action: 'Central pool (owner pull model): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins.'
+    next_action: 'Work PR open for review; merge is Muse. Acceptance 3 (daemon re-run) owed only on a write-scoped grant - coordinator to rule (merge as complete, or grant the re-run).'
 
   - id: TASK-INT-038
     title: 'IntelX: fast-lane live proof run 2 - one real alert end-to-end after INT-019'
