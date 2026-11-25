@@ -19276,13 +19276,13 @@ tasks:
   - id: TASK-STR-065
     title: 'Stratex: encode the Safety Nets stop-out rule into the advisory/risk gate'
     status: CLAIMED
-    owner: muse_16
-    branch: muse16/task-str-065-safety-nets-stopout
+    owner: muse_20
+    branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:42:00+05:30'
+    updated_at: '2026-11-25T16:06:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19290,8 +19290,9 @@ tasks:
     - The rule's two triggers (session flips from profit to loss; capital drawdown starts) exist as tested guardrail checks in the advisory/risk gate.
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-STR-SAFETY-NETS (IG package S-05). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'RE-SLOT 2026-11-25 (coordinator watch094): owner muse_16 -> muse_20. Muse 16 ruling request hub 7159669287: WATCH092 execution authorisation was per-worker (TP6 STR-086, Muse 8) and does NOT extend; ruling 5 stands - the flag must be cleared by the worker''s own runtime/owner, not by coordinator order. Muse 16 read-only legs done (FWD-006 overlap verdict NO OVERLAP; design + 12 tests drafted, pack ~/workspace/muse16-str065/STR-065-ANALYSIS.md, 20,708 bytes; branch muse16/task-str-065-safety-nets-stopout @ 3431cacf claim commit only, no work commits, no PR). GAP-LIST.md not found - S-05 wording still unverified; Muse 20 to verify first. Muse 20 queue now FRG-025 -> STR-065 -> SEN-033.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Re-slotted to Muse 20 by coordinator watch094 (2026-11-25, hub #1483): Muse 16 runtime execution-gate held per ruling 5; Muse 20 builds/tests the safety-nets leg from the Muse 16 design pack. Claim via hub #1483 (hub comment + branch push).'
   - id: TASK-STR-066
     title: 'Stratex: add PDO/PDC levels plus current-day 5-minute levels to S/R annotation records'
     status: MERGED
@@ -22202,14 +22203,14 @@ tasks:
     next_action: 'Work PR #1764 open; awaiting coordinator merge + paired-verifier verdict.'
   - id: TASK-STR-082
     title: 'Stratex: sizing governance additions - scale-up gate, Kelly paper study, creator hard rules in the advisory gate'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_20
     branch: muse20/task-str-082-sizing-governance
     pr: 1811
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T14:43:08+05:30'
+    updated_at: '2026-11-25T16:06:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Stratex/
@@ -22220,8 +22221,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Assigned to Muse 20 by the coordinator (watch085): queue position 2 behind TASK-STR-085 (claimed by Muse 20 as head, hub 7155770973). Freeness verified first-hand on main be3f303e (AVAILABLE / owner null, no branch, not in any known queue). Board flip in coordinator board PR #1791.'
+    - 'MERGED 2026-11-25 (work PR #1811, merge 1371db89, merged by coordinator watch093; CI 10/10 green on head f62c6130; full-diff reviewed watch093: scale-up gate pure/fail-closed, Kelly paper study explicitly NOT adopted, creator hard rules in advisory gate both paths, 23 new behavior tests, 2 checkpoint docs, CI collection lines).'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+    next_action: 'MERGED (work PR #1811, merge 1371db89, coordinator watch093). Deployed/production verification is follow-up work for a new task.'
   - id: TASK-STR-083
     title: 'Stratex: RiskGovernor deltas - per-engine trade-count cap and breach callback, plus Saturday retrain-cadence evaluation'
     status: AVAILABLE
@@ -22749,6 +22751,31 @@ tasks:
     - 'CI on head acf32277 at watch092 check: contracts job FAILED, test + workflow-syntax + fleet-layout jobs still in progress - fix owed before any merge. Do NOT merge on this CI state.'
     blockers: []
     next_action: 'Muse 18 fixes the contracts failure on PR #1815, then coordinator reviews + merges on fully green CI.'
+  - id: TASK-VOI-043
+
+    title: 'FRIDAY voice P0: zero dropped fragments + no arbitrary speech cancellation (owner live test 2026-11-25)'
+    status: CLAIMED
+    owner: muse_7
+    branch: null
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: '2026-11-25T16:06:00+05:30'
+    updated_at: '2026-11-25T16:06:00+05:30'
+    files:
+    - FRIDAY/src/friday/voice/livekit_worker.py
+    - FRIDAY/src/friday/voice/brain_bridge.py
+    - FRIDAY/tests/test_voice_fragment_recovery_frd019.py
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - '(c) ZERO dropped fragments: every final transcript dispatches a bridge turn; proven by journal + live test, no dropped-fragment suspect left unresolved.'
+    - '(d) No arbitrary speech cancellation mid-answer: her speech is not cancelled after interruption except on a real new user turn; proven live.'
+    - 'Acceptance is a real-use test: full spoken sentences asking FRIDAY to DO things (e.g. Stratex P and L), answered completely and fast. Scripted greeting runs do not count.'
+    evidence:
+    - 'Filed by coordinator watch094 (2026-11-25, hub #1483) from the owner live-test P0 post 7159737257: owner verdict ''It is not understanding anything''; journal 10:24-10:25 UTC shows fragments answered, English transcribed in Hindi/Telugu script, one dropped fragment never dispatched, her speech cut mid-answer. Assigned as P0 head to Muse 7, preempting queue (VOI-040/VYR-058/INF-032/INT-038 paused, owners unchanged); Muse 1 takes (a)+(b) under VOI-042. Voice status in ALL reporting is now NOT WORKING until the owner re-tests and accepts.'
+    blockers: []
+    next_action: 'Claim on hub #1483 and start now. Fix (c) then (d); file journal + live-test evidence per fix. Owner re-test is the acceptance verdict.'
+
 task_id_warnings:
   - id: TASK-REL-061
 
