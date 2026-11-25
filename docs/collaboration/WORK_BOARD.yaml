@@ -18923,13 +18923,13 @@ tasks:
   - id: TASK-VOI-041
     title: 'FRIDAY voice: acceptance run 26 - next calm-window run after VOI-040 (run 25); per-probe latency filed'
     status: AVAILABLE
-    owner: null
+    owner: muse_7
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T19:40:00+05:30'
+    updated_at: '2026-11-25T21:25:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18940,8 +18940,9 @@ tasks:
       - 'Released 2026-11-24 ~22:19 IST by Muse 10 (hub #1483 comment 7138194564): run leg blocked - run 26 follows VOI-040 (run 25, M7, doubly held) and VOI-039 (run 24) is parked on bridge approval bdc83814 + owner stop order; no probes possible. Claim PR #1653 merged 15:10 IST (merge f1caee50); branch stands on remote at 8db7216e, claim commit only. Released to the pool per pull-model rule 4 (owner directive 7136890552); re-pullable when the freeze lifts and run 24 files.'
       - 'Coordinator watch099 (2026-11-25): assigned to muse_7 - queue position 3 behind VOI-040 and VYR-058. Verified AVAILABLE / owner null on main c4b64284.'
       - 'Released to the pool by coordinator watch102 (2026-11-25, hub #1483): Muse 7 silent through 4 demands; run 26 is gated on VOI-040 (run 25, now muse_1) and VOI-039 (run 24, parked on bridge approval + owner stop order) so no probes are possible until VOI-040 files. Re-assignable when VOI-040 closes. Verified AVAILABLE / owner muse_7 on main 14181d3c.'
+      - 'Assigned to Muse 7 as queue position 1 by coordinator watch106 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. Head of Muse 7 queue (queue was empty since 2026-11-24; M7 silent, re-tasked this run). P1 voice acceptance run 26, sequel to VOI-040.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 once VOI-040 (run 25) files.'
+    next_action: 'Assigned to muse_7 as queue head by coordinator watch106 (2026-11-25, hub #1483); claim via hub #1483; run the probes in the next calm window; file per-probe latency + pass/fail.'
   - id: TASK-EARN-014
     title: 'EARN: gig copy pack 8 - Fiverr Level-1 batch service copy pack (Gig 8, Sales & Landing Page Copy)'
     status: IN_REVIEW
@@ -21393,13 +21394,13 @@ tasks:
   - id: TASK-FRG-029
     title: 'REPO-IMPLEMENT: Forge repos - net-merge (reference-only), Plexo (reference-only)... (wave 3)'
     status: AVAILABLE
-    owner: null
+    owner: muse_7
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T21:25:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -21409,8 +21410,9 @@ tasks:
     - 'real build task for another agent executed end-to-end through Forge and its output actually used by that agent in production, per item'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Assigned to Muse 7 as queue position 2 by coordinator watch106 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. P2 Forge repos wave 3 follow-up (repo-implement, multi-hour).'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'Assigned to muse_7 as queue position 2 by coordinator watch106 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
 
   - id: TASK-INT-051
     title: 'REPO-IMPLEMENT: IntelX repos - Agent Reach, Camofox Browser, Local Deep Research, Helix, Robin, OpenDirectory Finder (wave 3)'
@@ -21810,13 +21812,13 @@ tasks:
   - id: TASK-EARN-024
     title: 'EARN: clipping-campaign lane - join Content Rewards / Whop / clip.tech campaigns for GTA 6 clips, campaign tracker, first approved campaign payout'
     status: AVAILABLE
-    owner: null
+    owner: muse_tp5
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T02:40:00+05:30'
+    updated_at: '2026-11-25T21:25:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -21829,8 +21831,9 @@ tasks:
     - 'Done = tracker live with current campaigns ranked + first clip submitted under a live campaign brief. First-money path: the first approved campaign payout (small dollars by design - see the rate table above).'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s explicit follow-up order (02:24 IST) to the Instagram adoption re-audit: the GTA 6 clipping videos must NOT stay reference-only - file real implementation tasks. Source watches read first-hand in the re-audit (Df5V_2anUAj, Df-NMPUFbEx, Df6oHpmJ5Yz, Df0B9Z4n4BU + full-watch item Df1AKYMjuEg).'
+    - 'Assigned to Muse TP5 as queue position 3 by coordinator watch106 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. Earning lane, queue position 3 only (clipping-campaign lane, VyralX-adjacent).'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only.'
+    next_action: 'Assigned to muse_tp5 as queue position 3 (earning lane) by coordinator watch106 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
   - id: TASK-FRD-057
     title: 'FRIDAY: book-page translation reading mode - photograph pages, get Telugu translation page by page'
     status: AVAILABLE
@@ -22393,14 +22396,14 @@ tasks:
     next_action: 'CLOSED as a duplicate of TASK-IG-STR-06 (VERIFIED, PR #466; S-24 family declared, run and closed 2026-11-16, 0/4 cells pass). No re-run; a variant needs a NEW pre-declaration. Muse 20 re-slotted to STR-086 as queue position 2.'
   - id: TASK-STR-086
     title: 'Stratex: staged chart-analysis checklist in the research desk - the 7-stage screenshot pipeline'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_tp6
     branch: musetp6/task-str-086-staged-chart-checklist
-    pr: null
+    pr: 1863
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T16:30:00+05:30'
+    updated_at: '2026-11-25T21:25:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Stratex/
@@ -22413,8 +22416,9 @@ tasks:
     - 'Assigned to Muse 20 as queue position 2 by coordinator watch088 (2026-11-25 ~14:26 IST, hub #1483); verified AVAILABLE / owner null on main a0a9f1ba.'
     - 'Owner corrected watch092: TASK-STR-086 belongs to Muse TP6, NOT Muse 20. TP6 claim of record hub 7157064327 (~14:00 IST) + checkpoint 1 hub 7157143111; TP6 status 7158757742 confirms it is NOT released and branch musetp6/task-str-086 head 5ccdf991 stands. Watch090 treated it as released per a TP6 free request - that reading is withdrawn. Muse 20 queue position-2 replacement still owed.'
     - 'Coordinator watch095 (2026-11-25): branch field corrected per TP6 status 7160174357 - true branch is musetp6/task-str-086-staged-chart-checklist @ 5ccdf991 (verified via git ls-remote); the field previously read musetp6/task-str-086.'
+    - 'Work PR #1863 open (head 66306017, CI 9/9 green, full-diff reviewed by coordinator watch106); board flip AVAILABLE -> IN_REVIEW by coordinator watch106 (2026-11-25, hub #1483). Staged chart-analysis checklist: 7-stage pipeline + Kraken-leg chart run (SETUP SHORT, entry 58564.60, R:R 2.00) + 38/38 tests; demo-fapi HTTP 451 filed, Kraken alternate authorised by WATCH098 ruling 2.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+    next_action: 'Work PR #1863 open (TP6); merge after coordinator review + green CI.'
   - id: TASK-VYR-082
     title: 'VyralX: layered marketing architecture - the seven-layer growth system on top of channel_operator'
     status: AVAILABLE
@@ -22531,13 +22535,13 @@ tasks:
   - id: TASK-EARN-025
     title: 'EARN: Upwork lane - profile completion pack plus first-proposal drafts for the owner''s own sending'
     status: AVAILABLE
-    owner: null
+    owner: muse_7
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T03:10:00+05:30'
+    updated_at: '2026-11-25T21:25:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -22548,8 +22552,9 @@ tasks:
     - 'Done = profile pack finalised against the live account + five proposal drafts matched to live job posts, ready for his review. First-money path: the first Upwork contract, paid through Upwork escrow on milestone approval per the platform''s terms.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    - 'Assigned to Muse 7 as queue position 3 by coordinator watch106 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. Earning lane, queue position 3 only (Upwork profile pack + first-proposal drafts for the owner to send).'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+    next_action: 'Assigned to muse_7 as queue position 3 (earning lane) by coordinator watch106 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
   - id: TASK-DB-001
     title: 'DB: Stratex MySQL production-usage verification - prove live research runs actually persist to MySQL HeatWave, fix any gap found'
     status: BLOCKED
@@ -22889,14 +22894,14 @@ tasks:
     next_action: 'Queue position 2 for Muse 1 behind FRD-053 (coordinator watch097): P0 re-slot from Muse 7. Fix (c) then (d); file journal + live-test evidence per fix. Owner re-test is the acceptance verdict.'
   - id: TASK-IG2-FRD-03-FIX-01
     title: 'FRIDAY fix: lead_generate (IG2-FRD-03) - capability router lead rule + FindYello/JaRanks source repair'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-ig2-frd-03-fix-01
-    pr: null
+    pr: 1859
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T19:45:00+05:30'
+    updated_at: '2026-11-25T21:25:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-IG2-FRD-03-FIX-01-EVIDENCE.md
@@ -22912,8 +22917,9 @@ tasks:
     - 'Named by Muse 15 in TASK-FRD-054 (work PR #1828, merged d15c82c9; hub 7160841834): IG2-FRD-03 NOT VERIFIED - natural requests never reach the tool (capability router has no lead rule; DIRECT_REASONING score -16.5, Avoided External: True); explicit FindYello run 403s; explicit JaRanks run returns 65 rows with 0 phones / 0 emails + nav junk.'
     - 'Coordinator watch097 (2026-11-25): filed + assigned to Muse 15 as queue position 3 behind FRD-045 and FRD-043 (same worker who found the failure).'
     - 'Claimed by Muse 15 2026-11-25 ~19:01 IST (hub 7163894360), re-slotted from the pool per WATCH099 (FRD-043 hold stands). COMPLETE with live evidence (evidence docs/collaboration/TASK-IG2-FRD-03-FIX-01-EVIDENCE.md, work PR open): PARTIAL — router + parser VERIFIED live on FRIDAY-Server (59 tests green in the service venv; verbatim FRD-054 utterances route TOOL_EXECUTION/lead_generate; real JaRanks page yields 16/16 providers + profile URLs, zero garbage phones); FindYello BLOCKED (Cloudflare JS challenge, site-wide, cf-ray SYD); JaRanks NOT a contact source (0/16 profiles publish a phone or email); end-to-end /api/chat leg owed on deploy (merge + CD repair or coordinator deploy ruling).'
+    - 'PR #1859 merged 2026-11-25 (merge 4aeac520); board flip IN_REVIEW -> MERGED by coordinator watch106 (2026-11-25, hub #1483). Lead_generate router rule + parser fix merged; FRD-054 production-verify leg follows per acceptance.'
     blockers: []
-    next_action: 'IN_REVIEW — work PR open for merge (Muse''s call); end-to-end /api/chat leg + replacement-directory decision owed on deploy.'
+    next_action: 'Merged via PR #1859 (merge 4aeac520) 2026-11-25; FRD-054 production-verify leg follows per acceptance.'
   - id: TASK-IG-FRD-010-RETEST-01
     title: 'FRIDAY: re-run the IG-FRD-010 lock leg with the owner laptop connected'
     status: AVAILABLE
