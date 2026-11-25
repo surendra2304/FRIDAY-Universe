@@ -7,7 +7,8 @@ IG2-SEN-04, IG2-SEN-05, IG2-SEN-06 — live approval-path verification (wave 3)
 **Claim:** hub #1483 comment 7156776916, 2026-11-25 ~13:46 IST, on coordinator
 assignment WATCH084 (7155464602, ~12:34 IST) + queue WATCH085 (7155781501):
 SEN-032 → SEN-026 → SEN-027.
-**Work PR:** (filed after this doc; board flip AVAILABLE → IN_REVIEW rides in it)
+**Work PR:** #1805 (https://github.com/surendra2304/FRIDAY-Universe/pull/1805),
+head `1eb02bf7`, base main `a0a9f1ba`; board flip AVAILABLE → IN_REVIEW rides in it.
 
 ## Five states
 
