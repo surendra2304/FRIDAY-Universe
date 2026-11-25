@@ -209,6 +209,17 @@ async def handle_build(
                     "total_checks": report.total_checks,
                 },
             )
+            # TASK-MEM-031 (claude-mem): capture the build outcome as a
+            # session event, so Forge's build sessions are captured the
+            # way FRIDAY's are (MEM-029). The server classifies the
+            # needle kind; a failed build is a bugfix needle.
+            await memora.a_record_session_event(
+                session_id=f"forge-build-{task_id}",
+                kind="bugfix" if is_failed else "observation",
+                content=summary,
+                task_id=str(task_id),
+                agent_name="forge",
+            )
         except Exception as e:
             logger.debug(f"Memora build record failed: {e}")
 

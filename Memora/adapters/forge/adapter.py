@@ -7,8 +7,12 @@ from typing import Optional, Dict, Any, List
 import logging
 
 from adapters.base_adapter import BaseAgentAdapter
+from core.memory.session_needles import classify_needle
 
 logger = logging.getLogger(__name__)
+
+#: Provenance marker for observations recorded through this adapter.
+NEEDLE_PATTERN_TAG = "claude-mem-needles"
 
 class ForgeAdapter(BaseAgentAdapter):
     """
@@ -56,6 +60,50 @@ class ForgeAdapter(BaseAgentAdapter):
             importance=importance,
             provenance=prov,
             purpose=f"Architectural decision for project {project_id}"
+        )
+
+    def record_session_observation(
+        self,
+        session_id: str,
+        content: str,
+        kind: str = "observation",
+        project_id: Optional[str] = None,
+        confidence: float = 0.9,
+        importance: float = 0.6,
+    ) -> Dict[str, Any]:
+        """Record one Forge session observation with its claude-mem needle kind.
+
+        TASK-MEM-031: the Memora-side Forge wire for the needle taxonomy.
+        The content is classified (``core.memory.session_needles``) and
+        the needle kind is stored in provenance. A ``sensitive`` needle
+        is awareness-only — the content is never stored; a placeholder
+        marks the session and kind, exactly as claude-mem treats
+        sensitive observations.
+        """
+        needle_kind = classify_needle(content or "")
+        if project_id:
+            target_namespace = f"memora://forge/projects/{project_id}"
+        else:
+            target_namespace = self.default_namespace
+        provenance = {
+            "pattern": NEEDLE_PATTERN_TAG,
+            "session_id": session_id,
+            "event_kind": kind,
+            "needle_kind": needle_kind,
+        }
+        if needle_kind == "sensitive":
+            stored_text = f"[sensitive observation withheld — session {session_id}]"
+            provenance["withheld"] = True
+        else:
+            stored_text = content
+        return self.write_memory(
+            content_text=stored_text,
+            memory_type="episodic",
+            target_namespace_path=target_namespace,
+            confidence=confidence,
+            importance=importance,
+            provenance=provenance,
+            purpose=f"Forge session observation for session {session_id}",
         )
 
     def get_coding_constraints(

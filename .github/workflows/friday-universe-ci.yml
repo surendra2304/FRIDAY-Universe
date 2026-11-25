@@ -226,6 +226,7 @@ jobs:
             -- .venv-memora-ci/bin/python -m pytest -q \
             tests/test_tier1_resilience_contracts.py \
             tests/test_mem030_obsidian_vault.py \
+            tests/test_mem031_memora_verify_wave3.py \
             --deselect tests/test_tier1_resilience_contracts.py::test_health_probe_contract \
             --deselect tests/test_tier1_resilience_contracts.py::test_ready_probe_contract
 
@@ -281,6 +282,7 @@ jobs:
             --job "test" \
             -- .venv-forge-ci/bin/python -m pytest -q \
             tests/unit/test_tier1_resilience.py tests/unit/test_deep_upgrade_tier1.py \
+            tests/unit/test_mem031_forge_session_capture.py \
             --deselect tests/unit/test_tier1_resilience.py::test_ready_probe_contract \
             --deselect tests/unit/test_tier1_resilience.py::test_status_diagnostics_endpoint \
             --deselect tests/unit/test_tier1_resilience.py::test_sqlite_pragmas_and_wal_mode \
