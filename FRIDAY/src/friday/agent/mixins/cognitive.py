@@ -190,6 +190,16 @@ class CognitiveMixin:
                         maybe_deliver_morning_brief(self.notifications)
                     except Exception as brief_exc:
                         logger.debug(f"morning brief delivery skipped: {brief_exc}")
+                    # TASK-FRD-047: the pre-call brief is composed (once per
+                    # call, inside the 30-minute lead window, from real
+                    # Gmail/Calendar/news data) and pushed here so the owner
+                    # hears/sees it on the greeting just before the call.
+                    try:
+                        from friday.proactive.pre_call_brief import maybe_deliver_pre_call_brief
+
+                        maybe_deliver_pre_call_brief(self.notifications)
+                    except Exception as brief_exc:
+                        logger.debug(f"pre-call brief delivery skipped: {brief_exc}")
                     proactive = self.notifications.pop_notifications_summary()
                     if proactive:
                         from friday.persona.friday import proactive_style

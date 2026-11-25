@@ -20,6 +20,37 @@ logger = get_logger("tools.calendar")
 _FETCH_TIMEOUT = 10.0
 
 
+def _attendee_names(ev: Any) -> list[str]:
+    """Display names of an event's attendees (TASK-FRD-047).
+
+    ICS ATTENDEE may be one value or a list; each is a vCalAddress whose
+    ``CN`` parameter holds the display name and whose value is a
+    ``mailto:`` address. Falls back to the mailbox local-part so the
+    caller always gets something human-readable. Never raises.
+    """
+    raw = ev.get("ATTENDEE")
+    if raw is None:
+        return []
+    values = raw if isinstance(raw, list) else [raw]
+    names: list[str] = []
+    for value in values:
+        try:
+            params = getattr(value, "params", {}) or {}
+            cn = str(params.get("CN", "") or "").strip()
+            if cn:
+                names.append(cn)
+                continue
+            addr = str(value).strip()
+            if addr.lower().startswith("mailto:"):
+                addr = addr[7:]
+            local = addr.split("@")[0].strip()
+            if local:
+                names.append(local.replace(".", " ").replace("_", " ").title())
+        except Exception:
+            continue
+    return names
+
+
 def _parse_ics_content(ics_text: str, target_date: date | None = None) -> list[dict[str, Any]]:
     """Parse raw iCalendar text and return list of meetings occurring on target_date."""
     import icalendar
@@ -47,18 +78,22 @@ def _parse_ics_content(ics_text: str, target_date: date | None = None) -> list[d
 
         start_str = "All Day"
         end_str = ""
+        start_dt: datetime | None = None
+        end_dt: datetime | None = None
 
         if dtstart:
             dt_val = dtstart.dt
             if isinstance(dt_val, datetime):
-                start_str = dt_val.astimezone().strftime("%I:%M %p")
+                start_dt = dt_val.astimezone()
+                start_str = start_dt.strftime("%I:%M %p")
             elif isinstance(dt_val, date):
                 start_str = "All Day"
 
         if dtend:
             dt_val = dtend.dt
             if isinstance(dt_val, datetime):
-                end_str = dt_val.astimezone().strftime("%I:%M %p")
+                end_dt = dt_val.astimezone()
+                end_str = end_dt.strftime("%I:%M %p")
 
         time_range = f"{start_str} - {end_str}" if end_str and start_str != "All Day" else start_str
         results.append({
@@ -67,6 +102,12 @@ def _parse_ics_content(ics_text: str, target_date: date | None = None) -> list[d
             "end": end_str,
             "time_range": time_range,
             "location": loc,
+            # TASK-FRD-047: structured fields for the pre-call brief. The
+            # existing tool output above is unchanged — these keys are
+            # additive and ignored by the text formatter.
+            "attendees": _attendee_names(ev),
+            "start_dt": start_dt,
+            "end_dt": end_dt,
         })
 
     return results

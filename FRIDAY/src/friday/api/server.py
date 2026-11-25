@@ -4594,6 +4594,19 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                 _reply = f"{_brief}\n\n{_reply}"
         except Exception as _brief_exc:
             logger.debug(f"morning brief skipped in server greeting: {_brief_exc}")
+        # TASK-FRD-047: the pre-call brief (once per call, inside the
+        # 30-minute lead window, from real Gmail/Calendar/news data) joins
+        # the greeting so the owner gets it just before the call. A failed
+        # component contributes an honest line; delivery failure never
+        # breaks the greeting.
+        try:
+            from friday.proactive.pre_call_brief import maybe_deliver_pre_call_brief
+
+            _pre_call = maybe_deliver_pre_call_brief(agent.notifications)
+            if _pre_call:
+                _reply = f"{_pre_call}\n\n{_reply}"
+        except Exception as _brief_exc:
+            logger.debug(f"pre-call brief skipped in server greeting: {_brief_exc}")
         return {
             "reply": _reply,
             "metadata": {
