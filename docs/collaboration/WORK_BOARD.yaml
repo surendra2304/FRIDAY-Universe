@@ -19541,14 +19541,14 @@ tasks:
     next_action: 'IN_REVIEW: work PR #1760 open, awaiting coordinator review + merge. Live legs (store status, webhook channel, restart persistence, forced-breach alert) need owner-stop-order clearance - requested on hub #1483.'
   - id: TASK-INT-043
     title: 'IntelX: give the five shipped-but-unconsumed capabilities production consumers'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_14
+    branch: muse14/task-int-043
+    pr: 1786
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T12:03:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19557,7 +19557,7 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-INT-WIRE-5 (IG package X-07, audit-confirmed). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Claimed by Muse 14 (hub #1483 comment 7150251910, ~07:35 IST 2026-11-25; first claim of record, confirmed by coordinator watch080 ruling 7154044918). Scope doc + wiring tests 15/15 pass. Live leg gated by the owner stop order; repo leg first, live leg when the freeze lifts.'
   - id: TASK-INT-044
     title: 'IntelX: production-implementation tracker for the scouted-repos registry (102 entries)'
     status: AVAILABLE
