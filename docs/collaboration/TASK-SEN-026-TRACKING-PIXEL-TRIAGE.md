@@ -71,6 +71,24 @@ heuristics miss) gave the owner no instruction about images at all.
 - No signature or behaviour change to `triage_email` besides the one
   added guidance line; existing tests untouched and passing.
 
+## CI (PR #1902, head 1ff46926, checked 2026-11-26 ~03:50 IST)
+
+- `test` (friday-universe-ci): **success** — the Sentinel tier-1 list
+  including the triage file ran green in CI.
+- Fleet-layout, roster/task-IDs, secrets scan, entrypoint import: success.
+- `Validate monorepo-only policy and workflow syntax`: **failure — known
+  REL-070 exit-134 race, not this change.** Step 6 (repo-root pytest)
+  printed a short test summary with zero FAILED lines and then aborted
+  at interpreter shutdown: `Fatal Python error: _enter_buffered_busy:
+  could not acquire lock ... at interpreter shutdown, possibly due to
+  daemon threads`, exit code 134, `(core dumped)`. All 6 REL-070
+  signature markers verified present in the job log with the repo's own
+  `detect_exit134_signature()` (docs/collaboration/TASK-REL-070-EXIT-134-ROOT-CAUSE.md).
+  The same pytest command passed in the parallel validate-monorepo job
+  on this head — the race is intermittent. Failed job re-run requested
+  via API (201); check re-running at ~03:50 IST. Merge awaits the
+  re-run going green; no code change was needed.
+
 ## Live leg
 
 The triage module is a library — no endpoint, no deployed surface — so
