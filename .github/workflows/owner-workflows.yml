@@ -301,6 +301,7 @@ jobs:
             VyralX/tests/test_vyr057_pool.py \
             VyralX/tests/test_vyr055_refresh3_pool.py \
             VyralX/tests/test_vyr061_best_take_gate.py \
+            VyralX/tests/test_vyr060_bad_take_detection.py \
             VyralX/tests/test_vyr064_pd_whitelist.py \
             VyralX/tests/test_vyr074_mapping.py \
             VyralX/tests/test_vyr065_niche_guard.py \
