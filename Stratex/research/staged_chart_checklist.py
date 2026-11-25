@@ -1,10 +1,17 @@
 """Stratex research desk — staged chart-analysis checklist (TASK-STR-086).
 
-Seven stages, run in order over a rendered chart built from real Binance
-Demo Trading (demo-fapi) klines — NOT a broker-terminal screenshot. The
-input is a data-rendered chart: OHLCV klines fetched from the public
-demo-fapi endpoint (no key, no account, read-only). The persisted report
-says so.
+Seven stages, run in order over a rendered chart built from real klines
+from a read-only public market-data venue — NOT a broker-terminal
+screenshot. The input is a data-rendered chart: OHLCV klines fetched
+from a public endpoint (no key, no account, read-only). The persisted
+report says so.
+
+Default venue: Binance Demo Trading (demo-fapi) klines. WATCH098 ruling 2
+(2026-11-25, hub 7161941236) authorises the chart leg against an
+alternate public venue after demo-fapi returned HTTP 451 (location
+eligibility, verified independently): Kraken public OHLC
+(api.kraken.com, no key). The venue substitution is filed as evidence
+in checkpoint 3. If the alternate venue also fails, STR-086 stays held.
 
 Stages:
   1. Market structure — trend/regime (RegimeClassifier), swing highs/lows,
@@ -64,6 +71,17 @@ logger = logging.getLogger("staged_chart_checklist")
 # --- Desk constants ---------------------------------------------------------
 VENUE = "demo-fapi (Binance Demo Trading, public klines, no key)"
 DEMO_FAPI_BASE = "https://demo-fapi.binance.com"
+KRAKEN_BASE = "https://api.kraken.com"
+KRAKEN_VENUE = "kraken (Kraken public OHLC, api.kraken.com, no key)"
+KRAKEN_INTERVAL_MINUTES = {"1h": 60, "4h": 240, "1d": 1440}
+# Desk symbol -> Kraken pair. Fail-closed: an unmapped symbol raises
+# instead of guessing a pair.
+KRAKEN_PAIRS = {"BTCUSDT": "XBTUSD"}
+VENUE_LABELS = {"demo-fapi": VENUE, "kraken": KRAKEN_VENUE}
+VENUE_CONTRACT_TYPES = {
+    "demo-fapi": "USDT-M perpetual (Binance USD-margined futures)",
+    "kraken": "spot (Kraken XBTUSD)",
+}
 KLINE_LIMIT = 250
 TRADING_TF = "1h"
 CONTEXT_TFS = ("1d", "4h", "1h")
@@ -129,6 +147,90 @@ def fetch_klines(symbol: str, interval: str, limit: int = KLINE_LIMIT,
             "close_time": datetime.fromtimestamp(k[6] / 1000, tz=timezone.utc),
         })
     return rows
+
+
+def fetch_klines_kraken(symbol: str, interval: str, limit: int = KLINE_LIMIT,
+                        base_url: str = KRAKEN_BASE, timeout: float = 20.0,
+                        opener=None, now: datetime | None = None) -> list[dict]:
+    """Fetch closed klines from Kraken public OHLC (no key).
+
+    Kraken returns up to 720 candles per request as
+    ``[time, open, high, low, close, vwap, volume, count]`` under
+    ``result[<pair>]`` (pair key is Kraken-normalised, e.g. ``XXBTZUSD``,
+    so the first non-``last`` key is used). The still-forming candle is
+    dropped here so the returned rows are all closed — the desk's
+    closed-candle convention — and the last ``limit`` closed rows are
+    returned. Raises RuntimeError on any HTTP, transport or envelope
+    failure, and on an unmapped symbol or unsupported interval
+    (fail-closed, never a guessed pair).
+    """
+    from datetime import timedelta
+
+    if interval not in KRAKEN_INTERVAL_MINUTES:
+        raise RuntimeError(
+            f"kraken klines fetch failed for {symbol} {interval}: "
+            f"unsupported interval (supported: "
+            f"{sorted(KRAKEN_INTERVAL_MINUTES)})")
+    pair = KRAKEN_PAIRS.get(symbol)
+    if pair is None:
+        raise RuntimeError(
+            f"kraken klines fetch failed for {symbol} {interval}: "
+            f"no Kraken pair mapped for symbol (mapped: "
+            f"{sorted(KRAKEN_PAIRS)})")
+    minutes = KRAKEN_INTERVAL_MINUTES[interval]
+    url = (f"{base_url}/0/public/OHLC?pair={pair}&interval={minutes}")
+    open_url = opener or urllib.request.urlopen
+    try:
+        with open_url(url, timeout=timeout) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", "replace")[:300]
+        raise RuntimeError(
+            f"kraken klines fetch failed for {symbol} {interval}: "
+            f"HTTP {exc.code} {body}") from exc
+    except Exception as exc:  # transport error, DNS, timeout, bad JSON
+        raise RuntimeError(
+            f"kraken klines fetch failed for {symbol} {interval}: "
+            f"{type(exc).__name__}: {exc}") from exc
+    errors = payload.get("error") if isinstance(payload, dict) else None
+    if errors:
+        raise RuntimeError(
+            f"kraken klines fetch failed for {symbol} {interval}: "
+            f"error envelope {json.dumps(errors)[:300]}")
+    result = payload.get("result", {}) if isinstance(payload, dict) else {}
+    pair_key = next((k for k in result if k != "last"), None)
+    if pair_key is None:
+        raise RuntimeError(
+            f"kraken klines fetch failed for {symbol} {interval}: "
+            f"no OHLC data in response for pair {pair}")
+    now = now or datetime.now(timezone.utc)
+    step = timedelta(minutes=minutes)
+    rows = []
+    for k in result[pair_key]:
+        ts = datetime.fromtimestamp(float(k[0]), tz=timezone.utc)
+        close_time = ts + step - timedelta(milliseconds=1)
+        if close_time > now:
+            continue  # still-forming candle: not a closed bar
+        rows.append({
+            "timestamp": ts,
+            "open": float(k[1]), "high": float(k[2]), "low": float(k[3]),
+            "close": float(k[4]), "volume": float(k[6]),
+            "close_time": close_time,
+        })
+    return rows[-limit:]
+
+
+def fetch_for_venue(venue: str):
+    """Return the kline fetch function for a venue name.
+
+    Raises ValueError on an unknown venue (fail-closed).
+    """
+    if venue == "demo-fapi":
+        return fetch_klines
+    if venue == "kraken":
+        return fetch_klines_kraken
+    raise ValueError(f"unknown venue {venue!r} "
+                     f"(supported: {sorted(VENUE_LABELS)})")
 
 
 def klines_to_frame(rows: list[dict], now: datetime | None = None) -> pd.DataFrame:
@@ -244,7 +346,8 @@ def stage_market_structure(df: pd.DataFrame) -> dict:
 
 # --- Stage 2: data quality ---------------------------------------------------
 def stage_data_quality(frames: dict, expected: int = KLINE_LIMIT,
-                       now: datetime | None = None) -> dict:
+                       now: datetime | None = None,
+                       venue: str = VENUE) -> dict:
     section = {"stage": 2, "name": "data_quality"}
     now = now or datetime.now(timezone.utc)
     per_tf: dict[str, dict] = {}
@@ -281,7 +384,7 @@ def stage_data_quality(frames: dict, expected: int = KLINE_LIMIT,
             "stale": stale,
             "last_close_time": None if last_close is None else str(last_close),
         }
-    section["details"] = {"venue": VENUE, "per_timeframe": per_tf,
+    section["details"] = {"venue": venue, "per_timeframe": per_tf,
                           "data_trusted": trusted, "problems": problems}
     if trusted:
         section.update(status="PASS",
@@ -336,12 +439,15 @@ def stage_timeframe_context(regimes: dict) -> dict:
 
 # --- Stage 4: fundamentals (feed-limited by design) --------------------------
 def stage_fundamentals(symbol: str, funding_rate: float | None = None,
-                       funding_error: str | None = None) -> dict:
+                       funding_error: str | None = None,
+                       venue: str = VENUE,
+                       contract_type: str | None = None) -> dict:
     section = {"stage": 4, "name": "fundamentals"}
     available = {
         "symbol": symbol,
-        "venue": VENUE,
-        "contract_type": "USDT-M perpetual (Binance USD-margined futures)",
+        "venue": venue,
+        "contract_type": (contract_type
+                          or "USDT-M perpetual (Binance USD-margined futures)"),
         "funding_rate": funding_rate,
         "funding_rate_source": ("demo-fapi /fapi/v1/premiumIndex"
                                 if funding_rate is not None else None),
@@ -639,7 +745,8 @@ def run_pipeline(symbol: str, fetch_fn=None, out_dir: str | None = None,
                  funding_rate: float | None = None,
                  funding_error: str | None = None,
                  json_path: Path | None = None, md_path: Path | None = None,
-                 now: datetime | None = None) -> dict:
+                 now: datetime | None = None,
+                 venue: str = "demo-fapi") -> dict:
     """Run all seven stages in order, persisting after each stage.
 
     A stage that raises records an ERROR section and the pipeline
@@ -647,13 +754,21 @@ def run_pipeline(symbol: str, fetch_fn=None, out_dir: str | None = None,
     need missing data record BLOCKED with the reason. The partial
     report is written to disk after every stage, so a crash leaves an
     attributable partial report, never a silent skip.
+
+    `venue` selects the public market-data source ("demo-fapi" default,
+    "kraken" the WATCH098-authorised alternate). An explicit fetch_fn
+    overrides the venue's fetcher; the venue label is still recorded.
     """
-    fetch_fn = fetch_fn or fetch_klines
+    if venue not in VENUE_LABELS:
+        raise ValueError(f"unknown venue {venue!r} "
+                         f"(supported: {sorted(VENUE_LABELS)})")
+    venue_label = VENUE_LABELS[venue]
+    fetch_fn = fetch_fn or fetch_for_venue(venue)
     now = now or datetime.now(timezone.utc)
     if json_path is None or md_path is None:
         json_path, md_path = default_report_paths(symbol, out_dir)
-    input_note = ("Data-rendered chart from real demo-fapi klines "
-                  f"(venue: {VENUE}); symbol {symbol}; timeframes "
+    input_note = ("Data-rendered chart from real klines "
+                  f"(venue: {venue_label}); symbol {symbol}; timeframes "
                   f"{', '.join(CONTEXT_TFS)}, trading timeframe {TRADING_TF}. "
                   "Not a broker-terminal screenshot.")
     report: dict = {
@@ -698,7 +813,8 @@ def run_pipeline(symbol: str, fetch_fn=None, out_dir: str | None = None,
     trade_df = frames.get(TRADING_TF)
 
     s1 = run_stage("market_structure", stage_market_structure, trade_df)
-    s2 = run_stage("data_quality", stage_data_quality, frames, KLINE_LIMIT, now)
+    s2 = run_stage("data_quality", stage_data_quality, frames, KLINE_LIMIT, now,
+                   venue_label)
     regimes: dict[str, str] = {}
     if trade_df is not None and len(trade_df):
         for tf, df in frames.items():
@@ -711,7 +827,8 @@ def run_pipeline(symbol: str, fetch_fn=None, out_dir: str | None = None,
                 logger.warning(f"[STR-086] regime classify failed for {tf}: {exc}")
     s3 = run_stage("timeframe_context", stage_timeframe_context, regimes)
     s4 = run_stage("fundamentals", stage_fundamentals, symbol,
-                   funding_rate, funding_error)
+                   funding_rate, funding_error, venue_label,
+                   VENUE_CONTRACT_TYPES[venue])
     window_start = trade_df["timestamp"].iloc[0].to_pydatetime() if (
         trade_df is not None and len(trade_df)) else now
     window_end = trade_df["timestamp"].iloc[-1].to_pydatetime() if (
@@ -737,6 +854,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="TASK-STR-086 staged chart-analysis checklist (read-only).")
     parser.add_argument("symbol", nargs="?", default="BTCUSDT")
+    parser.add_argument("--venue", default="demo-fapi",
+                        choices=sorted(VENUE_LABELS),
+                        help="Public market-data venue (default: demo-fapi; "
+                             "kraken is the WATCH098-authorised alternate "
+                             "after demo-fapi HTTP 451).")
     parser.add_argument("--out-dir", default=None,
                         help="Directory for the JSON + Markdown report "
                              "(default: Stratex/research/).")
@@ -749,7 +871,8 @@ def main(argv: list[str] | None = None) -> int:
     report = run_pipeline(
         args.symbol, out_dir=args.out_dir,
         calendar_store=args.calendar_store,
-        refresh_calendar=args.refresh_calendar)
+        refresh_calendar=args.refresh_calendar,
+        venue=args.venue)
     print(f"Verdict: {report['verdict']}")
     for name in STAGES:
         s = report["sections"].get(name, {})
