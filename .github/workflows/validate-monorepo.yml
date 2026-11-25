@@ -51,6 +51,12 @@ jobs:
         run: |
           python -m pytest -q Sentinel/tests/unit/test_sen022_telegram_self_check.py
 
+      - name: Run REL-096 fleet-backup fleet-state unit tests
+        # TASK-REL-096: named invocation so the contracts guard credits
+        # the new test file (same pattern as the SEN-022 step above).
+        run: |
+          python -m pytest -q tests/test_rel096_backup_fleet_state.py tests/test_backup_fleet_databases.py tests/test_backup_sen009.py tests/test_backup_sen022.py
+
       - name: Compile shared coordinator and its integrated call sites
         run: python -m compileall -q mesh Forge/app/verification/engine.py Futuris/futuris/core/pipeline.py Sentinel/sentinel/core/orchestrator/executor.py
 

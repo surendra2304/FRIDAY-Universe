@@ -19118,6 +19118,34 @@ tasks:
       - 'Media QA gates BLOCKED: yt-dlp download broken on S2 (n-challenge + SABR-only). Repair is TASK-VYR-056 (Muse 18).'
     next_action: 'Open the work PR; post status on the hub. Media QA gates + render await the VYR-056 download-path repair.'
 
+  - id: TASK-REL-096
+    title: 'Fleet backup overhaul (owner order 2026-11-25): daily + on-big-change backups, full fleet-state coverage from all six servers, MySQL Stratex DB dump, one unified set held identically on both Oracle servers, proven by a fresh run + restore drill'
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: muse/task-rel-096-fleet-backup-overhaul
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T13:10:00+05:30'
+    files:
+      - scripts/backup_fleet_databases.py
+      - tests/test_rel096_backup_fleet_state.py
+      - .github/workflows/fleet-backup.yml
+      - .github/workflows/backup-watchdog.yml
+      - .github/workflows/validate-monorepo.yml
+      - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+      - 'Fleet Backup runs DAILY and after big changes (push trigger path-filtered to agent trees); watchdog checks BOTH Oracle servers daily at a 30h freshness window.'
+      - 'Coverage is the whole Universe: all ten Oracle ADB schemas + VyralX media schema + MySQL Stratex DB logical dump + live file state from all six servers (Stratex ledgers + forward record, VyralX renders + data/, IntelX/Futuris stores, FRIDAY state, fleet CREDENTIALS.md). Any exclusion is named in the manifest with a reason and size evidence (one today: VyralX/media source clips, 3.9 GB, re-obtainable).'
+      - 'Both Oracle servers hold the full unified set, verified identical by manifest + whole-tree hash comparison in the unify job.'
+      - 'A fresh backup is run and a restore drill into scratch proves content fidelity — zero empty CLOB/JSON values of the REL-089/REL-091 defect class — with spot-checked real records from Stratex, VyralX and Memora.'
+    evidence:
+      - 'Owner order 2026-11-25 ~12:35 IST: "Fix the backup properly now"; scope additions ~12:36-12:42 IST: daily + after big changes, both Oracle copies identical, both copies contain every single thing about FRIDAY Universe. Owner approval ~12:54 IST to work inside a repo clone despite the runtime execution-risk flag.'
+      - 'Starting state verified 2026-11-25: newest backup 2026-11-22 (pre-dates the Nov 24 AWS moves); the Nov 22 set FAILED the REL-089 restore drill on content fidelity (14,414 empty CLOB strings); REL-091 fix merged in PR #1576 (2026-11-24) and confirmed present in scripts/backup_fleet_databases.py on main be3f303e (jsonl_encode_value reads LOBs from offset 1); no backup had run since the fix; AWS servers file state and the MySQL Stratex DB were not covered at all.'
+    blockers: []
+    next_action: 'Ship the code PR, merge on green CI, dispatch Fleet Backup, verify the unified set on both Oracle servers, run the restore drill, then flip this record and TASK-REL-091 to MERGED with the run + drill evidence.'
+
   - id: TASK-REL-097
     title: 'CI canary for the voice-regression test files: prove CI collects every shipped voice test file, incl. the VOI-032 set'
     status: MERGED
