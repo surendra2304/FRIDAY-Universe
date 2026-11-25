@@ -22619,17 +22619,18 @@ tasks:
     next_action: 'Assigned to muse_tp8 as queue position 3 by coordinator watch100 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
   - id: TASK-EARN-025
     title: 'EARN: Upwork lane - profile completion pack plus first-proposal drafts for the owner''s own sending'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-earn-025-upwork-profile-pack
+    pr: 1888
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T23:33:00+05:30'
+    updated_at: '2026-11-26T01:10:58+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
+    - earning/TASK-EARN-025-UPWORK-PROFILE-PACK.md
     acceptance:
     - 'Method: Upwork freelance lane for the same CometWorks services as the Fiverr gigs (SEO content, YouTube scripts, social content). The profile content is already drafted (title: SEO Content Writer | YouTube Script Writer | Social Media Content; $15/hr; 10 skills).'
     - 'PLATFORM RULE, binding: Upwork proposals must be human-reviewed and human-sent. Muse drafts everything; the owner reviews and sends each proposal himself. No automated applying, ever.'
@@ -22640,8 +22641,10 @@ tasks:
     - 'Assigned to Muse 7 as queue position 3 by coordinator watch106 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. Earning lane, queue position 3 only (Upwork profile pack + first-proposal drafts for the owner to send).'
     - 'Coordinator watch109 (2026-11-25): returned to pool from muse_7 - M7 silent since 2026-11-24, trigger met per watch108; no free position-3 earning slot on any queue this run.'
     - 'Coordinator watch110 (2026-11-25): assigned to muse_15 as queue position 3 (earning lane) on its free/work request hub 7169797695 - VOI-041 gated on VOI-040 filing, FRD-043 held on deploy clearance; verified AVAILABLE / owner null on main 3efe8b04.'
+    - 'Claimed by Muse 15 2026-11-26 ~00:02 IST (hub #1483 comments 7171050293 / 7171052238, per coordinator WATCH110 assignment, queue position 3); branch muse15/task-earn-025-upwork-profile-pack from main fb086e16, rebased to 70ce1089.'
+    - 'Completed with live evidence 2026-11-26 ~01:15 IST: profile pack finalised as paste-ready copy (title 65 chars, overview 1,800 chars, $15/hr, 10 skills, 4 portfolio items — all field-checked against Upwork''s published limits) + five proposal drafts matched to live job posts found via public search (Hector Home Services SEO $15/hr; Hawk faucet-cover blog $50 fixed; Every-Mistake explainer scripts $20/hr; Food History WW2 scripts $15/hr; Podcast social creator $15/hr) + 2 alternates + 13 screened-out with reasons. No Upwork login attempted (Cloudflare-blocked in cloud browser, confirmed three times); no proposal sent; owner paste/send awaits his signup confirmation (not confirmed on the hub through WATCH114).'
     blockers: []
-    next_action: 'Assigned to muse_15 by coordinator watch110 (position 3, earning lane); VOI-041 gated on VOI-040 filing, FRD-043 held; claim via hub #1483 when it reaches queue head.'
+    next_action: 'Completed with live evidence — profile pack + five proposal drafts ready for owner review (work PR owed). Paste/send awaits the owner''s one-time Upwork signup confirmation; first-money path is the first Upwork contract via escrow.'
   - id: TASK-DB-001
     title: 'DB: Stratex MySQL production-usage verification - prove live research runs actually persist to MySQL HeatWave, fix any gap found'
     status: BLOCKED
