@@ -210,3 +210,10 @@ contracts list so the REL-068 collection guard collects it.
   regression from this PR. Re-running the failed job is the
   coordinator's call (I do not re-run CI from here).
 - Mergeable: true (re-polled).
+
+**Update ~14:30 IST:** CI on head `08f56b92` finished: 7 success, 2 skipped,
+1 failure (the monorepo-validation REL-070 flake above) — `test` and
+`contracts` both success. Head `42caadf7` (this correction, docs-only)
+CI still running at last read (5 in progress, 1 queued, 2 success,
+1 skipped); its outcome will be reported by the coordinator's next watch
+or the hourly self-check.
