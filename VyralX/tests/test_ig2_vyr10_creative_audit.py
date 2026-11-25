@@ -92,3 +92,67 @@ def test_brief_states_real_packaging_constraints():
         ca.creative_brief("X", lane="crypto_tips")
     with pytest.raises(ValueError):
         ca.creative_brief("  ")
+
+
+# --- TASK-VYR-059: competitor creative audit -------------------------
+
+def test_competitor_audit_same_findings_as_own():
+    own = ca.audit_creative(GOOD, lane="space_science")
+    comp = ca.audit_competitor_creative(GOOD, lane="space_science")
+    assert comp["kind"] == "vyralx.competitor_creative_audit"
+    assert comp["source_creative"] == "competitor"
+    assert comp["findings"] == own["findings"]
+    assert comp["counts"] == own["counts"]
+    assert comp["composite_score"] is None
+    assert comp["paid_spend_created"] is False
+    assert comp["changes_applied"] is False
+
+
+def test_competitor_audit_names_competitor_and_drafts_lessons():
+    comp = ca.audit_competitor_creative(
+        GOOD, lane="space_science", competitor="Rival Space")
+    assert comp["competitor"] == "Rival Space"
+    assert comp["lessons_status"] == "draft"
+    assert comp["lessons_applied"] is False
+    by_check = {lesson["check"]: lesson for lesson in comp["lessons"]}
+    # every passing copy check yields an adopt lesson, grounded in evidence
+    for check in ("title_packaging", "thumbnail_text", "description_substance",
+                  "tag_coverage"):
+        assert by_check[check]["stance"] == "adopt"
+        assert by_check[check]["evidence"]
+    assert all(lesson["lesson"] for lesson in comp["lessons"])
+
+
+def test_competitor_audit_bad_creative_lessons_avoid():
+    bad = {"title": "wow amazing stuff", "thumbnail_text": "",
+           "hook_line": "hello there everyone today",
+           "description": "short", "tags": []}
+    comp = ca.audit_competitor_creative(bad, lane="space_science")
+    assert comp["counts"]["fail"] >= 4
+    by_check = {lesson["check"]: lesson for lesson in comp["lessons"]}
+    assert by_check["thumbnail_text"]["stance"] == "avoid"
+    assert by_check["tag_coverage"]["stance"] == "avoid"
+    assert "do not copy" in by_check["thumbnail_text"]["lesson"]
+
+
+def test_competitor_audit_performance_unknown_and_no_spend():
+    comp = ca.audit_competitor_creative(
+        {**GOOD, "ctr": 0.12, "paid_spend": 500}, lane="space_science")
+    by_check = {f["check"]: f for f in comp["findings"]}
+    assert by_check["measured_performance"]["status"] == "unknown"
+    assert by_check["paid_spend"]["status"] == "unknown"
+    assert comp["composite_score"] is None
+    assert comp["paid_spend_created"] is False
+    # unknown checks yield no lesson
+    assert not any(lesson["check"] in ("measured_performance", "paid_spend")
+                   for lesson in comp["lessons"])
+
+
+def test_competitor_audit_mutates_nothing():
+    creative = {"title": "wow", "thumbnail_text": "", "hook_line": "",
+                "description": "", "tags": []}
+    snapshot = copy.deepcopy(creative)
+    comp = ca.audit_competitor_creative(creative, lane="space_science")
+    assert creative == snapshot
+    assert comp["lessons_status"] == "draft"
+    assert comp["lessons_applied"] is False
