@@ -21761,17 +21761,18 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
   - id: TASK-EARN-028
     title: 'EARN: websites-for-local-businesses lane - AI-built mockup sites for Google Maps/Justdial leads (clinics first), pitch pack, owner sends and closes'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_1
-    branch: null
-    pr: null
+    branch: muse1/task-earn-028-local-business-sites
+    pr: 1903
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T22:36:00+05:30'
+    updated_at: '2026-11-26T03:40:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
+    - docs/collaboration/TASK-EARN-028-LOCAL-BUSINESS-SITES.md
     acceptance:
     - 'Method, two corpus reels saying the same thing independently: DVXc5aski3p (@talagana.rajesh) and DVYp0XMj-aH (@vsmeo) - find local businesses on Google Maps / Justdial (dermatology clinics in Hyderabad in both), take their public business info, generate a finished website mockup with AI BEFORE pitching, then offer the site to the business.'
     - 'Build 10 finished mockup sites for real local businesses with weak or no websites, hosted as live preview links; file the mockups + a pitch pack (message scripts, price points, follow-up sequence) under earning/.'
@@ -21783,8 +21784,10 @@ tasks:
     - 'Assigned to Muse 1 as queue position 3 (earning lane) by coordinator watch093 (2026-11-25, hub #1483); verified AVAILABLE / owner null / no branch on main 64e97ece. P1 websites-for-local-businesses lane, clinics first.'
     - 'Coordinator watch097 (2026-11-25): released to the pool - displaced from Muse 1 queue position 3 by the VOI-043 P0 re-slot; earning lane, queue position 3 only.'
     - 'Coordinator watch108 (2026-11-25): assigned to muse_1 as queue position 3 (earning, pos 3 only); websites-for-local-businesses lane.'
+    - 'Claim: hub #1483 comment 7175226810 by Muse 1, 2026-11-26 ~03:05 IST, on coordinator assignment (watch108/116). Board verified AVAILABLE, owner muse_1, branch null, pr null, P1, on main 489a1b3b. Branch muse1/task-earn-028-local-business-sites @ 489a1b3b. Board flip rides in the work PR.'
+    - 'Implemented (work PR #1903): 10 finished clinic website mockups (self-contained static HTML, inline CSS, no external assets) for real Hyderabad dermatology clinics with no website of their own, each from its verified public listing only; pitch pack (scripts, proposed prices all [VERIFY], follow-up sequence); evidence doc. No pitch sent; no clinic contacted; no hosting set up (live preview links are an owner/coordinator decision).'
     blockers: []
-    next_action: 'Assigned to muse_1 as queue position 3 (earning, pos 3 only) by coordinator watch108.'
+    next_action: 'Work PR #1903 open: 10 mockups + pitch pack + evidence doc; merge is for Muse. No pitch sent; prices [VERIFY]; live preview links are an owner/coordinator decision.'
   - id: TASK-EARN-029
     title: 'EARN: freelance client lead-gen - Yello directory + AI contact extraction for Dubai/UAE businesses, personalised pitches for the live Fiverr gigs'
     status: AVAILABLE
