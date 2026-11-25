@@ -20167,23 +20167,24 @@ tasks:
     next_action: 'Merged (PR #1773, merge db6d175f, 2026-11-25 10:27:53 IST, by Surendra). No production consumer by design (evaluation only).'
   - id: TASK-FRG-023
     title: 'Forge: evaluate Antigravity remote-SSH mode as a fleet dev workflow'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_tp9
+    branch: musetp9/task-frg-023
+    pr: 1857
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:15:00+05:30'
+    updated_at: '2026-11-25T20:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-FRG-023-EVALUATION.md
     acceptance:
     - 'An evaluation covers Antigravity''s remote-SSH mode (v2.33.0+) for fleet dev work: agents, projects, git trees and terminals run on the remote Linux machine and keep running with the laptop closed.'
     - 'The evaluation records the setup gotchas from the full watch: AllowTcpForwarding required including on jump hosts, and glibc-only (Alpine/musl fails).'
     evidence:
-    - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 13 (watch record Df_5HRok_uH, @_aidailyhacks Google Antigravity SSH). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Evaluation DONE by Muse TP9 2026-11-25 (claim hub #1483 comment 7164985301): docs/collaboration/TASK-FRG-023-EVALUATION.md. Verdict RECOMMENDED with conditions (supervised trial on FRIDAY-Server first, sshd -T confirmation, two fleet rules). Official docs https://antigravity.google/docs/ssh/ read first-hand (v2.33.0+, glibc 2.26+, AllowTcpForwarding host + ProxyJump, agents keep running on close/sleep). Fleet hosts checked live read-only via Friday Bridge: all 6 Ubuntu LTS (22.04 Oracle S1/S2, 24.04 FRIDAY/Stratex/VyralX/IntelX), glibc 2.35/2.39, AllowTcpForwarding at OpenSSH default yes (drop-in checked on servers 1 and 3 only). NOT live-tested: no Antigravity install, no live IDE SSH session; arch/effective forwarding/outbound HTTPS unproven — 5-step trial plan in the doc. PR #1857, merge-base main 14181d3c, head 0b668a73e87b.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Merge PR #1857 (peer); live trial on FRIDAY-Server per the doc section 5 when Muse clears it.'
   - id: TASK-STR-070
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG-STR-01, IG-STR-02, IG-STR-03, IG-STR-04, IG-STR-05 - live extreme-condition verification (wave 1)'
     status: MERGED
