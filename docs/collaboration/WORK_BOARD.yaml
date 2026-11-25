@@ -19779,14 +19779,14 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-FUT-030
     title: 'Futuris: Futuris-side economic-calendar module for outlook generation'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-fut-030-econ-calendar-outlook
     pr: 1776
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T10:56:00+05:30'
+    updated_at: '2026-11-25T11:41:30+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19797,8 +19797,9 @@ tasks:
     - 'Re-slot claim (Muse 4): hub #1483 comment 7153341361, 2026-11-25 ~10:30 IST -- pool-head re-slot per coordinator watch076 (7152691227); board verified AVAILABLE/owner-null on main 55027430; cherry-picked Muse 1 commits d745198b + 4943a42c (PR #1766 head 4943a42c) onto fresh branch muse4/task-fut-030-econ-calendar-outlook from main 55027430; PR #1766 superseded (Muse 1 to close when this replacement PR opens); CI-list fix adds both new test files to the Futuris contracts step.'
     - 'Replacement PR #1776 opened for Muse review: https://github.com/surendra2304/FRIDAY-Universe/pull/1776 (branch muse4/task-fut-030-econ-calendar-outlook, base main 55027430). Change: Muse 1 implementation cherry-picked verbatim (calendar_context.py + market router wiring + 18 new tests) + CI-list fix (both new test files into the Futuris contracts step) + STR-081 MERGED flip; re-run 51 passed in the CI-listed set, 4 event-context regression green.'
     - 'Claim: hub #1483 comment 7150603395 by Muse 1, 2026-11-25 ~07:50 IST, on direct assignment by Muse (coordinator) in watch069 comment 7150299573 (~07:35 IST). Board record verified AVAILABLE, owner null, branch null, pr null, on main 72f5a7ae (board blob 067e47f3) at claim time; re-verified AVAILABLE on main 242e5de3 (blob 9d829aad) and main d2a40a6d (blob 4d50314c) at PR time; no prior claim, branch or PR. Branch muse1/task-fut-030-econ-calendar-outlook created at main 72f5a7ae, rebased to 242e5de3 after coordinator board PR #1763 merged (FUT-029 -> MERGED) and to d2a40a6d after PR #1758 merged; no work lost, the branch held no commits at rebase time.'
+    - 'MERGED by Muse (coordinator) 2026-11-25 11:09:18 IST: PR #1776, merge e5035288, head 4f097a81, CI 11/11 green (9 success + 2 skipped), verified first-hand by Muse 4 this run. Board flip to MERGED rides in the TASK-FUT-031 work PR (Muse 4). Live leg still held: production outlook from deployed Futuris needs fleet CD + hub clearance; owner stop order in force.'
     blockers: []
-    next_action: 'In review by Muse (coordinator); merge is Muse''s. Deploy + live production outlook need hub clearance.'
+    next_action: 'Merged. Live leg (production outlook from deployed Futuris) needs fleet CD + hub clearance; owner stop order in force.'
   - id: TASK-STR-068
     title: 'Stratex: new pairs-trading / stat-arb research family (Engle-Granger, OU half-life, Kalman hedge, z-score)'
     status: IN_REVIEW
@@ -20844,14 +20845,14 @@ tasks:
 
   - id: TASK-FUT-031
     title: 'PRODUCTION-VERIFY + REPO-IMPLEMENT: Futuris - IG-FUT-01/02 live verification + repos OpenBB, Polymarket py-sdk, Fincept Terminal, Scientific Agent Skills (wave 3)'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: IN_REVIEW
+    owner: muse_4
+    branch: muse4/task-fut-031-prod-verify-ig-fut-01-02
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:45:00+05:30'
+    updated_at: '2026-11-25T11:41:30+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20865,8 +20866,10 @@ tasks:
     - 'Live evidence per repo, same standard as the corpus items in this record.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Claim (Muse 4): hub #1483 comment 7154355763, 2026-11-25 ~11:31 IST, on coordinator watch080 assignment (7154044918); board verified AVAILABLE/owner-null on main 8fa84c61 (blob 46233d12), re-verified on main f6b912a6 (blob 105d663e); full hub scan of 1,261 comments, no competing claim. Branch muse4/task-fut-031-prod-verify-ig-fut-01-02 from main f6b912a6.'
+    - 'Repo leg (this PR): IG-FUT-01/02 artefacts mapped to merged code on main f6b912a6 and re-run first-hand (47 passed); OpenBB adapt verified intact (env flip + find_spec probe + optional extra only); reference-only guardrail test (5 tests) + Polymarket Gamma live trial (5/5 markets, prob sums 1.0000, failure cases behave); Fincept + Scientific Agent Skills guardrail proof of absence; IG-FUT-01/02 tests now collected in the Futuris contracts step (103 passed locally). Live legs HELD (owner stop order). Evidence: docs/collaboration/TASK-FUT-031-PROD-VERIFY-IG-FUT-01-02.md.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'In review by Muse (coordinator); merge is Muse''s. Live legs (IG-FUT-01 ARM day; IG-FUT-02 deployed-forecast probe) need hub clearance + stop-order lift.'
 
   - id: TASK-CTX-009
     title: 'PRODUCTION-VERIFY: Cortex budget gate (IG2-COR-01) - forced-breach live verification (wave 3)'
