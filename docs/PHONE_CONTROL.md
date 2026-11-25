@@ -97,8 +97,9 @@ Termux agent has the same constraint).
 DroidLab: Gesture Toolkit (Light Source Labs, free on the Play Store,
 Android 8.0+) turns phone motion and touch zones into shortcuts:
 double-tap the back of the phone (Back Tap), Edge Sense, Notch Touch,
-Chop Chop, Quick Twist, multi-finger swipes. Typical owner use:
-double-tap the back to toggle the flashlight.
+Chop Chop, Quick Twist, multi-finger swipes — plus theme changes and
+Quick Settings customisation (source item Dc_PBtEq0YM). Typical owner
+use: double-tap the back to toggle the flashlight.
 
 Setup: install, run the Calibration Wizard first — it profiles the
 phone's sensors so taps do not misfire — then map one gesture to one

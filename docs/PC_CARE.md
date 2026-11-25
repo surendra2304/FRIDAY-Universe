@@ -53,17 +53,24 @@ this order, read-only first:
    the port before blaming the card.
 2. `laptop_pc_health` — confirm the laptop itself is healthy (disk
    pressure, no resource exhaustion).
-3. Bootable USB rescue route ("USB TOOLS" route): a rescue USB (Ventoy
-   plus a free recovery ISO such as Hiren's BootCD PE) boots the laptop
-   outside Windows so the card can be read without Windows mounting
-   it. Never write anything to the failing card — recovery tools read
-   from it and write recovered files to a *different* drive.
-4. File recovery: PhotoRec / TestDisk (free, open source) carve files
-   from the raw device; see Autopsy below for a GUI route.
-5. If the card is physically damaged (not detected anywhere, clicking,
-   heat, smell) — stop. No software recovers a dead controller; a
-   professional lab is the only route, and every further attempt risks
-   more loss.
+3. USB TOOLS route (phone-side, source item DVlGJaNEal2): the **USB
+   TOOLS** app on Google Play (MixApplications, free download, ads;
+   recovery scans free, formatting costs tokens) turns the owner's
+   Android phone into a USB workbench over an OTG cable — plug the
+   drive into the phone, let the phone detect it, and run the app's
+   recovery scan. No root needed for USB drives over OTG; a charge-only
+   cable will not work, and the phone's OTG setting must be on. If the
+   phone detects the drive, recover files to the phone or another
+   drive — never write recovered files back onto the failing card.
+4. File recovery on the laptop: PhotoRec / TestDisk (free, open
+   source) carve files from the raw device; see Autopsy below for a
+   GUI route.
+5. Escalation threshold: **if nothing detects the drive** — not the
+   laptop, not another machine, not the phone over OTG — stop and use
+   a professional data-recovery technician. No software recovers a
+   drive nothing can see, and every further attempt risks more loss.
+   The same stop rule applies to physical damage (clicking, heat,
+   smell).
 
 ### Autopsy — when recovery needs a forensic-grade look
 
@@ -73,15 +80,21 @@ write-blocked drive) without mounting it, lists deleted files, and
 carves data from unallocated space with its built-in PhotoRec engine.
 When to mention it: the owner already has an image of the failing
 drive (`.dd` / `.E01`) and wants to browse what is recoverable before
-paying anyone. Rules: always work on a copy or image, never on the
-original; Autopsy is a heavyweight tool — for a single deleted file,
-PhotoRec alone is faster. Only examine drives the owner owns.
+paying anyone — and only if **no new data has been written** to the
+drive since the loss (new writes overwrite what recovery could have
+found). Rules: always work on a copy or image, never on the original;
+Autopsy is a heavyweight tool — for a single deleted file, PhotoRec
+alone is faster. Only examine drives the owner owns.
 
 ### WinSAT probe — caveat before you run it
 
 `winsat formal` (Windows System Assessment Tool, built into Windows)
 is a quick, scriptable first check of CPU, memory, disk and graphics
-— no download. Caveats FRIDAY must state before suggesting it:
+— no download. The recorded caveat (source item DXZ0dlzjijM): the
+probe score (`WinSPRLevel`) **can read 0 or 1 on capable gaming
+hardware**, so the score must never be used alone to gate heavy-work
+assignment — a low or missing score does not mean the machine is slow.
+Further caveats FRIDAY must state before suggesting it:
 
 - Legacy: Microsoft warns the WinSAT API may be altered or
   unavailable after Windows 8.1; the old Experience Index screen is
@@ -95,15 +108,17 @@ is a quick, scriptable first check of CPU, memory, disk and graphics
 - Results land in `%WINDIR%\Performance\WinSAT\DataStore`; read scores
   with PowerShell `Get-CimInstance Win32_WinSAT`.
 
-### Invisible-folder procedure — obscurity, not security
+### Invisible-folder procedure — cosmetic privacy, not security
 
-To hide a folder from casual browsing: `attrib +h +s "C:\path\folder"`
-(Command Prompt) hides it even from normal hidden-file views;
-`attrib -h -s` reverses it. FRIDAY must say plainly: this hides the
-folder, it does not protect it — anyone who enables "show hidden
-files" or knows the path can open it. For anything that must actually
-stay private, use BitLocker (drive encryption) or a VeraCrypt
-container, not hiding.
+The recorded procedure (source item DXRt_JKjKKt): rename the folder
+while holding **Alt+0160** (numeric keypad) to give it a blank name,
+then right-click > Properties > Customize > Change Icon and pick the
+transparent (blank) icon. The folder is still there, but with no name
+and no icon it is invisible on the desktop. FRIDAY must say plainly:
+this hides the folder, it does not protect it — anyone who enables
+"show hidden files", selects the area, or knows the path can open it.
+For anything that must actually stay private, use BitLocker (drive
+encryption) or a VeraCrypt container, not hiding.
 
 ### NetLimiter — reference, with the price stated
 
@@ -131,7 +146,7 @@ changed carelessly; change only the cores setting, photograph the
 screen before changing anything, and never touch voltage or overclock
 settings.
 
-### services.msc — verify-first evaluation
+### services.msc — verify-first evaluation, with per-service verdicts
 
 Before disabling any Windows service to "speed up" the PC: open
 `services.msc`, read the service's own Description and its
@@ -141,3 +156,21 @@ time and reboot-test; never bulk-disable from a "speed up Windows"
 list — those lists are how owners break printing, Wi-Fi, and Windows
 Update. If FRIDAY cannot name what a service does, it says so and
 does not recommend touching it.
+
+Recorded verdicts for the F-16 trio (source item DZ2nntDKOxe) —
+grounded in published service documentation and independent guides,
+**not** in a live Windows sandbox run (no sandbox was available in
+this environment; that test is not claimed):
+
+| Service | What it does | Verdict |
+|---|---|---|
+| SysMain (formerly Superfetch) | Preloads frequently used apps into RAM so they launch faster. | **Safe to disable, reversible.** Helps mainly on HDD / low-RAM machines, where it can cause 100% disk churn after boot. On an SSD the gain is negligible — apps already launch fast, and disabling trades a little launch speed for less background activity. Note the source video's own comment thread: the claim "Windows won't even let you disable SysMain" is wrong — it disables normally via services.msc. |
+| Connected User Experiences and Telemetry (`DiagTrack`) | Collects diagnostic data, crash traces and app-usage metrics for Microsoft. | **Safe to disable for personal use, reversible.** Stops the telemetry traffic and its background disk activity; does not break Windows Update or core OS features. May affect some Microsoft Store / cloud-backed experiences. Prefer lowering the diagnostic-data level in Settings first if the owner uses Store apps heavily. |
+| Windows Search (`WSearch`) | Builds and maintains the index behind instant Start-menu and File Explorer search. | **Safe to disable for personal use, reversible — with a real cost.** Search still works but falls back to slow, unindexed scanning. Caution on corporate machines: disabling breaks Outlook instant email search. Keep it enabled if the owner searches files daily; otherwise Manual is the safe first step. |
+
+**Rejected claim:** the video's "56% → 11% memory" graphic is not
+accepted. Task Manager memory percentage is not a valid before/after
+metric for these services — SysMain's preload is by design (cached
+memory Windows would free under pressure), and no such drop is
+attributable to disabling the trio. FRIDAY must not repeat the
+graphic as evidence.
