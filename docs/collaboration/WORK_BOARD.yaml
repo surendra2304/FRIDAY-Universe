@@ -17223,14 +17223,14 @@ tasks:
   - id: TASK-FUT-025
 
     title: 'Futuris: scoring-session contention — isolate scoring jobs from the shared session ("Session is already flushing") and fix calibration + provider-refresh failures'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-fut-025-scoring-session-isolation
     pr: 1538
     contributors: []
     priority: P2
     created_at: '2026-11-23'
-    updated_at: '2026-11-24T00:00:49+05:30'
+    updated_at: '2026-11-25T06:10:20+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - Futuris/futuris/infra/scheduler.py
@@ -17244,6 +17244,7 @@ tasks:
       - 'Drafted by the coordinator 2026-11-23 ~19:00 IST (consolidated board PR; from Muse 9 18:45 re-check in status 7102277953: second scoring job failed, calibration resolve failed b5c0a661 + f8921fe7, provider refresh failed vyralx/intelx; follow-up to TASK-FUT-023 section 6). Unassigned - the coordinator watch assigns it to the next free worker.'
       - 'Claim: hub #1483 comment 7108666868 by Muse 1, 2026-11-23 ~22:57 IST, on coordinator queue (watch 7106041874 assigned INT-034 -> FUT-025 -> FRD-040; watch 7108157938 + correction 7108435559 confirm FUT-025 head, FUT-019 re-slotted to Muse 4). Board record verified AVAILABLE, owner muse_1, on main a96c7bd9 (board blob deb6682f, verified against the true main blob before editing). No prior claim, branch or PR. Branch muse1/task-fut-025-scoring-session-isolation. Queue: FUT-025 (head) -> FRD-040.'
       - 'Implemented 2026-11-24 ~00:05 IST: session-per-job isolation in futuris/infra/scheduler.py (_JobScope/_job_scope, session_factory; every job on its own session, commit-before-report; scoring serialised by lock); per-score savepoint + skipped_duplicate in services/forecast_tracker.py; long-lived scheduler session removed from api/app.py (session_factory passed instead); 5 new tests in tests/test_fut025_scoring_session_isolation.py (reported==stored, concurrent scoring, calibration+scoring, provider refresh+scoring, commit-before-emit). Root cause: one shared session for all jobs + no repository ever commits + universe job committing the shared session. Evidence: docs/collaboration/TASK-FUT-025-SCORING-SESSION-ISOLATION.md. Work PR #1538 (claim+work on this branch), CI pending. Live re-probe needs Muse hub clearance for the S2 restart; not claimed here. Finding: lifecycle sweep not wired on main (no lifecycle_manager in app.py) -- filed, not fixed.'
+      - 'Merged via PR 1538 (merge 440fbfd0) - coordinator watch066 consolidated board PR, verified on main f6d1e665.'
     blockers: []
     next_action: 'Isolate the scoring jobs from the shared session; fix calibration resolve + provider refresh failures; file the evidence.'
   - id: TASK-CTX-006
@@ -19194,14 +19195,14 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-STR-066
     title: 'Stratex: add PDO/PDC levels plus current-day 5-minute levels to S/R annotation records'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-str-066-pdoc-levels
-    pr: null
+    pr: 1740
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T04:00:00+05:30'
+    updated_at: '2026-11-25T06:10:20+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-STR-066-PDOC-LEVELS.md
@@ -19211,6 +19212,7 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-STR-PDOC-LEVELS (IG package S-10). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     - 'Claimed by Muse 15 (hub #1483 comment 7146070918, 2026-11-25 ~03:45 IST): board AVAILABLE / owner null on main 4bed6107 (re-checked on 80b75649); no competing claim; branch muse15/task-str-066-pdoc-levels.'
     - 'Done with live proof (evidence: docs/collaboration/TASK-STR-066-PDOC-LEVELS.md): annotate_levels() in Stratex/rigorous_backtest/ig/levels.py adds PDO/PDC records (kind pdo/pdc, origin prev_day) + S/R levels recomputed from today''s 5m candles (timeframe 5m); find_levels() untouched. Tests 12/12 local (7 new); test_levels.py added to the Stratex tier-1 CI pytest invocation. Live run 2026-11-25 ~03:57 IST on real Deribit BTC-PERPETUAL candles: 101 x 1h bars (last close 59,934.5), prev-day daily open 61,386.0 / close 60,345.0, 270 x 5m bars today -> 22 records (13 base S/R + PDO + PDC + 7 5m).'
+    - 'Merged via PR 1740 (merge 07c72f72, head 45284099) - coordinator watch066 consolidated board PR, verified on main f6d1e665.'
     blockers: []
     next_action: 'Work PR open, awaiting coordinator review/merge. No production consumer by design (annotation aid only); production-verified = live-data run above.'
   - id: TASK-STR-067
@@ -19233,14 +19235,14 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-FRD-044
     title: 'FRIDAY: Spotify playback control by voice (play/pause/skip/search-and-play)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-frd-044-spotify-voice-control
     pr: 1742
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T04:26:00+05:30'
+    updated_at: '2026-11-25T06:10:20+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-FRD-044-SPOTIFY-VOICE-CONTROL.md
@@ -19265,6 +19267,7 @@ tasks:
     - 'Claim: hub #1483 comment 7145513924 by Muse 1, 2026-11-25 ~03:20 IST, per coordinator watch059 (hub 7145228662). Board verified AVAILABLE, owner null, P1, on main 2c51d17b (board blob 5d3436dd). Branch muse1/task-frd-044-spotify-voice-control.'
     - 'Implementation: laptop media-key pair (media_key + media_status read-back) on the LAP-001 lane; spotify_control tool with verified state; media confirmation family; voice fast-path + classify spotify_media. Evidence: docs/collaboration/TASK-FRD-044-SPOTIFY-VOICE-CONTROL.md.'
     - 'Work PR #1742 (head 481ff486, base main 2c51d17b): CI 9/10 on first head — contracts failed on the REL-068 test-collection guard (2 test files uncollected); fixed by adding both files to the FRIDAY tier-1 pytest invocation in friday-universe-ci.yml (this commit). Live leg GATED: needs owner laptop online + Spotify + Muse hub clearance.'
+    - 'Merged via PR 1742 (merge c6254208, head 4f9b6678) - coordinator watch066 consolidated board PR, verified on main f6d1e665.'
     blockers: []
     next_action: 'Work PR #1742 open; CI re-run pending on the contracts fix. Live leg gated: owner laptop online + Spotify + Muse hub clearance.'
   - id: TASK-FRD-045
@@ -20244,14 +20247,14 @@ tasks:
 
   - id: TASK-VYR-073
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG2-VYR-06, IG2-VYR-07, IG2-VYR-08, IG2-VYR-09, IG2-VYR-10 - live extreme-condition verification (wave 1)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_14
     branch: muse14/task-vyr-073
     pr: 1741
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T04:10:00+05:30'
+    updated_at: '2026-11-25T06:10:20+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20261,6 +20264,7 @@ tasks:
     - 'Any item that fails live gets a named fix task filed from this record; do not mark a failing item verified.'
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
+    - 'Merged via PR 1741 (merge cfd0ce2b, head 155c1a85) - coordinator watch066 consolidated board PR, verified on main f6d1e665.'
     blockers: []
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
 
@@ -20988,14 +20992,14 @@ tasks:
 
   - id: TASK-VYR-080
     title: 'REPO-IMPLEMENT: VyralX repos - OpenCut (reference-only), AgentTube (adapt), SANA-WM (reject), WanGP (reject), C... (wave 1)'
-    status: CLAIMED
+    status: MERGED
     owner: muse_2
     branch: muse2/task-vyr-080-vyralx-repo-implement-wave1
     pr: 1719
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T02:53:23+05:30'
+    updated_at: '2026-11-25T06:10:20+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -21007,6 +21011,7 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Claim: hub #1483 comment 7143373422 by Muse 2, 2026-11-25 ~01:49 IST. Board record verified AVAILABLE, owner null, P1, on main b0276946 (board blob 383d017d). No competing hub claim, no branch, no PR. Branch muse2/task-vyr-080-vyralx-repo-implement-wave1. Pulling next pool task per the pull model - STR-076 merged 00:41 IST (PR #1694), slot freed. Live legs gated under the owner stop order.'
     - 'Work PR #1719 open (head f653d43f): AgentTube operator workflow (agenttube.py +487) + 17-test suite (test_vyr080_agenttube.py +337) + evidence doc docs/collaboration/TASK-VYR-080-REPO-IMPLEMENT-WAVE1.md. CI 10/10 green first-hand (8 success, 2 skipped). Live legs gated under the owner stop order.'
+    - 'Merged via PR 1719 (merge 85176b2a) - coordinator watch066 consolidated board PR, verified on main f6d1e665.'
     blockers: []
     next_action: 'Review work PR #1719; deploy + live proof need coordinator clearance; live legs gated under the owner stop order.'
 
