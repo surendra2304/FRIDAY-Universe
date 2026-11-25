@@ -1,0 +1,22 @@
+{
+  "claim": "Free model inclusionai/ling-3.2-flash:free listed on OpenRouter ($0 prompt / $0 completion pricing): Ling 3.2 Flash is a hybrid reasoning model from inclusionAI that accepts text and image input, with a 1M-token context window and up to 200 images per request. Thinking can...",
+  "date": "2026-11-13",
+  "discovered_at": "2026-11-25",
+  "evaluation": "pending \u2014 IG-INF-03 gate (benchmarks/evaluate_candidate.py); not admitted, not routed",
+  "filed_by": "discovery-feed",
+  "id": "openrouter-inclusionai-ling-3-2-flash-free",
+  "kind": "model",
+  "name": "inclusionAI: Ling 3.2 Flash (free)",
+  "provenance": "Filed automatically by the Inference discovery feed (TASK-INF-041) from openrouter on 2026-11-25. Source listing only \u2014 no serve-check, no bench, no free-tier verification has been run on this record.",
+  "route": {
+    "api_key_env": "OPENROUTER_API_KEY",
+    "base_url": "https://openrouter.ai/api/v1",
+    "model_id": "inclusionai/ling-3.2-flash:free",
+    "provider": "openrouter"
+  },
+  "schema": "inference.discovery-record/v1",
+  "source": "openrouter",
+  "source_url": "https://openrouter.ai/api/v1/models",
+  "status": "filed",
+  "verification": "pending \u2014 source listing only; not evaluated"
+}

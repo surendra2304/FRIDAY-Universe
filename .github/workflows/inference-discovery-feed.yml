@@ -1,0 +1,74 @@
+name: Inference discovery feed
+
+# TASK-INF-041 — automated discovery feed for Inference.
+# Daily scan of model/tool release sources (OpenRouter free-model
+# catalogue + Hugging Face watchlist orgs) that files candidate
+# records (source, date, claim, provenance) into
+# Inference/benchmarks/discovery/. The feed FILES records; it does
+# not adopt them — every record still passes the IG-INF-03
+# evaluation gate before any model enters the catalogue or a route.
+#
+# When new records are filed, they are committed to a
+# discovery-feed/YYYY-MM-DD branch and opened as a PR for review.
+# Nothing lands on main without a PR and a merge. A run with no new
+# releases opens nothing. A run with a failed source exits non-zero
+# and fails loudly (see Inference/docs/DISCOVERY_FEED.md).
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # Daily 06:00 UTC (11:30 IST)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: inference-discovery-feed
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    name: Scan release sources and file new candidates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run the discovery feed
+        working-directory: Inference
+        run: python3 scripts/discovery_feed.py
+
+      - name: Open a PR when new records were filed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # New record files only — state.json rides along with them.
+          # A state-only change (no new records) opens no PR.
+          new_records=$(git status --porcelain Inference/benchmarks/discovery/ | grep -c '^?? .*\.json$' || true)
+          new_records=$(echo "$new_records" | tr -d ' ')
+          if [ "$new_records" = "0" ]; then
+            echo "No new candidate records — nothing to file."
+            exit 0
+          fi
+          branch="discovery-feed/$(date +%F)"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            echo "Branch $branch already exists (an earlier run today already opened its PR)."
+            echo "These records stay in-window and are picked up by a later run."
+            exit 0
+          fi
+          git config user.name "inference-discovery-feed"
+          git config user.email "inference-discovery-feed@friday-universe.local"
+          git checkout -b "$branch"
+          git add Inference/benchmarks/discovery/
+          git commit -m "Inference discovery feed: $new_records new candidate record(s) ($(date +%F))"
+          git push origin "$branch"
+          gh pr create \
+            --title "Inference discovery feed: $new_records new candidate record(s) ($(date +%F))" \
+            --body "Automated discovery-feed run (TASK-INF-041, daily schedule). New candidate records filed in Inference/benchmarks/discovery/ — source listings only, not evaluated. Each record still passes the IG-INF-03 gate (benchmarks/evaluate_candidate.py) before any model enters the catalogue or a route. See Inference/docs/DISCOVERY_FEED.md."
