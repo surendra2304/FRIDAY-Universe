@@ -20544,14 +20544,14 @@ tasks:
 
   - id: TASK-FRD-052
     title: 'PRODUCTION-VERIFY: FRIDAY corpus items IG-FRD-006, IG-FRD-007, IG-FRD-008, IG-FRD-009 - live extreme-condition verification (wave 2)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_tp7
     branch: musetp7/task-frd-052-prod-verify-wave2
-    pr: null
+    pr: 1867
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T16:30:00+05:30'
+    updated_at: '2026-11-25T21:06:31+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20563,8 +20563,9 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Muse TP7 claim of record (branch musetp7/task-frd-052-prod-verify-wave2 @ 514740ce); owner flip HELD by coordinator watch093 - muse_tp7 is not registered in TEAM_ROSTER.yaml yet (roster PR #1795 open, conflicted; rebase owed). Flip rides in the board PR after #1795 merges. Live legs re-target to FRIDAY-Server per watch093 ruling (S1 FRIDAY retired by design).'
     - 'Coordinator watch095 (2026-11-25): roster PR #1795 merged 01e9651d - TP7 now registered in TEAM_ROSTER.yaml; owner flip null -> muse_tp7 applied (claim of record hub 7156063432, branch musetp7/task-frd-052-prod-verify-wave2 @ 514740ce). Live legs re-target to FRIDAY-Server per watch093 ruling.'
+    - 'Muse TP7 work PR #1867 (head cb353495, rebased onto main 0eeaa43a; checkpoint 2 was 3d6a5f24 pre-rebase): close ruling PARTIAL (WATCH101 7164435710, confirmed WATCH102 7165214180). IG-FRD-009 VERIFIED live (life_calendar, 6/6 numbers exact, FRIDAY-Server loopback POST /api/chat, 2026-11-25); IG-FRD-006 NOT VERIFIED (intelx_research exceeded 30.0s timeout twice, no Sources: section); IG-FRD-007 NOT RUN (injection HELD, WATCH093); IG-FRD-008 NOT RUN (voice P0; VOI-043 legs (c)+(d) merged via PR #1856, voice still NOT WORKING until owner re-test). Fix task TASK-IG-FRD-006-FIX-01 filed in this PR. Hub status comment 7165489439.'
     blockers: []
-    next_action: 'Claimed by Muse TP7 (hub 7156063432, branch musetp7/task-frd-052-prod-verify-wave2 @ 514740ce). Live legs re-target to FRIDAY-Server per watch093 ruling; file live evidence per item.'
+    next_action: 'Work PR #1867 open (head cb353495, base 0eeaa43a); close as PARTIAL on merge per WATCH101/102. IG-FRD-006 fix tracked in TASK-IG-FRD-006-FIX-01; IG-FRD-007/008 gates unchanged (injection HELD, voice P0 — VOI-043 merged, owner re-test owed).'
 
   - id: TASK-FRD-053
     title: 'PRODUCTION-VERIFY: FRIDAY corpus items IG-FRD-010, IG-FRD-011, IG2-FRD-01, IG2-FRD-02 - live extreme-condition verification (wave 2)'
@@ -22986,6 +22987,27 @@ tasks:
     - 'Filed by coordinator watch102 (2026-11-25, hub #1483) from Muse 13 block post 7163772133: INT-020 BLOCKED + HELD (0/3 at synthesis). Assigned to muse_13 as queue position 2 behind IG-INF-01-FIX-01; VOI-030 stays position 3 (blocked).'
     blockers: []
     next_action: 'Assigned to muse_13 as queue position 2 by coordinator watch102 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
+
+  - id: TASK-IG-FRD-006-FIX-01
+    title: 'FRIDAY: fix intelx_research 30s timeout so IG-FRD-006 delivers a Sources: section live'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T21:06:31+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Find why intelx_research exceeds its 30s limit on FRIDAY-Server (IntelX service latency/availability — the tool never returned).'
+    - 'Consider a longer timeout or a fallback research path for time-sensitive news.'
+    - 'Re-probe with a current-events question until a Sources: section is delivered whose URLs match the tool results. Do not mark IG-FRD-006 verified until that lands and is re-probed.'
+    evidence:
+    - 'Named by Muse TP7 in TASK-FRD-052 checkpoint 2 (commit cb353495, branch musetp7/task-frd-052-prod-verify-wave2): IG-FRD-006 NOT VERIFIED live — intelx_research timed out at 30.0s twice on FRIDAY-Server (attempt 1: HTTP 200, 91.88s wall; journal ERROR "Tool intelx_research execution exceeded timeout of 30.0s", completed 30.0024s, Success: False); attempt 2 delivered no research result either; no Sources: section in either reply, nothing fabricated.'
+    blockers: []
+    next_action: 'Available in the pool; claim via hub #1483 when a slot frees. Re-probe is a live FRIDAY-Server leg.'
 
 task_id_warnings:
   - id: TASK-REL-061
