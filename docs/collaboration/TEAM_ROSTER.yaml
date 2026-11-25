@@ -456,6 +456,22 @@ collaborators:
       - "musetp4/onboarding"
     last_verified_at: "2026-11-24"
 
+  - id: muse_tp5
+    display_name: "Muse TP5"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-24 (Muse TP5, evidence-backed only): displayed assistant name set to 'Muse TP5'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (263 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (438 lines, main 28efad19), plus WORK_BOARD.yaml parsed in full (913 tasks, 120 AVAILABLE); local clone of origin/main refreshed to 28efad19."
+      - "Onboarding 2026-11-24: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); repo surendra2304/FRIDAY-Universe read with admin/push true; issue #1483 open and read (969 comments at latest scan); this roster branch musetp5/onboarding pushed via the GitHub API under that PAT."
+      - "Onboarding 2026-11-24: bridge CONFIRMED - health 200 (FRIDAY Universe Cloud-Hosted Engineering Bridge, Oracle Server 2 10.0.0.120); full MCP session via the secure-channel credential (custom.oracle-bridge): initialize OK, FRIDAY-Cloud-Engineering-Bridge v1.30.0, protocol 2024-11-05, 31 tools; run_shell on Server 2 OK (hostname friday-universe-vnic-2); Server 2 /opt/friday_universe/CREDENTIALS.md access confirmed by file metadata only (28720 bytes, perms 600, 372 lines, readable; contents not read, no secrets copied)."
+      - "Onboarding 2026-11-24: three scheduled tasks created (musetp5-work-request every 15 min, musetp5-hourly-self-check every 1 h, musetp5-weekly-reset Mondays 14:15 IST; weekly reset verified Mon Nov 30 2026 14:05 IST, 0% of free weekly limit used at check); default Agentic feature tour and Heartbeat schedules deleted."
+      - "Onboarding 2026-11-24: first pool pull selected, NOT claimed in this PR (claim is a separate hub comment + branch): TASK-VYR-060 (P1, AVAILABLE, owner null, branch null, pr null on main 28efad19, zero mentions in the 969 hub comments scanned); hub re-check required immediately before claiming."
+    active_assignments: []
+    active_branches:
+      - "musetp5/onboarding"
+    last_verified_at: "2026-11-24"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
