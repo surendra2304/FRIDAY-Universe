@@ -20832,14 +20832,14 @@ tasks:
 
   - id: TASK-MEM-031
     title: 'PRODUCTION-VERIFY + REPO-IMPLEMENT: Memora - IG2-MEM-01/02/03 live verification + repos claude-mem, Agent Memory, Open Viking (wave 3)'
-    status: CLAIMED
+    status: MERGED
     owner: muse_2
     branch: muse2/task-mem-031-memora-verify-wave3
     pr: 1784
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T11:55:52+05:30'
+    updated_at: '2026-11-25T12:56:46+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -20855,8 +20855,9 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Claim: hub #1483 comment 7154497656 by Muse 2, 2026-11-25 ~11:40 IST. Board record verified AVAILABLE, owner null, on main f6b912a6 (board blob 105d663e, 22,604 lines, verified against the true main blob before editing). Branch muse2/task-mem-031-memora-verify-wave3.'
     - 'Work PR #1784 (code head 756a4a54): REPO-IMPLEMENT leg only - claude-mem needle taxonomy + layered session index (Memora core + Forge client/call sites) and agentmemory confidence reinforcement (explicit recall-outcome endpoint + implicit compress-promote bump + weighted inject sort); Open Viking reference-only (AGPL-3.0, separate server + Doubao models, already implemented natively in real_viking_context.py). 20 new tests (14 Memora + 6 Forge), both files in the tier-1 CI lists. Evidence doc docs/collaboration/TASK-MEM-031-MEMORA-VERIFY-WAVE3.md. Live legs gated by the owner stop order; deploy needs coordinator clearance.'
+    - 'Merged 2026-11-25 12:31:34 IST by Surendra (merge 581f0d1d); work PR #1784, CI 11/11 green on head 7942efa1. Board flip rides in TASK-MEM-032 work PR.'
     blockers: []
-    next_action: 'Peer merge review of work PR #1784; deploy + live proof need coordinator clearance (owner stop order in force).'
+    next_action: 'Deploy + live proof need coordinator clearance (owner stop order in force).'
 
   - id: TASK-FUT-031
     title: 'PRODUCTION-VERIFY + REPO-IMPLEMENT: Futuris - IG-FUT-01/02 live verification + repos OpenBB, Polymarket py-sdk, Fincept Terminal, Scientific Agent Skills (wave 3)'
@@ -21973,14 +21974,14 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-MEM-032
     title: 'Memora: Project NOMAD offline knowledge pack - offline corpora as a Memora fallback store'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: CLAIMED
+    owner: muse_2
+    branch: muse2/task-mem-032-nomad-offline-pack
     pr: null
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T03:10:00+05:30'
+    updated_at: '2026-11-25T12:56:46+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Memora/
@@ -21990,8 +21991,9 @@ tasks:
     - 'Done = one offline pack built and answering a real query with the ADB path disabled.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
+    - 'Claim: hub #1483 comment 7155563616 by Muse 2, 2026-11-25 ~12:40 IST. Board record verified AVAILABLE, owner null, on main be3f303e (board blob 9f64aeb3, 22,623 lines, verified against the true main blob before editing). Branch muse2/task-mem-032-nomad-offline-pack.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
+    next_action: 'Work PR with the offline pack; peer merge review; deploy + live proof need coordinator clearance (owner stop order in force).'
   - id: TASK-SEN-034
     title: 'Sentinel: compromised-laptop OPSEC checklist in the owner-device hygiene set'
     status: AVAILABLE

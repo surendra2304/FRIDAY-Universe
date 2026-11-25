@@ -1,0 +1,16 @@
+{
+  "collections": [
+    "operations",
+    "reference",
+    "education"
+  ],
+  "coverage": "FRIDAY-Universe standing orders and Memora fallback procedures (operations); offline-first knowledge concepts adapted from NOMAD (reference); offline learning pointers (education)",
+  "entries_sha256": "cde36742285bb732d7e248d396fb02ae89d20a2460d20c1b3690126f0393135d",
+  "entry_count": 16,
+  "license": "Corpus text is original FRIDAY-Universe operational knowledge written for this pack; no third-party content is copied.",
+  "pack": "nomad-offline-pack",
+  "source_pattern": "Crosstalk-Solutions/project-nomad (Apache-2.0) \u2014 packaging pattern only; no NOMAD code, content, or services are vendored",
+  "task": "TASK-MEM-032",
+  "updated": "2026-11-25",
+  "version": "1.0.0"
+}

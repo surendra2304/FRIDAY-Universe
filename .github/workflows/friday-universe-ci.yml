@@ -227,6 +227,7 @@ jobs:
             tests/test_tier1_resilience_contracts.py \
             tests/test_mem030_obsidian_vault.py \
             tests/test_mem031_memora_verify_wave3.py \
+            tests/test_mem032_nomad_offline_pack.py \
             --deselect tests/test_tier1_resilience_contracts.py::test_health_probe_contract \
             --deselect tests/test_tier1_resilience_contracts.py::test_ready_probe_contract
 
