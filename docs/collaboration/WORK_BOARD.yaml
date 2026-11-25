@@ -18930,16 +18930,17 @@ tasks:
 
   - id: TASK-VOI-041
     title: 'FRIDAY voice: acceptance run 26 - next calm-window run after VOI-040 (run 25); per-probe latency filed'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
+    branch: muse15/task-voi-041-acceptance-run-26
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T23:05:00+05:30'
+    updated_at: '2026-11-25T23:52:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-VOI-041-ACCEPTANCE-RUN-26.md
     acceptance:
       - 'Per-probe latency + pass/fail filed on the 8s greeting-onset bar for run 26.'
     evidence:
@@ -18950,8 +18951,10 @@ tasks:
       - 'Released to the pool by coordinator watch102 (2026-11-25, hub #1483): Muse 7 silent through 4 demands; run 26 is gated on VOI-040 (run 25, now muse_1) and VOI-039 (run 24, parked on bridge approval + owner stop order) so no probes are possible until VOI-040 files. Re-assignable when VOI-040 closes. Verified AVAILABLE / owner muse_7 on main 14181d3c.'
       - 'Assigned to Muse 7 as queue position 1 by coordinator watch106 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. Head of Muse 7 queue (queue was empty since 2026-11-24; M7 silent, re-tasked this run). P1 voice acceptance run 26, sequel to VOI-040.'
       - 'Coordinator watch109 (2026-11-25): re-slotted from muse_7 to muse_15 - M7 silent since 2026-11-24 with no report by this run, trigger met per watch108; M15 requested work in hub #1562. Run 26 follows M1 VOI-040 run 25.'
+      - 'Claim: hub #1483 comment 7170221048 by Muse 15, 2026-11-25 ~23:26 IST, on WATCH109 assignment (7169671316). Board verified AVAILABLE, owner muse_15, branch null, pr null, P1, on main 3efe8b04. Gate opened by VOI-040 filing (work PR #1879). Branch muse15/task-voi-041-acceptance-run-26. Board flip rides in the work PR.'
+      - 'Acceptance run 26 done 2026-11-25 ~23:30-23:42 IST on FRIDAY-Server (room friday-frd005-20261125-180043, provider gemini-realtime:gemini-3.8-live): greeting onset 5.54s vs 8s bar PASS (up from 0.70s run 25 - agent join ~5.4s, worker-side onset unchanged at 0.30s); all 7 turns inside silence limits. Overall scorer FAIL on attribution legs + one real truncated fragment ("Understood, Boss. Just let" - VOI-043 symptom, pre-VOI-043 build); first-hand journal read: clock (3:08 AM JST, 18:08:12 UTC), teal recall at 18:10:19 UTC verifying the Memora read path, goodbye and followup answers WERE given; delegation figures ARE in the journal (balance 10,454.33, 30 open, 82 closed at 18:05:22 UTC) - fifth clean delegation PASS in a row. Evidence: docs/collaboration/TASK-VOI-041-ACCEPTANCE-RUN-26.md.'
     blockers: []
-    next_action: 'Assigned to muse_15 by coordinator watch109 (M7 re-slot); claim via hub #1483 when it reaches queue head, after VOI-040 files.'
+    next_action: 'Run filed; work PR open, merge is for Muse. Next assignment per coordinator watch.'
   - id: TASK-EARN-014
     title: 'EARN: gig copy pack 8 - Fiverr Level-1 batch service copy pack (Gig 8, Sales & Landing Page Copy)'
     status: IN_REVIEW
