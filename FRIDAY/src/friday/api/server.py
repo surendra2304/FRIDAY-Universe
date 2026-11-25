@@ -6297,6 +6297,22 @@ class VoiceSpeakRequest(BaseModel):
     lang: str | None = None
 
 
+class RSVPCreateRequest(BaseModel):
+    """Pasted text or an article URL to read, plus the starting rate."""
+
+    text: str
+    wpm: int | None = None
+    title: str | None = None
+
+
+class RSVPControlRequest(BaseModel):
+    """Pause/resume, rate change, or jump - only given fields change."""
+
+    wpm: int | None = None
+    paused: bool | None = None
+    position: int | None = None
+
+
 _VOICE_CATALOGUE = [
     {"id": "en-IN-NeerjaNeural", "language": "en-IN", "label": "English (India) — Neerja", "gender": "Female"},
     {"id": "en-IN-PrabhatNeural", "language": "en-IN", "label": "English (India) — Prabhat", "gender": "Male"},
@@ -6376,6 +6392,54 @@ async def voice_speak(
         media_type="audio/mpeg",
         headers={"Cache-Control": "no-store", "X-FRIDAY-Voice": voice},
     )
+
+
+# --- TASK-FRD-058: RSVP speed-reading aid ---
+# The reading surface is the static page FRIDAY/src/friday/api/rsvp.html
+# (served at /static/rsvp.html - this module's directory is the /static
+# mount). Sessions are local files under FRIDAY/.data/rsvp/sessions/.
+
+
+@app.post("/api/rsvp/session")
+async def rsvp_create_session(
+    req: RSVPCreateRequest,
+    _: None = Depends(_require_control_access),
+) -> Any:
+    """Create an RSVP reading session from pasted text or an article URL."""
+    from friday.workflows import rsvp as rsvp_workflow
+
+    result = rsvp_workflow.create_session(req.text, wpm=req.wpm, title=req.title)
+    if not result.get("ok"):
+        raise HTTPException(status_code=400, detail=result.get("error", "Could not create a session"))
+    return result
+
+
+@app.get("/api/rsvp/session/{session_id}")
+async def rsvp_get_session(session_id: str) -> Any:
+    """Load an RSVP session (words + state) for the reading surface."""
+    from friday.workflows import rsvp as rsvp_workflow
+
+    session = rsvp_workflow.get_session(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail=f"No RSVP session {session_id}")
+    return session
+
+
+@app.post("/api/rsvp/session/{session_id}/control")
+async def rsvp_control_session(
+    session_id: str,
+    req: RSVPControlRequest,
+    _: None = Depends(_require_control_access),
+) -> Any:
+    """Pause/resume, change the rate, or jump - from voice, chat, or the page."""
+    from friday.workflows import rsvp as rsvp_workflow
+
+    result = rsvp_workflow.control_session(
+        session_id, wpm=req.wpm, paused=req.paused, position=req.position
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=404, detail=result.get("error", "No RSVP session"))
+    return result
 
 
 # --- Enhanced Autonomous Controller Integration ---
