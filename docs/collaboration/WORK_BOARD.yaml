@@ -18128,14 +18128,14 @@ tasks:
 
   - id: TASK-STR-051
     title: 'Stratex: forward-window fills audit run 2 - reconcile the daemon fill ledger against venue history for the new window'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_8
     branch: muse8/task-str-051
     pr: 1749
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T05:21:02+05:30'
+    updated_at: '2026-11-25T06:21:45+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-STR-051-SCOPE.md
@@ -18151,8 +18151,9 @@ tasks:
       - 'Scope + read_file probe evidence filed on branch muse8/task-str-051 (hub 7141227234): TASK-STR-051-SCOPE.md + TASK-STR-051-PROBE-READFILE-2026-11-24.md; both ruled probe routes blocked (S1 paths not found on Server 2).'
       - 'S1-state pull filed per watch054 ruling 3 (hub 7142399844): M13 pull via bridge run_shell S1 (watch 7140957093) — fill_ledger.jsonl byte-identical (md5 5a8d43a3ef9f32c111280a615d6ceb35, 80 rows, 38,809 bytes, net +138.75, 2026-11-14 -> 2026-11-23); heartbeat 2026-11-24 13:41:35 IST (~11 h stale); reconciliation daily_2026-11-23 + daily_2026-11-24 both RECONCILED; G1 gap persists (35 venue closes, +15.93 USDT on 11-24); 69/80 rows carry no order_id. Evidence doc docs/collaboration/TASK-STR-051-S1-STATE-PULL-EVIDENCE.md on branch muse8/task-str-051. Probe leg needs the ledger data file or a read route to S1 state.'
       - 'Ruling (a) ACCEPTED per coordinator watch 7147595568 (hub #1483, 2026-11-25 ~05:06 IST): daemon RECONCILED verdicts + M13 md5-verified pull are acceptance evidence for the window state (80 rows, net +138.75, both daily reports RECONCILED, zero diffs over 0.5 USDT); G1 (35 closes, +15.93), G-trace (69/80 no order_id), Q1 (11-23 vs 11-24 net baseline) filed as KNOWN GAPS. Work PR opens with the window-state doc + this IN_REVIEW flip; TASK-STR-051-FIX-01 filed AVAILABLE in the same PR; M20 verifies. No ledger data pasted in the public repo.'
+      - 'Merged 2026-11-25 ~06:05 IST: work PR #1749 merged by coordinator (merge f6d1e665, head c0e56ccf); CI 9/9 complete first-hand (7 success, 2 skipped, 0 failed). Window state filed per ruling (a); G1 (35 closes, +15.93 USDT), G-trace (69/80 no order_id), Q1 baseline carried as KNOWN GAPS; TASK-STR-051-FIX-01 filed AVAILABLE in the pool. Board flip filed by Muse 8 in this board PR.'
     blockers: []
-    next_action: 'Awaiting M20 verification of the work PR; then merge. FIX-01 (35 closes) waits in the pool.'
+    next_action: 'Queue head now STR-047 (wiring leg held on coordinator clearance + owner stop order). FIX-01 (35 closes) waits in the pool.'
 
   - id: TASK-STR-051-FIX-01
     title: 'G1: reconcile the 35 venue closes with no ledger row (+15.93 USDT on 2026-11-24) - match each close to a ledger row or file it as a genuine gap, then re-run the daily reconciliation'
