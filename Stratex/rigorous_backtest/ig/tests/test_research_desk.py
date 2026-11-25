@@ -160,3 +160,86 @@ def test_run_desk_pattern_section():
     assert pm["matches_found"] == 3
     assert abs(pm["success_rate"] - 2 / 3) < 1e-12
     assert memo["summary"]["pattern_matches_found"] == 3
+
+
+# --- TASK-STR-069: hardened checklist -------------------------------
+
+_GOOD_EVIDENCE = {
+    "clean_data_retest": True,
+    "trade_count": 120,
+    "max_drawdown_pct": 8.0,
+    "total_return_pct": 24.0,
+    "tiny_size_incubated": True,
+    "repainting": False,
+    "bot_built_by_us": True,
+}
+_HARDENED = ["clean_data_retest", "min_trades", "drawdown_vs_return",
+             "tiny_size_incubation", "repainting_check", "bot_provenance"]
+
+
+def test_hardened_checklist_no_evidence_unevaluated():
+    # Pre-STR-069 behaviour is preserved: a plan with no backtest
+    # evidence still passes, and the six items are named unevaluated
+    # instead of being guessed at.
+    p = plan(SETUP, 10000.0, 0.001)
+    out = risk_checklist(p, SETUP, max_risk_pct=0.001)
+    assert out["passed"] is True
+    assert out["unevaluated"] == _HARDENED
+    assert all(i["evaluated"] for i in out["items"]
+               if i["name"] not in _HARDENED)
+
+
+def test_hardened_checklist_good_evidence_passes():
+    p = plan(SETUP, 10000.0, 0.001)
+    out = risk_checklist(p, SETUP, max_risk_pct=0.001,
+                         evidence=_GOOD_EVIDENCE)
+    assert out["passed"] is True
+    assert out["unevaluated"] == []
+
+
+def test_hardened_checklist_each_item_fails():
+    p = plan(SETUP, 10000.0, 0.001)
+    cases = [
+        ("clean_data_retest", {"clean_data_retest": False}),
+        ("min_trades", {"trade_count": 49}),
+        ("drawdown_vs_return",
+         {"max_drawdown_pct": 13.0, "total_return_pct": 24.0}),
+        ("tiny_size_incubation", {"tiny_size_incubated": False}),
+        ("repainting_check", {"repainting": True}),
+        ("bot_provenance", {"bot_built_by_us": False}),
+    ]
+    for name, ev in cases:
+        out = risk_checklist(p, SETUP, max_risk_pct=0.001, evidence=ev)
+        assert out["passed"] is False, name
+        assert any(i["name"] == name and not i["ok"]
+                   for i in out["items"]), name
+
+
+def test_hardened_checklist_boundaries():
+    p = plan(SETUP, 10000.0, 0.001)
+    # Exactly 50 trades passes; drawdown exactly half the return passes.
+    out = risk_checklist(p, SETUP, max_risk_pct=0.001,
+                         evidence={"trade_count": 50,
+                                   "max_drawdown_pct": 12.0,
+                                   "total_return_pct": 24.0})
+    assert out["passed"] is True
+    # Zero return fails the robustness gate: nothing to be robust against.
+    out2 = risk_checklist(p, SETUP, max_risk_pct=0.001,
+                          evidence={"max_drawdown_pct": 5.0,
+                                    "total_return_pct": 0.0})
+    assert out2["passed"] is False
+
+
+def test_run_desk_threads_backtest_evidence():
+    memo = run_desk([SETUP], CTX, {"BTCUSDT": _uptrend_candles()},
+                    equity=10000.0, risk_per_trade_pct=0.001,
+                    max_risk_pct=0.001,
+                    backtest_evidence={"BTCUSDT": _GOOD_EVIDENCE})
+    assert memo["checklists"][0]["passed"] is True
+    assert memo["checklists"][0]["unevaluated"] == []
+    memo2 = run_desk([SETUP], CTX, {"BTCUSDT": _uptrend_candles()},
+                     equity=10000.0, risk_per_trade_pct=0.001,
+                     max_risk_pct=0.001,
+                     backtest_evidence={"BTCUSDT": {"trade_count": 10}})
+    assert memo2["checklists"][0]["passed"] is False
+    assert "min_trades" not in memo2["checklists"][0]["unevaluated"]
