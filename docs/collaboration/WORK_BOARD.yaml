@@ -18077,14 +18077,14 @@ tasks:
 
   - id: TASK-CTX-007
     title: 'Cortex: post-#1054 escalation ratio run 3 - fires vs messages actually sent over the last 48h of live logs'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_12
     branch: muse12/task-ctx-007-escalation-ratio-run-3
     pr: 1636
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T12:02:49+05:30'
+    updated_at: '2026-11-25T13:03:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18095,8 +18095,9 @@ tasks:
       - 'Re-slotted by the coordinator 2026-11-24 ~07:53 IST (Muse 19 claimed ~04:25 IST, no work artifact ~3.5h; Muse 12 takes it as queue head).'
       - 'Claimed by Muse 12 2026-11-24 ~08:59 IST (hub #1483 comment 7121141082); branch muse12/task-ctx-007-escalation-ratio-run-3.'
       - 'Run 3 filed by Muse 12 2026-11-24 ~12:03 IST (work PR #1636): 3,651 fires : 1 delivered over 32.30h covered; journal leg under watch 7123397267 grant.'
+      - 'MERGED 2026-11-24 (work PR #1636, merge commit 89635755ed18fac3718c594cfaa949f139952f24, verified via the Pulls API); board flip filed by Muse 12 in work PR #1794.'
     blockers: []
-    next_action: 'Work PR #1636 open for review; merge is Muse''s.'
+    next_action: 'Done — merged.'
 
   - id: TASK-VOI-034
     title: 'Voice: acceptance run 19 - calm-window probes after VOI-033, per-probe latency filed'
@@ -18486,13 +18487,13 @@ tasks:
   - id: TASK-FUT-028
     title: 'Futuris: forecast accuracy scoring run 3 - score the next unscored forecast cohort'
     status: AVAILABLE
-    owner: muse_12
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T06:56:23+05:30'
+    updated_at: '2026-11-25T13:03:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18500,8 +18501,9 @@ tasks:
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~05:25 IST; follow-up to FUT-027 (scoring run 2, Muse 5 queue pos 3). Pool floor refill.'
       - 'Assigned to Muse 12 queue position 3 by coordinator watch 2026-11-24 ~06:55 IST (hub #1483) - after VAL-014 + FUT-026. Claim it when it reaches the head.'
+      - 'Released to the central pool by Muse 12 2026-11-25 ~13:05 IST (work PR #1794): blocked, cohort empty, ruling owed; Muse 12 queue is INT-044 -> SEN-030 -> SEN-031.'
     blockers: []
-    next_action: 'Muse 12 pos 3 (queue VAL-014 -> FUT-026 -> FUT-028).'
+    next_action: 'In the central pool; claim via hub #1483.'
 
   - id: TASK-INT-039
     title: 'IntelX: fast-lane live proof run 3 - one real alert end-to-end after INT-038'
@@ -18613,14 +18615,14 @@ tasks:
 
   - id: TASK-STR-054
     title: 'Stratex: forward-window fills audit run 4 - reconcile the daemon fill ledger against venue history for the new window'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_12
     branch: muse12/task-str-054-forward-window-fills-audit-run-4
     pr: 1658
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T16:15:00+05:30'
+    updated_at: '2026-11-25T13:03:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -18630,8 +18632,9 @@ tasks:
       - 'Assigned to Muse 12 as queue position 3 by coordinator watch 2026-11-24 ~07:53 IST (board PR watch010; hub #1483): queue CTX-007 -> FUT-028 -> STR-054.'
       - 'Claimed by Muse 12 2026-11-24 ~13:05 IST (hub #1483 comment 7125156712); branch muse12/task-str-054-forward-window-fills-audit-run-4.'
       - 'Run 4 filed by Muse 12 2026-11-24 ~16:15 IST (work PR #1658): window has 0 ledger closes, 1 venue close (ALGOUSDT -10.6622 at 14:41:54 IST, no ledger row - daemon dead since 13:42 IST); venue RECONCILED, residual -0.0001.'
+      - 'MERGED 2026-11-24 (work PR #1658, merge commit ff072e33b46615d25fb37ad68b52867cf9582557, verified via the Pulls API); board flip filed by Muse 12 in work PR #1794.'
     blockers: []
-    next_action: 'Work PR #1658 open for review; merge is Muse''s.'
+    next_action: 'Done — merged.'
 
   - id: TASK-VOI-037
     title: 'FRIDAY voice: acceptance run 22 - next calm-window run after VOI-036 (run 21); per-probe latency filed'
@@ -19560,24 +19563,27 @@ tasks:
     next_action: 'Claimed by Muse 14 (hub #1483 comment 7150251910, ~07:35 IST 2026-11-25; first claim of record, confirmed by coordinator watch080 ruling 7154044918). Scope doc + wiring tests 15/15 pass. Live leg gated by the owner stop order; repo leg first, live leg when the freeze lifts.'
   - id: TASK-INT-044
     title: 'IntelX: production-implementation tracker for the scouted-repos registry (102 entries)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_12
+    branch: muse12/task-int-044-production-tracker
+    pr: 1794
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T21:25:00+05:30'
+    updated_at: '2026-11-25T13:03:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INT-044-PRODUCTION-TRACKER.md
     acceptance:
     - 'A filed, evidence-linked status line exists for all 102 registry entries.'
     - 'The 46 adopt/adapt entries each carry a live production implementation status: implemented + production-verified, or explicitly not-yet with the blocking reason.'
     - 'The 46 reference-only dispositions are re-verified against the live agents, and the 10 reject entries are proven absent from every production path.'
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); scope CORRECTED the same evening: a coordinator audit verified from origin/main that the scouted_repos registry already holds all 102 cards (expanded 32 -> 102 via PR #771, recorded in TASK-IG-INT-06 board evidence), so the original GAP-LIST draft premise (TASK-INT-REGISTRY-102, IG package X-06 - incorporate the 70 wave-2 cards) was stale and is NOT the task. Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Claimed by Muse 12 2026-11-25 ~11:55 IST (hub #1483 comment 7154794782; watch080/081); branch muse12/task-int-044-production-tracker @ main 01e49d30, rebased to be3f303e for checkpoint 1.'
+    - 'Checkpoint 1 filed 2026-11-25 ~13:05 IST (work PR #1794, head f1d9b104): tracker docs/collaboration/TASK-INT-044-PRODUCTION-TRACKER.md — registry inventory verified (102 entries, fit counts match pinned counts); all 6 adopt entries verified repo-side implemented on main be3f303e; live leg NOT YET (owner stop order, no lift in watches 082-085).'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Checkpoint 1 filed 2026-11-25 ~13:05 IST (work PR #1794): tracker with all 102 status lines; 6 adopt verified repo-side; live leg gated by the owner stop order. Next: adapt-40 repo-side batch (checkpoint 2).'
 
   - id: TASK-INT-045
     title: 'IntelX: find a viable free feed route for First Squawk and activate it in headline_watch.py'
