@@ -106,6 +106,7 @@ jobs:
           host: ${{ secrets.SERVER1_HOST }}
           username: ubuntu
           key: ${{ secrets.ORACLE_SSH_KEY }}
+          command_timeout: 30m
           script: |
             set -e
             cd /opt/friday_universe
@@ -121,7 +122,7 @@ jobs:
             if [ -n "${{ inputs.agents }}" ]; then ARGS="$ARGS --agents ${{ inputs.agents }}"; fi
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
-            sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py $ARGS
+            sudo /opt/friday_universe/venv/bin/python -u /tmp/rel096-backup-script.py $ARGS
             echo "=== Latest backups ==="
             sudo ls -lt /var/backups/friday-universe | head -5
 
@@ -131,6 +132,7 @@ jobs:
           host: ${{ secrets.SERVER1_HOST }}
           username: ubuntu
           key: ${{ secrets.ORACLE_SSH_KEY }}
+          command_timeout: 30m
           script: |
             set -e
             cd /opt/friday_universe
@@ -138,7 +140,7 @@ jobs:
             echo "Verifying manifest completeness: $LATEST"
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
-            sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py --verify --from-dir "$LATEST"
+            sudo /opt/friday_universe/venv/bin/python -u /tmp/rel096-backup-script.py --verify --from-dir "$LATEST"
 
       - name: Alert on failure (never silent again)
         if: failure()
@@ -164,6 +166,7 @@ jobs:
           host: ${{ secrets.SERVER2_HOST }}
           username: ubuntu
           key: ${{ secrets.ORACLE_SSH_KEY }}
+          command_timeout: 30m
           script: |
             set -e
             cd /opt/friday_universe
@@ -176,7 +179,7 @@ jobs:
             fi
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
-            sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py --media-only --keep 4
+            sudo /opt/friday_universe/venv/bin/python -u /tmp/rel096-backup-script.py --media-only --keep 4
             echo "=== Latest backups ==="
             sudo ls -lt /var/backups/friday-universe | head -5
 
@@ -186,6 +189,7 @@ jobs:
           host: ${{ secrets.SERVER2_HOST }}
           username: ubuntu
           key: ${{ secrets.ORACLE_SSH_KEY }}
+          command_timeout: 30m
           script: |
             set -e
             cd /opt/friday_universe
@@ -194,7 +198,7 @@ jobs:
             echo "Verifying manifest completeness: $LATEST"
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
-            sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py --verify --from-dir "$LATEST"
+            sudo /opt/friday_universe/venv/bin/python -u /tmp/rel096-backup-script.py --verify --from-dir "$LATEST"
 
       - name: Alert on failure (never silent again)
         if: failure()
@@ -226,6 +230,7 @@ jobs:
           host: ${{ secrets.SERVER2_HOST }}
           username: ubuntu
           key: ${{ secrets.ORACLE_SSH_KEY }}
+          command_timeout: 30m
           script: |
             set -e
             cd /opt/friday_universe
@@ -245,7 +250,7 @@ jobs:
             fi
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
-            sudo /var/tmp/rel096-tooling/bin/python /tmp/rel096-backup-script.py --fleet-state-only
+            sudo /var/tmp/rel096-tooling/bin/python -u /tmp/rel096-backup-script.py --fleet-state-only
             echo "=== Latest bundles ==="
             sudo ls -lt /var/backups/friday-universe | head -5
 
@@ -274,6 +279,7 @@ jobs:
           host: ${{ secrets.SERVER1_HOST }}
           username: ubuntu
           key: ${{ secrets.ORACLE_SSH_KEY }}
+          command_timeout: 30m
           script: |
             set -e
             cd /opt/friday_universe
@@ -292,7 +298,7 @@ jobs:
             sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER2_HOST }}:${BUNDLE}" /tmp/rel096-bundle/
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
-            sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py \
+            sudo /opt/friday_universe/venv/bin/python -u /tmp/rel096-backup-script.py \
               --finalize --from-dir "$SET" --bundle-dir /tmp/rel096-bundle \
               --merge-from /tmp/rel096-media-set
 
@@ -302,6 +308,7 @@ jobs:
           host: ${{ secrets.SERVER2_HOST }}
           username: ubuntu
           key: ${{ secrets.ORACLE_SSH_KEY }}
+          command_timeout: 30m
           script: |
             set -e
             cd /opt/friday_universe
@@ -315,7 +322,7 @@ jobs:
             sudo rsync -az -e "$SSHOPT" "ubuntu@${{ secrets.SERVER1_HOST }}:$ROOT/$SET_NAME/" "$ROOT/$SET_NAME/"
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/backup_fleet_databases.py" -o /tmp/rel096-backup-script.py
             sudo curl -fsSL --retry 8 --retry-delay 15 --retry-all-errors "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/${{ github.sha }}/scripts/oracle_db.py" -o /tmp/oracle_db.py || sudo curl -fsSL "https://raw.githubusercontent.com/surendra2304/FRIDAY-Universe/main/scripts/oracle_db.py" -o /tmp/oracle_db.py
-            sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py \
+            sudo /opt/friday_universe/venv/bin/python -u /tmp/rel096-backup-script.py \
               --finalize --from-dir "$ROOT/$SET_NAME" --bundle-dir "$BUNDLE"
             # The media-only set was an intermediate: its content now lives
             # inside the unified set, so the standalone copy is removed to
@@ -324,7 +331,7 @@ jobs:
               echo "Removing merged media-only intermediate $MEDIA_SET"
               sudo rm -rf "$MEDIA_SET"
             fi
-            sudo /opt/friday_universe/venv/bin/python /tmp/rel096-backup-script.py \
+            sudo /opt/friday_universe/venv/bin/python -u /tmp/rel096-backup-script.py \
               --prune-only --out $ROOT --keep 3
             echo "=== Server 2 backup root ==="
             sudo ls -lt $ROOT | head -8
@@ -356,6 +363,7 @@ jobs:
           host: ${{ secrets.SERVER1_HOST }}
           username: ubuntu
           key: ${{ secrets.ORACLE_SSH_KEY }}
+          command_timeout: 30m
           envs: BACKUP_ARTIFACT_PASSPHRASE
           script: |
             set -e
