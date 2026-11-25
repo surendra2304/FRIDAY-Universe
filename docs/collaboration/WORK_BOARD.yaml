@@ -17814,14 +17814,14 @@ tasks:
 
   - id: TASK-REL-091
     title: 'Reliability: fix the backup CLOB-loss defect - jsonl_encode_value dumps every CLOB under 1 MB as empty (14,414 empty strings in the Nov 22 backup)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-rel-091-clob-loss-fix
     pr: 1576
     contributors: []
     priority: P0
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T03:21:07+05:30'
+    updated_at: '2026-11-25T18:45:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-REL-091-CLOB-LOSS-FIX.md
@@ -17831,8 +17831,9 @@ tasks:
     - 'Drafted by the coordinator 2026-11-24 ~00:15 IST from the Muse 13 REL-089 drill finding (hub 7109363715): jsonl_encode_value calls value.read(LOB_CAP_BYTES); the offset-first signature returns empty, so every CLOB under 1 MB dumps as an empty string - 14,414 empty strings in the Nov 22 backup. Deliberately NOT in #1539. P0 - routes to the first free worker.'
     - "Assigned to Muse 4 by the coordinator watch 2026-11-24 ~02:55 IST (hub #1483): corrected next after FUT-019 merged - STR-048 stays with Muse 19 per the board record (see TASK-STR-048), so the P0 CLOB-loss fix routes to the first free worker. Queue: STR-HLT-002 (blocked head) -> REL-091."
     - 'Claim: hub #1483 comment 7114897438 by Muse 4, 2026-11-24 ~03:20 IST, on coordinator watch 7114757009. Work PR #1576 open; fix + regression tests filed (22/22 local pytest). Live legs (fresh backup + re-drill to zero) owed post-merge.'
+    - 'LIVE LEGS COMPLETE 2026-11-25 (coordinator, via TASK-REL-096): fresh unified backup set 20261125T165942Z taken by Fleet Backup run 45603272006 (all four jobs green) and restore-drilled into scratch on Oracle Server 1 — MEMORA 12,153 rows / 75,933 string values with ZERO empty strings (the Nov 22 set had 14,414); VYRALX 333 rows / 2,761 values, zero empty. The REL-091 acceptance (fresh backup + re-drill showing zero empty CLOB dumps) is satisfied; flipped to MERGED.'
     blockers: []
-    next_action: 'Work PR #1576 open for review (merge by Muse); code leg done — fix + 5 regression tests, 22/22 local. Fresh backup + re-drill to zero owed post-merge.'
+    next_action: 'MERGED and live-proven: fix in PR #1576; fresh backup + zero-empty re-drill completed 2026-11-25 under TASK-REL-096. No further action.'
   - id: TASK-INF-031
     title: 'Inference: set the routing deadline from the INF-019 9k-token timing evidence'
     status: MERGED
@@ -19157,7 +19158,7 @@ tasks:
     contributors: []
     priority: P0
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T14:31:00+05:30'
+    updated_at: '2026-11-25T18:45:00+05:30'
     files:
       - scripts/backup_fleet_databases.py
       - tests/test_rel096_backup_fleet_state.py
@@ -19175,8 +19176,10 @@ tasks:
       - 'Starting state verified 2026-11-25: newest backup 2026-11-22 (pre-dates the Nov 24 AWS moves); the Nov 22 set FAILED the REL-089 restore drill on content fidelity (14,414 empty CLOB strings); REL-091 fix merged in PR #1576 (2026-11-24) and confirmed present in scripts/backup_fleet_databases.py on main be3f303e (jsonl_encode_value reads LOBs from offset 1); no backup had run since the fix; AWS servers file state and the MySQL Stratex DB were not covered at all.'
       - 'Merged 2026-11-25 ~13:20 IST in PR #1797 (owner merge, 36e2e2c9, CI 10/10 green); board flip rides in coordinator board PR watch088.'
       - 'Follow-up fix PR #1804 merged 2026-11-25 ~14:07 IST (merge a8beedde, head fb5ae17f, fleet-backup.yml +13/-4: from-dir double-prefix, Server 2 checkout-pull serialisation). Record already MERGED via PR #1797; live legs (dispatch backup, restore drill) still owed.'
+      - 'LIVE LEGS COMPLETE 2026-11-25: fix rounds PR #1807 (script pinned to the triggering commit — shared-checkout hazard), #1810 (download retry/fallback), #1812 (server-side tee diagnostics), #1813 (oracle_db sibling import), #1814 (fleet repo-root fallback + universal-key SSH pinning), #1819 (Futuris/.data optional — nonexistent live), #1823 (30m ssh timeouts + unbuffered output), #1829 (remote sudo rsync for root-owned set dirs). Fleet Backup run 45603272006 FULLY GREEN (backup, media, fleet-state collect, unify + identity). Unified set 20261125T165942Z (2.7 GB) on BOTH Oracle servers: manifest complete=true, 11 agent schemas, 1,276 fleet-state files, MySQL stratex_research dumped, one named exclusion (VyralX/media source clips, 3.9 GB, re-obtainable). Whole-tree SHA-256 identical on both servers: 94cd5dc83683f22bf3b89ed98eadea8634ed9117b02a8da10c545ac52a688d78 (manifest.json excluded — its recorded root path differs by design).'
+      - 'RESTORE DRILL PASS 2026-11-25 (scratch copy on Oracle Server 1, coordinator-run): MEMORA 12,153 rows / 75,933 string values / ZERO empty (REL-089 defect class gone); VYRALX 333 rows / 2,761 values / zero empty; Stratex forward_scorecard.json parses (183,687 bytes), fill_ledger.jsonl 82/82 lines parse, MySQL dump 3 CREATE TABLE + 415 INSERTs, 88 VyralX render files present, fleet CREDENTIALS.md present. Scratch copy removed after the drill.'
     blockers: []
-    next_action: 'Merged in PR #1797 by the owner 2026-11-25 ~13:20 IST (merge 36e2e2c9); live legs (dispatch backup, restore drill) still owed per the record.'
+    next_action: 'COMPLETE — production-verified 2026-11-25: daily + on-push backups live, unified set identical on both Oracle servers, restore drill PASS. Standing operation continues via the Fleet Backup + Backup Watchdog workflows.'
 
   - id: TASK-REL-097
     title: 'CI canary for the voice-regression test files: prove CI collects every shipped voice test file, incl. the VOI-032 set'
