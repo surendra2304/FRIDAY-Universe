@@ -232,6 +232,32 @@ class Settings(BaseSettings):
             "spoof their address and escape the anonymous budget."
         ),
     )
+    ECON_CALENDAR_MODULE_PATH: str | None = Field(
+        default=None,
+        description=(
+            "TASK-FUT-030: override path to the IG2-STR-11 economic-calendar "
+            "feed module (Stratex/research/economic_calendar.py). Unset means "
+            "auto-resolve by walking up from the Futuris package to the repo "
+            "root (monorepo and fleet sibling layouts)."
+        ),
+    )
+    ECON_CALENDAR_STORE_PATH: str | None = Field(
+        default=None,
+        description=(
+            "TASK-FUT-030: override path to the feed's JSONL store. Unset "
+            "means next to the feed module "
+            "(Stratex/research/economic_calendar.jsonl)."
+        ),
+    )
+    ECON_CALENDAR_REFRESH_MAX_AGE_HOURS: float = Field(
+        default=24.0,
+        ge=0,
+        description=(
+            "TASK-FUT-030: how stale the calendar store may be before an "
+            "outlook refreshes it through the feed's own refresh() (hours). "
+            "A failed refresh keeps serving the last stored events."
+        ),
+    )
     CORS_ORIGINS: list[str] = Field(
         default=[
             "https://friday-universe.duckdns.org",
