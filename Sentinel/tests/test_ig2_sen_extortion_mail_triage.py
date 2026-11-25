@@ -116,6 +116,53 @@ def test_ordinary_remote_image_is_not_a_tracking_pixel():
     assert result.category == "NOT_EXTORTION"
 
 
+def test_calm_guidance_warns_against_opening_and_loading_images_without_pixel():
+    # TASK-SEN-026: the standing do-not-open / do-not-load-images line
+    # is in the base calm-response guidance, so an extortion mail whose
+    # pixel evades detection still tells the owner about images.
+    result = triage_email(
+        subject="I recorded you",
+        body=(
+            "I hacked your computer and recorded you through your webcam "
+            "while you visited adult sites. Pay 1500 dollars in bitcoin to "
+            "my wallet address within 48 hours or else we will release "
+            "the video to all your contacts."
+        ),
+    )
+    assert result.category == "SEXTORTION_SCAM"
+    assert result.tracking_pixel is False
+    assert any(
+        "Do not open this message again" in g and "load its images" in g
+        for g in result.guidance
+    )
+    # No pixel-specific line when no pixel was detected.
+    assert not any("carries a tracking pixel" in g for g in result.guidance)
+
+
+def test_pixel_mail_carries_both_warnings():
+    # TASK-SEN-026: with a pixel, the base line and the pixel-specific
+    # line both appear, and the markdown carries the pixel warning.
+    result = triage_email(
+        subject="I recorded you",
+        body=(
+            "I hacked your computer and recorded you through your webcam "
+            "while you visited adult sites. Pay 1500 dollars in bitcoin to "
+            "my wallet address within 48 hours or else we will release "
+            "the video to all your contacts."
+            '<img src="https://mailstat.example/o/abc123.gif" width="1" height="1">'
+        ),
+    )
+    assert result.category == "SEXTORTION_SCAM"
+    assert result.tracking_pixel is True
+    assert any(
+        "Do not open this message again" in g and "load its images" in g
+        for g in result.guidance
+    )
+    assert any("carries a tracking pixel" in g for g in result.guidance)
+    assert "Tracking pixel" in result.to_markdown()
+    assert "Do not open this message again" in result.to_markdown()
+
+
 def test_reply_to_mismatch_is_a_named_signal():
     result = triage_email(
         body=(
