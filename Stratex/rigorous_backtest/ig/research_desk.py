@@ -14,6 +14,10 @@ The "agents" here are deterministic role functions, not LLM calls:
                     each + the historical success rate (TASK-STR-067)
   plan()          — draft a sized plan from caller-supplied risk inputs
   risk_checklist()— fail-closed checks a plan must pass to be memo'd
+                    (TASK-STR-069: six hardened, evidence-gated items —
+                    clean-data re-test, >=50 trades, drawdown-vs-return
+                    gate, tiny-size incubation, repainting warning, bot
+                    provenance)
   run_desk()      — run the chain and produce ONE structured memo
 
 RESEARCH ONLY. A plan produced here is a memo — it is not an order, it
@@ -245,12 +249,39 @@ def plan(setup, equity, risk_per_trade_pct):
     }
 
 
-def risk_checklist(plan_draft, setup, max_risk_pct, min_rr=1.5):
-    """Stage 4 — fail-closed checklist. `passed` requires every item."""
+def risk_checklist(plan_draft, setup, max_risk_pct, min_rr=1.5,
+                   evidence=None, min_trades=50, max_dd_to_return=0.5):
+    """Stage 4 — fail-closed checklist. `passed` requires every item.
+
+    TASK-STR-069: the checklist gains six hardened items, each gated on
+    caller-supplied backtest `evidence` (a dict). An item with no
+    evidence is recorded unevaluated (``ok`` True, ``evaluated`` False)
+    so a plan with no backtest evidence keeps the pre-STR-069 behaviour;
+    the result's ``unevaluated`` list names what was never proven. When
+    evidence IS supplied, the item is evaluated and can fail the
+    checklist. The desk reports what it does not know instead of
+    guessing (the same rule as scan()'s context_missing flag).
+
+    Evidence keys (all optional):
+      clean_data_retest (bool) — a clean-data / unseen-data re-test ran
+          after the big backtest.
+      trade_count (int) — trades in the backtest; must be >= min_trades.
+      max_drawdown_pct, total_return_pct (floats) — drawdown-vs-return
+          robustness gate: max drawdown must be <= max_dd_to_return *
+          total return (default: the strategy earns at least 2x its
+          worst drawdown). A non-positive return fails the gate.
+      tiny_size_incubated (bool) — tiny-size incubation ran before any
+          scale-up.
+      repainting (bool) — True means the signal repaints: the backtest
+          cannot be trusted, so the item fails (a warning, recorded).
+      bot_built_by_us (bool) — True means the bot was built by us;
+          False fails: never run a bot you did not build.
+    """
     items = []
 
-    def add(name, ok, detail):
-        items.append({"name": name, "ok": bool(ok), "detail": detail})
+    def add(name, ok, detail, evaluated=True):
+        items.append({"name": name, "ok": bool(ok), "detail": detail,
+                      "evaluated": bool(evaluated)})
 
     inv, entry, tgt = setup["invalidation"], setup["entry_ref"], setup["target"]
     if setup["direction"] == "long":
@@ -273,22 +304,79 @@ def risk_checklist(plan_draft, setup, max_risk_pct, min_rr=1.5):
         "risk_amount %.2f vs cap %.2f" % (plan_draft["risk_amount"], cap))
     add("research_only", True,
         "plan is a research memo; promotion requires the RD bar + forward protocol")
-    return {"passed": all(i["ok"] for i in items), "items": items}
+
+    # TASK-STR-069 hardened items (evidence-gated; see docstring).
+    ev = evidence or {}
+    if "clean_data_retest" in ev:
+        add("clean_data_retest", bool(ev["clean_data_retest"]),
+            "clean-data / unseen-data re-test after the big backtest: %s"
+            % ("done" if ev["clean_data_retest"] else "NOT done"))
+    else:
+        add("clean_data_retest", True,
+            "clean-data / unseen-data re-test: not supplied — unevaluated",
+            evaluated=False)
+    if ev.get("trade_count") is not None:
+        add("min_trades", ev["trade_count"] >= min_trades,
+            "%s trades vs minimum %s" % (ev["trade_count"], min_trades))
+    else:
+        add("min_trades", True,
+            "trade count: not supplied — unevaluated", evaluated=False)
+    dd, ret = ev.get("max_drawdown_pct"), ev.get("total_return_pct")
+    if dd is not None and ret is not None:
+        add("drawdown_vs_return",
+            ret > 0 and dd <= max_dd_to_return * ret,
+            "max drawdown %.2f%% vs total return %.2f%% "
+            "(gate: drawdown <= %.0f%% of return)"
+            % (dd, ret, max_dd_to_return * 100))
+    else:
+        add("drawdown_vs_return", True,
+            "drawdown/return: not supplied — unevaluated", evaluated=False)
+    if "tiny_size_incubated" in ev:
+        add("tiny_size_incubation", bool(ev["tiny_size_incubated"]),
+            "tiny-size incubation before scale-up: %s"
+            % ("done" if ev["tiny_size_incubated"] else "NOT done"))
+    else:
+        add("tiny_size_incubation", True,
+            "tiny-size incubation: not supplied — unevaluated",
+            evaluated=False)
+    if "repainting" in ev:
+        add("repainting_check", not ev["repainting"],
+            "WARNING: signal repaints — backtest results cannot be trusted"
+            if ev["repainting"] else "signal does not repaint")
+    else:
+        add("repainting_check", True,
+            "repainting status: not supplied — unevaluated", evaluated=False)
+    if "bot_built_by_us" in ev:
+        add("bot_provenance", bool(ev["bot_built_by_us"]),
+            "bot built by us" if ev["bot_built_by_us"]
+            else "bot NOT built by us — never run a bot you did not build")
+    else:
+        add("bot_provenance", True,
+            "bot provenance: not supplied — unevaluated", evaluated=False)
+
+    return {"passed": all(i["ok"] for i in items), "items": items,
+            "unevaluated": [i["name"] for i in items if not i["evaluated"]]}
 
 
 def run_desk(setups, contexts, candles_by_symbol, equity,
              risk_per_trade_pct, max_risk_pct, min_rr=1.5,
              min_adv_quote=None, max_spread_bps=None,
              pattern_window=10, pattern_forward=10,
-             pattern_lookback_days=180):
-    """Run the full desk chain and return one structured memo dict."""
+             pattern_lookback_days=180, backtest_evidence=None):
+    """Run the full desk chain and return one structured memo dict.
+
+    `backtest_evidence` (optional) maps a setup symbol to the backtest
+    evidence dict its checklist is hardened against (TASK-STR-069); a
+    symbol with no entry is checked with no evidence (hardened items
+    unevaluated, named in the checklist's ``unevaluated`` list)."""
     stage1 = scan(setups, contexts, min_adv_quote, max_spread_bps)
     analyses, plans, checks, patterns = {}, [], [], {}
     for s in stage1["kept"]:
         candles = candles_by_symbol.get(s["symbol"], [])
         analyses[s["symbol"]] = analyse(s, candles)
         p = plan(s, equity, risk_per_trade_pct)
-        chk = risk_checklist(p, s, max_risk_pct, min_rr)
+        ev = (backtest_evidence or {}).get(s["symbol"])
+        chk = risk_checklist(p, s, max_risk_pct, min_rr, evidence=ev)
         plans.append(p)
         checks.append({"symbol": s["symbol"], **chk})
         # TASK-STR-067: pattern-match section per kept setup.
