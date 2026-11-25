@@ -18907,24 +18907,27 @@ tasks:
 
   - id: TASK-VOI-040
     title: 'FRIDAY voice: acceptance run 25 - next calm-window run after VOI-039 (run 24); per-probe latency filed'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_1
-    branch: null
+    branch: muse1/task-voi-040-acceptance-run-25
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T19:40:00+05:30'
+    updated_at: '2026-11-25T23:20:02+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-VOI-040-ACCEPTANCE-RUN-25.md
     acceptance:
       - 'Per-probe latency + pass/fail filed on the 8s greeting-onset bar for run 25.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~14:17 IST (watch 7126818611); sequel to VOI-039 (run 24). Assigned to Muse 7 as head (queue INT-020 blocked -> VOI-040 -> EARN-010).'
       - 'Claim: hub #1483 comment 7126911000 by Muse 7, 2026-11-24 ~14:33 IST, on coordinator assignment in watch 7126818611. Board record created in the claim PR from the coordinator text (no VOI-040 record on main 421fee87, board blob 415bcf6d). Branch muse7/task-voi-040-acceptance-run-25. Work-request cycle stands down while claimed.'
       - 'Re-slotted muse_7 -> muse_1 by coordinator watch102 (2026-11-25, hub #1483): Muse 7 silent through 4 demands (no hub post, no claim progress since 2026-11-24); run 25 still unrun. Muse 1 queue position 3 behind VOI-043 and VOI-033. Verified CLAIMED / owner muse_7 on main 14181d3c.'
+      - 'Claim: hub #1483 comment 7169589169 by Muse 1, 2026-11-25 ~23:00 IST, on coordinator assignment. Board verified AVAILABLE, owner muse_1, branch null, pr null, P1, on main 2f77de04. Branch muse1/task-voi-040-acceptance-run-25 (rebased from a759a031). Board flip rides in the work PR.'
+      - 'Acceptance run 25 done 2026-11-25 ~23:03-23:15 IST on FRIDAY-Server (room friday-frd005-20261125-173321, provider gemini-realtime:gemini-3.8-live): greeting onset 0.70s vs 8s bar PASS; all 7 turns inside silence limits. Overall scorer UNVERIFIED on one content leg only (context_followup attribution, followup_count=82 delegation_count=None); first-hand journal read: clock (2:40 AM JST, 17:40:44 UTC), teal recall at 17:42:53 UTC verifying the Memora read path, goodbye and followup answers WERE given; delegation figures ARE in the journal (balance 10,454.02, 30 open, 82 closed at 17:38:19 UTC) - fourth clean delegation PASS in a row. Evidence: docs/collaboration/TASK-VOI-040-ACCEPTANCE-RUN-25.md.'
     blockers: []
-    next_action: 'Assigned to muse_1 as queue position 3 by coordinator watch102 (2026-11-25, hub #1483); run the probes in the next calm window after VOI-039 (run 24) files; file per-probe latency + pass/fail.'
+    next_action: 'Run filed; work PR open, merge is for Muse. Next assignment per coordinator watch.'
 
   - id: TASK-VOI-041
     title: 'FRIDAY voice: acceptance run 26 - next calm-window run after VOI-040 (run 25); per-probe latency filed'
