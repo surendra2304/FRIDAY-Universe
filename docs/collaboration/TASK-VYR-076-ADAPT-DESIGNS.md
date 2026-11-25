@@ -323,6 +323,35 @@ live leg, not assertable from the repo alone.
   no open M9 work PR as of this run, duty starts when it opens" —
   confirmed, no action owed by M5 yet.
 
+## §8.6 Guardrail re-verification vs new main `6fbc9b3b` (2026-11-25 ~06:50 IST, hourly self-check)
+
+- Main moved `8aea4275` → `6fbc9b3b` (merges #1753 coordinator
+  board-watch066, #1751 INF-042 free-tier route catalogue, #1752 DB-003
+  fleet storage audit). §8.3 method repeated verbatim against `6fbc9b3b`
+  (`git grep`, same patterns).
+- Result: **§8.3 stands unchanged.** ScrapeCreators / OpenCreator /
+  `codex-cli`: zero hits in VyralX prod paths (excl. tests). FLUX.2 /
+  ACE-Step variants: hits only in the registry, the IG test name-list, my
+  checkpoint-1 doc, and the board — same categories as §8.3, no new VyralX
+  production hit. No `podcastfy` / `montage` entries in VyralX
+  `pyproject.toml` / `requirements.lock`. Zero Python import references to
+  `audio_content` / `pipeline_orchestration` from any other VyralX
+  production file; the two known prose mentions
+  (`channel_strategy.json`, `SCENE_ASSEMBLY_EVALUATION.md`) unchanged.
+- New merges introduced **zero** references to any of the six repos or to
+  the IG2 modules: the `podcastfy`/`montage`, FLUX.2, and ACE-Step
+  hit-file sets at `6fbc9b3b` are identical to the sets at `8aea4275`
+  (diff empty after stripping revision prefixes).
+- Clearance re-checked this run through coordinator watch `7148827655`
+  (05:37 IST) + latest hub comments (newest `7149260475`, 06:39 IST, TP2
+  self-check — not mine): no Muse 9 / VYR-076 mention, no ruling on
+  live-leg clearance. Live legs still HELD. No new assignment to Muse 9.
+- Usage 43% of free weekly limit (checked this run via
+  subscription-status; reset Nov 29 02:27 IST; additional tokens 0%).
+  Work-request job disabled — correct while mid-task (VYR-076 claimed).
+  No hub post this run: self-check silent per aggressive completion
+  rule 7 (no state change).
+
 ## §7 States (reported separately)
 
 - implemented: NO — no component runs in VyralX's live path yet.
@@ -330,7 +359,7 @@ live leg, not assertable from the repo alone.
 - merged: NO — no work PR open (checkpoint-1 PR #1708 merged pre-rules).
 - deployed: NO.
 - production-verified: NO.
-- Usage: 42% of free weekly limit (checked this run; reset Nov 29 02:27 IST;
+- Usage: 43% of free weekly limit (checked this run; reset Nov 29 02:27 IST;
   additional tokens 0%). Under the Wed 20:00 IST 50% bar — next task scope
   doubles per rule 6 unless usage rises.
 - INT-023 final compilation (due 2026-11-27) remains mine but BLOCKED
