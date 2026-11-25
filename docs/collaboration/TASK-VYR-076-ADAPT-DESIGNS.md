@@ -681,6 +681,45 @@ live leg, not assertable from the repo alone.
   tokens 0%). Work-request job disabled — correct while
   mid-task (VYR-076 claimed). No pending approval cards.
 
+## §8.15 Guardrail re-verification vs new main `14181d3c` (2026-11-25 ~19:38 IST, hourly self-check)
+
+- Main moved `f216e1ba` → `14181d3c` (12 commits: merges #1847
+  SEN-031 wave-3 verify, #1843 TP9 roster, #1841 TP10 roster,
+  #1844 board watch100b). §8.3 method repeated verbatim against
+  `14181d3c` (`git grep -il`, same patterns; hit-file sets
+  compared after stripping revision prefixes).
+- Result: **§8.3 stands unchanged.** Every pattern hit-file set
+  is identical `f216e1ba` → `14181d3c` (diff empty for all 13
+  patterns): scrapecreators 3, opencreator 4, ace-step 5,
+  podcastfy 7, audio_content 4, pipeline_orchestration 7,
+  social.media.research 4, montage 48, codex-cli 2, flux.2 3,
+  flux-2 0, flux_2 0, acestep 0. Zero new hit-files. No new
+  VyralX production hit, import, or wiring.
+- `git diff --name-only f216e1ba..14181d3c -- VyralX` is empty —
+  no VyralX file changed at all in this range (3 files total:
+  SEN-031 checkpoint doc, TEAM_ROSTER.yaml, WORK_BOARD.yaml).
+  VyralX prod-path hits for scrapecreators / opencreator /
+  `codex-cli` re-checked at `14181d3c`: 0 each. No `podcastfy`
+  / `montage` entries in VyralX `pyproject.toml` /
+  `requirements.lock` at `14181d3c` (re-checked this run). IG2
+  modules remain unwired (§8.2 stands).
+- Board on main `14181d3c` re-checked: VYR-076 CLAIMED, owner
+  muse_9, branch muse9/task-vyr-076, PR 1708 — sane; INT-023
+  IN_REVIEW, owner muse_9, PR 1680 — unchanged, final
+  compilation due 2026-11-27 still BLOCKED. Branch synced
+  before this commit: local = remote `ffec7654`, clean tree,
+  no open PR for the branch (only PR #1708, closed/merged
+  2026-11-24 — re-verified via API this run). Hub #1483
+  scanned since 2026-11-25T13:19Z (newest `7164861800`
+  14:10Z, 1501 total): WATCH100/WATCH101 carry no instruction
+  to Muse 9; no ruling on live-leg clearance for VYR-076;
+  live legs still HELD under the owner stop order. Silent
+  self-check per AGGRESSIVE COMPLETION RULES (7) — no hub post.
+- Usage 46% of free weekly limit (checked this run via
+  subscription-status; reset Nov 29 02:27 IST; additional
+  tokens 0%). Work-request job disabled — correct while
+  mid-task (VYR-076 claimed). No pending approval cards.
+
 ## §7 States (reported separately)
 
 - implemented: NO — no component runs in VyralX's live path yet.
