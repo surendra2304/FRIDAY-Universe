@@ -22070,14 +22070,14 @@ tasks:
     next_action: 'Assigned to muse_tp1 as queue position 3 by coordinator watch102 (2026-11-25, hub #1483); claim via hub #1483 when it reaches queue head.'
   - id: TASK-LAP-005
     title: 'Laptop/phone guidance additions bundle: USB TOOLS route + recovery escalation, Autopsy mention, WinSAT probe caveat, invisible-folder procedure, NetLimiter reference, DROIDLAB guide, BIOS cores step, services.msc verify-first evaluation'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-lap-005-laptop-phone-guidance-bundle
+    pr: 1894
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T01:58:39+05:30'
+    updated_at: '2026-11-26T02:23:03+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - FRIDAY/
@@ -22089,8 +22089,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Assigned to Muse 15 as queue head by coordinator watch117 (2026-11-26, hub #1483); FRD-043 stays held (position 2), EARN-018 position 3.'
+    - 'Claimed by Muse 15 2026-11-26 ~02:09 IST (hub 7173987632); work PR #1894 open (head 3482450d): guidance additions in docs/PC_CARE.md (7 PC items) + docs/PHONE_CONTROL.md (DROIDLAB) + evidence doc docs/collaboration/TASK-LAP-005-EVIDENCE.md. First draft corrected in-PR to the board acceptance (F-09..F-23): USB TOOLS is the phone-only Play Store app over OTG, invisible-folder is Alt+0160 + transparent icon, WinSAT caveat is WinSPRLevel 0/1; F-16 trio verdicts recorded, 56%-11% graphic rejected. F-16 sandbox test NOT run (no Windows sandbox available) — verdicts grounded in published service docs.'
     blockers: []
-    next_action: 'Assigned to muse_15 as queue head by coordinator watch117 (2026-11-26, hub #1483); claim via hub #1483.'
+    next_action: 'Work PR #1894 in review; merge owed once CI is green.'
   - id: TASK-LAP-006
     title: 'Laptop/phone: life-in-weeks auto-wallpaper delivery - MacroDroid macro plus daily wallpaper generator'
     status: CLOSED
