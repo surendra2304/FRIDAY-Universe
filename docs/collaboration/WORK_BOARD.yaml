@@ -22315,14 +22315,14 @@ tasks:
     next_action: 'MERGED (work PR #1811, merge 1371db89, coordinator watch093). Deployed/production verification is follow-up work for a new task.'
   - id: TASK-STR-083
     title: 'Stratex: RiskGovernor deltas - per-engine trade-count cap and breach callback, plus Saturday retrain-cadence evaluation'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_8
     branch: muse8/task-str-083
     pr: 1851
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T19:45:00+05:30'
+    updated_at: '2026-11-25T20:25:24+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Stratex/
@@ -22336,8 +22336,10 @@ tasks:
     - 'Watch089 amend (coordinator): watch088 assignment to Muse 2 WITHDRAWN - STR-083 is Muse 8 queue (claim of record hub 7155163914, 12:17 IST, watch083; branch muse8/task-str-083 @ 6870a874 with scope-doc commit in-branch). Owner back to null; task stays AVAILABLE in the pool.'
     - 'Coordinator watch096 (2026-11-25): owner null to muse_8 - queue position 3 behind EARN-009 and STR-047 (STR-047 already IN_PROGRESS for Muse 8).'
     - 'Work PR #1851 (branch muse8/task-str-083, head f053464e, base main 14181d3c): breach→kill adapter (Stratex/paper_engine/breach_kill_adapter.py) + drill test + Saturday cadence head-to-head test + CI wiring (friday-universe-ci.yml tier-1). Stall repaired 2026-11-25 ~19:30 IST (branch had only the scope doc since 12:19 IST; stall reported hub 7157620282). Board flip AVAILABLE → IN_REVIEW rides in this PR.'
+    - 'Merged 2026-11-25 20:17:53 IST by surendra2304 (merge 5c901138, CI 10/10 green on head 3c5d9066: 8 success, 2 skipped, 0 failed); branch muse8/task-str-083 deleted post-merge.'
+    - 'Leg-2 verdict REJECT (Saturday cadence not adopted — FLIP panel worse on PF and positive fraction; evidence docs/collaboration/TASK-STR-083-EVIDENCE.md). Board flip IN_REVIEW → MERGED rides in verdict PR #1862 (branch muse8/task-str-083-verdict).'
     blockers: []
-    next_action: 'Work PR #1851 open (head f053464e): adapter + drill + cadence tests + CI wiring. Leg 2 verdict numbers from CI log; evidence doc follows in this PR. Queue after STR-083: FRD-055 → EARN-026.'
+    next_action: 'MERGED — leg 1 adapter + drill merged in #1851; leg 2 verdict REJECT filed in #1862, gate unchanged. Queue after STR-083: FRD-055 → EARN-026.'
   - id: TASK-STR-084
     title: 'Stratex: indicator-ranking evaluation - Order Flow, Volume Profile, Liquidity Sweeps, Anchored VWAP vs the RSI/MACD baseline (the open S-20 gap)'
     status: CLOSED
