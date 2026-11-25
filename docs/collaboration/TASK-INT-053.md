@@ -6,7 +6,7 @@
 - **Title (board):** 'INT-020 synthesis/entailment fix on the live chat route (INT-033 follow-up) - root-cause chat-route vs bus + fix + 3 consecutive live INT-020 runs passing'
 - **Claim:** hub #1483, comment 7169108662, 2026-11-25 ~22:40 IST, in the 22:36 hourly self-check run — IG-INF-01-FIX-01 MERGED (work PR #1865, merge 9025af4e), live leg blocked on deployment clearance, so per the blocked-head rule the queue head moves to this task. Filed by coordinator watch102 from my INT-020 block post 7163772133; assigned to muse_13 as queue position 2 behind IG-INF-01-FIX-01.
 - **Branch:** `muse13/task-int-053-synthesis-fix` from main `a759a031` (created via Git Data API, verified read-back).
-- **Work PR:** #1875 (https://github.com/surendra2304/FRIDAY-Universe/pull/1875), head `8d2381ff`, base main `a759a031`. Commit 1 `10c7c673` (evidence doc + IG-INF-01-FIX-01 MERGED note); commit 2 `8d2381ff` (board flip INT-053 → CLAIMED / pr 1875 + this PR number).
+- **Work PR:** #1875 (https://github.com/surendra2304/FRIDAY-Universe/pull/1875), head `2b0110a3`, base main `a759a031`. Commit 1 `10c7c673` (evidence doc + IG-INF-01-FIX-01 MERGED note); commit 2 `8d2381ff` (board flip INT-053 → CLAIMED / pr 1875 + this PR number); commit 3 `5daa8db0` (checkpoint 2 recon, §9); commit 4 `2b0110a3` (checkpoint 3 implementation: reason persistence + entailment retry + tests + board flip → IN_PROGRESS).
 
 ## 2. Board verification (first-hand, main a759a031, 22:36 run)
 
@@ -56,7 +56,7 @@ Constraints: no provider kills, no restarts, no fleet writes without clearance; 
 
 ## 6. Five states
 
-Implemented NO / tested NO / merged NO / deployed NO / production-verified NO — checkpoint 1 (claim + board verification) filed; **recon code-level DONE (checkpoint 2, §9)**; live reproduction PENDING (needs bridge/server access — no bridge tool in this run); live re-probe still blocked on deployment clearance (WATCH109: NOT granted, owner stop order stands).
+Implemented YES (checkpoint 3, §10) / tested LOCAL YES (pytest 24 + 23 pass in a /tmp mirror of the exact filed bytes; CI on head 2b0110a3 running at filing) / merged NO / deployed NO / production-verified NO — live reproduction PENDING (needs bridge/server access — no bridge tool in this run); live re-probe still blocked on deployment clearance (WATCH109: NOT granted, owner stop order stands).
 
 ## 9. Recon — code-level root cause (checkpoint 2, 2026-11-25 ~23:50 IST)
 
@@ -89,6 +89,34 @@ Read first-hand from main (GitHub API, no clone): `IntelX/intelx/api/grounded_li
 - (c) **Possessive-strip in the entity leg** (false-negative-only, same argument as INT-033) — implement once (a) or a reproduction confirms the class.
 - (d) **NOT recommended without evidence:** per-finding degradation instead of whole-draft fail-closed (semantics change; coordinator decision).
 
+## 10. Implementation — checkpoint 3 (2026-11-26 ~01:12 IST, commit `2b0110a3`)
+
+Work PR #1875, head `2b0110a3`, 4 commits, mergeable true. Board flip INT-053 → IN_PROGRESS rides in this commit. CI on the new head running at filing (9 checks: 3 completed — 2 success, 1 skipped — 6 in progress, incl. `test` and `contracts`).
+
+### 10.1 (a) Persist the per-finding reason — `IntelX/intelx/api/grounded_live_research.py` + `IntelX/intelx/api/live_research_task.py`
+
+- `synthesize_grounded`: the entailment loop now collects every failing finding (`{"source_id", "reason"}`) instead of returning on the first failure, and `_degraded` gains an optional `entailment_failures` key. The `error` string stays exactly `synthesis_entailment_unverified` — `IntelX/tests/test_int005_verification_pass.py:295` pins it with an exact match, so changing it would break that test.
+- `collect_live_brief`: when the synthesis dict carries `entailment_failures`, it is copied into `synthesis_failure` (guarded by isinstance + non-empty). `synthesis_error` and `source_failures` ride the envelope into the archive (`run_live_research` copies the whole brief dict into the payload), so the next failure names its failing leg in the stored run. The `reason` string is untouched: contract tests pin it (`tests/test_live_research_task_contract.py` asserts `synthesis_error['reason']`), and the spoken summary quotes it.
+- (c) possessive-strip HELD: the doc's own gating (§9.4) says implement once (a) or a reproduction confirms the class. (a) now exists; (c) waits on the first diagnosed failure.
+
+### 10.2 (b) Retry synthesis once on entailment failure — `grounded_live_research.py`
+
+- The draft-verify block runs up to 2 attempts. On entailment failure in attempt 1 a fresh draft is drawn (same kwargs, same gates); attempt 2 is final. Quote failures, insufficient evidence, mock and shape refusals return immediately — no retry. The existing `incomplete_completion` retry still applies per attempt (max gateway calls per synthesis: 4 in the pathological case, same per-attempt bound as before; typical qwen calls are 1.5–4 s).
+- Whole-draft fail-closed is preserved: any failing finding degrades the draft, even when other findings pass. No gate is relaxed — the fresh draft passes the quote gate and the entailment screen unchanged.
+
+### 10.3 Tests (local validation, exact filed bytes, /tmp mirror)
+
+- `tests/test_grounded_research_synthesis.py` +5 (19 → 24 pass): reason recorded with the exact `unsupported_entity:Zanzibar` string; retry succeeds on a fresh passing draft; retry bounded at 2 calls; quote failure not retried (1 call); all failing findings listed.
+- `tests/test_live_research_task_contract.py` +1 (22 → 23 pass): a DEGRADED synthesis dict with `entailment_failures` reaches the stored run — `synthesis_error` and `source_failures` both carry the list. The pre-existing 22 tests pass unchanged (they run against the patched file with stubbed `owner_briefing`/`source_diversity` in /tmp; CI runs the real ones).
+- No workflow change needed: both test files are already collected by `monorepo-validation.yml`'s PR-triggered `pytest -q tests` directory invocation, so the REL-068 guard credits them (verified by reading the audit's `covers()` — directory refs cover everything under `tests/`). The separate-step idea was dropped after that read.
+- Validation gap (honest): no scratch clone was used (a clone tripped an execution-risk check in the 23:36 run); the /tmp mirror was built from API-fetched bytes and diffed against the branch copies — the only differences are the intended patches. Tested state stays LOCAL until CI green on head `2b0110a3`.
+
+### 10.4 What is still owed
+
+- Live reproduction with reason logging (bridge/server access — still none in this run) to confirm whether the failing class is possessive entities (hypothesis 1) or another leg.
+- (c) possessive-strip, once (a) or a reproduction confirms the class.
+- Live re-probe + 3 consecutive INT-020 runs after deployment clearance (owner stop order stands, WATCH109).
+
 ## 7. Queue
 
 INT-053 (head) → VOI-030 (pos 2, blocked — calm window). INT-020 CLAIMED, held for this fix (0/3). IG-INF-01-FIX-01 MERGED (work PR #1865, merge 9025af4e); its live re-probe leg is blocked on Muse's deployment clearance (requested on #1483, comment 7169108662).
@@ -110,7 +138,17 @@ INT-053 (head) → VOI-030 (pos 2, blocked — calm window). INT-020 CLAIMED, he
 - **Hub read:** WATCH109 (7169671316) + WATCH110 (7170134760) read in full. **M13 items:** WATCH109 acknowledges the INT-053 claim (blocked-head skip from IG-INF-01-FIX-01) and rules **deploy clearance for IG-INF-01-FIX-01 is NOT granted — the owner stop order still stands**; the live re-probe leg stays owed until the owner lifts it. WATCH110 carries no M13 items. Main is now `3efe8b04` (board PR #1876 + VOI-031 PR #1872 merged).
 - **Recon (§9, code-level, done):** no code divergence between the chat route and the bus route — one funnel (`/v1/task/execute` action `research_live` → `collect_live_brief` → `synthesize_grounded`); the bus re-probe used the same dispatch with the same topic. Label mismatch resolved (envelope vs inner error). Failing leg unnameable from the archives — `synthesize_grounded` discards the `statement_support` reason. New hypothesis: possessive entities (`Google's`) fail the all-or-nothing entity leg. Fix candidates (a)–(c) filed in §9.4; (d) not recommended without evidence.
 - **Pending:** live reproduction (re-fetch the 3 failing runs' sources, rebuild documents, re-synthesize with reason logging) — needs bridge/server access, unavailable in this run; implementation of (a)–(c) next; live re-probe still blocked on deployment clearance.
-- **Filing:** this doc updated as commit 3 on branch `muse13/task-int-053-synthesis-fix`, PR #1875 (board unchanged — CLAIMED flip already rides in the PR). Doc note: §1 "head 8d2381ff" is the checkpoint-1 head; the checkpoint-2 head is recorded by PR read-back (see daily log 2026-11-25).
+- **Filing:** this doc updated as commit 3 on branch `muse13/task-int-053-synthesis-fix`, PR #1875 (board unchanged — CLAIMED flip already rides in the PR). §1 head pointer corrected to `2b0110a3` with checkpoint 3.
+
+### Checkpoint 3 — implementation (2026-11-26 ~01:12 IST, hourly self-check run)
+
+- **State check first:** work PR #1875 **open, CI 9/9 green** on checkpoint-2 head `5daa8db0` (7 success, 2 skipped — verified first-hand via check-runs). No stall — progress real; the checkpoint-2 CI green is the state change this run. Board on current main `14a72d15` verified first-hand (blob `c45ee5fa`, 991 `- id:` records by regex): INT-053 **AVAILABLE / owner muse_13** / branch null / pr null — no competing claim; IG-INF-01-FIX-01 MERGED / pr 1865; VOI-030 CLAIMED; INT-020 AVAILABLE / muse_13 (its CLAIMED flip rides in open PR #1834). **Note:** an early board grep missed INT-020/VOI-030 — the record regex broke on a blank line inside the record; a line-index read confirmed both records present and sane. Main moved `984398d0` → `14a72d15` (PR #1880, Muse 2 INT-051, merged); board PR #1882 merged (`9a1eebb7`).
+- **Hub read:** WATCH111 (7170527287) + WATCH112 (7170794107) + WATCH113 (7171357668) read in full. **No M13 items.** WATCH113: M13 usage 39% stale (this run re-verifies, see below); deploy clearance for IG-INF-01-FIX-01 still NOT granted; FRD-056 re-slotted to the pool (TP10 stall); #1880/#1881 held for review/mergeable; pool 19 AVAILABLE (floor 10, healthy).
+- **Usage:** 41% of free weekly limit (verified this run via subscription-status), reset Nov 29 6:09 PM IST. No subscription. Not nearly gone — no wrap-up.
+- **Schedules:** hourly self-check + weekly reset armed; work-request correctly absent (claimed — fleet-wide guard forbids re-creation while a task is claimed).
+- **Implementation (§10, commit 4 `2b0110a3`):** (a) per-finding `statement_support` reasons persisted + carried into the stored run; (b) one retry on entailment failure, same gates; (c) possessive-strip HELD pending confirmation. 5 files, board flip INT-053 → IN_PROGRESS, mergeable true. Local pytest 24 + 23 pass on the exact filed bytes; CI on head `2b0110a3` running at filing (3 completed, 6 in progress). **Filing:** this doc updated as commit 5 (head pointer §1 corrected to `2b0110a3`).
+- **Pending:** live reproduction (bridge/server access, still none); (c) pending confirmation; live re-probe + 3 INT-020 runs gated on deployment clearance.
+- Usage: 41% (verified this run). Queue: INT-053 (head, in progress) → VOI-030 (blocked); INT-020 CLAIMED, held for this fix.
 - Usage: 40% of free weekly limit (verified this run via subscription-status), reset Nov 29 6:09 PM IST. No subscription. Work-request task correctly absent (claimed); hourly self-check + weekly reset armed.
 
 — Muse 13
