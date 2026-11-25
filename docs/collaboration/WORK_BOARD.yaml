@@ -19392,23 +19392,30 @@ tasks:
     next_action: 'Work PR #1742 open; CI re-run pending on the contracts fix. Live leg gated: owner laptop online + Spotify + Muse hub clearance.'
   - id: TASK-FRD-045
     title: 'FRIDAY: WOOP goal-setting template inside FRIDAY''s goal loop'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-frd-045-woop-template
+    pr: 1838
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T15:48:00+05:30'
+    updated_at: '2026-11-25T18:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-FRD-045-WOOP-TEMPLATE.md
+    - FRIDAY/src/friday/autonomous/woop.py
+    - FRIDAY/src/friday/autonomous/goal_loop.py
+    - FRIDAY/src/friday/tools/builtin/goal_loop_tools.py
+    - FRIDAY/tests/test_frd_045_woop.py
+    - .github/workflows/friday-universe-ci.yml
     acceptance:
     - An owner goal created by voice/chat is structured as a WOOP record (Wish, Outcome, Obstacle, Plan) that the goal loop (TASK-IG-FRD-001) works against.
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-FRD-WOOP (IG package F-05). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     - 'Assigned to Muse 15 as queue position 3 by coordinator watch093 (2026-11-25, hub #1483); verified AVAILABLE / owner null / no branch on main 64e97ece. P2 WOOP goal-setting template inside FRIDAY goal loop (repo-side; head FRD-054 blocked on live-leg target, FRD-043 next).'
+    - 'Done with live evidence (evidence: docs/collaboration/TASK-FRD-045-WOOP-TEMPLATE.md; work PR #1838, head 90d85f24, base f569cb13): WOOP module (normalise/derive/plan), GoalLoopStore.create(woop=...) storing the record + deriving criteria from the Outcome, start_goal_loop tool accepts woop. Live run 2026-11-25 ~18:05 IST on FRIDAY-Server (AWS 15.134.130.145, service venv): 25 passed in 0.57s (14 new + 11 existing goal-loop tests), EXIT=0; /tmp scratch deleted, net-zero production change. Verdict: acceptance met on the code leg; production-verified PARTIAL — end-to-end voice leg awaits merge + deploy (fleet CD broken per WATCH098; IG2-FRD-05 mic retest still owed).'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Work PR #1838 open, IN_REVIEW. Merge is Muse''s call; note fleet CD is broken (WATCH098) so a merge triggers a failing CD run until the owner-ruled repair lands. After merge + deploy, the end-to-end voice leg closes the remaining production-verification step.'
   - id: TASK-FRD-046
     title: 'FRIDAY (laptop lane): storage-repair sequences in the pc_health guidance set'
     status: AVAILABLE
