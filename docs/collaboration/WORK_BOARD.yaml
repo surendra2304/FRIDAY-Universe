@@ -18454,14 +18454,14 @@ tasks:
 
   - id: TASK-VOI-036
     title: 'FRIDAY voice: acceptance run 21 - next calm-window run after VOI-035 (run 20); per-probe latency filed'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_1
     branch: muse1/task-voi-036-acceptance-run-21
     pr: 1802
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T13:52:06+05:30'
+    updated_at: '2026-11-25T15:20:30+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-VOI-036-ACCEPTANCE-RUN-21.md
@@ -18474,8 +18474,9 @@ tasks:
       - 'Released 2026-11-24 22:40 IST per coordinator ruling 7137935600 (21:37 watch): run leg held under the owner stop order with no sequencing ruling that lets it execute; blocked-head rule applies. Board flip rides in TASK-MEM-029 work PR #1765.'
       - 'Claim: hub #1483 comment 7156377968 by Muse 1, 2026-11-25 ~13:24 IST, on coordinator watch086 assignment (7156322977). Board verified AVAILABLE, owner null, branch null, pr null, P1, on main 2c6f913. Branch muse1/task-voi-036-acceptance-run-21. Board flip rides in the work PR.'
       - 'Acceptance run 21 done 2026-11-25 ~13:34-13:46 IST on FRIDAY-Server (room friday-frd005-20261125-080422, provider gemini-realtime:gemini-3.8-live): greeting onset 0.68s vs 8s bar PASS; all 7 turns inside silence limits. Overall scorer FAIL on content (order-based fallback attribution); first-hand journal read: clock/recall/goodbye/followup answers WERE given (teal recall at 08:13:55 UTC verifies the Memora read path, second run in a row); delegation figures ARE in the journal this run (balance 10,444.12, 30 open, 82 closed at 08:08:59 UTC) — the run-20 genuine gap is closed. Evidence: docs/collaboration/TASK-VOI-036-ACCEPTANCE-RUN-21.md.'
+      - 'MERGED 2026-11-25 15:14:23 IST: work PR #1802 merged by the owner (merge c554c54f, head b9f7bf92, CI 9/9 green). Flip filed by Muse 1 in the EARN-010 board-correction PR.'
     blockers: []
-    next_action: 'Run filed; work PR open, merge is for Muse. Next assignment per coordinator watch.'
+    next_action: 'Closed - run 21 PASS (greeting onset 0.68s vs 8s bar), evidence filed. Next: EARN-010 per watch082.'
 
   - id: TASK-VYR-054
     title: 'VyralX: supervised cycle 5 candidate pool - most-popular discovery + machine QA gates'
@@ -18720,22 +18721,26 @@ tasks:
 
   - id: TASK-EARN-010
     title: 'EARN: gig copy pack 4 - lead-magnet eBook service copy for the Fiverr Level-1 batch'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: MERGED
+    owner: muse_20
+    branch: muse20/task-earn-010
+    pr: 1677
     contributors: []
     priority: P3
     created_at: '2026-11-24'
-    updated_at: '2026-11-24T06:56:23+05:30'
+    updated_at: '2026-11-25T15:20:30+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - earning/TASK-EARN-010-LEAD-MAGNET-EBOOK-COPY-PACK.md
+      - docs/collaboration/TASK-EARN-010-GIG-COPY-PACK-4.md
     acceptance:
       - 'A complete lead-magnet eBook service copy pack (3 tiers, FAQ, requirements) committed under earning/, ready for the owner to approve.'
     evidence:
       - 'Drafted by the coordinator 2026-11-24 ~06:55 IST; Level-1 queue brief (fiverr-gig-pack-2.md). Pool floor refill.'
+      - 'Claim: hub #1483 comment 7135670375 by Muse 20, 2026-11-24 ~20:43 IST, under the blocked-head rule. Work PR #1677 merged 2026-11-24 21:12:07 IST (merge b2374d2a, head c7ed4294, merged by surendra2304): earning/TASK-EARN-010-LEAD-MAGNET-EBOOK-COPY-PACK.md, +97/-0, 1 file.'
+      - 'Claim: hub #1483 comment 7158767088 by Muse 1, 2026-11-25 ~15:15 IST, on coordinator watch082 queue (VOI-035 -> VOI-036 -> EARN-010). First-hand check found the pack already merged via PR #1677 (board record stale AVAILABLE - #1677 carried no board flip); no rewrite - verification + board correction filed instead. Evidence: docs/collaboration/TASK-EARN-010-GIG-COPY-PACK-4.md.'
     blockers: []
-    next_action: 'Draft the eBook service copy pack; keep it free-only, no paid tools.'
+    next_action: 'Closed - pack on main, owner/coordinator to confirm [VERIFY] prices, delivery times and category before publishing.'
 
   - id: TASK-STR-056
     title: 'Stratex: verify resting stops are actually armed for every open position (BNB sleeve position first); file per-position evidence'
