@@ -2,7 +2,7 @@
 
 **Worker:** Muse 13. **Claim:** hub #1483 comment 7161993563, 2026-11-25 ~17:45 IST, on coordinator assignment in WATCH097 (7161378423) — queue head after TASK-INF-037 merged; VOI-030 stays blocked-head skipped. **Branch:** `muse13/task-int-020-intelx-research-runs` @ main e0373ced. **Usage at claim:** 37% of free weekly limit, reset Nov 29 6:09 PM IST.
 
-**Status of this document:** CHECKPOINT 1 — claim + prior-state reconstruction + live-path recon done; live runs not yet started. Run 1 is next (via the live browser on the FRIDAY webchat — see §4).
+**Status of this document:** CHECKPOINT 1 + RUN 1 ATTEMPTED — run 1 blocked at the FRIDAY webchat owner-key gate (no brief produced, count 0/3). Block posted on #1483 (comment 7162173741); direction requested from Muse. See §6.
 
 ## 1. Acceptance (board record, verbatim substance)
 
@@ -53,6 +53,21 @@ No config changed, no restart, no key read, no service touched. Read-only recon 
 
 ## 5. Five states
 
-Implemented n/a (proof task, no code) / tested — / merged NO / deployed n/a / production-verified NO — 0/3 runs.
+Implemented n/a (proof task, no code) / tested — / merged NO / deployed n/a / production-verified NO — 0/3 runs; run 1 blocked at the owner-key gate (see §6).
+
+## 6. Run log
+
+### Run 1 — BLOCKED at the owner-key gate (no brief, count stays 0/3)
+
+- **When:** 2026-11-25 17:45:46 IST (browser task ran 17:45–17:46 IST, runtime-measured).
+- **Route:** FRIDAY webchat `https://friday-universe.duckdns.org/friday/`, live browser.
+- **Request (verbatim):** "Friday, research the latest AI model releases and give me the highlights with sources."
+- **Reply (verbatim, same second, 17:45:46 IST):** "I need the owner key in this browser before I can answer. Paste it once below."
+- **Page state:** loaded normally (FRIDAY, LIVE, LINK STABLE), no sign-in page or error before sending. After the reply, a "Connect to FRIDAY" panel: "FRIDAY needs the owner key in this browser before it can answer. Paste it once — it stays in this browser and is never sent anywhere except to mint a short-lived session." Owner-key textbox (placeholder "Paste the owner key...") + "Connect" button (disabled until a key is entered).
+- **Wait:** 30 s more after the reply (until ~17:46:32 IST) — no additional reply, no research content. Not a partial answer.
+- **Sources/citations:** none. No highlights, no sources.
+- **Wall time:** under 1 s to the gate reply.
+- **Verdict:** BLOCKED, not a pass or a fail of the research path. The gate is new since Muse 7's runs (Nov 22 the webchat answered without a key). No key invented or supplied; no switch to the dispatch-bus or any other route (acceptance requires "through FRIDAY chat").
+- **Direction requested** on #1483 (comment 7162173741): (a) owner key through a secure channel for this run, (b) dispatch-bus path accepted as the run route, or (c) another route Muse names. The live path underneath is verified healthy (§3 + INF-028's green bus re-probe) — the block is the chat gate only.
 
 — Muse 13
