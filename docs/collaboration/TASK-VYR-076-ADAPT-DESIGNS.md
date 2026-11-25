@@ -592,6 +592,54 @@ live leg, not assertable from the repo alone.
   self-check silent per aggressive completion rule 7 (no state
   change).
 
+## §8.13 Guardrail re-verification vs new main `e0373ced` (2026-11-25 ~17:42 IST, hourly self-check)
+
+- Main moved `076b3942` → `e0373ced` (merges #1832 board
+  watch097, #1830 INF-037, #1821 INF-038, #1831 board watch096,
+  #1828 FRD-054, #1829 REL-096 fix 10, #1825 VOI-042, #1827
+  board watch095). §8.3 method repeated verbatim against
+  `e0373ced` (`git grep -il`, same patterns; hit-file sets
+  compared after stripping revision prefixes).
+- Result: **§8.3 stands unchanged.** Every pattern hit-file set
+  is identical `076b3942` → `e0373ced` (diff empty for all 13
+  patterns): scrapecreators 3, opencreator 4, ace-step 5,
+  podcastfy 7, audio_content 4, pipeline_orchestration 7,
+  social.media.research 4, montage 48, codex-cli 2, flux.2 3,
+  flux-2 0, flux_2 0, acestep 0. Zero new hit-files. No new
+  VyralX production hit, import, or wiring.
+- `git diff --name-only 076b3942..e0373ced -- VyralX` is empty —
+  no VyralX file changed at all in this range (21 files total:
+  FRIDAY voice, Inference, workflows, board, four task docs).
+  VyralX prod-path hits for scrapecreators / opencreator /
+  `codex-cli` re-checked at `e0373ced`: 0 each. No `podcastfy`
+  / `montage` entries in VyralX `pyproject.toml` /
+  `requirements.lock` at `e0373ced` (re-checked this run). IG2
+  references in VyralX prod paths remain only the known
+  pre-existing prose mentions (`channel_strategy.json`,
+  `SCENE_ASSEMBLY_EVALUATION.md`) plus the `audio_content.py`
+  self kind string; Python imports remain only in test files
+  (`test_ig2_vyr01_audio_content.py`,
+  `test_ig2_vyr02_pipeline_orchestration.py`,
+  `test_ig3_vyr10_scene_assembly_eval.py`).
+- Board on main `e0373ced` re-checked: VYR-076 CLAIMED, owner
+  muse_9, branch muse9/task-vyr-076, PR 1708 — sane; INT-023
+  IN_REVIEW, owner muse_9, PR 1680 — unchanged, final
+  compilation due 2026-11-27 still BLOCKED. Branch synced
+  before this commit: local = remote `a675467a`, clean tree,
+  no open PR for the branch (checkpoint-1 PR #1708 closed/
+  merged 2026-11-24, merge `50802799` — re-verified via API
+  this run). Hub #1483 scanned since 2026-11-25T10:09Z (54
+  comments, newest `7161993563` 12:09Z): coordinator directive
+  `7160646976` (2026-11-25 ~16:38 IST) names Muse 9 among
+  eight chats overdue for a report — report posted this cycle
+  as comment `7162074378` (task, state, usage 45%). No ruling
+  on live-leg clearance for VYR-076 found; live legs still
+  HELD under the owner stop order.
+- Usage 45% of free weekly limit (checked this run via
+  subscription-status; reset Nov 29 02:27 IST; additional
+  tokens 0%). Work-request job disabled — correct while
+  mid-task (VYR-076 claimed). No pending approval cards.
+
 ## §7 States (reported separately)
 
 - implemented: NO — no component runs in VyralX's live path yet.
