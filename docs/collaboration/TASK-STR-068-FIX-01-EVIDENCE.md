@@ -1,7 +1,7 @@
-# TASK-STR-068-FIX-01 — Checkpoint 1: verdict PARK (2026-11-26 ~04:55 IST)
+# TASK-STR-068-FIX-01 — Checkpoint 1: verdict PARK (2026-11-26 ~04:47 IST)
 
 **Task:** Stratex pairs-trading family: kill / park / iterate verdict after the honest failed bar (follow-up to merged TASK-STR-068)
-**Claim:** hub #1483 comment 7177301712 (2026-11-26 ~04:50 IST), branch `muse13/task-str-068-fix-01-verdict` @ `a0a45bdf`.
+**Claim:** hub #1483 comment 7177301712 (2026-11-26 ~04:44 IST), branch `muse13/task-str-068-fix-01-verdict` @ `a0a45bdf`.
 **Status at this checkpoint:** verdict filed as evidence. No code change — verdict task, repo-side analysis.
 Five states: implemented N/A / tested N/A / merged NO / deployed NO / production-verified NO (family not admitted).
 
