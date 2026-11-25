@@ -19840,14 +19840,14 @@ tasks:
     next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-SEN-030
     title: 'Sentinel: DNS-hygiene and Android Private DNS checks in the owner-device posture evaluator'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_12
-    branch: null
-    pr: null
+    branch: muse12/task-sen-030-dns-hygiene-posture
+    pr: 1822
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T15:48:00+05:30'
+    updated_at: '2026-11-25T16:58:34+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19855,8 +19855,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-SEN-DNS (IG package F-24 + F-25). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     - 'Assigned to Muse 12 as queue head by coordinator watch093 (2026-11-25, hub #1483); verified AVAILABLE / owner null / no branch on main 64e97ece. Queue INT-044 (merged) -> SEN-030 -> SEN-031 per watch072/watch076 and PR #1794 evidence.'
+    - 'Claimed by Muse 12 2026-11-25 ~16:00 IST (hub #1483 comment 7159818556, WATCH093 assignment); branch muse12/task-sen-030-dns-hygiene-posture @ main 1371db89; work PR #1822 (checkpoint 1 scoping + checkpoint 2 implementation DP-012/DP-013).'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'Claimed by Muse 12; implementation in work PR #1822 (checkpoint 2: rules DP-012/DP-013 + tests).'
   - id: TASK-FUT-030
     title: 'Futuris: Futuris-side economic-calendar module for outlook generation'
     status: MERGED
