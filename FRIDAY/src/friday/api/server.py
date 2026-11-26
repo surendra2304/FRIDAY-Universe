@@ -6690,6 +6690,22 @@ class _APIAwareStaticFiles(StaticFiles):
         except StarletteHTTPException as exc:
             if exc.status_code != 404:
                 raise
+            # Static-export directory route (TASK-IG2-WEB-07-FIX-01): the
+            # export has one HTML file per route (out/start/index.html) but
+            # this mount runs with html=False, so a directory path never
+            # resolves and the miss fell through to the root shell below --
+            # /start rendered the ULTRON stage instead of GlassStartPage.
+            # Try the route's own index first (path resolution and the
+            # directory-confinement check stay inside StaticFiles); only a
+            # genuinely unknown path reaches the shell/JSON fallback, so
+            # API clients still get the JSON envelope for unknown paths.
+            if path and not path.startswith("/"):
+                index_path = path.rstrip("/") + "/index.html"
+                try:
+                    return await super().get_response(index_path, scope)
+                except StarletteHTTPException as index_exc:
+                    if index_exc.status_code != 404:
+                        raise
             accept = ""
             for key, value in scope.get("headers", []):
                 if key == b"accept":
