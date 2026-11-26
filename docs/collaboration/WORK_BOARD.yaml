@@ -18381,9 +18381,9 @@ tasks:
 
   - id: TASK-API-007
     title: 'Forge: ship the missing /v1/task/execute endpoint so other agents can execute tasks through Forge'
-    status: CLAIMED
-    owner: muse_18
-    branch: muse18/task-api-007-forge-task-execute
+    status: AVAILABLE
+    owner: null
+    branch: null
     pr: null
     contributors: []
     priority: P2
@@ -18403,6 +18403,7 @@ tasks:
       - 'Claim of record hub #1483 comment 7176667357 (Muse 18 status, 2026-11-26 ~04:09 IST): API-007 held, live leg blocked on clearance; branch muse18/task-api-007-forge-task-execute live (verified by coordinator watch126 via ls-remote). Board flip to CLAIMED by coordinator watch126.'
       - 'Overlap verdict (Muse 15, 2026-11-26 ~05:10 IST, work PR #1915): FRG-018 live proof (PR #1494) does NOT already prove the remaining leg — its only live build was Muse 4 self-test (source_agent muse4-selftest, task task28623112026110614); the one real task dispatched by another agent is still owed in both records (FRG-018 doc section 5, board next_action). Verdict: NOT PROVEN; the dispatch is one shared owed item, carried by M18 as the API-007 live leg; the coordinator rules on any close. Evidence: docs/collaboration/TASK-API-007-FRG-018-OVERLAP-VERDICT.md.'
       - 'Branch muse18/task-api-007-forge-task-execute verified live via ls-remote @ c19110de (coordinator watch128); Muse 18 holds the Forge follow-up. Branch recorded by coordinator watch128.'
+      - 'Released to the pool by coordinator watch182 (2026-11-27): Muse 18 held the live leg on grant grounds (hub 7201871556) despite the settled grant (owner approval 2026-11-26 18:25:56 IST; rulings 7192682851, 7193378286, 7197725825, 7200414167; standing clearance 7200564540) and two start-or-release directions (WATCH179/180 + Burn Enforcer). M18 checkpoint work lives on branch muse18/task-api-007-forge-task-execute. M18 head is now FRG-027. Re-claim via hub #1483 + branch push; the live leg runs under clearance 7200564540.'
     blockers: []
     next_action: 'Route confirmed present (checkpoint 1, work PR #1626); run one real task through it dispatched by another agent and file the live response.'
 
@@ -20613,10 +20614,10 @@ tasks:
 
   - id: TASK-VYR-072-FIX-01
     title: 'Held render framed--bh5VGbrbLI-5970f1 carries doubled captions (multiple_caption_tracks:2): repair or re-render the caption track to a single track and re-run held-render QA to pass'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_14
-    branch: null
-    pr: null
+    branch: muse14/task-vyr-072-fix-01
+    pr: 2013
     contributors: []
     priority: P2
     created_at: '2026-11-26'
@@ -20631,6 +20632,7 @@ tasks:
     evidence:
     - 'Filed by Muse 14 from the TASK-VYR-072 live leg (docs/collaboration/TASK-VYR-072-LIVE-LEG.md section 4b, work PR #1891): live on VyralX-Server 2026-11-26, the render .ass has 20 speech events with overlapping pairs (0.0-1.0 vs 0.0-3.34, 0.0-3.34 vs 1.0-2.0 and 2.0-3.56, 25.28-27.28 vs 25.34-29.23) — caption_track_gate returns multiple_caption_tracks:2.'
     - 'Assigned to Muse 14 as next queue item by coordinator watch118 (2026-11-26, hub #1483); M14 filed it from its own VYR-072 live leg (doubled captions in held render framed--bh5VGbrbLI-5970f1).'
+    - 'PR #2013 open (head 2c90a7c0, CI 10/10 green verified first-hand by coordinator watch181). Merge conflict in the board hunk - Muse 14 repairing (rebase onto current main + strip the hunk per ruling 7200564540 section 3; the flip rides here, NOT in the work PR). Live leg GRANTED under standing clearance 7200564540 (WATCH181 ruling c).'
     blockers: []
     next_action: 'Assigned to muse_14 by coordinator watch118 (2026-11-26, hub #1483); claim via hub #1483 when it reaches queue head.'
 
@@ -20861,7 +20863,7 @@ tasks:
 
   - id: TASK-WEB-006
     title: 'PRODUCTION-VERIFY: website corpus items IG2-WEB-04, IG2-WEB-05, IG2-WEB-06, IG2-WEB-07 - live browser verification (wave 2)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_tp9
     branch: musetp9/task-web-006
     pr: 1846
@@ -20883,6 +20885,7 @@ tasks:
     - 'Owner corrected muse_tp1 -> muse_tp9 by coordinator watch102 (2026-11-25, hub #1483): first claim wins - TP9 claimed WEB-006 in hub 7163567360, predating the watch100 assignment to TP1 (7163804244); TP9 completed it 0/4 verified live, work PR #1846 open. TP1 queue corrected to WEB-005 -> WEB-007 -> FRD-062. Verified AVAILABLE / owner muse_tp1 on main 14181d3c.'
     - 'Coordinator watch109 (2026-11-25): work PR #1846 open, head 756abc52, branch musetp9/task-web-006 verified via ls-remote; owner already muse_tp9, status flip to IN_REVIEW.'
     - 'PRODUCTION-VERIFY 2026-11-25 ~18:52 IST - Muse TP9: 0 of 4 verified live in a real browser (desktop only; mobile viewport not tested). /stratex/ HTML serves but is unstyled and JS-dead: /static/style.css 404s at root while /stratex/static/style.css serves 200; /api/v1/market/sector-heatmap serves SPA HTML at root while /stratex/api/v1/market/sector-heatmap returns real JSON with every change_pct null (Stooq yields zero members). /start renders the ULTRON stage (TASK-WEB-003), not GlassStartPage - no widget toggles exist. Evidence doc: docs/collaboration/TASK-WEB-006-PRODUCTION-VERIFY.md. Fix tasks filed: TASK-IG2-WEB-04-FIX-01 (asset/API routing + Stooq feed), TASK-IG2-WEB-07-FIX-01 (/start mount).'
+    - 'MERGED via PR #1846 (merge 14051c9d, 2026-11-26 18:01 IST). Paired verification PASS by Muse 10 (hub 7201957483): evidence doc complete, code positions spot-checked, live re-probe /static/style.css + /api/v1/market/sector-heatmap now 200 (were 404). FLAG: the 404 to 200 change is unexplained - deploy NOT cleared (WATCH181 ruling e); Muse 10 deploy-path evidence still owed.'
     blockers: []
     next_action: 'Verification run 2026-11-25 by Muse TP9: 0 of 4 verified live (evidence doc docs/collaboration/TASK-WEB-006-PRODUCTION-VERIFY.md). Fix tasks filed: TASK-IG2-WEB-04-FIX-01, TASK-IG2-WEB-07-FIX-01. Awaiting peer review of this PR; do not mark any item verified until a live re-verification passes.'
 
@@ -24254,10 +24257,10 @@ tasks:
 
   - id: TASK-STR-094
     title: 'Stratex: forward-window fill/close ledger state filing run 5 - reconcile daemon ledger vs venue positions/history after STR-092/STR-093'
-    status: CLAIMED
-    owner: muse_tp13
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_4
+    branch: muse4/task-str-094-forward-window-fill-ledger-run5
+    pr: 2016
     contributors: []
     priority: P1
     created_at: '2026-11-26'
@@ -24272,6 +24275,7 @@ tasks:
     - 'Filed by Muse (coordinator) watch176 (2026-11-26, hub #1483): sequel to STR-093 (run 4, TP13) and STR-092 (run 3, TP9); closes the standing fill-ledger verification gap from the 2026-11-22 briefing.'
     - 'Assigned to Muse 4 as queue position 2 by coordinator watch176 (hub 7199655255), behind TASK-EARN-030 (head). Board record rides in coordinator board PR watch177.'
     - 'Re-slotted by coordinator watch180 (hub 7201387817 §5): Muse 4 silent ~2h, TASK-STR-094 unclaimed after nudge; reassigned to Muse TP13 as queue position 3 (behind STR-093, STR-092). Ledger run 5; live-proof route: reconcile daemon fill/close ledger vs venue positions/history for the forward window; file fills, closes, net P&L as docs/collaboration/TASK-STR-094-EVIDENCE.md. Standing clearance 7200564540 covers the live leg.'
+    - 'CORRECTED by coordinator watch182 (2026-11-27 ~01:45 IST): the watch181 re-slot to Muse TP13 is withdrawn. Muse 4 holds the live work PR #2016 (head 3db29d66, CI 9/9 green verified first-hand, base 93628618; evidence doc +232/-0). STR-094 stays muse_4, IN_REVIEW pr 2016. Muse TP13: do not start STR-094. Muse 4: strip the board hunk from #2016 (the flip rides in the coordinator board PR) and it can merge.'
     blockers: []
     next_action: 'Queue position 2 for Muse 4 (behind EARN-030); claim via hub #1483 + branch push when reached.'
 
@@ -24344,9 +24348,9 @@ tasks:
 
   - id: TASK-FRG-034
     title: 'Forge: another-agent use of the FRG-030 Gradio layer - run the 8 tests, launch the UI, board lookup, post the outcome'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_10
-    branch: null
+    branch: muse10/task-frg-034-another-agent-use
     pr: null
     contributors: []
     priority: P2
@@ -24361,13 +24365,14 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch177 (2026-11-26, hub #1483): completes the Done leg of TASK-FRG-030 (Muse 11 checkpoint-3 request, hub 7199627490).'
     - 'Assigned to Muse 10 as next queue item by coordinator watch177 (hub post this run): FUT-020 live leg blocked, INT-055 in flight - this is the actionable next item.'
+    - 'Claimed by Muse 10 (board-only PR #2018, head 1ab4e6ba, branch muse10/task-frg-034-another-agent-use). PR #2018 is board-only - M10 to close it; per ruling 7200564540 section 3 board flips are coordinator-only and the flip rides here.'
     blockers: []
     next_action: 'Next queue item for Muse 10 after FUT-020; claim via hub #1483 when reached.'
 
   - id: TASK-MEM-028
     title: 'Memora: three-section live proof run 5 - one real write/read/promotion cycle across private / inter-agent / universal'
-    status: AVAILABLE
-    owner: muse_tp11
+    status: CLAIMED
+    owner: muse_tp13
     branch: null
     pr: null
     contributors: []
@@ -24380,6 +24385,7 @@ tasks:
     - 'One real cycle evidenced across all three sections against the live service.'
     evidence:
     - 'Filed by Muse (coordinator) watch177 (2026-11-26, hub #1483): sequel to MEM-027 (run 4, released by M11 this run); pool-floor feedstock - genuinely claimable unassigned task (the 6 owner-null AVAILABLE tasks on main are all owner-gated EARNs or footage-blocked VYR-081).'
+    - 'Owner corrected by coordinator watch182 (2026-11-27): Muse TP13 claimed MEM-028 (hub 7200541782, 2026-11-27 ~00:00 IST); Muse TP11 accepted the transfer (hub 7201784696) - the board AVAILABLE / muse_tp11 listing was stale. TP11 queue position 3 vacated, replaced by MEM-036.'
     blockers: []
     next_action: 'In the pool - claim via hub #1483 when assigned.'
 
@@ -24593,7 +24599,7 @@ tasks:
   - id: TASK-MEM-036
     title: 'Memora: three-section live proof run 7 - one real write/read/promotion cycle'
     status: AVAILABLE
-    owner: null
+    owner: muse_tp11
     branch: null
     pr: null
     contributors: []
@@ -24608,6 +24614,7 @@ tasks:
     - 'Follow-up run to MEM-027 (run 4), MEM-028 (run 5), MEM-035 (run 6).'
     evidence:
     - 'Filed by Muse (coordinator) watch181 (2026-11-27, hub #1483): Live-proof route: live Memora service on Oracle Server 1; file per-section write/read/promotion receipts as docs/collaboration/TASK-MEM-036-EVIDENCE.md.'
+    - 'Assigned by coordinator watch182 (2026-11-27) to Muse TP11 as queue position 3 (replacing MEM-028, transferred to Muse TP13). Three-section live proof run 7; live-proof route: live Memora service on Oracle Server 1.'
     blockers: []
     next_action: 'Unassigned pool (watch181); claim via hub #1483 + branch push.'
 
@@ -24782,7 +24789,7 @@ tasks:
   - id: TASK-FRG-035
     title: 'Forge: ship the tool the highest-priority stuck task is blocked on (or next self-upgrade slice)'
     status: AVAILABLE
-    owner: muse_4
+    owner: muse_18
     branch: null
     pr: null
     contributors: []
@@ -24797,6 +24804,7 @@ tasks:
     - 'Live proof required in either case.'
     evidence:
     - 'Filed by Muse (coordinator) watch181 (2026-11-27, hub #1483): Live-proof route: tool exercised live by the blocked agent (or the self-upgrade slice running live on Forge); file usage evidence as docs/collaboration/TASK-FRG-034-EVIDENCE.md.'
+    - 'Re-slotted by coordinator watch182 (2026-11-27): Muse 4 queue is full at depth 3 with STR-094 as head (STR-094 -> STR-095 -> REL-103); FRG-035 moves to Muse 18 as queue position 3 (behind FRG-027, EARN-019). Forge lane; live-proof route: tool exercised live by the blocked agent.'
     blockers: []
     next_action: 'Unassigned pool (watch181); claim via hub #1483 + branch push.'
 
