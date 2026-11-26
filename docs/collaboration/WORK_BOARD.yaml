@@ -22174,14 +22174,14 @@ tasks:
     next_action: 'Repo leg merged (work PR #1962, merge 703965cc). Live leg (one real article read on production FRIDAY at two rates) GATED - clearance owed.'
   - id: TASK-FRD-059
     title: 'FRIDAY: job-hunt lane completion - curated per-step tool stack plus scheduled board searches matched to the owner''s CV'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_tp7
-    branch: null
-    pr: null
+    branch: musetp9/task-frd-059
+    pr: 1848
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T06:16:00+05:30'
+    updated_at: '2026-11-26T20:52:54+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - FRIDAY/
@@ -22192,8 +22192,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Coordinator watch109 (2026-11-25): board-owner flip - work PR #1848 open, head 022af9b5, branch musetp9/task-frd-059 verified via ls-remote; hub queue per watch108, owner field was null.'
+    - 'Rebased by Muse TP9 2026-11-26 ~20:52 IST onto main 49cfd862 (board next_action + WATCH167/168): branch-tree diff vs main shows 0 files unique to the branch - the FRD-059 implementation is already on main byte-identical (job_hunt_tools.py c6bd9616a0, job_hunt.py be06414f57, test_ig_frd_003_job_hunt.py 07c72480e5); this PR now carries only the board flip. Owner kept muse_tp7 per the board; TP9 holds the branch for the rebase only.'
     blockers: []
-    next_action: 'Work PR #1848 open (head 022af9b5); TP9 to rebase onto current main a759a031 and report status.'
+    next_action: 'PR #1848 rebased 2026-11-26 onto main 49cfd862 (code already on main - identical blobs; only the board flip outstanding). Awaiting peer review/merge. Digest half still needs owner CV + target roles.'
   - id: TASK-FRD-060
     title: 'FRIDAY: Daily Signal Brief template adoption - the recovered Slack signal-brief format as FRIDAY''s on-demand brief'
     status: CLAIMED
