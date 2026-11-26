@@ -22185,14 +22185,14 @@ tasks:
     next_action: 'Work PR #1848 open (head 022af9b5); TP9 to rebase onto current main a759a031 and report status.'
   - id: TASK-FRD-060
     title: 'FRIDAY: Daily Signal Brief template adoption - the recovered Slack signal-brief format as FRIDAY''s on-demand brief'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_7
+    branch: musetp9/task-frd-060
+    pr: 1852
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T15:02:00+05:30'
+    updated_at: '2026-11-26T15:24:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - FRIDAY/
@@ -22204,8 +22204,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Coordinator watch109 (2026-11-25): board-owner flip - work PR #1852 open, head 90c7db20, branch musetp9/task-frd-060 verified via ls-remote; hub queue per watch108, owner field was null.'
     - 'Re-slotted to the pool by Muse (coordinator) watch152 (2026-11-26, hub #1483): TP9 held FRD-060 since 2026-11-25, head a367e977 unchanged since 22:55 IST 2026-11-25, no report after the WATCH151 demand (hub 7187158651) and no rebase for the held merge (board hunk conflicts with main, stale base a759a031). Work PR #1852 stays open on branch musetp9/task-frd-060; new owner rebases and rebuilds the board hunk. TP9 queue topped up with STR-091 in the same run.'
+    - 'Assigned to Muse 7 by Muse (coordinator) watch153 (2026-11-26, hub #1483): M7 queue empty since INF-022 MERGED 2026-11-23 - queue rebuilt to depth 3 (INF-044 head, INF-045, FRD-060). FRD-060 returns from the pool (re-slotted watch152 after the TP9 stall); M7 continues held work PR #1852 - rebase onto current main, rebuild the board hunk from the fresh main blob, re-verify, push; no force-push.'
     blockers: []
-    next_action: 'In the unassigned pool - claim via hub #1483 when assigned. Branch musetp9/task-frd-060 held at a367e977 (work PR #1852 open, CI was 10/10 green watch142); new owner rebases onto current main, rebuilds the board hunk from the fresh main blob, re-verifies, pushes; no force-push.'
+    next_action: 'Queue position 3 for Muse 7 behind TASK-INF-044 and TASK-INF-045 (assigned watch153) - continue work PR #1852 on branch musetp9/task-frd-060: rebase onto current main, rebuild the board hunk from the fresh main blob, re-verify, push; no force-push. Claim via hub #1483 when reached.'
   - id: TASK-FRD-061
     title: 'FRIDAY: lead-gen verify-then-outreach step - verify each lead''s contact details before the outreach list is final'
     status: MERGED
@@ -23973,6 +23974,131 @@ tasks:
     - 'Assigned to Muse TP6 by Muse (coordinator) watch151 (2026-11-26, hub #1483): TP6 queue position 3 behind VYR-087 and FRD-046. IntelX research via FRIDAY chat, P2. Board flip in coordinator board PR watch152.'
     blockers: []
     next_action: 'Queue position 3 for Muse TP6 behind TASK-VYR-087 and TASK-FRD-046 (assigned watch151) - claim via hub #1483 + branch push when reached.'
+
+  - id: TASK-INF-044
+    title: 'Inference: adaptive-routing live audit - one week of INF-022 routing receipts, per-class fallback rate + deadline compliance'
+    status: CLAIMED
+    owner: muse_7
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-26'
+    updated_at: '2026-11-26T15:24:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INF-044-EVIDENCE.md
+    acceptance:
+    - 'Sample one week of live routing receipts from the INF-022 receipts endpoint (or all available since the INF-022 deploy, stated honestly if under 7 days).'
+    - 'Per-class fallback rate + deadline compliance table filed; silent-fallback cases listed, or explicitly none found.'
+    - 'Tuning recommendation filed if any class breaches its deadline budget.'
+    evidence:
+    - 'Filed + assigned to Muse 7 by Muse (coordinator) watch153 (2026-11-26, hub #1483): M7 queue empty since INF-022 MERGED 2026-11-23 - queue head. Source: INF-022 evidence (adaptive routing has no live audit evidence) + owner architecture law 2026-11-18 (Inference routing is adaptive). Outcome-bearing: live verdict + tuning input.'
+    blockers: []
+    next_action: 'Queue head for Muse 7 (assigned watch153) - claim via hub #1483 + branch push. Sample one week of INF-022 routing receipts; file per-class fallback rate + deadline compliance.'
+  - id: TASK-INF-045
+    title: 'Inference: fallback-path audibility - receipts record a fallback reason for every fallback; live-probe a forced fallback'
+    status: CLAIMED
+    owner: muse_7
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-26'
+    updated_at: '2026-11-26T15:24:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INF-045-EVIDENCE.md
+    acceptance:
+    - 'Forced-fallback live probe filed with the full receipt (class, model, latency, fallback, fallback reason).'
+    - 'Fallback reason captured in receipts, or the gap + the fix filed.'
+    - 'No silent fallback in the probe.'
+    evidence:
+    - 'Filed + assigned to Muse 7 by Muse (coordinator) watch153 (2026-11-26, hub #1483): queue position 2 behind INF-044. Source: INF-019 (Gemini deadline misses 2/2 on ~9k-token prompts with silent dependence on the OpenRouter fallback); INF-022 receipts exist but reason capture is unverified.'
+    blockers: []
+    next_action: 'Queue position 2 for Muse 7 behind TASK-INF-044 (assigned watch153) - claim via hub #1483 + branch push when reached. Verify fallback reason in receipts; live-probe a forced fallback.'
+  - id: TASK-OPS-004
+    title: 'Oracle Server 2 disk hygiene - audit largest growth paths (86% full, 6.9G avail), propose cleanup; delete nothing without hub clearance'
+    status: CLAIMED
+    owner: muse_tp4
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-26'
+    updated_at: '2026-11-26T15:24:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-OPS-004-EVIDENCE.md
+    acceptance:
+    - 'Audit filed with top growth paths + sizes on Oracle Server 2.'
+    - 'Cleanup list proposed with before/after estimate; NOTHING deleted without coordinator hub clearance.'
+    - 'If clearance lands and the approved list executes, before/after disk numbers filed.'
+    evidence:
+    - 'Filed + assigned to Muse TP4 by Muse (coordinator) watch153 (2026-11-26, hub #1483): TP4 queue top-up depth 2 -> 3 behind STR-074 and DB-005. Source: TP8 status hub 7187437279 (S2 disk 86%, 6.9G avail, flat) - carried as the S2 disk cleanup decision. Read-only first; deletes need hub clearance.'
+    blockers: []
+    next_action: 'Queue position 3 for Muse TP4 behind TASK-STR-074 and TASK-DB-005 (assigned watch153) - claim via hub #1483 + branch push when reached. Audit S2 disk growth; propose cleanup; delete nothing without hub clearance.'
+  - id: TASK-INT-056
+    title: 'IntelX: synthesis-failure path preserves extractive excerpts instead of discarding them'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-26'
+    updated_at: '2026-11-26T15:24:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INT-056-EVIDENCE.md
+    acceptance:
+    - 'When research synthesis fails, the answer carries the extractive excerpts the pre-#78 deployed path returned.'
+    - 'Proven with a failing-synthesis live case; regression tests filed.'
+    - 'No behaviour change to the success path.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch153 (2026-11-26, hub #1483): pool feedstock to restore the 10-task floor (8 after watch152). Source: MASTER_PLAN section 6, PR #78 follow-up - behaviour-regression risk accepted onto main under the owner merge-all override 2026-11-14.'
+    blockers: []
+    next_action: 'In the unassigned pool - claim via hub #1483 when assigned.'
+  - id: TASK-STR-092
+    title: 'Stratex: forward-window fill/close ledger state filing run 3 - reconcile daemon ledger vs venue positions/history'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-26'
+    updated_at: '2026-11-26T15:24:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-STR-092-EVIDENCE.md
+    acceptance:
+    - 'Daemon fill/close ledger reconciled against venue positions/history for the forward window.'
+    - 'Fills, closes and net P&L filed as evidence.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch153 (2026-11-26, hub #1483): pool feedstock to restore the 10-task floor (8 after watch152). Sequel to STR-091 (run 2, in flight with TP9) and STR-090; closes the standing fill-ledger verification gap from the 2026-11-22 briefing.'
+    blockers: []
+    next_action: 'In the unassigned pool - claim via hub #1483 when assigned. Sequel to STR-091 (run 2, in flight with TP9).'
+  - id: TASK-FUT-034
+    title: 'Futuris: forecast accuracy scoring run 6 - score the next unscored forecast cohort against outcomes'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-26'
+    updated_at: '2026-11-26T15:24:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-FUT-034-EVIDENCE.md
+    acceptance:
+    - 'Next unscored forecast cohort scored against outcomes; accuracy evidence filed.'
+    - 'Scoring method matches the FUT-028/033 runs.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch153 (2026-11-26, hub #1483): pool feedstock to restore the 10-task floor (8 after watch152). Sequel to FUT-033 (run 5, in flight with TP5); source: owner architecture law 2026-11-18 (Futuris forecasts everything) + pool-7 item (vi).'
+    blockers: []
+    next_action: 'In the unassigned pool - claim via hub #1483 when assigned. Sequel to FUT-033 (run 5, in flight with TP5).'
 
 task_id_warnings:
   - id: TASK-REL-061
