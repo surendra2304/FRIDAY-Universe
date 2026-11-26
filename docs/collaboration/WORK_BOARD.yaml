@@ -23662,9 +23662,9 @@ tasks:
 
   - id: TASK-VOI-044
     title: 'FRIDAY voice: acceptance run 27 - next calm-window run after VOI-041 (run 26); per-probe latency + pass/fail'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: CLAIMED
+    owner: muse_10
+    branch: muse10/task-voi-044-acceptance-run-27
     pr: null
     contributors: []
     priority: P1
