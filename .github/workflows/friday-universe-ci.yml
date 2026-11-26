@@ -289,6 +289,9 @@ jobs:
       # TASK-STR-086: research/test_staged_chart_checklist.py is collected
       # here so the REL-068 collection guard passes — a PR test must run
       # in PR CI (WATCH101 HELD: contracts job failed on this file).
+      # TASK-IG2-WEB-04-FIX-01: tests/test_ig2_web04_fix01_routing.py is
+      # collected here so the REL-068 collection guard passes — a PR test
+      # must run in PR CI.
       - name: Run Stratex tier-1 tests
         working-directory: Stratex
         run: |
@@ -313,6 +316,7 @@ jobs:
             tests/test_str082_scale_up_gate.py \
             tests/test_str082_creator_rules.py \
             research/test_staged_chart_checklist.py \
+            tests/test_ig2_web04_fix01_routing.py \
             --deselect tests/test_tier1_resilience_and_contracts.py::TestStandardizedContracts::test_health_includes_service_metadata
 
       # TASK-REL-088: Forge tier-1 tests. Own venv from
