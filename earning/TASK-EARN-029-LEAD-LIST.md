@@ -1,13 +1,13 @@
-# TASK-EARN-029 — Lead list, checkpoint 3: 30 of 50 leads (UAE/Dubai)
+# TASK-EARN-029 — Lead list, checkpoint 4: 40 of 50 leads (UAE/Dubai)
 
 Researched 2026-11-26 ~09:0x IST by Muse 12 worker (checkpoint 1: leads
 1–10). Checkpoint 2 added 2026-11-26 ~10:0x IST: leads 11–20 (travel &
 tourism agencies + fitness/wellness studios, Business Bay / DIFC / Al
-Barsha). Checkpoint 3 added 2026-11-26 ~10:5x IST: leads 21–30 (restaurants & cafes + e-commerce/retail stores). Method: Yello business directory verified live as the source
+Barsha). Checkpoint 3 added 2026-11-26 ~10:5x IST: leads 21–30 (restaurants & cafes + e-commerce/retail stores). Checkpoint 4 added 2026-11-26 ~14:0x IST: leads 31–40 (second real-estate batch Marina / Business Bay + second fitness/wellness round Marina / JLT / Media City / Al Wasl / Al Furjan). Method: Yello business directory verified live as the source
 directory (see checkpoint doc), leads drawn from live public
 directory/place listings for the named businesses. Every business below
 appeared in live search results with the phone number and website shown
-(except leads 15, 29 and 30 — no website in the listing, flagged).
+(except leads 15, 29 and 30 — no website in the listing, flagged; leads 33 and 34 — no website in the listing, flagged; lead 35 — website shown is a maintenance page, flagged).
 
 **Verification caveat, stated plainly (same honesty bar as TASK-EARN-027):**
 phone numbers are as shown in the public listings; none were called to
@@ -20,6 +20,8 @@ pitching. No lead below showed a content-agency relationship in the sources
 seen; that is an absence in the sources, not a verified fact.
 
 **Checkpoint 3 method (leads 21–30, 2026-11-26 ~10:5x IST):** all ten appeared in live public place/directory listings with the phone number shown; leads 21–28 also with the website shown. Leads 29–30 showed no website in the listing — flagged below, verify before outreach. Restaurants/cafes drawn from live place listings (Marina, Media City, Downtown, Business Bay); retail from Yello.ae listings and live place listings. Same honesty bar: phones not called, websites not opened page by page, no email taken except where the listing itself shows one (lead 28).
+
+**Checkpoint 4 method (leads 31–40, 2026-11-26 ~14:0x IST):** all ten appeared in live public place/directory listings with the phone number shown; leads 31, 32, 36–40 also with the website shown. Leads 33–34 showed no website in the listing — flagged below, verify before outreach. Lead 35's listing shows a website URL that lands on a maintenance page — flagged below, verify before outreach. Real-estate batch drawn from live place listings (Marina Gate, Al Habtoor Business Tower, Al Seef, Prism Tower Business Bay); fitness/wellness batch from live place listings and studio sites (Trident Bayside, Media City, One JLT, Al Wasl Rd, Al Furjan). Yello.ae re-verified live this run (homepage opened and read ~14:00 IST: 224,402 listings, same count as checkpoints 1–3). Same honesty bar: phones not called, websites not opened page by page, no email taken from any listing in this batch — take each email from the business's own website/contact page before outreach.
 
 **Rules (board acceptance):** public business contact data only; no scraping
 behind logins; no automated mass outreach. The owner reviews and sends every
@@ -129,7 +131,37 @@ whose product pages need the same treatment.
 | 29 | Marino Wholesale | Warehouse 6-23, 19th St, Al Qusais Industrial Area | +971502353971 | No website shown in listing — verify before outreach | S4 + S1 |
 | 30 | Affordables Fashion LLC | 14 stores, Dubai / Sharjah / Abu Dhabi (founded 2010) | +971559080680 | No website shown in listing — verify before outreach | S4 + S3 |
 
-## Pitch drafts (30 — one per lead; 1–10 from checkpoint 1, 11–20 from checkpoint 2, 21–30 new in checkpoint 3)
+## Batch 7 — Real estate agencies, Dubai Marina / Business Bay (5)
+
+Second real-estate batch, outside Downtown: Marina brokerages publish
+constantly (area guides, new launches, listings) and pay for content that
+brings buyer enquiries. All five are independent brokerages with their own
+offices in the Marina / Business Bay cluster.
+
+| # | Business | Area | Phone | Website / route | Matched service |
+|---|----------|------|-------|-----------------|-----------------|
+| 31 | One Broker Group | 16th Floor, Al Habtoor Business Tower, Dubai Marina | +97145825999 | https://www.obg.ae/ | S1 + S3 |
+| 32 | Exclusive Links Real Estate Brokers | Ground Floor Shop 1, Marina Gate, Dubai Marina | +97143994937 | https://www.exclusive-links.com/ | S1 + S3 |
+| 33 | First Homes Real Estate Broker LLC | Shop 6, Al Seef, Al Naseem St, Dubai Marina (est. 2001) | +97142442280 | No website shown in listing — verify before outreach | S1 + S3 |
+| 34 | Immobilien Welt | Marina Gate 2, Dubai Marina | +971522776604 | No website shown in listing — verify before outreach | S1 + S3 |
+| 35 | Key 2 Dubai | Office 2805, Prism Tower, Business Bay | +97144322789 | Website shown in listing (https://www.fundingsecure.com/maintenance.html) lands on a maintenance page — verify before outreach | S1 + S3 |
+
+## Batch 8 — Fitness & wellness studios, Marina / JLT / Media City / Al Wasl / Al Furjan (5)
+
+Second fitness/wellness round, outside Business Bay / DIFC: yoga, Pilates
+and wellness studios live on social proof — class content, trainer tips,
+member stories, programme guides. All five are independent studios/clubs
+with their own websites and publishable service pages.
+
+| # | Business | Area | Phone | Website / route | Matched service |
+|---|----------|------|-------|-----------------|-----------------|
+| 36 | Trident Wellness Center | Trident Bayside, Dubai Marina | +971559306592 | https://tridentwellnessdubai.com/ | S3 + S1 |
+| 37 | Akasa Wellness | Dubai Media City Building 2 | +971585534896 | http://www.akasawellness.ae/ | S3 + S1 |
+| 38 | Real Pilates JLT | One JLT Building, Level 1, Jumeirah Lakes Towers | +97144585399 | https://real-pilates.com/ | S3 + S1 |
+| 39 | UCRYO | RSMB Villa 12, Al Wasl Rd, Dubai | +97142550660 | https://ucryowellness.com/ | S3 + S1 |
+| 40 | Al Furjan Club | Pavilion, Al Furjan, Dubai | +97144221491 | https://www.alfurjanclub.com/ | S3 + S1 |
+
+## Pitch drafts (40 — one per lead; 1–10 from checkpoint 1, 11–20 from checkpoint 2, 21–30 from checkpoint 3, 31–40 new in checkpoint 4)
 
 All drafts are templates for the owner to send in his own words, one business
 at a time. Replace `[Owner name]` before sending. Never send two businesses
@@ -463,6 +495,117 @@ draft — the owner confirms pricing before quoting (same rule as EARN-028).
 > one sample product description first, free, so you can judge the
 > quality. My work is at https://payhip.com/cometworks — shall I send it?
 
+### 31. One Broker Group (Al Habtoor Business Tower, Dubai Marina)
+
+> Hi, this is [Owner name] from CometWorks. I came across One Broker Group
+> while looking at brokerages in Dubai Marina — a powerhouse brokerage
+> covering sales, lettings, property management and mortgages has more
+> worth publishing than most: area guides, market explainers, buying
+> guides that bring buyer searches to your site instead of the portals. I
+> write SEO blog posts and 30-day social content packs for small
+> businesses, researched and human-edited. I would like to write you one
+> sample Marina article first, free, so you can judge the quality. My work
+> is at https://payhip.com/cometworks — shall I send the sample?
+
+### 32. Exclusive Links Real Estate Brokers (Marina Gate, Dubai Marina)
+
+> Hi, this is [Owner name] from CometWorks. I found Exclusive Links while
+> looking at brokerages in Dubai Marina — with so many agencies competing
+> for the same Marina searches, the ones that publish helpful guides win
+> the enquiries. I write SEO blog posts and 30-day social content packs
+> for small businesses, researched and human-edited. Happy to write you
+> one sample article on a Marina topic first, free, for you to judge. My
+> work is at https://payhip.com/cometworks — shall I send the sample?
+
+### 33. First Homes Real Estate Broker LLC (Al Seef, Dubai Marina)
+
+> Hi, this is [Owner name] from CometWorks. I came across First Homes
+> while looking at brokerages in Dubai Marina — established since 2001,
+> you have a track record most Marina agencies cannot match, and buyers
+> trust the brokerage whose guides they read first. I write SEO blog posts
+> and 30-day social content packs for small businesses, researched and
+> human-edited. I would like to write you one sample article first, free,
+> so you can judge the quality. My work is at
+> https://payhip.com/cometworks — shall I send the sample?
+
+### 34. Immobilien Welt (Marina Gate 2, Dubai Marina)
+
+> Hi, this is [Owner name] from CometWorks. I found Immobilien Welt while
+> looking at brokerages in Dubai Marina — a Marina brokerage with your
+> street-level presence should be the one buyers find when they search,
+> not the directories. I write SEO blog posts and 30-day social content
+> packs for small businesses, researched and human-edited. Happy to write
+> you one sample article first, free, for you to judge. My work is at
+> https://payhip.com/cometworks — shall I send the sample?
+
+### 35. Key 2 Dubai (Prism Tower, Business Bay)
+
+> Hi, this is [Owner name] from CometWorks. I came across Key 2 Dubai
+> while looking at brokerages in Business Bay — commercial and residential
+> brokerage on Sheikh Zayed Road, and the agencies that publish market
+> guides and area explainers win the enquiries before the portals do. I
+> write SEO blog posts and 30-day social content packs for small
+> businesses, researched and human-edited. I would like to write you one
+> sample Business Bay article first, free, so you can judge the quality.
+> My work is at https://payhip.com/cometworks — shall I send the sample?
+
+### 36. Trident Wellness Center (Trident Bayside, Dubai Marina)
+
+> Hi, this is [Owner name] from CometWorks. I found Trident Wellness
+> Center while looking at yoga and wellness studios in Dubai Marina — a
+> studio whose mission is yoga for everyone has more worth saying than
+> most: class guides, wellbeing notes, member stories that fill the mats.
+> I write 30-day social content packs and SEO articles for small
+> businesses, researched and human-edited. Happy to draft you a week's
+> social posts first, free, so you can judge the quality. My work is at
+> https://payhip.com/cometworks — shall I send the sample?
+
+### 37. Akasa Wellness (Dubai Media City)
+
+> Hi, this is [Owner name] from CometWorks. I came across Akasa Wellness
+> while looking at wellness studios in Dubai Media City — yoga, wellness
+> and holistic health, seven days a week: people search all of it before
+> they book, so the studio with the clearest guides wins the enquiry. I
+> write 30-day social content packs and SEO articles for small businesses,
+> researched and human-edited. I would like to draft you a week's social
+> posts first, free. My work is at https://payhip.com/cometworks — shall
+> I send them?
+
+### 38. Real Pilates JLT (One JLT Building)
+
+> Hi, this is [Owner name] from CometWorks. I found Real Pilates while
+> looking at Pilates studios in JLT — Studio of the Year seven years
+> running, with Mat, Barre, Yoga and pre/postnatal classes: that is a
+> library of content waiting to be published, and the studios that post
+> steady, useful content fill their classes first. I write 30-day social
+> content packs and SEO articles for small businesses, researched and
+> human-edited. Happy to draft you a week's social posts first, free, for
+> you to judge. My work is at https://payhip.com/cometworks — shall I
+> send the sample?
+
+### 39. UCRYO (Al Wasl Rd, Dubai)
+
+> Hi, this is [Owner name] from CometWorks. I came across UCRYO while
+> looking at wellness centres in Dubai — cryotherapy, EMS training,
+> massage, personal training: every treatment you offer needs copy that
+> explains the benefit, and buyers search those exact treatments before
+> they book. I write 30-day social content packs and SEO articles for
+> small businesses, researched and human-edited. I would like to draft you
+> a week's social posts first, free, so you can judge the quality. My work
+> is at https://payhip.com/cometworks — shall I send the sample?
+
+### 40. Al Furjan Club (Al Furjan, Dubai)
+
+> Hi, this is [Owner name] from CometWorks. I found Al Furjan Club while
+> looking at fitness and social clubs in Dubai — a fully-equipped gym,
+> aerobics studio, pool, tennis and a cafe under one roof is a community,
+> not just a gym, and communities grow on content: class guides, member
+> stories, event posts that bring new members in. I write 30-day social
+> content packs and SEO articles for small businesses, researched and
+> human-edited. Happy to draft you a week's social posts first, free, for
+> you to judge. My work is at https://payhip.com/cometworks — shall I
+> send the sample?
+
 ## Flags for the owner / coordinator (before any pitch is sent)
 
 - [ ] **Fiverr gig links:** the four live Fiverr gig URLs were not found in
@@ -478,15 +621,16 @@ draft — the owner confirms pricing before quoting (same rule as EARN-028).
 - [ ] **Lead 15:** no website in the listing — verify the business and
   find a contact route (website or official social) before pitching.
 - [ ] **Leads 29 and 30:** no website in the listing — verify the business and find a contact route (website or official social) before pitching.
+- [ ] **Leads 33 and 34:** no website in the listing — verify the business and find a contact route (website or official social) before pitching.
+- [ ] **Lead 35:** website shown in the listing lands on a maintenance page — verify the business and find a working contact route (website or official social) before pitching.
 - [ ] **Prices:** no prices quoted in drafts. Owner confirms pricing before
   quoting any lead.
 
-## Checkpoint 4 (remaining 20 leads)
+## Checkpoint 5 (remaining 10 leads)
 
-Niches to cover next: second real-estate batch outside Downtown (Marina,
-Business Bay); second rounds of the best-converting niches so far —
-restaurants/cafes, e-commerce/retail, fitness/wellness. Each new lead gets
-the same treatment: Yello.ae profile cross-check first, then a personalised
-pitch draft pointing at the matching service.
+Niches to cover next: second rounds of restaurants/cafes and
+e-commerce/retail (the remaining second-round niches from checkpoint 4).
+Each new lead gets the same treatment: Yello.ae profile cross-check first,
+then a personalised pitch draft pointing at the matching service.
 
-— Muse 12, checkpoint 3, 2026-11-26 ~10:5x IST
+— Muse 12, checkpoint 4, 2026-11-26 ~14:0x IST
