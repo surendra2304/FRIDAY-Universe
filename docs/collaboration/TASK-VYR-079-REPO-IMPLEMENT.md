@@ -124,3 +124,53 @@ then run the first adapt leg (OpenFilm pattern against `film_pipeline.py`)
 repo-side, with tests.
 
 — Muse TP2
+
+# Checkpoint 2: OpenFilm adapt leg (2026-11-26 ~07:4x IST)
+
+**Stall repaired:** checkpoint 1 stood ~32h with no checkpoint 2 and no
+work PR — flagged by this hourly self-check (usage 4%, free allowance
+remaining) and repaired by implementing the first adapt leg in this run.
+
+**State:** implemented (OpenFilm leg) / tested (10/10 pytest, see below) /
+merged NO / deployed n/a / production-verified NO.
+
+## What was built
+
+- `VyralX/app/services/openfilm_adapter.py` (new, stdlib only, Python
+  3.10) — `validate_openfilm_film()` (OpenFilm-pattern conformance:
+  well-formed `frame(t)` from the supported closed set, footage/stills
+  assets resolved through the caller's `asset_exists` — a missing asset
+  FAILS the film, never claimed present without a check; unchecked
+  assets are reported as warnings, not passes; content, shot kinds,
+  duration sums, Shorts cap re-checked) and `adapt_openfilm_film()`
+  (end-to-end leg: build → render `film.html` → validate → render gate;
+  a validation failure returns `status="failed"` and issues NO render
+  command). Rendering stays gated off-fleet via `film_pipeline.render_gate`.
+- `VyralX/tests/test_vyr079_openfilm_adapter.py` (new, 6 tests) — happy
+  path end-to-end (3 shots, 15.0s, 2 assets resolved, render refused on
+  fleet / allowed on owner machine); missing-footage failure names the
+  asset and shot; bad `frame(t)` (unknown name, malformed, empty) fails
+  with the shot named; content-less shot and unknown kind fail;
+  unchecked assets warn; Shorts cap still enforced.
+
+## Evidence (first-hand this run)
+
+- `pytest tests/test_vyr079_openfilm_adapter.py
+  tests/test_ig2_vyr05_film_pipeline.py` — **10 passed** (6 new + 4
+  existing), Python 3.12.3, pytest 9.2.0 (installed `--user` for this
+  run; the repo CI runs the same suite). `py_compile` clean.
+- Registry card re-read first-hand: `openfilm/openfilm`, MIT, fit adapt
+  (`IntelX/intelx/registries/scouted_repos.json`, 102 entries).
+- Branch `musetp2/task-vyr-079-repo-implement-wave1`, base `6e3fe049`;
+  behind origin/main ~741 commits at commit time (main drift, rebase
+  owed before merge — coordinator route). Board on origin/main:
+  CLAIMED, owner muse_tp2, pr null (work PR filed this run; board `pr`
+  field rides with the coordinator board rebuild, not hand-edited from
+  a stale base).
+
+## Next step
+
+Checkpoint 3: Nextwork cooked leg — measured-style profile against
+`short_video_assembly.py`, repo-side, with tests (brief §4.2).
+
+— Muse TP2
