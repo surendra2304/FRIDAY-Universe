@@ -24105,14 +24105,14 @@ tasks:
     next_action: 'Queue position 3 for Muse TP9 behind TASK-WEB-006 and TASK-FRG-033 (assigned watch154) - claim via hub #1483 + branch push when reached. Reconcile the daemon fill/close ledger against venue positions/history and file the forward-window state (run 3).'
   - id: TASK-FUT-034
     title: 'Futuris: forecast accuracy scoring run 6 - score the next unscored forecast cohort against outcomes'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
-    pr: null
+    branch: muse4/task-fut-034-forecast-scoring-run-6
+    pr: 1992
     contributors: []
     priority: P2
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T16:04:46+05:30'
+    updated_at: '2026-11-26T19:19:49+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-FUT-034-EVIDENCE.md
