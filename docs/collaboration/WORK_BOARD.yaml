@@ -21871,7 +21871,7 @@ tasks:
     status: MERGED
     owner: muse_12
     branch: muse12/task-earn-029-uae-lead-gen
-    pr: 1953
+    pr: 1981
     contributors: []
     priority: P2
     created_at: '2026-11-25'
@@ -21894,8 +21894,9 @@ tasks:
     - 'Checkpoint 3 filed 2026-11-26 ~10:58 IST (Muse 12, PR #1958): 30/50 leads (batch 5: 5 restaurants & cafes, Marina/Media City/Downtown/Business Bay; batch 6: 5 e-commerce/retail stores) + 10 more pitch drafts; place listings verified live with phone + website shown for leads 21-28; leads 29-30 have no website in listing - verify before outreach.'
     - 'Checkpoint 4 filed 2026-11-26 ~14:02 IST (Muse 12, PR #1975): 40/50 leads (batch 7: 5 real-estate agencies, Marina/Business Bay; batch 8: 5 fitness/wellness studios, Marina/JLT/Media City/Al Wasl/Al Furjan) + 10 more pitch drafts; Yello.ae re-verified live (224,402 listings); place listings verified live with phone + website shown for leads 31, 32, 36-40; leads 33-34 no website in listing, lead 35 listed website is a maintenance page - verify before outreach.'
     - 'Checkpoint 5 filed 2026-11-26 ~15:0x IST (Muse 12, PR #1981): 50/50 leads COMPLETE (batch 9: 5 restaurants & cafes, JLT/Al Barsha; batch 10: 5 e-commerce/retail stores, Downtown/Deira) + 10 more pitch drafts; Yello.ae re-verified live (224,403 listings); place listings verified live with phone + website shown for leads 41-43, 46-50; leads 44-45 show a listing/hotel page, not the business''s own site - verify before outreach.'
+    - 'MERGED via PR #1981 (merge b75a128f, 15:29 IST), coordinator-merged per WATCH154: CI 9/9 green on head 942dabab, full diff reviewed first-hand, clean merge-tree vs main. TASK COMPLETE: 50/50 UAE leads + pitch drafts filed.'
     blockers: []
-    next_action: 'Checkpoint 5 filed in PR #1981 (50/50 leads + pitch drafts, TASK COMPLETE, in review); merge awaits review. Next queue task REL-100 starts after merge.'
+    next_action: 'TASK COMPLETE — 50/50 leads + pitch drafts merged via PR #1981 (merge b75a128f, 15:29 IST, CI 9/9 green, coordinator-merged per WATCH154). Next queue task REL-100 claimed by Muse 12.'
   - id: TASK-EARN-030
     title: 'EARN: Contra lane start (owner order 2026-11-25: implement all) - owner creates the account, Muse builds the full CometWorks profile + services'
     status: AVAILABLE
@@ -23391,7 +23392,7 @@ tasks:
     title: 'Oracle Server 2 disk pressure: reconcile the conflicting readings (86-91%) and reclaim / bound the growth before a live service is hit'
     status: CLAIMED
     owner: muse_12
-    branch: null
+    branch: muse12/task-rel-100-server2-disk
     pr: null
     contributors: []
     priority: P1
@@ -23410,7 +23411,7 @@ tasks:
     - 'Claimed by Muse TP11 as double-scope in hub 1700 (watch121); assigned by coordinator watch122 as queue pos 3.'
     - 'Re-slotted to Muse 12 by coordinator watch130 (2026-11-26): Muse TP11 gave no report after the watch129 demand; REL-100 claimed ~2h+ with zero branches, commits or PRs. Fresh branch + new work PR when claimed.'
     blockers: []
-    next_action: 'Re-slotted to muse_12 by coordinator watch130 (queue position 4); claim via hub #1483 + branch push when reached.'
+    next_action: 'Claimed by Muse 12 (hub #1483 comment 7189351478, ~15:55 IST); branch muse12/task-rel-100-server2-disk @ main 40d0f4a3. Checkpoint 1 in progress: read-only df probes on both Oracle servers delegated to the bridge.'
 
   - id: TASK-REL-101
     title: 'Fix the Futuris FUT-030 calendar-test date rollover that fails contracts on main'
