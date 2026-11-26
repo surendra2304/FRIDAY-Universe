@@ -19789,14 +19789,14 @@ tasks:
 
   - id: TASK-INT-045
     title: 'IntelX: find a viable free feed route for First Squawk and activate it in headline_watch.py'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_10
     branch: muse10/task-int-045-first-squawk-free-feed
     pr: 1771
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T10:15:00+05:30'
+    updated_at: '2026-11-26T14:37:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19805,8 +19805,9 @@ tasks:
     - 'Claim: issue #1483 comment 7152682884 by Muse 10, 2026-11-25 ~09:43 IST, on direct assignment by Muse (coordinator) in watch075 (comment 7152477568, run scheduled 09:17 IST): new queue INT-045 -> INT-048 -> INT-049, claim INT-045 now. Board record verified AVAILABLE, owner null, on main 15f08b93 (board blob 0df89b8e, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-int-045-first-squawk-free-feed. Work-request cycle stands down while claimed.'
     - 'Work PR #1771 (this PR): no-free-route verdict implemented + tested (31 passed local incl. tier-1 list); evidence doc docs/collaboration/TASK-INT-045.md. Rebased onto main c52daf14 (PR #1770 landed first); claim + work in a single PR.'
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-INT-SQUAWK (IG package X-02). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
+    - 'Merged (Muse, coordinator, watch151, 2026-11-26 ~14:37 IST): work PR #1771 merged as 55027430 on 2026-11-25 (verified first-hand via API this run); no-free-route verdict implemented + tested (31 passed local incl. tier-1 list), evidence doc docs/collaboration/TASK-INT-045.md. MERGED flip was owed since 2026-11-25 and caught by the watch151 board sweep. MERGED flip in coordinator board PR watch151.'
     blockers: []
-    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
+    next_action: 'MERGED 2026-11-26 (work PR #1771, merge 55027430). No-free-route verdict recorded; First Squawk source dispositioned. No further action.'
   - id: TASK-INT-046
     title: 'IntelX: Telegram topic-search source discovery for the standing watches'
     status: CLAIMED
@@ -23882,14 +23883,14 @@ tasks:
 
   - id: TASK-SEN-036
     title: 'Sentinel: approval-path live proof run 2 - one low-risk auto-approve + one high-risk Telegram prompt'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_10
     branch: muse10/task-sen-036-live-proof-run-2
     pr: 1971
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T13:20:27+05:30'
+    updated_at: '2026-11-26T14:37:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-SEN-036-APPROVAL-PATH-LIVE-PROOF-RUN-2.md
@@ -23900,19 +23901,20 @@ tasks:
     - 'Assigned to muse_10 by Muse (coordinator) watch145 (2026-11-26, hub #1483): Muse 10 free-requested work (hub 7184746985) after INT-042 MERGED; CTX-009 gated, INT-045 in review. P1 live proof; queue head after INT-042.'
     - 'Claim: hub #1483 comment 7185001542 by Muse 10, 2026-11-26 ~12:30 IST, on assignment by Muse (coordinator) in WATCH145 (comment 7184867284): new queue head SEN-036 -> CTX-009 (gated) -> INT-045 (IN_REVIEW). Branch muse10/task-sen-036-live-proof-run-2. Claim PR #1969 (board-only) conflicted with the WATCH145 board PR owner flip, so the flip rides in the coordinator board PR watch147 and #1969 was closed unmerged; no action needed from Muse 10.'
     - 'Checkpoint 1 live proof 2026-11-26 ~13:19 IST: leg 1 appr_e52f0b36f25d AUTO_APPROVED (ledger seq 38, hash-chained); leg 2 appr_1bc482b7b1c0 OWNER_PROMPT, Telegram prompt dispatched, no decision, expired 13:17:44 IST, approve link 409 after expiry. Evidence doc docs/collaboration/TASK-SEN-036-APPROVAL-PATH-LIVE-PROOF-RUN-2.md. Work PR #1971.'
+    - 'Merged (Muse, coordinator, watch151, 2026-11-26 ~14:37 IST): work PR #1971 merged as 0434f6df (CI 9/9 green, verified by WATCH149); leg 1 AUTO_APPROVED ledger seq 38, leg 2 OWNER_PROMPT + Telegram dispatched, expired, no decision. MERGED flip in coordinator board PR watch151.'
     blockers: []
-    next_action: 'Checkpoint 1 filed as work PR #1971 - live proof done, awaiting merge. Queue next: TASK-CTX-009 (gated) / TASK-INT-045 (IN_REVIEW).'
+    next_action: 'MERGED 2026-11-26 (work PR #1971, merge 0434f6df). Live proof done: leg 1 auto-approved, leg 2 Telegram-prompted and expired. Queue moves to TASK-INT-055.'
 
   - id: TASK-INT-055
     title: 'IntelX: fast-lane live proof run 5 - one real alert end-to-end after INT-054'
-    status: AVAILABLE
-    owner: null
+    status: CLAIMED
+    owner: muse_10
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T11:27:53+05:30'
+    updated_at: '2026-11-26T14:37:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -23920,19 +23922,20 @@ tasks:
     - 'Kill switch stays OFF.'
     evidence:
     - 'Filed by Muse (coordinator) watch143 (2026-11-26, hub #1483): next fast-lane proof run. Follows INT-054 run 4 (assigned to muse_12 this run). Unassigned pool feedstock.'
+    - 'Assigned to Muse 10 by Muse (coordinator) watch151 (2026-11-26, hub #1483): Muse 10 free after SEN-036 merged (work request 7186956648); queue head INT-055 -> FUT-020 -> CTX-009 (gated). IntelX fast-lane run 5, P1, fits the Muse 10 IntelX lane (INT-045 just closed). Claim via hub #1483 + branch push.'
     blockers: []
-    next_action: 'In the pool - claim via hub #1483 when assigned.'
+    next_action: 'Queue head for Muse 10 (assigned watch151) - claim via hub #1483 + branch push. One real alert end-to-end with evidence, or armed-state evidence + wait state; kill switch stays OFF.'
 
   - id: TASK-FUT-020
     title: 'Futuris: one NON-market forecast live through the scheduler - fleet capacity, weather, or tech trend - filed and scored against the outcome'
-    status: AVAILABLE
-    owner: null
+    status: CLAIMED
+    owner: muse_10
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T12:31:00+05:30'
+    updated_at: '2026-11-26T14:37:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -23940,8 +23943,9 @@ tasks:
     - 'Forecast scored against the outcome when it lands, with the accuracy evidence filed.'
     evidence:
     - 'Filed by Muse (coordinator) watch145 (2026-11-26, hub #1483): pool feedstock to restore the 10-task floor after SEN-036 and DB-012 left the pool. Source: owner architecture law 2026-11-18 (Futuris forecasts everything) + TASK-FUT-017 family; brief from pool-11 draft 2026-11-23.'
+    - 'Assigned to Muse 10 by Muse (coordinator) watch151 (2026-11-26, hub #1483): queue position 2 behind INT-055 (SEN-036 merged; work request 7186956648). Futuris non-market forecast live through the scheduler, P2. Claim via hub #1483 when reached.'
     blockers: []
-    next_action: 'In the pool - claim via hub #1483 when assigned.'
+    next_action: 'Queue position 2 for Muse 10 behind TASK-INT-055 (assigned watch151). One non-market forecast live through the Futuris scheduler, filed and scored against the outcome.'
 
   - id: TASK-INT-025
     title: 'IntelX: research with sources via FRIDAY chat - 3 consecutive live runs, sources cited in the answer, traces filed'
