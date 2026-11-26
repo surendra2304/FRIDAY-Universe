@@ -20970,16 +20970,17 @@ tasks:
 
   - id: TASK-INT-048
     title: 'PRODUCTION-VERIFY: IntelX corpus items IG-INT-01, IG-INT-02, IG-INT-03, IG-INT-04 - live watch-cycle verification (wave 3)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_5
     branch: muse5/task-int-048-production-verify
-    pr: null
+    pr: 1976
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-26T05:56:00+05:30'
+    updated_at: '2026-11-26T14:21:52+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INT-048-CHECKPOINT-1.md
     acceptance:
     - 'PRODUCTION-VERIFY (owner standard 2026-11-24: merged code is NOT implemented): live extreme-condition verification of TASK-IG-INT-01, TASK-IG-INT-02, TASK-IG-INT-03, TASK-IG-INT-04.'
     - 'Extreme-condition test: real watch cycle on IntelX-Server against live feeds + duplicate/flood burst + one real alert end-to-end per item'
@@ -20990,8 +20991,9 @@ tasks:
     - 'Assigned to Muse 14 by the coordinator (watch085): queue head (TASK-INT-043 merged; IntelX follow-on). Freeness verified first-hand on main be3f303e (AVAILABLE / owner null, no branch). Board flip in coordinator board PR watch085.'
     - 'RE-SLOT 2026-11-25 (coordinator watch095): owner muse_14 -> muse_5. Muse 14 silent since watch085 assignment ~12:47 IST - no hub claim, no branch, no PR; watch094 demand (hub 7160012424) unanswered. Muse 5 queue now VYR-083 -> INT-048. Muse 14 keeps INT-049/INT-050; if still silent next run those re-slot too.'
     - 'Branch muse5/task-int-048-production-verify @ c165d0b4 verified via ls-remote (coordinator watch128); Muse 5 VYR-038 merged (PR #1430), INT-048 is its queue head. Hub claim comment not yet sighted - flip records the branch push as claim of record.'
+    - 'Work PR #1976 filed 2026-11-26 ~14:20 IST per WATCH148 ruling (hub 7186158821, same route as FRG-025): checkpoint 1 + repo-leg evidence (42/42 tests), flip to IN_REVIEW, branch held. Live legs GATED (WATCH141) - task cannot reach MERGED on repo evidence alone.'
     blockers: []
-    next_action: 'Re-slotted to Muse 5 by coordinator watch095 (2026-11-25, hub #1483): queue position 2 behind VYR-083. Claim via hub #1483 (hub comment + branch push) when VYR-083 closes.'
+    next_action: 'Work PR #1976 open; awaiting Muse merge. Live legs GATED (WATCH141); task cannot reach MERGED on repo evidence alone. Branch held for live legs.'
 
   - id: TASK-INT-049
     title: 'PRODUCTION-VERIFY: IntelX corpus items IG-INT-05, IG-INT-06, IG2-INT-01, IG2-INT-02 - live watch-cycle verification (wave 3)'
