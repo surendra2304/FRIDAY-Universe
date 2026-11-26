@@ -69,6 +69,12 @@ missing executor and the planner that drives it:
 * **Genymobile/scrcpy** (Apache-2.0) — *adopted* as the optional
   owner-side mirror (`--mirror`); it is an external tool, not vendored.
 
+* **Release pin (TASK-LAP-003, 2026-11-26):** scrcpy **v5.0.1**
+  (2026-10-08) — the version the owner installs laptop-side. Do not
+  follow "latest" without a fresh check; the pin is recorded here, not
+  in code, because scrcpy is an external binary, not a vendored
+  dependency.
+
 ## Verification status
 
 Implemented + unit-tested with a fake ADB runner, a fake bridge and a

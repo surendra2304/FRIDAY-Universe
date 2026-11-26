@@ -174,3 +174,121 @@ def test_reply_to_mismatch_is_a_named_signal():
     )
     assert "reply_to_differs_from_from" in result.signals
     assert result.category == "SEXTORTION_SCAM"
+
+
+# --- TASK-SEN-027: family codeword (SE-03) -------------------------------
+
+def test_family_plea_triggers_codeword_guidance():
+    # The exact SE-03 shape: "in trouble, send money". No threat, no
+    # ransom framing — so the category stays NOT_EXTORTION (no verdict
+    # is manufactured), but the plea shape is itself the scam the
+    # codeword guards, so the guidance fires anyway.
+    result = triage_email(
+        subject="Mum it's me",
+        body=(
+            "Mum it's me, I'm in trouble abroad and I need you to send "
+            "$500 now for bail, please hurry, don't tell dad."
+        ),
+    )
+    assert result.category == "NOT_EXTORTION"
+    assert result.family_plea is True
+    assert "family_impersonation_plea" in result.signals
+    assert result.as_dict()["family_plea"] is True
+    assert any("Family codeword check (SE-03)" in g for g in result.guidance)
+    assert "Family codeword" in result.to_markdown()
+    assert "SE-03" in result.to_markdown()
+
+
+def test_family_plea_with_threat_is_extortion_and_carries_codeword():
+    result = triage_email(
+        subject="Your son is in trouble",
+        body=(
+            "Your son is in jail abroad. Send $2,000 in bitcoin within "
+            "24 hours or we will hurt him and expose your family."
+        ),
+    )
+    assert result.category == "FAKE_RANSOM_DEMAND"
+    assert result.family_plea is True
+    assert "family_impersonation_plea" in result.signals
+    assert any("Family codeword check (SE-03)" in g for g in result.guidance)
+    # Base calm-response guidance still leads; the codeword item rides
+    # with it, not instead of it.
+    assert any("Do NOT pay" in g for g in result.guidance)
+    assert "Family codeword" in result.to_markdown()
+
+
+def test_trouble_without_money_request_is_not_a_plea():
+    # A notification, not a plea: trouble, but nobody asks for money.
+    result = triage_email(
+        subject="Update on your son",
+        body=(
+            "Your son was in an accident and is in the hospital. "
+            "Please call the ward on the number you have for us."
+        ),
+    )
+    assert result.family_plea is False
+    assert "family_impersonation_plea" not in result.signals
+    assert result.category == "NOT_EXTORTION"
+    assert result.guidance == []
+
+
+def test_money_request_without_trouble_is_not_a_plea():
+    result = triage_email(
+        subject="Your invoice",
+        body="Hi, your monthly statement is ready. Total $120 due on the 1st.",
+    )
+    assert result.family_plea is False
+    assert "family_impersonation_plea" not in result.signals
+
+
+def test_bare_abroad_without_trouble_is_not_a_plea():
+    # "Abroad" alone is not a trouble marker: a tuition mail must not
+    # trigger the codeword item.
+    result = triage_email(
+        subject="Tuition",
+        body=(
+            "Your son is studying abroad. Please send the tuition money "
+            "of $4,000 to the university account by Friday."
+        ),
+    )
+    assert result.family_plea is False
+    assert "family_impersonation_plea" not in result.signals
+
+
+def test_codeword_guidance_states_the_setup_and_the_no_storage_rule():
+    result = triage_email(
+        body="I'm stranded, please send money urgently, I'm in trouble.",
+    )
+    assert result.family_plea is True
+    item = next(g for g in result.guidance if "Family codeword" in g)
+    # The owner can set it up: agreed offline, in person, before travel.
+    assert "in person" in item
+    assert "before travel" in item
+    # No codeword, no transfer; call back on a trusted number.
+    assert "No codeword, no transfer" in item
+    assert "call the person back on a number you already trust" in item
+    # Burned phrase: re-agree a new one in person.
+    assert "burned" in item
+    # The phrase itself is never stored by the fleet.
+    assert "never stores the codeword" in item
+    assert "never write it into a chat, email or note" in item
+
+
+def test_codeword_is_never_stored():
+    # The module accepts no phrase and stores none: no parameter, no
+    # attribute, no result key holds a codeword value.
+    import inspect
+
+    from app.services import extortion_mail_triage as mod
+
+    params = inspect.signature(mod.triage_email).parameters
+    assert "codeword" not in params and "phrase" not in params
+    result = triage_email(
+        body="I'm in trouble abroad, send $500 now for bail.",
+    )
+    assert not hasattr(result, "codeword")
+    assert not hasattr(result, "phrase")
+    assert "codeword" not in result.as_dict()
+    assert "phrase" not in result.as_dict()
+    # The only "codeword" in the module is the guidance item itself.
+    assert hasattr(mod, "FAMILY_CODEWORD_GUIDANCE")

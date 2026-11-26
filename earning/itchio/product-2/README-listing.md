@@ -35,11 +35,12 @@ cost views. The YouTube Creator Starter Pack removes all three.
 
 1. **5 complete script templates** — listicle, explainer, story/ documentary,
    comparison and myth-busting formats. Each one is a fill-in structure with the
-   hook, retention beats and payoff already mapped, plus a fully worked example so
-   you can see the template in action before you write a word.
+   hook, retention beats and payoff already mapped, plus sample lines throughout
+   and a worked opening example (Template A) so you can see a template in action
+   before you write a word.
 2. **The 100-Hook Bank** — 100 opening lines organised by type (curiosity gap,
    bold claim, mistake/warning, number-led, question, story cold-open and more),
-   each with a fill-in-the-blank version for your niche.
+   90 of them with a fill-in-the-blank version for your niche.
 3. **Thumbnail Text Guide** — the 3-word rule, contrast and readability checks,
    25 proven thumbnail text formulas, and the mistakes that make thumbnails
    invisible on a phone screen.
