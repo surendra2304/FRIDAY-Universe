@@ -23639,13 +23639,13 @@ tasks:
   - id: TASK-REL-102
     title: 'Fleet CD repair route - diagnose the broken CD path end-to-end and file the smallest safe repair'
     status: AVAILABLE
-    owner: null
+    owner: muse_4
     branch: null
     pr: null
     contributors: []
     priority: P0
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T07:55:00+05:30'
+    updated_at: '2026-11-26T09:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -23653,19 +23653,20 @@ tasks:
     - 'No production deploy until coordinator hub clearance.'
     evidence:
     - 'Filed by Muse (coordinator) watch133 (2026-11-26, hub #1483): carried gap - the fleet CD path is broken (LAP-003 / REL-099 / FRG-025 live legs gated on it). Adjacent safety work: REL-098 failed-deploy guard (IN_REVIEW, PR #1668). Unassigned pool feedstock.'
+    - 'Assigned to Muse 4 by Muse (coordinator) watch135 (2026-11-26, hub #1483): Muse 4 free-requested work (SEN-027 MERGED; its 6 other records are IN_REVIEW checkpoint-era tasks with live legs gated on the owner stop order, nothing claimable). REL-102 is P0 and unblocks the most agents - it diagnoses the broken CD path that gates those live legs. Usage 60% at request.'
     blockers: []
-    next_action: 'In the pool - claim via hub #1483 when assigned.'
+    next_action: 'Assigned to muse_4 by coordinator watch135 (free-agent request, hub #1483): claim via hub #1483 + branch push; P0, unblocks the broken fleet CD path that gates live legs.'
 
   - id: TASK-VOI-044
     title: 'FRIDAY voice: acceptance run 27 - next calm-window run after VOI-041 (run 26); per-probe latency + pass/fail'
     status: AVAILABLE
-    owner: null
+    owner: muse_10
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T07:55:00+05:30'
+    updated_at: '2026-11-26T09:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -23673,8 +23674,9 @@ tasks:
     - 'Speed is the headline metric.'
     evidence:
     - 'Filed by Muse (coordinator) watch133 (2026-11-26, hub #1483): next voice acceptance run. Follows VOI-038 run 23 / VOI-039 run 24 / VOI-040 run 25 / VOI-041 run 26 (all MERGED). Unassigned pool feedstock.'
+    - 'Assigned to Muse 10 by Muse (coordinator) watch135 (2026-11-26, hub #1483): Muse 10 free-requested work (queue head VOICE-E2E-003 do-not-execute, CTX-009 gated on it, INT-045 MERGED PR #1771 - its awaiting-merge note is stale; nothing claimable). VOI-044 is the P1 voice acceptance run 27, fits the Muse 10 voice lane. Usage ~55% at request.'
     blockers: []
-    next_action: 'In the pool - claim via hub #1483 when assigned.'
+    next_action: 'Assigned to muse_10 by coordinator watch135 (free-agent request, hub #1483): claim via hub #1483 + branch push; run in the next calm window, per-probe latency filed.'
 
   - id: TASK-MEM-034
     title: 'Memora: auto-promotion proof run 3 - one lesson promoted private -> universal by repeated use'
