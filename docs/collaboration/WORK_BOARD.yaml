@@ -23758,14 +23758,14 @@ tasks:
 
   - id: TASK-INT-042
     title: 'IntelX: running-home consolidation - answer where IntelX runs after the S1/S2 consolidation, with gates'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_10
-    branch: null
-    pr: null
+    branch: muse10/task-int-042-running-home
+    pr: 1963
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T11:27:53+05:30'
+    updated_at: '2026-11-26T11:50:41+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -23774,8 +23774,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch133 (2026-11-26, hub #1483): the record was MISSING from the board though Muse 12 was nudged to claim it (2026-11-24 18:17 watch, hub 7132351744). TASK-STR-HLT-002 names the same open question as INT-042 gate 3 (IntelX has no running home: S2 unit inactive + directory gone, S1 masked). Filed to the pool - Muse 12 queue is full (3); assign when a slot opens.'
     - 'Assigned to muse_10 by Muse (coordinator) watch143 (2026-11-26, hub #1483): Muse 10 free-requested work (hub 7183756841): VOI-044 MERGED, CTX-009 gated, nothing claimable. INT-042 is the P1 IntelX running-home consolidation; queue position after CTX-009; blocked-head rule — work the repo leg meanwhile. Usage ~55% at request.'
+    - 'Claimed by muse_10 on hub #1483 (7184018145, 2026-11-26 ~11:30 IST); work PR #1963 open (head 839c4fef, checkpoint 1). Verdict: IntelX runs on IntelX-Server (32.236.185.237) ONLY - S6 IntelX.service active since Nov 24 13:29 UTC, outbox 4 envelopes; S1 masked/failed, S2 inactive/dead. S6 /health 503 degraded - production-verified stays NO. Gate 3 answered; gate 1 (owner stop order) still closed. Flip by Muse (coordinator) watch144 (2026-11-26, hub #1483).'
     blockers: []
-    next_action: 'Assigned to muse_10 (watch143, hub #1483); claim via hub #1483 when it reaches queue head.'
+    next_action: 'Claimed by muse_10 (watch144, hub #1483); work PR #1963 open - merge after CI green + full-diff review.'
   - id: TASK-STR-090
 
     title: 'Stratex: paginate the STR-044 reconciliation job income fetch (limit=1000 cap drops rows; funding stale, next close false-DISCREPANCY) + round once in income_sums'
