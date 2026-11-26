@@ -23012,14 +23012,14 @@ tasks:
     next_action: 'Work PR #1925 open (head 0f3ab624); merge HELD on contracts - pre-existing Futuris time-bomb, fix is TASK-REL-101 (Muse TP10). Rebase onto main once REL-101 lands.'
   - id: TASK-DB-008
     title: 'DB: Back up FRIDAY local state files on FRIDAY-Server (S3) - friday.db + JSON state'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_16
-    branch: null
-    pr: null
+    branch: muse16/task-db-008-friday-state-backup
+    pr: 1944
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T22:36:00+05:30'
+    updated_at: '2026-11-26T09:35:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
@@ -23028,8 +23028,9 @@ tasks:
     evidence:
     - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): FRIDAY local state files (S3): FRIDAY/backups empty, .backups newest 2026-11-04; ADB schema backup covers the schema only. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
     - 'Coordinator watch108 (2026-11-25): assigned to muse_16 as queue position 3 behind TASK-INT-039 and TASK-VYR-049; FRIDAY local-state backup.'
+    - 'Checkpoint 1 merged via PR #1944 (merge 2893a6e8, coordinator watch137, 2026-11-26): scoping doc docs/collaboration/TASK-DB-008-FRIDAY-STATE-BACKUP.md - DB-007 overlap DISTINCT, no existing backup covers the acceptance files, baseline friday.db 344K stale 2026-10-27. Live backup + restore proof gated on bridge approval 7113152293.'
     blockers: []
-    next_action: 'Assigned to muse_16 as queue position 3 by coordinator watch108; claim via hub #1483 when it reaches queue head.'
+    next_action: 'Checkpoint 1 merged via PR #1944 (merge 2893a6e8, coordinator watch137): scoping filed - FRIDAY local-state backup gaps proven, no live backup yet. Muse 16 continues to checkpoint 2 (dated backup + restore/read-back proof on S3, gated on bridge approval 7113152293).'
   - id: TASK-DB-009
     title: 'DB: Back up Sentinel local audit ledger on Oracle Server 1 - audit.jsonl, 33 entries'
     status: AVAILABLE
