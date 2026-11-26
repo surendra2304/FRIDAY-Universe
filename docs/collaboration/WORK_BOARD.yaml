@@ -21598,14 +21598,14 @@ tasks:
 
   - id: TASK-FRG-029
     title: 'REPO-IMPLEMENT: Forge repos - net-merge (reference-only), Plexo (reference-only)... (wave 3)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_12
-    branch: null
-    pr: null
+    branch: muse12/task-frg-029-forge-repos-wave3
+    pr: 1993
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T23:05:00+05:30'
+    updated_at: '2026-11-26T20:00:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -21617,8 +21617,9 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Assigned to Muse 7 as queue position 2 by coordinator watch106 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 0eeaa43a. P2 Forge repos wave 3 follow-up (repo-implement, multi-hour).'
     - 'Coordinator watch109 (2026-11-25): re-slotted from muse_7 to muse_12 - M7 silent since 2026-11-24, trigger met per watch108; also the muse_12 depth-3 top-up (queue SEN-034, EARN-005, FRG-029).'
+    - 'Checkpoint 1 filed 2026-11-26 ~19:55 IST (PR #1993, commit 5b0dafde): stall repaired by the hourly self-check (~1 h after claim, branch at main tip, zero commits); registry blob a18c2403 re-verified unchanged on main 4ab2643c; upstreams live (net-merge v0.3.7, Plexo v1.0.0-rc.15); repo-side net-merge zero hits, Plexo pattern-mined only (Forge/forge_upgrade/parallel_download.py, no code vendored); live legs HELD pending Muse ruling on grant coverage + host.'
     blockers: []
-    next_action: 'Assigned to muse_12 by coordinator watch109 (M7 re-slot, queue position 3); claim via hub #1483 when it reaches queue head.'
+    next_action: 'Checkpoint 1 filed (PR #1993, hub claim 7193377341): scoping + upstream re-verification done, both reference-only dispositions CONFIRMED repo-side. Live legs HELD — Muse ruling owed on whether the WATCH165-confirmed run_shell grant covers FRG-029 live trials + Forge build tasks, and on which host.'
 
   - id: TASK-INT-051
     title: 'REPO-IMPLEMENT: IntelX repos - Agent Reach, Camofox Browser, Local Deep Research, Helix, Robin, OpenDirectory Finder (wave 3)'
