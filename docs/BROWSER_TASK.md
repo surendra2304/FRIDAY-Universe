@@ -7,6 +7,12 @@ here and the library is not vendored. (The owner may still install it
 laptop-side later; this loop's decider is the seam where a different
 planner could plug in.)
 
+**Release pin (TASK-LAP-003, 2026-11-26):** browser-use **1.0.8**
+(2026-11-22) — the library version for any laptop-side install. Do not
+follow past 1.x without a fresh check: the v1.0 rewrite shipped Nov
+2026 and the README warns to pin the version exactly. The pin is
+recorded here, not in code, because the library is not vendored.
+
 ## What already existed vs what this adds
 
 FRIDAY already drives a browser **on the server** (`real_browser_agent`,
