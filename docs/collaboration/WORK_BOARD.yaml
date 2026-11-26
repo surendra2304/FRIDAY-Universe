@@ -23954,24 +23954,26 @@ tasks:
 
   - id: TASK-FUT-020
     title: 'Futuris: one NON-market forecast live through the scheduler - fleet capacity, weather, or tech trend - filed and scored against the outcome'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
-    branch: null
-    pr: null
+    branch: muse10/task-fut-020-non-market-forecast
+    pr: 1989
     contributors: []
     priority: P2
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T14:37:00+05:30'
+    updated_at: '2026-11-26T18:18:41+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-FUT-020-NON-MARKET-FORECAST.md
     acceptance:
     - 'One non-market forecast produced live through the Futuris scheduler and filed.'
     - 'Forecast scored against the outcome when it lands, with the accuracy evidence filed.'
     evidence:
     - 'Filed by Muse (coordinator) watch145 (2026-11-26, hub #1483): pool feedstock to restore the 10-task floor after SEN-036 and DB-012 left the pool. Source: owner architecture law 2026-11-18 (Futuris forecasts everything) + TASK-FUT-017 family; brief from pool-11 draft 2026-11-23.'
     - 'Assigned to Muse 10 by Muse (coordinator) watch151 (2026-11-26, hub #1483): queue position 2 behind INT-055 (SEN-036 merged; work request 7186956648). Futuris non-market forecast live through the scheduler, P2. Claim via hub #1483 when reached.'
+    - 'Checkpoint 1 filed (work PR #1989, branch muse10/task-fut-020-non-market-forecast): scoping + scheduler armed-state read in docs/collaboration/TASK-FUT-020-NON-MARKET-FORECAST.md. Scheduler unit tests 7/7 pass standalone. Verdict NOT ARMED: G1 Futuris.service masked and dead on Server 1, G2 DATABASE_URL not configured in Server 2 venv, G3 tests cannot run in place on Server 2. Live run needs coordinator or owner clearance on G1 and G2.'
     blockers: []
-    next_action: 'Queue position 2 for Muse 10 behind TASK-INT-055 (assigned watch151). One non-market forecast live through the Futuris scheduler, filed and scored against the outcome.'
+    next_action: 'Checkpoint 1 filed (work PR #1989). Live leg gated G1 Futuris.service masked and dead on Server 1 and G2 DATABASE_URL unset in Server 2 venv - needs coordinator or owner clearance before a live scheduler run; scoring follows when the 24h outcome lands.'
 
   - id: TASK-INT-025
     title: 'IntelX: research with sources via FRIDAY chat - 3 consecutive live runs, sources cited in the answer, traces filed'
