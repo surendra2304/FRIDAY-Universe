@@ -130,6 +130,9 @@ from friday.tools.builtin import (
     TriageInboxTool,
     ReadOwnCodebaseTool,
     ReadScreenTextTool,
+    RsvpControlTool,
+    RsvpStartTool,
+    RsvpStatusTool,
     RememberFactTool,
     ReplaceFileContentTool,
     RunSkillTool,
@@ -206,6 +209,12 @@ class ToolExecutionMixin:
             # (generation only, no outreach). Registered at creation, per
             # the AUDIT-2 wiring lesson: export-only is not implemented.
             registry.register(LocalBusinessTool())
+            # TASK-FRD-058: RSVP speed-reading aid — registered at
+            # creation, per the AUDIT-2 wiring lesson: export-only is
+            # not implemented. Voice/chat control needs these live.
+            registry.register(RsvpStartTool())
+            registry.register(RsvpControlTool())
+            registry.register(RsvpStatusTool())
             registry.register(StratexPortfolioTool())
             registry.register(SentinelSecurityTool())
             registry.register(FuturisForecastTool())
