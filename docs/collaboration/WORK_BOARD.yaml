@@ -17656,25 +17656,27 @@ tasks:
   - id: TASK-INT-037
 
     title: 'IntelX: root-cause and fix the Futuris cursor 401s so scheduled research cycles stop failing auth'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_1
-    branch: null
-    pr: null
+    branch: muse1/task-int-037-futuris-cursor-401s
+    pr: 1917
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-26T05:21:04+05:30'
+    updated_at: '2026-11-26T06:07:13+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
+      - docs/collaboration/TASK-INT-037-FUTURIS-CURSOR-401S.md
     acceptance:
       - 'The 401 source is named with log evidence (which credential/check rejects the Futuris cursor calls); a fix is merged; three consecutive scheduled IntelX/Futuris cycles run with zero cursor 401s, filed as evidence.'
     evidence:
       - 'Drafted by the coordinator enforcement round 2026-11-23 ~22:40 IST: Futuris cursor 401s were flagged as a next-pool candidate on 2026-11-23 and nobody owns them. Pool floor refill.'
       - 'Assigned Muse 3 queue head (hub 7109363715, 2026-11-23 ~23:24 IST); claim branch muse3/task-int-037-futuris-cursor-401s pushed @13cdf268 (base, no commits yet at 2026-11-23 ~23:37 IST). Board flip rides in the coordinator consolidated board PR 2026-11-24 ~00:15 IST.'
       - 'Merged by coordinator watch 2026-11-24 ~04:45 IST: PR #1574 merged (merge cae99f6c5a76faf4df7f0fb06d3cfa01f3f9161b, head 7f3c448f); CI 9/9 complete first-hand (7 success, 2 skipped, 0 failed). Restart actor PROVEN: GitHub Actions CD workflow on push to main.'
-      - 'Re-slotted to Muse 1 by coordinator watch122 (Muse 3 non-poster enforcement); Muse 1 takes it as queue pos 3.'
+      - 'Re-slotted to Muse 1 (M3 non-poster): coordinator WATCH122 (hub 7176443876) + WATCH123 nudge (7176656559); claim hub #1483 comment 7177626435, 2026-11-26 ~04:59 IST. Branch muse1/task-int-037-futuris-cursor-401s @ main a0a45bdf (M3 branch had 0 commits, 1088 behind main — filed fresh).'
+      - 'Close-out (work PR #1917, Muse 1): all three legs verified first-hand on main a0a45bdf — 401 source named (stale FUTURIS_MEMORA_API_KEY → Memora authenticate_agent rejection; 174 cursor 401s in 45 min pre-fix, 0 in 949 requests post-fix); fix merged via PR #1661 (merge 547cbd98, guard code + tests byte-identical on main, untouched since); three clean cycles satisfied per the ruling (M8 window: 17 consecutive clean 15-min cycles). NEW: guard tests never ran in CI (Futuris step listed 2 files) — wired into the tier-1 invocation in this PR; CI on the head is the proof. Fresh S2 state (bridge probes ~05:09 IST): Futuris.service inactive/dead, IntelX.service inactive/disabled, no live Futuris .env on S2 — no S2-side 401 source remains.'
     blockers: []
-    next_action: 'Start from the live IntelX/Futuris logs on S2: find the first cursor 401, name the rejecting check, then fix and prove three clean cycles.'
+    next_action: 'Work PR #1917 open: CI wiring for the 401-guard tests + close-out evidence; merge is for Muse. MERGED flip rides in the coordinator board PR after merge.'
   - id: TASK-OBS-022
 
     title: 'OBS: identify the FRIDAY.service restart actor - 3 clean restarts on S1 (20:00 / 20:10 / 21:28 IST, PID changes, no OOM kill)'
