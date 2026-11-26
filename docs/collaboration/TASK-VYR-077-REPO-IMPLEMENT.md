@@ -122,3 +122,36 @@
 - 0% of free weekly limit (checked this run; reset Mon Nov 30, 3:03 PM IST). Additional tokens 0% used.
 
 — Muse TP3
+
+## Live trial — 2026-11-26/27, VyralX-Server (run 6: all steps pass)
+
+Live leg executed 2026-11-26 ~23:45 IST – 2026-11-27 ~00:15 IST via run_shell (owner-approved 2026-11-26), standalone venv process on VyralX-Server; VyralX.service untouched, loop OFF, uploader paused, all renders unlisted/pending_review, nothing published. Trial script + JSON reports on the server under `VyralX/data/vyr077_trial_*/report.json` (run 6: `vyr077_trial_20261126-183949`). Deployed `shorts_live_path.py` verified byte-size-identical to main at trial start.
+
+### Run 6 evidence (all steps pass)
+
+| Step | Result | Evidence |
+|---|---|---|
+| transcribe | OK, 31.8s | `media/viral_sources/8kggT2ej-lo.mp4` (38.5s) → 96 timed words, tiny-whisper (cached), en |
+| clip_path_render | OK, 50.0s | `generate_shorts` → 1 clip (10.0–37.38s, 27.38s, viral_score 0.2825) → `build_clip_render_plan` (BGM upbeat_energetic.mp3, 16 cues) → `execute_render_plan` → `renderer.render_video` → clip.mp4 **1080x1920, 27.38s, 22,979,116 B, h264+aac** |
+| failure_missing_bgm | OK, 51.3s | empty music dir → plan fallback `ambient_pad` → pad synthesized (138,861 B, `media/vyr077_trial_pad/ambient_pad.m4a`) → clip.mp4 **1080x1920, 27.38s, 22,729,959 B** |
+| failure_doubled_captions_factory | OK, 64.6s | `shorts_factory.build_job` → 16 cues doubled to 32 → `build_factory_render_plan` removed **16** → short.mp4 **1080x1920, 38.4s, 28,227,642 B** (voiceover honestly None — EdgeTTS pending) |
+| watermark_step | OK, 4.0s | `watermark_video_frame` on the rendered clip with registry record `b2ae51597115` → frame_watermarked.png + marked.mp4; `verify_image` **verified=True** ("watermark matches the registry record exactly") |
+
+Both adapt entries (Short Video Factory via the factory path, AI YouTube Shorts Generator via the clip path) ran end-to-end in the live production path, including the three bad-input cases (missing BGM, doubled captions, watermark). Metrics-sync against the real channel remains a separate later step (renders held unlisted by design).
+
+### Findings from runs 1–5 (probe-proven, fixed in this PR's wiring)
+
+1. **Renderer memory cap.** At the fleet setting `RENDER_MAX_MEMORY_MB=320` — and at the code default 512 — `renderer.render_video` cannot open libx264 for 1080x1920 shorts renders (RLIMIT_AS malloc failures: "malloc of size 5353683 failed", "Cannot allocate memory"). At **1024MB** the same renders complete. The identical filter chain succeeds uncapped (probe: 640x360 landscape crop render, exit 0). Production renders succeeded as recently as 2026-11-23 (`renders/vyr045-doubled-proof.mp4`); what drifted since (ffmpeg build, .env, host state) is undetermined. **Fleet action owed (Muse/owner): raise `RENDER_MAX_MEMORY_MB` in VyralX/.env to ≥1024** — at 320 the production worker path (same cap) cannot render shorts today.
+2. **SRT vs ASS subtitle filter memory.** The SRT `subtitles`+force_style filter path needs materially more address space than the `ass` path: SRT renders died mid-encode at a 1024MB cap ("Failed to allocate packet of size 63101"); ASS renders completed. Production already uses ASS companions (renders/ carries .ass files). Fix in this PR: `execute_render_plan` also writes the ASS companion via `captions.write_ass` (the renderer already prefers it).
+3. **Ambient-pad container bug.** `audio_mixer.synthesize_ambient_pad_bgm` encodes AAC; `execute_render_plan` named the output `ambient_pad.wav`, producing an AAC-in-WAV file ffmpeg cannot decode ("Decode error rate 1 exceeds maximum 0.666667") — the missing-BGM fallback could never complete. Fix in this PR: pad named `ambient_pad.m4a`.
+4. **Resource pass-through.** `execute_render_plan` exposed no way to set the renderer's resource caps. Fix in this PR: `max_memory_mb`/`cpu_threads` pass-through (None = fleet settings). Runs 5–6 used 1024MB explicitly.
+5. **Pad location contract.** The renderer refuses BGM outside the media directory, so `data_root` must sit inside it when the pad fallback can fire — now stated in the docstring.
+
+Runs 1–4 are recorded honestly in the trial reports: run 1 (first three viral_sources have ~no speech for tiny-whisper; subtitle data-dir rule), run 2 (landscape renders vs the 320MB cap; pad location), run 3 (vertical source still fails at 320MB — x264 malloc), run 4 (ASS fix missing — SRT path dies mid-encode at 1024MB), run 5 (4/5 — pad container bug), run 6 (5/5).
+
+### State after this PR
+
+- implemented YES (wiring + 3 fixes) / tested YES (repo tests + live trial run 6) / merged NO (this PR) / deployed NO (needs merge + Fleet CD) / production-verified NO (needs Muse 7's paired verification on the deployed build + the .env cap raise).
+- Verifier: Muse 7 (watch057).
+
+— Muse TP3, live trial 2026-11-27

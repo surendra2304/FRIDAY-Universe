@@ -130,3 +130,38 @@ def test_wrong_kind_rejected():
 def test_empty_clip_window_has_no_cues():
     assert lp.clip_subtitles([], 0.0, 10.0) == []
     assert lp.clip_subtitles(_timed("hello world"), 100.0, 110.0) == []
+
+
+def test_execute_plan_writes_ass_and_m4a_pad_and_passes_resources(monkeypatch, tmp_path):
+    # Live-trial fixes (2026-11-26): the renderer prefers the ASS
+    # companion; the ambient pad must be .m4a (an AAC stream inside a
+    # WAV container is undecodable downstream); resource caps pass
+    # through to the renderer.
+    calls = {}
+    monkeypatch.setattr(lp.captions, "write_srt",
+                        lambda cues, path: calls.setdefault("srt", str(path)))
+    monkeypatch.setattr(lp.captions, "write_ass",
+                        lambda cues, path: calls.setdefault("ass", str(path)))
+    monkeypatch.setattr(lp.audio_mixer, "synthesize_ambient_pad_bgm",
+                        lambda path, dur, mood: calls.setdefault("pad", str(path)))
+    def fake_render(source, destination, preset, **kw):
+        calls["render_kw"] = kw
+        return str(destination)
+    monkeypatch.setattr(lp.renderer, "render_video", fake_render)
+    plan = {
+        "status": "planned", "publish": False,
+        "destination": str(tmp_path / "clip.mp4"),
+        "subtitle_file": str(tmp_path / "clip.srt"),
+        "subtitle_cues": [{"start_seconds": 0.0, "end_seconds": 1.0, "text": "hi"}],
+        "bgm_path": None, "bgm_fallback": "ambient_pad",
+        "duration_seconds": 5.0, "voiceover_path": None,
+        "fit_mode": "crop", "preset": "shorts", "source_path": "src.mp4",
+        "duplicated_cues_removed": 0,
+    }
+    result = lp.execute_render_plan(plan, data_root=tmp_path,
+                                    max_memory_mb=1024, cpu_threads=2)
+    assert calls["ass"].endswith("clip.ass")
+    assert calls["pad"].endswith("ambient_pad.m4a")
+    assert calls["render_kw"]["max_memory_mb"] == 1024
+    assert calls["render_kw"]["cpu_threads"] == 2
+    assert result["bgm_path"].endswith("ambient_pad.m4a")
