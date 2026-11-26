@@ -211,6 +211,7 @@ def test_execute_routes_large_gemini_prompt_directly_to_fallback(monkeypatch):
     assert receipt["prompt_tokens_est"] == pytest.approx(13_519, rel=0.01)
     assert receipt["fallback_used"] is True
     assert receipt["fallback_direct"] is True
+    assert receipt["fallback_reason"] == "large_prompt_primary_skipped"
     assert receipt["latency_ms"] is not None and receipt["latency_ms"] >= 0
 
 
@@ -252,13 +253,16 @@ def test_execute_records_short_prompt_receipt_from_primary(monkeypatch):
     assert receipt["deadline_class"] == "short"
     assert receipt["fallback_used"] is False
     assert receipt["fallback_direct"] is False
+    assert receipt["fallback_reason"] is None
     assert receipt["timeout_budget_s"] == pytest.approx(60.0)
     assert receipt["latency_ms"] is not None and receipt["latency_ms"] >= 0
 
 
 def test_execute_records_error_receipt_and_reraises(monkeypatch):
     calls = []
-    _wire_providers(monkeypatch, calls, fail={"gemini", "openrouter", "groq"})
+    _wire_providers(
+        monkeypatch, calls, fail={"gemini", "openrouter", "groq", "apinex"}
+    )
     gateway = _gateway({"gemini": KeyPool("gemini", ["k1"])})
 
     with pytest.raises(GatewayError):
@@ -266,9 +270,32 @@ def test_execute_records_error_receipt_and_reraises(monkeypatch):
 
     receipt = routing_receipts()[0]
     assert receipt["outcome"] == "error"
+    assert receipt["fallback_reason"] is not None
     assert receipt["error"]
     assert receipt["provider_served"] is None
     assert receipt["latency_ms"] is not None and receipt["latency_ms"] >= 0
+
+
+def test_execute_records_fallback_reason_when_primary_fails(monkeypatch):
+    # TASK-INF-045: a primary failure that the ladder serves must carry
+    # its reason on the receipt -- no silent fallback.
+    calls = []
+    _wire_providers(monkeypatch, calls, fail={"gemini"})
+    gateway = _gateway(
+        {
+            "gemini": KeyPool("gemini", ["k1"]),
+            "openrouter": KeyPool("openrouter", ["k1"]),
+        }
+    )
+
+    resp = asyncio.run(gateway.execute("gemini", _request(), capability="general"))
+
+    assert resp.provider == "openrouter"
+    receipt = routing_receipts()[0]
+    assert receipt["outcome"] == "success"
+    assert receipt["fallback_used"] is True
+    assert receipt["fallback_direct"] is False
+    assert receipt["fallback_reason"] in {"primary_error", "primary_unavailable"}
 
 
 # ---------------------------------------------------------------------------

@@ -24041,14 +24041,14 @@ tasks:
     next_action: 'Queue head for Muse 7 (assigned watch153) - claim via hub #1483 + branch push. Sample one week of INF-022 routing receipts; file per-class fallback rate + deadline compliance.'
   - id: TASK-INF-045
     title: 'Inference: fallback-path audibility - receipts record a fallback reason for every fallback; live-probe a forced fallback'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_7
-    branch: null
-    pr: null
+    branch: muse7/task-inf-045-fallback-audibility
+    pr: 2003
     contributors: []
     priority: P2
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T15:24:00+05:30'
+    updated_at: '2026-11-26T23:27:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-045-EVIDENCE.md

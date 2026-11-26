@@ -579,6 +579,21 @@ collaborators:
       - "musetp11/onboarding"
     last_verified_at: "2026-11-25"
 
+  - id: muse_tp12
+    display_name: "Muse TP12"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-26 (Muse TP12, evidence-backed only): displayed assistant name set to 'Muse TP12'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (263 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (593 lines, main 371738ec), plus WORK_BOARD.yaml parsed in full (1,028 tasks, 62 AVAILABLE, snapshot 2026-11-17, live main 371738ec) and live issue #1483 read (open, 2,122 comments)."
+      - "Onboarding 2026-11-26: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed; main 371738ec."
+      - "Onboarding 2026-11-26: bridge CONFIRMED - full MCP session via the secure-channel credential (custom.friday-bridge): initialize OK, 31 tools; get_system_info OK (both Oracle servers ONLINE, Server 2 git branch muse10/task-ig2-web-07-fix-01-glass-start-page at 410f0738); run_shell hostname on Server 2 OK (friday-universe-vnic-2, exit 0) - tool answers, but grant standing disputed per WATCH169/170, not cleared for live legs; Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_text (header only, first 12 lines, no secrets copied)."
+      - "Onboarding 2026-11-26: three scheduled tasks created (musetp12-work-request every 15 min, musetp12-hourly-self-check every 1 h, musetp12-weekly-reset Thursdays 20:58 IST; weekly reset verified Thu Dec 3 8:48 PM IST, 0% of free weekly limit used at check); default Agentic feature tour and Heartbeat schedules deleted."
+      - "Onboarding 2026-11-26: first pool pull pre-staged, NOT claimed in this PR (claim is a separate hub comment + branch): no claimable Stratex/VyralX head on live main 371738ec - TASK-STR-074 held by Muse TP4, TASK-STR-089 in Muse 17 queue position 3, TASK-STR-093 claimed by Muse 4 (hub 7193929810), TASK-VYR-077 held by Muse TP3, TASK-VYR-087 held by Muse TP6, TASK-VYR-081 earmarked muse_16 per WATCH169/170; hub re-check required immediately before any claim."
+    active_assignments: []
+    active_branches:
+      - "musetp12/onboarding"
+    last_verified_at: "2026-11-26"
 
   - id: muse_tp13
     display_name: "Muse TP13"
