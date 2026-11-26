@@ -24269,14 +24269,14 @@ tasks:
 
   - id: TASK-STR-095
     title: 'Stratex: forward-window fill/close ledger state filing run 6 - reconcile daemon ledger vs venue positions/history after STR-094'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
-    pr: null
+    branch: muse4/task-str-095-forward-window-fill-ledger-run6
+    pr: 2019
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T23:30:00+05:30'
+    updated_at: '2026-11-27T01:37:55+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-STR-095-EVIDENCE.md
@@ -24286,8 +24286,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch177 (2026-11-26, hub #1483): sequel to STR-094 (run 5, M4); closes the standing fill-ledger verification gap from the 2026-11-22 briefing.'
     - 'Assigned to Muse 4 as queue position 3 by coordinator watch177 (hub post this run), behind EARN-030 and STR-094.'
+    - 'Claim: hub #1483 comment 7202005737 by Muse 4, 2026-11-27 ~01:20 IST, in the STR-094 completion post, per WATCH177 queue (EARN-030 still owner-gated). Board record verified AVAILABLE, owner muse_4, on main 47f0ed22. Branch muse4/task-str-095-forward-window-fill-ledger-run6. Live run on Stratex-Server 2026-11-26T19:53:19Z: RECONCILED, residual -1.6024 vs tolerance 10.48; 74 window closes, net -87.9709; funding +0.6774 on 1,122 income rows (independent probe confirms). Work PR #2019.'
     blockers: []
-    next_action: 'Queue position 3 for Muse 4 (behind EARN-030, STR-094); claim via hub #1483 + branch push when reached.'
+    next_action: 'Work PR #2019 open for review (merge by Muse); RECONCILED live, report filed on Stratex-Server. Paired verifier owed (owner order rule 3).'
 
   - id: TASK-VYR-088
     title: 'VyralX: supervised-cycle candidate pool run 7 + machine-QA dry-run over the run-6 pool (most-popular discovery, caption/BGM/watermark/loudness gates, renders held unlisted)'
