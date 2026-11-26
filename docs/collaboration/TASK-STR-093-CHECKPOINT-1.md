@@ -1,0 +1,15 @@
+# TASK-STR-093 — Checkpoint 1 (scoping) — Muse TP13
+
+- **Task:** Stratex: forward-window fill/close ledger state filing run 4 — reconcile daemon ledger vs venue positions/history.
+- **Owner:** Muse TP13. **Claim:** coordinator ruling in WATCH171 (hub #1483 comment 7197061449, 2026-11-26 ~21:31 IST) — TASK-STR-093 re-slotted Muse 4 → Muse TP13 per the owner rule (no PR/hub activity for 1h → re-slot). M4's stall report: hub 7196606028 (~21:08 IST), claimed 19:21 IST, zero work filed.
+- **Claim base:** main `0c89b38b` (verified first-hand this run; PR #1994 DB-012 merged). Board blob `ded5ea4c` (24,265 lines, live main).
+- **Board record verified first-hand:** status AVAILABLE, owner null, branch null, pr null, priority P2. Acceptance: (1) daemon fill/close ledger reconciled end to end against the venue positions/history for the forward window; fills, closes, net P&L filed as evidence; (2) method matches the STR-090/091 runs (daily reconciler + income pagination). Evidence file: `docs/collaboration/TASK-STR-093-EVIDENCE.md`.
+- **M4's branch left untouched:** `muse4/task-str-093-forward-window-fill-ledger-run4` at `44cb0cef` (claim base, zero work commits, verified in M4's stall report). This claim uses a fresh branch `musetp13/task-str-093-forward-window-fill-ledger-run4` from main `0c89b38b`.
+- **Prior runs (method reference):**
+  - STR-091 (run 2, Muse 4): evidence filed on main (`docs/collaboration/TASK-STR-091-EVIDENCE.md`). Verdict RECONCILED — window identity residual **−1.6025 USDT** vs 10.51 tolerance; ledger 82 closes, window net −77.1101; venue 77 closes in window. Method: merged STR-044 daily reconciler run live on Stratex-Server (server 4) from a fresh worktree at the claim base; Binance Futures demo only, read-only (signed GETs, no orders, ledger never written); report at `Stratex/state/reconciliation/daily_2026-11-26.json`.
+  - STR-092 (run 3, Muse TP9): board CLAIMED, owner muse_tp9, queue position 3 — no branch, no PR, evidence doc 404 on main as of this run. Run 3 has not filed evidence yet; run 4 follows run 2's filed method.
+- **Method for run 4:** same reconciler, `Stratex/scripts/daily_fill_ledger_reconciliation.py` — verified present on claim base (blob `f12f5fca`, 50,053 bytes). Daily reconciler + income pagination, Binance Futures demo read-only, forward window from 2026-11-15T11:29:49+05:30.
+- **LIVE LEG HELD — no server touch this checkpoint.** The run_shell grant is DISPUTED (hub 7196866222, Muse 19 correction ~21:22 IST); all live legs held pending a coordinator ruling. Per the WATCH171 ruling: repo-side prep first. No bridge call, no server read, no venue call made in this checkpoint. The live reconciliation run follows the STR-091 method only once the grant ruling lands.
+- **Next:** (1) await grant ruling on the hub; (2) run the reconciler live per the STR-091 method and file `docs/collaboration/TASK-STR-093-EVIDENCE.md`; (3) work PR with the board flip AVAILABLE → CLAIMED/muse_tp13 (flip rides in the work PR per team convention; the coordinator board PR also lists STR-093 → CLAIMED muse_tp13).
+
+— Muse TP13, 2026-11-26 ~21:35 IST
