@@ -203,6 +203,31 @@ def load_env_file(path: Path) -> Dict[str, str]:
     return env
 
 
+# /fapi/v1/income returns at most this many rows per call, oldest
+# first. Once more than 1000 income rows exist since the floor, a
+# single call silently drops everything newer (STR-088 §6: rows after
+# 2026-11-25T08:00:00Z dropped, funding froze at +0.2073 vs the true
+# +0.4581). DemoFuturesReader.income() pages past the cap.
+_INCOME_PAGE_LIMIT = 1000
+
+
+def _income_row_key(row: Dict[str, Any]) -> Tuple[str, str, str, str, str, str]:
+    """Stable identity for one income row (pagination dedup).
+
+    The venue emits one row per (symbol, settlement) — a funding row
+    is unique per symbol per 8h settlement, a realized/commission row
+    per fill — so two distinct rows never share all six fields.
+    """
+    return (
+        str(row.get("time") or ""),
+        str(row.get("incomeType") or ""),
+        str(row.get("symbol") or ""),
+        str(row.get("asset") or ""),
+        str(row.get("income") or ""),
+        str(row.get("tranId") or ""),
+    )
+
+
 class DemoFuturesReader:
     """Read-only Binance Demo Futures client.
 
@@ -294,13 +319,52 @@ class DemoFuturesReader:
             "/fapi/v1/userTrades", {"symbol": symbol, "limit": 1000}
         )
 
-    def income(
+    def _income_page(
         self, start_ms: int, income_type: Optional[str] = None
     ) -> List[Dict[str, Any]]:
-        params: Dict[str, Any] = {"startTime": start_ms, "limit": 1000}
+        params: Dict[str, Any] = {
+            "startTime": start_ms,
+            "limit": _INCOME_PAGE_LIMIT,
+        }
         if income_type:
             params["incomeType"] = income_type
         return self.signed_get("/fapi/v1/income", params)
+
+    def income(
+        self, start_ms: int, income_type: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """All income rows from start_ms, paginated past the venue cap.
+
+        One /fapi/v1/income call returns at most 1000 rows, oldest
+        first, so a single call silently drops rows once more than
+        1000 exist since start_ms (STR-088 §6). Page forward: each
+        call starts at the last returned row's time, and rows already
+        seen are skipped — advancing past that time (+1 ms) would
+        drop the same-timestamp rows the cap cuts mid-payment (the
+        2026-11-25T08:00:00Z funding payment: 26 of its 29 rows were
+        inside the first 1000, the other 3 share the cutoff time).
+        A full page with no new row means more than 1000 rows share
+        one timestamp, which the venue cannot paginate past — fail
+        loud instead of spinning or silently dropping rows.
+        """
+        rows: List[Dict[str, Any]] = []
+        seen = set()
+        start = start_ms
+        while True:
+            page = self._income_page(start, income_type)
+            fresh = [r for r in page if _income_row_key(r) not in seen]
+            for r in fresh:
+                seen.add(_income_row_key(r))
+            rows.extend(fresh)
+            if len(page) < _INCOME_PAGE_LIMIT:
+                return rows
+            if not fresh:
+                raise RuntimeError(
+                    "income pagination stalled: the venue keeps "
+                    "returning the same full page (more than 1000 "
+                    "rows share one timestamp)"
+                )
+            start = int(page[-1].get("time") or start)
 
     def all_orders(self, symbol: str) -> List[Dict[str, Any]]:
         return self.signed_get(
@@ -697,10 +761,12 @@ def income_sums(
         if not (start_ms <= ts < end_ms):
             continue
         key = str(row.get("incomeType") or "UNKNOWN")
-        totals[key] = round(
-            totals.get(key, 0.0) + _finite(row.get("income")), 4
-        )
-    return totals
+        totals[key] = totals.get(key, 0.0) + _finite(row.get("income"))
+    # STR-090: round once at the end. Rounding after every row
+    # accumulated ~0.001 error in the reported totals (STR-088 §6:
+    # commission reported -9.4624 vs true -9.46322266; funding
+    # reported +0.2073 vs true capped +0.20649291).
+    return {key: round(total, 4) for key, total in totals.items()}
 
 
 def reconcile_window(

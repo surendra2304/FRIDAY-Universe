@@ -93,6 +93,8 @@ from friday.tools.builtin import (
     LaptopHotkeyTool,
     LaptopListDevicesTool,
     LaptopLockTool,
+    LaptopMediaKeyTool,
+    LaptopMediaStatusTool,
     LaptopPcCleanupTool,
     LaptopPcHealthTool,
     LaptopStorageCheckTool,
@@ -103,6 +105,7 @@ from friday.tools.builtin import (
     LaptopScreenshotTool,
     LaptopTypeTextTool,
     LaptopDescribeScreenTool,
+    SpotifyControlTool,
     LaunchApplicationTool,
     ListSkillsTool,
     ListGitHubIssuesTool,
@@ -127,6 +130,9 @@ from friday.tools.builtin import (
     TriageInboxTool,
     ReadOwnCodebaseTool,
     ReadScreenTextTool,
+    RsvpControlTool,
+    RsvpStartTool,
+    RsvpStatusTool,
     RememberFactTool,
     ReplaceFileContentTool,
     RunSkillTool,
@@ -170,6 +176,7 @@ from friday.tools.builtin import (
     WriteCodeFileTool,
     YouTubeTool,
 )
+from friday.tools.base import BaseTool
 from friday.tools.registry import ToolRegistry
 from friday.vision.actions import ActionType
 from friday.vision.computer_control import ComputerActionExecutor
@@ -202,6 +209,12 @@ class ToolExecutionMixin:
             # (generation only, no outreach). Registered at creation, per
             # the AUDIT-2 wiring lesson: export-only is not implemented.
             registry.register(LocalBusinessTool())
+            # TASK-FRD-058: RSVP speed-reading aid — registered at
+            # creation, per the AUDIT-2 wiring lesson: export-only is
+            # not implemented. Voice/chat control needs these live.
+            registry.register(RsvpStartTool())
+            registry.register(RsvpControlTool())
+            registry.register(RsvpStatusTool())
             registry.register(StratexPortfolioTool())
             registry.register(SentinelSecurityTool())
             registry.register(FuturisForecastTool())
@@ -262,6 +275,11 @@ class ToolExecutionMixin:
             registry.register(LaptopRunCommandTool())
             # TASK-IG-FRD-010: lock the laptop screen (no unlock, by design).
             registry.register(LaptopLockTool())
+            # TASK-FRD-044: Spotify playback control by voice — media keys
+            # plus the session read-back that proves playback changed.
+            registry.register(LaptopMediaKeyTool())
+            registry.register(LaptopMediaStatusTool())
+            registry.register(SpotifyControlTool())
             # TASK-IG2-LAP-01: Escrcpy integration — launch plans and phone
             # automation over the scrcpy/ADB transport. Registered
             # 2026-11-16 (IG implementation wave): the tools were exported
@@ -516,6 +534,27 @@ class ToolExecutionMixin:
             )
             return synthesized
 
+    def _effective_tool_timeout(self, tool: Any | None, timeout: float | None = None) -> float:
+        """Timeout for one tool call: explicit > tool-declared > agent default.
+
+        TASK-IG-FRD-006-FIX-01: the agent used to pass its own default (30s)
+        explicitly for every call, which shadowed the per-tool timeout in the
+        registry — intelx_research declares 125s but was killed at 30.0s on
+        FRIDAY-Server while its IntelX dispatch was still in flight. A tool
+        timeout equal to BaseTool's class default (30) carries no override,
+        so only a value different from the default counts as declared.
+        """
+        if timeout is not None:
+            return float(timeout)
+        declared = getattr(tool, "timeout", None)
+        if declared:
+            try:
+                if float(declared) != float(BaseTool.timeout):
+                    return float(declared)
+            except (TypeError, ValueError):
+                pass
+        return float(self.tool_timeout)
+
     def _execute_single_tool_call_internal(self, tc: ToolCall, timeout: float | None = None) -> ToolResult:
             """Internal helper handling validation, authorization, and execution of a single tool call."""
             # Replay prevention within turn
@@ -594,7 +633,10 @@ class ToolExecutionMixin:
             )
 
             # 4. Execution happens ONLY after explicit authorization capability
-            effective_timeout = timeout if timeout is not None else self.tool_timeout
+            # TASK-IG-FRD-006-FIX-01: honor the tool's declared timeout
+            # (e.g. intelx_research: 125s) instead of always passing the
+            # agent default, which shadowed it in the registry.
+            effective_timeout = self._effective_tool_timeout(tool, timeout)
             if auth_resp.decision == AuthorizationDecision.APPROVED:
                 return self.tools.execute(
                     name=tc.name,
@@ -628,10 +670,12 @@ class ToolExecutionMixin:
                 f"(Success: {not result.is_error})"
             )
             # Automatic Experience Learning & Self-Upgrading into Memora
+            # TASK-MEM-029: report_task_outcome_async fans the same event
+            # out to the skill-learning loop as well (pattern = tool name).
             try:
                 from friday.memory.memora_client import memora_client
                 if result.is_error:
-                    memora_client.learn_from_outcome_async(
+                    memora_client.report_task_outcome_async(
                         agent_name="friday",
                         task_name=tc.name,
                         status="failure",
@@ -645,8 +689,12 @@ class ToolExecutionMixin:
             return result
 
     def _execute_single_tool_call_with_timeout(
-            self, tc: ToolCall, timeout: float = 30.0
+            self, tc: ToolCall, timeout: float | None = None
         ) -> ToolResult:
-            """Execute a single tool call through ToolRegistry's shared worker pool and timeout mechanism."""
+            """Execute a single tool call through ToolRegistry's shared worker pool and timeout mechanism.
+
+            A None timeout honors the tool's declared timeout (or the agent
+            default); an explicit value still overrides it.
+            """
             return self._execute_single_tool_call(tc, timeout=timeout)
 

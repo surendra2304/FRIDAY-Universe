@@ -765,6 +765,17 @@ class AgentRegistry:
             self.register(ProactiveMitigationAgent())
         except Exception:
             pass
+        try:
+            # TASK-EARN-027: conversational voice/chat booking agents.
+            from .conversational_agent import (
+                ClinicAppointmentVoiceAgent,
+                WebsiteChatBookingAgent,
+            )
+
+            self.register(ClinicAppointmentVoiceAgent())
+            self.register(WebsiteChatBookingAgent())
+        except Exception:
+            pass
 
     def register(self, agent: SpecialistAgent) -> None:
         self._agents[agent.agent_id] = agent
@@ -840,12 +851,32 @@ class AgentRegistry:
             or "complaint" in e or "refund" in e or "bug_report" in e
         ):
             return self._agents["support"]
+        # TASK-EARN-027: conversational voice/chat booking events go to the
+        # new conversational family. Placed last so no earlier branch is
+        # stolen: "appointment" / "voice" / "chat" match no COR-004 labelled
+        # case ("sales_meeting_booked" stays with sales — it contains none
+        # of these tokens).
+        if (
+            "appointment" in e
+            or "voice_call" in e
+            or "chat_message" in e
+            or "voice" in tokens
+            or "chat" in tokens
+        ):
+            if "chat" in tokens or "chat_message" in e:
+                return self._agents.get(
+                    "agent_conversational_chat", self._agents["reliability"]
+                )
+            return self._agents.get(
+                "agent_conversational_voice", self._agents["reliability"]
+            )
         return self._agents["reliability"]
 
 
 from .collaboration import CollaborationResult, CollaborationSession  # noqa: E402  (defined after agents)
 from .competitive_agent import CompetitiveIntelligenceAgent
 from .compliance_agent import ComplianceGovernanceAgent
+from .conversational_agent import ClinicAppointmentVoiceAgent, WebsiteChatBookingAgent
 from .cro_agent import CROExperimentAgent
 from .mitigation_agent import ProactiveMitigationAgent
 from .revops_agent import RevenueOperationsAgent
@@ -856,6 +887,7 @@ __all__ = [
     "AgentRegistry",
     "ChallengeNote",
     "ChurnRiskAgent",
+    "ClinicAppointmentVoiceAgent",
     "CollaborationResult",
     "CollaborationSession",
     "CompetitiveIntelligenceAgent",
@@ -871,4 +903,5 @@ __all__ = [
     "SalesAgent",
     "SpecialistAgent",
     "SupportAgent",
+    "WebsiteChatBookingAgent",
 ]

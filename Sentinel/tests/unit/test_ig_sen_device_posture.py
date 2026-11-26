@@ -38,6 +38,12 @@ def clean_report(**overrides):
         ],
         paired_bluetooth=["Car Audio"],
         trusted_bluetooth=["Car Audio"],
+        # TASK-SEN-030: clean device reports strict Private DNS with a
+        # trusted resolver.
+        private_dns_mode="strict",
+        private_dns_hostname="one.one.one.one",
+        dns_servers=["1.1.1.1"],
+        trusted_dns_servers=["1.1.1.1"],
     )
     base.update(overrides)
     return DevicePostureReport(**base)
@@ -124,6 +130,71 @@ def test_developer_options_alone_is_low():
     )
     assert rules(findings) == ["DP-011"]
     assert findings[0].severity == SeverityLevel.LOW
+
+
+def test_private_dns_off_flags_dp012():
+    # TASK-SEN-030: Private DNS off leaves DNS in cleartext.
+    findings = DevicePostureEvaluator().evaluate(
+        clean_report(private_dns_mode="off"), now=NOW
+    )
+    assert rules(findings) == ["DP-012"]
+    assert findings[0].severity == SeverityLevel.HIGH
+
+
+def test_private_dns_opportunistic_with_trusted_resolver_is_clean():
+    # TASK-SEN-030: opportunistic mode + trusted resolver is clean.
+    findings = DevicePostureEvaluator().evaluate(
+        clean_report(private_dns_mode="opportunistic"), now=NOW
+    )
+    assert findings == []
+
+
+def test_private_dns_hostname_mode_is_strict_and_clean():
+    # TASK-SEN-030: Android reports strict mode as the system value
+    # "hostname" (Settings.Global.PRIVATE_DNS_MODE); it is strict.
+    findings = DevicePostureEvaluator().evaluate(
+        clean_report(private_dns_mode="hostname"), now=NOW
+    )
+    assert findings == []
+
+
+def test_private_dns_hostname_without_hostname_is_info():
+    # TASK-SEN-030: "hostname" mode with no provider hostname reported
+    # is the same DP-012 INFO as strict-without-hostname.
+    findings = DevicePostureEvaluator().evaluate(
+        clean_report(private_dns_mode="hostname", private_dns_hostname=""), now=NOW
+    )
+    assert rules(findings) == ["DP-012"]
+    assert findings[0].severity == SeverityLevel.INFO
+
+
+def test_untrusted_resolver_flags_dp013():
+    # TASK-SEN-030: a resolver outside the trusted set is a finding;
+    # the trusted one is not flagged.
+    findings = DevicePostureEvaluator().evaluate(
+        clean_report(dns_servers=["1.1.1.1", "8.8.8.8"]),
+        now=NOW,
+    )
+    assert rules(findings) == ["DP-013"]
+    assert findings[0].severity == SeverityLevel.MEDIUM
+    assert "8.8.8.8" in findings[0].evidence
+
+
+def test_private_dns_reporting_edges():
+    # TASK-SEN-030: missing / unrecognised / hostname-less strict all
+    # report as DP-012 INFO, mirroring the DP-009 patch discipline.
+    ev = DevicePostureEvaluator()
+    missing = ev.evaluate(clean_report(private_dns_mode=""), now=NOW)
+    assert rules(missing) == ["DP-012"]
+    assert missing[0].severity == SeverityLevel.INFO
+    garbage = ev.evaluate(clean_report(private_dns_mode="automatic"), now=NOW)
+    assert rules(garbage) == ["DP-012"]
+    assert garbage[0].severity == SeverityLevel.INFO
+    no_host = ev.evaluate(
+        clean_report(private_dns_mode="strict", private_dns_hostname=""), now=NOW
+    )
+    assert rules(no_host) == ["DP-012"]
+    assert no_host[0].severity == SeverityLevel.INFO
 
 
 def test_credential_posture_modes(tmp_path):

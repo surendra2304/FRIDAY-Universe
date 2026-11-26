@@ -49,6 +49,8 @@ from friday.tools.builtin.meeting_followup_tools import (
     MeetingFollowUpListTool,
 )
 from friday.tools.builtin.browser_tool import BrowserAutomationTool
+from friday.tools.builtin.book_translation_tools import BookPageTranslateTool
+from friday.tools.builtin.rsvp_tools import RsvpControlTool, RsvpStartTool, RsvpStatusTool
 from friday.tools.builtin.fleet_dispatch import FleetDispatchTool
 from friday.tools.builtin.fleet_status import FleetStatusTool
 from friday.tools.builtin.forge_code_task import ForgeCodeTool
@@ -118,11 +120,14 @@ from friday.tools.builtin.laptop_control import (
     LaptopClickTool,
     LaptopListDevicesTool,
     LaptopLockTool,
+    LaptopMediaKeyTool,
+    LaptopMediaStatusTool,
     LaptopOpenAppTool,
     LaptopOpenUrlTool,
     LaptopRunCommandTool,
     LaptopScreenshotTool,
     LaptopTypeTextTool,
+    SpotifyControlTool,
 )
 from friday.tools.builtin.laptop_dictation import LaptopDictateTool
 from friday.tools.builtin.laptop_pc_care import (
@@ -224,6 +229,10 @@ __all__ = [
     "SwipeScreenTool",
     "TapScreenTool",
     "BrowserAutomationTool",
+    "BookPageTranslateTool",
+    "RsvpControlTool",
+    "RsvpStartTool",
+    "RsvpStatusTool",
     "CalculatorTool",
     "CloseApplicationTool",
     "ControlLightTool",
@@ -270,6 +279,9 @@ __all__ = [
     "LaptopOpenUrlTool",
     "LaptopRunCommandTool",
     "LaptopLockTool",
+    "LaptopMediaKeyTool",
+    "LaptopMediaStatusTool",
+    "SpotifyControlTool",
     "LaptopDescribeScreenTool",
     "LaptopScreenshotTool",
     "LaptopDictateTool",

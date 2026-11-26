@@ -73,7 +73,10 @@ def test_status_write_emits_the_contract_keys(worker_with_tmp_status, monkeypatc
     assert payload["state"] == "ready"
     assert payload["provider"] == "gemini-realtime"
     assert payload["voice"] == worker._voice_name()
-    assert payload["language"] == ""  # unconfigured = native mirroring
+    # TASK-VOI-042: unconfigured now reports the pinned default
+    # en-IN — the status file must show the language the session
+    # actually runs, never an empty "mirroring".
+    assert payload["language"] == "en-IN"
     assert payload["room"] == "friday-voice"
     assert payload["job_id"] == "job-1"
 

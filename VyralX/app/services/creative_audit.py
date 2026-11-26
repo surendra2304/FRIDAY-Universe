@@ -30,6 +30,12 @@ Checks that VyralX already owns are reused, not reinvented: title,
 thumbnail-text and hook findings delegate to
 ``app.services.packaging`` lints, so the audit can never drift from
 the packaging rules the pipeline actually enforces.
+
+TASK-VYR-059 adds the competitor path: :func:`audit_competitor_creative`
+ingests a competitor's creative and runs the same evidence-gated audit,
+then derives draft lessons (adopt where the competitor passes, avoid
+where it fails). The result is tagged with its provenance so a
+competitor's creative is never mistaken for VyralX's own.
 """
 from __future__ import annotations
 
@@ -148,6 +154,61 @@ def audit_creative(creative: dict[str, Any], *,
         "paid_spend_created": False,
         "changes_applied": False,
         "source": "claude-ads-pattern (MIT), FRIDAY-native port",
+    }
+
+
+def audit_competitor_creative(creative: dict[str, Any], *,
+                              lane: str = "space_science",
+                              competitor: str | None = None) -> dict[str, Any]:
+    """Audit a COMPETITOR's creative the same way as VyralX's own,
+    plus draft lessons (TASK-VYR-059).
+
+    The audit is the same evidence-gated audit :func:`audit_creative`
+    runs (same findings, same pass/fail/unknown, no composite score,
+    no paid spend, no platform calls). The result is tagged with its
+    provenance (``source_creative: "competitor"``) so a competitor's
+    creative is never mistaken for VyralX's own, and it carries
+    ``lessons`` — draft takeaways grounded in the findings, for owner
+    review: ``adopt`` where the competitor passes a check VyralX
+    should test, ``avoid`` where it fails a check VyralX should not
+    copy. Unknown checks (measured performance, paid spend) yield no
+    lesson — nothing is learned from an unevaluated claim. The input
+    is not mutated and nothing is applied or published.
+    """
+    creative = dict(creative or {})
+    name = competitor or creative.get("competitor") or creative.get("channel")
+    audit = audit_creative(creative, lane=lane)
+    adopt = {
+        "title_packaging": "Competitor title passes the lane lint — the same concrete-anchor title shape is worth testing in VyralX's own creative.",
+        "thumbnail_text": "Competitor thumbnail text passes (short, does not repeat the title) — the same brevity is worth testing.",
+        "hook_strength": "Competitor hook uses a strong device (number, question, negation/secret, or second-person address) — the same device is worth testing.",
+        "description_substance": "Competitor description carries real context with limited hashtags — the same substance is worth matching.",
+        "tag_coverage": "Competitor tags cover the topic with specific tags — the same coverage is worth matching.",
+    }
+    lessons: list[dict[str, Any]] = []
+    for f in audit["findings"]:
+        check = f["check"]
+        if check not in adopt:
+            continue
+        if f["status"] == "pass":
+            lessons.append({"check": check, "stance": "adopt",
+                            "lesson": adopt[check],
+                            "evidence": f["evidence"]})
+        elif f["status"] == "fail":
+            lessons.append({"check": check, "stance": "avoid",
+                            "lesson": ("Competitor fails %s (%s) — do not copy "
+                                       "this; it is a weakness to avoid."
+                                       % (check, f["evidence"])),
+                            "evidence": f["evidence"]})
+    return {
+        **audit,
+        "kind": "vyralx.competitor_creative_audit",
+        "source_creative": "competitor",
+        "competitor": (str(name) if name else None),
+        "lessons": lessons,
+        "lessons_status": "draft",
+        "lessons_applied": False,
+        "lessons_note": "Draft lessons only — owner review required; nothing applied.",
     }
 
 

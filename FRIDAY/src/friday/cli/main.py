@@ -850,6 +850,14 @@ Modes:
                         except BaseException:
                             pass
                 agent.stop_proactive_monitoring()
+                # TASK-MEM-029: close the session-capture loop for the
+                # voice session too (same best-effort contract as the
+                # text loop end).
+                try:
+                    from friday.memory.memora_client import memora_client as _memora_voice_end
+                    _memora_voice_end.compress_session()
+                except Exception as e:
+                    logger.debug(f"Memora voice session compress skipped: {e}")
                 try:
                     loop.run_until_complete(loop.shutdown_asyncgens())
                 except Exception:
@@ -1099,7 +1107,10 @@ Modes:
                         event_type="os_directive",
                         tags=["os_directive", action_name],
                     )
-                    memora_client.learn_from_outcome_async(
+                    # TASK-MEM-029: report_task_outcome_async fans the same
+                    # event out to the skill-learning loop as well
+                    # (pattern = OS-directive action name).
+                    memora_client.report_task_outcome_async(
                         agent_name="friday",
                         task_name=action_name,
                         status="success" if friday_meta.get("success", True) else "failure",
@@ -1190,6 +1201,15 @@ Modes:
                 native_tts.speak(response.content)
         except Exception as e:
             print(f"\n[Error]: {e}\n")
+
+    # TASK-MEM-029: close the session-capture loop — compress this CLI
+    # session's captured events into its digest. Best-effort, never
+    # blocks exit.
+    try:
+        from friday.memory.memora_client import memora_client as _memora_end
+        _memora_end.compress_session()
+    except Exception as e:
+        logger.debug(f"Memora session compress skipped: {e}")
 
     text_event_stop.set()
 

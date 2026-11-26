@@ -161,6 +161,67 @@ def _delegation_instruction_agent(low: str) -> "str | None":
     return None
 
 
+# TASK-FRD-044: Spotify playback control by voice.
+_MEDIA_NOUNS = ("spotify", "song", "track", "music", "playlist", "album")
+_MEDIA_GENERIC_OBJECTS = frozenset(
+    {
+        "something",
+        "anything",
+        "whatever",
+        "music",
+        "some music",
+        "a song",
+        "some songs",
+        "something good",
+    }
+)
+_MEDIA_NO_OBJECT_ACTIONS = ("pause", "resume", "skip", "next", "previous", "stop")
+
+
+def _parse_spotify_media_command(
+    match: "re.Match", text: str
+) -> tuple[str, str | None] | None:
+    """Parse a Spotify media utterance into (action, query), or None.
+
+    Fully-specified commands only: pause/skip/next (with at most a media
+    noun as object) and "play <named track>" with a media anchor
+    (spotify/song/track/playlist/album) in the utterance. A track-less
+    "play" returns None so it falls through to the model and the
+    confirmation gate instead of executing on a guess.
+    """
+    action = (match.group("action") or "").lower()
+    raw_object = (match.group("object") or "").strip()
+    lowered = (text or "").strip().lower()
+    if action in _MEDIA_NO_OBJECT_ACTIONS:
+        if not raw_object:
+            return action, None
+        obj = re.sub(r"^(the|this|that)\s+", "", raw_object.lower()).strip()
+        if obj in {
+            "",
+            "music",
+            "song",
+            "track",
+            "spotify",
+            "playback",
+            "this song",
+            "this track",
+            "the music",
+            "the song",
+        }:
+            return action, None
+        return None
+    if action != "play":
+        return None
+    query = raw_object
+    query = re.sub(r"\s+on\s+spotify\s*$", "", query, flags=re.IGNORECASE).strip()
+    query = re.sub(r"\s+spotify\s*$", "", query, flags=re.IGNORECASE).strip()
+    if not query or query.lower() in _MEDIA_GENERIC_OBJECTS:
+        return None
+    if not any(noun in lowered for noun in _MEDIA_NOUNS):
+        return None
+    return "play", query
+
+
 class FastPathMixin:
     _WAKE_PHRASE_PATTERN = re.compile(
         r"^\s*(?:(?:hey|okay|ok|please)\s+)?friday\s*[,!:;-]?\s*",
@@ -1462,7 +1523,7 @@ class FastPathMixin:
                     event_type="action",
                     tags=["desktop_action", intent.action_type.value],
                 )
-                memora_client.learn_from_outcome_async(
+                memora_client.report_task_outcome_async(
                     agent_name="friday",
                     task_name=intent.action_type.value,
                     status="success" if success else "failure",
@@ -1702,7 +1763,7 @@ class FastPathMixin:
                     event_type="fast_path_action",
                     tags=["fast_path", action_key],
                 )
-                memora_client.learn_from_outcome_async(
+                memora_client.report_task_outcome_async(
                     agent_name="friday",
                     task_name=action_key,
                     status="success" if success else "failure",
@@ -2308,6 +2369,34 @@ class FastPathMixin:
                     _mute_toggle,
                 )
 
+            # TASK-FRD-044: Spotify playback control by voice, over the
+            # laptop bridge. Only fully-specified commands reach here —
+            # a track-less "play" returns None from the parser and falls
+            # through to the model + confirmation gate.
+            spotify_match = self._SPOTIFY_MEDIA_PATTERN.match(clean_input)
+            if spotify_match:
+                parsed = _parse_spotify_media_command(spotify_match, clean_input)
+                if parsed is not None:
+                    spotify_action, spotify_query = parsed
+
+                    def _spotify_media() -> str:
+                        from friday.tools.builtin.laptop_control import SpotifyControlTool
+
+                        kwargs: dict[str, Any] = {"action": spotify_action}
+                        if spotify_query:
+                            kwargs["query"] = spotify_query
+                        res = SpotifyControlTool().execute(**kwargs)
+                        if res.is_error:
+                            raise RuntimeError(res.content)
+                        return res.content
+
+                    return self._complete_fast_path(
+                        clean_input, start_time, "spotify_media",
+                        "Direct Spotify media command", "Controlling Spotify playback",
+                        _spotify_media,
+                        verifying_reason="Validating Spotify playback state",
+                    )
+
             if self._BATTERY_PATTERN.match(clean_input):
                 return self._complete_fast_path(
                     clean_input, start_time, "battery_status",
@@ -2578,6 +2667,9 @@ class FastPathMixin:
                 return "set_volume"
             if self._MUTE_PATTERN.match(clean):
                 return "volume_mute"
+            spotify_match = self._SPOTIFY_MEDIA_PATTERN.match(clean)
+            if spotify_match and _parse_spotify_media_command(spotify_match, clean) is not None:
+                return "spotify_media"
             if self._BATTERY_PATTERN.match(clean):
                 return "battery_status"
             if self._SCREEN_DESCRIBE_PATTERN.match(clean):

@@ -5,9 +5,13 @@ Indian-language support). These tests pin:
 
 - the profile table: the eleven launch profiles, well-formed BCP-47
   codes, resolvable by code or name in any case;
-- the default contract: NO profile configured means NO language is
-  passed to the realtime model and the instruction section is empty
-  — the owner's current native-mirroring behaviour is byte-identical;
+- the default contract (TASK-VOI-042, P0 2026-11-25): NO profile
+  configured means the session language is en-IN — the model is
+  built with language="en-IN" and the instruction section names
+  English (India). Native mirroring was the 2026-11-25 failure
+  (owner's English transcribed in Hindi/Telugu script); an explicit
+  FRIDAY_VOICE_LANGUAGE still overrides the default, and junk
+  values fall back to en-IN, never to mirroring;
 - the configured path: the model is built with the profile's code;
 - the degradation path: a plugin generation that rejects the
   language option builds without it instead of losing the call.
@@ -65,9 +69,24 @@ def test_configured_language_reads_the_env_name():
     assert lp.configured_language({}) is None
 
 
-def test_instruction_section_is_empty_without_a_profile():
-    assert lp.instruction_section({}) == ""
-    assert lp.instruction_section({"FRIDAY_VOICE_LANGUAGE": "klingon"}) == ""
+def test_effective_language_defaults_to_en_in():
+    # TASK-VOI-042: unset, empty and junk all land on the pinned
+    # default — never on None (mirroring was the failure mode).
+    assert lp.effective_language({}) == "en-IN"
+    assert lp.effective_language({"FRIDAY_VOICE_LANGUAGE": ""}) == "en-IN"
+    assert lp.effective_language({"FRIDAY_VOICE_LANGUAGE": "klingon"}) == "en-IN"
+    assert lp.effective_language({"FRIDAY_VOICE_LANGUAGE": "te-IN"}) == "te-IN"
+
+
+def test_instruction_section_names_the_default_language():
+    # TASK-VOI-042: the section is present on every call now — the
+    # model is told English (India) from the first word unless the
+    # user switches language mid-call.
+    section = lp.instruction_section({})
+    assert "English (India)" in section and "en-IN" in section
+    assert "primarily" in section
+    junk = lp.instruction_section({"FRIDAY_VOICE_LANGUAGE": "klingon"})
+    assert "en-IN" in junk
 
 
 def test_instruction_section_names_the_profile():
@@ -109,13 +128,15 @@ def fake_plugin(monkeypatch):
     return worker
 
 
-def test_default_build_passes_no_language(fake_plugin, monkeypatch):
+def test_default_build_pins_en_in(fake_plugin, monkeypatch):
+    # TASK-VOI-042: no profile configured pins en-IN — the model is
+    # built with language="en-IN", never without a language.
     monkeypatch.delenv("FRIDAY_VOICE_LANGUAGE", raising=False)
     worker = fake_plugin
-    assert worker._voice_language() is None
+    assert worker._voice_language() == "en-IN"
     model = worker._build_realtime_model("key", "instructions")
     assert model is not None
-    assert "language" not in _FakeRealtimeModel.calls[0]
+    assert _FakeRealtimeModel.calls[0]["language"] == "en-IN"
 
 
 def test_profile_build_passes_the_language_code(fake_plugin, monkeypatch):

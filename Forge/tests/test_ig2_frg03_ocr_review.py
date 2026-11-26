@@ -4,6 +4,12 @@ Pins the honesty properties: deterministic file selection, Delegation
 Mode by default, honest UNAVAILABLE without the CLI, unparseable
 output is a failed pass (never "no findings"), and — above all — the
 OCR result can never change the existing review's gate verdict.
+
+TASK-FRG-028: the command shape is pinned to the real CLI (ocr
+v1.14.3, verified live 2026-11-25). Delegation is a subcommand
+(``ocr delegate preview`` / ``ocr delegate rule``), NOT a ``--delegate``
+flag; ``ocr review`` takes ``--from`` (not ``--base``) and no ``--file``
+flag, and needs a configured provider, so it is opt-in only.
 """
 from __future__ import annotations
 
@@ -12,12 +18,28 @@ import json
 from forge_upgrade.ocr_review import (
     OcrFinding,
     OcrResult,
-    build_ocr_command,
+    build_delegate_preview_command,
+    build_delegate_rule_command,
+    build_ocr_review_command,
     parse_ocr_json,
     run_ocr_review,
     select_review_files,
     supplement_review,
 )
+
+
+class _Proc:
+    def __init__(self, returncode=0, stdout="", stderr=""):
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+
+
+def _fake_runner_factory(seen, proc):
+    def runner(cmd, **kwargs):
+        seen.append(list(cmd))
+        return proc
+    return runner
 
 
 def test_selection_skips_binaries_lockfiles_and_vendored() -> None:
@@ -35,12 +57,28 @@ def test_selection_skips_binaries_lockfiles_and_vendored() -> None:
     ]
 
 
-def test_command_defaults_to_delegation_mode() -> None:
-    cmd = build_ocr_command(["a.py", "b.py"])
-    assert cmd[0] == "ocr"
-    assert "--delegate" in cmd
-    assert "--format" in cmd and "json" in cmd
-    assert "--delegate" not in build_ocr_command(["a.py"], delegation=False)
+def test_delegate_rule_command_is_the_default_pass() -> None:
+    cmd = build_delegate_rule_command(["a.py", "b.py"])
+    assert cmd[:3] == ["ocr", "delegate", "rule"]
+    assert cmd[3:] == ["a.py", "b.py"]
+    # No LLM flags anywhere: delegation needs no provider.
+    assert "--delegate" not in cmd
+    assert "--format" not in cmd
+
+
+def test_delegate_preview_command_uses_from_not_base() -> None:
+    assert build_delegate_preview_command() == ["ocr", "delegate", "preview"]
+    assert build_delegate_preview_command("main") == [
+        "ocr", "delegate", "preview", "--from", "main",
+    ]
+
+
+def test_review_command_uses_from_and_no_delegate_flag() -> None:
+    cmd = build_ocr_review_command("main")
+    assert cmd == ["ocr", "review", "--from", "main", "--format", "json"]
+    assert "--base" not in cmd
+    assert "--delegate" not in cmd
+    assert "--file" not in cmd
 
 
 def test_parse_ocr_json_list_and_object_shapes() -> None:
@@ -79,6 +117,68 @@ def test_run_review_no_reviewable_files_completes_empty() -> None:
     # review (completed, zero findings) — both are honest outcomes.
     assert result.status in {"unavailable", "completed"}
     assert result.findings == []
+
+
+def test_run_review_default_is_delegate_rule_not_llm_review(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "forge_upgrade.ocr_review.shutil.which", lambda _: "/usr/bin/ocr"
+    )
+    seen: list[list[str]] = []
+    proc = _Proc(0, "### Rule Group 1: system / **/*.py\n\nApplies to:\n- a.py\n")
+    result = run_ocr_review(
+        ["a.py"], runner=_fake_runner_factory(seen, proc)
+    )
+    assert result.status == "completed"
+    assert result.findings == []  # rules, not findings — no LLM ran
+    assert "1 rule groups" in result.detail
+    assert seen == [["ocr", "delegate", "rule", "a.py"]]
+    assert "review" not in seen[0]
+
+
+def test_run_review_delegate_failure_is_failed(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "forge_upgrade.ocr_review.shutil.which", lambda _: "/usr/bin/ocr"
+    )
+    proc = _Proc(1, "", "delegate: no git repository")
+    result = run_ocr_review(
+        ["a.py"], runner=_fake_runner_factory([], proc)
+    )
+    assert result.status == "failed"
+    assert "no git repository" in result.detail
+
+
+def test_run_review_provider_path_parses_findings(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "forge_upgrade.ocr_review.shutil.which", lambda _: "/usr/bin/ocr"
+    )
+    seen: list[list[str]] = []
+    payload = json.dumps(
+        [{"file": "a.py", "line": 3, "severity": "warning",
+          "rule": "SQLI", "message": "string-built query"}]
+    )
+    result = run_ocr_review(
+        ["a.py"],
+        provider_review=True,
+        runner=_fake_runner_factory(seen, _Proc(0, payload)),
+    )
+    assert result.status == "completed"
+    assert result.findings == [
+        OcrFinding("a.py", 3, "warning", "SQLI", "string-built query")
+    ]
+    assert seen == [["ocr", "review", "--from", "main", "--format", "json"]]
+
+
+def test_run_review_provider_path_unparseable_is_failed(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "forge_upgrade.ocr_review.shutil.which", lambda _: "/usr/bin/ocr"
+    )
+    result = run_ocr_review(
+        ["a.py"],
+        provider_review=True,
+        runner=_fake_runner_factory([], _Proc(0, "not json")),
+    )
+    assert result.status == "failed"
+    assert "unparseable" in result.detail
 
 
 def test_supplement_never_changes_gate_verdict() -> None:

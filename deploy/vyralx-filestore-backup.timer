@@ -1,0 +1,13 @@
+[Unit]
+Description=Run the VyralX file-store backup daily (TASK-DB-007)
+# Daily 02:15 UTC (07:45 IST), off the VyralX render/upload peaks.
+# INSTALL IS GATED on the owner stop order — see
+# docs/collaboration/TASK-DB-007-VYRALX-FILESTORE-BACKUP.md (live leg).
+
+[Timer]
+OnCalendar=*-*-* 02:15:00 UTC
+RandomizedDelaySec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

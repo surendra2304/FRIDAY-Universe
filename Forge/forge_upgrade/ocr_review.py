@@ -12,6 +12,18 @@ Apache-2.0) into Forge's PR-review tooling as a *supplement*:
   Forge's existing review verdict. It can only add findings.
 * If the ``ocr`` binary is absent, the pass reports UNAVAILABLE —
   the existing review proceeds exactly as before.
+
+CLI shape (TASK-FRG-028, verified live 2026-11-25 against ocr
+v1.14.3): delegation is a *subcommand*, not a flag — ``ocr delegate
+preview`` lists the reviewable files and ``ocr delegate rule <files>``
+prints the resolved ruleset, both with no LLM and no provider
+configured. ``ocr review`` takes ``--from`` (not ``--base``), takes no
+``--file`` and no ``--delegate`` flag, and needs a configured LLM
+provider; it is therefore opt-in only (``provider_review=True``) and
+never runs by default. The wave-2 command builder (``ocr review
+--base main --format json --delegate --file ...``) matched no shipped
+CLI flag and would have failed on every invocation; it is replaced
+here.
 """
 from __future__ import annotations
 
@@ -81,18 +93,38 @@ def select_review_files(changed_files: list[str]) -> list[str]:
     return sorted(selected)
 
 
-def build_ocr_command(
-    files: list[str],
-    base: str = "main",
-    delegation: bool = True,
-) -> list[str]:
-    """Build the ``ocr`` invocation (Delegation Mode by default)."""
-    cmd = ["ocr", "review", "--base", base, "--format", "json"]
-    if delegation:
-        cmd.append("--delegate")
-    for name in files:
-        cmd.extend(["--file", name])
+def build_delegate_preview_command(base: str | None = None) -> list[str]:
+    """Build the ``ocr delegate preview`` invocation.
+
+    No LLM, no provider: lists the files OCR would review. With ``base``
+    the preview covers that ref range (``--from``); without it the
+    workspace changes are previewed.
+    """
+    cmd = ["ocr", "delegate", "preview"]
+    if base:
+        cmd.extend(["--from", base])
     return cmd
+
+
+def build_delegate_rule_command(files: list[str]) -> list[str]:
+    """Build the ``ocr delegate rule <files>`` invocation.
+
+    No LLM, no provider: prints the resolved review ruleset for the
+    given files, grouped by content. This is the deterministic half of
+    Delegation Mode — the rules the host agent judges against.
+    """
+    return ["ocr", "delegate", "rule", *files]
+
+
+def build_ocr_review_command(base: str = "main") -> list[str]:
+    """Build the provider-backed ``ocr review`` invocation.
+
+    Only valid when an LLM provider is configured; never used by the
+    default pass. ``--from`` is the real flag (``--base`` does not
+    exist in ocr v1.14.3) and there is no ``--file`` / ``--delegate``
+    flag on this subcommand.
+    """
+    return ["ocr", "review", "--from", base, "--format", "json"]
 
 
 def parse_ocr_json(output: str) -> list[OcrFinding]:
@@ -118,24 +150,60 @@ def parse_ocr_json(output: str) -> list[OcrFinding]:
     return findings
 
 
+def _count_rule_groups(output: str) -> int:
+    """Count ``### Rule Group N:`` headings in delegate-rule output."""
+    return sum(
+        1 for line in output.splitlines()
+        if line.startswith("### Rule Group ")
+    )
+
+
 def run_ocr_review(
     changed_files: list[str],
     base: str = "main",
-    delegation: bool = True,
+    workdir: str | Path | None = None,
+    provider_review: bool = False,
     runner=subprocess.run,
 ) -> OcrResult:
-    """Run the ocr pass over the selected files, if the CLI exists."""
+    """Run the ocr pass over the selected files, if the CLI exists.
+
+    Default (Delegation Mode, no LLM): ``ocr delegate rule`` over the
+    selected files. A completed delegate pass carries no findings —
+    findings only come from an LLM judgement — so the result reports
+    the ruleset fetched and leaves findings empty; callers must not
+    read that as "the code is clean". With ``provider_review=True``
+    the pass additionally runs provider-backed ``ocr review`` and
+    parses its JSON findings; that path needs a configured provider
+    and is never taken by default.
+    """
     available, detail = ocr_status()
     if not available:
         return OcrResult("unavailable", detail)
     files = select_review_files(changed_files)
     if not files:
         return OcrResult("completed", "no reviewable files in the change set")
+    if not provider_review:
+        proc = runner(
+            build_delegate_rule_command(files),
+            capture_output=True,
+            text=True,
+            timeout=600,
+            cwd=str(workdir) if workdir is not None else None,
+        )
+        if proc.returncode != 0:
+            return OcrResult("failed", (proc.stderr or proc.stdout or "")[-500:])
+        groups = _count_rule_groups(proc.stdout or "")
+        return OcrResult(
+            "completed",
+            f"delegate pass: rules fetched for {len(files)} files "
+            f"({groups} rule groups); no LLM judgement run, no findings",
+        )
     proc = runner(
-        build_ocr_command(files, base=base, delegation=delegation),
+        build_ocr_review_command(base=base),
         capture_output=True,
         text=True,
         timeout=1200,
+        cwd=str(workdir) if workdir is not None else None,
     )
     if proc.returncode != 0:
         return OcrResult("failed", (proc.stderr or proc.stdout or "")[-500:])

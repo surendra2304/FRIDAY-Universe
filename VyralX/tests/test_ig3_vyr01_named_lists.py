@@ -16,6 +16,9 @@ Behaviour pinned here:
   (several conflict with the owner's lanes or the compliance gate);
 * the pre-existing VYR-10 invariants still hold (three lanes, the
   Silk Road seed, the creator-tools pointer untouched).
+* the V-07 space-movies pointer is recorded reference-only with no
+  items — the listicle titles were never supplied, so none are
+  invented (TASK-VYR-084, WATCH105 ruling).
 
 On clean main every test fails: the sections do not exist.
 """
@@ -113,6 +116,18 @@ def test_listicle_tool_patterns_are_notes_only():
     assert set(section["ig_sources"]) == {"DdePxRHk3mB", "DeMoCfwCHE8"}
 
 
+def test_space_movies_reference_recorded_without_invented_items():
+    data = _load()
+    section = data["space_movies_reference"]
+    _assert_reference(section)
+    assert section["ig_sources"] == ["DfaN9_fEVNy"]
+    # The V-07 listicle titles were never supplied (no package in the
+    # repo; WATCH105 ruling) - the section records the pointer only.
+    assert section["items"] == []
+    assert "never supplied" in section["note"]
+    assert "No titles are invented" in section["note"]
+
+
 def test_vyr10_invariants_untouched():
     data = _load()
     assert {e["lane"] for e in data["lanes"]} == {
@@ -129,7 +144,7 @@ def test_doc_names_the_recorded_lists():
     assert "TASK-IG3-VYR-01" in doc
     for marker in ("teaching_channel_watchlist", "browser_toolkit_reference",
                    "free_generator_shortlist", "faceless_idea_examples",
-                   "free_route_alternatives", "listicle_tool_patterns"):
+                   "free_route_alternatives", "listicle_tool_patterns", "space_movies_reference"):
         assert marker in doc
 
 
@@ -148,7 +163,7 @@ def test_loader_serves_every_reference_section():
         "creator_tools_reference", "teaching_channel_watchlist",
         "browser_toolkit_reference", "free_generator_shortlist",
         "faceless_idea_examples", "free_route_alternatives",
-        "listicle_tool_patterns"}
+        "listicle_tool_patterns", "space_movies_reference"}
     # Serving a name never upgrades its recorded status.
     for section in sections.values():
         assert section["status"] in _REFERENCE_STATUSES

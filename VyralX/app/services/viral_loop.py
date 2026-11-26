@@ -71,6 +71,7 @@ from app.config import get_settings
 from app.models import PublishJob, Source
 from app.services import scene_analysis, viral_bgm, viral_framing, viral_remix as vr
 from app.services.viral_discovery import Candidate, discover_candidates_api
+from app.services.reddit_discovery import discover_reddit_candidates
 from app.services.viral_longform import append_manifest, produce_compilation
 from app.services.viral_series import SERIES_BY_LABEL, normalise_label
 from app.services.viral_trending import trending_candidates
@@ -340,6 +341,22 @@ def run_viral_loop_cycle(db: Session, *, force: bool = False) -> dict[str, Any]:
             pool.setdefault(candidate.video_id, candidate)
     except Exception as exc:  # the lanes are best-effort; trending is the breadth
         log.info("Lane discovery unavailable this cycle (%s)", type(exc).__name__)
+    # TASK-VYR-058: the Reddit pool merges here, through the same gates
+    # (the adapter applies them) and the same dedup. Off by default:
+    # with no subreddits configured the adapter returns [] and makes
+    # no network call. A dead listing fails loud inside the adapter
+    # and is caught here, like the lanes above.
+    try:
+        for candidate in discover_reddit_candidates(
+            str(getattr(settings, "viral_reddit_subreddits", "") or ""),
+            limit=24,
+            exclude_ids=exclude,
+            max_seconds=max_source,
+            min_score=int(getattr(settings, "viral_reddit_min_score", 0) or 0),
+        ):
+            pool.setdefault(candidate.video_id, candidate)
+    except Exception as exc:
+        log.info("Reddit discovery unavailable this cycle (%s)", type(exc).__name__)
     ranked = sorted(pool.values(), key=lambda item: item.score, reverse=True)
 
     summary: dict[str, Any] = {

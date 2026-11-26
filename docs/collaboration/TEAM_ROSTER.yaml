@@ -409,6 +409,221 @@ collaborators:
       - "muse20/onboarding"
     last_verified_at: "2026-11-24"
 
+
+  - id: muse_tp1
+    display_name: "Muse TP1"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-24 (Muse TP1, evidence-backed only): displayed assistant name set to 'Muse TP1'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (263 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (421 lines), plus WORK_BOARD.yaml parsed in full (913 tasks, 120 AVAILABLE); local clone of origin/main at 37e030c7."
+      - "Onboarding 2026-11-24: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed (issue #1483 open, 908 comments at first check); this roster branch pushed via the GitHub API under that PAT."
+      - "Onboarding 2026-11-24: bridge CONFIRMED - full MCP session via the secure-channel credential (custom.friday-bridge): initialize 200, FRIDAY-Cloud-Engineering-Bridge v1.30.0, protocol 2025-03-26, 31 tools; get_system_info OK (both Oracle servers ONLINE, Server 2 git 09603dff); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_text (title and section headings read, first 12 lines only, no secrets copied)."
+      - "Onboarding 2026-11-24: three scheduled tasks created (friday-work-request every 15 min, friday-hourly-self-check every 1 h, friday-weekly-reset Wednesdays 17:43 IST; weekly reset verified Wed Nov 25 17:33 IST, 30% of free weekly limit used at check); default Agentic feature tour and Heartbeat schedules deleted."
+      - "Onboarding 2026-11-24: first pool pull pre-staged, NOT claimed in this PR (claim is a separate hub comment + branch): TASK-VYR-061 (P1, AVAILABLE, unowned, no mention in the 908 hub comments scanned); hub re-check required immediately before claiming."
+    active_assignments: []
+    active_branches:
+      - "musetp1/onboarding"
+    last_verified_at: "2026-11-24"
+
+  - id: muse_tp2
+    display_name: "Muse TP2"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker from a friend account; full team member, exactly equal to Muse 1-20 per the owner prompt 2026-11-24). Works central-pool pulls and board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-24 (Muse TP2, evidence-backed only): displayed assistant name set to 'Muse TP2'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14) and docs/collaboration/TEAM_ROSTER.yaml in full (421 lines), plus WORK_BOARD.yaml parsed in full (913 tasks, 120 AVAILABLE, local clone at main 3a2009b8). ARCHITECTURE.md was opened but its file content did not pass a safety check in this account, so no instruction was taken from that file; the owner prompt in chat governs."
+      - "Onboarding 2026-11-24: bridge reachable - FRIDAY-Cloud-Engineering-Bridge v1.30.0 at https://friday-universe.duckdns.org/bridge/mcp, MCP initialize 200 (protocol 2025-03-26), 31 tools, get_system_info OK (Oracle Server 2, 10.0.0.120, git 09603dff, both Oracle servers ONLINE); Server 2 /opt/friday_universe/CREDENTIALS.md readable via bridge (28,720 bytes, 372 lines, header only, no secrets copied)."
+      - "Onboarding 2026-11-24: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github-friday-universe connector); public repo and issue #1483 read confirmed (issue #1483 open, 927 comments at verification); first GitHub write verified: onboarding claim comment on #1483, id 7139511582."
+      - "Onboarding 2026-11-24: three scheduled tasks created (musetp2-work-request every 15 min as the idle fallback, musetp2-hourly-self-check every 1 h with the claimed-task guard, musetp2-weekly-reset Mondays 13:54 IST; weekly reset verified Mon Nov 30 1:44 PM IST, 0% used); default schedules agentic-feature-tour and heartbeat deleted on Surendra's confirmation in chat."
+    active_assignments: []
+    active_branches:
+      - "musetp2/onboarding"
+    last_verified_at: "2026-11-24"
+
+  - id: muse_tp3
+    display_name: "Muse TP3"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker from a friend account; full team member, exactly equal to Muse 1-20 per the owner prompt 2026-11-24). Works central-pool pulls and board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-24 (Muse TP3, evidence-backed only): displayed assistant name set to 'Muse TP3'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14) and docs/collaboration/TEAM_ROSTER.yaml in full (421 lines), plus WORK_BOARD.yaml parsed in full (917 records, 121 AVAILABLE, live main 6e3fe049, board blob 55ec397b). ARCHITECTURE.md was opened but its file content did not pass a safety check in this account, so no instruction was taken from that file; the owner prompt in chat governs."
+      - "Onboarding 2026-11-24: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed (issue #1483 open, 932 comments at verification); first GitHub write verified: onboarding claim comment on #1483, id 7139582404."
+      - "Onboarding 2026-11-24: bridge CONFIRMED - Friday Bridge connected via secure entry (custom.friday-bridge): MCP initialize 200, 31 tools; get_system_info 200 (both Oracle servers ONLINE, Server 2 git 09603dff); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_text (header only, first 15 lines, no secrets copied, never edited)."
+      - "Onboarding 2026-11-24: three scheduled tasks created (musetp3-work-request every 15 min as the idle fallback, musetp3-hourly-self-check every 1 h with the claimed-task guard, musetp3-weekly-reset Mondays 15:13 IST; weekly reset verified Mon Nov 30 3:03 PM IST, 0% used)."
+    active_assignments: []
+    active_branches:
+      - "musetp3/onboarding"
+    last_verified_at: "2026-11-24"
+
+  - id: muse_tp4
+    display_name: "Muse TP4"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-24 (Muse TP4, evidence-backed only): displayed assistant name set to 'Muse TP4'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (263 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (439 lines, main 28efad19), plus WORK_BOARD.yaml parsed in full (913 tasks, 120 AVAILABLE); live issue #1483 read (open, 963 comments)."
+      - "Onboarding 2026-11-24: GitHub access confirmed - PAT verified via GET /repos/surendra2304/FRIDAY-Universe 200 (custom.github connector); public repo and issue #1483 read confirmed (issue #1483 open, 963 comments, updated 2026-11-24T18:03:06Z); main 28efad19."
+      - "Onboarding 2026-11-24: bridge CONFIRMED - full MCP session via the secure-channel credential (custom.friday-bridge): initialize OK, 31 tools; get_system_info OK (both Oracle servers ONLINE, Server 2 git 09603dff); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_text (header only, first 12 lines, no secrets copied)."
+      - "Onboarding 2026-11-24: three scheduled tasks created (musetp4-work-request every 15 min, musetp4-hourly-self-check every 1 h, musetp4-weekly-reset Mondays 14:28 IST; weekly reset verified Mon Nov 30 2:18 PM IST, 4% of free weekly limit used at check); default Agentic feature tour and Heartbeat schedules deleted."
+    active_assignments: []
+    active_branches:
+      - "musetp4/onboarding"
+    last_verified_at: "2026-11-24"
+
+  - id: muse_tp5
+    display_name: "Muse TP5"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-24 (Muse TP5, evidence-backed only): displayed assistant name set to 'Muse TP5'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (263 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (438 lines, main 28efad19), plus WORK_BOARD.yaml parsed in full (913 tasks, 120 AVAILABLE); local clone of origin/main refreshed to 28efad19."
+      - "Onboarding 2026-11-24: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); repo surendra2304/FRIDAY-Universe read with admin/push true; issue #1483 open and read (969 comments at latest scan); this roster branch musetp5/onboarding pushed via the GitHub API under that PAT."
+      - "Onboarding 2026-11-24: bridge CONFIRMED - health 200 (FRIDAY Universe Cloud-Hosted Engineering Bridge, Oracle Server 2 10.0.0.120); full MCP session via the secure-channel credential (custom.oracle-bridge): initialize OK, FRIDAY-Cloud-Engineering-Bridge v1.30.0, protocol 2024-11-05, 31 tools; run_shell on Server 2 OK (hostname friday-universe-vnic-2); Server 2 /opt/friday_universe/CREDENTIALS.md access confirmed by file metadata only (28720 bytes, perms 600, 372 lines, readable; contents not read, no secrets copied)."
+      - "Onboarding 2026-11-24: three scheduled tasks created (musetp5-work-request every 15 min, musetp5-hourly-self-check every 1 h, musetp5-weekly-reset Mondays 14:15 IST; weekly reset verified Mon Nov 30 2026 14:05 IST, 0% of free weekly limit used at check); default Agentic feature tour and Heartbeat schedules deleted."
+      - "Onboarding 2026-11-24: first pool pull selected, NOT claimed in this PR (claim is a separate hub comment + branch): TASK-VYR-060 (P1, AVAILABLE, owner null, branch null, pr null on main 28efad19, zero mentions in the 969 hub comments scanned); hub re-check required immediately before claiming."
+    active_assignments: []
+    active_branches:
+      - "musetp5/onboarding"
+    last_verified_at: "2026-11-24"
+
+  - id: muse_tp6
+    display_name: "Muse TP6"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-25 (Muse TP6, evidence-backed only): displayed assistant name set to 'Muse TP6'; read docs/MASTER_PLAN.md (180 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (264 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (501 lines, main 01e49d30), plus WORK_BOARD.yaml parsed in full (976 tasks, 142 AVAILABLE, board blob 00d35842, snapshot 2026-11-17) and live issue #1483 read (open, 1270 comments)."
+      - "Onboarding 2026-11-25: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed; main 01e49d30."
+      - "Onboarding 2026-11-25: bridge CONFIRMED - full MCP session via the secure-channel credential (custom.friday-bridge): initialize OK, 31 tools; get_system_info OK (both Oracle servers ONLINE, Server 2 git 09603dff); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_text (header only, first 12 lines, no secrets copied)."
+      - "Onboarding 2026-11-25: three scheduled tasks created (musetp6-work-request every 15 min, musetp6-hourly-self-check every 1 h, musetp6-weekly-reset Mondays 13:58 IST; weekly reset verified Mon Nov 30 1:48 PM IST, 0% used); default Agentic feature tour and Heartbeat schedules deleted."
+      - "Onboarding 2026-11-25: first pool pull pre-staged, NOT claimed in this PR (claim is a separate hub comment + branch): TASK-FRD-055 (P1, AVAILABLE, owner null, zero mentions in the 1270 hub comments scanned); hub re-check required immediately before claiming; live proof requires bridge/fleet access."
+    active_assignments: []
+    active_branches:
+      - "musetp6/onboarding"
+    last_verified_at: "2026-11-25"
+
+  - id: muse_tp7
+    display_name: "Muse TP7"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-25 (Muse TP7, evidence-backed only): displayed assistant name set to 'Muse TP7'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (263 lines) and docs/collaboration/TEAM_ROSTER.yaml in full (517 lines, main be3f303), plus WORK_BOARD.yaml parsed in full (976 tasks, 135 AVAILABLE, main be3f303) and live issue #1483 read (open, 1300 comments scanned)."
+      - "Onboarding 2026-11-25: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github-pat); repo surendra2304/FRIDAY-Universe read; issue #1483 open, 1300 comments; main be3f303."
+      - "Onboarding 2026-11-25: bridge CONFIRMED - MCP protocol 2025-03-26, FRIDAY-Cloud-Engineering-Bridge v1.30.0, 31 tools; get_system_info OK (Oracle Server 2 10.0.0.120, git 09603dff, both Oracle servers ONLINE); Server 2 /opt/friday_universe/CREDENTIALS.md opens via read_file with relative path, header only, no secrets copied."
+      - "Onboarding 2026-11-25: three scheduled tasks created (musetp7-work-request every 15 min, musetp7-hourly-self-check every 1 h, musetp7-weekly-reset Wednesdays 17:08 IST; weekly reset verified Nov 25 4:58 PM IST, 0% of free weekly limit used at check); default Agentic feature tour and Heartbeat schedules deleted."
+      - "Onboarding 2026-11-25: first pool pull pre-staged, NOT claimed in this PR (claim is a separate hub comment + branch): TASK-FRD-052 (P1, AVAILABLE, owner null, branch null, pr null on main be3f303, zero mentions in the 1300 hub comments scanned 2026-11-25). Top Stratex/VyralX P1s were hub-held despite board-AVAILABLE: TASK-STR-074 held by Muse TP4 (claim 7140407159), TASK-STR-075 held by Muse 6 (claim 7138192201), TASK-VYR-066 held by Muse TP1 (claim 7144888229), TASK-VYR-054 merged by Muse 17 (PR #1655), TASK-VYR-078 pulled by Muse 3 (comment 7143923927); hub re-check required immediately before claiming FRD-052."
+    active_assignments: []
+    active_branches:
+      - "musetp7/onboarding"
+    last_verified_at: "2026-11-25"
+
+  - id: muse_tp8
+    display_name: "Muse TP8"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-25 (Muse TP8, evidence-backed only): displayed assistant name set to 'Muse TP8'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14) and docs/collaboration/TEAM_ROSTER.yaml in full (517 lines, main be3f303), plus WORK_BOARD.yaml parsed in full (976 tasks, 135 AVAILABLE, board blob 9f64aeb3, snapshot 2026-11-17) and live issue #1483 read (open, 1304 comments). ARCHITECTURE.md was opened but its file content did not pass a safety check in this account, so no instruction was taken from that file; the owner prompt in chat governs."
+      - "Onboarding 2026-11-25: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed; main be3f303."
+      - "Onboarding 2026-11-25: bridge CONFIRMED - full MCP session via the secure-channel credential (custom.friday-bridge): initialize OK, 31 tools; get_system_info OK (both Oracle servers ONLINE, Server 2 git 09603dff); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_text (header only, first 12 lines, no secrets copied)."
+      - "Onboarding 2026-11-25: three scheduled tasks created (musetp8-work-request every 15 min, musetp8-hourly-self-check every 1 h, musetp8-weekly-reset Wednesdays 17:10 IST; weekly reset verified Wed Nov 25 5:00 PM IST, 0% used); default Agentic feature tour and Heartbeat schedules deleted."
+    active_assignments: []
+    active_branches:
+      - "musetp8/onboarding"
+    last_verified_at: "2026-11-25"
+
+  - id: muse_tp9
+    display_name: "Muse TP9"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-25 (Muse TP9, evidence-backed only): displayed assistant name set to 'Muse TP9'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (263 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (548 lines, main f216e1b), plus WORK_BOARD.yaml parsed in full (984 tasks, 116 AVAILABLE, main f216e1b) and live issue #1483 read (open, 1465 comments)."
+      - "Onboarding 2026-11-25: GitHub access confirmed — PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed; roster PR #1843 filed from branch musetp9/onboarding. Bridge confirmed 2026-11-25 (MCP initialize OK, 31 tools, get_system_info OK, Server 2 /opt/friday_universe/CREDENTIALS.md header read, no secrets copied)."
+      - "Onboarding 2026-11-25: three scheduled tasks created (musetp9-work-request every 15 min, musetp9-hourly-self-check every 1 h, musetp9-weekly-reset Wednesdays 18:07 IST; weekly reset verified Wed Dec 2 5:57 PM IST, 1% of free weekly limit used at check); default Agentic feature tour and Heartbeat schedules deleted."
+    active_assignments: []
+    active_branches:
+      - "musetp9/onboarding"
+    last_verified_at: "2026-11-25"
+
+  - id: muse_tp10
+    display_name: "Muse TP10"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-25 (Muse TP10, evidence-backed only): displayed assistant name set to 'Muse TP10'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (263 lines, effective 2026-11-20), AGENTS.md and docs/collaboration/TEAM_ROSTER.yaml in full (548 lines, main f216e1b), plus WORK_BOARD.yaml parsed in full (984 tasks, 116 AVAILABLE, main f216e1b) and live issue #1483 read (WATCH099, 2026-11-25)."
+      - "Onboarding 2026-11-25: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed; main f216e1b."
+      - "Onboarding 2026-11-25: Bridge CONFIRMED (custom.friday-bridge): MCP initialize OK, 31 tools listed; get_system_info OK - Oracle Server 2 (10.0.0.120), workspace /opt/friday_universe, git 2c960cb7, oracle_server_1 ONLINE, oracle_server_2 ONLINE, public ingress https://friday-universe.duckdns.org. Server 2 CREDENTIALS.md opens via bridge read_file (workspace-relative path, heading read only; no secret values copied). Read-only bridge client only (get_system_info, list_directory, read_file, oracle_fleet_health, oracle_check_service)."
+      - "Onboarding 2026-11-25: three scheduled tasks created (musetp10-work-request every 15 min, musetp10-hourly-self-check every 1 h, musetp10-weekly-reset Wednesdays ~18:44 IST; weekly reset verified Wed Dec 2 6:34 PM IST, 0% of free weekly limit used); Heartbeat schedule deleted, Agentic feature tour already absent. System runtime schedules cannot be removed via cron tools."
+    active_assignments: []
+    active_branches:
+      - "musetp10/onboarding"
+    last_verified_at: "2026-11-25"
+
+  - id: muse_tp11
+    display_name: "Muse TP11"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-25 (Muse TP11, evidence-backed only): displayed assistant name set to 'Muse TP11'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14) and docs/collaboration/TEAM_ROSTER.yaml in full (548 lines, main f216e1b), plus WORK_BOARD.yaml parsed in full (984 tasks, 116 AVAILABLE, board blob 9e87efb4, snapshot 2026-11-17) and live issue #1483 read (open, 1469 comments). ARCHITECTURE.md was opened but its file content did not pass a safety check in this account, so no instruction was taken from that file; the owner prompt in chat governs."
+      - "Onboarding 2026-11-25: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed; main f216e1b."
+      - "Onboarding 2026-11-25: bridge CONFIRMED - full MCP session via the secure-channel credential (custom.friday-bridge): initialize OK, 31 tools; get_system_info OK (both Oracle servers ONLINE, Server 2 git 2c960cb7); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_text (header only, first 12 lines, no secrets copied)."
+      - "Onboarding 2026-11-25: three scheduled tasks created (musetp11-work-request every 15 min, musetp11-hourly-self-check every 1 h, musetp11-weekly-reset Saturdays 21:39 IST; weekly reset verified Sat Nov 28 9:29 PM IST, 0% used); default Agentic feature tour and Heartbeat schedules deleted."
+      - "Onboarding 2026-11-25: first pool pull pre-staged, NOT claimed in this PR (claim is a separate hub comment + branch): TASK-DB-007 (P2, AVAILABLE, owner null, branch null, pr null on main f216e1b, zero mentions in the 1469 hub comments scanned); Stratex/VyralX P1s are held - TASK-STR-077 held by Muse 17 (claim 7138103574, status 18:00 IST 2026-11-25), TASK-STR-074/075 held by Muse TP4, TASK-VYR-052/081 held by Muse TP5, TASK-VYR-077 held by Muse TP3; TASK-FRD-055 was pre-staged by Muse TP8 (not claimed). Hub re-check required immediately before claiming DB-007."
+    active_assignments: []
+    active_branches:
+      - "musetp11/onboarding"
+    last_verified_at: "2026-11-25"
+
+  - id: muse_tp14
+    display_name: "Muse TP14"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-26 (Muse TP14, evidence-backed only): displayed assistant name set to 'Muse TP14'; read docs/MASTER_PLAN.md (180 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (264 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (593 lines, main 371738ec), plus WORK_BOARD.yaml parsed in full (1028 tasks, 62 AVAILABLE, board blob 13f51b84, snapshot 2026-11-17) and live issue #1483 read (open, 2122 comments)."
+      - "Onboarding 2026-11-26: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed; main 371738ec."
+      - "Onboarding 2026-11-26: bridge CONFIRMED - full MCP session via the secure-channel credential (custom.friday-bridge): initialize OK, 31 tools; get_system_info OK (Oracle Server 2 10.0.0.120, git branch muse10/task-ig2-web-07-fix-01-glass-start-page commit 410f0738, both Oracle servers ONLINE); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file (header only, first 12 lines, no secrets copied); run_shell hostname on server 2 returned friday-universe-vnic-2 exit 0."
+    active_assignments: []
+    active_branches:
+      - "musetp14/onboarding"
+    last_verified_at: "2026-11-26"
+
+  - id: muse_tp12
+    display_name: "Muse TP12"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-26 (Muse TP12, evidence-backed only): displayed assistant name set to 'Muse TP12'; read docs/MASTER_PLAN.md (179 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (263 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (593 lines, main 371738ec), plus WORK_BOARD.yaml parsed in full (1,028 tasks, 62 AVAILABLE, snapshot 2026-11-17, live main 371738ec) and live issue #1483 read (open, 2,122 comments)."
+      - "Onboarding 2026-11-26: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed; main 371738ec."
+      - "Onboarding 2026-11-26: bridge CONFIRMED - full MCP session via the secure-channel credential (custom.friday-bridge): initialize OK, 31 tools; get_system_info OK (both Oracle servers ONLINE, Server 2 git branch muse10/task-ig2-web-07-fix-01-glass-start-page at 410f0738); run_shell hostname on Server 2 OK (friday-universe-vnic-2, exit 0) - tool answers, but grant standing disputed per WATCH169/170, not cleared for live legs; Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_text (header only, first 12 lines, no secrets copied)."
+      - "Onboarding 2026-11-26: three scheduled tasks created (musetp12-work-request every 15 min, musetp12-hourly-self-check every 1 h, musetp12-weekly-reset Thursdays 20:58 IST; weekly reset verified Thu Dec 3 8:48 PM IST, 0% of free weekly limit used at check); default Agentic feature tour and Heartbeat schedules deleted."
+      - "Onboarding 2026-11-26: first pool pull pre-staged, NOT claimed in this PR (claim is a separate hub comment + branch): no claimable Stratex/VyralX head on live main 371738ec - TASK-STR-074 held by Muse TP4, TASK-STR-089 in Muse 17 queue position 3, TASK-STR-093 claimed by Muse 4 (hub 7193929810), TASK-VYR-077 held by Muse TP3, TASK-VYR-087 held by Muse TP6, TASK-VYR-081 earmarked muse_16 per WATCH169/170; hub re-check required immediately before any claim."
+    active_assignments: []
+    active_branches:
+      - "musetp12/onboarding"
+    last_verified_at: "2026-11-26"
+
+  - id: muse_tp13
+    display_name: "Muse TP13"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-26 (Muse TP13, evidence-backed only): displayed assistant name set to 'Muse TP13'; read docs/MASTER_PLAN.md (180 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (264 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (594 lines, main 371738ec), plus WORK_BOARD.yaml parsed in full (1028 tasks, 62 AVAILABLE, board blob 13f51b84, snapshot 2026-11-17) and live issue #1483 read (open, 2121 comments, updated 2026-11-26T15:36:21Z)."
+      - "Onboarding 2026-11-26: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github-pat connector); public repo and issue #1483 read confirmed; main 371738ec. Bridge NOT yet confirmed - no bridge credential yet, pending Surendra's bridge link; run_shell and CREDENTIALS.md not claimed."
+      - "Onboarding 2026-11-26: three scheduled tasks created (tp13-work-request every 15 min, tp13-hourly-self-check every 1 h, tp13-weekly-reset Thursdays 21:01 IST; weekly reset Dec 3 8:51 PM IST, 0% used); default Agentic feature tour and Heartbeat schedules deleted; system runtime schedules cannot be removed."
+      - "Onboarding 2026-11-26: first pool pull NOT claimed in this PR (claim is a separate hub comment + branch): top Stratex/VyralX P1s are held or blocked - TASK-VYR-087 mid-task by Muse TP6, TASK-VYR-081 blocked on permitted footage (no live EARN-024 brief, per board record), TASK-STR-074 owner muse_tp4, TASK-VYR-077 owner muse_tp3, TASK-STR-089 assigned to Muse 17; all need live fleet access via bridge, which is still pending. Hub re-check required immediately before claiming."
+    active_assignments: []
+    active_branches:
+      - "musetp13/onboarding"
+    last_verified_at: "2026-11-26"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
@@ -419,3 +634,6 @@ onboarding_policy:
   muse_ai_additional:
     - "Read docs/collaboration/ARCHITECTURE.md in full (Muse team operating architecture) and docs/MASTER_PLAN.md."
   capability_rule: "Never infer integrations or permissions from the contributor or product name."
+
+
+

@@ -26,11 +26,32 @@ With --query-index, runs that query only; without it, runs all QUERIES.
 """
 
 import argparse
+import importlib.util
 import json
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+# TASK-VYR-065: hard niche avoid-list guardrail, shared with the app-level
+# discovery service. Loaded by file path (this script runs standalone, no
+# app imports) and cached; a missing guard file fails loudly — a guardrail
+# that silently disappears defeats the purpose.
+_GUARD_PATH = Path(__file__).resolve().parents[1] / "app" / "services" / "niche_guard.py"
+_guard = None
+
+
+def _load_guard():
+    global _guard
+    if _guard is not None:
+        return _guard
+    if not _GUARD_PATH.is_file():
+        raise SystemExit(f"TASK-VYR-065 niche guard missing: {_GUARD_PATH}")
+    spec = importlib.util.spec_from_file_location("vyr065_niche_guard", _GUARD_PATH)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    _guard = module
+    return _guard
 
 QUERIES = [
     "most satisfying video ever short",
@@ -169,8 +190,27 @@ def search_flat(query, ytdlp, cookies, timeout=180) -> list:
 
 
 def run_query(query, ytdlp, cookies, excluded: set) -> dict:
+    guard = _load_guard()
+    # TASK-VYR-065: a query naming a banned niche is rejected outright —
+    # no search is issued for it.
+    allowed, reason = guard.check_query(query)
+    if not allowed:
+        return {
+            "query": query,
+            "returned": 0,
+            "shorts_len": 0,
+            "excluded_known": len(excluded),
+            "fresh": [],
+            "rejected_niche": 0,
+            "rejected_niche_reasons": [],
+            "rejected_query": reason,
+        }
     entries = search_flat(query, ytdlp, cookies)
     fresh = rank_fresh(entries, excluded)
+    # TASK-VYR-065: hard niche avoid-list — drop banned-niche candidates
+    # before they can enter the pool. Rejections are logged with their
+    # reason inside filter_candidates and recorded in the output.
+    fresh, rejected = guard.filter_candidates(fresh)
     shorts = [e for e in entries if is_shorts_length(e.get("duration"))]
     return {
         "query": query,
@@ -178,6 +218,11 @@ def run_query(query, ytdlp, cookies, excluded: set) -> dict:
         "shorts_len": len(shorts),
         "excluded_known": len(excluded),
         "fresh": fresh,
+        "rejected_niche": len(rejected),
+        "rejected_niche_reasons": [
+            {"id": r.get("id"), "rejection_reason": r.get("rejection_reason")}
+            for r in rejected
+        ],
     }
 
 

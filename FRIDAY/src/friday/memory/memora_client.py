@@ -220,6 +220,13 @@ class MemoraClient:
         self.resync_delays: tuple = (5.0, 25.0, 90.0)
         self._executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="friday-memory")
 
+        # TASK-MEM-029: one process is one capture session unless a caller
+        # passes an explicit session_id. The CLI is one process per session
+        # and the agent runtimes that record interactions are likewise
+        # single-session processes, so a process-stable id keeps one
+        # session's events compressible into one digest at session end.
+        self.session_id = f"friday-{uuid.uuid4().hex[:12]}"
+
         # Local fallback storage. Production uses the FRIDAY Oracle schema; an
         # explicit path is test-only.
         self.local_db_path: Optional[str] = None
@@ -558,6 +565,26 @@ class MemoraClient:
             sanitized = pat.sub("[REDACTED_CREDENTIAL]", sanitized)
         return sanitized
 
+    def _capture_turn(self, agent_name: str, user_input: str, agent_output: str) -> None:
+        """Best-effort session-capture event for one turn (TASK-MEM-029).
+
+        Called from record_interaction on every path (remote success,
+        remote miss, local-only) so every turn is captured exactly once.
+        Never raises; a miss is logged at WARNING and the turn's own
+        record is unaffected. The content is the already-sanitized turn
+        text, truncated to the capture router's 20000-char limit.
+        """
+        if not self.remote_enabled:
+            return
+        try:
+            self.capture_session_event(
+                agent_name,
+                kind="observation",
+                content=f"User: {user_input}\nFRIDAY: {agent_output}"[:19000],
+            )
+        except Exception as e:
+            logger.warning(f"Memora session capture skipped: {type(e).__name__}.")
+
     def record_interaction_async(
         self,
         user_input: str,
@@ -617,10 +644,20 @@ class MemoraClient:
                 # logged at WARNING (was DEBUG — invisible in production).
                 with urllib.request.urlopen(req, timeout=self.write_timeout) as resp:
                     if resp.status in (200, 201):
-                        return json.loads(resp.read().decode("utf-8"))
+                        result = json.loads(resp.read().decode("utf-8"))
+                        self._capture_turn(agent_name, user_clean, agent_clean)
+                        return result
                     logger.warning(f"Memora remote interaction write returned HTTP {resp.status}; recording locally.")
             except Exception as e:
                 logger.warning(f"Memora remote interaction write error: {type(e).__name__}; recording locally.")
+
+        # TASK-MEM-029: the same turn is the session-capture loop's input.
+        # Every interaction already flows through here, so this is the
+        # capture service's production caller — no per-call-site wiring.
+        # Best-effort and independent of the record above: a capture miss
+        # never changes this method's result or raises into the caller.
+        # (The success path above captures before its early return.)
+        self._capture_turn(agent_name, user_clean, agent_clean)
 
         local_result = self._record_locally(agent_name, user_clean, agent_clean)
         return {**local_result, "status": "local_only" if local_result.get("status") == "success" else local_result.get("status"), "cloud": False}
@@ -1586,6 +1623,326 @@ class MemoraClient:
 
         local = self._learn_locally(agent_name, task_name, status, error_clean, actions_clean, context_clean, domain)
         return {**local, "status": "local_only" if local.get("status") == "success" else local.get("status"), "cloud": False, "sync_error": sync_error}
+
+    # ------------------------------------------------------------------
+    # TASK-MEM-029: production callers for the three shipped-but-never-
+    # invoked Memora services (skill-learning TASK-IG2-MEM-02, user-model
+    # TASK-IG2-MEM-03, session capture PR #709). Each method is fail-soft
+    # by the same contract as the rest of this client: a remote miss is
+    # logged at WARNING and reported in the result, never raised into the
+    # caller. There is no local fallback for these writes — the services
+    # live in Memora, so a missed write is reported as missed, not kept
+    # local and silently diverged.
+    # ------------------------------------------------------------------
+
+    def _post_json(
+        self,
+        path: str,
+        payload: Dict[str, Any],
+        *,
+        agent_name: str,
+        method: str = "POST",
+    ) -> tuple[Optional[Dict[str, Any]], Optional[str]]:
+        """POST/PUT one JSON body to Memora. Returns (parsed, error)."""
+        if not self.remote_enabled:
+            return None, "remote_disabled"
+        try:
+            url = f"{self.base_url}{path}"
+            headers = self._remote_headers(agent_name, json_body=True)
+            req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method=method)
+            with urllib.request.urlopen(req, timeout=self.write_timeout) as resp:
+                if resp.status in (200, 201):
+                    return json.loads(resp.read().decode("utf-8")), None
+                return None, f"HTTP {resp.status}"
+        except Exception as e:
+            return None, type(e).__name__
+
+    def record_skill_outcome(
+        self,
+        agent_name: str = "friday",
+        *,
+        pattern_key: str,
+        outcome: str,
+        detail: str,
+        correction: Optional[str] = None,
+        task_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Record one task outcome with the skill-learning loop (TASK-IG2-MEM-02).
+
+        POST /v1/skills/outcomes. The loop's trigger pass runs in Memora's
+        background worker, so recording the outcome is the whole caller
+        contract on this side — evaluation and drafting happen server-side.
+        """
+        payload: Dict[str, Any] = {
+            "pattern_key": pattern_key,
+            "outcome": outcome,
+            "detail": detail,
+        }
+        if correction:
+            payload["correction"] = correction
+        if task_id:
+            payload["task_id"] = task_id
+        result, error = self._post_json("/v1/skills/outcomes", payload, agent_name=agent_name)
+        if error is not None:
+            logger.warning(f"Memora skill-outcome write failed ({error}); outcome not recorded.")
+            return {"stored": False, "reason": error}
+        return result or {"stored": False, "reason": "empty_response"}
+
+    def record_skill_outcome_async(
+        self,
+        agent_name: str = "friday",
+        *,
+        pattern_key: str,
+        outcome: str,
+        detail: str,
+        correction: Optional[str] = None,
+        task_id: Optional[str] = None,
+    ) -> None:
+        """Non-blocking skill-outcome record (same executor as the other async writes)."""
+        try:
+            self._executor.submit(
+                self.record_skill_outcome,
+                agent_name,
+                pattern_key=pattern_key,
+                outcome=outcome,
+                detail=detail,
+                correction=correction,
+                task_id=task_id,
+            )
+        except Exception as e:
+            logger.debug(f"Memora async skill-outcome record failed to submit: {e}")
+
+    def report_task_outcome_async(
+        self,
+        agent_name: str,
+        task_name: str,
+        status: str,
+        error_log: Optional[str] = None,
+        actions_taken: Optional[str] = None,
+        context: Optional[str] = None,
+        domain: Optional[str] = None,
+        pattern_key: Optional[str] = None,
+        correction: Optional[str] = None,
+    ) -> None:
+        """Report one task outcome to BOTH learning paths, non-blocking.
+
+        The fan-out is the production caller for the skill-learning loop:
+        every site that already reported an outcome to the old
+        /v1/memories/learn-outcome path reports the same event as a
+        skill-loop outcome (pattern_key defaults to the task name — the
+        recurring task shape the loop keys on). The old path keeps its
+        guideline synthesis; the new path feeds the draft loop. One call
+        site, one pairing — the two can never drift apart.
+        """
+        self.learn_from_outcome_async(
+            agent_name,
+            task_name,
+            status,
+            error_log,
+            actions_taken,
+            context,
+            domain,
+        )
+        skill_outcome = (
+            "success" if status == "success"
+            else "corrected" if status == "corrected" else "failure"
+        )
+        self.record_skill_outcome_async(
+            agent_name,
+            pattern_key=pattern_key or task_name,
+            outcome=skill_outcome,
+            detail=(actions_taken or error_log or task_name),
+            correction=correction,
+        )
+
+    def update_user_model_field(
+        self,
+        agent_name: str = "friday",
+        *,
+        field: str,
+        value: Any,
+        kind: str,
+        subject: str = "owner",
+        source_ref: Optional[str] = None,
+        confidence: float = 0.8,
+    ) -> Dict[str, Any]:
+        """Set one user-model field (TASK-IG2-MEM-03): PUT /v1/user-model/field."""
+        payload: Dict[str, Any] = {
+            "field": field,
+            "value": value,
+            "kind": kind,
+            "subject": subject,
+            "confidence": confidence,
+        }
+        if source_ref:
+            payload["source_ref"] = source_ref
+        result, error = self._post_json("/v1/user-model/field", payload, agent_name=agent_name, method="PUT")
+        if error is not None:
+            logger.warning(f"Memora user-model field write failed ({error}); field not updated.")
+            return {"updated": False, "reason": error}
+        return result or {"updated": False, "reason": "empty_response"}
+
+    def update_user_model_field_async(
+        self,
+        agent_name: str = "friday",
+        *,
+        field: str,
+        value: Any,
+        kind: str,
+        subject: str = "owner",
+        source_ref: Optional[str] = None,
+        confidence: float = 0.8,
+    ) -> None:
+        """Non-blocking user-model field update (same executor as the other async writes)."""
+        try:
+            self._executor.submit(
+                self.update_user_model_field,
+                agent_name,
+                field=field,
+                value=value,
+                kind=kind,
+                subject=subject,
+                source_ref=source_ref,
+                confidence=confidence,
+            )
+        except Exception as e:
+            logger.debug(f"Memora async user-model field update failed to submit: {e}")
+
+    def record_owner_correction(
+        self,
+        agent_name: str = "friday",
+        *,
+        field: str,
+        value: Any,
+        subject: str = "owner",
+        source_ref: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Record an owner correction as a standing rule (TASK-IG2-MEM-03).
+
+        POST /v1/user-model/corrections. A correction is the highest-value
+        teaching signal there is, so it lands at confidence 1.0 and
+        outranks inferred preferences by design — server-side.
+        """
+        payload: Dict[str, Any] = {"field": field, "value": value, "subject": subject}
+        if source_ref:
+            payload["source_ref"] = source_ref
+        result, error = self._post_json("/v1/user-model/corrections", payload, agent_name=agent_name)
+        if error is not None:
+            logger.warning(f"Memora user-model correction failed ({error}); correction not recorded.")
+            return {"updated": False, "reason": error}
+        return result or {"updated": False, "reason": "empty_response"}
+
+    def record_owner_correction_async(
+        self,
+        agent_name: str = "friday",
+        *,
+        field: str,
+        value: Any,
+        subject: str = "owner",
+        source_ref: Optional[str] = None,
+    ) -> None:
+        """Non-blocking owner-correction record (same executor as the other async writes)."""
+        try:
+            self._executor.submit(
+                self.record_owner_correction,
+                agent_name,
+                field=field,
+                value=value,
+                subject=subject,
+                source_ref=source_ref,
+            )
+        except Exception as e:
+            logger.debug(f"Memora async owner-correction record failed to submit: {e}")
+
+    def fetch_user_model_render(self, agent_name: str = "friday", *, subject: str = "owner") -> str:
+        """The owner's rendered profile for session-start injection (TASK-IG2-MEM-03).
+
+        GET /v1/user-model/render. Returns "" when remote is off, the
+        service fails, or no fields exist yet — "nothing assumed" is not
+        injected into the prompt; absence stays absence.
+        """
+        if not self.remote_enabled:
+            return ""
+        try:
+            query = urllib.parse.urlencode({"subject": subject})
+            url = f"{self.base_url}/v1/user-model/render?{query}"
+            headers = self._remote_headers(agent_name)
+            req = urllib.request.Request(url, headers=headers, method="GET")
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                if resp.status != 200:
+                    return ""
+                profile = (json.loads(resp.read().decode("utf-8")) or {}).get("profile") or ""
+        except Exception as e:
+            logger.debug(f"Memora user-model render failed ({type(e).__name__}).")
+            return ""
+        if "nothing assumed" in profile.lower():
+            return ""
+        return profile
+
+    def capture_session_event(
+        self,
+        agent_name: str = "friday",
+        *,
+        session_id: Optional[str] = None,
+        kind: str = "observation",
+        content: str,
+        task_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Capture one session event (TASK-IG2-MEM-01, PR #709): POST /v1/capture/events.
+
+        The service secret-scrubs before storage; callers pass already
+        sanitized text (record_interaction sanitizes before calling).
+        """
+        payload: Dict[str, Any] = {
+            "session_id": session_id or self.session_id,
+            "kind": kind,
+            "content": content,
+        }
+        if task_id:
+            payload["task_id"] = task_id
+        result, error = self._post_json("/v1/capture/events", payload, agent_name=agent_name)
+        if error is not None:
+            logger.warning(f"Memora session capture failed ({error}); event not captured.")
+            return {"stored": False, "reason": error}
+        return result or {"stored": False, "reason": "empty_response"}
+
+    def capture_session_event_async(
+        self,
+        agent_name: str = "friday",
+        *,
+        session_id: Optional[str] = None,
+        kind: str = "observation",
+        content: str,
+        task_id: Optional[str] = None,
+    ) -> None:
+        """Non-blocking session-event capture (same executor as the other async writes)."""
+        try:
+            self._executor.submit(
+                self.capture_session_event,
+                agent_name,
+                session_id=session_id,
+                kind=kind,
+                content=content,
+                task_id=task_id,
+            )
+        except Exception as e:
+            logger.debug(f"Memora async session capture failed to submit: {e}")
+
+    def compress_session(self, agent_name: str = "friday", *, session_id: Optional[str] = None) -> Dict[str, Any]:
+        """Compress one session's captured events into its digest (TASK-IG2-MEM-01).
+
+        POST /v1/capture/compress. Idempotent per event set server-side.
+        Called at session end (CLI text loop, voice session end).
+        """
+        result, error = self._post_json(
+            "/v1/capture/compress",
+            {"session_id": session_id or self.session_id},
+            agent_name=agent_name,
+        )
+        if error is not None:
+            logger.warning(f"Memora session compress failed ({error}); session not compressed.")
+            return {"compressed": False, "reason": error}
+        return result or {"compressed": False, "reason": "empty_response"}
 
     def recall_experience(
         self,

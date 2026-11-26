@@ -54,7 +54,10 @@ class LocationMapsTool(BaseTool):
     description = (
         "Find current geographic location, search Google Maps for places/businesses, "
         "or get driving directions between locations. "
-        "Supports 'where am i', searching 'restaurants near me', or getting directions."
+        "Supports 'where am i', searching 'restaurants near me', or getting directions. "
+        "The 'find_best_place' action runs the TASK-FRD-050 voice place-finder flow: "
+        "map search by cuisine/type, highest-rated filter, route time from a named "
+        "start point, and a speakable verdict (no browser opened)."
     )
     safety_level = SafetyLevel.SAFE
     parameters = {
@@ -62,12 +65,12 @@ class LocationMapsTool(BaseTool):
         "properties": {
             "action": {
                 "type": "string",
-                "enum": ["current_location", "search_maps", "directions"],
-                "description": "Operation to perform: 'current_location' (Where am I?), 'search_maps' (Find places), 'directions' (Navigate).",
+                "enum": ["current_location", "search_maps", "directions", "find_best_place"],
+                "description": "Operation to perform: 'current_location' (Where am I?), 'search_maps' (Find places), 'directions' (Navigate), 'find_best_place' (Best-rated place + route time + verdict).",
             },
             "query": {
                 "type": "string",
-                "description": "Place, restaurant, or business to search for (e.g. 'coffee shops near me', 'Eiffel Tower').",
+                "description": "Place, restaurant, or business to search for (e.g. 'coffee shops near me', 'Eiffel Tower'). For 'find_best_place': the spoken place request (e.g. 'best Italian restaurant near Bhimavaram from home').",
             },
             "destination": {
                 "type": "string",
@@ -79,11 +82,16 @@ class LocationMapsTool(BaseTool):
             },
             "open_in_browser": {
                 "type": "boolean",
-                "description": "Whether to open the map directly in the browser (default: true).",
+                "description": "Whether to open the map directly in the browser (default: true; ignored by 'find_best_place', which never opens a browser).",
             },
         },
         "required": ["action"],
     }
+
+    def __init__(self, place_provider=None) -> None:
+        # Optional injected PlaceSearchProvider (tests); default is the
+        # keyless OpenStreetMap provider built lazily in execute().
+        self._place_provider = place_provider
 
     def execute(
         self,
@@ -191,9 +199,46 @@ class LocationMapsTool(BaseTool):
                 safety_level=self.safety_level,
             )
 
+        elif act == "find_best_place":
+            # TASK-FRD-050: full voice place-finder flow — map search,
+            # highest-rated filter, route time from a named start point,
+            # speakable verdict. No browser is opened: this runs on the
+            # voice path, where the verdict is read aloud instead.
+            from friday.voice.place_finder import (
+                OverpassPlaceProvider,
+                run_place_finder_flow,
+            )
+
+            spoken = (query or "").strip()
+            if not spoken:
+                return ToolResult(
+                    name=self.name,
+                    content="Error: 'query' is required for find_best_place "
+                    "(e.g. 'best Italian restaurant near Bhimavaram from home').",
+                    is_error=True,
+                    safety_level=self.safety_level,
+                )
+            provider = self._place_provider or OverpassPlaceProvider()
+            loc = get_current_approximate_location()
+            centre = None
+            if loc.get("lat") is not None and loc.get("lon") is not None:
+                centre = (float(loc["lat"]), float(loc["lon"]))
+            result = run_place_finder_flow(
+                spoken, provider, default_center=centre
+            )
+            content = result.verdict
+            if result.map_url:
+                content += f"\nMap: {result.map_url}"
+            return ToolResult(
+                name=self.name,
+                content=content,
+                is_error=result.place is None,
+                safety_level=self.safety_level,
+            )
+
         return ToolResult(
             name=self.name,
-            content=f"Unknown action '{action}'. Supported actions: current_location, search_maps, directions.",
+            content=f"Unknown action '{action}'. Supported actions: current_location, search_maps, directions, find_best_place.",
             is_error=True,
             safety_level=self.safety_level,
         )

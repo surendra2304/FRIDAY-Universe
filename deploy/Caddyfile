@@ -53,6 +53,33 @@ friday-universe.duckdns.org {
             }
         }
     }
+    # TASK-IG2-WEB-04-FIX-01: the Stratex dashboard (served under
+    # /stratex/) used to reference its assets and API root-relative, so
+    # they 404'd / served the FRIDAY SPA at the site root (WEB-006).
+    # The dashboard now references them mount-relative, but the root
+    # paths must answer 200 too: the FRIDAY app owns no /static/* path
+    # (its Next.js assets live under /friday/_next/static/), and
+    # /api/v1/market/sector-heatmap is Stratex-only, so these two
+    # handles cannot shadow FRIDAY. `handle` (not `handle_path`) so the
+    # full path reaches the Stratex app, whose Flask static route and
+    # sector-heatmap blueprint serve them. /api/* as a whole stays with
+    # FRIDAY — the dashboard's other API calls go via /stratex/api/*.
+    handle /static/* {
+        reverse_proxy 127.0.0.1:18003 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
+    }
+    handle /api/v1/market/sector-heatmap {
+        reverse_proxy 127.0.0.1:18003 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
+    }
     handle_path /futuris* {
         reverse_proxy 10.0.0.120:8004 {
             transport http {

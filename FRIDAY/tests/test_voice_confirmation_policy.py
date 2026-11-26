@@ -106,6 +106,65 @@ def test_specific_low_risk_actions_pass(text):
 
 
 # ---------------------------------------------------------------------------
+# Classifier: Spotify media (TASK-FRD-044) — ambiguous play confirms,
+# named play and media verbs pass, questions are read-only
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("text", [
+    "Play something",
+    "Play",
+    "Play some music",
+    "Play a song",
+    "Play whatever",
+    "Play something on Spotify",
+])
+def test_ambiguous_spotify_play_confirms(text):
+    cls = policy.classify_request(text)
+    assert cls.category == policy.SENSITIVE, text
+    assert cls.family == "media", text
+    assert cls.ambiguous, text
+    decision = policy.decide(text)
+    assert decision.verdict == policy.CONFIRM, text
+    assert "What would you like me to play" in decision.question, text
+
+
+@pytest.mark.parametrize("text", [
+    "Play Bohemian Rhapsody on Spotify",
+    "Play my workout playlist",
+    "Play the new Taylor Swift song",
+    "Pause Spotify",
+    "Pause the music",
+    "Skip this song",
+    "Next track",
+    "Resume Spotify",
+])
+def test_specific_spotify_requests_pass(text):
+    cls = policy.classify_request(text)
+    assert cls.category == policy.SENSITIVE, text
+    assert cls.family == "media", text
+    assert not cls.ambiguous, text
+    assert policy.decide(text).verdict == policy.ALLOW, text
+
+
+@pytest.mark.parametrize("text", [
+    "What song is playing?",
+    "Is Spotify playing?",
+])
+def test_spotify_questions_are_read_only(text):
+    cls = policy.classify_request(text)
+    assert cls.category == policy.READ_ONLY, text
+    assert policy.decide(text).verdict == policy.ALLOW, text
+
+
+def test_gate_blocks_ambiguous_spotify_play_then_allows_exactly_once():
+    gate = policy.ConfirmationGate(clock=_Clock())
+    text = "Play something"
+    assert gate.check(text).verdict == policy.CONFIRM
+    assert gate.check(text).verdict == policy.ALLOW
+    assert gate.check(text).verdict == policy.CONFIRM
+
+
+# ---------------------------------------------------------------------------
 # Classifier: always-confirm families (money out, irreversible, security)
 # ---------------------------------------------------------------------------
 
@@ -266,6 +325,18 @@ def test_bridge_blocks_ambiguous_request_before_any_submission(monkeypatch):
     result2 = _run(bridge.execute("Message her on Instagram and tell her the plan"))
     assert result2["state"] == "answered"
     assert recorder.calls == ["Message her on Instagram and tell her the plan"]
+
+
+def test_bridge_blocks_ambiguous_spotify_play(monkeypatch):
+    bridge, recorder = _bridge_with_fake_send(monkeypatch)
+    result = _run(bridge.execute("Play something on Spotify"))
+    assert result["state"] == "confirmation_required"
+    assert result["confirmation_required"] is True
+    assert "What would you like me to play" in result["spoken_reply"]
+    assert recorder.calls == []  # nothing reached the brain
+    # After the owner names a track, the re-issue passes.
+    result2 = _run(bridge.execute("Play Bohemian Rhapsody on Spotify"))
+    assert result2["state"] == "answered"
 
 
 def test_bridge_passes_questions_immediately(monkeypatch):

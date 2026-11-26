@@ -19,6 +19,14 @@ as every other Memora surface:
 - ``POST /v1/capture/handoff``  — compress the ending session and build
   the next session's pack in one call, user-model block included.
 
+TASK-MEM-031 adds two endpoints on the same surface:
+
+- ``GET  /v1/capture/sessions`` — the claude-mem L0 session index: the
+  caller's past captured sessions with needle counts and token costs.
+- ``POST /v1/capture/recall-outcome`` — the agentmemory explicit
+  confidence path: the caller reports which served memories were
+  actually useful, and stored confidence moves a bounded step.
+
 The actor is always the authenticated agent identity — a request body
 cannot name a different agent to write as. Service results are returned
 verbatim: the services never raise into the caller, and a refusal
@@ -28,7 +36,7 @@ verbatim: the services never raise into the caller, and a refusal
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
@@ -36,6 +44,8 @@ from sqlalchemy.orm import Session
 
 from apps.api.dependencies import get_actor_header
 from core.memory.capture_service import SessionCaptureService
+from core.memory.confidence_reinforcement import MAX_REINFORCE_IDS, reinforce_on_recall
+from core.memory.session_needles import list_actor_sessions, render_index
 from core.memory.user_model_service import UserModelService
 from storage.relational.session import get_db
 
@@ -60,6 +70,12 @@ class CompressRequest(BaseModel):
 class HandoffRequest(BaseModel):
     session_id: str = Field(..., min_length=1, max_length=128)
     next_query: str = Field(..., min_length=1, max_length=2000)
+    tenant_id: Optional[str] = Field(default=None, max_length=128)
+
+
+class RecallOutcomeRequest(BaseModel):
+    memory_ids: List[str] = Field(..., min_length=1, max_length=MAX_REINFORCE_IDS)
+    useful_ids: List[str] = Field(default_factory=list, max_length=MAX_REINFORCE_IDS)
     tenant_id: Optional[str] = Field(default=None, max_length=128)
 
 
@@ -145,3 +161,33 @@ def session_handoff(
     )
     result["user_model_profile"] = _user_model_block(db, actor_name, body.tenant_id)
     return result
+
+
+@router.get("/sessions")
+def session_index(
+    limit: int = Query(default=10, ge=1, le=25),
+    tenant_id: Optional[str] = Query(default=None, max_length=128),
+    actor_name: str = Depends(get_actor_header),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    """TASK-MEM-031 (claude-mem): the L0 session index for this actor —
+    past captured sessions with needle counts and token costs."""
+    sessions = list_actor_sessions(db, actor_name=actor_name, tenant_id=tenant_id, limit=limit)
+    return {"sessions": sessions, "index": render_index(sessions)}
+
+
+@router.post("/recall-outcome")
+def recall_outcome(
+    body: RecallOutcomeRequest,
+    actor_name: str = Depends(get_actor_header),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    """TASK-MEM-031 (agentmemory): report which served memories were
+    useful; stored confidence moves a bounded step per record."""
+    return reinforce_on_recall(
+        db,
+        record_ids=body.memory_ids,
+        useful_ids=body.useful_ids,
+        actor_name=actor_name,
+        tenant_id=body.tenant_id,
+    )

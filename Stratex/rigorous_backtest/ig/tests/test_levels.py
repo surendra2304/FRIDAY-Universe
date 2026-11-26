@@ -2,9 +2,11 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from ig.levels import find_levels, swing_points
+from ig.levels import annotate_levels, find_levels, swing_points
 
 
 def _candles(highs, lows, closes):
@@ -63,3 +65,88 @@ def test_tolerance_merges_nearby_swings():
                      tol_frac=0.01, min_touches=1)
     near = [r for r in lv if 109 < r["price"] < 111]
     assert len(near) == 1 and near[0]["touches"] == 3
+
+
+# TASK-STR-066: PDO/PDC + current-day 5-minute levels in the output.
+
+def _base_candles():
+    # repeated ceiling at 110 and floor at 90, last close 100
+    highs = [100, 110, 100, 110, 100, 110, 100]
+    lows = [90, 95, 90, 95, 90, 95, 92]
+    closes = [98, 105, 98, 105, 98, 105, 100]
+    return _candles(highs, lows, closes)
+
+
+def test_pdo_pdc_carried_alongside_sr():
+    lv = annotate_levels(_base_candles(), prev_day={"open": 105, "close": 98},
+                         window=1, tol_frac=0.01, min_touches=2)
+    by_kind = {r["kind"]: r for r in lv}
+    assert by_kind["pdo"]["price"] == 105
+    assert by_kind["pdc"]["price"] == 98
+    assert by_kind["pdo"]["origin"] == "prev_day"
+    assert by_kind["pdc"]["origin"] == "prev_day"
+    assert by_kind["pdo"]["touches"] == 1
+    assert by_kind["pdo"]["first_index"] is None
+    assert by_kind["pdo"]["last_index"] is None
+    # base S/R levels still present
+    assert ("resistance", 110) in {(r["kind"], round(r["price"])) for r in lv}
+    assert ("support", 90) in {(r["kind"], round(r["price"])) for r in lv}
+    # every record is JSON-shaped plain data, sorted by price
+    prices = [r["price"] for r in lv]
+    assert prices == sorted(prices)
+    for r in lv:
+        assert set(r) >= {"kind", "price", "touches", "first_index",
+                          "last_index", "strength"}
+
+
+def test_pdo_pdc_at_price_flag():
+    # prev-day close equals the last close -> at_price True
+    lv = annotate_levels(_base_candles(), prev_day={"open": 105, "close": 100},
+                         window=1, tol_frac=0.01, min_touches=2)
+    by_kind = {r["kind"]: r for r in lv}
+    assert by_kind["pdc"]["at_price"] is True
+    assert by_kind["pdo"]["at_price"] is False
+
+
+def test_today_5m_levels_tagged_and_separate():
+    five_m = _candles([100, 112, 100, 112, 100, 112, 100],
+                      [96, 98, 96, 98, 96, 98, 97],
+                      [99, 106, 99, 106, 99, 106, 100])
+    lv = annotate_levels(_base_candles(), today_5m=five_m,
+                         window=1, tol_frac=0.01, min_touches=2)
+    m5 = [r for r in lv if r.get("timeframe") == "5m"]
+    assert m5, "no 5-minute levels in the output"
+    assert {(r["kind"], round(r["price"])) for r in m5} >= {
+        ("resistance", 112)}
+    # 5m indices refer to the 5-minute series, not the base series
+    assert all(0 <= r["first_index"] < len(five_m) for r in m5)
+    # base records carry no timeframe tag
+    assert all("timeframe" not in r for r in lv if r not in m5)
+
+
+def test_annotate_without_extras_matches_find_levels():
+    base = _base_candles()
+    assert annotate_levels(base, window=1, tol_frac=0.01,
+                           min_touches=2) == find_levels(
+        base, window=1, tol_frac=0.01, min_touches=2)
+
+
+def test_annotate_strength_normalised_across_combined_set():
+    lv = annotate_levels(_base_candles(), prev_day={"open": 105, "close": 98},
+                         window=1, tol_frac=0.01, min_touches=2)
+    top = max(r["touches"] for r in lv)
+    assert max(r["strength"] for r in lv) == 1.0
+    pdo = [r for r in lv if r["kind"] == "pdo"][0]
+    assert pdo["strength"] == pytest.approx(1 / top)
+
+
+def test_prev_day_missing_keys_raises():
+    with pytest.raises(ValueError):
+        annotate_levels(_base_candles(), prev_day={"open": 105})
+    with pytest.raises(ValueError):
+        annotate_levels(_base_candles(), prev_day={"close": 98})
+
+
+def test_annotate_empty_series():
+    assert annotate_levels([]) == []
+    assert annotate_levels([], prev_day={"open": 1, "close": 2}) == []

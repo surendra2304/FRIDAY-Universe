@@ -97,6 +97,7 @@ jobs:
             tests/test_rel068_collection_canary.py \
             tests/test_rel081_gate_failure_summary.py \
             tests/test_rel086_test_failure_summary.py \
+            tests/test_sen032_live_probes.py \
             FRIDAY/tests/test_four_owner_workflows.py \
             FRIDAY/tests/test_persona_clock_annotations.py \
             FRIDAY/tests/test_intelx_research_dispatch.py \
@@ -170,7 +171,11 @@ jobs:
             Forge/tests/test_frg001_cage.py \
             Forge/tests/test_frg017_idle_experiments.py \
             Forge/tests/test_frg017_wiring_gates.py \
-            Forge/tests/test_frg019_idle_stale.py
+            Forge/tests/test_frg019_idle_stale.py \
+            Forge/tests/test_frg022_workflow_passes.py \
+            Forge/tests/test_ig2_frg02_code_graph.py \
+            Forge/tests/test_ig2_frg03_ocr_review.py \
+            Forge/tests/test_frg028_build_run.py
       - name: Direct memory evidence outranks graph-only context
         env:
           PYTHONPATH: Memora
@@ -204,7 +209,10 @@ jobs:
             Inference/tests/test_inf030_apinex_fallback.py \
             Inference/tests/test_inf008_failover_drill.py \
             Inference/tests/test_key_inventory_report.py \
-            Inference/tests/test_universal_task_and_waterfall.py
+            Inference/tests/test_universal_task_and_waterfall.py \
+            Inference/tests/test_inf042_free_tier_routes.py \
+            Inference/tests/test_inf038_needle_router.py \
+            Inference/tests/test_inf039_bytez_guard.py
       - name: Futuris health-capability contracts (TASK-REL-067)
         env:
           PYTHONPATH: Futuris
@@ -219,7 +227,15 @@ jobs:
           python -m pytest -q \
             Futuris/tests/test_futuris_health_contract.py \
             Futuris/tests/api/test_health.py \
-            Futuris/tests/api/test_hostile_inputs.py
+            Futuris/tests/api/test_hostile_inputs.py \
+            Futuris/tests/test_fut030_calendar_context.py \
+            Futuris/tests/api/test_market_calendar_context.py \
+            Futuris/tests/test_fut031_reference_only_guardrail.py \
+            Futuris/tests/market_data/test_backbone.py \
+            Futuris/tests/market_data/test_providers.py \
+            Futuris/tests/market_data/test_api.py \
+            Futuris/tests/features/test_event_context.py \
+            Futuris/tests/api/test_market_event_context.py
       - name: IntelX health-capability contracts (TASK-REL-067)
         env:
           PYTHONPATH: IntelX
@@ -270,7 +286,11 @@ jobs:
             Stratex/tests/test_telegram_bot.py \
             Stratex/tests/test_daemon_heartbeat_health.py \
             Stratex/tests/test_rel_071_stratex_health_path.py \
-            Stratex/tests/test_daily_fill_ledger_reconciliation.py
+            Stratex/tests/test_str076_repo_implement_wave1.py \
+            Stratex/tests/test_daily_fill_ledger_reconciliation.py \
+            Stratex/tests/test_str081_emotion_journal.py \
+            Stratex/tests/test_pairs_trading_str068.py \
+            Stratex/tests/test_g1_reconcile.py
       - name: Install ffmpeg for VyralX real-render contracts
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Review-required project persistence and worker boundaries
@@ -297,6 +317,17 @@ jobs:
             VyralX/tests/test_vyr053_pool.py \
             VyralX/tests/test_vyr057_pool.py \
             VyralX/tests/test_vyr055_refresh3_pool.py \
+            VyralX/tests/test_vyr061_best_take_gate.py \
+            VyralX/tests/test_vyr060_bad_take_detection.py \
+            VyralX/tests/test_vyr064_pd_whitelist.py \
+            VyralX/tests/test_vyr044_held_render_qa.py \
+            VyralX/tests/test_vyr074_mapping.py \
+            VyralX/tests/test_vyr065_niche_guard.py \
+            VyralX/tests/test_vyr062_stick_figure_series.py \
+            VyralX/tests/test_vyr069_what_if_story.py \
+            VyralX/tests/test_ig_vyr09_format_tooling.py \
+            VyralX/tests/test_vyr083_format_registry.py \
+            VyralX/tests/test_vyr081_gta6_series.py \
             VyralX/tests/test_vyr079_openfilm_adapter.py \
             VyralX/tests/test_vyr079_nextwork_style.py
       - name: Compile fresh research and deployed voice wiring

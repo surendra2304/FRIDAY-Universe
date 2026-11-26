@@ -176,3 +176,47 @@ def test_router_serves_budget_endpoints():
     assert one.status_code == 200 and one.json()["agent"] == "Stratex"
     missing = client.get("/api/v1/cortex/budgets/Nope")
     assert missing.status_code == 404
+
+
+def test_router_post_usage_reports_tokens_and_enforces_token_budget(monkeypatch):
+    """TASK-CTX-008: the token-reporting seam, proven through the HTTP surface.
+
+    ``POST /api/v1/cortex/budgets/usage`` is the ledger's only token-reporting
+    surface: no in-repo LLM caller produces tokens (Cortex's cognitive
+    modules are deterministic heuristics), so the endpoint itself must be
+    shown to charge tokens, enforce the token budget with 429, and fire
+    the breach alert exactly once.
+    """
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from cortex_api import agent_budgets
+
+    if agent_budgets.router is None:
+        pytest.skip("FastAPI unavailable")
+    monkeypatch.setattr(agent_budgets, "ledger", small_ledger())
+    app = FastAPI()
+    app.include_router(agent_budgets.router)
+    client = TestClient(app)
+
+    ok = client.post(
+        "/api/v1/cortex/budgets/usage",
+        json={"agent": "Cortex", "tokens": 600, "tasks": 0},
+    )
+    assert ok.status_code == 200
+    assert ok.json()["tokens_used"] == 600
+    assert ok.json()["tokens_remaining"] == 400
+
+    breach = client.post(
+        "/api/v1/cortex/budgets/usage",
+        json={"agent": "Cortex", "tokens": 500, "tasks": 0},
+    )
+    assert breach.status_code == 429
+
+    snapshot = client.get("/api/v1/cortex/budgets/Cortex")
+    assert snapshot.status_code == 200
+    assert snapshot.json()["tokens_used"] == 600
+    assert snapshot.json()["paused"] is True
+    assert snapshot.json()["token_budget"] == 1_000
+
+    assert [a["agent"] for a in agent_budgets.ledger.alerts()] == ["Cortex"]

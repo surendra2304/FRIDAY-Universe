@@ -27,14 +27,36 @@ therefore shipped behind two gates:
 Only ≤7B open models are listed: larger models are credit-gated upstream,
 so offering them here would invite accidental paid spend. The empirical
 trial harness lives in :mod:`app.providers.bytez_probe`.
+
+TASK-INF-039 free-tier guardrails
+---------------------------------
+``generate``/``stream`` run through :mod:`app.providers.bytez_guard`:
+
+* the requested model must be in the ≤7B allowlist (a larger model is
+  refused before any call is made — no credit-metered model is reachable
+  through this rung);
+* the call holds the single free-tier concurrency slot (the $0 tier
+  allows 1 concurrent request); a caller that cannot get the slot within
+  ``BYTEZ_SLOT_WAIT_SECONDS`` (default 5 s) fails fast so the gateway
+  ladder serves the request from the next rung;
+* the served-model id Bytez returns is verified against the requested
+  model and the verdict is recorded in ``raw_response["bytez"]`` (the
+  INF-005 serve-check, at runtime: an aggregator may substitute models).
 """
 
 from __future__ import annotations
 
 import os
+from collections.abc import AsyncIterator
 
 from app.core.config import settings
-from app.providers.base import ProviderCapabilities
+from app.providers.base import ProviderCapabilities, ProviderRequest, ProviderResponse
+from app.providers.bytez_guard import (
+    acquire_bytez_slot,
+    annotate_bytez_response,
+    validate_bytez_model,
+    verify_served_model,
+)
 from app.providers.openai_compatible import OpenAICompatibleProvider
 
 BYTEZ_BASE_URL = "https://api.bytez.com/models/v2/openai/v1"
@@ -81,3 +103,33 @@ class BytezProvider(OpenAICompatibleProvider):
             "metering": "credit-metered beyond the $0 tier; paid spend is out of bounds (FREE-only rule)",
         }
         return caps
+
+    async def generate(self, request: ProviderRequest) -> ProviderResponse:
+        """Generate via Bytez under the TASK-INF-039 free-tier guardrails.
+
+        Order is deliberate: the model allowlist is checked first (a
+        refused model must never take the slot), then the credential, then
+        the single concurrency slot. A busy slot raises
+        :class:`BytezSlotBusyError` (a ``TimeoutError``) so the gateway
+        escalates to the fallback ladder; the served-model verdict is
+        recorded on the response before it is returned.
+        """
+        model = validate_bytez_model(request.model, BYTEZ_SUPPORTED_MODELS, BYTEZ_DEFAULT_MODEL)
+        self._require_key_or_raise()
+        async with acquire_bytez_slot():
+            resp = await super().generate(request)
+        served = resp.raw_response.get("model") if isinstance(resp.raw_response, dict) else None
+        return annotate_bytez_response(resp, verify_served_model(model, served))
+
+    async def stream(self, request: ProviderRequest) -> AsyncIterator[str]:
+        """Stream via Bytez under the same guardrails as :meth:`generate`.
+
+        The concurrency slot is held for the whole stream (a streamed call
+        is still one of the tier's single concurrent requests) and released
+        when the stream ends, errors, or the consumer closes it early.
+        """
+        validate_bytez_model(request.model, BYTEZ_SUPPORTED_MODELS, BYTEZ_DEFAULT_MODEL)
+        self._require_key_or_raise()
+        async with acquire_bytez_slot():
+            async for chunk in super().stream(request):
+                yield chunk

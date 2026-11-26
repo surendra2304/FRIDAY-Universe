@@ -217,3 +217,19 @@ def test_collector_passes_fetched_prose_not_hidden_script_or_search_snippets():
     assert 'HIDDEN' not in documents[0]['text']
     assert 'INVENTED' not in documents[0]['text']
     assert 'Battery capacity' in documents[0]['text']
+
+
+def test_entailment_failure_reasons_reach_the_stored_run():
+    # TASK-INT-053: when synthesis degrades on entailment, the per-finding
+    # reasons must reach the stored run (synthesis_error + source_failures),
+    # not just the generic code — otherwise the next failure cannot name
+    # its failing leg without a live reproduction.
+    search = SimpleNamespace(fetch=AsyncMock(return_value=[SimpleNamespace(title='Fixture', url='https://example.org/doc')]))
+    fetch = SimpleNamespace(fetch=AsyncMock(return_value=SimpleNamespace(status_code=200, content_type='text/plain', final_url='https://example.org/doc', content=b'Battery capacity is measured and reported in this synthetic source document. It is a sufficiently long passage for the fixture.')))
+    failures = [{"source_id": "public-one", "reason": "unsupported_entity:Zanzibar"}]
+    synthesis = AsyncMock(return_value={'status': 'DEGRADED', 'error': 'synthesis_entailment_unverified', 'entailment_failures': failures, 'findings': []})
+    result = asyncio.run(m.collect_live_brief('battery capacity', search, fetch, synthesize=synthesis))
+    assert result['status'] == 'DEGRADED'
+    assert result['synthesis_error']['reason'] == 'synthesis_entailment_unverified'
+    assert result['synthesis_error']['entailment_failures'] == failures
+    assert any(f.get('entailment_failures') == failures for f in result['source_failures'])

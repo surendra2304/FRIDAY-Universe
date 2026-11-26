@@ -301,6 +301,49 @@ class CamofoxClient:
                 except Exception:
                     logger.debug("camofox tab close failed (tab %s)", tab_id, exc_info=True)
 
+    async def fetch_macro(self, site: str, query: str) -> tuple[str, str]:
+        """Run a camofox search macro: build the site search URL, snapshot it.
+
+        TASK-INT-051: the upstream search-macro feature, bound to
+        ``CamofoxClient.fetch_snapshot`` — the tab is still opened and
+        closed per call, and the URL is still subject to the sidecar
+        connector's robots / domain-policy checks on the fetch path.
+        Raises :class:`ValueError` for an unknown site or bad query.
+        """
+        from intelx.connectors.camofox_macros import build_search_url
+
+        return await self.fetch_snapshot(build_search_url(site, query))
+
+    async def fetch_transcript(self, video_id: str) -> str:
+        """Fetch a public YouTube video's English captions as plain text.
+
+        TASK-INT-051: the upstream transcript feature without the yt-dlp
+        binary — the public, no-login timedtext endpoint serves captions
+        for public videos. Returns ``""`` when the video has no English
+        captions; raises :class:`ProviderError` on an HTTP error and
+        :class:`ValueError` on an unparseable payload.
+        """
+        from intelx.connectors.camofox_macros import (
+            parse_transcript_json3,
+            parse_transcript_xml,
+            youtube_transcript_url,
+        )
+
+        url = youtube_transcript_url(video_id)
+        async with self._client() as client:
+            resp = await client.get(url)
+        if resp.status_code >= 400:
+            raise ProviderError(
+                "YouTube transcript endpoint refused the request",
+                details={"provider": "youtube-timedtext", "status_code": resp.status_code},
+            )
+        if not resp.content.strip():
+            return ""
+        try:
+            return parse_transcript_json3(resp.json())
+        except (ValueError, UnicodeDecodeError):
+            return parse_transcript_xml(resp.content)
+
     @staticmethod
     def _extract_tab_id(response: httpx.Response) -> str | None:
         try:

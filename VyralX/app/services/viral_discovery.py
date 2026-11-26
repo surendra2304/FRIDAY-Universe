@@ -141,6 +141,16 @@ class Candidate:
     tags: list[str] = field(default_factory=list)
     description: str = ""
     webpage_url: str = ""
+    # TASK-VYR-058: sourcing provenance. YouTube candidates keep the
+    # defaults (platform "youtube", no subreddit); the Reddit adapter
+    # fills these in so a candidate's origin survives the whole
+    # pipeline (audition, production, manifest) unchanged.
+    source_platform: str = "youtube"
+    source_subreddit: str = ""
+    source_post_id: str = ""
+    source_url: str = ""
+    reddit_score: int = 0
+    reddit_comments: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -153,6 +163,12 @@ class Candidate:
             "hook": self.hook,
             "score": self.score,
             "url": self.webpage_url or f"https://www.youtube.com/watch?v={self.video_id}",
+            "source_platform": self.source_platform,
+            "source_subreddit": self.source_subreddit,
+            "source_post_id": self.source_post_id,
+            "source_url": self.source_url,
+            "reddit_score": self.reddit_score,
+            "reddit_comments": self.reddit_comments,
         }
 
 

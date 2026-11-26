@@ -76,6 +76,10 @@ one as unverified reference, none as adoption:
   the $0 claims are disputed in the source post's own comments.
 - `listicle_tool_patterns` — the listicle tool set (Wireflo, ZSKY
   AI, D-ID Studio, Steve AI, Pictory): pattern notes only.
+- `space_movies_reference` — the V-07 round-8 addendum space-movies
+  listicle (item DfaN9_fEVNy): pointer recorded reference-only for
+  the Space & Science lane; the listicle titles were never supplied,
+  none invented.
 
 Unverified creator claims — the honesty rule above applies to
 every name on this page.
