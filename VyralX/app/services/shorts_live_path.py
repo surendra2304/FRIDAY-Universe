@@ -224,16 +224,34 @@ def build_clip_render_plan(
     return plan
 
 
-def execute_render_plan(plan: dict[str, Any], *, data_root: str | Path) -> dict[str, Any]:
+def execute_render_plan(
+    plan: dict[str, Any],
+    *,
+    data_root: str | Path,
+    max_memory_mb: int | None = None,
+    cpu_threads: int | None = None,
+) -> dict[str, Any]:
     """Run one render plan: write subtitles, resolve BGM, render.
 
     Writes the SRT via ``captions.write_srt`` (which raises on
-    overlapping cues — that failure is reported, not hidden). When the
+    overlapping cues — that failure is reported, not hidden), plus the
+    styled ASS companion via ``captions.write_ass``: the renderer
+    prefers the ASS file when present, and on the current ffmpeg build
+    the SRT ``subtitles`` filter path needs materially more address
+    space than the ``ass`` path (live-trial finding 2026-11-26: SRT
+    renders died mid-encode at a 1024MB cap; ASS renders completed).
     plan's BGM fallback is ``ambient_pad``, a pad is synthesised with
     ``audio_mixer.synthesize_ambient_pad_bgm`` before rendering.
     Renders with ``renderer.render_video`` (preset ``shorts``).
     Returns the render result with the output path. Nothing is uploaded
     and nothing is published by this function.
+
+    ``data_root`` must sit inside the VyralX media directory when the
+    ambient-pad fallback can fire: the renderer refuses BGM outside it.
+    ``max_memory_mb`` / ``cpu_threads`` pass through to the renderer;
+    None keeps the fleet settings. (Live-trial finding 2026-11-26: the
+    fleet cap RENDER_MAX_MEMORY_MB=320 starves libx264 at 1080x1920 —
+    renders need a cap of at least ~1024MB on the current ffmpeg build.)
     """
     if plan.get("status") != "planned":
         raise LivePathError(f"plan is not planned: {plan.get('status')!r}")
@@ -242,9 +260,13 @@ def execute_render_plan(plan: dict[str, Any], *, data_root: str | Path) -> dict[
     destination = Path(plan["destination"])
     subtitle_file = Path(plan["subtitle_file"])
     captions.write_srt(plan["subtitle_cues"], subtitle_file)
+    captions.write_ass(plan["subtitle_cues"], subtitle_file.with_suffix(".ass"))
     bgm_path = plan.get("bgm_path")
     if plan.get("bgm_fallback") == "ambient_pad":
-        pad_path = Path(data_root) / "ambient_pad.wav"
+        # .m4a, not .wav: synthesize_ambient_pad_bgm encodes AAC, and an
+        # AAC stream inside a WAV container is undecodable downstream
+        # (live-trial finding 2026-11-26: "Decode error rate 1").
+        pad_path = Path(data_root) / "ambient_pad.m4a"
         audio_mixer.synthesize_ambient_pad_bgm(
             pad_path, float(plan["duration_seconds"]), "ambient_explainer")
         bgm_path = str(pad_path)
@@ -253,6 +275,8 @@ def execute_render_plan(plan: dict[str, Any], *, data_root: str | Path) -> dict[
         "bgm_path": bgm_path,
         "voiceover_path": plan.get("voiceover_path"),
         "fit_mode": plan.get("fit_mode", "pad"),
+        "max_memory_mb": max_memory_mb,
+        "cpu_threads": cpu_threads,
     }
     if plan.get("clip_start") is not None:
         kwargs["trim_start_seconds"] = float(plan["clip_start"])
