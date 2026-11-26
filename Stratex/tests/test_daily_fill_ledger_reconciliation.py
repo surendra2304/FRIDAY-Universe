@@ -323,6 +323,126 @@ def test_income_sums_windowed():
     }
 
 
+def _fake_reader(dataset):
+    """A DemoFuturesReader whose signed_get emulates /fapi/v1/income.
+
+    Oldest first, startTime filter, limit cap — the venue's observed
+    semantics (STR-088 §6). No keys, no network: __init__ is bypassed
+    and signed_get is stubbed on the instance.
+    """
+    reader = object.__new__(job.DemoFuturesReader)
+    calls = []
+
+    def fake_signed_get(path, params=None):
+        params = dict(params or {})
+        calls.append((path, params))
+        assert path == "/fapi/v1/income"
+        start = int(params.get("startTime") or 0)
+        limit = int(params.get("limit") or 1000)
+        rows = [r for r in dataset if int(r.get("time") or 0) >= start]
+        if params.get("incomeType"):
+            rows = [r for r in rows
+                    if str(r.get("incomeType") or "") == params["incomeType"]]
+        return rows[:limit]
+
+    reader.signed_get = fake_signed_get
+    reader.calls = calls
+    return reader
+
+
+def test_income_paginates_past_1000_rows():
+    # STR-088 §6 shape: 974 rows at distinct times, then a 29-row
+    # funding payment sharing one timestamp (the 1000th row is the
+    # 26th of the 29 — the cap cuts the payment mid-payment), then 58
+    # rows after the cutoff. The capped fetch drops 61 rows; the
+    # paginated fetch must return all 1061, exactly once each.
+    base = START_MS
+    cut = base + 974 * 1000
+    dataset = []
+    for i in range(974):
+        dataset.append({
+            "incomeType": "REALIZED_PNL" if i % 2 == 0 else "COMMISSION",
+            "symbol": "ETHUSDT", "asset": "USDT",
+            "income": "1.0" if i % 2 == 0 else "0.5",
+            "time": base + i * 1000, "tranId": f"tx-{i}",
+        })
+    for i in range(29):
+        dataset.append({
+            "incomeType": "FUNDING_FEE", "symbol": f"SYM{i:02d}",
+            "asset": "USDT", "income": "0.006",
+            "time": cut, "tranId": f"fund-{i}",
+        })
+    for j, offset in enumerate((8 * 3600 * 1000, 16 * 3600 * 1000)):
+        for i in range(29):
+            dataset.append({
+                "incomeType": "FUNDING_FEE", "symbol": f"SYM{i:02d}",
+                "asset": "USDT", "income": "0.001",
+                "time": cut + offset, "tranId": f"fund{j}-{i}",
+            })
+    reader = _fake_reader(dataset)
+    rows = reader.income(base)
+    assert len(rows) == 1061
+    assert len({job._income_row_key(r) for r in rows}) == 1061
+    assert [int(r.get("time") or 0) for r in rows] == sorted(
+        int(r.get("time") or 0) for r in rows)
+    assert len(reader.calls) == 2  # 1000-row page, then the 87-row tail
+    sums = job.income_sums(rows, base, cut + 16 * 3600 * 1000 + 1)
+    assert sums["FUNDING_FEE"] == pytest.approx(0.232)
+    assert sums["REALIZED_PNL"] == pytest.approx(487.0)
+    assert sums["COMMISSION"] == pytest.approx(243.5)
+
+
+def test_income_single_page_and_type_filter():
+    dataset = [
+        {"incomeType": "FUNDING_FEE", "symbol": "ETHUSDT", "asset": "USDT",
+         "income": "0.5", "time": START_MS + 1000, "tranId": "f1"},
+        {"incomeType": "REALIZED_PNL", "symbol": "ETHUSDT", "asset": "USDT",
+         "income": "2.0", "time": START_MS + 2000, "tranId": "f2"},
+    ]
+    reader = _fake_reader(dataset)
+    assert reader.income(START_MS) == dataset
+    assert len(reader.calls) == 1
+    assert reader.calls[0][1]["limit"] == 1000
+    assert reader.income(START_MS, "FUNDING_FEE") == dataset[:1]
+    assert reader.calls[1][1]["incomeType"] == "FUNDING_FEE"
+
+
+def test_income_sums_rounds_once():
+    # 100 rows of 0.00006: true sum 0.006. Rounding after every row
+    # (the pre-STR-090 behaviour) gives 0.01 — each 0.00006 rounds to
+    # 0.0001 at 4 decimals. STR-088 §6 saw the same drift live:
+    # commission reported -9.4624 vs true -9.46322266.
+    income = [
+        {"incomeType": "FUNDING_FEE", "income": "0.00006",
+         "time": START_MS + i * 1000}
+        for i in range(100)
+    ]
+    assert job.income_sums(income, START_MS, START_MS + DAY * 1000) == {
+        "FUNDING_FEE": 0.006,
+    }
+
+
+def test_income_pagination_stall_fails_loud():
+    # The venue keeps returning the same full page (more than 1000
+    # rows sharing one timestamp): refuse to spin, fail loud.
+    dataset = [
+        {"incomeType": "REALIZED_PNL", "symbol": "ETHUSDT", "asset": "USDT",
+         "income": "1.0", "time": START_MS + i * 1000, "tranId": f"s-{i}"}
+        for i in range(1000)
+    ]
+    reader = object.__new__(job.DemoFuturesReader)
+    calls = []
+
+    def always_same_page(path, params=None):
+        calls.append(params)
+        return list(dataset)
+
+    reader.signed_get = always_same_page
+    with pytest.raises(RuntimeError, match="pagination stalled"):
+        reader.income(START_MS)
+    assert len(calls) == 2  # one full page, one confirming page, then stop
+
+
 # -- window identity (LEDGER-001 section 6 numbers) ------------------------------
 
 
