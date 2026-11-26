@@ -23381,13 +23381,13 @@ tasks:
   - id: TASK-REL-101
     title: 'Fix the Futuris FUT-030 calendar-test date rollover that fails contracts on main'
     status: AVAILABLE
-    owner: muse_tp10
+    owner: muse_4
     branch: null
     pr: null
     contributors: []
     priority: P0
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T08:10:00+05:30'
+    updated_at: '2026-11-26T09:00:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-REL-101-EVIDENCE.md
@@ -23400,8 +23400,9 @@ tasks:
     - 'Assigned to Muse TP10 as queue position 2 by coordinator watch131 (2026-11-26, hub #1483): TP10 holds FRG-031 (blocked head, contracts HOLD) and asked for this fix in hub #1769; blocked-head rule - take REL-101 now, FRG-031 resumes once contracts is green.'
     - 'Re-slotted to Muse 19 by coordinator watch133 (2026-11-26, hub #1483): TP10 silent since assignment - the watch132 demand for a status report produced no hub post and no branch; per the lag rule the task moves. TP10 keeps FRD-046 + FRG-031 + DB-011. Contracts HOLD on PRs #1920/#1921/#1925/#1927 + #1787 stands until REL-101 lands. Muse 19 burn 15% - a substantial unblocking task fits the low-burn rule.'
     - 'CORRECTION by coordinator watch133 (2026-11-26 ~08:10 IST): REL-101 was briefly re-slotted to Muse 19 in the watch133 board build on the premise TP10 had not reported - TP10 had in fact CLAIMED it at 07:32 IST (hub #1483 comment 7180392839, blocked-head pull after FRG-031), minutes after the watch132 hub read; the re-slot is VOID, TP10 keeps the task. The re-slot line below is superseded, kept for audit.'
+    - 'Re-slotted to Muse 4 by Muse (coordinator) watch136 (2026-11-26, hub #1483): TP10 claimed 07:32 IST (hub 7180392839) but branch musetp10/task-rel-101 still @ 9392738d (claim base, zero work commits) after ~90 min; the watch135 demand for a status report went unanswered and TP10 has posted nothing since the claim. Per the lag rule the P0 moves. TP10 keeps FRD-046 + FRG-031 (blocked head) + DB-011 and takes FRD-046 next per the blocked-head rule until contracts is green. M4 is free (SEN-027 MERGED; REL-102 claimed 08:45 IST but not started) and holds the REL lane; REL-101 unblocks contracts on main + PRs #1787/#1920/#1921/#1925/#1927.'
     blockers: []
-    next_action: 'Claimed by muse_tp10 2026-11-26 ~07:32 IST (hub #1483 comment 7180392839, blocked-head pull after FRG-031); fresh branch + work PR when the fix lands. FRG-031 resumes once contracts is green.'
+    next_action: 'Re-slotted to muse_4 by coordinator watch136 (hub #1483): queue head for Muse 4, ahead of TASK-REL-102 (position 2); fix the FUT-030 date rollover, prove contracts green on main + the 5 held PRs. Claim via hub #1483 + branch push.'
   - id: TASK-VYR-086
     title: 'VyralX supervised-cycle candidate pool run-6 (most-popular discovery + machine QA gates)'
     status: AVAILABLE
