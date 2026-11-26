@@ -7,6 +7,10 @@ consumer. These routes are their production consumers:
   * ``FootprintAudit`` (TASK-IG-004/C48)   -> POST /osint/footprint-audit
   * ``SocialLinkReader`` (TASK-IG-INT-02)  -> GET  /osint/social-link
     (the reader is also wired into the retriever's fetch path)
+  * ``TelegramTopicSearch`` (TASK-INT-046) -> GET
+    /osint/telegram-topic-search (flag-gated, default off): a topic query
+    returns a ranked candidate list of public Telegram channels with a
+    manual watch-inclusion proposal per candidate.
   * ``untrusted_ingest.run_investigation`` (TASK-IG2-INT-04, Robin
     pattern) -> POST /research/investigations, with the production
     clearnet connectors injected exactly as the module's docstring
@@ -152,6 +156,53 @@ async def social_link(url: str = Query(..., min_length=8, max_length=2048)) -> d
     except SocialLinkUnavailable as exc:
         raise HTTPException(status_code=422, detail=exc.reason) from exc
     return doc.to_dict()
+
+
+# ---------------------------------------------------------------------------
+# TelegramTopicSearch consumer (TASK-INT-046)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/osint/telegram-topic-search", summary="Telegram topic search: candidate public channels")
+async def telegram_topic_search(
+    topic: str = Query(..., min_length=3, max_length=200),
+    max_results: int = Query(default=10, ge=1, le=20),
+    max_candidates: int = Query(default=10, ge=1, le=20),
+) -> dict:
+    """Return a ranked candidate list of public Telegram channels for a topic.
+
+    Route A of TASK-INT-046: the web-search seam runs ``site:t.me <topic>``
+    and each candidate handle is verified against its public preview
+    (``t.me/s/<handle>``) — credential-free, fail-closed. Every candidate
+    carries a watch-inclusion ``proposal`` (``inclusion: "manual"`` — a
+    Telegram channel has no RSS feed, so it cannot be appended as a
+    FeedSource; a human/coordinator reviews and adds it, or waits for the
+    Telegram-channel source-kind adapter). Flag-gated: the route answers
+    503 while ``ENABLE_TELEGRAM_TOPIC_SEARCH`` is off (default).
+    """
+    if not get_settings().ENABLE_TELEGRAM_TOPIC_SEARCH:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Telegram topic search is disabled; enable "
+                "ENABLE_TELEGRAM_TOPIC_SEARCH to use this route "
+                "(TASK-INT-046, flag off by default until the live leg proves it)"
+            ),
+        )
+    from intelx.connectors.telegram_topic_search import (
+        TelegramTopicSearch,
+        build_search_query,
+    )
+
+    candidates = await TelegramTopicSearch().search(
+        topic, max_results=max_results, max_candidates=max_candidates
+    )
+    return {
+        "topic": topic,
+        "query": build_search_query(topic),
+        "count": len(candidates),
+        "candidates": [c.to_dict() for c in candidates],
+    }
 
 
 # ---------------------------------------------------------------------------

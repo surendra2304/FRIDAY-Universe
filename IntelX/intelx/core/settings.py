@@ -439,6 +439,14 @@ class Settings(BaseSettings):
         default=900.0,
         description="Seconds between AI-radar sweeps when ENABLE_AI_RADAR is on",
     )
+    ENABLE_TELEGRAM_TOPIC_SEARCH: bool = Field(
+        default=False,
+        description=(
+            "Enable the Telegram topic-search route GET /api/v1/osint/telegram-topic-search "
+            "(TASK-INT-046). Discovery is credential-free (web search site:t.me + public "
+            "t.me/s/ preview); the flag stays off until the live leg proves the route."
+        ),
+    )
 
     # Auth & Storage
     SESSION_TTL_SECONDS: int = Field(

@@ -97,6 +97,20 @@ NAMED_SOURCES: tuple[NamedSource, ...] = (
         access_note="No public API (partner API is commercial). Streaming-availability catalogue; use the site search URL as a seed.",
         search_url_template="https://www.justwatch.com/in/search?q={q}",
     ),
+    NamedSource(
+        name="Telegram Public Preview",
+        kind="api_keyless",
+        home_url="https://t.me",
+        access_note=(
+            "Public channel previews at t.me/s/<handle> — no account, key or login; "
+            "verify a candidate channel exists and read its title, description and "
+            "recent posts. Telegram offers no web search endpoint, so discovery "
+            "runs through the web-search seam (site:t.me) and verifies via the "
+            "preview (TASK-INT-046). The {q} slot is a channel handle, not a "
+            "search term."
+        ),
+        search_url_template="https://t.me/s/{q}",
+    ),
 )
 
 
