@@ -181,8 +181,8 @@ def test_collect_fleet_state_covers_forge_workspaces(tmp_path, monkeypatch):
     for entry in forge:
         assert entry["sha256"] == _sha(tmp_path / "bundle" / entry["path"])
     sources = {(s["label"], s["path"]): s["status"] for s in manifest["sources"]}
-    assert sources[("server1", "/opt/friday_universe/Forge/workspaces")] == "collected"
-    assert sources[("server1", "/opt/friday_universe/Forge/artifacts")] == "collected"
+    assert sources[("server1", "/opt/friday_universe/Forge/workspaces")] == "ok"
+    assert sources[("server1", "/opt/friday_universe/Forge/artifacts")] == "ok"
 
 
 def test_collect_fleet_state_forge_workspaces_missing_fails(tmp_path, monkeypatch):
