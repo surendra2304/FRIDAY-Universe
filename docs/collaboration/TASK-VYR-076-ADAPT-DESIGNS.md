@@ -1390,6 +1390,56 @@ live leg, not assertable from the repo alone.
   Hourly self-check + weekly reset armed. No pending
   approval cards.
 
+## §8.29 Guardrail re-verification vs new main `703965cc` (2026-11-26 ~13:38 IST, hourly self-check)
+
+- Main moved `ef50a0b0` → `703965cc` (22 commits, 17 files
+  changed: merges #1962 FRD-058, #1965 STR-075, #1958
+  EARN-029, #1970 board watch147 — no VyralX files). §8.3
+  method repeated verbatim against `703965cc`
+  (`git grep -il`, same 13 patterns).
+- Result: **§8.3 stands unchanged.** All 13 pattern
+  hit-file sets identical `ef50a0b0` → `703965cc`:
+  scrapecreators 3, opencreator 4, ace-step 5,
+  social.media.research 4, codex-cli 2, flux.2 3,
+  flux-2 0, flux_2 0, acestep 0, podcastfy 8,
+  audio_content 5, pipeline_orchestration 8, montage 49.
+  VyralX prod-path hits for the scoped upstream patterns
+  at `703965cc`: 0 each (VyralX `montage` hits are
+  VyralX's own `app.services.montage`; `podcastfy` in
+  VyralX is only the IG2 module + its test). No
+  `podcastfy` / `montage` entries in VyralX
+  `pyproject.toml` / lock at `703965cc` (re-checked this
+  run). IG2 modules remain unwired — zero prod references
+  outside the modules themselves + 3 test files (§8.2
+  stands).
+- Board on main `703965cc` re-checked (blob `1d73c021`):
+  VYR-076 CLAIMED, owner muse_9, branch muse9/task-vyr-076,
+  PR 1708 — sane; INT-023 IN_REVIEW, owner muse_9, PR 1680
+  — unchanged, final compilation due 2026-11-27 still
+  BLOCKED. Branch synced before this commit: local =
+  remote `d57b5cb2`, clean tree, no open PR for the branch
+  (re-verified via API this run; PR #1708 closed/merged).
+  Branch behind main 859 (rebase owed at work-PR time).
+  Hub #1483 scanned through newest `7186200860`
+  (WATCH146 `7185178868`, WATCH147 `7185752260`, WATCH148
+  `7186050652` + correction `7186158821` searched in full
+  for Muse 9 / VYR-076 / INT-023 — zero hits): zero new
+  instruction, no ruling on live-leg clearance for
+  VYR-076; live legs still HELD under the owner stop
+  order (WATCH141 gating reaffirmed for FRG-025/INT-048/
+  FRD-058 in the same watches). Issue #35 still frozen at
+  2500 comments — hub is #1483. Silent self-check per
+  AGGRESSIVE COMPLETION RULES (7) — no hub post.
+- Usage 50% of free weekly limit (checked this run via
+  subscription-status; reset Nov 29 02:27 IST; additional
+  tokens 0%) — at the Wed 20:00 IST 50% bar (rule 6 noted;
+  next-task scope doubling is the coordinator's call).
+  Work-request job disabled — correct while mid-task
+  (VYR-076 claimed; last run Nov 24 23:03 IST failed,
+  2 consecutive failures — delivery-status artifact).
+  Hourly self-check + weekly reset armed. No pending
+  approval cards.
+
 ## §7 States (reported separately)
 
 - implemented: NO — no component runs in VyralX's live path yet.
