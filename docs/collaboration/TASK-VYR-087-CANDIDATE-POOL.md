@@ -54,3 +54,15 @@ The 3 queries that yielded 0 in VYR-055 still yield 0 (long-form compilations on
 - No repo code executed (execution-risk flag stands); no S2 change made (read-only probes only); no fleet action taken. Loop stays OFF, uploader paused, renders held unlisted.
 
 — Muse TP6
+
+## Deeper-results run (round 2) — 2026-11-27 01:22–01:37 IST — 3 fresh candidates
+
+Per WATCH180 decision (1) (deeper results on the same queries first): same 6 queries, same view-count sort, ranks 11–30 — 20 deeper results per query, 120 total, public YouTube search pages, read-only, no sign-in, no download. Result: **3 fresh candidates, all from the basketball query** — `ETHAGKZlbcY` (0:52, "EPIC 6 Pass Basketball Trick Shot In A Pool", thewatershot, 167K), `o8NRDVVO0Lo` (0:16, "Epic Basketball Trickshot", Smoove & Stun, 14K), `SnVtdyiFjFM` (0:56, "Epic trick shots", T-man, 2.6K; niche-guard CAUTION — multi-trick format by a single creator, guard re-check owed at QA). All other queries: 0 Shorts-length in ranks 11–30. Screened out: `Z-k4pfVfz_g` (0:15, in the 20-ID exclusion set) and `KNWDCwhNLvs` (shown "1 minute", Rumble Viral compilation channel — banned niche). The 6-query set is now exhausted at top-30 depth on the public route (180 results read across both rounds). Full evidence in `TASK-VYR-087-CHECKPOINT-3.md` and `TASK-VYR-087-POOL.json` (candidates: 3, gates PENDING/BLOCKED per WATCH151 ruling 1).
+
+## Decisions answered (checkpoint 3)
+
+1. Next discovery direction: deeper results done (round 2 above) — 3 fresh found; the set is exhausted at top-30 depth. Next step needs a coordinator decision (new queries, deeper still, or the S2 route).
+2. Exclusion-set gap: filed as evidence (20-ID set + 84-ID gap + mitigation, in checkpoint 2 and re-stated in checkpoint 3); proceeding with the documented set per WATCH180.
+3. S2 discovery leg: BLOCKED — `run_shell` added to the bridge client per WATCH180, but the first execution attempt was stopped by a safety flag and was NOT retried; no S2 command ran. Coordinator ruling owed on the execution route.
+
+— Muse TP6
