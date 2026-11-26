@@ -20437,16 +20437,18 @@ tasks:
 
   - id: TASK-STR-075
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG2-STR-14, IG2-STR-16, IG2-STR-17, IG2-STR-18, IG2-STR-19 - live extreme-condition verification (wave 1)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_tp4
-    branch: null
-    pr: null
+    branch: musetp4/task-str-075-production-verify-wave1
+    pr: 1965
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T16:46:00+05:30'
+    updated_at: '2026-11-26T12:56:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-STR-075-PRODUCTION-VERIFY-WAVE-1.md
+    - docs/collaboration/TASK-STR-075-CHECKPOINT-2.md
     acceptance:
     - 'PRODUCTION-VERIFY (owner standard 2026-11-24: merged code is NOT implemented): live extreme-condition verification of TASK-IG2-STR-14, TASK-IG2-STR-16, TASK-IG2-STR-17, TASK-IG2-STR-18, TASK-IG2-STR-19.'
     - 'Extreme-condition test: live demo-daemon cycle on Stratex-Server on real market data + failure injection (venue disconnect, stale feed) + full-allowlist load scan; results filed from the live ledger'
@@ -20456,8 +20458,9 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Claim: hub #1483 comment 7138192201 by Muse 6, 2026-11-24 ~22:08 IST, under the central-pool pull model (owner directive 7136890552). Branch muse6/task-str-075-prod-verify from main 4e2a14be, rebased to 6e3fe04. Checkpoint 1 (this PR): repo-side mapping of all 5 items to merged artefacts on main 6e3fe04 - IG2-STR-14 VERIFIED, declared run FAIL, family CLOSED; IG2-STR-16 research-only module, live daemon does not import it; IG2-STR-17 docs-only concept note; IG2-STR-18 CLOSED as SKIP; IG2-STR-19 VERIFIED, declared run FAIL, family CLOSED. Finding: no live-agent leg exists for any of the 5 items as specified; failure-injection + load-scan legs out of scope per coordinator ruling 4 (22:17 watch 7138911209, STR-070 precedent). Ruling requested from the coordinator: re-scope to artefact verification or release STR-075 to the pool.'
     - 'Coordinator watch096 (2026-11-25): owner null to muse_tp4 - queue position 2 behind STR-074; Stratex production-verify lane.'
+    - 'Completion (Muse TP4, 2026-11-26 ~12:01 IST): checkpoint 2 filed (docs/collaboration/TASK-STR-075-CHECKPOINT-2.md) - live-leg evidence under WATCH136 grant: checks 1+3 PASS (WATCH140, hub 7182946843), journal leg proven 0/6 hourly slices (WATCH143, hub 7184216469). Work PR #1965. Production-verified on the re-scoped basis (WATCH123 ruling option 1).'
     blockers: []
-    next_action: 'Queue position 2 for Muse TP4 behind STR-074 (coordinator watch096): Stratex production-verify corpus items. Claim via hub #1483 when STR-074 closes.'
+    next_action: 'Checkpoint 2 filed, production-verified on the re-scoped basis (WATCH123 ruling); merge of PR #1965 owed by coordinator. MERGED flip rides in the coordinator board PR after the work PR merges.'
 
   - id: TASK-VYR-070
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG-VYR-01, IG-VYR-02, IG-VYR-03, IG-VYR-04, IG-VYR-05 - live extreme-condition verification (wave 1)'
