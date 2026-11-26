@@ -260,7 +260,9 @@ def test_execute_records_short_prompt_receipt_from_primary(monkeypatch):
 
 def test_execute_records_error_receipt_and_reraises(monkeypatch):
     calls = []
-    _wire_providers(monkeypatch, calls, fail={"gemini", "openrouter", "groq"})
+    _wire_providers(
+        monkeypatch, calls, fail={"gemini", "openrouter", "groq", "apinex"}
+    )
     gateway = _gateway({"gemini": KeyPool("gemini", ["k1"])})
 
     with pytest.raises(GatewayError):

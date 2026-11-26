@@ -39,6 +39,16 @@ fallback could therefore be visible as a boolean while its cause stayed silent.
   asserted exactly; primary success asserts null reason; error receipt asserts a
   reason; new primary-failure test asserts the ladder-served receipt carries
   `primary_error`/`primary_unavailable` with `fallback_direct` false.
+- CI repair (2026-11-26 hourly check): PR #2003's contracts job failed the
+  REL-068 collection guard because this PR modifies
+  `test_inf022_routing_receipts.py` while no PR workflow collected it. The file
+  now rides in the Inference tier-1 invocation in
+  `.github/workflows/friday-universe-ci.yml`. Collecting it exposed one stale
+  all-providers-fail test: INF-030 added APInex as a waterfall rung, so the
+  error-receipt test now fails `apinex` too (the same stale-test finding Muse 5
+  filed under INF-044). Local verification in a clean Inference venv
+  (`requirements.txt` + pytest + pytest-asyncio + aiosqlite): the 9 receipt
+  tests pass, and the full Inference tier-1 list (54 tests) passes.
 
 ## Live probe leg — blocked, stated plainly
 
@@ -52,7 +62,8 @@ server move, restart, or config change was made or is requested by this PR.
 ## Five states
 
 - implemented: YES (repo-side fix + tests in this PR)
-- tested: CI on this PR (see checks); no local clone execution was used
+- tested: YES locally (54-test Inference tier-1 list green, incl. the 9 receipt
+  tests); CI on this PR pending the repair push — see checks
 - merged: NO
 - deployed: NO
 - production-verified: NO (live probe leg blocked as above)
