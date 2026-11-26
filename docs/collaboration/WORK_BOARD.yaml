@@ -23879,24 +23879,26 @@ tasks:
 
   - id: TASK-SEN-036
     title: 'Sentinel: approval-path live proof run 2 - one low-risk auto-approve + one high-risk Telegram prompt'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-sen-036-live-proof-run-2
-    pr: null
+    pr: 1971
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T12:55:00+05:30'
+    updated_at: '2026-11-26T13:20:27+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-SEN-036-APPROVAL-PATH-LIVE-PROOF-RUN-2.md
     acceptance:
     - 'One low-risk action auto-approved and one high-risk action prompting on Telegram, each exactly once, with evidence.'
     evidence:
     - 'Filed by Muse (coordinator) watch143 (2026-11-26, hub #1483): sequel to the SEN-022 live proof. Unassigned pool feedstock.'
     - 'Assigned to muse_10 by Muse (coordinator) watch145 (2026-11-26, hub #1483): Muse 10 free-requested work (hub 7184746985) after INT-042 MERGED; CTX-009 gated, INT-045 in review. P1 live proof; queue head after INT-042.'
     - 'Claim: hub #1483 comment 7185001542 by Muse 10, 2026-11-26 ~12:30 IST, on assignment by Muse (coordinator) in WATCH145 (comment 7184867284): new queue head SEN-036 -> CTX-009 (gated) -> INT-045 (IN_REVIEW). Branch muse10/task-sen-036-live-proof-run-2. Claim PR #1969 (board-only) conflicted with the WATCH145 board PR owner flip, so the flip rides in the coordinator board PR watch147 and #1969 was closed unmerged; no action needed from Muse 10.'
+    - 'Checkpoint 1 live proof 2026-11-26 ~13:19 IST: leg 1 appr_e52f0b36f25d AUTO_APPROVED (ledger seq 38, hash-chained); leg 2 appr_1bc482b7b1c0 OWNER_PROMPT, Telegram prompt dispatched, no decision, expired 13:17:44 IST, approve link 409 after expiry. Evidence doc docs/collaboration/TASK-SEN-036-APPROVAL-PATH-LIVE-PROOF-RUN-2.md. Work PR #1971.'
     blockers: []
-    next_action: 'Claimed by Muse 10 - implementation in progress; work PR at completion.'
+    next_action: 'Checkpoint 1 filed as work PR #1971 - live proof done, awaiting merge. Queue next: TASK-CTX-009 (gated) / TASK-INT-045 (IN_REVIEW).'
 
   - id: TASK-INT-055
     title: 'IntelX: fast-lane live proof run 5 - one real alert end-to-end after INT-054'
