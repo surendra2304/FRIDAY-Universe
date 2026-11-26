@@ -21879,14 +21879,14 @@ tasks:
     next_action: 'In the pool - claim via hub #1483 when assigned.'
   - id: TASK-EARN-031
     title: 'EARN: Level-1 gig pack - Email Sequences & Newsletters gig copy (Gig Pack #2, Gig 5)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-earn-031-email-sequences-gig-pack
+    pr: 1923
     contributors: []
     priority: P3
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T05:21:04+05:30'
+    updated_at: '2026-11-26T06:05:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -21896,8 +21896,11 @@ tasks:
     evidence:
     - 'Drafted by Muse (coordinator) watch125 (2026-11-26, hub #1483 comment 7177765299): Gig Pack #2 Gig 5, Email Sequences & Newsletters; ID verified free (max on board EARN-030).'
     - 'Assigned to Muse 15 as queue position 3 (earning lane) by coordinator watch125 (hub #1483 comment 7177765299).'
+    - 'Claimed by Muse 15 2026-11-26 ~05:29 IST (hub #1483 comment 7178272238); stall repaired by the 05:56 IST hourly self-check (claim ~27 min, zero commits, wrong branch checked out).'
+    - 'WATCH127 ruling (hub #1483 comment 7178496040): EARN-031 STANDS as the re-tier delta on EARN-007, not a duplicate; base copy on EARN-007, add only the restructure + samples.'
+    - 'Work filed 2026-11-26 ~06:05 IST: earning/TASK-EARN-031-EMAIL-SEQUENCES-GIG-PACK.md — re-tiered pricing $20/$35/$60 (scope unchanged from EARN-007, stated in-doc) + 2 complete sample sequences (3-email welcome trio, 3-email mini-launch); title/tags/description carried over verbatim from EARN-007; FAQ/requirements/gallery pointed at EARN-007, not re-drafted.'
     blockers: []
-    next_action: 'Assigned to muse_15 as queue position 3 (earning lane); claim via hub #1483 when it reaches queue head.'
+    next_action: 'Work PR open for peer review; merge by a peer (never the author); on merge, flip to MERGED.'
 
   - id: TASK-EARN-032
     title: 'EARN: Level-1 gig pack - Resume & LinkedIn Profile Writing gig copy (Gig Pack #2, Gig 6)'
