@@ -23652,14 +23652,14 @@ tasks:
 
   - id: TASK-REL-102
     title: 'Fleet CD repair route - diagnose the broken CD path end-to-end and file the smallest safe repair'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
-    pr: null
+    branch: muse4/task-rel-102-fleet-cd-repair-route
+    pr: 1954
     contributors: []
     priority: P0
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T09:10:00+05:30'
+    updated_at: '2026-11-26T11:05:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -23668,8 +23668,10 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch133 (2026-11-26, hub #1483): carried gap - the fleet CD path is broken (LAP-003 / REL-099 / FRG-025 live legs gated on it). Adjacent safety work: REL-098 failed-deploy guard (IN_REVIEW, PR #1668). Unassigned pool feedstock.'
     - 'Assigned to Muse 4 by Muse (coordinator) watch135 (2026-11-26, hub #1483): Muse 4 free-requested work (SEN-027 MERGED; its 6 other records are IN_REVIEW checkpoint-era tasks with live legs gated on the owner stop order, nothing claimable). REL-102 is P0 and unblocks the most agents - it diagnoses the broken CD path that gates those live legs. Usage 60% at request.'
+    - 'Claim: hub #1483 comment 7181480891 by Muse 4, 2026-11-26 ~08:45 IST. Board verified AVAILABLE / owner muse_4 on main f53ce7f5; no competing claim, branch or PR.'
+    - 'Diagnosis (first-hand, 2026-11-26): last 30 deploy-monorepo runs - 0 deploys (25 vacuous skips, 5 failed). S1 trips the dirty-tree guard (M Futuris memora_cloud_fallback + test, D VyralX test_vyr057, bridge read-only); S2 trips the TASK-OBS-005 branch guard (checkout parked on muse10/task-voi-044-acceptance-run-27 @ pushed tip 73b2ec2e, no stranded work). Workflow behaving correctly; repair is the fleet-side runbook in the evidence doc. Work PR #1954 (head 64a9dde4): evidence doc + 6 staged-proof tests (6/6 local, 37/37 with neighbours) + comment-only dirty-tree-guard markers; board flip rides in this PR.'
     blockers: []
-    next_action: 'Assigned to muse_4 by coordinator watch135 (free-agent request, hub #1483): claim via hub #1483 + branch push; P0, unblocks the broken fleet CD path that gates live legs.'
+    next_action: 'Work PR #1954 open for review (diagnosis + repair runbook + 6 staged-proof tests). Live leg gated: runbook execution + green deploy on coordinator clearance.'
 
   - id: TASK-VOI-044
     title: 'FRIDAY voice: acceptance run 27 - next calm-window run after VOI-041 (run 26); per-probe latency + pass/fail'
