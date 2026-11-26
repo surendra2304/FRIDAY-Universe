@@ -23469,9 +23469,9 @@ tasks:
     next_action: 'Assigned to muse_15 by coordinator watch131 (queue position 3, after FRD-043 + FRD-057); claim via hub #1483 + branch push when reached.'
   - id: TASK-STR-088
     title: 'Stratex forward-window fills audit run-6 (daemon ledger vs venue positions/history)'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_1
-    branch: null
+    branch: muse1/task-str-088-fills-audit-run-6
     pr: null
     contributors: []
     priority: P1
