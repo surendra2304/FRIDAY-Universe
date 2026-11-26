@@ -2259,6 +2259,81 @@ async def update_owner_preferences(
     return owner_preferences.update(payload or {})
 
 
+# --- TASK-FRD-058: RSVP speed-reading aid ---------------------------------
+# The reading surface is FRIDAY/src/friday/api/rsvp.html (served as
+# /static/rsvp.html by the /static mount). These routes are its backend:
+# start a session from pasted text or an article URL, control it, and
+# read its state. All three are origin-gated like the owner-preferences
+# routes: sessions are local JSON files with no fleet or system effect,
+# so the control-token tier (fleet/system actions) does not apply.
+
+
+@app.post("/api/rsvp/start")
+async def rsvp_start(
+    payload: dict[str, Any] = Body(default={}),
+    _: None = Depends(_require_origin_gate),
+) -> dict[str, Any]:
+    """Start an RSVP reading session from pasted text or an article URL.
+
+    Body: {text?, url?, wpm?, title?}. Returns the session (id, word
+    count, rate, position) or {"ok": false, "error": ...}.
+    """
+    from friday.workflows import rsvp
+
+    return rsvp.create_session(
+        (payload or {}).get("text"),
+        url=(payload or {}).get("url"),
+        wpm=(payload or {}).get("wpm", rsvp.DEFAULT_WPM),
+        title=(payload or {}).get("title", ""),
+    )
+
+
+@app.post("/api/rsvp/control")
+async def rsvp_control(
+    payload: dict[str, Any] = Body(default={}),
+    _: None = Depends(_require_origin_gate),
+) -> dict[str, Any]:
+    """Pause, resume, change rate, or jump within an RSVP session.
+
+    Body: {session_id, action, wpm?, position?}. Actions: pause, resume,
+    set_rate, jump. Returns the session state or an honest error.
+    """
+    from friday.workflows import rsvp
+
+    payload = payload or {}
+    return rsvp.control_session(
+        str(payload.get("session_id", "")),
+        action=str(payload.get("action", "")),
+        wpm=payload.get("wpm"),
+        position=payload.get("position"),
+    )
+
+
+@app.get("/api/rsvp/status/{session_id}")
+async def rsvp_status(
+    session_id: str, _: None = Depends(_require_origin_gate)
+) -> dict[str, Any]:
+    """Progress of an RSVP session, plus its current word."""
+    from friday.workflows import rsvp
+
+    progress = rsvp.session_progress(session_id)
+    if not progress.get("ok"):
+        return progress
+    word = rsvp.current_word(session_id)
+    progress["current_word"] = word.get("word", "") if word.get("ok") else ""
+    return progress
+
+
+@app.get("/api/rsvp/session/{session_id}")
+async def rsvp_session(
+    session_id: str, _: None = Depends(_require_origin_gate)
+) -> dict[str, Any]:
+    """Full RSVP session, words included, for the reading surface."""
+    from friday.workflows import rsvp
+
+    return rsvp.get_session(session_id)
+
+
 @app.get("/api/voice/diagnostics")
 async def get_voice_diagnostics(_: None = Depends(_require_origin_gate)) -> dict[str, Any]:
     """Checklist E7 (batch 8, ZAI Agent 2): voice session diagnostics surface.

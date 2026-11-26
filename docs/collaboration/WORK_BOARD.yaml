@@ -22135,8 +22135,8 @@ tasks:
     title: 'FRIDAY: RSVP speed-reading aid - word-by-word reader for pasted text and articles'
     status: CLAIMED
     owner: muse_tp6
-    branch: null
-    pr: null
+    branch: musetp6/task-frd-058-rsvp-reader
+    pr: 1962
     contributors: []
     priority: P3
     created_at: '2026-11-25'
@@ -22152,9 +22152,8 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Coordinator watch109 (2026-11-25): board-owner flip - work PR #1850 open, head b9fdd9e4, branch musetp9/task-frd-058 verified via ls-remote; hub queue per watch108, owner field was null.'
     - 'Re-slotted to Muse TP6 by coordinator watch129 (2026-11-26): TP9 work PR #1850 CI-blocked (test failing) with no fix or report after the watch125 demand and the watch128 re-slot warning; TP9 keeps WEB-006, FRD-060 and FRG-033. Fresh branch + new work PR; PR #1850 is superseded - do not rebase it.'
-    - 'Re-slotted to Muse TP7 by coordinator watch129 (2026-11-26): TP9 work PR #1848 CI-blocked (Validate roster, task IDs and file ownership failing) with no fix or report after the watch125 demand and the watch128 re-slot warning; TP9 keeps WEB-006, FRD-060 and FRG-033. Fresh branch + new work PR; PR #1848 is superseded - do not rebase it.'
     blockers: []
-    next_action: 'Claimed by Muse TP6 (hub 7182957572); branch musetp6/task-frd-058-rsvp-reader; checkpoint 1 filed (commit b67d2dc6). Repo leg in progress; live leg (one real article read on production FRIDAY at two rates) gated - clearance owed. CORRECTION: coordinator board PR watch141 fixed this record''s next_action, which wrongly carried FRD-059 text (muse_tp7 / PR #1848).'
+    next_action: 'Work PR #1962 open (head 83efa1da, 11 files: fresh RSVP implementation + 23 hermetic tests + CI tier-1 line); CI running at filing; merge by coordinator. Repo leg in progress; live leg (one real article read on production FRIDAY at two rates) gated - clearance owed.'
   - id: TASK-FRD-059
     title: 'FRIDAY: job-hunt lane completion - curated per-step tool stack plus scheduled board searches matched to the owner''s CV'
     status: CLAIMED

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FRIDAY — RSVP Speed Reader</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #101418; color: #e8e8e8; margin: 0; padding: 24px; }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.sub { color: #9aa4ad; margin: 0 0 20px; }
+  textarea, input[type=url] { width: 100%; box-sizing: border-box; background: #1b2127; color: #e8e8e8; border: 1px solid #333d46; border-radius: 8px; padding: 10px; font-size: 15px; }
+  textarea { min-height: 110px; resize: vertical; }
+  .row { display: flex; gap: 10px; align-items: center; margin: 12px 0; flex-wrap: wrap; }
+  label { color: #9aa4ad; font-size: 14px; }
+  button { background: #2f6feb; color: #fff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 15px; cursor: pointer; }
+  button.secondary { background: #2a333d; }
+  button:disabled { opacity: 0.45; cursor: default; }
+  #word { font-size: 64px; text-align: center; margin: 34px 0 8px; min-height: 84px; font-weight: 600; }
+  #word .orp { color: #ff7b72; }
+  #progress { height: 8px; background: #2a333d; border-radius: 4px; overflow: hidden; }
+  #bar { height: 100%; width: 0%; background: #2f6feb; }
+  #status { text-align: center; color: #9aa4ad; margin-top: 8px; font-size: 14px; }
+  #error { color: #ff7b72; margin-top: 10px; min-height: 20px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>FRIDAY — RSVP Speed Reader</h1>
+  <p class="sub">Paste text or an article URL. FRIDAY shows it one word at a time at your rate. TASK-FRD-058.</p>
+
+  <textarea id="text" placeholder="Paste the text to read…"></textarea>
+  <div class="row">
+    <input type="url" id="url" placeholder="…or an article URL">
+  </div>
+  <div class="row">
+    <label for="wpm">Rate: <span id="wpmVal">300</span> wpm</label>
+    <input type="range" id="wpm" min="60" max="1200" step="10" value="300" style="flex:1">
+    <button id="start">Start reading</button>
+  </div>
+
+  <div id="word">&nbsp;</div>
+  <div id="progress"><div id="bar"></div></div>
+  <div id="status">No session yet.</div>
+
+  <div class="row" style="justify-content:center">
+    <button id="toggle" class="secondary" disabled>Pause</button>
+    <button id="slower" class="secondary" disabled>− 50 wpm</button>
+    <button id="faster" class="secondary" disabled>+ 50 wpm</button>
+    <button id="restart" class="secondary" disabled>Restart</button>
+  </div>
+  <div id="error"></div>
+</main>
+<script>
+(function () {
+  var sessionId = null, words = [], pos = 0, wpm = 300, timer = null, paused = false;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function showError(msg) { $('error').textContent = msg || ''; }
+  function orp(word) {
+    if (!word) return '&nbsp;';
+    var i = Math.max(0, Math.floor(word.length / 3));
+    var esc = function (s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+    return esc(word.slice(0, i)) + '<span class="orp">' + esc(word.slice(i, i + 1)) + '</span>' + esc(word.slice(i + 1));
+  }
+  function render() {
+    $('word').innerHTML = words.length ? orp(words[Math.min(pos, words.length - 1)]) : '&nbsp;';
+    $('bar').style.width = (words.length ? (100 * pos / words.length) : 0) + '%';
+    $('status').textContent = words.length
+      ? ('Word ' + (pos + 1) + ' of ' + words.length + ' — ' + wpm + ' wpm' + (paused ? ' — paused' : ''))
+      : 'No session yet.';
+  }
+  function tick() {
+    if (paused || !words.length) return;
+    if (pos >= words.length - 1) { stopTimer(); sync('jump', pos); $('status').textContent += ' — finished.'; return; }
+    pos += 1;
+    render();
+  }
+  function startTimer() {
+    stopTimer();
+    timer = setInterval(tick, Math.round(60000 / wpm));
+  }
+  function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
+  function sync(action, value) {
+    if (!sessionId) return Promise.resolve();
+    var body = { session_id: sessionId, action: action };
+    if (action === 'set_rate') body.wpm = wpm;
+    if (action === 'jump') body.position = value;
+    return fetch('/api/rsvp/control', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.ok) showError(d.error || 'Control failed.');
+    }).catch(function (e) { showError('Control failed: ' + e.message); });
+  }
+  function setControls(on) {
+    ['toggle', 'slower', 'faster', 'restart'].forEach(function (id) { $(id).disabled = !on; });
+    $('toggle').textContent = paused ? 'Resume' : 'Pause';
+  }
+
+  $('wpm').addEventListener('input', function () {
+    wpm = parseInt($('wpm').value, 10);
+    $('wpmVal').textContent = wpm;
+    if (words.length && !paused) { startTimer(); sync('set_rate'); }
+    render();
+  });
+  $('start').addEventListener('click', function () {
+    showError('');
+    var text = $('text').value.trim(), url = $('url').value.trim();
+    if (!text && !url) { showError('Paste text or give an article URL first.'); return; }
+    fetch('/api/rsvp/start', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text || undefined, url: url || undefined, wpm: wpm }),
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.ok) { showError(d.error || 'Could not start the session.'); return; }
+      sessionId = d.session_id; wpm = d.wpm; pos = 0; paused = false;
+      return fetch('/api/rsvp/session/' + encodeURIComponent(sessionId));
+    }).then(function (r) { return r && r.json(); }).then(function (d) {
+      if (!d || !d.ok) { showError((d && d.error) || 'Could not load the session.'); return; }
+      words = d.words || [];
+      $('wpm').value = wpm; $('wpmVal').textContent = wpm;
+      setControls(true);
+      render();
+      startTimer();
+    }).catch(function (e) { showError('Start failed: ' + e.message); });
+  });
+  $('toggle').addEventListener('click', function () {
+    paused = !paused;
+    if (paused) { stopTimer(); sync('pause'); } else { startTimer(); sync('resume'); }
+    setControls(true); render();
+  });
+  $('slower').addEventListener('click', function () {
+    wpm = Math.max(60, wpm - 50);
+    $('wpm').value = wpm; $('wpmVal').textContent = wpm;
+    if (!paused) startTimer();
+    sync('set_rate'); render();
+  });
+  $('faster').addEventListener('click', function () {
+    wpm = Math.min(1200, wpm + 50);
+    $('wpm').value = wpm; $('wpmVal').textContent = wpm;
+    if (!paused) startTimer();
+    sync('set_rate'); render();
+  });
+  $('restart').addEventListener('click', function () {
+    pos = 0; paused = false;
+    sync('jump', 0).then(function () { return sync('resume'); });
+    setControls(true); render(); startTimer();
+  });
+  window.addEventListener('beforeunload', function () { if (sessionId) sync('jump', pos); });
+})();
+</script>
+</body>
+</html>
