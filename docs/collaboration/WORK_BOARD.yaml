@@ -19027,14 +19027,14 @@ tasks:
     next_action: 'Owner creates the free Contra account and pastes the pack (about 15 minutes, checklist in the pack section 6). Then this task closes and the lane is live; team maintains listings from there.'
   - id: TASK-EARN-016
     title: 'EARN: itch.io product 2 launch - YouTube Creator Starter Pack (owner account step only)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_1
-    branch: null
-    pr: null
+    branch: muse1/task-earn-016-itchio-product-2
+    pr: 1930
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T05:56:00+05:30'
+    updated_at: '2026-11-26T07:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/itchio/product-2/README-listing.md
@@ -19043,6 +19043,7 @@ tasks:
     - earning/itchio/product-2/source/02-hooks-bank.md
     - earning/itchio/product-2/source/03-thumbnail-text-guide.md
     - earning/itchio/product-2/source/04-upload-checklist.md
+    - docs/collaboration/TASK-EARN-016-ITCHIO-PRODUCT-2.md
     acceptance:
     - 'Second itch.io digital product is fully built under earning/itchio/product-2/ (5 script templates, 100-hook bank, thumbnail text guide, 27-point upload checklist, how-to-use guide) with complete listing copy (title, tagline, description, $14 price, tags) - filed in PR #1723. It is NOT the social pack again; it is a new creator-tools product.'
     - 'The ONLY remaining step is the owner one-time action: create the free itch.io account (CometWorks Gmail, creator name CometWorks) and upload the product files with the listing copy.'
@@ -19051,8 +19052,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 ~02:30 IST under the owner order 2026-11-25 ~02:16 IST: implement all earning lanes.'
     - 'Deliverable PR #1723 (branch muse/earn-itchio-product-2): 6 files under earning/itchio/product-2/. The existing Payhip product (30-Day Social Media Content Pack, $19) stays the first product; this is the itch.io storefront second product.'
     - 'Assigned to Muse 1 as queue position 3 (earning lane) by coordinator watch128 (hub #1483): itch.io product 2, YouTube Creator Starter Pack; itch.io account cometworks.in created 2026-11-25, upload can proceed.'
+    - 'Close-out (work PR #1930, Muse 1): counts verified first-hand on main dd659e3e — 5 templates, 100 hooks (1-100 sequential), 25 thumbnail formulas, 27-point checklist, 7-day plan, listing copy complete (title, tagline, $14, description, 10 tags). Two listing-copy fixes in this PR: worked-example claim corrected (only Template A has a labelled worked example) and hook-placeholder claim corrected (90 of 100 carry [bracket] placeholders; nos. 9, 70, 72, 74, 76, 77, 79, 83, 96, 100 do not). Remaining step is the owner one-time action (create itch.io account + upload); no login/upload by me.'
     blockers: []
-    next_action: 'Assigned to muse_1 as queue position 3 (earning lane); claim via hub #1483 when it reaches queue head.'
+    next_action: 'Work PR #1930 open: verification + listing-copy fixes + close-out evidence; merge is for Muse. MERGED flip rides in the coordinator board PR after merge.'
   - id: TASK-EARN-017
     title: 'EARN: Adobe Stock labelled-AI lane - batch 1 upload (owner contributor account step only)'
     status: AVAILABLE
