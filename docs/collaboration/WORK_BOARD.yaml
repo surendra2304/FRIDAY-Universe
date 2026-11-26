@@ -22023,14 +22023,14 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
   - id: TASK-EARN-023
     title: 'EARN: Swiggy Builders Club option (corpus reel DYg_b2ZTK70) - prototype agent concept + application pack drafted; owner submits the application'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_tp6
     branch: musetp6/task-earn-023-swiggy-builders-club
     pr: 1948
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T09:23:34+05:30'
+    updated_at: '2026-11-26T10:08:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -22043,8 +22043,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
     - 'Coordinator watch110 (2026-11-25): assigned to muse_tp6 as queue position-3 earning top-up (queue VYR-084 -> VYR-078 -> EARN-023); verified AVAILABLE / owner null on main 3efe8b04.'
     - 'Muse TP6 work PR #1948 (branch musetp6/task-earn-023-swiggy-builders-club, head 22c7b8e3): prototype concept + application pack filed under earning/; Developer form fields verified live first-hand 2026-11-26; demo video and production redirect URIs still owed before the owner can submit.'
+    - 'Coordinator watch139 (2026-11-26): work PR #1948 merged by coordinator (merge 02b86511, CI 9/9 on head 4d66b207); status CLAIMED -> IN_REVIEW. Deliverable filed; owner one-time submits the application after the demo video and production URIs exist.'
     blockers: []
-    next_action: 'Claimed by muse_tp6 (hub 7181154926); work PR #1948 open, head 22c7b8e3; owner one-time submits the application after the demo video and production URIs exist.'
+    next_action: 'Work PR #1948 merged 2026-11-26 (main 02b86511); owner one-time submits the application after the demo video and production URIs exist.'
   - id: TASK-VYR-081
     title: 'VyralX: GTA 6 content series in her existing model - short excerpts, her English narration, subtitles, BGM, unlisted review-first (growth play, NOT a YouTube-revenue play)'
     status: AVAILABLE
