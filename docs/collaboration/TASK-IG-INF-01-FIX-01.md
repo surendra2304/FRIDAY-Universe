@@ -8,7 +8,7 @@
 - **Branch:** `muse13/task-ig-inf-01-fix-01` from main `14181d3c` (created via Git Data API, verified read-back).
 - **Work PR:** #1854 (https://github.com/surendra2304/FRIDAY-Universe/pull/1854), head 2172886e, base main 14181d3c. Checkpoint 1: commit 1 `1bde103e` (evidence doc), commit 2 `6e94dd8d` (board flip), commit 3 `2172886e` (head-pointer correction). **MERGED 2026-11-25 ~20:20 IST by the coordinator flow (merge 7871150c, CI 9/9 green on head 2172886e — WATCH103, hub 7165911052).** Board flip landed: IG-INF-01-FIX-01 → CLAIMED/muse_13/pr 1854 on main (verified first-hand on main 5c901138, §2 below).
 - **Implementation branch:** `muse13/task-ig-inf-01-fix-01-impl` from main `0eeaa43a` (checkpoint 2 — see §9).
-- **Implementation PR:** #1865 (https://github.com/surendra2304/FRIDAY-Universe/pull/1865), head `2f5aa24c`, base main `0eeaa43a`. Commit 1 `2f5aa24c` (code + tests + evidence doc); commit 2 (board flip + PR number) to follow on the same branch.
+- **Implementation PR:** #1865 (https://github.com/surendra2304/FRIDAY-Universe/pull/1865), head `b3aa5828`, base main `0eeaa43a`. Commit 1 `2f5aa24c` (code + tests + evidence doc); commit 2 `d0dd7d20` (board flip + PR number); commit 3 `b3aa5828` (REL-068 collection fix). **MERGED 2026-11-25 22:07:37 IST by Surendra (merge 9025af4e, CI 10/10 green on head b3aa5828 — 8 success, 2 skipped, verified first-hand).** Board flip landed: IG-INF-01-FIX-01 → MERGED on main (verified first-hand on main a759a031, board blob 31ae33e4, 990 records, 0 dups).
 
 ## 2. Board verification (first-hand, main 14181d3c — checkpoint 1; re-verified on main 5c901138, 20:36 run)
 
@@ -68,7 +68,7 @@ Live-leg notes: the live Inference gateway is the AWS host reached via the S1 tu
 
 ## 7. Five states
 
-Implemented YES / tested NO (pending CI — see §9 checkpoint 2) / merged NO / deployed NO / production-verified NO — checkpoint 1 merged (PR #1854, merge 7871150c, CI 9/9 green); implementation filed as checkpoint 2 (work PR #1865, head 2f5aa24c, base main 0eeaa43a; board flip in commit 2). Live re-probe still needs Muse's deployment clearance after the code lands.
+Implemented YES / tested YES (CI 10/10 green on merged head b3aa5828 — 8 success, 2 skipped, verified first-hand) / merged YES (PR #1865, merge 9025af4e, 2026-11-25 22:07:37 IST by Surendra) / deployed NO / production-verified NO — checkpoint 1 merged (PR #1854, merge 7871150c, CI 9/9 green). Live re-probe still needs Muse's deployment clearance after the code lands; clearance requested on #1483, comment 7169108662.
 
 ## 8. Queue
 
@@ -97,5 +97,14 @@ IG-INF-01-FIX-01 (head) → INT-053 (pos 2, filed on main via coordinator board 
 - **Known gap (not in this fix):** the streaming path (`stream_model` default `openai/gpt-oss-120b` for `"auto"`) has no provenance surface and is unchanged — an oversized `"auto"` stream still routes to the 131k default. Follow-up owed, not acceptance-blocking (acceptance is about the non-stream route + provenance).
 - **Work PR #1865** (https://github.com/surendra2304/FRIDAY-Universe/pull/1865), head `2f5aa24c`, base main `0eeaa43a`, 1 commit, +294/−40, 3 files, open; mergeable_state unknown at opening (GitHub computing). Commit 2 on the same branch adds the board flip (IG-INF-01-FIX-01 → IN_PROGRESS / pr 1865) + this PR number in the doc.
 - Usage: 38% of free weekly limit (19:36 run; re-check owed next run), reset Nov 29 6:09 PM IST. No subscription.
+
+— Muse 13
+
+### Checkpoint 4 — MERGED (2026-11-25 ~22:40 IST, hourly self-check run)
+
+- **Work PR #1865 MERGED** by Surendra (merge 9025af4e, 22:07:37 IST, head b3aa5828, 3 commits, +303/−45, 5 files). **CI 10/10 green on the merged head, verified first-hand** (8 success, 2 skipped — test + contracts both success). Board on main a759a031 verified first-hand (blob 31ae33e4, 990 records, 0 dups): IG-INF-01-FIX-01 → MERGED / muse_13 / pr 1865 (flip rode in coordinator board PR #1874, WATCH108).
+- **Five states:** implemented YES / tested YES / merged YES / deployed NO / production-verified NO. The live re-probe leg is blocked on deployment clearance — requested from Muse on #1483, comment 7169108662. Until clearance lands, the live leg stays owed, not claimed as done.
+- **Queue moves:** head now blocked on clearance, so per the blocked-head rule the next task is claimed: TASK-INT-053 (claim comment 7169108662, branch muse13/task-int-053-synthesis-fix @ main a759a031; checkpoint 1 PR follows in the same run). INT-020 stays CLAIMED, held for the INT-053 fix. VOI-030 stays blocked (calm window).
+- Usage: 39% of free weekly limit (last verified 20:36 IST), reset Nov 29 6:09 PM IST. No subscription.
 
 — Muse 13

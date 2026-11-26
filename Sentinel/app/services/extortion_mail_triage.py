@@ -59,6 +59,34 @@ too — and a pixel is not access to the machine: it reports an open,
 nothing more. Detection covers the HTML body text passed in; a
 pixel inside a PDF attachment is visible only if the caller's
 extractor preserves the markup.
+
+TASK-SEN-026: the calm-response guidance also carries the standing
+do-not-open / do-not-load-images line (DO_NOT_PAY_GUIDANCE) on every
+extortion verdict, pixel or not — the pixel-specific line alone left
+extortion mail with an undetected pixel without any instruction
+about images.
+
+Family codeword (IG full-watch SE-03; TASK-SEN-027)
+---------------------------------------------------
+The "in trouble abroad, send money" plea is the impersonation scam
+this triage sees most: a message, call or voice note claiming a
+family member is in trouble and needs money now — exactly the shape
+AI voice cloning now fakes convincingly. The defence is a practice,
+not a feature, banked in Sentinel/docs/SECURITY_REFERENCE_IG.md §5:
+one secret phrase agreed with family offline, which any urgent
+money/credentials/secrecy request must produce before anything
+moves. This module detects the plea shape (trouble marker + money
+request) and surfaces the practice as the named guidance item
+FAMILY_CODEWORD_GUIDANCE, with the named signal
+``family_impersonation_plea`` and a ``family_plea`` flag on the
+verdict. Unlike the tracking pixel (common in legitimate mail, and
+never manufactures a verdict), a trouble-plea + money-request is
+itself the scam shape the codeword guards — so the guidance fires
+even when the mail is not extortion (category stays NOT_EXTORTION;
+no verdict is manufactured). The phrase itself is never stored by
+the fleet: the module accepts no phrase, stores none, and says so
+in the guidance — there is nothing to look up, only something to
+ask for.
 """
 from __future__ import annotations
 
@@ -86,11 +114,41 @@ _IMG_HIDDEN_STYLE_RE = re.compile(
     re.IGNORECASE,
 )
 _TRACKING_PATH_RE = re.compile(r"/(pixel|track|tracker|open|beacon)\b", re.IGNORECASE)
+# TASK-SEN-027 (SE-03): the trouble-plea shape — a family member
+# supposedly in trouble, needing money now. Bare "abroad"/"overseas"
+# is deliberately NOT a marker on its own (a tuition mail would
+# match); it counts only inside "stuck/stranded abroad/overseas".
+# The plea gate also needs a money request (payment demand or an
+# amount) — trouble without a money ask is a notification, not a
+# plea, and a money ask without trouble is any other mail.
+_TROUBLE_PLEA_RE = re.compile(
+    r"\b(in trouble|stranded|stuck abroad|stuck overseas|in jail|locked up|"
+    r"arrested|in (the )?hospital|had an accident|emergency)\b",
+    re.IGNORECASE,
+)
 
 TRACKING_PIXEL_GUIDANCE = (
     "This mail carries a tracking pixel: opening it (or opening an attachment 'to check') can "
     "tell the sender when and roughly where it was opened and on what device — nothing more; "
     "it is not access to your machine. Keep remote images blocked in your mail client."
+)
+
+# TASK-SEN-027 (SE-03): the named family-codeword guidance item.
+# The practice, as banked in Sentinel/docs/SECURITY_REFERENCE_IG.md
+# §5: agree one secret phrase with family offline, in person, before
+# travel; any urgent request for money, credentials or secrecy — from
+# any channel, in any voice — must produce it before anything moves.
+# The phrase itself is never stored by the fleet: this module accepts
+# no phrase, stores none, and the guidance says so.
+FAMILY_CODEWORD_GUIDANCE = (
+    "Family codeword check (SE-03): an urgent 'we are in trouble, send money' claim — "
+    "by message, call or voice note, in any voice — must produce the family codeword "
+    "before anything moves. No codeword, no transfer: call the person back on a number "
+    "you already trust instead. Agree one codeword with family offline, in person, "
+    "before travel; never write it into a chat, email or note. If it is ever spoken "
+    "under pressure, demanded by a third party, or suspected shared, treat it as burned "
+    "and re-agree a new one in person. The fleet never stores the codeword — there is "
+    "nothing to look up, only something to ask for."
 )
 
 
@@ -115,6 +173,14 @@ def _has_tracking_pixel(body: str) -> bool:
 DO_NOT_PAY_GUIDANCE: tuple[str, ...] = (
     "Do NOT pay — payment marks you as a payer, funds the next round, and buys nothing: these senders almost never delete or withhold anything.",
     "Do NOT reply to the sender and do not click links or open attachments in the message.",
+    # TASK-SEN-026: the standing do-not-open / do-not-load-images line.
+    # It belongs in the base guidance, not only in the pixel-specific
+    # line: an extortion mail whose pixel evades detection (hidden in
+    # an attachment, or a tracking image the heuristics miss) still
+    # needs the owner told not to open it again or load its images —
+    # each open or image load can confirm to the sender that this
+    # address is live and being read.
+    "Do not open this message again or load its images: each open or image load can tell the sender this address is live and being read. Keep remote images blocked in your mail client.",
     "Preserve the evidence: keep the original email with full headers (do not forward-and-delete); screenshot the demand and the amount/address asked.",
     "Verify calmly, separately from the email: check your own accounts/devices directly (never via links in the message). If it claims your files are encrypted, run the compromised-host triage on that machine.",
     "If the message shows a password you recognise, treat that password as burned: change it — and anywhere you reused it — from a clean device, and enable MFA. Old breached passwords are the usual source; the sender rarely has live access.",
@@ -131,6 +197,7 @@ class ExtortionTriage:
     amounts_mentioned: list[str] = field(default_factory=list)
     verify_first: bool = False
     tracking_pixel: bool = False
+    family_plea: bool = False
     guidance: list[str] = field(default_factory=list)
 
     def as_dict(self) -> dict[str, Any]:
@@ -141,6 +208,7 @@ class ExtortionTriage:
             "amounts_mentioned": self.amounts_mentioned,
             "verify_first": self.verify_first,
             "tracking_pixel": self.tracking_pixel,
+            "family_plea": self.family_plea,
             "guidance": self.guidance,
             "engages_sender": False,
         }
@@ -168,6 +236,14 @@ class ExtortionTriage:
                 "opening it can report the open (time, rough location, "
                 "device) to the sender. That is all it reports; it is "
                 "not access to your machine."
+            )
+        if self.family_plea:
+            lines.append(
+                "**Family codeword (SE-03):** this reads as an 'in trouble, "
+                "send money' plea — ask for the family codeword before "
+                "anything moves. No codeword, no transfer; call back on a "
+                "number you already trust. The fleet never stores the "
+                "codeword."
             )
         if self.guidance:
             lines.append("What to do:")
@@ -213,6 +289,18 @@ def triage_email(subject: str = "", body: str = "",
         signals.append("monetary_amount_mentioned")
         score += 1
 
+    # Family impersonation plea (SE-03; TASK-SEN-027): trouble marker
+    # + money request (payment demand or an amount). A named signal
+    # like the pixel — it never feeds the category logic — but unlike
+    # the pixel its guidance fires even on NOT_EXTORTION: the plea
+    # shape is itself the scam the codeword guards.
+    has_family_plea = bool(_TROUBLE_PLEA_RE.search(text)) and (
+        has_payment or bool(amounts)
+    )
+    if has_family_plea:
+        signals.append("family_impersonation_plea")
+        score += 1
+
     # Spoof hygiene: a Reply-To that does not match From is common in
     # bulk extortion and worth naming (it proves nothing alone).
     from_h = (headers.get("From") or "").lower()
@@ -231,14 +319,21 @@ def triage_email(subject: str = "", body: str = "",
     elif has_threat and (has_hack_claim or amounts):
         category = "THREAT_OTHER"
     else:
+        # A trouble plea carries the codeword guidance even when the
+        # mail is not extortion — the plea shape is the scam the
+        # codeword guards; the category is still NOT_EXTORTION.
+        plea_guidance = [FAMILY_CODEWORD_GUIDANCE] if has_family_plea else []
         return ExtortionTriage(
             category="NOT_EXTORTION", score=score, signals=signals,
             amounts_mentioned=amounts, tracking_pixel=has_pixel,
+            family_plea=has_family_plea, guidance=plea_guidance,
         )
 
     guidance = list(DO_NOT_PAY_GUIDANCE)
     if has_pixel:
         guidance.append(TRACKING_PIXEL_GUIDANCE)
+    if has_family_plea:
+        guidance.append(FAMILY_CODEWORD_GUIDANCE)
     return ExtortionTriage(
         category=category,
         score=score,
@@ -248,5 +343,6 @@ def triage_email(subject: str = "", body: str = "",
         # verification lead — never a payment.
         verify_first=bool(has_password_lead or category == "RANSOMWARE_CLAIM"),
         tracking_pixel=has_pixel,
+        family_plea=has_family_plea,
         guidance=guidance,
     )

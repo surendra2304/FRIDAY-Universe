@@ -2,6 +2,21 @@
 // Quantum Research Interface Controller
 // Advisory & Research Simulation Only (Zero Execution Authority)
 
+// TASK-IG2-WEB-04-FIX-01: mount-aware API base. The quantum page is
+// served under /stratex/ in production (Caddy strips the prefix) and at
+// / standalone, so the advisory fetch must be relative to the mount, not
+// root-relative — root /api/* goes to the FRIDAY app and never reaches
+// Stratex. Same derivation as Stratex/static/app.js.
+function dashboardMountBase() {
+    var path = window.location.pathname.replace(/\/+$/, '');
+    if (!path) return '';
+    if (path.slice(-'/index.html'.length) === '/index.html') {
+        path = path.slice(0, -'/index.html'.length);
+    }
+    return path;
+}
+var API_BASE = dashboardMountBase();
+
 document.addEventListener('DOMContentLoaded', () => {
     const statusEl = document.getElementById('status');
     const backendEl = document.getElementById('backend');
@@ -45,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchAdvisory() {
         if (statusEl) statusEl.textContent = '● FETCHING SIMULATION...';
         try {
-            const res = await fetch('/api/quantum/advisory?symbol=BTCUSDT&tf=15m');
+            const res = await fetch(API_BASE + '/api/quantum/advisory?symbol=BTCUSDT&tf=15m');
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
 

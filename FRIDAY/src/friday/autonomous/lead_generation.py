@@ -129,6 +129,12 @@ class Lead:
     address: str = ""
     category: str = ""
     source_url: str = ""
+    # TASK-FRD-061: verification pass state — filled by
+    # friday.autonomous.lead_verification.verify_lead. Defaults keep
+    # every existing construction and test unchanged.
+    status: str = "unchecked"
+    checked_at: str = ""
+    verification_note: str = ""
 
     def key(self) -> str:
         return (self.email or self.phone or self.name).strip().lower()
@@ -512,9 +518,32 @@ def _default_fetcher(url: str) -> str:
     return resp.text
 
 
+def _fetcher_website_checker(fetch):
+    """Website liveness via the errand's fetcher (SSRF-guarded).
+
+    A fetch that returns means the public listing still serves. An HTTP
+    error status means the page is gone (stale); any other failure means
+    the check could not run (unverifiable, never "dead").
+    """
+    def check(url: str) -> tuple[bool, str]:
+        reason = check_url_allowed(url)
+        if reason:
+            return False, f"not checked: {reason}"
+        try:
+            fetch(url)
+        except Exception as exc:  # noqa: BLE001 - mapped below, never raised
+            status = getattr(getattr(exc, "response", None), "status_code", None)
+            if isinstance(status, int):
+                return False, f"HTTP {status}"
+            return False, f"could not reach to check ({type(exc).__name__})"
+        return True, "reachable"
+    return check
+
+
 def run_lead_generation(start_url: str, category: str = "", *,
-                        fetcher=None, max_pages: int = MAX_PAGES) -> LeadGenResult:
-    """Run the errand: fetch -> parse -> dedupe -> table-ready result.
+                        fetcher=None, max_pages: int = MAX_PAGES,
+                        verify: bool = False, dns_resolver=None) -> LeadGenResult:
+    """Run the errand: fetch -> parse -> dedupe -> (optional verify) -> result.
 
     TASK-IG2-FRD-03-FIX-01: listing blocks without a contact signal are
     enriched from their same-host detail page (bounded by
@@ -523,6 +552,12 @@ def run_lead_generation(start_url: str, category: str = "", *,
     runs AFTER dedupe, so a name-only relisting still merges into (and
     fills the website of) the contactful first listing. A lead with no
     phone and no email after enrichment is dropped, never delivered.
+
+    ``verify`` runs the TASK-FRD-061 verification pass over the deduped
+    leads (website liveness via the same fetcher, email domain resolution,
+    phone format) so every lead carries a verified/stale/unverifiable
+    status with the check date. Off by default: existing callers and
+    tests see exactly the old behaviour.
     """
     reason = check_url_allowed(start_url)
     if reason:
@@ -563,6 +598,11 @@ def run_lead_generation(start_url: str, category: str = "", *,
             break
         url = next_url
     result.leads = dedupe_leads(result.leads)
+    if verify:
+        from friday.autonomous.lead_verification import verify_leads
+
+        verify_leads(result.leads, website_checker=_fetcher_website_checker(fetch),
+                     dns_resolver=dns_resolver)
     result.leads = [lead for lead in result.leads if lead.phone or lead.email]
     return result
 

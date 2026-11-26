@@ -327,6 +327,19 @@ FLEET_STATE_SOURCES = (
         "/opt/friday_universe/Sentinel/data", "/opt/friday_universe/Sentinel/state",
         "/opt/friday_universe/Cortex/data", "/opt/friday_universe/Cortex/state",
     ), False),
+    # TASK-DB-011: Forge working output on Oracle Server 1. The DB-003
+    # fleet storage audit (2026-11-25) found Forge/workspaces/ (27M)
+    # with no file backup, and Forge/artifacts/ (archived workspaces,
+    # multi_project.prune_workspaces) was likewise uncollected. This
+    # entry is SEPARATE from the server1 data/state entry above and
+    # required=True so a future omission marks the bundle INCOMPLETE
+    # (failed_required) instead of passing silently — the silence is
+    # what DB-011 exists to fix. Regenerability verdict and the gated
+    # live procedure: docs/collaboration/TASK-DB-011-EVIDENCE.md.
+    ("server1", "140.245.208.100", (
+        "/opt/friday_universe/Forge/workspaces",
+        "/opt/friday_universe/Forge/artifacts",
+    ), True),
     ("server3", "15.134.130.145", (
         "/opt/friday_universe/FRIDAY/data", "/opt/friday_universe/FRIDAY/state",
         "/opt/friday_universe/Inference/data",

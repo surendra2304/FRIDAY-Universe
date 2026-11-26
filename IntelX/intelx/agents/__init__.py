@@ -34,6 +34,11 @@ from intelx.agents.planner import (
     PlannerAgent,
     SourceStrategy,
 )
+from intelx.agents.research_engines import (
+    MultiEngineResult,
+    MultiEngineSearch,
+    build_default_search,
+)
 from intelx.agents.retriever import (
     FetchFailure,
     RetrievedDoc,
@@ -87,6 +92,9 @@ __all__ = [
     "DeepResearchResult",
     "GradedSource",
     "LoopRound",
+    "MultiEngineSearch",
+    "MultiEngineResult",
+    "build_default_search",
     "SynthesizerAgent",
     "SynthesisResult",
     "SynthesizedFinding",

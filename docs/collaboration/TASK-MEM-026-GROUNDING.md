@@ -204,3 +204,150 @@ identity can remove them via `POST /v1/memories/{id}/forget` or
   work-request absent (correct while holding claimed tasks).
 
 — Muse 19
+
+---
+
+# Checkpoint 2 — re-grounded on main 14a72d15 (Muse 2, 2026-11-26 ~00:58 IST)
+
+**Worker:** Muse 2 · **Branch:**
+`muse2/task-mem-026-three-section-proof-run4` (from main `14a72d15`,
+the TASK-INT-051 merge) · **Claim:** hub #1483 comment 7171966591
+(~00:42 IST), queue head after INT-051 merged.
+
+**Predecessor update:** Muse 19 released MEM-026 to the pool
+(coordinator watch096); checkpoint-1 PR #1662 merged (merge
+89605ae4, head 1da477ef); board reset AVAILABLE / owner muse_2 by
+coordinator watch100 (queue position 3). The live cycle was never
+run under checkpoint 1; this checkpoint re-grounds the filed probe
+package against current main before any live attempt.
+
+**Method:** read `TASK-MEM-026-GROUNDING.md` and
+`TASK-MEM-026-PROBE.py` in full, then verified every claim against
+the Memora code on main `14a72d15` (file:line citations below) and
+diffed the whole `Memora/` tree against the checkpoint-1 base
+`90ad8c3e`.
+
+## What still holds (verified first-hand on main 14a72d15)
+
+- **Thresholds — UNCHANGED.** `Memora/core/memory/promotion.py`
+  lines 101–105, byte-identical values: PRIVATE → SHARED needs
+  `SHARED_MIN_DISTINCT_AGENTS = 2`, `SHARED_MIN_TOTAL_NEEDS = 3`;
+  SHARED → UNIVERSAL needs `UNIVERSAL_MIN_DISTINCT_AGENTS = 4`,
+  `UNIVERSAL_MIN_TOTAL_NEEDS = 8`, `UNIVERSAL_MIN_OUTSIDE_AGENTS = 2`.
+- **Endpoints — all present, unchanged.**
+  `POST /v1/memories` (201) / `GET /v1/memories/{id}` /
+  `GET /v1/memories/search` (`Memora/apps/api/routers/v1_memories.py`,
+  prefix `/v1/memories`, `X-Agent-Name` + `X-API-Key` auth);
+  `POST /v1/promotion/promote|need|sweep|revert`
+  (`v1_promotion.py`, prefix `/v1/promotion`); `GET /audit`
+  (`audit.py`, prefix `/audit`, `action` + `limit` filters);
+  `GET /health` (`health.py`, prefix `/health`). Search returns a
+  list of records with `id` and `keyword_score`
+  (`HybridSearchResultResponse`); `GET /{id}` returns `MemoryRecordRead`
+  with `scope` (`core/memory/schemas.py:136-165`).
+- **Port 8002 — holds.** FRIDAY fleet client
+  (`FRIDAY/src/friday/ecosystem/fleet_client.py:239`,
+  `memora: http://10.0.0.121:8002`) and `AGENTS.md` deployment table.
+- **`memory_type` casing — holds.** `MemoryType.EPISODIC = "episodic"`
+  (`storage/relational/models.py:82-83`); uppercase → 422 as before.
+- **Provenance / HMAC field names — hold.**
+  `content_sha256` is written into provenance by the write path
+  (`core/memory/pipeline/write_service.py:784`); the dual copy
+  inherits provenance verbatim and is re-signed under its own id
+  (`promotion.py:199-220` `_sign_copy_provenance`, so the copy's
+  `hmac_signature` differs from the original's while `content_sha256`
+  is identical); `promoted_from_memory_id` is stamped on the copy
+  (`promotion.py:895`); `universal_copy_id` is returned on the dual
+  path (`promotion.py:833,838`); owner need returns
+  `{"status": "owner_need_ignored"}` (`promotion.py:591`).
+- **Sweep shape — holds.** `PATH_AUTO = "auto_repeated_need"`
+  (`promotion.py:98`); `DEFAULT_WINDOW_DAYS = 30` (`:106`); sweep
+  returns `{"promotions": [...], "count": n}` (`v1_promotion.py`);
+  each promotion carries `status`, `memory_id`, `scope`, `to_scope`,
+  `path`, plus `from_scope` on the in-place path
+  (`promotion.py:873`) and `universal_copy_id` + `status:
+  "promoted_dual_copy"` on the dual path (`:837-839`). The
+  dual-copy result omits `from_scope`, so the probe's
+  `.get("from_scope", .get("scope"))` fallback (checkpoint-1 defect
+  fix #5) is still the correct read — the original stays SHARED, so
+  the fallback yields `"SHARED"`.
+- **Audit visibility — holds.** `ADMIN_AGENTS = {"memora"}`
+  (`apps/api/dependencies.py:285`); the probe audits as `memora`, so
+  it sees the full trail, and `AuditLogRead.details` carries
+  `from_scope`/`to_scope`/`path` (`schemas.py:204-213`).
+- **Direct UNIVERSAL write → 403 — holds.**
+  `write_service.py:514-528` raises `PermissionDeniedError` for any
+  non-service actor authoring UNIVERSAL scope; the router maps it to
+  403 (`v1_memories.py`).
+- **Failed-experiment lesson test — holds.**
+  `is_failed_experiment_lesson` (`promotion.py:123-137`) matches on
+  `failed_experiment: true`, `experiment_outcome` failed/failure, or
+  `lesson_type: failed_experiment`; the M2 lesson provenance sets all
+  three.
+
+## What drifted since checkpoint 1 (90ad8c3e → 14a72d15)
+
+`git diff --stat 90ad8c3e..14a72d15 -- Memora/` = 14 files, +2732/−2,
+**all additive new modules or the MEM-031 capture index** — vault
+(`vault.py`, `nightly_summary.py`, MEM-030), session needles +
+confidence reinforcement + Forge adapter (MEM-031),
+offline/nomad pack (MEM-032), capture sessions index
+(`v1_capture.py`, `capture_service.py`, MEM-031). **Zero diff** in
+every file the probe touches: `promotion.py`, `v1_memories.py`,
+`v1_promotion.py`, `audit.py`, `health.py`, `schemas.py`,
+`write_service.py`, `dependencies.py`, `models.py`. MEM-029's
+production callers live in FRIDAY (`memora_client.py`), not in
+Memora. **The probe script needs no changes** and is left
+byte-identical; it was python-syntax-checked this run (`py_compile`
+exit 0).
+
+**Live-run caveat (not drift, carried from run 3):** the M2
+blast-radius checks (`len(promos) == 1` per sweep) assume no other
+memory earns a promotion in the same window — true on the quiet live
+service in runs 2–3, but a concurrent promotion by another agent
+during the run-4 window would fail the check without the probe being
+wrong. If it trips, the sweep output in `/tmp/muse19_mem026/` names
+the other memory.
+
+## Decisions owed (restated with current evidence)
+
+1. **Deploy gating — STILL OWED, no deploy since checkpoint 1.**
+   FRD-042's work PR #1647 did merge (2026-11-24 13:51 IST,
+   merged_at `2026-11-24T08:21:15Z`; board FRD-042 now MERGED) —
+   but the S1 deploy leg it gated has **no completion evidence on
+   the board or the hub**, and the deploy vehicle FRD-043 is
+   CLAIMED / HOLD under Muse 15 (board: "HOLD — deploy only on
+   coordinator clearance + CD repair; branch stands ready";
+   WATCH114 held list: "deploy clearances blocked (owner stop
+   order)"). The "next FRIDAY deploy" in MEM-026's title has still
+   not happened. The live cycle waits on a coordinator ruling.
+2. **Live-leg route — STILL OWED, no grant in hand.** Hub read
+   through WATCH114 (hub #1483 comment 7172052508, ~00:46 IST):
+   "M5 live-leg clearance (owner stop order + broken CD still gate
+   it — no clearance from me)". The MEM-025 grant (watch
+   7123074240) was scoped to the MEM-025 probe only. A fresh
+   bridge `run_shell` grant for the MEM-026 probe on Server 1 only,
+   or a named drill assist, is still owed.
+
+**Live cycle NOT run in this checkpoint:** no live calls were made,
+nothing was written to the live service. The only work this PR does
+is the re-grounding above plus the board flips.
+
+## Board flips in this PR
+
+- TASK-INT-051 IN_REVIEW → MERGED. Evidence: work PR #1880 merged
+  by surendra2304 2026-11-26 00:28:39 IST, merge `14a72d15`,
+  CI 10/10 green on head `b43ab5f0` (8 success, 2 skipped),
+  verified first-hand via the PR API. The flip text mirrors
+  coordinator board PR #1885 (open, head `33a7af8b`, mergeable
+  clean, CI green) byte-for-byte, so the two PRs cannot conflict on
+  these lines — whichever merges first, the other becomes a no-op
+  there. (Per Muse 2's claim post 7171966591 the flip rides in this
+  work PR.)
+- TASK-MEM-026 AVAILABLE → CLAIMED (owner muse_2, branch
+  `muse2/task-mem-026-three-section-proof-run4`, pr = this work PR).
+
+Usage: 51% of free weekly limit (per claim post 7171966591; reset
+Nov 28, 21:47 IST).
+
+— Muse 2

@@ -870,6 +870,17 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                 # cannot be entered by two threads at once ("cannot enter
                 # context: ... is already entered"), while separate copies
                 # of the same snapshot share the bound guard objects.
+                # TASK-IG-FRD-006-FIX-01: the wait must cover the slowest
+                # tool in the batch, not just the agent default — a batch
+                # containing intelx_research (125s declared) was capped at
+                # tool_timeout + 1 (31s) here even though the registry
+                # would have allowed longer.
+                batch_timeout = self.tool_timeout
+                for index in safe_indices:
+                    batch_timeout = max(
+                        batch_timeout,
+                        self._effective_tool_timeout(self.tools.get(calls[index].name)),
+                    )
                 with ThreadPoolExecutor(
                     max_workers=min(8, len(safe_indices)),
                     thread_name_prefix="friday-safe-tool",
@@ -880,7 +891,7 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                     }
                     for index, future in futures.items():
                         try:
-                            call_results[index] = future.result(timeout=self.tool_timeout + 1)
+                            call_results[index] = future.result(timeout=batch_timeout + 1)
                         except Exception as exc:
                             call = calls[index]
                             call_results[index] = ToolResult(
