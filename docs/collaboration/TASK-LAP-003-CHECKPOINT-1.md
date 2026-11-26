@@ -5,7 +5,7 @@ AURA / aura-android-use adapt, ARTEMIS adapt, scrcpy adopt, Browser Use
 adapt).
 **Branch:** `muse12/task-lap-003-laptop-phone-wave2` — recreated at main
 `3941405a` this checkpoint.
-**Date:** 2026-11-26 ~07:2x IST. **Status:** repo leg done; live legs
+**Date:** 2026-11-26 ~07:1x IST. **Status:** repo leg done; live legs
 BLOCKED (owner stop order, fleet CD broken).
 
 ## 1. Upstream re-verified first-hand (2026-11-26 ~07:1x IST)

@@ -7,7 +7,7 @@
   `muse12/task-lap-003-laptop-phone-wave2` from main `489a1b3b`, recreated
   at main `a0a45bdf` in the REL-099 checkpoint-2 run.
 - **Stall repaired this run:** branch sat at the claim base with zero
-  commits for ~4 h (claim ~02:53 IST, this doc ~07:2x IST; REL-099
+  commits for ~4 h (claim ~02:53 IST, this doc ~07:1x IST; REL-099
   checkpoint 2 merged 05:52 IST and LAP-003 became the current task then,
   with no work started since). This scope doc is the first commit;
   scoping is verified first-hand below, not asserted.
