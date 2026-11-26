@@ -191,7 +191,13 @@ def test_progress_unknown_session_is_honest_error():
 def test_current_word():
     sid = _session()["session_id"]
     assert rsvp.current_word(sid)["word"] == "The"
+    # Positions are 0-based (tool schema + reading surface both index
+    # words[position]): index 3 is "fox", index 4 is "jumps". WATCH144
+    # caught this test jumping to 3 while expecting "jumps" — the
+    # expectation was off by one, not the implementation.
     rsvp.control_session(sid, action="jump", position=3)
+    assert rsvp.current_word(sid)["word"] == "fox"
+    rsvp.control_session(sid, action="jump", position=4)
     assert rsvp.current_word(sid)["word"] == "jumps"
 
 
