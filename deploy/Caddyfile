@@ -162,6 +162,23 @@ friday-universe.duckdns.org {
         rewrite * /pepperstone-auth.html
         file_server
     }
+    # TASK-WEB-005-FIX-01: the Halo stage's own route. The app is a
+    # static export with basePath /friday, so the route's file is
+    # out/halo/index.html and the FRIDAY service answers it at
+    # /friday/halo/; this handle exposes it at the bare-domain /halo
+    # the acceptance names. The rewrite (not a redirect) keeps the
+    # /halo URL in the browser; the page's assets are /friday/_next/…
+    # and already pass through the /friday* handle above. Port to the
+    # Server 2 live file with its upstream (15.134.130.145:10000).
+    handle /halo* {
+        rewrite * /friday/halo/
+        reverse_proxy 127.0.0.1:10000 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
+    }
     handle {
         reverse_proxy 127.0.0.1:10000 {
             transport http {
