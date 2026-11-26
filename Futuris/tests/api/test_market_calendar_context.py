@@ -9,7 +9,7 @@ a fake transport (no network); telemetry uses the same fake connector
 as the event-context tests.
 """
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time, timezone
 from unittest.mock import AsyncMock
 
 import pytest
@@ -19,8 +19,15 @@ from futuris.connectors.base import Observation
 from futuris.features import calendar_context as cc
 
 UTC = timezone.utc
-NOW = datetime(2026, 11, 25, 12, 0, tzinfo=UTC)
-TODAY = date(2026, 11, 25)
+# TASK-REL-101: TODAY/NOW track the real current UTC date, refreshed per
+# test by _patch_connectors below. The old fixed date pinned the stored
+# feed events to one day while the router filters on the real UTC date,
+# so once the real date moved past it the events fell out of the window
+# and this file's available / 3-events / CPI-headline assertions failed
+# (contracts run 45728251068 on main). No fixed calendar date may remain
+# in the Futuris calendar path.
+TODAY = datetime.now(UTC).date()
+NOW = datetime.combine(TODAY, time(12, 0), tzinfo=UTC)
 
 ECON_PAYLOAD = {"data": {"rows": [
     {"eventName": "Consumer Price Index (MoM)", "time": "8:30 AM", "country": "US",
@@ -100,6 +107,12 @@ def _feed(tmp_path, fetch=_fake_fetch):
 
 @pytest.fixture(autouse=True)
 def _patch_connectors(monkeypatch):
+    global TODAY, NOW
+    # Re-anchor "today" per test so the stored feed events and the
+    # router's real-UTC-date window can never straddle a midnight
+    # rollover (TASK-REL-101).
+    TODAY = datetime.now(UTC).date()
+    NOW = datetime.combine(TODAY, time(12, 0), tzinfo=UTC)
     FakeIntelXInjector.reports = []
     monkeypatch.setattr(market_module, "TradingBotConnector", FakeTradingConnector)
     monkeypatch.setattr(market_module, "IntelXContextInjector", FakeIntelXInjector)
@@ -133,7 +146,7 @@ async def test_calendar_release_is_cited_in_response_and_named_in_rationale(tmp_
     assert headline.kind == "macro" and headline.impact == "high"
     rationale = resp.regime_outlook.rationale
     assert "Calendar [macro/high]: Consumer Price Index (MoM)" in rationale
-    assert "2026-11-25 08:30" in rationale
+    assert f"{TODAY.isoformat()} 08:30" in rationale
     assert "Nasdaq economic calendar" in rationale
 
 
