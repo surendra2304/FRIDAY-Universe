@@ -296,7 +296,9 @@ jobs:
             VyralX/tests/test_vyr055_discovery_helpers.py \
             VyralX/tests/test_vyr053_pool.py \
             VyralX/tests/test_vyr057_pool.py \
-            VyralX/tests/test_vyr055_refresh3_pool.py
+            VyralX/tests/test_vyr055_refresh3_pool.py \
+            VyralX/tests/test_vyr079_openfilm_adapter.py \
+            VyralX/tests/test_vyr079_nextwork_style.py
       - name: Compile fresh research and deployed voice wiring
         run: >-
           python -m compileall -q IntelX/intelx/api/router.py
