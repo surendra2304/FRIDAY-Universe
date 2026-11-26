@@ -95,7 +95,21 @@ on repo CI). The module and tests were validated parse-only
 parse, no lines over 100 chars, no forbidden constructs. The 28
 tests follow the existing `test_ig_vyr01_channel_operator.py` style
 (plain functions, `from app.services import ...`, `tmp_path` for the
-queue). CI result on the PR head: _to be filled after the PR opens_.
+queue). CI on head 0b34447c (first full run, 2026-11-26 ~00:05 IST): 7 success,
+2 skipped, 2 failed. One failure was mine —
+`test_signals_missing_kinds_reported_not_synthesised` asserted only
+four missing kinds; `collect_signals({})` correctly reports all six
+(fixed in the follow-up commit on this branch). The other failure is
+NOT from this PR: the contracts workflow's Futuris step
+(`Futuris/tests/api/test_market_calendar_context.py::test_calendar_release_is_cited_in_response_and_named_in_rationale`)
+fails because its fixture date is 2026-11-25 and it ran on 2026-11-26
+(`assert 'none_upcoming' == 'available'`). The same workflow, same
+step 10, fails on a main push (run 45728251068, head 875504ffd5,
+2026-11-26T00:22Z) and on PR #1921 (run 45726195648) — every
+contracts run since 2026-11-26 00:00 UTC fails, while all runs on
+2026-11-25 passed. No Futuris file is touched by this PR; the fix
+belongs to the Futuris area (a date-rolling fixture), not to VYR-082.
+CI re-run pending on the fix head.
 
 One deliberate fixture choice, verified against the source: the
 market-intelligence brief test uses hooks that score ≥ 0.60 on the

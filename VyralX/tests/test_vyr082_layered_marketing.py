@@ -147,8 +147,10 @@ def test_signals_missing_kinds_reported_not_synthesised():
         assert entry["items"] == []
         assert entry["note"]
     assert out["kinds"]["competitor_ads"]["available"] is False
+    # Empty input: every kind is missing, in SIGNAL_KINDS order.
     assert out["missing_kinds"] == [
-        "competitor_ads", "website_visitors", "lead_forms", "sales_calls"]
+        "competitor_ads", "comments_dms", "website_visitors", "lead_forms",
+        "reviews_mentions", "sales_calls"]
 
 
 def test_signals_invalid_ad_record_listed_not_dropped():
