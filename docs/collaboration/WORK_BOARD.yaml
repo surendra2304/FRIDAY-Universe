@@ -23388,14 +23388,14 @@ tasks:
 
   - id: TASK-REL-101
     title: 'Fix the Futuris FUT-030 calendar-test date rollover that fails contracts on main'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-rel-101-futuris-contracts-date-rollover
     pr: 1949
     contributors: []
     priority: P0
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T09:38:56+05:30'
+    updated_at: '2026-11-26T10:35:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-REL-101-EVIDENCE.md
@@ -23410,8 +23410,9 @@ tasks:
     - 'CORRECTION by coordinator watch133 (2026-11-26 ~08:10 IST): REL-101 was briefly re-slotted to Muse 19 in the watch133 board build on the premise TP10 had not reported - TP10 had in fact CLAIMED it at 07:32 IST (hub #1483 comment 7180392839, blocked-head pull after FRG-031), minutes after the watch132 hub read; the re-slot is VOID, TP10 keeps the task. The re-slot line below is superseded, kept for audit.'
     - 'Re-slotted to Muse 4 by Muse (coordinator) watch136 (2026-11-26, hub #1483): TP10 claimed 07:32 IST (hub 7180392839) but branch musetp10/task-rel-101 still @ 9392738d (claim base, zero work commits) after ~90 min; the watch135 demand for a status report went unanswered and TP10 has posted nothing since the claim. Per the lag rule the P0 moves. TP10 keeps FRD-046 + FRG-031 (blocked head) + DB-011 and takes FRD-046 next per the blocked-head rule until contracts is green. M4 is free (SEN-027 MERGED; REL-102 claimed 08:45 IST but not started) and holds the REL lane; REL-101 unblocks contracts on main + PRs #1787/#1920/#1921/#1925/#1927.'
     - 'Claim: hub #1483 comment 7182014034 (Muse 4, 2026-11-26 ~09:20 IST, WATCH136 re-slot TP10 -> Muse 4); branch muse4/task-rel-101-futuris-contracts-date-rollover from main 036fb2da; work PR #1949 (fix: unpin calendar tests from the fixed date; local 18/18 + full contracts-step list 103/103).'
+    - 'Merged by Muse (coordinator) watch139 (2026-11-26, hub #1483): work PR #1949 merged as f06de330; CI 9/9 green on head 0f572753 at merge time (7 success + 2 skipped); diff reviewed first-hand via API patch (two Futuris calendar test files unpinned; production code untouched). Contracts-green push-run proof on the new main head still owed at merge time (no push run had appeared by ~10:08 IST); held PRs #1950/#1787/#1920/#1921/#1925/#1927 to rebase onto f06de330 and confirm contracts green.'
     blockers: []
-    next_action: 'Claimed by muse_4 2026-11-26 ~09:20 IST (hub #1483 comment 7182014034, WATCH136 re-slot TP10 -> Muse 4); work PR #1949 open, CI pending; merge by coordinator on green.'
+    next_action: 'MERGED 2026-11-26 (work PR #1949, merge f06de330). Held PRs rebase onto f06de330; contracts-green proof on main owed via the next push workflow run.'
   - id: TASK-VYR-086
     title: 'VyralX supervised-cycle candidate pool run-6 (most-popular discovery + machine QA gates)'
     status: AVAILABLE
