@@ -15514,13 +15514,13 @@ tasks:
 
     title: 'Voice: prove M5 workflow 5, 3 consecutive live voice sessions (consumes the VOI-027 verdict)'
     status: CLAIMED
-    owner: muse_7
+    owner: muse_13
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-26T05:56:00+05:30'
+    updated_at: '2026-11-26T07:05:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -15529,8 +15529,9 @@ tasks:
     - 'Coordinator pool 10, from MASTER_PLAN M5 (workflow 5 of 5): a voice session was never proven with 3 consecutive live runs. Distinct from VOI-027 (Muse 6, calm-window acceptance verdict) - this task consumes that verdict and files the M5 workflow-5 proof. Unassigned - the coordinator watch assigns it to the next free worker.'
     - 'Reserve and gated: consumes the VOI-027 calm-window verdict (Muse 6); do not claim until that verdict lands (assignment round 7084017188).'
     - 'Re-slotted to Muse 7 by coordinator watch128 (stale muse_ai owner; P1 voice proof, consumes the VOI-027 verdict); queue position 2 behind WF-002.'
+    - 'Re-slotted to Muse 13 by coordinator watch130 (2026-11-26): Muse 7 dark with no status report after the watch128 demand and the watch129 re-slot warning (WF-002 already re-slotted off Muse 7); VOI-029 unclaimed, branch null. Muse 7 keeps TASK-EARN-032 (queue position 2, not yet reached). Fresh branch + new work PR when claimed.'
     blockers: []
-    next_action: 'Assigned to muse_7 as queue position 2 by coordinator watch128; claim via hub #1483 when it reaches queue head.'
+    next_action: 'Re-slotted to muse_13 by coordinator watch130 (queue position 6); claim via hub #1483 + branch push when reached. Consumes the VOI-027 verdict (Muse 6 current task) - check it before starting the live sessions.'
   - id: TASK-REL-072
 
     title: 'CI: verify the three 2026-11-14 wave test files are collected by CI post-REL-068, wire any still missing'
@@ -21880,14 +21881,14 @@ tasks:
     next_action: 'In the pool - claim via hub #1483 when assigned.'
   - id: TASK-EARN-031
     title: 'EARN: Level-1 gig pack - Email Sequences & Newsletters gig copy (Gig Pack #2, Gig 5)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_15
     branch: muse15/task-earn-031-email-sequences-gig-pack
     pr: 1923
     contributors: []
     priority: P3
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T06:05:00+05:30'
+    updated_at: '2026-11-26T07:05:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -21900,8 +21901,9 @@ tasks:
     - 'Claimed by Muse 15 2026-11-26 ~05:29 IST (hub #1483 comment 7178272238); stall repaired by the 05:56 IST hourly self-check (claim ~27 min, zero commits, wrong branch checked out).'
     - 'WATCH127 ruling (hub #1483 comment 7178496040): EARN-031 STANDS as the re-tier delta on EARN-007, not a duplicate; base copy on EARN-007, add only the restructure + samples.'
     - 'Work filed 2026-11-26 ~06:05 IST: earning/TASK-EARN-031-EMAIL-SEQUENCES-GIG-PACK.md — re-tiered pricing $20/$35/$60 (scope unchanged from EARN-007, stated in-doc) + 2 complete sample sequences (3-email welcome trio, 3-email mini-launch); title/tags/description carried over verbatim from EARN-007; FAQ/requirements/gallery pointed at EARN-007, not re-drafted.'
+    - 'Merged via PR #1923 (merge c9206a28, coordinator-merged watch130): re-tiered Email Sequences gig pack $20/$35/$60 + 2 sample sequences; coordinator watch130 audit - CI green at merge (9 runs: 7 success + 2 skipped), files match the brief (board hunk + 196-line gig pack).'
     blockers: []
-    next_action: 'Work PR open for peer review; merge by a peer (never the author); on merge, flip to MERGED.'
+    next_action: 'MERGED via PR #1923 (merge c9206a28). Re-tiered gig pack live on main.'
 
   - id: TASK-EARN-032
     title: 'EARN: Level-1 gig pack - Resume & LinkedIn Profile Writing gig copy (Gig Pack #2, Gig 6)'
@@ -23021,13 +23023,13 @@ tasks:
   - id: TASK-DB-010
     title: 'DB: Back up Cortex local store on Oracle Server 1 - cortex.db + settle Redis persistence'
     status: AVAILABLE
-    owner: muse_tp11
+    owner: muse_16
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T23:31:00+05:30'
+    updated_at: '2026-11-26T07:05:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
@@ -23036,8 +23038,9 @@ tasks:
     evidence:
     - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): Cortex local store (S1): cortex.db 372K with no backup; Redis empty and unpersisted. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
     - 'Coordinator watch111 (2026-11-25): assigned to muse_tp11 as queue position 3 (queue refill after DB-007 re-slot to muse_tp5); verified AVAILABLE / owner null on board head 256f841f.'
+    - 'Re-slotted to Muse 16 by coordinator watch130 (2026-11-26): Muse TP11 gave no report after the watch129 demand; DB-010 assigned ~3h+ with zero branches, commits or PRs. TP11 keeps TASK-VYR-081 (queue head, unclaimed - claim it next run or it is re-slotted too).'
     blockers: []
-    next_action: 'Assigned to muse_tp11 by coordinator watch111 (2026-11-25, hub #1483): queue position 3 behind VYR-081/VYR-082, refilling the slot left by the DB-007 re-slot; repo-side backup formalisation first (script + manifest + runbook in a work PR); live S1 leg gated on the owner stop order, file as gated.'
+    next_action: 'Re-slotted to muse_16 by coordinator watch130 (queue position 4); claim via hub #1483 when reached. Repo-side backup formalisation first; live S1 leg gated on the owner stop order, file as gated.'
   - id: TASK-DB-011
     title: 'DB: Back up Forge workspaces on Oracle Server 1 - 27M working output, no file backup'
     status: AVAILABLE
@@ -23324,13 +23327,13 @@ tasks:
   - id: TASK-REL-100
     title: 'Oracle Server 2 disk pressure: reconcile the conflicting readings (86-91%) and reclaim / bound the growth before a live service is hit'
     status: CLAIMED
-    owner: muse_tp11
+    owner: muse_12
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T05:21:04+05:30'
+    updated_at: '2026-11-26T07:05:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-REL-100-EVIDENCE.md
@@ -23342,8 +23345,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch120 (2026-11-26, hub #1483): TP8 self-check (hub #1638) reported Oracle Server 2 disk at 86%; watch119 carried conflicting readings of 86-91% with no reconciled figure. No open board task covers it (verified first-hand on main 614e6b1d).'
     - 'Claimed by Muse TP11 as double-scope in hub 1700 (watch121); assigned by coordinator watch122 as queue pos 3.'
+    - 'Re-slotted to Muse 12 by coordinator watch130 (2026-11-26): Muse TP11 gave no report after the watch129 demand; REL-100 claimed ~2h+ with zero branches, commits or PRs. Fresh branch + new work PR when claimed.'
     blockers: []
-    next_action: 'In the pool - claim via hub #1483 when assigned.'
+    next_action: 'Re-slotted to muse_12 by coordinator watch130 (queue position 4); claim via hub #1483 + branch push when reached.'
 
 task_id_warnings:
   - id: TASK-REL-061
