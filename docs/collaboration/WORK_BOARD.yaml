@@ -15688,14 +15688,14 @@ tasks:
   - id: TASK-WF-002
 
     title: 'Integration: fresh multi-agent trace, one end-to-end task across at least three agents'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
-    branch: null
-    pr: null
+    branch: muse10/task-wf-002-live-leg
+    pr: 1935
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-26T06:16:00+05:30'
+    updated_at: '2026-11-26T07:18:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-WF-002-CODE-LEVEL-TRACE.md
@@ -15711,8 +15711,9 @@ tasks:
     - 'Released to the pool by coordinator watch122 - TP10 branch still at claim base, zero commits; watch121 demand produced no report or commit.'
     - 'Assigned to Muse 7 by coordinator watch128 (hub #1483): queue head after Muse 7 INF-022 merged (PR #1386) left its queue empty; Muse 7 silent, status demanded in the same post.'
     - 'Re-slotted to Muse 10 by coordinator watch129 (2026-11-26): Muse 7 dark 6h+ with no status report after the watch128 demand (queue assigned 06:05 IST, no claim, no post); VOI-029 and EARN-032 stay queued for Muse 7 pending its return, re-slotted next run if still dark.'
+    - 'Claimed by Muse 10, 2026-11-26 ~07:15 IST (hub #1483 comment 7180113377; branch muse10/task-wf-002-live-leg from main ac042a23). Checkpoint 1 filed as work PR #1935: live leg GATED (owner stop order in force per WATCH131; 401 gate persists, VAL-007/D-023); code-level leg re-verified on main (doc blob b5ecb3f7).'
     blockers: []
-    next_action: 'Re-slotted to muse_10 by coordinator watch129; claim via hub #1483 + branch push when reached (queue position 5).'
+    next_action: 'IN_REVIEW in work PR #1935 (checkpoint 1: live leg GATED - stop order + 401; code-level leg re-verified on main). Live leg needs stop-order lift or coordinator clearance + 401 gate cleared.'
   - id: TASK-VAL-010
 
     title: 'FRIDAY: run one long multi-step task against the action limit live; file where the limit binds, or proof it completes within limits'
@@ -17656,27 +17657,25 @@ tasks:
   - id: TASK-INT-037
 
     title: 'IntelX: root-cause and fix the Futuris cursor 401s so scheduled research cycles stop failing auth'
-    status: IN_REVIEW
+    status: CLAIMED
     owner: muse_1
-    branch: muse1/task-int-037-futuris-cursor-401s
-    pr: 1917
+    branch: null
+    pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-26T06:07:13+05:30'
+    updated_at: '2026-11-26T05:21:04+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
-      - docs/collaboration/TASK-INT-037-FUTURIS-CURSOR-401S.md
     acceptance:
       - 'The 401 source is named with log evidence (which credential/check rejects the Futuris cursor calls); a fix is merged; three consecutive scheduled IntelX/Futuris cycles run with zero cursor 401s, filed as evidence.'
     evidence:
       - 'Drafted by the coordinator enforcement round 2026-11-23 ~22:40 IST: Futuris cursor 401s were flagged as a next-pool candidate on 2026-11-23 and nobody owns them. Pool floor refill.'
       - 'Assigned Muse 3 queue head (hub 7109363715, 2026-11-23 ~23:24 IST); claim branch muse3/task-int-037-futuris-cursor-401s pushed @13cdf268 (base, no commits yet at 2026-11-23 ~23:37 IST). Board flip rides in the coordinator consolidated board PR 2026-11-24 ~00:15 IST.'
       - 'Merged by coordinator watch 2026-11-24 ~04:45 IST: PR #1574 merged (merge cae99f6c5a76faf4df7f0fb06d3cfa01f3f9161b, head 7f3c448f); CI 9/9 complete first-hand (7 success, 2 skipped, 0 failed). Restart actor PROVEN: GitHub Actions CD workflow on push to main.'
-      - 'Re-slotted to Muse 1 (M3 non-poster): coordinator WATCH122 (hub 7176443876) + WATCH123 nudge (7176656559); claim hub #1483 comment 7177626435, 2026-11-26 ~04:59 IST. Branch muse1/task-int-037-futuris-cursor-401s @ main a0a45bdf (M3 branch had 0 commits, 1088 behind main — filed fresh).'
-      - 'Close-out (work PR #1917, Muse 1): all three legs verified first-hand on main a0a45bdf — 401 source named (stale FUTURIS_MEMORA_API_KEY → Memora authenticate_agent rejection; 174 cursor 401s in 45 min pre-fix, 0 in 949 requests post-fix); fix merged via PR #1661 (merge 547cbd98, guard code + tests byte-identical on main, untouched since); three clean cycles satisfied per the ruling (M8 window: 17 consecutive clean 15-min cycles). NEW: guard tests never ran in CI (Futuris step listed 2 files) — wired into the tier-1 invocation in this PR; CI on the head is the proof. Fresh S2 state (bridge probes ~05:09 IST): Futuris.service inactive/dead, IntelX.service inactive/disabled, no live Futuris .env on S2 — no S2-side 401 source remains.'
+      - 'Re-slotted to Muse 1 by coordinator watch122 (Muse 3 non-poster enforcement); Muse 1 takes it as queue pos 3.'
     blockers: []
-    next_action: 'Work PR #1917 open: CI wiring for the 401-guard tests + close-out evidence; merge is for Muse. MERGED flip rides in the coordinator board PR after merge.'
+    next_action: 'Start from the live IntelX/Futuris logs on S2: find the first cursor 401, name the rejecting check, then fix and prove three clean cycles.'
   - id: TASK-OBS-022
 
     title: 'OBS: identify the FRIDAY.service restart actor - 3 clean restarts on S1 (20:00 / 20:10 / 21:28 IST, PID changes, no OOM kill)'
@@ -19027,14 +19026,14 @@ tasks:
     next_action: 'Owner creates the free Contra account and pastes the pack (about 15 minutes, checklist in the pack section 6). Then this task closes and the lane is live; team maintains listings from there.'
   - id: TASK-EARN-016
     title: 'EARN: itch.io product 2 launch - YouTube Creator Starter Pack (owner account step only)'
-    status: IN_REVIEW
+    status: CLAIMED
     owner: muse_1
-    branch: muse1/task-earn-016-itchio-product-2
-    pr: 1930
+    branch: null
+    pr: null
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T07:15:00+05:30'
+    updated_at: '2026-11-26T05:56:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/itchio/product-2/README-listing.md
@@ -19043,7 +19042,6 @@ tasks:
     - earning/itchio/product-2/source/02-hooks-bank.md
     - earning/itchio/product-2/source/03-thumbnail-text-guide.md
     - earning/itchio/product-2/source/04-upload-checklist.md
-    - docs/collaboration/TASK-EARN-016-ITCHIO-PRODUCT-2.md
     acceptance:
     - 'Second itch.io digital product is fully built under earning/itchio/product-2/ (5 script templates, 100-hook bank, thumbnail text guide, 27-point upload checklist, how-to-use guide) with complete listing copy (title, tagline, description, $14 price, tags) - filed in PR #1723. It is NOT the social pack again; it is a new creator-tools product.'
     - 'The ONLY remaining step is the owner one-time action: create the free itch.io account (CometWorks Gmail, creator name CometWorks) and upload the product files with the listing copy.'
@@ -19052,9 +19050,8 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 ~02:30 IST under the owner order 2026-11-25 ~02:16 IST: implement all earning lanes.'
     - 'Deliverable PR #1723 (branch muse/earn-itchio-product-2): 6 files under earning/itchio/product-2/. The existing Payhip product (30-Day Social Media Content Pack, $19) stays the first product; this is the itch.io storefront second product.'
     - 'Assigned to Muse 1 as queue position 3 (earning lane) by coordinator watch128 (hub #1483): itch.io product 2, YouTube Creator Starter Pack; itch.io account cometworks.in created 2026-11-25, upload can proceed.'
-    - 'Close-out (work PR #1930, Muse 1): counts verified first-hand on main dd659e3e — 5 templates, 100 hooks (1-100 sequential), 25 thumbnail formulas, 27-point checklist, 7-day plan, listing copy complete (title, tagline, $14, description, 10 tags). Two listing-copy fixes in this PR: worked-example claim corrected (only Template A has a labelled worked example) and hook-placeholder claim corrected (90 of 100 carry [bracket] placeholders; nos. 9, 70, 72, 74, 76, 77, 79, 83, 96, 100 do not). Remaining step is the owner one-time action (create itch.io account + upload); no login/upload by me.'
     blockers: []
-    next_action: 'Work PR #1930 open: verification + listing-copy fixes + close-out evidence; merge is for Muse. MERGED flip rides in the coordinator board PR after merge.'
+    next_action: 'Assigned to muse_1 as queue position 3 (earning lane); claim via hub #1483 when it reaches queue head.'
   - id: TASK-EARN-017
     title: 'EARN: Adobe Stock labelled-AI lane - batch 1 upload (owner contributor account step only)'
     status: AVAILABLE
@@ -19923,14 +19920,14 @@ tasks:
     next_action: 'CLAIMED by Muse 4 (hub #1483 comment 7175442056, 2026-11-26 ~03:15 IST). Work PR open from branch muse4/task-sen-026-tracking-pixel-triage; live leg N/A (library-only, no endpoint) - behaviour proven by unit suite + SEN-032 S1 probe driver. Next in queue: TASK-SEN-027.'
   - id: TASK-SEN-027
     title: 'Sentinel: family secret-phrase anti-impersonation practice in owner-security guidance'
-    status: IN_REVIEW
+    status: AVAILABLE
     owner: muse_4
-    branch: muse4/task-sen-027-family-codeword
-    pr: 1929
+    branch: null
+    pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-26T06:35:00+05:30'
+    updated_at: '2026-11-25T12:47:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19938,10 +19935,8 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-SEN-FAMILY-PHRASE (IG package SE-03). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     - 'Assigned to Muse 4 by the coordinator (watch085): queue position 3 behind TASK-SEN-032 and TASK-SEN-026. Freeness verified first-hand on main be3f303e (AVAILABLE / owner null, no branch). Board flip in coordinator board PR watch085.'
-    - 'Claim: hub #1483 comment 7179307127 by Muse 4, 2026-11-26 ~06:30 IST. Queue head: SEN-032 and SEN-026 both MERGED on main. Board verified AVAILABLE / owner muse_4, branch null, pr null, on main dd659e3e (board blob 99790a3d, 993 tasks); no competing claim, branch or PR (49 open PRs checked; the 03:12 IST SEN-027 claim was withdrawn in the 03:15 correction). WATCH129 carries no re-slot for SEN-027.'
-    - 'Repo leg (single work PR, owner order 7143628341 rule 1): FAMILY_CODEWORD_GUIDANCE named item in Sentinel/app/services/extortion_mail_triage.py (SE-03 practice: codeword before anything moves; no codeword, no transfer, call back on a trusted number; agree offline/in person before travel; never written into a chat/email/note; burned, re-agree in person; fleet never stores it) + trouble-plea detection (trouble marker + money request; bare abroad is not a marker) + named signal family_impersonation_plea + family_plea flag + markdown section. Guidance fires even on NOT_EXTORTION (plea shape is itself the scam; no verdict manufactured) — deliberate difference from the SEN-026 pixel precedent, recorded in the module docstring and evidence doc. 7 new tests; 18/18 passed locally with the root conftest loaded; py_compile + ruff clean. No workflow change (test file already in tier-1). Evidence docs/collaboration/TASK-SEN-027-FAMILY-CODEWORD.md.'
     blockers: []
-    next_action: 'CLAIMED by Muse 4 (hub #1483 comment 7179307127, 2026-11-26 ~06:30 IST). Work PR open from branch muse4/task-sen-027-family-codeword; live leg N/A (library-only, no endpoint) - behaviour proven by unit suite. Next in queue: none assigned - next pull from the pool at merge.'
+    next_action: 'Available in the implementation-push pool; claim via hub #1483 (hub comment + branch push). Coordinator assigns by queue, Stratex and VyralX first.'
   - id: TASK-SEN-028
     title: 'Sentinel: 7-step digital-footprint cleanup as an owner checklist tool'
     status: IN_PROGRESS
@@ -23403,6 +23398,5 @@ task_id_warnings:
     description: "PR #34 is labelled TASK-CI-004 but the Master Plan currently describes TASK-CI-004 as narrowing the bridge/** gitignore rule. PR #34 is a separate broad root-cause CI change. RESOLVED 2026-11-11 (ZAI): the Master Plan backlog TASK-CI-004 (bridge gitignore) was implemented and closed as commit 57c5868 (.gitignore bridge/** narrowed to artifact classes + tests/test_gitignore_bridge_source.py 19-case contract, 21 tests green with the bridge-auth suite); PR #34's fleet-validation work remains recorded under its own merged entry. The two TASK-CI-004 scopes are now both closed and no longer collide; warning retired."
     resolution_owner: "claude"
     resolution_note: "Closed by ZAI 2026-11-11; see ACTIVITY_LOG ORCH-008 session entry and the TASK-CI-004 backlog tick in the Master Completion Checklist infra notes."
-
 
 
