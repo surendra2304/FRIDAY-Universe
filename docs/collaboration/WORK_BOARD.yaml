@@ -22381,17 +22381,18 @@ tasks:
     next_action: 'Assigned to muse_8 as queue position 3 by coordinator watch116 (2026-11-26, hub #1483); claim via hub #1483 when it reaches queue head.'
   - id: TASK-FRG-033
     title: 'Forge: free utility kit additions - sejda PDF editing and ToffeeShare P2P transfer, verified and test-used'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_tp9
     branch: musetp9/task-frg-033
-    pr: null
+    pr: 1987
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T23:05:00+05:30'
+    updated_at: '2026-11-26T18:08:14+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
-    - Forge/
+    - Forge/docs/UTILITY_KIT.md
+    - docs/collaboration/TASK-FRG-033-VERIFY.md
     acceptance:
     - 'Sources: forge package G-05 (item DcJFRqqDIIA - sejda.com free online PDF editing) and intelx package X-04 (item DaXwbFrDEuX - ToffeeShare: peer-to-peer file sharing without uploading, a candidate-missed sub-point named in no baseline).'
     - 'Build: add both to the fleet utility reference with usage notes; verify each free tier live at build time (limits, file-size caps, sign-up needs) and record the verified facts, not the reels'' claims.'
@@ -22399,8 +22400,10 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Coordinator watch109 (2026-11-25): board-owner flip - branch musetp9/task-frg-033 verified via ls-remote at 439dfe98, zero commits; blocked on upload approvals per TP9 hub #1560 (ToffeeShare 2 pending, Sejda 1 pending).'
-    blockers: []
-    next_action: 'Claimed by muse_tp9; unblocked only when the upload approvals land; TP9 to report.'
+    - 'Build DONE by Muse TP9 2026-11-26 (claim hub #1483 comment 7165145167): Forge/docs/UTILITY_KIT.md + docs/collaboration/TASK-FRG-033-VERIFY.md. Sejda test-use DONE live 2026-11-25 (2-page PDF x2 -> verified 4-page merge, Pages: 4); ToffeeShare PARTIAL - upload + share links verified live in both cloud browser environments (5 download attempts, 0 bytes, WebRTC data channel never establishes), transfer NOT verified, device-browser retry is the remaining route. PR #1987, merge-base main 087e05d6, head f96d16d30cd595a6c701359fff327630a3cd6ad9.'
+    blockers:
+    - 'ToffeeShare transfer NOT verified (5 attempts, 0 bytes, both cloud browser environments); device-browser retry is the remaining route.'
+    next_action: 'IN_REVIEW: PR #1987 open; peer review + merge awaited. ToffeeShare leg Done-blocked on transfer verification - device-browser retry is the remaining route.'
   - id: TASK-INF-040
     title: 'Inference: LiteLLM evaluation - local unified API layer A/B against the current routing'
     status: MERGED
