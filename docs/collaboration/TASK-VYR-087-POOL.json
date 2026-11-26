@@ -1,1 +1,216 @@
-{"branch":"musetp6/task-vyr-087-candidate-pool","candidates":[],"discovery":{"data_quality_notes":["Same title/channel/duration/views ('Top 100 Best Hydraulic Press Moments | Satisfying Crushing Compilation', Hydraulic Press Channel, 12:49, 67M views) shows video ID U-4jNw4zF2s on the query-1 page and q9BtYEnrkg4 on the query-3 page; both IDs recorded exactly as shown, neither used (both long-form, no pool impact).","Durations taken from thumbnail badges for 8 results (query 1 #4, query 2 #3 and #6, query 3 #7 and #10, query 5 #5, #7, #8, #9); badge values count down while a hover preview plays, so the value seen when the result first appeared was used. All 8 are long-form (minutes/hours), so no gate outcome depends on them. The 3 sub-60s durations (0:49, 0:47, 0:14) came from result headings, not badges.","View counts on public search pages are rounded ('116M views'), unlike yt-dlp's exact integers; recorded here as shown, as strings.","Sponsored ads (queries 2 and 6, between results 6 and 7) and a timestamp/key-moment link inside query 2 result 6 were not counted as video results."],"excluded_ids":["-Cl9AAsXzk8","-NA0MFteWBE","0QYrrGrwpzs","0ZRt4Dw5PAQ","0nb5q5UYjHU","5uHUVyy3rNw","8jTv5Mo9vJY","CpQGaTtppnU","Gq0GO14QiGM","H99NdQZw_DE","H9IwXr4r3pg","JxAMNzlUFFE","KmVREAe5XhU","RSu5wD55uag","XwMLwKG5WrY","Z-k4pfVfz_g","eQZ-s2JK08I","f-8OGQHhqq0","tOlU-Ly1BWk","vbVT8wfjoWk"],"excluded_known_ids":20,"exclusion_sets":{"extra":["CpQGaTtppnU"],"note":"The S2 exclusion files that held 84 known IDs at VYR-055 time (rejected_sources.json 51, published_shorts_manifest.json 11, viral_loop_manifest.jsonl 11) are NOT retrievable: absent from the repo on main and from S2 /opt/friday_universe/VyralX/data/ (bridge read_text, exit 2, verified 2026-11-26 ~18:13 IST). The 20-ID set below is rebuilt first-hand from prior pool JSONs on main only; a candidate from the lost 51 rejected IDs could have slipped past exclusion. Titles were screened against the VYR-065 banned niches; no banned-niche title appears among the 3 sub-60s results.","prior_pools":{"TASK-VYR-053-POOL.json":6,"TASK-VYR-054-POOL.json":2,"TASK-VYR-055-POOL.json":7,"TASK-VYR-057-POOL.json":4}},"fresh":0,"method":"Public YouTube search pages, view-count sorted (&sp=CAMSAhAB), read live in the browser 2026-11-26 18:19-18:26 IST, read-only, no sign-in, no download — venue substitution per WATCH098 precedent (STR-086 alternate public venue). The S2 yt-dlp flat-playlist route (VYR-055 method) was unavailable: no run_shell grant (WATCH151 ruling 2).","near_miss":{"duration_seconds":14,"id":"feCVG-91Xt4","note":"1 second below the 15-60s lower boundary; NOT a candidate. Celebrity-named title ('Justin Bieber's Epic Basketball Trick Shot') would also have needed a VYR-065 niche-guard check had duration passed; duration fails first, so no guard verdict is claimed.","query":"epic basketball trick shot short","title":"Justin Bieber's Epic Basketball Trick Shot","uploader":"Funny Or Die","url":"https://youtube.com/shorts/feCVG-91Xt4","views":"3.7M"},"queries":["most satisfying video ever short","incredible street magic revealed short","satisfying hydraulic press crushing short","amazing domino art chain reaction short","oddly satisfying soap carving short","epic basketball trick shot short"],"results_returned":60,"shorts_length":2,"shorts_length_detail":[{"duration_seconds":49,"excluded_as":"TASK-VYR-055 pool candidate 1","id":"JxAMNzlUFFE","query":"amazing domino art chain reaction short","title":"Domino Effect V10 The largest domino simulation on Real Footage","uploader":"Idan David Animations","views":"116M"},{"duration_seconds":47,"excluded_as":"TASK-VYR-055 pool candidate 2","id":"5uHUVyy3rNw","query":"amazing domino art chain reaction short","title":"Domino Effect - The largest domino simulation on Real Footage V4","uploader":"Domino effect simulation Dude","views":"66M"}],"zero_yield":"0 fresh candidates from 60 results. The 6-query set is exhausted at top-10 depth on the public route: the 3 queries that yielded 0 in VYR-055 still yield 0, and the 3 that yielded in VYR-055 now yield only already-pooled Shorts (domino), nothing Shorts-length (soap), or a 14s near-miss (basketball). No pool of fresh candidates exists to file; the next step needs a coordinator decision (new queries, deeper results, or another route)."},"generated_at":"2026-11-26T18:28:00+05:30","media_gates_blocked":{"gates":["licence","caption_track_count","bgm_presence","watermark","loudness"],"reason":"No candidate exists to gate, and the media gates still need a download: yt-dlp download broken on S2 since 2026-11-24 (YouTube n-challenge unsolvable, SABR-only streaming experiment, zero formats). VYR-056 leg CLOSED as unachievable (coordinator ruling 4). WATCH151 ruling 1: gates PENDING/BLOCKED acceptable for the VYR-087 pool, proceed — but with 0 fresh candidates there is nothing to record gates against."},"task":"TASK-VYR-087"}
+{
+  "branch": "musetp6/task-vyr-087-candidate-pool",
+  "candidates": [
+    {
+      "bgm_presence": "BLOCKED",
+      "caption_track_count": "BLOCKED",
+      "discovery_round": 2,
+      "duration_gate_15_60s": "PASS",
+      "duration_seconds": 52,
+      "id": "ETHAGKZlbcY",
+      "licence": "PENDING",
+      "loudness": "BLOCKED",
+      "niche_guard": "PASS - basketball trick shot, VYR-065-guarded niche; single trick-shot video, not a compilation",
+      "query": "epic basketball trick shot short",
+      "rank": 18,
+      "title": "EPIC 6 Pass Basketball Trick Shot In A Pool",
+      "uploader": "thewatershot",
+      "url": "https://youtube.com/shorts/ETHAGKZlbcY",
+      "views": "167K",
+      "watermark": "BLOCKED"
+    },
+    {
+      "bgm_presence": "BLOCKED",
+      "caption_track_count": "BLOCKED",
+      "discovery_round": 2,
+      "duration_gate_15_60s": "PASS",
+      "duration_seconds": 16,
+      "id": "o8NRDVVO0Lo",
+      "licence": "PENDING",
+      "loudness": "BLOCKED",
+      "niche_guard": "PASS - basketball trickshot, VYR-065-guarded niche; single trick-shot video",
+      "query": "epic basketball trick shot short",
+      "rank": 21,
+      "title": "Epic Basketball Trickshot",
+      "uploader": "Smoove & Stun",
+      "url": "https://youtube.com/shorts/o8NRDVVO0Lo",
+      "views": "14K",
+      "watermark": "BLOCKED"
+    },
+    {
+      "bgm_presence": "BLOCKED",
+      "caption_track_count": "BLOCKED",
+      "discovery_round": 2,
+      "duration_gate_15_60s": "PASS",
+      "duration_seconds": 56,
+      "id": "SnVtdyiFjFM",
+      "licence": "PENDING",
+      "loudness": "BLOCKED",
+      "niche_guard": "CAUTION - multi-trick format (water bottle flip + basketball + ping pong) by a single creator; not an unlicensed viral-clip compilation on the evidence shown, but the compilation format needs a guard re-check at QA stage",
+      "query": "epic basketball trick shot short",
+      "rank": 26,
+      "title": "Epic trick shots",
+      "uploader": "T-man",
+      "url": "https://youtube.com/shorts/SnVtdyiFjFM",
+      "views": "2.6K",
+      "watermark": "BLOCKED"
+    }
+  ],
+  "discovery": {
+    "data_quality_notes": [
+      "Same title/channel/duration/views ('Top 100 Best Hydraulic Press Moments | Satisfying Crushing Compilation', Hydraulic Press Channel, 12:49, 67M views) shows video ID U-4jNw4zF2s on the query-1 page and q9BtYEnrkg4 on the query-3 page; both IDs recorded exactly as shown, neither used (both long-form, no pool impact).",
+      "Durations taken from thumbnail badges for 8 results (query 1 #4, query 2 #3 and #6, query 3 #7 and #10, query 5 #5, #7, #8, #9); badge values count down while a hover preview plays, so the value seen when the result first appeared was used. All 8 are long-form (minutes/hours), so no gate outcome depends on them. The 3 sub-60s durations (0:49, 0:47, 0:14) came from result headings, not badges.",
+      "View counts on public search pages are rounded ('116M views'), unlike yt-dlp's exact integers; recorded here as shown, as strings.",
+      "Sponsored ads (queries 2 and 6, between results 6 and 7) and a timestamp/key-moment link inside query 2 result 6 were not counted as video results.",
+      "Round 2 (deeper results, ranks 11-30, 2026-11-27 01:22-01:37 IST): view counts on the sorted pages are not strictly descending in a few places (query 1 rank 29, query 2 rank 25, query 3 rank 29, query 5 rank 28/30) - recorded as shown. Two durations verified from element text (query 1 rank 29: 9 minutes 59 seconds; query 5 rank 17: 7 minutes 16 seconds); several long-video durations came from truncated list text ('12 minutes', '1 hour,') with thumbnail badges where visible. YNC8bJnwwxo appears twice (query 1 rank 26 and query 3 rank 16, same video). Query 5 ranks 18-21, 24, 28, 30 are separate uploads with the same title/channel/duration (5:19) and different IDs/view counts.",
+      "Round 2 sub-60s count: 5 of 120 (query 6 only): 0:52, 0:15 (excluded - in set), 0:16, 0:56, 1:00 (screened out - niche guard). All other queries: 0 Shorts-length in ranks 11-30."
+    ],
+    "excluded_ids": [
+      "-Cl9AAsXzk8",
+      "-NA0MFteWBE",
+      "0QYrrGrwpzs",
+      "0ZRt4Dw5PAQ",
+      "0nb5q5UYjHU",
+      "5uHUVyy3rNw",
+      "8jTv5Mo9vJY",
+      "CpQGaTtppnU",
+      "Gq0GO14QiGM",
+      "H99NdQZw_DE",
+      "H9IwXr4r3pg",
+      "JxAMNzlUFFE",
+      "KmVREAe5XhU",
+      "RSu5wD55uag",
+      "XwMLwKG5WrY",
+      "Z-k4pfVfz_g",
+      "eQZ-s2JK08I",
+      "f-8OGQHhqq0",
+      "tOlU-Ly1BWk",
+      "vbVT8wfjoWk"
+    ],
+    "excluded_known_ids": 20,
+    "exclusion_sets": {
+      "extra": [
+        "CpQGaTtppnU"
+      ],
+      "note": "The S2 exclusion files that held 84 known IDs at VYR-055 time (rejected_sources.json 51, published_shorts_manifest.json 11, viral_loop_manifest.jsonl 11) are NOT retrievable: absent from the repo on main and from S2 /opt/friday_universe/VyralX/data/ (bridge read_text, exit 2, verified 2026-11-26 ~18:13 IST). The 20-ID set below is rebuilt first-hand from prior pool JSONs on main only; a candidate from the lost 51 rejected IDs could have slipped past exclusion. Titles were screened against the VYR-065 banned niches; no banned-niche title appears among the 3 sub-60s results.",
+      "prior_pools": {
+        "TASK-VYR-053-POOL.json": 6,
+        "TASK-VYR-054-POOL.json": 2,
+        "TASK-VYR-055-POOL.json": 7,
+        "TASK-VYR-057-POOL.json": 4
+      }
+    },
+    "fresh": 3,
+    "method": "Public YouTube search pages, view-count sorted (&sp=CAMSAhAB), read live in the browser 2026-11-26 18:19-18:26 IST, read-only, no sign-in, no download \u2014 venue substitution per WATCH098 precedent (STR-086 alternate public venue). The S2 yt-dlp flat-playlist route (VYR-055 method) was unavailable: no run_shell grant (WATCH151 ruling 2). Round 2: same 6 queries, same view-count sort, ranks 11-30 (20 deeper results per query, 120 total), read live in the browser 2026-11-27 01:22-01:37 IST, read-only, no sign-in, no download - WATCH180 decision (1): deeper results on the same queries first.",
+    "near_miss": {
+      "duration_seconds": 14,
+      "id": "feCVG-91Xt4",
+      "note": "1 second below the 15-60s lower boundary; NOT a candidate. Celebrity-named title ('Justin Bieber's Epic Basketball Trick Shot') would also have needed a VYR-065 niche-guard check had duration passed; duration fails first, so no guard verdict is claimed.",
+      "query": "epic basketball trick shot short",
+      "title": "Justin Bieber's Epic Basketball Trick Shot",
+      "uploader": "Funny Or Die",
+      "url": "https://youtube.com/shorts/feCVG-91Xt4",
+      "views": "3.7M"
+    },
+    "queries": [
+      "most satisfying video ever short",
+      "incredible street magic revealed short",
+      "satisfying hydraulic press crushing short",
+      "amazing domino art chain reaction short",
+      "oddly satisfying soap carving short",
+      "epic basketball trick shot short"
+    ],
+    "results_returned": 180,
+    "rounds": [
+      {
+        "fresh": 0,
+        "range": "ranks 1-10",
+        "results": 60,
+        "when": "2026-11-26 18:19-18:26 IST"
+      },
+      {
+        "fresh": 3,
+        "range": "ranks 11-30",
+        "results": 120,
+        "when": "2026-11-27 01:22-01:37 IST"
+      }
+    ],
+    "shorts_length": 7,
+    "shorts_length_detail": [
+      {
+        "duration_seconds": 49,
+        "excluded_as": "TASK-VYR-055 pool candidate 1",
+        "id": "JxAMNzlUFFE",
+        "query": "amazing domino art chain reaction short",
+        "title": "Domino Effect V10 The largest domino simulation on Real Footage",
+        "uploader": "Idan David Animations",
+        "views": "116M"
+      },
+      {
+        "duration_seconds": 47,
+        "excluded_as": "TASK-VYR-055 pool candidate 2",
+        "id": "5uHUVyy3rNw",
+        "query": "amazing domino art chain reaction short",
+        "title": "Domino Effect - The largest domino simulation on Real Footage V4",
+        "uploader": "Domino effect simulation Dude",
+        "views": "66M"
+      },
+      {
+        "duration_seconds": 52,
+        "id": "ETHAGKZlbcY",
+        "query": "epic basketball trick shot short",
+        "title": "EPIC 6 Pass Basketball Trick Shot In A Pool",
+        "uploader": "thewatershot",
+        "views": "167K"
+      },
+      {
+        "duration_seconds": 15,
+        "excluded_as": "in the 20-ID exclusion set (prior-pool candidate)",
+        "id": "Z-k4pfVfz_g",
+        "query": "epic basketball trick shot short",
+        "title": "epic basketball trickshot",
+        "uploader": "KickThePj",
+        "views": "74K"
+      },
+      {
+        "duration_seconds": 16,
+        "id": "o8NRDVVO0Lo",
+        "query": "epic basketball trick shot short",
+        "title": "Epic Basketball Trickshot",
+        "uploader": "Smoove & Stun",
+        "views": "14K"
+      },
+      {
+        "duration_seconds": 56,
+        "id": "SnVtdyiFjFM",
+        "query": "epic basketball trick shot short",
+        "title": "Epic trick shots",
+        "uploader": "T-man",
+        "views": "2.6K"
+      },
+      {
+        "duration_seconds": 60,
+        "id": "KNWDCwhNLvs",
+        "note": "Shown as '1 minute'; exact seconds unverified. Screened out on niche guard: Rumble Viral is a viral-clip repost channel (banned niche: unlicensed viral-clip compilations). NOT a candidate.",
+        "query": "epic basketball trick shot short",
+        "title": "Skateboarding meets basketball in epic trick shot compilation",
+        "uploader": "Rumble Viral",
+        "views": "2.1K"
+      }
+    ],
+    "zero_yield": "SUPERSEDED by round 2: 3 fresh candidates from 120 deeper results (ranks 11-30). Round 1 alone was 0 fresh from 60 results; the 6-query set is now exhausted at top-30 depth on the public route (round 1 + round 2 = 180 results read). Next discovery direction needs a coordinator decision (new queries, deeper still, or the S2 route)."
+  },
+  "generated_at": "2026-11-27T01:40:00+05:30",
+  "media_gates_blocked": {
+    "gates": [
+      "licence",
+      "caption_track_count",
+      "bgm_presence",
+      "watermark",
+      "loudness"
+    ],
+    "reason": "3 candidates exist; the media gates still need a download: yt-dlp download broken on S2 since 2026-11-24 (YouTube n-challenge unsolvable, SABR-only streaming experiment, zero formats). VYR-056 leg CLOSED as unachievable (coordinator ruling 4). WATCH151 ruling 1: gates PENDING/BLOCKED acceptable for the VYR-087 pool, proceed. Gates recorded PENDING (licence) / BLOCKED (caption_track_count, bgm_presence, watermark, loudness) per candidate; the S2 discovery leg that could change this is blocked (see checkpoint 3)."
+  },
+  "s2_leg": "BLOCKED 2026-11-27 ~01:20 IST: run_shell added to the bridge client per WATCH180 section 2(b) (grant settled, owner tap 2026-11-26 18:25:56 IST; clarification 7200651240; standing clearance 7200564540), but the first live-leg execution attempt was stopped by a safety flag and was NOT retried. No S2 change was made; no S2 command ran. Coordinator ruling owed on the execution route before the S2 discovery leg can run.",
+  "task": "TASK-VYR-087"
+}
