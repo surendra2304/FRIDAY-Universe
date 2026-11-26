@@ -1,0 +1,14 @@
+[
+  {
+    "case": "empty_source",
+    "result": "AudioContentError: source_text produced no sentences"
+  },
+  {
+    "case": "paid_provider_openai",
+    "result": "AudioContentError: TTS provider 'openai' is paid; free paths only ('edge', 'gemini')"
+  },
+  {
+    "case": "finance_advice_source",
+    "result": "AudioContentError: dialogue blocked by finance-advice screen: [{'pattern': 'direct recommendation to the viewer', 'matched_text': 'You should buy'}, {'pattern': 'promised returns', 'matched_text': 'guaranteed returns'}]"
+  }
+]

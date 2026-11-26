@@ -1,0 +1,83 @@
+{
+  "trial": "design_b",
+  "module_version": "ig2-vyr02-1",
+  "provider_selected": "edge_tts_free",
+  "paid_only_refusal": "OrchestrationError: no eligible provider within budget $0.00: [{'name': 'paid_cloud_tts', 'eligible': False, 'score': 0.0, 'reasons': ['cost $0.40 exceeds budget $0.00']}]",
+  "storyboard_refusal": "OrchestrationError: storyboard approval gate: a human must approve the storyboard before production stages run",
+  "missing_bgm_gate": {
+    "passed": true,
+    "checks": {
+      "duration_within_cap": true,
+      "captions_present": true,
+      "provenance_present": true
+    },
+    "pipeline": "explainer_short"
+  },
+  "finance_advice_script_gate": {
+    "passed": false,
+    "checks": {
+      "no_finance_advice": false
+    },
+    "pipeline": "explainer_short"
+  },
+  "quality_refusal": "OrchestrationError: quality gate failed: {'passed': False, 'checks': {'duration_within_cap': False, 'captions_present': False, 'provenance_present': False}, 'pipeline': 'explainer_short'}",
+  "final_state": "complete",
+  "stages": [
+    {
+      "stage": "research",
+      "runs": "on_fleet",
+      "status": "done"
+    },
+    {
+      "stage": "script",
+      "runs": "on_fleet",
+      "status": "done"
+    },
+    {
+      "stage": "storyboard",
+      "runs": "on_fleet",
+      "status": "done"
+    },
+    {
+      "stage": "assets",
+      "runs": "on_fleet",
+      "status": "done"
+    },
+    {
+      "stage": "voice",
+      "runs": "off_fleet",
+      "status": "done"
+    },
+    {
+      "stage": "compose",
+      "runs": "off_fleet",
+      "status": "done"
+    },
+    {
+      "stage": "quality",
+      "runs": "on_fleet",
+      "status": "done",
+      "gate": {
+        "passed": true,
+        "checks": {
+          "duration_within_cap": true,
+          "captions_present": true,
+          "provenance_present": true
+        },
+        "pipeline": "explainer_short"
+      }
+    },
+    {
+      "stage": "approval",
+      "runs": "on_fleet",
+      "status": "done"
+    },
+    {
+      "stage": "publish_plan",
+      "runs": "on_fleet",
+      "status": "done"
+    }
+  ],
+  "publish": false,
+  "privacy_if_published": "unlisted"
+}
