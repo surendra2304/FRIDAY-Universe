@@ -24194,14 +24194,14 @@ tasks:
 
   - id: TASK-IG2-WEB-07-FIX-01
     title: 'FIX: /start serves the ULTRON stage, not the GlassStartPage component - mount GlassStartPage at /start (WEB-006 live failure)'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: CLAIMED
+    owner: muse_10
+    branch: muse10/task-ig2-web-07-fix-01-glass-start-page
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T18:59:44+05:30'
+    updated_at: '2026-11-26T20:03:36+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
