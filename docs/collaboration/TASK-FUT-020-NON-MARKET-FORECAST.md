@@ -4,7 +4,7 @@
 - Branch: `muse10/task-fut-020-non-market-forecast`, base main `087e05d6` (fast-forwarded from claim base `992cf3b2`; main advanced via #1986 and #1972; the branch held zero commits, so the move is a clean fast-forward, not a rebase).
 - Claim: hub #1483 comment 7191030516 (~17:10 IST).
 - Board: CLAIMED → IN_REVIEW in this PR.
-- Work PR: #TBD (filled in by the board-edit commit once the PR opens).
+- Work PR: #1989 (this PR).
 
 ## 1. Stall repaired
 
