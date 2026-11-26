@@ -1,0 +1,18 @@
+[Unit]
+Description=VyralX file-store backup (TASK-DB-007) — one dated snapshot + prune
+# Triggered by vyralx-filestore-backup.timer on VyralX-Server (S5) only.
+# Type=oneshot: between timer runs `systemctl status` shows "inactive (dead)"
+# — that is the NORMAL resting state. Judge liveness by the TIMER
+# (systemctl is-active vyralx-filestore-backup.timer) and the newest snapshot
+# under /var/backups/friday-universe/vyralx-filestore/.
+# INSTALL IS GATED on the owner stop order — see
+# docs/collaboration/TASK-DB-007-VYRALX-FILESTORE-BACKUP.md (live leg).
+Documentation=https://github.com/surendra2304/FRIDAY-Universe
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/friday_universe
+ExecStart=/opt/friday_universe/venv/bin/python scripts/backup_vyralx_filestore.py backup --source /opt/friday_universe/VyralX --store /var/backups/friday-universe/vyralx-filestore
+User=ubuntu
+Nice=10
+IOSchedulingClass=idle
