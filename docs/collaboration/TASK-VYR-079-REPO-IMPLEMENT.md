@@ -174,3 +174,70 @@ Checkpoint 3: Nextwork cooked leg — measured-style profile against
 `short_video_assembly.py`, repo-side, with tests (brief §4.2).
 
 — Muse TP2
+
+# Checkpoint 3: Nextwork cooked adapt leg (2026-11-26 ~12:3x IST)
+
+**Stall repaired:** checkpoint 2 (`42c8b4bb`, 07:28 IST) stood ~5h with
+no checkpoint 3 and no new commits — flagged by this hourly self-check
+(usage 5%, free allowance remaining) and repaired by implementing the
+second adapt leg in this run. Same yardstick the team applies to
+others (Muse 4 DB-012, TP11 VYR-081 flagged at ~2h zero commits).
+
+**State:** implemented (OpenFilm + Nextwork legs) / tested (16/16
+pytest, see below) / merged NO / deployed n/a / production-verified NO.
+
+## What was built
+
+- `VyralX/app/services/nextwork_style.py` (new, stdlib only, Python
+  3.10) — `measure_style()` (3–6 same-format references averaged into
+  a reusable style profile: cut speed, mean shot length, zooms, caption
+  style, cards, graphics density, sound bed; fewer than 3 / more than 6
+  / mismatched formats / out-of-range measurements FAIL, never
+  silently averaged), `cut_transcript()` (retakes, false starts and
+  pauses dropped with reasons named; kept speech re-cut into shots at
+  the style's mean shot length; an all-junk transcript FAILS),
+  `build_staged_plan()` / `approve_stage()` (cut → look → render,
+  in order only — out-of-order approval is an error), `render_gate()` /
+  `render_command()` (Remotion rendering ~1.5 GB install stays gated
+  off-fleet; a command is issued only when all three stages are
+  approved AND the host is the owner machine). Paid-path honesty: the
+  Claude-account constraint is recorded on every style
+  (`claude_code.required_upstream` True, `used_here` False,
+  `paid_services_used` False) — no Claude Code/plugin step runs, no
+  key is taken, no paid path is promised.
+- `VyralX/tests/test_vyr079_nextwork_style.py` (new, 6 tests) — happy
+  path end-to-end (3 refs → 12.0 cuts/min, 4.0s mean shot, 18s kept
+  speech re-cut into 5 shots, 7s dropped, stages unapproved, no
+  render); reference bounds (2 / 7 refs, mixed formats, bad caption
+  style, zero cut speed); missing raw clip fails, unchecked asset
+  warns; all-junk transcript fails, unknown segment kind fails;
+  stages approve in order only; render gated until approved and
+  off-fleet (fleet refused, owner machine gets the `remotion render`
+  command).
+
+## Evidence (first-hand this run)
+
+- `pytest tests/test_vyr079_nextwork_style.py
+  tests/test_vyr079_openfilm_adapter.py
+  tests/test_ig2_vyr05_film_pipeline.py` — **16 passed** (6 new + 6
+  OpenFilm + 4 existing), Python 3.12.3, pytest 9.2.0 (fresh venv in
+  /tmp for this run — the `--user` pytest from checkpoint 2 is no
+  longer importable on this VM; the repo CI runs the same suite).
+  `py_compile` clean.
+- Registry card re-read first-hand:
+  `nextwork-projects/ai-video-editor-cooked`, MIT, fit adapt
+  (`IntelX/intelx/registries/scouted_repos.json`, 102 entries).
+- Branch `musetp2/task-vyr-079-repo-implement-wave1`, base `6e3fe049`;
+  behind origin/main ~830 commits at commit time (main drift, rebase
+  owed before merge — coordinator route; no rebase demand names this
+  branch in WATCH113–144). Board on origin/main: CLAIMED, owner
+  muse_tp2, pr null (work PR #1787 open, updated by this push; board
+  `pr` field rides with the coordinator board rebuild, not hand-edited
+  from a stale base).
+
+## Next step
+
+Checkpoint 4: OpenVoice adapt leg — drive the existing
+`openvoice_gate.py` through one real end-to-end use (brief §4.3).
+
+— Muse TP2
