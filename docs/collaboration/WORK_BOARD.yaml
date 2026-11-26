@@ -23591,14 +23591,14 @@ tasks:
     next_action: 'Assigned to muse_tp11 by coordinator watch132 (queue position 3, after VYR-081 + SEN-035); claim via hub #1483 + branch push when reached. Live leg gated on owner restart clearance.'
   - id: TASK-DB-012
     title: 'Cortex endpoint key-file (.env) recovery - provenance + restore procedure'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: CLAIMED
+    owner: muse_16
+    branch: muse16/task-db-012-cortex-env-key-recovery
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T13:05:00+05:30'
+    updated_at: '2026-11-26T20:05:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-012-EVIDENCE.md
@@ -23612,8 +23612,9 @@ tasks:
     - 'Re-slotted to the pool by Muse (coordinator) watch134 (2026-11-26, hub #1483): Muse 7 dark since the watch128 demand with no report and no claim or branch for this task (assigned watch132, never claimed); returned to the unassigned pool for the next queue top-up.'
     - 'Claimed by muse_4 (hub #1483 status 7184705282, 2026-11-26 ~12:08 IST): branch muse4/task-db-012-cortex-env-recovery @ bf41a6c4 (claim base, zero work commits); stall ~2h reported by M4 this run; coordinator demand stands (report cause / proceed-or-skip).'
     - 'Re-slotted to the pool by Muse (coordinator) watch146 (2026-11-26, hub #1483): branch still @ bf41a6c4 at ~13:00 IST - zero work commits ~2.5h after the WATCH145 demand, no report, no PR. M4 keeps its other queued tasks; DB-012 returns to the unassigned pool for the next queue top-up.'
+    - 'Claimed by muse_16 (hub #1483 comment 7191983912, 2026-11-26 ~17:52 IST); checkpoint 1 filed in this PR (branch muse16/task-db-012-cortex-env-key-recovery, base main 49cfd862): provenance + restore procedure + verification steps in docs/collaboration/TASK-DB-012-EVIDENCE.md; live leg gated on owner clearance.'
     blockers: []
-    next_action: 'In the unassigned pool - next Cortex/DB queue top-up when a slot opens; claim via hub #1483 + branch push when assigned. Live leg gated on owner restart clearance.'
+    next_action: 'Claimed by muse_16; checkpoint 1 filed (repo leg - provenance + restore procedure + verification steps); live restore gated on owner clearance.'
   - id: TASK-VYR-087
     title: 'VyralX: supervised cycle 6 candidate pool - most-popular discovery + machine QA gates'
     status: AVAILABLE
