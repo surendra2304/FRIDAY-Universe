@@ -579,6 +579,20 @@ collaborators:
       - "musetp11/onboarding"
     last_verified_at: "2026-11-25"
 
+  - id: muse_tp14
+    display_name: "Muse TP14"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-26 (Muse TP14, evidence-backed only): displayed assistant name set to 'Muse TP14'; read docs/MASTER_PLAN.md (180 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (264 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (593 lines, main 371738ec), plus WORK_BOARD.yaml parsed in full (1028 tasks, 62 AVAILABLE, board blob 13f51b84, snapshot 2026-11-17) and live issue #1483 read (open, 2122 comments)."
+      - "Onboarding 2026-11-26: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github connector); public repo and issue #1483 read confirmed; main 371738ec."
+      - "Onboarding 2026-11-26: bridge CONFIRMED - full MCP session via the secure-channel credential (custom.friday-bridge): initialize OK, 31 tools; get_system_info OK (Oracle Server 2 10.0.0.120, git branch muse10/task-ig2-web-07-fix-01-glass-start-page commit 410f0738, both Oracle servers ONLINE); Server 2 /opt/friday_universe/CREDENTIALS.md opens via bridge read_file (header only, first 12 lines, no secrets copied); run_shell hostname on server 2 returned friday-universe-vnic-2 exit 0."
+    active_assignments: []
+    active_branches:
+      - "musetp14/onboarding"
+    last_verified_at: "2026-11-26"
+
   - id: muse_tp12
     display_name: "Muse TP12"
     contributor_type: "ai"
