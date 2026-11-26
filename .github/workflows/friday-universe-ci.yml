@@ -512,7 +512,8 @@ jobs:
             tests/test_vyr075_hyperframes_render.py tests/test_vyr075_ltx2_reject.py \
             tests/test_vyr075_operator_cycle.py tests/test_vyr075_studio_reference.py \
             tests/test_vyr058_reddit_discovery.py tests/test_ig2_vyr10_creative_audit.py \
-            tests/test_ig3_vyr01_named_lists.py
+            tests/test_ig3_vyr01_named_lists.py \
+            tests/test_vyr082_layered_marketing.py  # TASK-VYR-082: collected here for the same reason (REL-068 guard)
 
       - name: Start API server and run HTTP tests
         run: |
