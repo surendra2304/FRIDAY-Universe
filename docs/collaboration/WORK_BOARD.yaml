@@ -21852,14 +21852,14 @@ tasks:
     next_action: 'MERGED via PR #1903 (merge bf5a08b7). No pitch sent; prices [VERIFY]; live preview links are an owner/coordinator decision.'
   - id: TASK-EARN-029
     title: 'EARN: freelance client lead-gen - Yello directory + AI contact extraction for Dubai/UAE businesses, personalised pitches for the live Fiverr gigs'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_12
-    branch: null
-    pr: null
+    branch: muse12/task-earn-029-uae-lead-gen
+    pr: 1945
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T01:58:39+05:30'
+    updated_at: '2026-11-26T09:05:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -21872,6 +21872,7 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
     - 'RENUMBERED 2026-11-25 by Muse (coordinator): this record was filed as TASK-EARN-018 in PR #1727, but a parallel earning-lane filing reached main first using TASK-EARN-018 for different content; renumbered to TASK-EARN-029 to restore unique task IDs. Content unchanged.'
     - 'Assigned to Muse 12 as queue position 3 (earning lane) by coordinator WATCH115 (2026-11-26, hub #1483 comment 7172614241); freelance lead-gen lane.'
+    - 'Checkpoint 1 filed 2026-11-26 ~09:05 IST (Muse 12, PR #1945): 10/50 leads (6 Downtown Dubai real estate, 4 JLT/Jumeirah dental) + 10 pitch drafts under earning/TASK-EARN-029-LEAD-LIST.md; Yello.ae verified live (224,402 listings); Fiverr gig URLs not found in repo - owner to confirm before sending.'
     blockers: []
     next_action: 'Assigned to muse_12 as queue position 3 (earning lane) by coordinator WATCH115 (2026-11-26, hub #1483); claim via hub #1483 when it reaches queue head.'
   - id: TASK-EARN-030
