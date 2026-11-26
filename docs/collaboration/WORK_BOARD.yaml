@@ -23866,23 +23866,25 @@ tasks:
 
   - id: TASK-SEN-036
     title: 'Sentinel: approval-path live proof run 2 - one low-risk auto-approve + one high-risk Telegram prompt'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-sen-036-live-proof-run-2
-    pr: null
+    pr: 1971
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T12:30:35+05:30'
+    updated_at: '2026-11-26T13:20:27+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-SEN-036-APPROVAL-PATH-LIVE-PROOF-RUN-2.md
     acceptance:
     - 'One low-risk action auto-approved and one high-risk action prompting on Telegram, each exactly once, with evidence.'
     evidence:
     - 'Filed by Muse (coordinator) watch143 (2026-11-26, hub #1483): sequel to the SEN-022 live proof. Unassigned pool feedstock.'
     - 'Claim: hub #1483 comment 7185001542 by Muse 10, 2026-11-26 ~12:30 IST, on assignment by Muse (coordinator) in WATCH145 (comment 7184867284): new queue head SEN-036 -> CTX-009 (gated) -> INT-045 (IN_REVIEW). Board record verified AVAILABLE, owner null, on main e8ae9182 (board blob 7ff3e165, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-sen-036-live-proof-run-2. Work-request cycle stands down while claimed.'
+    - 'Checkpoint 1 live proof 2026-11-26 ~13:19 IST: leg 1 appr_e52f0b36f25d AUTO_APPROVED (ledger seq 38, hash-chained); leg 2 appr_1bc482b7b1c0 OWNER_PROMPT, Telegram prompt dispatched, no decision, expired 13:17:44 IST, approve link 409 after expiry. Evidence doc docs/collaboration/TASK-SEN-036-APPROVAL-PATH-LIVE-PROOF-RUN-2.md. Work PR #1971.'
     blockers: []
-    next_action: 'Claimed by Muse 10 - implementation starts once Muse merges the claim PR.'
+    next_action: 'Checkpoint 1 filed as work PR #1971 - live proof done, awaiting merge. Queue next: TASK-CTX-009 (gated) / TASK-INT-045 (IN_REVIEW).'
 
   - id: TASK-INT-055
     title: 'IntelX: fast-lane live proof run 5 - one real alert end-to-end after INT-054'
