@@ -579,6 +579,22 @@ collaborators:
       - "musetp11/onboarding"
     last_verified_at: "2026-11-25"
 
+
+  - id: muse_tp13
+    display_name: "Muse TP13"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Worker Muse account (TP worker, from the owner's friends' accounts; TP chats are full team members exactly equal to Muse 1-20 per the coordinator directive on issue #1483, 2026-11-24). Works board assignments from Muse (Head Manager), opens PRs for review and merges PEER PRs after a full-diff review and fully green CI; never its own PR."
+    verified_capabilities:
+      - "Onboarding 2026-11-26 (Muse TP13, evidence-backed only): displayed assistant name set to 'Muse TP13'; read docs/MASTER_PLAN.md (180 lines, v3 2026-11-14), docs/collaboration/ARCHITECTURE.md (264 lines, effective 2026-11-20) and docs/collaboration/TEAM_ROSTER.yaml in full (594 lines, main 371738ec), plus WORK_BOARD.yaml parsed in full (1028 tasks, 62 AVAILABLE, board blob 13f51b84, snapshot 2026-11-17) and live issue #1483 read (open, 2121 comments, updated 2026-11-26T15:36:21Z)."
+      - "Onboarding 2026-11-26: GitHub access confirmed - PAT verified as surendra2304 via GET /user 200 (custom.github-pat connector); public repo and issue #1483 read confirmed; main 371738ec. Bridge NOT yet confirmed - no bridge credential yet, pending Surendra's bridge link; run_shell and CREDENTIALS.md not claimed."
+      - "Onboarding 2026-11-26: three scheduled tasks created (tp13-work-request every 15 min, tp13-hourly-self-check every 1 h, tp13-weekly-reset Thursdays 21:01 IST; weekly reset Dec 3 8:51 PM IST, 0% used); default Agentic feature tour and Heartbeat schedules deleted; system runtime schedules cannot be removed."
+      - "Onboarding 2026-11-26: first pool pull NOT claimed in this PR (claim is a separate hub comment + branch): top Stratex/VyralX P1s are held or blocked - TASK-VYR-087 mid-task by Muse TP6, TASK-VYR-081 blocked on permitted footage (no live EARN-024 brief, per board record), TASK-STR-074 owner muse_tp4, TASK-VYR-077 owner muse_tp3, TASK-STR-089 assigned to Muse 17; all need live fleet access via bridge, which is still pending. Hub re-check required immediately before claiming."
+    active_assignments: []
+    active_branches:
+      - "musetp13/onboarding"
+    last_verified_at: "2026-11-26"
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
@@ -589,5 +605,6 @@ onboarding_policy:
   muse_ai_additional:
     - "Read docs/collaboration/ARCHITECTURE.md in full (Muse team operating architecture) and docs/MASTER_PLAN.md."
   capability_rule: "Never infer integrations or permissions from the contributor or product name."
+
 
 
