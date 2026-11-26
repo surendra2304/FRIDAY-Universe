@@ -205,6 +205,13 @@ jobs:
           # since IG2-LAP-01 landed; stdlib + friday.* imports only, runs in
           # this venv). Escrcpy upstream pinned to v3.3.1 — see
           # docs/collaboration/TASK-LAP-004-CHECKPOINT-1.md.
+          # TASK-LAP-003: tests/test_phone_ui_automation.py,
+          # tests/test_browser_use_integration.py and
+          # tests/test_laptop_browser_agent.py ride in this invocation so
+          # the REL-068 guard sees them collected (uncollected since
+          # IG-LAP-01 / IG-LAP-04 landed; stdlib + friday.* imports only,
+          # run in this venv). Upstream pins scrcpy v5.0.1 / browser-use
+          # 1.0.8 — see docs/collaboration/TASK-LAP-003-CHECKPOINT-1.md.
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
             --check "test-job" \
@@ -220,6 +227,8 @@ jobs:
             tests/test_ig_frd_001_goal_loop.py tests/test_frd_045_woop.py \
             tests/test_capability_routing.py tests/test_ig2_frd03_lead_generation.py tests/test_ig_frd_061_lead_verification.py \
             tests/test_reliability.py tests/test_ig2_lap01_escrcpy.py \
+            tests/test_phone_ui_automation.py tests/test_browser_use_integration.py \
+            tests/test_laptop_browser_agent.py \
             --deselect tests/test_reliability.py::test_retry_on_network_failure \
             --deselect tests/test_reliability.py::test_retry_on_rate_limit \
             --deselect tests/test_reliability.py::test_no_retry_on_auth_error
@@ -679,3 +688,4 @@ jobs:
 
       - name: Docker compose down
         run: docker compose down
+
