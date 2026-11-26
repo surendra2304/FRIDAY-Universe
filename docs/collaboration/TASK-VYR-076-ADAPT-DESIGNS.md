@@ -1189,6 +1189,67 @@ live leg, not assertable from the repo alone.
   failures — delivery-status artifact). Hourly self-check +
   weekly reset armed. No pending approval cards.
 
+## §8.25 Guardrail re-verification vs new main `f53ce7f5` (2026-11-26 ~08:38 IST, hourly self-check)
+
+- Main moved `9392738d` → `f53ce7f5` (merges #1936 board
+  watch132, #1932 STR-077, #1933 LAP-003 checkpoint 1, #1934
+  VYR-078, #1935 WF-002 checkpoint, #1937 board watch133,
+  #1938 STR-088 run 6, #1939 board watch134; WATCH134 hub
+  `7181094520` read in full). §8.3 method repeated verbatim
+  against `f53ce7f5` (`git grep -il`, same 13 patterns;
+  hit-file sets compared after stripping revision prefixes).
+- Result: **§8.3 stands unchanged.** All 13 pattern hit-file
+  sets are identical `9392738d` → `f53ce7f5`: scrapecreators 3,
+  opencreator 4, ace-step 5, social.media.research 4, codex-cli 2,
+  flux.2 3, flux-2 0, flux_2 0, acestep 0, podcastfy 8,
+  audio_content 5, pipeline_orchestration 8, montage 49. No new
+  hit-file at all. No new VyralX production hit, import, or wiring.
+- `git diff --name-only 9392738d..f53ce7f5 -- VyralX` is empty
+  — no VyralX file changed at all in this range (11 files total:
+  CI workflow, BROWSER_TASK/PHONE_UI docs, LAP-003/STR-077/
+  STR-088/VYR-078/WF-002 evidence docs, board). VyralX prod-path
+  hits for scrapecreators / opencreator / `codex-cli` at
+  `f53ce7f5`: 0 each. No `podcastfy` / `montage` entries in VyralX
+  `pyproject.toml` / `requirements.lock` at `f53ce7f5`
+  (re-checked this run). IG2 importers unchanged: only the three
+  test files (`test_ig2_vyr01_audio_content.py`,
+  `test_ig2_vyr02_pipeline_orchestration.py`,
+  `test_ig3_vyr10_scene_assembly_eval.py`) plus pre-existing
+  prose mentions in `channel_strategy.json`
+  (`pipeline_orchestration.select_provider`) and
+  `VyralX/docs/SCENE_ASSEMBLY_EVALUATION.md`
+  (`pipeline_orchestration.create_run` / `advance_run` /
+  `evaluate_quality_gate` — doc table, not an import). IG2
+  modules remain unwired (§8.2 stands).
+- Board on main `f53ce7f5` re-checked (blob `f19f44cd`):
+  VYR-076 CLAIMED, owner muse_9, branch muse9/task-vyr-076,
+  PR 1708 — sane; INT-023 IN_REVIEW, owner muse_9, PR 1680
+  — unchanged, final compilation due 2026-11-27 still
+  BLOCKED. TASK-INT-041 (fast-lane final compilation, due
+  2026-11-27) now filed AVAILABLE / owner null on main
+  (watch133: record was missing though queued for Muse 9
+  after INT-023) — noted, not claimed this run (VYR-076
+  remains current; INT-023 still held). Branch synced before
+  this commit: local = remote `c1facac7`, clean tree, no open
+  PR for the branch (PRs #1708 + #1680 re-verified closed/
+  merged via API this run). Branch behind main 741 (rebase
+  owed at work-PR time). Hub #1483 scanned through WATCH134
+  (`7181094520`, newest `7181155936`; WATCH133 + WATCH134 read
+  in full): zero new Muse 9 / VYR-076 / INT-023 instruction,
+  no ruling on live-leg clearance for VYR-076; live legs still
+  HELD under the owner stop order. M9 queue depth 6, burn 48%
+  carried in both watches — no demand owed. Issue #35 still
+  frozen at 2500 comments — hub is #1483. Silent self-check
+  per AGGRESSIVE COMPLETION RULES (7) — no hub post.
+- Usage 49% of free weekly limit (checked this run via
+  subscription-status; reset Nov 29 02:27 IST; additional
+  tokens 0%) — under the Wed 20:00 IST 50% bar (rule 6 noted;
+  next-task scope doubling is the coordinator's call).
+  Work-request job disabled — correct while mid-task (VYR-076
+  claimed; last run Nov 24 23:03 IST failed, 2 consecutive
+  failures — delivery-status artifact). Hourly self-check +
+  weekly reset armed. No pending approval cards.
+
 ## §7 States (reported separately)
 
 - implemented: NO — no component runs in VyralX's live path yet.
