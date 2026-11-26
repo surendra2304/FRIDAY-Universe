@@ -20859,9 +20859,10 @@ tasks:
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T23:05:00+05:30'
+    updated_at: '2026-11-26T17:50:46+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-WEB-006-PRODUCTION-VERIFY.md
     acceptance:
     - 'PRODUCTION-VERIFY (owner standard 2026-11-24: merged code is NOT implemented): live extreme-condition verification of TASK-IG2-WEB-04, TASK-IG2-WEB-05, TASK-IG2-WEB-06, TASK-IG2-WEB-07.'
     - 'Extreme-condition test: served page on the production site exercised in a real browser at real viewport sizes + slow-network load; what renders is the evidence'
@@ -20872,8 +20873,9 @@ tasks:
     - 'Assigned to Muse TP1 as queue position 2 by coordinator watch100 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main f216e1ba. P1 website production-verify wave 2 (IG2-WEB-04..07).'
     - 'Owner corrected muse_tp1 -> muse_tp9 by coordinator watch102 (2026-11-25, hub #1483): first claim wins - TP9 claimed WEB-006 in hub 7163567360, predating the watch100 assignment to TP1 (7163804244); TP9 completed it 0/4 verified live, work PR #1846 open. TP1 queue corrected to WEB-005 -> WEB-007 -> FRD-062. Verified AVAILABLE / owner muse_tp1 on main 14181d3c.'
     - 'Coordinator watch109 (2026-11-25): work PR #1846 open, head 756abc52, branch musetp9/task-web-006 verified via ls-remote; owner already muse_tp9, status flip to IN_REVIEW.'
+    - 'PRODUCTION-VERIFY 2026-11-25 ~18:52 IST - Muse TP9: 0 of 4 verified live in a real browser (desktop only; mobile viewport not tested). /stratex/ HTML serves but is unstyled and JS-dead: /static/style.css 404s at root while /stratex/static/style.css serves 200; /api/v1/market/sector-heatmap serves SPA HTML at root while /stratex/api/v1/market/sector-heatmap returns real JSON with every change_pct null (Stooq yields zero members). /start renders the ULTRON stage (TASK-WEB-003), not GlassStartPage - no widget toggles exist. Evidence doc: docs/collaboration/TASK-WEB-006-PRODUCTION-VERIFY.md. Fix tasks filed: TASK-IG2-WEB-04-FIX-01 (asset/API routing + Stooq feed), TASK-IG2-WEB-07-FIX-01 (/start mount).'
     blockers: []
-    next_action: 'Work PR #1846 open (head 756abc52); TP9 to rebase onto current main a759a031 and report status.'
+    next_action: 'Verification run 2026-11-25 by Muse TP9: 0 of 4 verified live (evidence doc docs/collaboration/TASK-WEB-006-PRODUCTION-VERIFY.md). Fix tasks filed: TASK-IG2-WEB-04-FIX-01, TASK-IG2-WEB-07-FIX-01. Awaiting peer review of this PR; do not mark any item verified until a live re-verification passes.'
 
   - id: TASK-LAP-002
     title: 'PRODUCTION-VERIFY: laptop/phone corpus items IG-LAP-01..04 + IG2-LAP-01 - real device verification (wave 2)'
@@ -24157,6 +24159,49 @@ tasks:
     - 'Filed by Muse (coordinator) watch155 (2026-11-26, hub #1483): pool feedstock to restore the 10-task floor (9 after INT-056 + FUT-034 assigned to Muse 4). Sequel to STR-092 (run 3, TP9) and STR-091 (run 2, M4); closes the standing fill-ledger verification gap from the 2026-11-22 briefing.'
     blockers: []
     next_action: 'In the unassigned pool - claim via hub #1483 when assigned. Sequel to STR-092 (run 3, TP9).'
+
+  - id: TASK-IG2-WEB-04-FIX-01
+    title: 'FIX: Stratex dashboard assets and API 404 at site root - route /static/* and /api/* to Stratex (WEB-006 live failure)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T18:59:44+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Fix the Stratex dashboard serving defect found live by TASK-WEB-006 (2026-11-25): map /static/* and /api/* to the Stratex app, or make the dashboard references prefix-relative.'
+    - 'Live proof, all in a real browser: /static/style.css, /static/app.js, /static/heatmap.js, /static/command-palette.js, /static/layout.js and /api/v1/market/sector-heatmap all answer 200 with the right content, and the dashboard renders styled with working nav.'
+    - 'Confirm the Stooq feed actually prices members (2026-11-25 13:27 UTC every change_pct was null, members_available 0); an all-unavailable heatmap is honest but not a verification.'
+    - 'Re-verify IG2-WEB-04, IG2-WEB-05 and IG2-WEB-06 live in a real browser at desktop AND mobile viewport sizes; file the live evidence per item.'
+    evidence:
+    - 'Filed by Muse TP9 from TASK-WEB-006 (live browser verification 2026-11-25, evidence doc docs/collaboration/TASK-WEB-006-PRODUCTION-VERIFY.md): /static/* 404 at root, /stratex/static/* serves 200; root /api/* serves SPA HTML, /stratex/api/* returns JSON with all change_pct null.'
+    blockers: []
+    next_action: 'Central pool: claim via hub #1483 when a slot frees.'
+
+  - id: TASK-IG2-WEB-07-FIX-01
+    title: 'FIX: /start serves the ULTRON stage, not the GlassStartPage component - mount GlassStartPage at /start (WEB-006 live failure)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-25'
+    updated_at: '2026-11-25T18:59:44+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Make /start serve the GlassStartPage component (PR #720 wiring) in the deployed build, or correct the mount if the route is miswired.'
+    - 'Live proof in a real browser: /start shows the glass start page (search, weather, to-dos, notes, map) with its settings strip of widget toggles.'
+    - 'Toggle a widget off and on live and confirm it hides/shows; repeat at desktop AND mobile viewport sizes; file the live evidence.'
+    evidence:
+    - 'Filed by Muse TP9 from TASK-WEB-006 (live browser verification 2026-11-25, evidence doc docs/collaboration/TASK-WEB-006-PRODUCTION-VERIFY.md): /start renders the ULTRON COMMAND stage subtitled TASK-WEB-003; no Settings, Weather or To-do on the page; no widget-toggle control exists.'
+    blockers: []
+    next_action: 'Central pool: claim via hub #1483 when a slot frees.'
 task_id_warnings:
   - id: TASK-REL-061
 
