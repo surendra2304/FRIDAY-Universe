@@ -24169,16 +24169,17 @@ tasks:
 
   - id: TASK-IG2-WEB-04-FIX-01
     title: 'FIX: Stratex dashboard assets and API 404 at site root - route /static/* and /api/* to Stratex (WEB-006 live failure)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_tp9
+    branch: musetp9/task-ig2-web-04-fix-01
+    pr: 1990
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T18:59:44+05:30'
+    updated_at: '2026-11-26T18:41:24+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-IG2-WEB-04-FIX-01-VERIFY.md
     acceptance:
     - 'Fix the Stratex dashboard serving defect found live by TASK-WEB-006 (2026-11-25): map /static/* and /api/* to the Stratex app, or make the dashboard references prefix-relative.'
     - 'Live proof, all in a real browser: /static/style.css, /static/app.js, /static/heatmap.js, /static/command-palette.js, /static/layout.js and /api/v1/market/sector-heatmap all answer 200 with the right content, and the dashboard renders styled with working nav.'
@@ -24186,8 +24187,10 @@ tasks:
     - 'Re-verify IG2-WEB-04, IG2-WEB-05 and IG2-WEB-06 live in a real browser at desktop AND mobile viewport sizes; file the live evidence per item.'
     evidence:
     - 'Filed by Muse TP9 from TASK-WEB-006 (live browser verification 2026-11-25, evidence doc docs/collaboration/TASK-WEB-006-PRODUCTION-VERIFY.md): /static/* 404 at root, /stratex/static/* serves 200; root /api/* serves SPA HTML, /stratex/api/* returns JSON with all change_pct null.'
-    blockers: []
-    next_action: 'Central pool: claim via hub #1483 when a slot frees.'
+    - 'Build DONE by Muse TP9 2026-11-26 (claim hub #1483 comment 7192736359, WATCH161 assignment): dashboard references mount-relative + Caddy root handles; 30 new tests green locally (38 total with existing heatmap tests); Stooq unreachable from this VM (feed yields zero members - live-data condition, no fallback invented). PR #1990, merge-base main 4a9b0a57, head 5488384ac5a86de79f137e9145e8b11570f68441.'
+    blockers:
+    - 'Live proof in a real browser (desktop + mobile) + Stooq-feed confirmation gated on the owner stop order (live gate CLOSED); Caddyfile mirror updated, deployed file on S1 needs sync + reload.'
+    next_action: 'IN_REVIEW: PR #1990 open; peer review + merge awaited. Live proof + Stooq-feed confirmation gated on the owner stop order.'
 
   - id: TASK-IG2-WEB-07-FIX-01
     title: 'FIX: /start serves the ULTRON stage, not the GlassStartPage component - mount GlassStartPage at /start (WEB-006 live failure)'

@@ -3,15 +3,30 @@
   'use strict';
 
   const REFRESH_MS = 1000;
+  // TASK-IG2-WEB-04-FIX-01: the dashboard is served under /stratex/ in
+  // production (Caddy strips the prefix) and at / standalone, so API
+  // paths must be relative to the mount, not root-relative — root
+  // /api/* goes to the FRIDAY app and never reaches Stratex. Derive the
+  // mount prefix from the page URL: /stratex/ or /stratex -> '/stratex',
+  // / or /index.html -> '' (standalone root).
+  function dashboardMountBase() {
+    var path = window.location.pathname.replace(/\/+$/, '');
+    if (!path) return '';
+    if (path.slice(-'/index.html'.length) === '/index.html') {
+      path = path.slice(0, -'/index.html'.length);
+    }
+    return path;
+  }
+  const API_BASE = dashboardMountBase();
   const resourceUrls = {
-    account: '/api/status',
-    engine: '/api/engine-health',
-    paper: '/api/paper/forward-status',
-    positions: '/api/positions?status=OPEN',
-    trades: '/api/telemetry/trades?status=CLOSED&limit=100',
-    equity: '/api/equity-history?range=7d',
-    markets: '/api/markets',
-    signals: '/api/telemetry/signals?limit=30'
+    account: API_BASE + '/api/status',
+    engine: API_BASE + '/api/engine-health',
+    paper: API_BASE + '/api/paper/forward-status',
+    positions: API_BASE + '/api/positions?status=OPEN',
+    trades: API_BASE + '/api/telemetry/trades?status=CLOSED&limit=100',
+    equity: API_BASE + '/api/equity-history?range=7d',
+    markets: API_BASE + '/api/markets',
+    signals: API_BASE + '/api/telemetry/signals?limit=30'
   };
   const resources = Object.fromEntries(Object.keys(resourceUrls).map((key) => [key, {
     state: 'loading', value: null, error: null, updatedAt: null
