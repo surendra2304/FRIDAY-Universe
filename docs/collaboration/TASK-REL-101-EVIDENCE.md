@@ -49,13 +49,28 @@ only the test pinned a fixed date.
 - The two calendar files: **18/18 passed** (was 17 passed / 1 failed).
 - Full contracts-step file list (the "Futuris health-capability contracts" step
   of `.github/workflows/owner-workflows.yml`, 11 files): **103/103 passed**,
-  exit 0. CI proof on the work PR to follow (contracts job).
+  exit 0.
+- CI note (path gating, verified first-hand): the Owner Workflow Contracts job
+  triggers only on listed paths (`owner-workflows.yml` `on.pull_request.paths`
+  / `on.push.paths`); `Futuris/**` and `docs/collaboration/**` are not listed,
+  so the contracts job does **not** run on this PR and will not re-run on its
+  merge. The PR's own CI (friday-universe-ci.yml and the other workflows) is
+  the merge gate. Contracts-green-on-main is therefore proven by (1) the local
+  exact replica of the contracts step above (103/103), and (2) the next
+  contracts run on main after merge (any push touching a listed path) and the
+  held PRs' rebase runs (#1920/#1921/#1925/#1927). The REL-068 collection guard
+  counts these files as collected (named in the contracts step); it does not
+  evaluate path filters. No workflow trigger change is made in this PR — that
+  is a coordinator decision (adding `Futuris/**` to the paths would make
+  contracts run on Futuris PRs).
 
 ## Acceptance
 
 - [x] Date-rollover failure fixed: the failing test passes; no test in the
   Futuris calendar path pins a fixed calendar date.
-- [ ] Contracts green on current main after the fix (CI on the work PR — pending).
+- [ ] Contracts green on current main after the fix — local exact replica green
+  (103/103); CI proof deferred to the next contracts run on main post-merge
+  (path-gated: does not run on this Futuris-only PR, see above).
 - [ ] Held PRs (#1787/#1920/#1921/#1925/#1927) green once they rebase (their owners'
       step, after this merges).
 
