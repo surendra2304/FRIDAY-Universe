@@ -27,6 +27,7 @@ from sentinel.intelligence.risk.finding_engine import finding_engine
 from sentinel.intelligence.risk.risk_engine import risk_engine
 from sentinel.modules.recon.graph import asset_graph_store
 from sentinel.storage.evidence.store import evidence_store
+from sentinel.apps.cli.footprint_cleanup import footprint_app
 
 app = typer.Typer(
     name="sentinel",
@@ -47,6 +48,7 @@ app.add_typer(evidence_app, name="evidence")
 
 recon_app = typer.Typer(help="Reconnaissance and Attack Surface intelligence")
 app.add_typer(recon_app, name="recon")
+app.add_typer(footprint_app, name="footprint")
 
 console = Console(legacy_windows=False)
 
