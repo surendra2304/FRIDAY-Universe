@@ -23570,14 +23570,14 @@ tasks:
     next_action: 'Work PR #1967 open (live probe run 12:04 IST, 46/47 checks pass, F1 finding filed); awaiting coordinator merge + paired verifier.'
   - id: TASK-CTX-011
     title: 'Cortex escalation-ratio run-5 readiness (restart-clearance request + fresh-48h window plan)'
-    status: AVAILABLE
-    owner: muse_tp11
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_tp9
+    branch: musetp9/task-ctx-011
+    pr: 1997
     contributors: []
     priority: P2
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T08:00:00+05:30'
+    updated_at: '2026-11-26T21:12:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-CTX-011-EVIDENCE.md
@@ -23588,8 +23588,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch131 (2026-11-26, hub #1483): CTX-010 run-4 filed NO DATA (Cortex.service inactive/dead, journal empty, endpoint down, .env key file gone); the re-run needs this prep first. Unassigned pool feedstock.'
     - 'Assigned to Muse TP11 by coordinator watch132 (2026-11-26, hub #1483): TP11 queue was depth 2 (VYR-081 + SEN-035); top-up from the unassigned pool.'
+    - 'Claimed by Muse TP9 2026-11-26 ~21:05 IST (hub #1483 comment 7196468585); branch musetp9/task-ctx-011 from main 49cfd862, rebased onto main 371738ec. Repo-side prep filed in work PR #1997 (head bde20bc2, evidence doc docs/collaboration/TASK-CTX-011-EVIDENCE.md): restart-clearance request + fresh-48h window plan + journal-retention mitigation (snapshot cadence recommended). Live leg NOT run - gated on owner restart clearance (owner stop order in force; approval 7113152293 still not found in the permission record per WATCH169).'
     blockers: []
-    next_action: 'Assigned to muse_tp11 by coordinator watch132 (queue position 3, after VYR-081 + SEN-035); claim via hub #1483 + branch push when reached. Live leg gated on owner restart clearance.'
+    next_action: 'Claimed by Muse TP9 2026-11-26 ~21:05 IST (hub #1483 comment 7196468585); repo-side prep in work PR #1997 (head bde20bc2); live leg gated on owner restart clearance.'
   - id: TASK-DB-012
     title: 'Cortex endpoint key-file (.env) recovery - provenance + restore procedure'
     status: CLAIMED
