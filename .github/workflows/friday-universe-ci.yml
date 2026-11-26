@@ -322,6 +322,7 @@ jobs:
             tests/unit/test_tier1_resilience.py tests/unit/test_deep_upgrade_tier1.py \
             tests/unit/test_mem031_forge_session_capture.py \
             tests/unit/test_task_execute_mounted_app.py \
+            tests/unit/test_task_frg031_preview.py \
             --deselect tests/unit/test_tier1_resilience.py::test_ready_probe_contract \
             --deselect tests/unit/test_tier1_resilience.py::test_status_diagnostics_endpoint \
             --deselect tests/unit/test_tier1_resilience.py::test_sqlite_pragmas_and_wal_mode \
