@@ -38,6 +38,16 @@ the mirror/control need.
    `phone_ui_dump` tools, or a validated `escrcpy_automation` script
    rendered to the same ADB transport.
 
+## Release pin (TASK-LAP-004, 2026-11-26)
+
+Pin **viarotel-org/escrcpy v3.3.1** (released 2026-10-10, Apache-2.0).
+v3.3.1 is a transitional release: all existing features are free in it,
+and a new billing/licensing system is planned for 4.0.0 and later. Do not
+follow "latest" past 4.0.0 without a fresh licence check — the fleet rule
+is FREE-only. The FRIDAY-side code is a pattern adaptation (no Escrcpy
+code vendored), so the pin constrains only which released app the owner
+installs on the laptop.
+
 ## Safety model (inherited, not reinvented)
 
 - Automation scripts reuse `BLOCKED_PACKAGE_HINTS` from

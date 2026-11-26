@@ -5,15 +5,20 @@ module, classification and store. No network in this file -- the feed
 is driven with a fake transport, exactly like its own unit tests.
 """
 
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
 from futuris.features import calendar_context as cc
 
-DAY = "2026-11-25"
-TODAY = date(2026, 11, 25)
+# TASK-REL-101: the calendar fixtures track the real current UTC date —
+# no fixed calendar date may remain in the Futuris calendar path. The
+# old fixed date was harmless here (refresh and query both took it
+# explicitly) but the same pin in the router-facing test rolled over
+# once the real UTC date moved past it, and failed contracts on main.
+TODAY = datetime.now(timezone.utc).date()
+DAY = TODAY.isoformat()
 
 ECON_PAYLOAD = {"data": {"rows": [
     {"eventName": "Consumer Price Index (MoM)", "time": "8:30 AM", "country": "US",
@@ -171,7 +176,7 @@ def test_headline_is_the_soonest_event():
     events = [
         cc.CalendarEventItem(date=DAY, time="14:00", name="Late", kind="macro", impact="high"),
         cc.CalendarEventItem(date=DAY, time="08:30", name="Early", kind="macro", impact="high"),
-        cc.CalendarEventItem(date="2026-11-26", time="08:30", name="Tomorrow", kind="macro", impact="high"),
+        cc.CalendarEventItem(date=(TODAY + timedelta(days=1)).isoformat(), time="08:30", name="Tomorrow", kind="macro", impact="high"),
     ]
     assert cc.headline_event(events).name == "Early"
     assert cc.headline_event([]) is None
@@ -184,5 +189,5 @@ def test_format_headline_cites_feed_record():
     )
     text = cc.format_headline(event)
     assert "Calendar [macro/high]: Consumer Price Index (MoM)" in text
-    assert "2026-11-25 08:30" in text
+    assert f"{DAY} 08:30" in text
     assert "Nasdaq economic calendar" in text
