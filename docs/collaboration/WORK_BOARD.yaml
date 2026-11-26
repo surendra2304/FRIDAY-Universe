@@ -21349,7 +21349,7 @@ tasks:
   - id: TASK-STR-078
     title: 'REPO-IMPLEMENT: Stratex repos - FinRL (reference-only), Lumibot (reference-only), Vibe-Trading (adapt), AutoHedg... (wave 1)'
     status: AVAILABLE
-    owner: muse_tp12
+    owner: null
     branch: muse11/task-str-078-repo-implement
     pr: null
     contributors: []
@@ -21368,6 +21368,7 @@ tasks:
     - 'Watch087 re-slot to Muse 18 REVERSED by watch088: Muse 11 reported first (checkpoint 1, hub 7156880367, ~13:49 IST, commit c027186a in-branch) one minute before the re-slot post; Muse 18 claimed in good faith (hub 7156975325) but holds no work on STR-078 (branch at main tip). STR-078 stays Muse 11; Muse 18 takes API-007 as head.'
     - 'Muse 18 checkpoint-1 handover verification + LumibotBacktest defect fix landed 2026-11-25 ~14:18 IST (hub 7157483526; branch muse18/task-str-078-repo-implement @ ddd3c61b, 3 files +200/-1; LumibotBacktest.run() never traded - list/dict indexing defect fixed, 4/4 regression tests local). Work done AFTER the watch088 reversal, which STANDS: STR-078 stays Muse 11. Coordinator ruling watch089: Muse 18 files the Lumibot fix as its own PR; no further STR-078 work from Muse 18.'
     - 'Released back to the pool by Muse 11 (hub 7199615571): blocked - demo-daemon cycle needs Stratex-Daemon restart (server move, frozen under owner stop order); failure injection held per STR-070 precedent; load scan needs the allowlist definition. 126 checkpoints of repo-side evidence stand on branch muse11/task-str-078-repo-implement @ 9d1d5765. Board flip rides in coordinator board PR watch177 (not the FRG-030 work PR).'
+    - 'Owner corrected to null (pool) by coordinator watch183: the board listed muse_tp12 but no TP12 claim exists (TP12 queue is FUT-036 -> FUT-037; hub 7202069367). Branch muse11/task-str-078-repo-implement preserved: Muse 11''s 126 checkpoints of repo-side evidence stand on it (hub 7199615571); re-claim via hub #1483 + branch push.'
     blockers: []
     next_action: 'In the pool - claim via hub #1483 when assigned; branch muse11/task-str-078-repo-implement holds 126 checkpoints of repo-side evidence.'
 
@@ -21419,10 +21420,10 @@ tasks:
 
   - id: TASK-VYR-077
     title: 'REPO-IMPLEMENT: VyralX repos - Short Video Factory (adapt), AI YouTube Shorts Generator (adapt), Social Media A... (wave 1)'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_tp3
-    branch: null
-    pr: null
+    branch: musetp3/task-vyr-077-live-leg
+    pr: 2011
     contributors: []
     priority: P1
     created_at: '2026-11-24'
@@ -21438,6 +21439,7 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Coordinator watch096 (2026-11-25): owner null to muse_tp2 - queue position 3 behind VYR-079 and REL-095; larger multi-hour task for the 3% burn chat per the lag-hunt rule.'
     - 'Coordinator watch099 (2026-11-25): owner corrected muse_tp2 -> muse_tp3 - TP3 holds the first claim (hub 7139661577) plus watch065/watch086 rulings and merged PR #1709; the #1831 flip to TP2 was a coordinator error (watch098 ruling, hub 7161941236).'
+    - 'PR #2011 open (head c9f70e67, CI 10/10 green verified first-hand by coordinator watch181; live trial 5/5 steps pass). Board hunk to be stripped by Muse TP3 per ruling 7200564540 section 3 (coordinator watch182 section 2b); the flip rides here, NOT in the work PR. M7 verdict on #2011 overdue (due ~01:30 IST, watch182).'
     blockers: []
     next_action: 'Queue position 3 for Muse TP2 behind VYR-079 and REL-095 (coordinator watch096): VyralX repo implementation, substantial work for the 3% burn chat. Claim via hub #1483 when REL-095 closes.'
 
@@ -23477,8 +23479,8 @@ tasks:
   - id: TASK-VYR-086
     title: 'VyralX supervised-cycle candidate pool run-6 (most-popular discovery + machine QA gates)'
     status: CLAIMED
-    owner: muse_3
-    branch: muse3/task-vyr-086-supervised-cycle-pool-run-6
+    owner: muse_9
+    branch: muse9/task-vyr-086
     pr: null
     contributors: []
     priority: P2
@@ -23498,6 +23500,7 @@ tasks:
     - 'Claimed by Muse TP11 2026-11-26 ~21:10 IST; branch musetp11/task-vyr-086-supervised-cycle-pool-run-6 @ 49cfd862 verified via ls-remote (coordinator watch176). Board flip rides in coordinator board PR watch177.'
     - 'Re-slotted to Muse 3 by coordinator watch177: TP11 stall - claimed 2026-11-26 ~21:10 IST, zero commits beyond the claim push, no hub post and no work PR/checkpoint by the WATCH176 re-slot deadline (next run). TP11 branch musetp11/task-vyr-086-supervised-cycle-pool-run-6 @ 49cfd862 stands; M3 continues from it or pushes its own branch.'
     - 'Ownership ruling watch181 (2026-11-27): board owner muse_3 STANDS. Muse 9 claim (hub 7201405786) conflicts — M9 releases VYR-086; its branch muse9/task-vyr-086 @ 6182a9f3 has no commits. TP11 branch musetp11/task-vyr-086 @ 49cfd862 and TP14 branch musetp14/task-vyr-088 @ 4cf9c897 are claim-only duplicates of main merge commits (#1992 / #1997) — owners to delete them. Branch field corrected to muse_3 claim branch muse3/task-vyr-086-supervised-cycle-pool-run-6. M9 S2 discovery leg NOT run from the flagged fetch (safety flag in hub 7201405786); the leg is M3s to run under clearance 7200564540.'
+    - 'Released by Muse 3 (hub 7202036053) per the Burn Enforcer; re-assigned to Muse 9 by coordinator watch182 follow-up (claim hub 7201315044, branch muse9/task-vyr-086, zero commits on M3''s branch). Live discovery step HELD on the safety flag (M9 hub 7202423840); no execution until the coordinator rules. Board flip watch183.'
     blockers: []
     next_action: 'Queue head for Muse 3 (re-slotted from muse_tp11 by coordinator watch177); claim via hub #1483 + branch push now. Loop OFF, uploader paused, renders unlisted.'
   - id: TASK-SEN-035
@@ -23644,10 +23647,10 @@ tasks:
     next_action: 'MERGED via PR #1994 (merge 0c89b38b). Live restore gated on owner clearance.'
   - id: TASK-VYR-087
     title: 'VyralX: supervised cycle 6 candidate pool - most-popular discovery + machine QA gates'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_tp6
-    branch: null
-    pr: null
+    branch: musetp6/task-vyr-087-candidate-pool-run-6
+    pr: 2020
     contributors: []
     priority: P1
     created_at: '2026-11-26'
@@ -23662,6 +23665,7 @@ tasks:
     - 'Loop stays OFF, uploader paused, renders held unlisted.'
     evidence:
     - 'Filed + assigned by Muse (coordinator) watch133 (2026-11-26, hub #1483): TP6 queue drops to 2 after VYR-078 merges (PR #1934); top-up from the new pool. Follows VYR-053 (cycle 4) / VYR-054 (cycle 5, PR #1655) / VYR-055 (refresh).'
+    - 'PR #2020 open (head 59035e83, CI 9/9 green verified first-hand by coordinator watch183; 5 files: pool doc + checkpoints 1-3 + POOL.json, no board hunk). Deeper-results leg done: 3 fresh candidates (TP6 hub 7202452995). S2 discovery leg BLOCKED on the execution-route safety flag - ruling owed by coordinator watch183 (hub post this run). Board flip watch183.'
     blockers: []
     next_action: 'Assigned to muse_tp6 by coordinator watch133 (queue position 3, after EARN-023 + FRD-058); claim via hub #1483 + branch push when reached. Loop OFF, uploader paused, renders unlisted.'
 
@@ -24276,6 +24280,7 @@ tasks:
     - 'Assigned to Muse 4 as queue position 2 by coordinator watch176 (hub 7199655255), behind TASK-EARN-030 (head). Board record rides in coordinator board PR watch177.'
     - 'Re-slotted by coordinator watch180 (hub 7201387817 §5): Muse 4 silent ~2h, TASK-STR-094 unclaimed after nudge; reassigned to Muse TP13 as queue position 3 (behind STR-093, STR-092). Ledger run 5; live-proof route: reconcile daemon fill/close ledger vs venue positions/history for the forward window; file fills, closes, net P&L as docs/collaboration/TASK-STR-094-EVIDENCE.md. Standing clearance 7200564540 covers the live leg.'
     - 'CORRECTED by coordinator watch182 (2026-11-27 ~01:45 IST): the watch181 re-slot to Muse TP13 is withdrawn. Muse 4 holds the live work PR #2016 (head 3db29d66, CI 9/9 green verified first-hand, base 93628618; evidence doc +232/-0). STR-094 stays muse_4, IN_REVIEW pr 2016. Muse TP13: do not start STR-094. Muse 4: strip the board hunk from #2016 (the flip rides in the coordinator board PR) and it can merge.'
+    - 'PR #2016 MERGED by coordinator watch183 (merge cd94db08, 2026-11-27 ~02:09 IST; head f8641a6f, CI 9/9 green, full-diff review first-hand: evidence-only +232/-0, ledger RECONCILED, window net -87.9709, venue true net -59.7759). Stays IN_REVIEW: paired verification owed before MERGED. M4 head now STR-095 (PR #2019 open).'
     blockers: []
     next_action: 'Queue position 2 for Muse 4 (behind EARN-030); claim via hub #1483 + branch push when reached.'
 
@@ -24304,7 +24309,7 @@ tasks:
   - id: TASK-VYR-088
     title: 'VyralX: supervised-cycle candidate pool run 7 + machine-QA dry-run over the run-6 pool (most-popular discovery, caption/BGM/watermark/loudness gates, renders held unlisted)'
     status: AVAILABLE
-    owner: muse_3
+    owner: null
     branch: null
     pr: null
     contributors: []
@@ -24321,6 +24326,7 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch177 (2026-11-26, hub #1483): double-scope task for Muse 3 (usage 26%, under 50% at the Wednesday 20:00 IST mark - M3 pool-scan post 7199598765); VYR-086 (run 6, TP11) and VYR-087 (run 6, TP6) in flight, run 7 is the next pool.'
     - 'Assigned to Muse 3 as queue position 2 by coordinator watch177 (hub post this run), behind VYR-086 (re-slotted head): M3 free since STR-071 merged (PR #1713) and VYR-078 lost to TP6 (merged PR #1934); no claimable pool task existed, so this run drafted it.'
+    - 'Released by Muse 3 (hub 7202036053); pool/HOLD by coordinator watch182 follow-up - owner null; no execution by any chat until the coordinator rules (safety-flag HOLD stands). TP14''s claim (hub 7198307780) does not start the task. Board flip watch183.'
     blockers: []
     next_action: 'Queue position 2 for Muse 3 (behind VYR-086); claim via hub #1483 + branch push when reached. Loop OFF, uploader paused, renders unlisted.'
 
@@ -24803,8 +24809,9 @@ tasks:
     - 'Identify the blocker from the board/hub at claim time and ship the one tool another agent is currently blocked on; if no agent is blocked, ship the next self-upgrade slice.'
     - 'Live proof required in either case.'
     evidence:
-    - 'Filed by Muse (coordinator) watch181 (2026-11-27, hub #1483): Live-proof route: tool exercised live by the blocked agent (or the self-upgrade slice running live on Forge); file usage evidence as docs/collaboration/TASK-FRG-034-EVIDENCE.md.'
+    - 'Filed by Muse (coordinator) watch181 (2026-11-27, hub #1483): Live-proof route: tool exercised live by the blocked agent (or the self-upgrade slice running live on Forge); file usage evidence as docs/collaboration/TASK-FRG-035-EVIDENCE.md.'
     - 'Re-slotted by coordinator watch182 (2026-11-27): Muse 4 queue is full at depth 3 with STR-094 as head (STR-094 -> STR-095 -> REL-103); FRG-035 moves to Muse 18 as queue position 3 (behind FRG-027, EARN-019). Forge lane; live-proof route: tool exercised live by the blocked agent.'
+    - 'Evidence-file reference corrected by coordinator watch183 (TASK-FRG-034-EVIDENCE.md -> TASK-FRG-035-EVIDENCE.md; carried from watch182).'
     blockers: []
     next_action: 'Unassigned pool (watch181); claim via hub #1483 + branch push.'
 
