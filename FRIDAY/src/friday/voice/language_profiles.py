@@ -17,11 +17,20 @@ What a profile does when configured (FRIDAY_VOICE_LANGUAGE):
    optional-sections aggregator) tells the model the call's primary
    language, so replies start in it rather than waiting to mirror.
 
-What it deliberately does NOT do: with no profile configured the
-worker behaves exactly as before — no language is passed and Gemini
-Live mirrors the caller's language natively (TASK-VOI-009's design).
-The owner's own line is untouched unless he sets the variable.
-
+TASK-VOI-042 (P0, owner live test 2026-11-25 ~15:54 IST): the
+default is no longer "unset means native mirroring". The owner's
+own session ran unset, Gemini auto-detected, and his English was
+transcribed in Hindi and Telugu script ("ए, पड़को।",
+"Stratex స్పష్టంగా తెలుసు.") while she answered the fragments.
+The P0 directive pins the owner's English (en-IN): with no
+explicit FRIDAY_VOICE_LANGUAGE the effective language is en-IN —
+the model language, the input-transcription language_codes, the
+instruction section and the status file all read en-IN. An
+explicit FRIDAY_VOICE_LANGUAGE still wins (business deployments
+keep their pinned profile; a Telugu session is one env var away).
+``configured_language()`` keeps its old meaning (the explicit
+config, or None) so callers that need "was anything configured"
+keep working; ``effective_language()`` is the session default.
 Safety: if the deployed livekit google plugin generation predates
 the ``language`` option, the worker catches the TypeError and builds
 without it (see _build_realtime_model) — a profile can degrade to
@@ -88,14 +97,30 @@ def configured_language(environ=None) -> "str | None":
     return profile.code if profile else None
 
 
+# TASK-VOI-042: the owner's English is the session default. An
+# unrecognised FRIDAY_VOICE_LANGUAGE falls back here too — a typo
+# must never silently re-enable native mirroring (the 2026-11-25
+# failure mode), it lands on the pinned default instead.
+DEFAULT_CODE = "en-IN"
+
+
+def effective_language(environ=None) -> str:
+    """The session language: the configured profile, or en-IN.
+
+    Always a code, never None — this is what the worker pins into
+    the realtime model, the input-transcription language_codes, the
+    instruction section and the status file."""
+    return configured_language(environ) or DEFAULT_CODE
+
+
 def instruction_section(environ=None) -> str:
-    """The aggregator contract (TASK-IG-VOI-01): empty unless a
-    profile is configured, so the owner's default instructions are
-    byte-identical to before."""
+    """The aggregator contract (TASK-IG-VOI-01): the effective
+    language's section — TASK-VOI-042 pins the default to en-IN, so
+    the section is present on every call and tells the model to
+    speak primarily English (India) from the first word unless the
+    user switches language mid-call."""
     env = os.environ if environ is None else environ
-    profile = resolve(env.get("FRIDAY_VOICE_LANGUAGE"))
-    if profile is None:
-        return ""
+    profile = resolve(env.get("FRIDAY_VOICE_LANGUAGE")) or PROFILES[DEFAULT_CODE]
     return (
         f"LANGUAGE PROFILE: this call is configured for "
         f"{profile.name} ({profile.code}). Speak primarily in "

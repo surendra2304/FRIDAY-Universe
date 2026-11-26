@@ -47,6 +47,33 @@ def slow_registry():
     return reg
 
 
+class SlowDeclaredTimeoutTool(BaseTool):
+    """TASK-IG-FRD-006-FIX-01: declares a long timeout like intelx_research
+    (125s) and sleeps briefly; the agent must not kill it at its own default."""
+
+    name = "slow_declared_tool"
+    description = "A safe tool that sleeps; declares its own long timeout"
+    safety_level = SafetyLevel.SAFE
+    timeout = 5.0
+    parameters = {"type": "object", "properties": {"duration": {"type": "number"}}}
+
+    def execute(self, duration: float = 1.0, **kwargs: Any) -> ToolResult:
+        time.sleep(duration)
+        return ToolResult(
+            name=self.name,
+            content="Declared-timeout tool finished.",
+            is_error=False,
+            safety_level=self.safety_level,
+        )
+
+
+@pytest.fixture
+def slow_declared_registry():
+    reg = ToolRegistry()
+    reg.register(SlowDeclaredTimeoutTool())
+    return reg
+
+
 # --- 1. Test LLM retry on transient network errors ---
 @patch("httpx.Client.post")
 def test_retry_on_network_failure(mock_post):
@@ -142,6 +169,59 @@ def test_tool_timeout_enforcement(slow_registry):
     # Executing the slow tool with 0.1s limit should trigger a timeout
     result = agent._execute_single_tool_call_with_timeout(tc, timeout=0.1)
     
+    assert result.is_error
+    assert "timeout" in result.content.lower() or "exceeded" in result.content.lower()
+
+
+# --- 4b. TASK-IG-FRD-006-FIX-01: a tool's declared timeout must be honored ---
+def test_tool_declared_timeout_honored(slow_declared_registry):
+    # Regression: intelx_research declares 125s but was killed at 30.0s live
+    # because the agent passed its own default explicitly, shadowing the
+    # tool's value in the registry. With no explicit timeout, a 1s run of a
+    # tool declaring 5s must complete even when the agent default is 0.1s.
+    agent = FridayAgent(
+        settings=Settings(env="testing"),
+        tool_registry=slow_declared_registry,
+        tool_timeout=0.1,
+        authorizer=AutoApproveAuthorizer.create_for_testing()
+    )
+
+    tc = ToolCall(id="c2", name="slow_declared_tool", arguments={"duration": 1.0})
+    result = agent._execute_single_tool_call(tc)
+
+    assert not result.is_error
+    assert "Declared-timeout tool finished." in result.content
+
+
+def test_tool_explicit_timeout_still_wins(slow_declared_registry):
+    # An explicit per-call timeout still overrides a tool's declared timeout.
+    agent = FridayAgent(
+        settings=Settings(env="testing"),
+        tool_registry=slow_declared_registry,
+        tool_timeout=5.0,
+        authorizer=AutoApproveAuthorizer.create_for_testing()
+    )
+
+    tc = ToolCall(id="c3", name="slow_declared_tool", arguments={"duration": 1.0})
+    result = agent._execute_single_tool_call_with_timeout(tc, timeout=0.1)
+
+    assert result.is_error
+    assert "timeout" in result.content.lower() or "exceeded" in result.content.lower()
+
+
+def test_tool_agent_default_caps_undeclared_tool(slow_registry):
+    # A tool with no declared timeout (BaseTool default 30) is still capped
+    # by the agent default — the fix must not turn the default into a no-op.
+    agent = FridayAgent(
+        settings=Settings(env="testing"),
+        tool_registry=slow_registry,
+        tool_timeout=0.1,
+        authorizer=AutoApproveAuthorizer.create_for_testing()
+    )
+
+    tc = ToolCall(id="c4", name="slow_tool", arguments={"duration": 1.0})
+    result = agent._execute_single_tool_call(tc)
+
     assert result.is_error
     assert "timeout" in result.content.lower() or "exceeded" in result.content.lower()
 

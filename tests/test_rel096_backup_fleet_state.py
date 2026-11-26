@@ -45,12 +45,17 @@ def test_source_table_covers_all_six_servers_and_required_state():
     joined = " ".join(
         path for _l, _h, paths, _r in backup_mod.FLEET_STATE_SOURCES for path in paths)
     for needle in ("Stratex/state", "VyralX/data", "VyralX/renders",
-                   "FRIDAY/data", "IntelX/data", "Futuris/data"):
+                   "FRIDAY/data", "IntelX/data", "Futuris/data",
+                   # TASK-DB-011: Forge working output on Oracle Server 1.
+                   "Forge/workspaces", "Forge/artifacts"):
         assert needle in joined
     required_paths = " ".join(
         path for _l, _h, paths, req in backup_mod.FLEET_STATE_SOURCES if req
         for path in paths)
-    for needle in ("Stratex/state", "VyralX/data", "FRIDAY/data", "IntelX/data"):
+    for needle in ("Stratex/state", "VyralX/data", "FRIDAY/data", "IntelX/data",
+                   # TASK-DB-011: the Forge workspace entry is required so a
+                   # future omission fails the bundle loudly (DB-003 gap).
+                   "Forge/workspaces", "Forge/artifacts"):
         assert needle in required_paths
     # The one named exclusion is recorded with a size, never silent.
     assert backup_mod.FLEET_STATE_EXCLUDED
@@ -158,6 +163,37 @@ def test_collect_fleet_state_required_missing_fails(tmp_path, monkeypatch):
     manifest = _collect(tmp_path, monkeypatch, runner)
     assert manifest["complete"] is False
     assert any("Stratex/state" in f for f in manifest["failed_required"])
+
+
+# ---------------------------------------------------------------------------
+# TASK-DB-011 — Forge workspaces + artifacts (Oracle Server 1)
+# ---------------------------------------------------------------------------
+
+def test_collect_fleet_state_covers_forge_workspaces(tmp_path, monkeypatch):
+    # Happy path: both Forge paths are collected and every collected
+    # Forge file carries a manifest SHA-256 that verifies on disk.
+    manifest = _collect(tmp_path, monkeypatch, _fake_runner_factory())
+    assert manifest["complete"] is True
+    forge = [e for e in manifest["files"]
+             if "Forge/workspaces" in e["path"] or "Forge/artifacts" in e["path"]]
+    assert any("Forge/workspaces" in e["path"] for e in forge)
+    assert any("Forge/artifacts" in e["path"] for e in forge)
+    for entry in forge:
+        assert entry["sha256"] == _sha(tmp_path / "bundle" / entry["path"])
+    sources = {(s["label"], s["path"]): s["status"] for s in manifest["sources"]}
+    assert sources[("server1", "/opt/friday_universe/Forge/workspaces")] == "ok"
+    assert sources[("server1", "/opt/friday_universe/Forge/artifacts")] == "ok"
+
+
+def test_collect_fleet_state_forge_workspaces_missing_fails(tmp_path, monkeypatch):
+    # The DB-011 entry is required: a missing Forge/workspaces source
+    # must mark the bundle incomplete and name the path, never pass
+    # silently (the DB-003 audit gap).
+    runner = _fake_runner_factory(
+        missing_paths=("/opt/friday_universe/Forge/workspaces",))
+    manifest = _collect(tmp_path, monkeypatch, runner)
+    assert manifest["complete"] is False
+    assert any("Forge/workspaces" in f for f in manifest["failed_required"])
 
 
 def test_collect_fleet_state_optional_missing_is_recorded_not_fatal(tmp_path, monkeypatch):
@@ -279,3 +315,49 @@ def test_finalize_merges_bundle_and_agents(tmp_path):
             / "Stratex" / "state" / "forward_scorecard.json").is_file()
     ok, failed = backup_mod.verify_backup(set_dir, merged, log=lambda *a: None)
     assert failed == 0 and ok >= 3
+
+
+# ---------------------------------------------------------------------------
+# Fix round 7 regressions (live run 45587046488)
+# ---------------------------------------------------------------------------
+
+def test_fleet_state_ssh_pins_the_universal_key():
+    # The collect runs under sudo; root has no default SSH identities,
+    # so the rsync ssh string must name the fleet's universal key.
+    assert "-i /home/ubuntu/.ssh/Oracle-Cloud-x-AWS-Key" in backup_mod.FLEET_STATE_SSH
+    argv = backup_mod.fleet_state_rsync_argv("203.0.113.9", "/srv/x", Path("/tmp/d"))
+    assert backup_mod.UNIVERSAL_KEY_PATH in " ".join(argv)
+
+
+def test_fleet_repo_root_falls_back_to_installed_root(tmp_path, monkeypatch):
+    # Script downloaded outside the checkout (its own root has no agent
+    # dirs): fleet-file lookups must resolve to the installed root.
+    bare = tmp_path / "bare"
+    (bare / "scripts").mkdir(parents=True)
+    installed = tmp_path / "installed"
+    (installed / "Stratex").mkdir(parents=True)
+    monkeypatch.setattr(backup_mod, "__file__", str(bare / "scripts" / "backup_fleet_databases.py"))
+    monkeypatch.setattr(backup_mod, "FLEET_INSTALLED_ROOT", installed)
+    assert backup_mod._fleet_repo_root() == installed
+
+
+def test_fleet_repo_root_prefers_the_checkout_when_present(tmp_path, monkeypatch):
+    checkout = tmp_path / "checkout"
+    (checkout / "scripts").mkdir(parents=True)
+    (checkout / "Stratex").mkdir()
+    monkeypatch.setattr(backup_mod, "__file__", str(checkout / "scripts" / "backup_fleet_databases.py"))
+    monkeypatch.setattr(backup_mod, "FLEET_INSTALLED_ROOT", tmp_path / "elsewhere")
+    assert backup_mod._fleet_repo_root() == checkout
+
+
+def test_agent_runtime_env_loads_from_installed_root(tmp_path, monkeypatch):
+    bare = tmp_path / "bare"
+    (bare / "scripts").mkdir(parents=True)
+    installed = tmp_path / "installed"
+    env_dir = backup_mod.AGENT_ENV_DIRS["STRATEX"]
+    (installed / env_dir).mkdir(parents=True)
+    (installed / env_dir / ".env").write_text("STRATEX_DATABASE_URL=oracle+oracledb://u:p@dsn\n")
+    monkeypatch.setattr(backup_mod, "__file__", str(bare / "scripts" / "backup_fleet_databases.py"))
+    monkeypatch.setattr(backup_mod, "FLEET_INSTALLED_ROOT", installed)
+    env = backup_mod.agent_runtime_env("STRATEX")
+    assert env.get("STRATEX_DATABASE_URL") == "oracle+oracledb://u:p@dsn"

@@ -587,61 +587,95 @@ class VoiceBrainBridge:
         # observer on every exit path (gate, guard, reuse, dispatch),
         # so dispatch start/settle pair 1:1 by turn_id.
         self._notify_dispatch(turn_id, text)
-        if self._gate is not None:
-            # The gate runs BEFORE anything is submitted: a gated
-            # request has caused no side effect anywhere when the
-            # owner hears the confirmation question.
-            decision = self._gate.check(text)
-            if decision.verdict == _confirmation_policy.CONFIRM:
-                logger.info(
-                    "VOICE brain bridge gate turn=%s "
-                    "verdict=confirmation_required (nothing submitted)",
-                    turn_id,
-                )
-                return self._settle(turn_id, text, {
-                    "state": "confirmation_required",
-                    "spoken_reply": decision.question,
-                    "confirmation_required": True,
-                    "action_summary": decision.classification.action_summary,
-                    "completion_verified": False,
-                }, started)
-        # TASK-FRD-015: the split-final guard runs after the
-        # confirmation gate (gate semantics unchanged) and before the
-        # reuse window: a superseded/refused outcome is never cached,
-        # and a grounded request still reaches the reuse check below.
-        guard_result = await self._fragment_guard(text, turn_id)
-        if guard_result is not None:
-            return self._settle(turn_id, text, guard_result, started)
-        # TASK-FRD-011: the gate above has run for THIS call; only the
-        # send is serialized/reused, so a confirmed re-issue still passes
-        # the gate on its own merits before it can reuse or send.
-        key = " ".join(text.split()).casefold()
-        cached = self._cached_result(key)
-        if cached is not None:
-            logger.info(
-                "VOICE brain bridge reuse turn=%s — settled result of "
-                "turn=%s served from the reuse window", turn_id,
-                self._last_turn_id or "?",
-            )
-            return self._settle(turn_id, text, cached, started)
-        async with self._send_lock:
-            # A concurrent identical call may have completed while this
-            # one waited for the lock — reuse its result, never re-send.
+        # TASK-VOI-043: a cancelled call must still SETTLE its flight.
+        # The realtime SDK cancels a tool call on interruption, and
+        # the arbitrary-cancellation backstop cancels the whole speech
+        # — pre-fix, execute() let CancelledError propagate without
+        # _settle, so the result observer never fired and the worker's
+        # fragment watch kept the flight in-flight FOREVER: any
+        # suspect that landed during it could never become due, so a
+        # dropped fragment was journalled but never recovered (repro:
+        # cancel a blocked execute() and the result observer sees
+        # zero records). The settle-once guard below closes the
+        # flight exactly once on cancellation (state "cancelled", no
+        # spoken text — the delivery watch closes a non-watchable
+        # state with a journal line and never nudges it) and
+        # re-raises, so the SDK still sees the cancellation; the
+        # shielded send's late result is still filed by _dispatch's
+        # own CancelledError arm and delivered by the watch through
+        # the ordinary late channel.
+        _settled: list = []
+
+        def _settle_once(result: dict[str, Any]) -> dict[str, Any]:
+            if _settled:
+                return _settled[0]
+            outcome = self._settle(turn_id, text, result, started)
+            _settled.append(outcome)
+            return outcome
+
+        try:
+            if self._gate is not None:
+                # The gate runs BEFORE anything is submitted: a gated
+                # request has caused no side effect anywhere when the
+                # owner hears the confirmation question.
+                decision = self._gate.check(text)
+                if decision.verdict == _confirmation_policy.CONFIRM:
+                    logger.info(
+                        "VOICE brain bridge gate turn=%s "
+                        "verdict=confirmation_required (nothing submitted)",
+                        turn_id,
+                    )
+                    return _settle_once({
+                        "state": "confirmation_required",
+                        "spoken_reply": decision.question,
+                        "confirmation_required": True,
+                        "action_summary": decision.classification.action_summary,
+                        "completion_verified": False,
+                    })
+            # TASK-FRD-015: the split-final guard runs after the
+            # confirmation gate (gate semantics unchanged) and before the
+            # reuse window: a superseded/refused outcome is never cached,
+            # and a grounded request still reaches the reuse check below.
+            guard_result = await self._fragment_guard(text, turn_id)
+            if guard_result is not None:
+                return _settle_once(guard_result)
+            # TASK-FRD-011: the gate above has run for THIS call; only the
+            # send is serialized/reused, so a confirmed re-issue still passes
+            # the gate on its own merits before it can reuse or send.
+            key = " ".join(text.split()).casefold()
             cached = self._cached_result(key)
             if cached is not None:
                 logger.info(
-                    "VOICE brain bridge reuse turn=%s — settled result "
-                    "of turn=%s served from the reuse window", turn_id,
+                    "VOICE brain bridge reuse turn=%s — settled result of "
+                    "turn=%s served from the reuse window", turn_id,
                     self._last_turn_id or "?",
                 )
-                return self._settle(turn_id, text, cached, started)
-            result = await self._dispatch(text, turn_id)
-            if result.get("state") in _CACHEABLE_STATES:
-                self._last_key = key
-                self._last_result = result
-                self._last_ts = time.monotonic()
-                self._last_turn_id = turn_id
-            return self._settle(turn_id, text, result, started)
+                return _settle_once(cached)
+            async with self._send_lock:
+                # A concurrent identical call may have completed while this
+                # one waited for the lock — reuse its result, never re-send.
+                cached = self._cached_result(key)
+                if cached is not None:
+                    logger.info(
+                        "VOICE brain bridge reuse turn=%s — settled result "
+                        "of turn=%s served from the reuse window", turn_id,
+                        self._last_turn_id or "?",
+                    )
+                    return _settle_once(cached)
+                result = await self._dispatch(text, turn_id)
+                if result.get("state") in _CACHEABLE_STATES:
+                    self._last_key = key
+                    self._last_result = result
+                    self._last_ts = time.monotonic()
+                    self._last_turn_id = turn_id
+                return _settle_once(result)
+        except asyncio.CancelledError:
+            _settle_once({
+                "state": "cancelled",
+                "spoken_reply": "",
+                "cancelled": True,
+            })
+            raise
 
     async def _dispatch(self, text: str, turn_id: str) -> dict[str, Any]:
         """Send one brain request under the foreground budget.

@@ -187,6 +187,34 @@ def record_routing_receipt(receipt: dict[str, Any]) -> None:
         pass
 
 
+def _annotate_fallback_reason(reason: str) -> None:
+    """Record why the fallback ladder was entered on the live receipt.
+
+    TASK-INF-045: every fallback must be audible. The first reason
+    wins -- it names the decision that sent the request to the ladder.
+    """
+    current = _current_receipt.get()
+    if current is not None and not current.get("fallback_reason"):
+        current["fallback_reason"] = reason
+
+
+def _primary_failure_reason(last_error: Exception | None) -> str:
+    """Stable reason code for a primary-attempt failure (TASK-INF-045)."""
+    if last_error is None:
+        return "primary_error"
+    if "Primary attempt slice" in str(last_error):
+        return "primary_slice_exhausted"
+    if isinstance(last_error, TimeoutError):
+        return "primary_timeout"
+    if isinstance(last_error, RateLimitError):
+        return "primary_rate_limited"
+    if isinstance(last_error, ProviderUnconfiguredError):
+        return "provider_unconfigured"
+    if isinstance(last_error, TemporaryUnavailableError):
+        return "primary_unavailable"
+    return "primary_error"
+
+
 def routing_receipts(limit: int = 20) -> list[dict[str, Any]]:
     """Most recent routing receipts, newest first (up to ``limit``)."""
     if limit <= 0:
@@ -595,6 +623,7 @@ class ModelGateway:
             "latency_ms": None,
             "fallback_used": False,
             "fallback_direct": False,
+            "fallback_reason": None,
         }
         token = _current_receipt.set(receipt)
         try:
@@ -611,6 +640,10 @@ class ModelGateway:
         receipt["model_served"] = resp.model
         receipt["latency_ms"] = round((time.monotonic() - started) * 1000.0, 1)
         receipt["fallback_used"] = resp.provider != requested_provider or resp.model != request.model
+        if receipt["fallback_used"] and not receipt.get("fallback_reason"):
+            # TASK-INF-045 safety net: a served fallback with no entry
+            # annotation still names itself -- never silent.
+            receipt["fallback_reason"] = "served_by_fallback"
         record_routing_receipt(receipt)
         return resp
 
@@ -659,6 +692,25 @@ class ModelGateway:
         # its inter-key sleep), and an adapter-level sleep is paid a second
         # time inside every fallback rung.
         request.deadline_monotonic = deadline
+
+        # TASK-INF-038: needle fast path (cactus-compute Needle, IG-INF-04
+        # §6) — an optional pre-routing stage for single-command requests.
+        # When enabled and a local needle engine routes the command to one
+        # of the fixed FRIDAY device-safe tools, the gateway answers with
+        # the tool call and spends no cloud round trip; anything else
+        # (disabled, multi-message, no-call, engine error) falls through
+        # to the normal ladder exactly as before. A fast-path failure must
+        # never break serving.
+        try:
+            from app.providers.needle_router import try_fast_path
+
+            fast_resp = await try_fast_path(request)
+            if fast_resp is not None:
+                return fast_resp
+        except Exception:  # noqa: BLE001 - fast path must never break serving
+            logger.warning(
+                "GATEWAY: Needle fast path failed; continuing to the provider ladder."
+            )
 
         prov_name = provider_name.lower().strip()
         if prov_name == "litellm":
@@ -722,6 +774,7 @@ class ModelGateway:
                 estimate_prompt_tokens(request),
                 GROQ_PROMPT_TOKEN_LIMIT,
             )
+            _annotate_fallback_reason("groq_prompt_over_limit")
             return await self._execute_dynamic_fallback(
                 failed_provider=prov_name,
                 request=request,
@@ -766,6 +819,7 @@ class ModelGateway:
             if current is not None:
                 current["fallback_direct"] = True
                 current["routing_note"] = "large prompt: Gemini primary skipped (INF-LLM-003)"
+            _annotate_fallback_reason("large_prompt_primary_skipped")
             return await self._execute_dynamic_fallback(
                 failed_provider=prov_name,
                 request=request,
@@ -787,6 +841,7 @@ class ModelGateway:
                 "GATEWAY: NVIDIA rung is disabled by configuration; "
                 "escalating to the fallback ladder without an attempt."
             )
+            _annotate_fallback_reason("provider_disabled")
             return await self._execute_dynamic_fallback(
                 failed_provider=prov_name,
                 request=request,
@@ -812,6 +867,7 @@ class ModelGateway:
                 "GATEWAY: Bytez rung is disabled by configuration; "
                 "escalating to the fallback ladder without an attempt."
             )
+            _annotate_fallback_reason("provider_disabled")
             return await self._execute_dynamic_fallback(
                 failed_provider=prov_name,
                 request=request,
@@ -841,6 +897,7 @@ class ModelGateway:
             # "no configured credential" while the local model sat idle. The ladder skips
             # unconfigured candidates itself and ends with ``raise last_error``, so when nothing
             # can answer the caller still receives this exact ProviderUnconfiguredError.
+            _annotate_fallback_reason("provider_unconfigured")
             return await self._execute_dynamic_fallback(
                 failed_provider=prov_name,
                 request=request,
@@ -1016,6 +1073,7 @@ class ModelGateway:
             "GATEWAY: Primary provider '%s' failed. Initiating capability fallback for '%s'.", prov_name, capability
         )
 
+        _annotate_fallback_reason(_primary_failure_reason(last_error))
         fallback_resp = await self._execute_dynamic_fallback(
             failed_provider=prov_name,
             request=request,

@@ -101,3 +101,68 @@ def test_status_reports_unavailable_without_cli(monkeypatch) -> None:
     assert not status.available
     assert "graphifyy" in status.detail
     assert MAX_FILES_PER_RUN == 500
+
+
+# TASK-FRG-028: graphify 0.9.119 emits edges under "links", not
+# "edges" (verified live 2026-11-25: 395 nodes, 695 links, 0 edges).
+# The loader must read both, or path/explain silently return nothing
+# on a real current graph.
+GRAPH_LINKS = {
+    "directed": False,
+    "multigraph": False,
+    "graph": {"schema_version": 1, "graphify_version": "0.9.119"},
+    "nodes": [
+        {"id": "audit_auditlog", "label": "AuditLog"},
+        {"id": "audit_auditrecord", "label": "AuditRecord"},
+        {"id": "models_checkpoint", "label": "Checkpoint"},
+    ],
+    "links": [
+        {
+            "source": "audit_auditlog",
+            "target": "audit_auditrecord",
+            "relation": "contains",
+            "confidence": "EXTRACTED",
+        },
+        {
+            "source": "audit_auditrecord",
+            "target": "models_checkpoint",
+            "relation": "calls",
+            "confidence": "EXTRACTED",
+        },
+    ],
+}
+
+
+def _write_links_graph(tmp_path: Path) -> Path:
+    path = tmp_path / "graph.json"
+    path.write_text(json.dumps(GRAPH_LINKS), encoding="utf-8")
+    return path
+
+
+def test_load_reads_links_when_edges_absent(tmp_path) -> None:
+    graph = CodeGraph.load(_write_links_graph(tmp_path))
+    assert len(graph.nodes) == 3
+    assert len(graph.edges) == 2
+    assert graph.path("audit_auditlog", "models_checkpoint") == [
+        "audit_auditlog",
+        "audit_auditrecord",
+        "models_checkpoint",
+    ]
+    info = graph.explain("audit_auditrecord")
+    assert info is not None
+    assert info["degree"] == 2
+    assert {e["relation"] for e in info["edges"]} == {"contains", "calls"}
+
+
+def test_load_prefers_edges_when_both_present(tmp_path) -> None:
+    merged = dict(GRAPH)
+    merged["links"] = GRAPH_LINKS["links"]
+    path = tmp_path / "graph.json"
+    path.write_text(json.dumps(merged), encoding="utf-8")
+    graph = CodeGraph.load(path)
+    assert len(graph.edges) == 2
+    assert graph.path("forge_main", "fleet_client") == [
+        "forge_main",
+        "review_passes",
+        "fleet_client",
+    ]

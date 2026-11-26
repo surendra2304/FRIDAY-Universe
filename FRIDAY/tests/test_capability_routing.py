@@ -144,3 +144,64 @@ def test_capability_metadata_score_calculation():
 
     # Local deterministic score must be strictly lower (better) than external API call
     assert local_meta.compute_selection_score() < external_meta.compute_selection_score()
+
+
+# ============================================================================
+# 7. Lead Generation Routing (TASK-IG2-FRD-03-FIX-01)
+# ============================================================================
+
+def test_lead_generation_routing_for_natural_directory_request():
+    """The live FRD-054 failure: a natural lead request routed DIRECT_REASONING
+    (score -16.5) and lead_generate never executed. It must reach TOOL_EXECUTION
+    with required_tools == ["lead_generate"], as a single deterministic table hit."""
+    router = CapabilityRouter()
+
+    decision = router.route_request(
+        "Generate leads for me from this business directory page "
+        "https://www.findyello.com/jamaica/ category general, max 1 page")
+
+    assert decision.selected_capability == ExecutionCapabilityType.TOOL_EXECUTION
+    tools = [t for c in decision.candidate_evaluations for t in (c.required_tools or [])]
+    assert tools == ["lead_generate"]
+    assert router.deterministic_match_count(
+        "Generate leads for me from this business directory page "
+        "https://www.findyello.com/jamaica/ category general, max 1 page") == 1
+
+
+def test_lead_generation_routing_for_jaranks_request():
+    """The second FRD-054 leg: a JaRanks lead request must reach the tool too."""
+    router = CapabilityRouter()
+
+    decision = router.route_request(
+        "Generate leads from the JaRanks best insurance brokers page, "
+        "category insurance, max 1 page")
+
+    assert decision.selected_capability == ExecutionCapabilityType.TOOL_EXECUTION
+    tools = [t for c in decision.candidate_evaluations for t in (c.required_tools or [])]
+    assert tools == ["lead_generate"]
+
+
+def test_lead_generation_routing_for_explicit_tool_request():
+    """An explicit lead_generate invocation names the tool and must route to it."""
+    router = CapabilityRouter()
+
+    decision = router.route_request(
+        "Execute the lead_generate tool with directory_url "
+        "https://www.findyello.com/jamaica/, category general, max_pages 1")
+
+    assert decision.selected_capability == ExecutionCapabilityType.TOOL_EXECUTION
+    tools = [t for c in decision.candidate_evaluations for t in (c.required_tools or [])]
+    assert tools == ["lead_generate"]
+
+
+def test_lead_keywords_do_not_fire_on_verb_or_own_contacts():
+    """Narrow by design: bare 'leads' (verb) and the owner's own contact list
+    are not lead-generation errands and must stay conversational."""
+    router = CapabilityRouter()
+
+    for utterance in ("He leads the team every morning",
+                      "show me my contact list"):
+        decision = router.route_request(utterance)
+        assert decision.selected_capability == ExecutionCapabilityType.DIRECT_REASONING
+        tools = [t for c in decision.candidate_evaluations for t in (c.required_tools or [])]
+        assert "lead_generate" not in tools

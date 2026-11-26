@@ -59,6 +59,18 @@ this sensitivity as the only gate between fan noise and a
 truncated answer. HIGH stays available as the explicit env
 override (FRIDAY_VOICE_AAD_START_SENSITIVITY=high) if
 transcripts ever regress; the calm-vs-noise A/B is the proof.
+
+TASK-VOI-043 (2026-11-25) CHANGES the activity-handling default to
+NO_INTERRUPTION — the pins below now assert the new contract.
+Reason: the owner's live test showed her answer cut mid-sentence
+by her own continuation ("Stratex") — with
+START_OF_ACTIVITY_INTERRUPTS, Gemini's `interrupted` on start of
+user activity became a plugin input_speech_started event that the
+worker cannot gate per turn, and the 5.0 s wind-down always ended
+in an arbitrary cancel during a bridge call. Barge-in is now
+opt-in via FRIDAY_VOICE_AAD_ACTIVITY_HANDLING=
+start_of_activity_interrupts; the default, env-restore and
+junk-fallback pins live in test_voice_noise_interruption_voi032.py.
 """
 
 import sys
@@ -119,16 +131,26 @@ def test_junk_env_value_falls_back_to_low(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# The barge-in case: genuine owner speech must still interrupt her
+# The barge-in case: opt-in since TASK-VOI-043 (d) — the default no
+# longer interrupts her mid-answer; genuine barge-in is restored by
+# FRIDAY_VOICE_AAD_ACTIVITY_HANDLING=start_of_activity_interrupts
+# (pinned in test_voice_noise_interruption_voi032.py).
 # ---------------------------------------------------------------------------
 
 
-def test_activity_handling_still_interrupts(monkeypatch):
-    """Real speech still interrupts: activity handling is unchanged —
-    only the EVIDENCE BAR for what counts as speech onset moved."""
+def test_activity_handling_defaults_to_no_interruption_voi043(monkeypatch):
+    """TASK-VOI-043 (P0, owner live test 2026-11-25): the default
+    activity handling is NO_INTERRUPTION — her answer is never cut
+    by user activity. The pre-VOI-043 pin (START_OF_ACTIVITY_
+    INTERRUPTS) is deliberately replaced: with interrupts on, the
+    owner's own continuation cut her fragment-1 answer off
+    mid-sentence and the 5.0 s wind-down always ended in an
+    arbitrary cancel during a bridge call. Barge-in returns only
+    via the env override (see test_voice_noise_interruption_
+    voi032.py)."""
     cfg = w._realtime_input_config()
     assert cfg.activity_handling == (
-        _TYPES.ActivityHandling.START_OF_ACTIVITY_INTERRUPTS
+        _TYPES.ActivityHandling.NO_INTERRUPTION
     )
 
 
@@ -144,14 +166,18 @@ def test_prefix_padding_keeps_first_syllable(monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_end_sensitivity_and_silence_unchanged(monkeypatch):
-    """Turn finalization (reply speed) is NOT traded for noise
-    robustness: end sensitivity stays HIGH, silence stays 500 ms."""
+def test_end_sensitivity_and_silence_voi042(monkeypatch):
+    """TASK-VOI-042 (P0, owner live test 2026-11-25): silence is
+    1200 ms (was 500) — the owner's sentences were split into
+    finals at a half-second pause and answered as fragments. End
+    sensitivity stays HIGH; the speed trade is ordered by the P0
+    directive and reversible in one env var
+    (FRIDAY_VOICE_AAD_SILENCE_MS=500)."""
     aad = _aad(monkeypatch)
     assert aad.end_of_speech_sensitivity == (
         _TYPES.EndSensitivity.END_SENSITIVITY_HIGH
     )
-    assert aad.silence_duration_ms == 500
+    assert aad.silence_duration_ms == 1200
 
 
 def test_env_high_selects_high(monkeypatch):

@@ -86,7 +86,22 @@ def test_registry_expected_set_includes_what_if():
     templates = ft.load_templates()
     ids = {t["id"] for t in templates}
     assert TEMPLATE_ID in ids
-    assert len(ids) == 8
+    # TASK-VYR-083 grew the registry 8 -> 11; the set is pinned exactly
+    # (same set as EXPECTED_TEMPLATES in test_ig_vyr09_format_tooling.py)
+    # so the next registry addition fails here loudly, not silently.
+    assert ids == {
+        "cinematic_short",
+        "original_character_series",
+        "animated_explainer",
+        "character_explainer",
+        "flyover_segment",
+        "ambient_longform",
+        "stick_figure_explainer",
+        "what_if_narrated_story",
+        "build_in_public_day1",
+        "ai_3d_cartoon_comedy_short",
+        "trail_transition_technique",
+    }
 
 
 def test_malformed_template_rejected():

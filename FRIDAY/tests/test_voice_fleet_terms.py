@@ -10,8 +10,12 @@ Stray Kids for me", delegation grounded on the mishearing):
   SDK predates the field (a build failure here would mute the call:
   _build_realtime_model turns exceptions into "no voice").
 - ``_realtime_input_config``: Gemini's automatic activity detection
-  pinned explicitly (start HIGH, end HIGH, prefix 200 ms, silence
-  500 ms, START_OF_ACTIVITY_INTERRUPTS) instead of the API-surface
+  pinned explicitly (start LOW, end HIGH, prefix 200 ms, silence
+  1200 ms — TASK-VOI-042 raised it from 500 ms so a mid-sentence
+  pause stops splitting utterances into answered fragments,
+  activity handling NO_INTERRUPTION — TASK-VOI-043 (d) replaced
+  START_OF_ACTIVITY_INTERRUPTS so her answer is never cut by user
+  activity) instead of the API-surface
   defaults, with None (pass nothing) as the degradation.
 - ``_correct_fleet_terms``: the conservative post-STT correction map
   for the text the WORKER consumes (watchdog re-ask + rebuilt-session
@@ -110,6 +114,34 @@ def test_transcription_config_carries_fleet_vocabulary(monkeypatch):
     assert len(vocab) <= 100
 
 
+def test_transcription_config_pins_en_in_by_default(monkeypatch):
+    # TASK-VOI-042 (P0): the owner's English was transcribed in
+    # Hindi/Telugu script while language_codes stayed unset
+    # (auto-detect). The transcription now pins the effective
+    # session language — en-IN unless FRIDAY_VOICE_LANGUAGE says
+    # otherwise — so English speech cannot be re-scripted.
+    monkeypatch.delenv("FRIDAY_VOICE_LANGUAGE", raising=False)
+    monkeypatch.setattr(w, "genai_types", genai_types_real)
+    cfg = w._input_transcription_config()
+    assert cfg is not None
+    assert list(cfg.language_codes) == ["en-IN"]
+    assert list(cfg.custom_vocabulary) == list(w._FLEET_VOCABULARY)
+
+
+def test_transcription_config_follows_the_profile(monkeypatch):
+    monkeypatch.setenv("FRIDAY_VOICE_LANGUAGE", "te-IN")
+    monkeypatch.setattr(w, "genai_types", genai_types_real)
+    cfg = w._input_transcription_config()
+    assert list(cfg.language_codes) == ["te-IN"]
+
+
+def test_transcription_config_junk_env_falls_back_to_en_in(monkeypatch):
+    monkeypatch.setenv("FRIDAY_VOICE_LANGUAGE", "klingon")
+    monkeypatch.setattr(w, "genai_types", genai_types_real)
+    cfg = w._input_transcription_config()
+    assert list(cfg.language_codes) == ["en-IN"]
+
+
 def test_transcription_config_degrades_on_old_sdk(monkeypatch):
     class StrictConfig:
         def __init__(self, **kwargs):
@@ -122,6 +154,23 @@ def test_transcription_config_degrades_on_old_sdk(monkeypatch):
     cfg = w._input_transcription_config()
     assert isinstance(cfg, StrictConfig)
     assert cfg.kwargs == {}
+
+
+def test_transcription_config_drops_only_the_pin_on_old_sdk(monkeypatch):
+    # TASK-VOI-042 ladder, rung 2: an SDK that knows the vocabulary
+    # but predates language_codes keeps the biasing and loses only
+    # the pin — the call still goes through.
+    class PinlessConfig:
+        def __init__(self, **kwargs):
+            if "language_codes" in kwargs:
+                raise TypeError("unexpected keyword 'language_codes'")
+            self.kwargs = kwargs
+
+    fake = SimpleNamespace(AudioTranscriptionConfig=PinlessConfig)
+    monkeypatch.setattr(w, "genai_types", fake)
+    cfg = w._input_transcription_config()
+    assert isinstance(cfg, PinlessConfig)
+    assert cfg.kwargs == {"custom_vocabulary": list(w._FLEET_VOCABULARY)}
 
 
 # ---------- _realtime_input_config ----------
@@ -148,9 +197,18 @@ def test_realtime_config_pins_aad(monkeypatch):
         genai_types_real.EndSensitivity.END_SENSITIVITY_HIGH
     )
     assert aad.prefix_padding_ms == 200
-    assert aad.silence_duration_ms == 500
+    # TASK-VOI-042: 1200 ms, not 500 — the owner's sentences were
+    # split into finals at a half-second pause and answered as
+    # fragments (2026-11-25 live test). FRIDAY_VOICE_AAD_SILENCE_MS
+    # still overrides (see test_realtime_config_env_overrides).
+    assert aad.silence_duration_ms == 1200
+    # TASK-VOI-043 (d): NO_INTERRUPTION is the deliberate default —
+    # START_OF_ACTIVITY_INTERRUPTS let the owner's own continuation
+    # cut her answer off mid-sentence. Barge-in is restored only via
+    # FRIDAY_VOICE_AAD_ACTIVITY_HANDLING=start_of_activity_interrupts
+    # (pinned in test_voice_noise_interruption_voi032.py).
     assert cfg.activity_handling == (
-        genai_types_real.ActivityHandling.START_OF_ACTIVITY_INTERRUPTS
+        genai_types_real.ActivityHandling.NO_INTERRUPTION
     )
 
 
@@ -239,8 +297,24 @@ def test_build_passes_biasing_and_aad_kwargs(monkeypatch, _model_env):
         w._FLEET_VOCABULARY
     )
     aad = kwargs["realtime_input_config"].automatic_activity_detection
-    assert aad.silence_duration_ms == 500
+    assert aad.silence_duration_ms == 1200
     assert "language" not in kwargs
+
+
+def test_build_pins_language_and_transcription_by_default(monkeypatch):
+    # TASK-VOI-042: with the REAL _voice_language (no mock) the
+    # model carries language="en-IN" and the transcription carries
+    # language_codes=["en-IN"] — the two halves of the (a) pin,
+    # proven against the real genai SDK types.
+    _FakeRealtimeModel.instances = []
+    monkeypatch.setattr(w, "genai_types", genai_types_real)
+    monkeypatch.setattr(w, "_lk_google", _fake_google(_FakeRealtimeModel))
+    monkeypatch.delenv("FRIDAY_VOICE_LANGUAGE", raising=False)
+    model = w._build_realtime_model("key-1", "instructions")
+    assert model is not None
+    kwargs = _FakeRealtimeModel.instances[-1].kwargs
+    assert kwargs["language"] == "en-IN"
+    assert list(kwargs["input_audio_transcription"].language_codes) == ["en-IN"]
 
 
 def test_build_drops_rejected_optional_kwarg_not_the_call(monkeypatch, _model_env):
@@ -269,6 +343,24 @@ def test_build_returns_none_when_plugin_rejects_everything(monkeypatch, _model_e
     assert w._build_realtime_model("key-1", "instructions") is None
 
 
+# ---------- _session_turn_kwargs ----------
+
+def test_session_turn_kwargs_wait_for_a_complete_sentence():
+    # TASK-VOI-042 (b): min endpointing 1.0 s (was 0.5) — the
+    # session waits a full second of quiet before treating a turn
+    # as complete, so a mid-sentence pause does not split one
+    # utterance into answered fragments. Max 3.0 s bounds the wait;
+    # real barge-in stays enabled.
+    kwargs = w._session_turn_kwargs()
+    assert kwargs["turn_detection"] == "realtime_llm"
+    assert kwargs["min_endpointing_delay"] == 1.0
+    assert kwargs["max_endpointing_delay"] == 3.0
+    assert kwargs["allow_interruptions"] is True
+    assert kwargs["min_interruption_duration"] == 0.8
+    assert kwargs["resume_false_interruption"] is True
+    assert kwargs["false_interruption_timeout"] == 1.0
+
+
 # ---------- integration pins (source-level) ----------
 
 def test_worker_wiring_points_present():
@@ -278,9 +370,11 @@ def test_worker_wiring_points_present():
     # the guard runs inside the watchdog poll and re-asks on the session
     assert "_turn_unanswered_in_listening(turn, time.time())" in src
     assert "sess.generate_reply(user_input=pending_text)" in src
-    # the greeting path and VOI-010's session shape are untouched
-    assert 'turn_detection="realtime_llm"' in src
-    assert "allow_interruptions=True" in src
+    # the greeting path and VOI-010's session shape are untouched;
+    # the session knobs ride through _session_turn_kwargs (VOI-042)
+    assert "**_session_turn_kwargs()" in src
+    assert '"turn_detection": "realtime_llm"' in src
+    assert '"allow_interruptions": True' in src
     # instruction priming carries the attested mishearing
     assert "Stray Kids" in w.BASE_INSTRUCTIONS
     assert "Surendra" in w.BASE_INSTRUCTIONS

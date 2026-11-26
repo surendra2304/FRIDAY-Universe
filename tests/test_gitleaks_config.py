@@ -248,3 +248,43 @@ def test_live_gitleaks_allows_receipt_and_flags_real_secret(tmp_path):
     assert "doc.md" not in output, "labeled digest was flagged (allowlist broken)"
     assert "secret.txt" in output, "real secret was NOT flagged (rules disabled?)"
     assert "leaks found: 1" in output
+
+
+# ---------------------------------------------------------------------------
+# The FRG-028 fake-credential fixture (second allowlist regex)
+# ---------------------------------------------------------------------------
+
+# The exact fake fixture from Forge/tests/test_frg028_build_run.py (a
+# sequential-hex synthetic value, assembled at runtime since the fix so no
+# source line carries the literal — the allowlist entry exists because
+# gitleaks scans the whole PR commit range, including the first commit that
+# introduced the literal).
+FAKE_FIXTURE_LINE = (
+    '"env_text": "api_key = \'sk-live-1234567890abcdef\'",'
+)
+
+
+def _fixture_regex():
+    cfg = _load_config()
+    regexes = cfg["allowlist"]["regexes"]
+    assert len(regexes) >= 2, (
+        "expected a second allowlist regex (FRG-028 fake fixture)"
+    )
+    return re.compile(regexes[1])
+
+
+def test_fixture_regex_matches_fake_credential_line():
+    """The exact FRG-028 fake fixture line is allowed (it is not a real key)."""
+    assert _fixture_regex().search(FAKE_FIXTURE_LINE)
+
+
+def test_fixture_regex_does_not_match_other_keys():
+    """Only the exact fixture is allowed — any other sk-live value stays flagged."""
+    # The other keys are assembled from fragments, like the fixture itself:
+    # a realistic-looking key literal here would be a NEW gitleaks finding
+    # (the pinning test's own negative cases tripped the scan in round 2).
+    rx = _fixture_regex()
+    other_a = "sk-live-" + "9f2c41ab77e0d3f5" + "a1b8c6d2e4f0a9b8"
+    other_b = "sk-live-" + "1234567890" + "abcdeg"
+    assert not rx.search(f'api_key = "{other_a}"')
+    assert not rx.search(f'api_key = "{other_b}"')

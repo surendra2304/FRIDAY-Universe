@@ -11,6 +11,8 @@ AlertEngine as BaselineDeltas (no new alert path):
    * DXeyj7HCg-M — "Phantom Droid" Android security lab: untrusted
      connections and dangerous permission grants are the risk.
    The evaluator is pure: it judges a report, it does not touch a device.
+   Rules DP-012/DP-013 (TASK-SEN-030) judge the device's Private DNS
+   setting and resolver hygiene.
 
 2. ``CredentialPostureChecker`` — stat-only permission checks on the
    fleet's credential material (per-agent .env files must be 0600,
@@ -42,6 +44,9 @@ SENSITIVE_PERMISSIONS = {"overlay", "notification_access", "sms", "call_log"}
 #: A security patch older than this many days is a finding.
 PATCH_MAX_AGE_DAYS = 180
 
+#: Android Private DNS modes the companion can report (TASK-SEN-030).
+PRIVATE_DNS_MODES = {"off", "opportunistic", "strict"}
+
 
 class PermissionGrant(BaseModel):
     app_package: str
@@ -69,6 +74,18 @@ class DevicePostureReport(BaseModel):
     permission_grants: list[PermissionGrant] = Field(default_factory=list)
     paired_bluetooth: list[str] = Field(default_factory=list)
     trusted_bluetooth: list[str] = Field(default_factory=list)
+    private_dns_mode: str = ""
+    """Android Private DNS setting: 'off', 'opportunistic' or 'strict';
+    empty when the companion does not report it. Android's system value
+    for strict is 'hostname'; the evaluator treats it as 'strict'
+    (TASK-SEN-030)."""
+    private_dns_hostname: str = ""
+    """Private DNS provider hostname, reported when mode is 'strict'
+    (or the Android system value 'hostname')."""
+    dns_servers: list[str] = Field(default_factory=list)
+    """DNS resolver addresses the device is using, as reported."""
+    trusted_dns_servers: list[str] = Field(default_factory=list)
+    """Owner-trusted DNS resolver addresses."""
 
 
 class PostureFinding(BaseModel):
@@ -254,6 +271,68 @@ class DevicePostureEvaluator:
                 "Turn developer options off when not actively developing.",
                 "developer_options_on=true",
             )
+
+        # TASK-SEN-030: Private DNS + resolver hygiene.
+        # Android reports strict mode as the system value "hostname"
+        # (Settings.Global.PRIVATE_DNS_MODE); treat it as "strict".
+        dns_mode = "strict" if report.private_dns_mode == "hostname" else report.private_dns_mode
+        if dns_mode == "off":
+            add(
+                "DP-012",
+                "Private DNS off",
+                SeverityLevel.HIGH,
+                "Private DNS is off, so DNS queries leave the device in "
+                "cleartext on any network it joins — the Phantom Droid "
+                "untrusted-connection pattern: a hostile network sees and "
+                "can redirect every lookup.",
+                "Turn on Private DNS (Automatic, or a strict hostname).",
+                "private_dns_mode=off",
+            )
+        elif dns_mode == "":
+            add(
+                "DP-012",
+                "Private DNS setting not reported",
+                SeverityLevel.INFO,
+                "The posture report carries no Private DNS setting, so "
+                "DNS privacy cannot be judged.",
+                "Include private_dns_mode in the posture report.",
+                "private_dns_mode missing",
+            )
+        elif dns_mode not in PRIVATE_DNS_MODES:
+            add(
+                "DP-012",
+                "Private DNS mode unrecognised",
+                SeverityLevel.INFO,
+                f"Reported Private DNS mode {report.private_dns_mode!r} is "
+                "not one of off / opportunistic / strict, so it cannot be judged.",
+                "Report private_dns_mode as off, opportunistic or strict.",
+                f"private_dns_mode={report.private_dns_mode!r}",
+            )
+        elif dns_mode == "strict" and not report.private_dns_hostname:
+            add(
+                "DP-012",
+                "Private DNS strict but no hostname reported",
+                SeverityLevel.INFO,
+                "Private DNS is strict, but no provider hostname was "
+                "reported, so the strict endpoint cannot be judged.",
+                "Include private_dns_hostname in the posture report.",
+                "private_dns_hostname missing",
+            )
+
+        trusted_dns = set(report.trusted_dns_servers)
+        for server in report.dns_servers:
+            if server not in trusted_dns:
+                add(
+                    "DP-013",
+                    "Untrusted DNS resolver in use",
+                    SeverityLevel.MEDIUM,
+                    f"DNS resolver {server} is in use but not in the "
+                    "owner-trusted list. An untrusted resolver sees every "
+                    "lookup and can answer with attacker-chosen addresses.",
+                    "Use only owner-trusted resolvers, or add the resolver "
+                    "to the trusted list deliberately.",
+                    f"dns_servers contains {server!r}",
+                )
 
         return findings
 

@@ -48,6 +48,13 @@ import time
 import uuid
 from typing import Any, Callable, Optional
 
+from friday.autonomous.woop import (
+    format_woop_summary,
+    normalise_woop,
+    woop_plan,
+    woop_to_criteria,
+)
+
 logger = logging.getLogger(__name__)
 
 #: Hard bound on cycles per loop unless the owner sets otherwise — a loop
@@ -286,19 +293,34 @@ class GoalLoopStore:
         *,
         max_cycles: int = DEFAULT_MAX_CYCLES,
         source: str = "chat",
+        woop: Optional[Any] = None,
     ) -> dict[str, Any]:
+        """Create a goal loop.
+
+        TASK-FRD-045: when ``woop`` is given (a Wish/Outcome/Obstacle/
+        Plan record — see ``friday.autonomous.woop``), the goal is
+        structured as a WOOP record that the loop works against: the
+        Outcome becomes the success criterion when the caller passes no
+        explicit criteria, the Plan's if-then entries become work steps,
+        and the record itself is stored on the loop. The ``goal`` text
+        should be the Wish when a WOOP record is supplied.
+        """
         goal_text = (goal or "").strip()
         if not goal_text:
             raise ValueError("goal must not be empty")
+        woop_norm = normalise_woop(woop) if woop is not None else None
+        if woop_norm is not None and not criteria:
+            criteria = woop_to_criteria(woop_norm)
         if not criteria:
             raise ValueError("a goal loop needs at least one success criterion")
         norm = [normalise_criterion(c, i) for i, c in enumerate(criteria)]
         cycles = max(1, min(int(max_cycles or DEFAULT_MAX_CYCLES), MAX_CYCLES_CEILING))
+        steps = woop_plan(woop_norm, norm) if woop_norm is not None else default_plan(goal_text, norm)
         loop = {
             "id": _new_id("goal"),
             "goal": goal_text,
             "criteria": norm,
-            "steps": default_plan(goal_text, norm),
+            "steps": steps,
             "status": STATUS_ACTIVE,
             "cycles_run": 0,
             "max_cycles": cycles,
@@ -309,6 +331,8 @@ class GoalLoopStore:
             "report": "",
             "history": [{"at": _now(), "event": "created", "detail": source}],
         }
+        if woop_norm is not None:
+            loop["woop"] = woop_norm
         with self._lock:
             loops = self._load()
             loops.append(loop)
@@ -490,10 +514,16 @@ def build_report(loop: dict[str, Any], evaluations: list[dict[str, Any]]) -> str
     lines = [
         f"Goal loop {loop.get('id')} — {str(loop.get('status') or '').upper()}",
         f"Goal: {loop.get('goal')}",
-        f"Cycles run: {loop.get('cycles_run')} of {loop.get('max_cycles')}",
-        "",
-        "Success criteria:",
     ]
+    if loop.get("woop"):
+        lines.append(format_woop_summary(loop["woop"]))
+    lines.extend(
+        [
+            f"Cycles run: {loop.get('cycles_run')} of {loop.get('max_cycles')}",
+            "",
+            "Success criteria:",
+        ]
+    )
     by_id = {e["criterion_id"]: e for e in evaluations}
     for crit in loop.get("criteria") or []:
         ev = by_id.get(crit["id"]) or {}
@@ -517,8 +547,11 @@ def format_loop_summary(loop: dict[str, Any]) -> str:
     for ev in loop.get("evaluations") or []:
         latest[ev["criterion_id"]] = ev
     met = sum(1 for c in criteria if (latest.get(c["id"]) or {}).get("met"))
-    return (
+    summary = (
         f"Goal loop {loop.get('id')}: '{loop.get('goal')}' — "
         f"status {loop.get('status')}, {met}/{len(criteria)} criteria met, "
         f"cycle {loop.get('cycles_run')}/{loop.get('max_cycles')}."
     )
+    if loop.get("woop"):
+        summary += f" {format_woop_summary(loop['woop'])}"
+    return summary

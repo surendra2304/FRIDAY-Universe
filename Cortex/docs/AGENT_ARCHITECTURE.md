@@ -46,6 +46,7 @@ class AgentOutput(BaseModel):
 | **`ReliabilityAgent`** | Site Reliability | Monitors P99 latency and error rates against configured operational thresholds, escalating P0/P1 incidents. |
 | **`QualificationAgent`** | Lead Qualification | Calculates 4-factor explainable qualification score, deciding `QUALIFIED_LEAD` vs `UNQUALIFIED_LEAD`. |
 | **`ChurnRiskAgent`** | Customer Retention | Analyzes 30-day session decline velocity, recent support ticket volume, and negative cancellation signals to classify risk (`HIGH`, `MEDIUM`, `LOW`). |
+| **`ClinicAppointmentVoiceAgent` / `WebsiteChatBookingAgent`** | Conversational Voice/Chat (TASK-EARN-027) | Deterministic booking flow over caller/chat turns using the F-35 prompt method; matches the requested service against the business's own services list, collects name/phone/date/time, confirms, and proposes `lead_create` + `follow_up_schedule` so the booking lands in Cortex CRM. Refuses without services text; out-of-scope requests are relayed, never invented. |
 
 ---
 
@@ -57,3 +58,4 @@ The [`AgentRegistry`](file:///d:/Cortex/packages/agents/src/cortex_agents/__init
 - `latency`, `metric`, `heartbeat` -> `ReliabilityAgent`
 - `qualify`, `score` -> `QualificationAgent`
 - `churn`, `engage` -> `ChurnRiskAgent`
+- `appointment`, `voice_call`, `chat_message` -> `ClinicAppointmentVoiceAgent` / `WebsiteChatBookingAgent` (TASK-EARN-027; voice events to the voice agent, chat events to the chat agent)

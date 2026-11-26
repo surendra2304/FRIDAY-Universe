@@ -13,6 +13,22 @@
   var REFRESH_MS = 60000;
   var CAP_PCT = 3; // |change| at which a tile reaches full colour intensity
 
+  // TASK-IG2-WEB-04-FIX-01: mount-aware API base. The dashboard is served
+  // under /stratex/ in production (Caddy strips the prefix) and at /
+  // standalone, so the heatmap fetch must be relative to the mount, not
+  // root-relative — root /api/* goes to the FRIDAY app and never reaches
+  // Stratex. Same derivation as Stratex/static/app.js (kept local: this
+  // module is self-contained and does not touch app.js state).
+  function dashboardMountBase() {
+    var path = window.location.pathname.replace(/\/+$/, '');
+    if (!path) return '';
+    if (path.slice(-'/index.html'.length) === '/index.html') {
+      path = path.slice(0, -'/index.html'.length);
+    }
+    return path;
+  }
+  var API_BASE = dashboardMountBase();
+
   function tileColour(change) {
     if (change === null || change === undefined || Number.isNaN(change)) {
       return { background: 'var(--surface-soft)', border: 'var(--line)' };
@@ -65,7 +81,7 @@
   }
 
   function load() {
-    fetch('/api/v1/market/sector-heatmap', { headers: { Accept: 'application/json' } })
+    fetch(API_BASE + '/api/v1/market/sector-heatmap', { headers: { Accept: 'application/json' } })
       .then(function (response) {
         if (!response.ok) throw new Error('heatmap HTTP ' + response.status);
         return response.json();

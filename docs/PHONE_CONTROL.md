@@ -92,6 +92,27 @@ Termux agent has the same constraint).
 | `POST /api/phone/{device_id}/command` | control | dispatch one allowlisted command, returns the evidence record |
 | `DELETE /api/phone/devices/{device_id}` | control | revoke a pairing |
 
+## DROIDLAB — gesture shortcuts on Android (TASK-LAP-005)
+
+DroidLab: Gesture Toolkit (Light Source Labs, free on the Play Store,
+Android 8.0+) turns phone motion and touch zones into shortcuts:
+double-tap the back of the phone (Back Tap), Edge Sense, Notch Touch,
+Chop Chop, Quick Twist, multi-finger swipes — plus theme changes and
+Quick Settings customisation (source item Dc_PBtEq0YM). Typical owner
+use: double-tap the back to toggle the flashlight.
+
+Setup: install, run the Calibration Wizard first — it profiles the
+phone's sensors so taps do not misfire — then map one gesture to one
+action and test it. It needs the Accessibility Service permission;
+Android shows a "danger" warning for this, which is the normal system
+prompt for the permission — grant it only to the Play Store build.
+
+Caveats: check whether the phone already has the gesture built in
+(Motorola's back-tap, for example) before installing another app.
+Gestures can misfire while the phone is in a pocket or bag, so never
+map a gesture to anything destructive — no calls, no payments, no
+deletes.
+
 ## Verification state (2026-11-15)
 
 Proven without hardware: the pytest harness

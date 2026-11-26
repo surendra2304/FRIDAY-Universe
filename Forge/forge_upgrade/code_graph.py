@@ -18,7 +18,12 @@ point reports UNAVAILABLE honestly instead of fabricating a graph.
 
 The query side (load/query/path/explain over ``graphify-out/graph.json``)
 is implemented here in stdlib Python so a produced graph stays usable
-without NetworkX or the CLI present.
+without NetworkX or the CLI present. The loader accepts both edge keys
+the CLI has used: ``edges`` (older output / the wave-2 fixture shape)
+and ``links`` (what graphify 0.9.119 actually emits — verified live
+2026-11-25, TASK-FRG-028: a 31-file run wrote 395 nodes and 695 links,
+zero ``edges``; the old loader silently read 0 edges, so ``path`` and
+``explain`` always returned nothing on a real current graph).
 """
 from __future__ import annotations
 
@@ -163,7 +168,11 @@ class CodeGraph:
             node_id = str(node.get("id", ""))
             if node_id:
                 nodes[node_id] = node
-        return cls(nodes=nodes, edges=list(data.get("edges", [])))
+        # graphify 0.9.119 emits edges under "links"; older output (and the
+        # wave-2 fixtures) use "edges". Accept both, preferring "edges"
+        # when present so an explicit edge list is never shadowed.
+        edges = data.get("edges") or data.get("links", [])
+        return cls(nodes=nodes, edges=list(edges))
 
     def _adjacency(self) -> dict[str, set[str]]:
         adj: dict[str, set[str]] = {node_id: set() for node_id in self.nodes}

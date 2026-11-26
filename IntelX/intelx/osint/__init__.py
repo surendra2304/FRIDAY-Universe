@@ -9,6 +9,7 @@ from intelx.osint.breach_check import (
 )
 from intelx.osint.email import EmailFootprint, check_email
 from intelx.osint.helix_lookup import HelixHit, HelixReport, helix_lookup
+from intelx.osint.helix_watch import HelixWatchStore, diff_helix_reports, get_watch_store
 from intelx.osint.phone import PhoneInfo, parse_phone
 from intelx.osint.username import UsernameHit, check_username
 
@@ -18,6 +19,9 @@ __all__ = [
     "FootprintAudit",
     "HelixHit",
     "HelixReport",
+    "HelixWatchStore",
+    "diff_helix_reports",
+    "get_watch_store",
     "PasswordBreachResult",
     "PhoneInfo",
     "UsernameHit",

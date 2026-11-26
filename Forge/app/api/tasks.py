@@ -738,6 +738,98 @@ async def download_task_artifact(
     )
 
 
+# TASK-FRG-031: live preview of generated web output.
+#
+# Forge verifies generated static output with checkers but, before this
+# route, never served a generated site for the owner to look at before
+# delivery (Forge/docs/IG_EVALUATION_NOTES.md section 5, source
+# DXMg0D9jD3Y). The preview serves the task workspace's project/
+# directory read-only and always reads the latest bytes on disk, so it
+# tracks the build loop live. It serves exactly the tree the checkers
+# verified; the X-Forge-Verification-Report header states whether a
+# verification report exists for the task, so a preview of unverified
+# output is never mistaken for verified output.
+_PREVIEW_INDEX_CANDIDATES = ("index.html", "index.htm")
+
+
+def _preview_verification_state(paths) -> str:
+    """Return "present" when the task has a verification report on disk."""
+    report = paths.artifacts / "verification_report.json"
+    return "present" if report.is_file() else "absent"
+
+
+def _serve_preview_file(task_id: str, paths, relative_path: str) -> FileResponse:
+    """Serve one file from the task's project dir, traversal-guarded."""
+    project_root = canonical_path(paths.project)
+    target = canonical_path(project_root / relative_path)
+    try:
+        target.relative_to(project_root)
+    except ValueError as exc:
+        logger.warning(
+            f"Blocked preview path traversal attempt for task '{task_id}': "
+            f"'{relative_path}'"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Preview file '{relative_path}' not found.",
+        ) from exc
+
+    if not target.exists() or not target.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Preview file '{relative_path}' not found.",
+        )
+
+    mime, _ = mimetypes.guess_type(target.name)
+    response = FileResponse(
+        path=str(target),
+        media_type=mime or "application/octet-stream",
+    )
+    response.headers["X-Forge-Verification-Report"] = _preview_verification_state(paths)
+    # Live preview: never let a browser or proxy cache a stale build.
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@tasks_router.get(
+    "/{task_id}/preview", summary="Live Preview of Generated Web Output"
+)
+async def preview_task_output(task_id: str):
+    """Serve the entry page of the task's generated web output, live.
+
+    Returns project/index.html (or index.htm) from the task workspace.
+    The dashboard can frame this URL; asset requests resolve against
+    the sibling /preview/{path} route below.
+    """
+    paths = workspace_manager.get_workspace_paths(task_id)
+    if not paths or not paths.project.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task workspace not found.",
+        )
+    for candidate in _PREVIEW_INDEX_CANDIDATES:
+        if (paths.project / candidate).is_file():
+            return _serve_preview_file(task_id, paths, candidate)
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="No web output (index.html) in this task's project directory.",
+    )
+
+
+@tasks_router.get(
+    "/{task_id}/preview/{preview_path:path}", summary="Live Preview Asset"
+)
+async def preview_task_asset(task_id: str, preview_path: str):
+    """Serve one asset (css/js/image/...) of the generated web output."""
+    paths = workspace_manager.get_workspace_paths(task_id)
+    if not paths or not paths.project.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task workspace not found.",
+        )
+    return _serve_preview_file(task_id, paths, preview_path)
+
+
 async def execute_task_cancellation(
     task_id: str,
     reason: str,

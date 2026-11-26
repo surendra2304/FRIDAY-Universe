@@ -23,13 +23,22 @@ def _store():
 
 
 class StartGoalLoopTool(BaseTool):
-    """Register a goal with success criteria and work it autonomously."""
+    """Register a goal with success criteria and work it autonomously.
+
+    TASK-FRD-045: a goal may instead be given as a WOOP record (Wish,
+    Outcome, Obstacle, Plan) — pass ``woop`` and the Outcome becomes
+    the success criterion, the Plan's if-then entries become work steps,
+    and the loop carries the WOOP record it works against.
+    """
 
     name = "start_goal_loop"
     description = (
         "Start a goal loop: give FRIDAY a goal plus explicit success criteria; "
         "FRIDAY works it autonomously in cycles and returns a completion report "
-        "showing which criteria are met and which are not, with evidence."
+        "showing which criteria are met and which are not, with evidence. "
+        "Or give the goal as a WOOP record (wish, outcome, obstacle, plan of "
+        "if-then entries) instead: the outcome becomes the success criterion "
+        "and the plan becomes the work steps."
     )
     safety_level = SafetyLevel.SENSITIVE
     risk_level = "SENSITIVE"
@@ -83,12 +92,43 @@ class StartGoalLoopTool(BaseTool):
                 "type": "integer",
                 "description": "Cycle budget (default 5, ceiling 50).",
             },
+            "woop": {
+                "type": "object",
+                "description": (
+                    "WOOP goal-setting record (TASK-FRD-045) instead of, or "
+                    "alongside, explicit criteria: {wish, outcome, obstacle, "
+                    "plan}. wish is the goal in plain words; outcome is the "
+                    "best outcome (becomes the success criterion when no "
+                    "explicit criteria are given); obstacle is the inner "
+                    "obstacle most likely to block it; plan is a list of "
+                    "if-then entries {if, then} (a plain string is also "
+                    "accepted per entry). The goal argument should be the wish."
+                ),
+                "properties": {
+                    "wish": {"type": "string", "description": "The goal, in plain words."},
+                    "outcome": {"type": "string", "description": "The best outcome — what success looks like."},
+                    "obstacle": {"type": "string", "description": "The inner obstacle most likely to block it."},
+                    "plan": {
+                        "type": "array",
+                        "description": "If-then plans: {if, then} objects or plain strings.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "if": {"type": "string", "description": "The triggering situation."},
+                                "then": {"type": "string", "description": "The response to carry out."},
+                            },
+                            "required": ["then"],
+                        },
+                    },
+                },
+                "required": ["wish", "outcome", "obstacle", "plan"],
+            },
             "run_now": {
                 "type": "boolean",
                 "description": "Run cycles immediately (default true); false only registers the loop.",
             },
         },
-        "required": ["goal", "criteria"],
+        "required": ["goal"],
     }
 
     def execute(
@@ -96,6 +136,7 @@ class StartGoalLoopTool(BaseTool):
         goal: str = "",
         criteria: Any = None,
         max_cycles: int = 5,
+        woop: Any = None,
         run_now: bool = True,
         **kwargs: Any,
     ) -> ToolResult:
@@ -106,6 +147,7 @@ class StartGoalLoopTool(BaseTool):
                 list(criteria or []),
                 max_cycles=int(max_cycles or 5),
                 source="tool:start_goal_loop",
+                woop=woop,
             )
             if run_now:
                 loop = store.run_until_terminal(loop["id"])

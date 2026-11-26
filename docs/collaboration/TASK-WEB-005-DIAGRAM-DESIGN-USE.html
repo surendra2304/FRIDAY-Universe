@@ -1,0 +1,108 @@
+<!doctype html>
+<!-- diagram-design exercised end-to-end by Muse TP1 for TASK-WEB-005 verification of TASK-IG2-WEB-01 (2026-11-26).
+     Type: Flow / process. Budget check: 8 nodes, 7 arrows, 1 accent element. Geometry on the 4px grid; hairline borders; no shadows. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-WEB-005 — Production Verification Flow</title>
+<style>
+  :root{
+    --paper:#030409; --ink:#eef1ff; --muted:#8b93b8;
+    --rule:rgba(148,163,255,.18); --rule-solid:rgba(148,163,255,.35);
+    --accent:#8f9bff; --accent-tint:rgba(99,102,241,.16); --link:#7dd3fc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:system-ui,sans-serif;padding:40px 24px}
+  .wrap{max-width:1000px;margin:0 auto}
+  .eyebrow{font-family:monospace;font-size:11px;letter-spacing:.18em;color:var(--muted);margin:0 0 8px}
+  h1{font-weight:600;font-size:30px;margin:0 0 8px}
+  .lede{color:var(--muted);font-size:15px;margin:0 0 28px;max-width:640px}
+  .svg-scroll{overflow-x:auto}
+  svg{display:block;min-width:1000px}
+  .node-name{font-weight:600;font-size:15px;fill:var(--ink)}
+  .node-sub{font-family:monospace;font-size:10px;letter-spacing:.08em;fill:var(--muted)}
+  .arrow-label{font-family:monospace;font-size:10px;letter-spacing:.12em;fill:var(--muted)}
+  .legend{font-family:monospace;font-size:10px;letter-spacing:.08em;fill:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">FRIDAY UNIVERSE · PRODUCTION VERIFICATION</p>
+  <h1>How TASK-WEB-005 is proven live</h1>
+  <p class="lede">Merged code is not implemented. Each website corpus item is exercised on the production site in a real browser, and the evidence — including the failure case — is what closes the task.</p>
+  <div class="svg-scroll">
+  <svg viewBox="0 0 1000 360" role="img" aria-labelledby="t d" xmlns="http://www.w3.org/2000/svg">
+    <title id="t">TASK-WEB-005 production verification flow</title>
+    <desc id="d">The owner standard feeds the WEB-005 task. The verifier opens the live site, summons each sheet through the veil, records per-item verdicts in an evidence doc, ships one work PR with the board flip, and a different chat verifies the live behaviour.</desc>
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#8b93b8"/>
+      </marker>
+      <marker id="arr-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#8f9bff"/>
+      </marker>
+    </defs>
+
+    <!-- arrows first: lines sit behind nodes -->
+    <path d="M224,84 H288" fill="none" stroke="#8b93b8" stroke-width="1" marker-end="url(#arr)"/>
+    <path d="M480,84 H544" fill="none" stroke="#8f9bff" stroke-width="1.5" marker-end="url(#arr-accent)"/>
+    <path d="M736,84 H800" fill="none" stroke="#8b93b8" stroke-width="1" marker-end="url(#arr)"/>
+    <path d="M864,128 V188" fill="none" stroke="#8b93b8" stroke-width="1" marker-end="url(#arr)"/>
+    <path d="M800,232 H736" fill="none" stroke="#8b93b8" stroke-width="1" marker-end="url(#arr)"/>
+    <path d="M544,232 H480" fill="none" stroke="#8b93b8" stroke-width="1" marker-end="url(#arr)"/>
+    <path d="M288,232 H224" fill="none" stroke="#8b93b8" stroke-width="1" marker-end="url(#arr)"/>
+
+    <text class="arrow-label" x="600" y="72">SUMMON + EXERCISE</text>
+    <text class="arrow-label" x="820" y="164">VERDICTS</text>
+
+    <!-- row 1 -->
+    <g>
+      <rect x="32" y="48" width="192" height="72" fill="none" stroke="var(--rule-solid)" stroke-width="1"/>
+      <text class="node-name" x="48" y="80">Owner standard</text>
+      <text class="node-sub" x="48" y="100">MERGED ≠ IMPLEMENTED</text>
+    </g>
+    <g>
+      <rect x="288" y="48" width="192" height="72" fill="none" stroke="var(--rule-solid)" stroke-width="1"/>
+      <text class="node-name" x="304" y="80">TASK-WEB-005</text>
+      <text class="node-sub" x="304" y="100">4 ITEMS · WAVE 2 · P1</text>
+    </g>
+    <g>
+      <rect x="544" y="48" width="192" height="72" fill="var(--accent-tint)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text class="node-name" x="560" y="80">Live production site</text>
+      <text class="node-sub" x="560" y="100">FRIDAY-UNIVERSE.DUCKDNS.ORG</text>
+    </g>
+    <g>
+      <rect x="800" y="48" width="160" height="72" fill="none" stroke="var(--rule-solid)" stroke-width="1"/>
+      <text class="node-name" x="816" y="80">Sheets via veil</text>
+      <text class="node-sub" x="816" y="100">EDITORIAL · RANK · ORB</text>
+    </g>
+
+    <!-- row 2 -->
+    <g>
+      <rect x="800" y="188" width="160" height="72" fill="none" stroke="var(--rule-solid)" stroke-width="1"/>
+      <text class="node-name" x="816" y="220">Evidence doc</text>
+      <text class="node-sub" x="816" y="240">PER-ITEM · + FAILURE CASE</text>
+    </g>
+    <g>
+      <rect x="544" y="188" width="192" height="72" fill="none" stroke="var(--rule-solid)" stroke-width="1"/>
+      <text class="node-name" x="560" y="220">One work PR</text>
+      <text class="node-sub" x="560" y="240">EVIDENCE + BOARD FLIP</text>
+    </g>
+    <g>
+      <rect x="288" y="188" width="192" height="72" fill="none" stroke="var(--rule-solid)" stroke-width="1"/>
+      <text class="node-name" x="304" y="220">Peer verification</text>
+      <text class="node-sub" x="304" y="240">A DIFFERENT CHAT · LIVE</text>
+    </g>
+    <g>
+      <rect x="32" y="188" width="192" height="72" fill="none" stroke="var(--rule-solid)" stroke-width="1"/>
+      <text class="node-name" x="48" y="220">Five states reported</text>
+      <text class="node-sub" x="48" y="240">DONE = PRODUCTION-VERIFIED</text>
+    </g>
+
+    <text class="legend" x="32" y="320">— FLOW OF PROOF · ACCENT MARKS THE LIVE SURFACE UNDER TEST · DIAGRAM DRAWN WITH THE ADOPTED DIAGRAM-DESIGN SKILL (TASK-IG2-WEB-01)</text>
+  </svg>
+  </div>
+</div>
+</body>
+</html>
