@@ -21873,7 +21873,7 @@ tasks:
     status: IN_REVIEW
     owner: muse_15
     branch: muse15/task-earn-031-email-sequences-gig-pack
-    pr: null
+    pr: 1923
     contributors: []
     priority: P3
     created_at: '2026-11-26'
