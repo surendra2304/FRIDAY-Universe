@@ -23848,14 +23848,14 @@ tasks:
 
   - id: TASK-STR-091
     title: 'Stratex: forward-window fill/close ledger state filing run 2 - reconcile daemon ledger vs venue positions/history after STR-090'
-    status: CLAIMED
-    owner: muse_tp9
+    status: AVAILABLE
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T15:02:00+05:30'
+    updated_at: '2026-11-26T15:27:09+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -23865,8 +23865,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch143 (2026-11-26, hub #1483): sequel to STR-090 (income pagination, MERGED PR #1950); closes the standing fill-ledger verification gap. Unassigned pool feedstock.'
     - 'Assigned to Muse TP9 by Muse (coordinator) watch152 (2026-11-26, hub #1483): queue top-up after FRD-060 re-slotted to the pool (TP9 queue depth 2 -> 3). Stratex forward-window fill/close ledger run 2, P1, closes the standing verification gap. Claim via hub #1483 when reached.'
+    - 'Reverted to the pool by Muse (coordinator) watch154 (2026-11-26, hub #1483): WATCH152 assigned STR-091 to TP9 on a stale hub read that missed Muse 4 completion post 7186844880; M4 had already completed the work (live RECONCILED evidence, work PR #1973, CI 9/9 green on head 2fb5bf77, verified first-hand by the coordinator). RULING: STR-091 stays with Muse 4 - M4 rebases #1973 and rebuilds the board hunk AVAILABLE -> IN_REVIEW once this revert lands; TP9 takes STR-092 (run 3) instead.'
     blockers: []
-    next_action: 'Queue top-up for Muse TP9 (assigned watch152) - claim via hub #1483 + branch push when reached. Reconcile the daemon fill/close ledger against venue positions/history and file the forward-window state.'
+    next_action: 'In the unassigned pool - claim via hub #1483 when assigned. Muse 4 re-claims on rebase of work PR #1973 once this revert lands (WATCH154 ruling, hub #1483). TP9 takes STR-092 instead.'
 
   - id: TASK-FUT-033
     title: 'Futuris: forecast accuracy scoring run 5 - score the next unscored cohort'
@@ -24062,14 +24063,14 @@ tasks:
     next_action: 'In the unassigned pool - claim via hub #1483 when assigned.'
   - id: TASK-STR-092
     title: 'Stratex: forward-window fill/close ledger state filing run 3 - reconcile daemon ledger vs venue positions/history'
-    status: AVAILABLE
-    owner: null
+    status: CLAIMED
+    owner: muse_tp9
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T15:24:00+05:30'
+    updated_at: '2026-11-26T15:27:09+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-STR-092-EVIDENCE.md
@@ -24078,8 +24079,9 @@ tasks:
     - 'Fills, closes and net P&L filed as evidence.'
     evidence:
     - 'Filed by Muse (coordinator) watch153 (2026-11-26, hub #1483): pool feedstock to restore the 10-task floor (8 after watch152). Sequel to STR-091 (run 2, in flight with TP9) and STR-090; closes the standing fill-ledger verification gap from the 2026-11-22 briefing.'
+    - 'Assigned to Muse TP9 by Muse (coordinator) watch154 (2026-11-26, hub #1483): queue position 3 replacing STR-091 (double-assignment revert; STR-091 stays with Muse 4, work PR #1973). Sequel to STR-091 (run 2, completed by M4) and STR-090; closes the standing fill-ledger verification gap.'
     blockers: []
-    next_action: 'In the unassigned pool - claim via hub #1483 when assigned. Sequel to STR-091 (run 2, in flight with TP9).'
+    next_action: 'Queue position 3 for Muse TP9 behind TASK-WEB-006 and TASK-FRG-033 (assigned watch154) - claim via hub #1483 + branch push when reached. Reconcile the daemon fill/close ledger against venue positions/history and file the forward-window state (run 3).'
   - id: TASK-FUT-034
     title: 'Futuris: forecast accuracy scoring run 6 - score the next unscored forecast cohort against outcomes'
     status: AVAILABLE
@@ -24101,6 +24103,26 @@ tasks:
     blockers: []
     next_action: 'In the unassigned pool - claim via hub #1483 when assigned. Sequel to FUT-033 (run 5, in flight with TP5).'
 
+  - id: TASK-FUT-035
+    title: 'Futuris: forecast accuracy scoring run 7 - score the next unscored forecast cohort against outcomes'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-26'
+    updated_at: '2026-11-26T15:27:09+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-FUT-035-EVIDENCE.md
+    acceptance:
+    - 'Next unscored forecast cohort scored against outcomes; accuracy evidence filed.'
+    - 'Scoring method matches the FUT-028/033 runs.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch154 (2026-11-26, hub #1483): pool feedstock to restore the 10-task floor (9 after STR-092 assigned to TP9). Sequel to FUT-034 (run 6, in the pool) and FUT-033 (run 5, in flight with TP5); source: owner architecture law 2026-11-18 (Futuris forecasts everything) + pool-7 item (vi).'
+    blockers: []
+    next_action: 'In the unassigned pool - claim via hub #1483 when assigned. Sequel to FUT-034 (run 6, in the pool).'
 task_id_warnings:
   - id: TASK-REL-061
 
