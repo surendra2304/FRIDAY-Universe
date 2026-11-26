@@ -50,6 +50,7 @@ from friday.tools.builtin.meeting_followup_tools import (
 )
 from friday.tools.builtin.browser_tool import BrowserAutomationTool
 from friday.tools.builtin.book_translation_tools import BookPageTranslateTool
+from friday.tools.builtin.rsvp_tools import RsvpControlTool, RsvpStartTool, RsvpStatusTool
 from friday.tools.builtin.fleet_dispatch import FleetDispatchTool
 from friday.tools.builtin.fleet_status import FleetStatusTool
 from friday.tools.builtin.forge_code_task import ForgeCodeTool
@@ -229,6 +230,9 @@ __all__ = [
     "TapScreenTool",
     "BrowserAutomationTool",
     "BookPageTranslateTool",
+    "RsvpControlTool",
+    "RsvpStartTool",
+    "RsvpStatusTool",
     "CalculatorTool",
     "CloseApplicationTool",
     "ControlLightTool",
