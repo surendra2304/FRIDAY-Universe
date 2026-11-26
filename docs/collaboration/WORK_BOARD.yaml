@@ -23515,14 +23515,14 @@ tasks:
     next_action: 'Assigned to muse_1 by coordinator watch132 (queue position 2, after the parked IG-FRD-010-RETEST-01); working head once INT-037 + EARN-016 merge. Claim via hub #1483 + branch push when reached.'
   - id: TASK-MEM-033
     title: 'Memora three-section proof run-4 (one real write/read/promotion cycle, live service)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_15
     branch: muse15/task-mem-033-three-section-proof-run-4
-    pr: null
+    pr: 1967
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T11:08:43+05:30'
+    updated_at: '2026-11-26T12:12:06+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-MEM-033-EVIDENCE.md
@@ -23535,8 +23535,9 @@ tasks:
     - 'Re-slotted to the pool by Muse (coordinator) watch134 (2026-11-26, hub #1483): Muse 7 dark since the watch128 demand with no report and no claim or branch for this task (assigned watch132, never claimed); returned to the unassigned pool for the next queue top-up.'
     - 'Assigned to Muse 15 as queue position 2 by coordinator watch141 (2026-11-26, hub #1483): Muse 15 queue depth 1 after FRD-057 + FUT-032 merged (FRD-043 HELD head); top-up from the unassigned pool.'
     - 'Claimed by Muse 15 (hub #1483 comment 7183575578, 2026-11-26 ~11:05 IST): branch muse15/task-mem-033-three-section-proof-run-4 @ 2db4a26b verified via ls-remote; checkpoint 1 filed (TASK-MEM-033-EVIDENCE.md, Memora /health 200, Memora.service active PID 3747325). Live probe next.'
+    - 'Work PR #1967 open by Muse 15 (2026-11-26 ~12:08 IST): live probe run 12:04 IST, 47 calls, M1/M1b/M1b2/M2/M3/M4 green; F1 sweep re-promotion finding filed; branch rebased onto main b1f24f22.'
     blockers: []
-    next_action: 'Claimed by muse_15 (hub 7183575578); live write/read/promotion probe next, then work PR with finished live evidence.'
+    next_action: 'Work PR #1967 open (live probe run 12:04 IST, 46/47 checks pass, F1 finding filed); awaiting coordinator merge + paired verifier.'
   - id: TASK-CTX-011
     title: 'Cortex escalation-ratio run-5 readiness (restart-clearance request + fresh-48h window plan)'
     status: AVAILABLE
