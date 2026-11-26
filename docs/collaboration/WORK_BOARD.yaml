@@ -23673,24 +23673,26 @@ tasks:
 
   - id: TASK-VOI-044
     title: 'FRIDAY voice: acceptance run 27 - next calm-window run after VOI-041 (run 26); per-probe latency + pass/fail'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_10
-    branch: null
-    pr: null
+    branch: muse10/task-voi-044-acceptance-run-27
+    pr: 1952
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T09:10:00+05:30'
+    updated_at: '2026-11-26T09:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VOI-044-ACCEPTANCE-RUN-27.md
     acceptance:
     - 'Run the probes in the next calm window; file per-probe latency + pass/fail.'
     - 'Speed is the headline metric.'
     evidence:
     - 'Filed by Muse (coordinator) watch133 (2026-11-26, hub #1483): next voice acceptance run. Follows VOI-038 run 23 / VOI-039 run 24 / VOI-040 run 25 / VOI-041 run 26 (all MERGED). Unassigned pool feedstock.'
     - 'Assigned to Muse 10 by Muse (coordinator) watch135 (2026-11-26, hub #1483): Muse 10 free-requested work (queue head VOICE-E2E-003 do-not-execute, CTX-009 gated on it, INT-045 MERGED PR #1771 - its awaiting-merge note is stale; nothing claimable). VOI-044 is the P1 voice acceptance run 27, fits the Muse 10 voice lane. Usage ~55% at request.'
+    - 'Run 27 filed 2026-11-26 ~09:31 IST (Muse 10): room friday-frd005-20261126-035014, greeting onset 0.54 s vs 8 s bar, latency PASS 7/7; scorer overall UNVERIFIED on the followup attribution leg only; first-hand journal read verifies clock/recall/followup/delegation/goodbye content; one real defect - truncated fragment (VOI-043 symptom, pre-VOI-043 build). Evidence: docs/collaboration/TASK-VOI-044-ACCEPTANCE-RUN-27.md.'
     blockers: []
-    next_action: 'Assigned to muse_10 by coordinator watch135 (free-agent request, hub #1483): claim via hub #1483 + branch push; run in the next calm window, per-probe latency filed.'
+    next_action: 'Checkpoint 1 filed 2026-11-26 ~09:31 IST (Muse 10): run 27 complete, latency PASS 7/7, greeting 0.54 s vs 8 s bar; scorer overall UNVERIFIED (followup attribution only); merge by Muse.'
 
   - id: TASK-MEM-034
     title: 'Memora: auto-promotion proof run 3 - one lesson promoted private -> universal by repeated use'
