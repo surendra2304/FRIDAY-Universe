@@ -1,13 +1,13 @@
-# TASK-EARN-029 — Lead list, checkpoint 2: 20 of 50 leads (UAE/Dubai)
+# TASK-EARN-029 — Lead list, checkpoint 3: 30 of 50 leads (UAE/Dubai)
 
 Researched 2026-11-26 ~09:0x IST by Muse 12 worker (checkpoint 1: leads
 1–10). Checkpoint 2 added 2026-11-26 ~10:0x IST: leads 11–20 (travel &
 tourism agencies + fitness/wellness studios, Business Bay / DIFC / Al
-Barsha). Method: Yello business directory verified live as the source
+Barsha). Checkpoint 3 added 2026-11-26 ~10:5x IST: leads 21–30 (restaurants & cafes + e-commerce/retail stores). Method: Yello business directory verified live as the source
 directory (see checkpoint doc), leads drawn from live public
 directory/place listings for the named businesses. Every business below
 appeared in live search results with the phone number and website shown
-(except lead 15 — no website in the listing, flagged).
+(except leads 15, 29 and 30 — no website in the listing, flagged).
 
 **Verification caveat, stated plainly (same honesty bar as TASK-EARN-027):**
 phone numbers are as shown in the public listings; none were called to
@@ -18,6 +18,8 @@ current public listing BEFORE outreach). Websites were not opened page by
 page in this batch; confirm the site loads and matches the business before
 pitching. No lead below showed a content-agency relationship in the sources
 seen; that is an absence in the sources, not a verified fact.
+
+**Checkpoint 3 method (leads 21–30, 2026-11-26 ~10:5x IST):** all ten appeared in live public place/directory listings with the phone number shown; leads 21–28 also with the website shown. Leads 29–30 showed no website in the listing — flagged below, verify before outreach. Restaurants/cafes drawn from live place listings (Marina, Media City, Downtown, Business Bay); retail from Yello.ae listings and live place listings. Same honesty bar: phones not called, websites not opened page by page, no email taken except where the listing itself shows one (lead 28).
 
 **Rules (board acceptance):** public business contact data only; no scraping
 behind logins; no automated mass outreach. The owner reviews and sends every
@@ -92,7 +94,42 @@ for its treatment packages.
 | 19 | Body Time | Silver Tower, Office 1810, Business Bay | +971585818904 | http://www.bodytime.ae/ | S3 + S1 |
 | 20 | Cozy Bay Spa | Spa 2304, The Exchange Tower, Business Bay | +971566126684 | http://www.cozybayspa.com/ | S3 + S4 |
 
-## Pitch drafts (20 — one per lead; 1–10 from checkpoint 1, 11–20 new in checkpoint 2)
+## Batch 5 — Restaurants & cafes, Dubai Marina / Media City / Downtown / Business Bay (5)
+
+Restaurants and cafes live on discovery: diners search dishes, areas and
+cuisines before they ever walk in, and short food videos travel far. The
+social pack (S3) plus YouTube scripts (S2) fit — menu features, dish
+stories, area guides — with SEO articles (S1) for the searches that bring
+first-time diners. All five are independent businesses with their own
+websites and publishable menus.
+
+| # | Business | Area | Phone | Website / route | Matched service |
+|---|----------|------|-------|-----------------|-----------------|
+| 21 | Deniz Restaurant | Al Sharta St, Dubai Marina | +97144471606 | http://www.denizrestaurant.ae/ | S3 + S2 |
+| 22 | Cafe Society Dubai | Tamani Hotel Marina, Dubai Marina | +97143183755 | http://cafesociety.ae/ | S3 + S2 |
+| 23 | Joga | Dubai Media City Building 7 | +971503461255 | http://www.eatjoga.com/ | S3 + S2 |
+| 24 | Drinkit coffee | Emaar Square Building 1, Downtown Dubai | +971565454460 | https://drinkit.io/ | S3 + S2 |
+| 25 | Estekana Cafe | Blue Bay Tower, Marasi Dr, Business Bay | +97144232239 | http://estekanacafe.com/ | S3 + S2 |
+
+## Batch 6 — E-commerce / retail stores, Dubai (5)
+
+Online and retail stores live or die on product copy: every product needs a
+benefits-led description (S4) and the store needs SEO articles (S1) that
+bring buyers searching for the product, not the brand. Premium Organics is
+an online-first store with priced products already listed; Comfort Nest and
+Grassitup sell custom/bespoke furniture that needs descriptive copy;
+Marino is a wholesale online hub; Affordables is a 14-store fashion chain
+whose product pages need the same treatment.
+
+| # | Business | Area | Phone | Website / route | Matched service |
+|---|----------|------|-------|-----------------|-----------------|
+| 26 | Premium Organics UAE | Office #903 Iris Bay, Business Bay | +971569192545 | https://premiumorganics.ae | S4 + S1 |
+| 27 | Comfort Nest Furniture Trading LLC | Sheikh Rashid Road, Dubai | +971509947428 | http://www.comfortnestllc.com/ | S4 + S1 |
+| 28 | Grassitup | JAM Tower, Sheikh Zayed Rd, Dubai | +97143388169 (email grass@grassitup.ae shown in listing) | http://www.grassitup.com/ | S4 + S1 |
+| 29 | Marino Wholesale | Warehouse 6-23, 19th St, Al Qusais Industrial Area | +971502353971 | No website shown in listing — verify before outreach | S4 + S1 |
+| 30 | Affordables Fashion LLC | 14 stores, Dubai / Sharjah / Abu Dhabi (founded 2010) | +971559080680 | No website shown in listing — verify before outreach | S4 + S3 |
+
+## Pitch drafts (30 — one per lead; 1–10 from checkpoint 1, 11–20 from checkpoint 2, 21–30 new in checkpoint 3)
 
 All drafts are templates for the owner to send in his own words, one business
 at a time. Replace `[Owner name]` before sending. Never send two businesses
@@ -314,6 +351,118 @@ draft — the owner confirms pricing before quoting (same rule as EARN-028).
 
 
 
+### 21. Deniz Restaurant (Dubai Marina)
+
+> Hi, this is [Owner name] from CometWorks. I found Deniz Restaurant while
+> looking at restaurants in Dubai Marina — Aegean cuisine in the Marina
+> deserves content that shows it: short food videos and social posts that
+> put your kebabs and pide in front of people scrolling for somewhere to
+> eat tonight, plus SEO articles for the dish and area searches. I write
+> 30-day social packs and YouTube scripts for small businesses, researched
+> and human-edited. Happy to write you one sample post set first, free, so
+> you can judge the quality. My work is at
+> https://payhip.com/cometworks — shall I send the sample?
+
+### 22. Cafe Society Dubai (Tamani Hotel Marina)
+
+> Hi, this is [Owner name] from CometWorks. I came across Cafe Society
+> while looking at cafes in Dubai Marina — an artistic, European cafe in
+> the Marina has more worth saying than most: afternoon tea, red velvet
+> cake, salmon nigiri — the kind of dishes people photograph and share. I
+> write 30-day social content packs and YouTube scripts for small
+> businesses, researched and human-edited. I would like to write you one
+> sample post set first, free, so you can see the quality. My work is at
+> https://payhip.com/cometworks — shall I send it?
+
+### 23. Joga (Dubai Media City)
+
+> Hi, this is [Owner name] from CometWorks. I found Joga while looking at
+> healthy restaurants in Dubai Media City — serving nutritious food since
+> 2004, you have a story most healthy-eating spots cannot tell: Thai beef
+> salad, creamy avocado, steak sandwich, all under one roof. I write
+> 30-day social packs and YouTube scripts for small businesses, researched
+> and human-edited, so people searching for healthy food in Media City find
+> you first. Happy to write one sample post set first, free. My work is at
+> https://payhip.com/cometworks — shall I send the sample?
+
+### 24. Drinkit coffee (Emaar Square, Downtown)
+
+> Hi, this is [Owner name] from CometWorks. I came across Drinkit while
+> looking at coffee shops in Downtown — a coffee app with its own Downtown
+> spot is built for content: short videos and social posts that turn
+> passers-by into regulars. I write 30-day social content packs and
+> YouTube scripts for small businesses, researched and human-edited. I
+> would like to write you one sample post set first, free, so you can
+> judge the quality. My work is at https://payhip.com/cometworks — shall
+> I send it?
+
+### 25. Estekana Cafe (Business Bay)
+
+> Hi, this is [Owner name] from CometWorks. I found Estekana Cafe while
+> looking at cafes in Business Bay — Turkish coffee with a Burj Khalifa
+> view is exactly the kind of thing people search for and share, and the
+> cafe that publishes it wins the visit. I write 30-day social packs and
+> YouTube scripts for small businesses, researched and human-edited. Happy
+> to write you one sample post set first, free, for you to judge. My work
+> is at https://payhip.com/cometworks — shall I send the sample?
+
+### 26. Premium Organics UAE (Business Bay)
+
+> Hi, this is [Owner name] from CometWorks. I found Premium Organics
+> while looking at online food stores in Dubai — raw A2 milk, Sidr honey,
+> desi ghee, cold-pressed olive oil: every product you sell needs copy
+> that explains why it is worth the price, and buyers search those exact
+> products before they order. I write benefits-led product descriptions
+> and SEO articles for small businesses, researched and human-edited. I
+> would like to write you one sample product description first, free, so
+> you can see the quality. My work is at
+> https://payhip.com/cometworks — shall I send it?
+
+### 27. Comfort Nest Furniture Trading LLC (Sheikh Rashid Road)
+
+> Hi, this is [Owner name] from CometWorks. I came across Comfort Nest
+> while looking at furniture stores in Dubai — bespoke furniture, TV walls,
+> bedrooms, full renovations: buyers searching for those exact pieces land
+> on whoever describes them best. I write benefits-led product
+> descriptions and SEO articles for small businesses, researched and
+> human-edited. Happy to write you one sample product description first,
+> free. My work is at https://payhip.com/cometworks — shall I send the
+> sample?
+
+### 28. Grassitup (JAM Tower, Sheikh Zayed Rd)
+
+> Hi, this is [Owner name] from CometWorks. I found Grassitup while
+> looking at outdoor furniture stores in Dubai — dining sets, lounge
+> chairs, daybeds for homes, restaurants and hotels: each piece needs
+> copy that sells the holiday feeling, not just the dimensions. I write
+> benefits-led product descriptions and SEO articles for small businesses,
+> researched and human-edited. I would like to write you one sample
+> product description first, free, so you can judge the quality. My work
+> is at https://payhip.com/cometworks — shall I send it?
+
+### 29. Marino Wholesale (Al Qusais Industrial Area)
+
+> Hi, this is [Owner name] from CometWorks. I came across Marino
+> Wholesale while looking at online wholesale stores in Dubai — fashion,
+> electronics and home essentials at wholesale prices is a wide catalogue,
+> and every category needs clear product copy that brings retailers and
+> buyers to you instead of the marketplaces. I write benefits-led product
+> descriptions and SEO articles for small businesses, researched and
+> human-edited. Happy to write you one sample product description first,
+> free. My work is at https://payhip.com/cometworks — shall I send the
+> sample?
+
+### 30. Affordables Fashion LLC (14 stores, UAE)
+
+> Hi, this is [Owner name] from CometWorks. I found Affordables while
+> looking at fashion retailers in the UAE — fourteen stores since 2010,
+> high-end apparel at affordable prices: that is a story worth telling in
+> every product description and social post, not just on the shop floor. I
+> write benefits-led product descriptions and 30-day social packs for
+> small businesses, researched and human-edited. I would like to write you
+> one sample product description first, free, so you can judge the
+> quality. My work is at https://payhip.com/cometworks — shall I send it?
+
 ## Flags for the owner / coordinator (before any pitch is sent)
 
 - [ ] **Fiverr gig links:** the four live Fiverr gig URLs were not found in
@@ -328,15 +477,16 @@ draft — the owner confirms pricing before quoting (same rule as EARN-028).
   find a contact route (website or official social) before pitching.
 - [ ] **Lead 15:** no website in the listing — verify the business and
   find a contact route (website or official social) before pitching.
+- [ ] **Leads 29 and 30:** no website in the listing — verify the business and find a contact route (website or official social) before pitching.
 - [ ] **Prices:** no prices quoted in drafts. Owner confirms pricing before
   quoting any lead.
 
-## Checkpoint 3 (remaining 30 leads)
+## Checkpoint 4 (remaining 20 leads)
 
-Niches to cover next: restaurants/cafes (social + YouTube), e-commerce/
-retail stores (product descriptions, S4), and a second real-estate batch
-outside Downtown (Marina, Business Bay). Each new lead gets the same
-treatment: Yello.ae profile cross-check first, then a personalised pitch
-draft pointing at the matching service.
+Niches to cover next: second real-estate batch outside Downtown (Marina,
+Business Bay); second rounds of the best-converting niches so far —
+restaurants/cafes, e-commerce/retail, fitness/wellness. Each new lead gets
+the same treatment: Yello.ae profile cross-check first, then a personalised
+pitch draft pointing at the matching service.
 
-— Muse 12, checkpoint 2, 2026-11-26 ~10:0x IST
+— Muse 12, checkpoint 3, 2026-11-26 ~10:5x IST

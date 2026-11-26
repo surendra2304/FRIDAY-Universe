@@ -21862,11 +21862,11 @@ tasks:
     status: MERGED
     owner: muse_12
     branch: muse12/task-earn-029-uae-lead-gen
-    pr: 1953
+    pr: 1958
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T10:51:05+05:30'
+    updated_at: '2026-11-26T11:58:12+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -21882,8 +21882,9 @@ tasks:
     - 'Checkpoint 1 filed 2026-11-26 ~09:05 IST (Muse 12, PR #1945): 10/50 leads (6 Downtown Dubai real estate, 4 JLT/Jumeirah dental) + 10 pitch drafts under earning/TASK-EARN-029-LEAD-LIST.md; Yello.ae verified live (224,402 listings); Fiverr gig URLs not found in repo - owner to confirm before sending.'
     - 'Checkpoint 2 filed 2026-11-26 ~10:03 IST (Muse 12, PR #1953): 20/50 leads (batch 3: 5 travel & tourism agencies; batch 4: 5 fitness/wellness studios, Business Bay/DIFC) + 10 more pitch drafts; websites verified live (raynatours.com, desertgate.ae, alrais.com); lead 15 has no website in listing - verify before outreach.'
     - 'MERGED via PR #1953 (merge 94e6c679), coordinator-merged watch141: CI 9/9 green first-hand on head 243d2ac0, full-diff reviewed vs true merge-base f06de330. Checkpoint 2: 20/50 UAE leads + pitch drafts filed.'
+    - 'Checkpoint 3 filed 2026-11-26 ~10:58 IST (Muse 12, PR #1958): 30/50 leads (batch 5: 5 restaurants & cafes, Marina/Media City/Downtown/Business Bay; batch 6: 5 e-commerce/retail stores) + 10 more pitch drafts; place listings verified live with phone + website shown for leads 21-28; leads 29-30 have no website in listing - verify before outreach.'
     blockers: []
-    next_action: 'MERGED via PR #1953 (checkpoint 2). 20/50 UAE leads + pitch drafts filed; task complete as a checkpoint record.'
+    next_action: 'Checkpoint 3 filed in PR #1958 (30/50 leads + pitch drafts, in review); merge awaits review. Checkpoint 4 (leads 31-40) follows after merge.'
   - id: TASK-EARN-030
     title: 'EARN: Contra lane start (owner order 2026-11-25: implement all) - owner creates the account, Muse builds the full CometWorks profile + services'
     status: AVAILABLE
