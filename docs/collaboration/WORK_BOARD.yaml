@@ -20438,14 +20438,14 @@ tasks:
 
   - id: TASK-STR-075
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG2-STR-14, IG2-STR-16, IG2-STR-17, IG2-STR-18, IG2-STR-19 - live extreme-condition verification (wave 1)'
-    status: CLAIMED
+    status: MERGED
     owner: muse_tp4
     branch: musetp4/task-str-075-production-verify-wave1
     pr: 1965
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-26T12:56:00+05:30'
+    updated_at: '2026-11-26T13:58:45+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-STR-075-PRODUCTION-VERIFY-WAVE-1.md
@@ -20460,8 +20460,9 @@ tasks:
     - 'Claim: hub #1483 comment 7138192201 by Muse 6, 2026-11-24 ~22:08 IST, under the central-pool pull model (owner directive 7136890552). Branch muse6/task-str-075-prod-verify from main 4e2a14be, rebased to 6e3fe04. Checkpoint 1 (this PR): repo-side mapping of all 5 items to merged artefacts on main 6e3fe04 - IG2-STR-14 VERIFIED, declared run FAIL, family CLOSED; IG2-STR-16 research-only module, live daemon does not import it; IG2-STR-17 docs-only concept note; IG2-STR-18 CLOSED as SKIP; IG2-STR-19 VERIFIED, declared run FAIL, family CLOSED. Finding: no live-agent leg exists for any of the 5 items as specified; failure-injection + load-scan legs out of scope per coordinator ruling 4 (22:17 watch 7138911209, STR-070 precedent). Ruling requested from the coordinator: re-scope to artefact verification or release STR-075 to the pool.'
     - 'Coordinator watch096 (2026-11-25): owner null to muse_tp4 - queue position 2 behind STR-074; Stratex production-verify lane.'
     - 'Completion (Muse TP4, 2026-11-26 ~12:01 IST): checkpoint 2 filed (docs/collaboration/TASK-STR-075-CHECKPOINT-2.md) - live-leg evidence under WATCH136 grant: checks 1+3 PASS (WATCH140, hub 7182946843), journal leg proven 0/6 hourly slices (WATCH143, hub 7184216469). Work PR #1965. Production-verified on the re-scoped basis (WATCH123 ruling option 1).'
+    - 'Merged (Muse, coordinator, watch150, 2026-11-26 ~13:58 IST): work PR #1965 merged as 458c2f5b (CI 9/9 green on head 54f5aece, full diff reviewed first-hand by the coordinator); checkpoint 2 filed; production-verified on the re-scoped basis (WATCH123 ruling option 1). MERGED flip in coordinator board PR watch150.'
     blockers: []
-    next_action: 'Checkpoint 2 filed, production-verified on the re-scoped basis (WATCH123 ruling); merge of PR #1965 owed by coordinator. MERGED flip rides in the coordinator board PR after the work PR merges.'
+    next_action: 'MERGED 2026-11-26 (work PR #1965, merge 458c2f5b). Production-verified on the re-scoped basis (WATCH123 ruling option 1); checkpoint 2 filed. No further action unless a live-leg follow-up is filed.'
 
   - id: TASK-VYR-070
     title: 'PRODUCTION-VERIFY: VyralX corpus items IG-VYR-01, IG-VYR-02, IG-VYR-03, IG-VYR-04, IG-VYR-05 - live extreme-condition verification (wave 1)'
@@ -22133,14 +22134,14 @@ tasks:
     next_action: 'MERGED via PR #1927. Live proof still owed: one real book page translated end to end on production FRIDAY (gated - owner stop order).'
   - id: TASK-FRD-058
     title: 'FRIDAY: RSVP speed-reading aid - word-by-word reader for pasted text and articles'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_tp6
     branch: musetp6/task-frd-058-rsvp-reader
     pr: 1962
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T10:51:05+05:30'
+    updated_at: '2026-11-26T13:58:45+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - FRIDAY/
@@ -22152,8 +22153,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Coordinator watch109 (2026-11-25): board-owner flip - work PR #1850 open, head b9fdd9e4, branch musetp9/task-frd-058 verified via ls-remote; hub queue per watch108, owner field was null.'
     - 'Re-slotted to Muse TP6 by coordinator watch129 (2026-11-26): TP9 work PR #1850 CI-blocked (test failing) with no fix or report after the watch125 demand and the watch128 re-slot warning; TP9 keeps WEB-006, FRD-060 and FRG-033. Fresh branch + new work PR; PR #1850 is superseded - do not rebase it.'
+    - 'Merged (Muse, coordinator, watch150, 2026-11-26 ~13:58 IST): work PR #1962 merged as 703965cc (CI 10/10 green on head 746e1b49, full diff reviewed first-hand by the coordinator - 13 files: fresh RSVP implementation + 23 hermetic tests + CI tier-1 line). Repo leg merged; live leg GATED. IN_REVIEW flip in coordinator board PR watch150.'
     blockers: []
-    next_action: 'Work PR #1962 open (head 83efa1da, 11 files: fresh RSVP implementation + 23 hermetic tests + CI tier-1 line); CI running at filing; merge by coordinator. Repo leg in progress; live leg (one real article read on production FRIDAY at two rates) gated - clearance owed.'
+    next_action: 'Repo leg merged (work PR #1962, merge 703965cc). Live leg (one real article read on production FRIDAY at two rates) GATED - clearance owed.'
   - id: TASK-FRD-059
     title: 'FRIDAY: job-hunt lane completion - curated per-step tool stack plus scheduled board searches matched to the owner''s CV'
     status: CLAIMED
