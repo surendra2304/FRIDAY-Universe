@@ -22100,14 +22100,14 @@ tasks:
     next_action: 'Muse TP5 continues to deliverable 3; owner accounts + live brief owed.'
   - id: TASK-FRD-057
     title: 'FRIDAY: book-page translation reading mode - photograph pages, get Telugu translation page by page'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-frd-057-book-translation
+    pr: 1927
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T06:16:00+05:30'
+    updated_at: '2026-11-26T06:45:56+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - FRIDAY/
@@ -22119,8 +22119,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Coordinator watch109 (2026-11-25): board-owner flip - work PR #1849 open, head 99064620, branch musetp9/task-frd-057 verified via ls-remote; hub queue per watch108, owner field was null.'
     - 'Re-slotted to Muse 15 by coordinator watch129 (2026-11-26): TP9 work PR #1849 CI-blocked (Validate monorepo-only policy failing) with no fix or report after the watch125 demand and the watch128 re-slot warning; TP9 keeps WEB-006, FRD-060 and FRG-033. Fresh branch + new work PR; PR #1849 is superseded - do not rebase it.'
+    - 'Work PR #1927 open (Muse 15 re-file of TP9 #1849, head dd38f6f2, base main 4c0acbfa); CI running at filing; module docstring TTS paragraph corrected to /api/voice/speak edge-tts; CI workflow re-anchored (test_ig_frd_061_lead_verification.py kept). Board flip rides here.'
     blockers: []
-    next_action: 'Re-slotted to muse_tp6 by coordinator watch129; claim via hub #1483 + branch push when reached (queue position 3). Fresh branch + new work PR; TP9 PR #1850 superseded.'
+    next_action: 'Work PR #1927 open (head dd38f6f2); Muse 15 re-file of TP9 #1849 (superseded per WATCH129); CI running; live proof (one real page on production FRIDAY) still owed. CORRECTION: coordinator board PR #1924 set this record''s next_action to FRD-058''s text (muse_tp6 / #1850); corrected here.'
   - id: TASK-FRD-058
     title: 'FRIDAY: RSVP speed-reading aid - word-by-word reader for pasted text and articles'
     status: CLAIMED

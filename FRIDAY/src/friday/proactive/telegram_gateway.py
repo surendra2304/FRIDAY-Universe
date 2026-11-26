@@ -242,6 +242,79 @@ class TelegramGateway:
             sent_any = bool(data)
         return sent_any
 
+    def _download_telegram_file(self, file_path: str) -> bytes | None:
+        """Download a file from Telegram's file server. None on any failure."""
+        token, _ = _env_credentials()
+        if not token or not file_path:
+            return None
+        try:
+            resp = requests.get(
+                f"https://api.telegram.org/file/bot{token}/{file_path}",
+                timeout=60,
+            )
+        except requests.exceptions.RequestException:
+            return None
+        if resp.status_code != 200:
+            return None
+        return resp.content
+
+    def _handle_photo(self, message: dict[str, Any]) -> None:
+        """TASK-FRD-057 — owner photo -> book-page translation. Never raises.
+
+        Downloads the largest size Telegram kept, saves it under the
+        book-translation inbox, runs the page workflow (OCR, then
+        translate to Telugu through Inference), and replies with the
+        Telugu translation. The caption names the book; without one the
+        page goes to the "unspecified" book. Failures are reported
+        honestly — no fabricated translation is ever sent.
+        """
+        photos = message.get("photo") or []
+        if not photos:
+            return
+        largest = photos[-1]  # Telegram sizes are ascending; last is largest.
+        file_id = str(largest.get("file_id") or "")
+        if not file_id:
+            self.send_message(
+                "I got a photo but Telegram gave it no file id, so I could not download it."
+            )
+            return
+        data = self._api("getFile", {"file_id": file_id})
+        file_path = ((data or {}).get("result") or {}).get("file_path") or ""
+        if not file_path:
+            self.send_message(
+                "I could not download that photo from Telegram. Please send it again."
+            )
+            return
+        raw = self._download_telegram_file(file_path)
+        if raw is None:
+            self.send_message(
+                "The photo download from Telegram failed. Please send it again."
+            )
+            return
+        book = str(message.get("caption") or "").strip() or "unspecified"
+        try:
+            from friday.workflows import book_translation
+
+            inbox = book_translation.inbox_path(file_id)
+            inbox.parent.mkdir(parents=True, exist_ok=True)
+            inbox.write_bytes(raw)
+            result = book_translation.translate_page(str(inbox), book=book)
+        except Exception as exc:  # never raises into the poller
+            logger.exception("[TG-GATEWAY] book-page translation failed")
+            self.send_message(f"Translating that page failed: {exc}")
+            return
+        if not result.get("ok"):
+            detail = result.get("error", "unknown error")
+            reply = f"Could not translate that page: {detail}"
+            if result.get("ocr_text"):
+                reply += f"\n\nWhat I could read from the page:\n{result['ocr_text'][:1000]}"
+            self.send_message(reply)
+            return
+        self.send_message(
+            f"Page {result['page']} of {result['book']} — Telugu translation:\n\n"
+            f"{result['telugu']}"
+        )
+
     # ------------------------------------------------------------------
     # inbound processing
     # ------------------------------------------------------------------
@@ -254,7 +327,8 @@ class TelegramGateway:
         sender = message.get("from") or {}
         sender_id = str(sender.get("id") or "")
         sender_name = str(sender.get("first_name") or sender.get("username") or "unknown")
-        if not text:
+        photos = message.get("photo") or []
+        if not text and not photos:
             return
 
         _, owner_chat = _env_credentials()
@@ -270,6 +344,13 @@ class TelegramGateway:
                 "Your message was not processed.",
                 chat_id=chat_id or None,
             )
+            return
+
+        # TASK-FRD-057: a photo from the owner is a book page to
+        # translate — handled here, after the owner gate, before text
+        # commands. Non-owner photos never reach this branch (gate above).
+        if photos:
+            self._handle_photo(message)
             return
 
         # Owner-only commands, answered deterministically (no LLM needed).
