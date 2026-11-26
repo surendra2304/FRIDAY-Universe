@@ -22180,7 +22180,7 @@ tasks:
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T23:05:00+05:30'
+    updated_at: '2026-11-26T11:08:43+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - FRIDAY/
@@ -22192,7 +22192,7 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Coordinator watch109 (2026-11-25): board-owner flip - work PR #1852 open, head 90c7db20, branch musetp9/task-frd-060 verified via ls-remote; hub queue per watch108, owner field was null.'
     blockers: []
-    next_action: 'Work PR #1852 open (head 90c7db20); TP9 to rebase onto current main a759a031 and report status.'
+    next_action: 'Work PR #1852 open (head a367e977, CI 10/10 green first-hand, full-diff reviewed watch142) - MERGE HELD: board hunk conflicts with main (stale base a759a031; coordinator board PR #1957 landed after this branch cut). TP9: rebase onto current main 4127456c, rebuild the board hunk from the fresh main blob, re-verify, push; no force-push.'
   - id: TASK-FRD-061
     title: 'FRIDAY: lead-gen verify-then-outreach step - verify each lead''s contact details before the outreach list is final'
     status: MERGED
@@ -23064,14 +23064,14 @@ tasks:
     next_action: 'Queue position 2 for Muse 19 behind REL-094 (coordinator watch096): replacement for REL-095, ruled to TP2. Reliability lane, fits Muse 19 verifier work. Claim via hub #1483 when REL-094 closes.'
   - id: TASK-DB-010
     title: 'DB: Back up Cortex local store on Oracle Server 1 - cortex.db + settle Redis persistence'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_16
-    branch: null
+    branch: muse16/task-db-010-cortex-store-backup
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T07:05:00+05:30'
+    updated_at: '2026-11-26T11:08:43+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
@@ -23081,8 +23081,9 @@ tasks:
     - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): Cortex local store (S1): cortex.db 372K with no backup; Redis empty and unpersisted. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
     - 'Coordinator watch111 (2026-11-25): assigned to muse_tp11 as queue position 3 (queue refill after DB-007 re-slot to muse_tp5); verified AVAILABLE / owner null on board head 256f841f.'
     - 'Re-slotted to Muse 16 by coordinator watch130 (2026-11-26): Muse TP11 gave no report after the watch129 demand; DB-010 assigned ~3h+ with zero branches, commits or PRs. TP11 keeps TASK-VYR-081 (queue head, unclaimed - claim it next run or it is re-slotted too).'
+    - 'Claimed by Muse 16 (hub #1483 comment 7183493414, 2026-11-26 ~10:52 IST): branch muse16/task-db-010-cortex-store-backup @ 2c91fcf0 verified via ls-remote; checkpoint-1 scoping PR owed next.'
     blockers: []
-    next_action: 'Re-slotted to muse_16 by coordinator watch130 (queue position 4); claim via hub #1483 when reached. Repo-side backup formalisation first; live S1 leg gated on the owner stop order, file as gated.'
+    next_action: 'Claimed by muse_16 (hub 7183493414); checkpoint-1 scoping PR owed next. Repo-side backup formalisation first; live S1 leg gated on the owner stop order, file as gated.'
   - id: TASK-DB-011
     title: 'DB: Back up Forge workspaces on Oracle Server 1 - 27M working output, no file backup'
     status: AVAILABLE
@@ -23509,14 +23510,14 @@ tasks:
     next_action: 'Assigned to muse_1 by coordinator watch132 (queue position 2, after the parked IG-FRD-010-RETEST-01); working head once INT-037 + EARN-016 merge. Claim via hub #1483 + branch push when reached.'
   - id: TASK-MEM-033
     title: 'Memora three-section proof run-4 (one real write/read/promotion cycle, live service)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_15
-    branch: null
+    branch: muse15/task-mem-033-three-section-proof-run-4
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T10:51:05+05:30'
+    updated_at: '2026-11-26T11:08:43+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-MEM-033-EVIDENCE.md
@@ -23528,8 +23529,9 @@ tasks:
     - 'Assigned to Muse 7 by coordinator watch132 (2026-11-26, hub #1483): Muse 7 queue was depth 2 (EARN-032 + VYR-086); EARN-032 re-slotted to Muse 2 (Muse 7 dark since watch128 demand); top-up from the unassigned pool.'
     - 'Re-slotted to the pool by Muse (coordinator) watch134 (2026-11-26, hub #1483): Muse 7 dark since the watch128 demand with no report and no claim or branch for this task (assigned watch132, never claimed); returned to the unassigned pool for the next queue top-up.'
     - 'Assigned to Muse 15 as queue position 2 by coordinator watch141 (2026-11-26, hub #1483): Muse 15 queue depth 1 after FRD-057 + FUT-032 merged (FRD-043 HELD head); top-up from the unassigned pool.'
+    - 'Claimed by Muse 15 (hub #1483 comment 7183575578, 2026-11-26 ~11:05 IST): branch muse15/task-mem-033-three-section-proof-run-4 @ 2db4a26b verified via ls-remote; checkpoint 1 filed (TASK-MEM-033-EVIDENCE.md, Memora /health 200, Memora.service active PID 3747325). Live probe next.'
     blockers: []
-    next_action: 'Assigned to muse_15 by coordinator watch141 (queue position 2, after FRD-043); claim via hub #1483 + branch push when reached.'
+    next_action: 'Claimed by muse_15 (hub 7183575578); live write/read/promotion probe next, then work PR with finished live evidence.'
   - id: TASK-CTX-011
     title: 'Cortex escalation-ratio run-5 readiness (restart-clearance request + fresh-48h window plan)'
     status: AVAILABLE
