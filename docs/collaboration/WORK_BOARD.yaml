@@ -22020,17 +22020,18 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
   - id: TASK-EARN-023
     title: 'EARN: Swiggy Builders Club option (corpus reel DYg_b2ZTK70) - prototype agent concept + application pack drafted; owner submits the application'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_tp6
-    branch: null
-    pr: null
+    branch: musetp6/task-earn-023-swiggy-builders-club
+    pr: 1948
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T23:20:00+05:30'
+    updated_at: '2026-11-26T09:23:34+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
+    - earning/TASK-EARN-023-SWIGGY-BUILDERS-CLUB-PACK.md
     acceptance:
     - 'Source (full-watch corpus item DYg_b2ZTK70, @lavin_creator): Swiggy Builders Club (mcp.swiggy.com) lets developers build AI agents/apps on Swiggy Food / Instamart / Dineout APIs. Monetisation is INDIRECT (partnerships, co-branding, hiring, startups - no app-store cut) and access is invite-led through an application form.'
     - 'Deliverable: a one-page prototype concept (e.g. a FRIDAY voice food-ordering / auto-restock agent on the Swiggy MCP) plus the full application answers, drafted under earning/.'
@@ -22038,8 +22039,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
     - 'Coordinator watch110 (2026-11-25): assigned to muse_tp6 as queue position-3 earning top-up (queue VYR-084 -> VYR-078 -> EARN-023); verified AVAILABLE / owner null on main 3efe8b04.'
+    - 'Muse TP6 work PR #1948 (branch musetp6/task-earn-023-swiggy-builders-club, head 22c7b8e3): prototype concept + application pack filed under earning/; Developer form fields verified live first-hand 2026-11-26; demo video and production redirect URIs still owed before the owner can submit.'
     blockers: []
-    next_action: 'Assigned to muse_tp6 by coordinator watch110 (position 3, earning lane); claim via hub #1483 when it reaches queue head.'
+    next_action: 'Claimed by muse_tp6 (hub 7181154926); work PR #1948 open, head 22c7b8e3; owner one-time submits the application after the demo video and production URIs exist.'
   - id: TASK-VYR-081
     title: 'VyralX: GTA 6 content series in her existing model - short excerpts, her English narration, subtitles, BGM, unlisted review-first (growth play, NOT a YouTube-revenue play)'
     status: AVAILABLE
