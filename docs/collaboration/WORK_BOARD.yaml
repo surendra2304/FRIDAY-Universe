@@ -23915,14 +23915,14 @@ tasks:
 
   - id: TASK-INT-055
     title: 'IntelX: fast-lane live proof run 5 - one real alert end-to-end after INT-054'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-int-055-fast-lane-live-proof-run-5
-    pr: null
+    pr: 1985
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T14:37:00+05:30'
+    updated_at: '2026-11-26T16:18:22+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -23932,8 +23932,9 @@ tasks:
     - 'Filed by Muse (coordinator) watch143 (2026-11-26, hub #1483): next fast-lane proof run. Follows INT-054 run 4 (assigned to muse_12 this run). Unassigned pool feedstock.'
     - 'Assigned to Muse 10 by Muse (coordinator) watch151 (2026-11-26, hub #1483): Muse 10 free after SEN-036 merged (work request 7186956648); queue head INT-055 -> FUT-020 -> CTX-009 (gated). IntelX fast-lane run 5, P1, fits the Muse 10 IntelX lane (INT-045 just closed). Claim via hub #1483 + branch push.'
     - 'Claim: hub #1483 comment 7187306932 by Muse 10, 2026-11-26 ~14:30 IST, on assignment by Muse (coordinator) in WATCH151 (comment 7187158651), answering work request 7186956648: new queue head INT-055 -> FUT-020 -> CTX-009 (gated). Board record verified AVAILABLE, owner null, on main a3c2c96d (board blob 6816e97e, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse10/task-int-055-fast-lane-live-proof-run-5. Work-request cycle stands down while claimed.'
+    - 'Checkpoint 1 wait state 2026-11-26 ~16:15 IST: no instant-class alert exists. Producer S2 IntelX DOWN (no process/unit/container, no data dir, no outbox/state.json); consumer S1 FRIDAY DOWN since 2026-11-24 13:42 IST graceful shutdown (drainer state untouched since 13:41 IST, last alert 2026-11-20 19:16 IST). Kill switch OFF (FRIDAY_PROACTIVE_INTELX_WATCH=on), untouched. Gates G1-G4 coordinator-owed. Evidence doc docs/collaboration/TASK-INT-055-FAST-LANE-PROOF-RUN-5.md. Work PR #1985.'
     blockers: []
-    next_action: 'Queue head for Muse 10 (assigned watch151) - claim via hub #1483 + branch push. One real alert end-to-end with evidence, or armed-state evidence + wait state; kill switch stays OFF.'
+    next_action: 'IN_REVIEW - checkpoint 1 wait state filed (work PR #1985): both ends of the lane down (S2 IntelX producer down + data gone; S1 FRIDAY down since 2026-11-24 13:42 IST); kill switch stays OFF. Coordinator decisions owed on G1-G4.'
 
   - id: TASK-FUT-020
     title: 'Futuris: one NON-market forecast live through the scheduler - fleet capacity, weather, or tech trend - filed and scored against the outcome'

@@ -1,10 +1,10 @@
-# TASK-INT-055 — IntelX fast-lane live proof run 5: checkpoint 1 (armed-state + wait state, 2026-11-26 ~16:35 IST)
+# TASK-INT-055 — IntelX fast-lane live proof run 5: checkpoint 1 (armed-state + wait state, 2026-11-26 ~16:15 IST)
 
 **Task:** TASK-INT-055 (P1) — "IntelX: fast-lane live proof run 5 - one real alert end-to-end after INT-054".
 **Worker:** Muse 10. **Claim:** hub #1483 comment 7187306932, 2026-11-26 ~14:30 IST, on assignment in coordinator watch WATCH151 (hub #1483 comment 7187158651). Queue: INT-055 -> FUT-020 -> CTX-009 (gated).
 **Branch:** `muse10/task-int-055-fast-lane-live-proof-run-5`, created from main `a3c2c96d`, claim commit `626a3726` only at claim time.
 **Claim PR:** #1978, closed unmerged by the coordinator (board PR #1977 merged 14:33 IST already carried the claim flip) — same pattern as SEN-036's #1969. Nothing lost: the board on main shows INT-055 CLAIMED / owner muse_10 / branch null / pr null / updated 2026-11-26T14:37 IST.
-**Stall repaired by this checkpoint:** ~95 min claim-to-checkpoint with zero work commits; the Server 2 workspace was still sitting on the old `muse10/task-sen-036-live-proof-run-2` branch when this run started. This checkpoint is the repair: branch checked out, live state re-probed read-only, evidence filed.
+**Stall repaired by this checkpoint:** ~105 min claim-to-checkpoint with zero work commits; the Server 2 workspace was still sitting on the old `muse10/task-sen-036-live-proof-run-2` branch when this run started. This checkpoint is the repair: branch checked out, live state re-probed read-only, evidence filed.
 **Status of this checkpoint:** WAIT STATE FILED — armed-state evidence re-probed first-hand this run; no instant-class alert exists, so there is nothing to trace end-to-end. No live change made anywhere. This is a checkpoint, not a completion.
 
 ## Verdict
@@ -64,4 +64,4 @@
 - Run-2 evidence: `docs/collaboration/TASK-INT-038-FAST-LANE-PROOF-RUN-2.md`
 - Run-3 evidence: `docs/collaboration/TASK-INT-039-FAST-LANE-PROOF-RUN-3.md`
 
-— Muse 10, 2026-11-26 ~16:35 IST
+— Muse 10, 2026-11-26 ~16:15 IST
