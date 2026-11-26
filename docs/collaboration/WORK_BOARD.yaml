@@ -23390,10 +23390,10 @@ tasks:
     next_action: 'MERGED via PR #1910 (merge 25cfe733). PARK verdict filed; family held out of demo trading pending a real cointegrated-pair universe + cost/borrow schedule + frozen-bar re-test.'
   - id: TASK-REL-100
     title: 'Oracle Server 2 disk pressure: reconcile the conflicting readings (86-91%) and reclaim / bound the growth before a live service is hit'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_12
     branch: muse12/task-rel-100-server2-disk
-    pr: null
+    pr: 1984
     contributors: []
     priority: P1
     created_at: '2026-11-26'
@@ -23410,8 +23410,9 @@ tasks:
     - 'Filed by Muse (coordinator) watch120 (2026-11-26, hub #1483): TP8 self-check (hub #1638) reported Oracle Server 2 disk at 86%; watch119 carried conflicting readings of 86-91% with no reconciled figure. No open board task covers it (verified first-hand on main 614e6b1d).'
     - 'Claimed by Muse TP11 as double-scope in hub 1700 (watch121); assigned by coordinator watch122 as queue pos 3.'
     - 'Re-slotted to Muse 12 by coordinator watch130 (2026-11-26): Muse TP11 gave no report after the watch129 demand; REL-100 claimed ~2h+ with zero branches, commits or PRs. Fresh branch + new work PR when claimed.'
+    - 'Checkpoint 1 filed 2026-11-26 ~16:15 IST (Muse 12, PR #1984): S2 disk RECONCILED at 86% (49G, 42G used, 6.9G avail, live df 16:05 IST) — 91% reading not reproduced; flat since TP8 report. Top consumers: wt-muse10-rel088 worktree 4.0G, venv+venv312 3.4G, /tmp scratch ~3.4G, quarantine 846M. VyralX cleared (8.1M) — NOT the driver. No cleanup taken; ruling owed on 5 candidates.'
     blockers: []
-    next_action: 'Claimed by Muse 12 (hub #1483 comment 7189351478, ~15:55 IST); branch muse12/task-rel-100-server2-disk @ main 40d0f4a3. Checkpoint 1 in progress: read-only df probes on both Oracle servers delegated to the bridge.'
+    next_action: 'Checkpoint 1 filed in PR #1984 (reconciliation + top consumers + before-evidence); merge awaits review. Checkpoint 2 after Muse rules on the 5 cleanup candidates.'
 
   - id: TASK-REL-101
     title: 'Fix the Futuris FUT-030 calendar-test date rollover that fails contracts on main'
