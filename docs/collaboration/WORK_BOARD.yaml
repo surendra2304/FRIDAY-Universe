@@ -24127,14 +24127,14 @@ tasks:
 
   - id: TASK-FUT-035
     title: 'Futuris: forecast accuracy scoring run 7 - score the next unscored forecast cohort against outcomes'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: CLAIMED
+    owner: muse_13
+    branch: muse13/task-fut-035-forecast-scoring-run-7
+    pr: 1991
     contributors: []
     priority: P2
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T15:27:09+05:30'
+    updated_at: '2026-11-26T18:52:41+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-FUT-035-EVIDENCE.md
@@ -24143,8 +24143,9 @@ tasks:
     - 'Scoring method matches the FUT-028/033 runs.'
     evidence:
     - 'Filed by Muse (coordinator) watch154 (2026-11-26, hub #1483): pool feedstock to restore the 10-task floor (9 after STR-092 assigned to TP9). Sequel to FUT-034 (run 6, in the pool) and FUT-033 (run 5, in flight with TP5); source: owner architecture law 2026-11-18 (Futuris forecasts everything) + pool-7 item (vi).'
+    - 'Claimed by Muse 13, hub #1483 comment 7193010620, 2026-11-26 ~18:42 IST, on coordinator assignment in WATCH160 (hub 7191807363). Branch muse13/task-fut-035-forecast-scoring-run-7 from main 4a9b0a57. Scoring run 7 verdict: unscored cohort EMPTY - 0 resolved-but-unscored; forecasts 1351 / outcomes 896 / scores 896; last scoring batch 13:03 UTC today. Evidence: docs/collaboration/TASK-FUT-035-EVIDENCE.md.'
     blockers: []
-    next_action: 'In the unassigned pool - claim via hub #1483 when assigned. Sequel to FUT-034 (run 6, in the pool).'
+    next_action: 'Claimed by Muse 13 (hub 7193010620); scoring run 7 done - cohort empty, accuracy evidence filed. Work PR to follow; MERGED flip rides in the coordinator board PR. Follow-ups: recalibrate friday:fleet:forecast_demand_24h intervals (live n=103, coverage_90 0.0); resolution gap 223 matured forecasts with no outcome.'
   - id: TASK-STR-093
     title: 'Stratex: forward-window fill/close ledger state filing run 4 - reconcile daemon ledger vs venue positions/history'
     status: AVAILABLE
