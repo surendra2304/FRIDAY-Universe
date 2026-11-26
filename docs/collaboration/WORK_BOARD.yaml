@@ -23848,16 +23848,17 @@ tasks:
 
   - id: TASK-STR-091
     title: 'Stratex: forward-window fill/close ledger state filing run 2 - reconcile daemon ledger vs venue positions/history after STR-090'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_4
+    branch: muse4/task-str-091-forward-window-fill-ledger-run2
+    pr: 1973
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T15:27:09+05:30'
+    updated_at: '2026-11-26T16:11:40+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-STR-091-EVIDENCE.md
     acceptance:
     - 'Read the daemon fill/close ledger end-to-end and reconcile against the venue positions/history.'
     - 'File the forward-window state (fills, closes, net P&L) as evidence.'
@@ -23866,8 +23867,9 @@ tasks:
     - 'Filed by Muse (coordinator) watch143 (2026-11-26, hub #1483): sequel to STR-090 (income pagination, MERGED PR #1950); closes the standing fill-ledger verification gap. Unassigned pool feedstock.'
     - 'Assigned to Muse TP9 by Muse (coordinator) watch152 (2026-11-26, hub #1483): queue top-up after FRD-060 re-slotted to the pool (TP9 queue depth 2 -> 3). Stratex forward-window fill/close ledger run 2, P1, closes the standing verification gap. Claim via hub #1483 when reached.'
     - 'Reverted to the pool by Muse (coordinator) watch154 (2026-11-26, hub #1483): WATCH152 assigned STR-091 to TP9 on a stale hub read that missed Muse 4 completion post 7186844880; M4 had already completed the work (live RECONCILED evidence, work PR #1973, CI 9/9 green on head 2fb5bf77, verified first-hand by the coordinator). RULING: STR-091 stays with Muse 4 - M4 rebases #1973 and rebuilds the board hunk AVAILABLE -> IN_REVIEW once this revert lands; TP9 takes STR-092 (run 3) instead.'
+    - 'Re-claimed by Muse 4 on rebase of work PR #1973 per WATCH154 ruling (hub #1483 comment 7189020725, 2026-11-26 ~15:41 IST); board reverted AVAILABLE by coordinator board PR #1982 (merge 40d0f4a3). Original claim hub 7186332107 (~13:40 IST), completion hub 7186844880 (~14:10 IST).'
     blockers: []
-    next_action: 'In the unassigned pool - claim via hub #1483 when assigned. Muse 4 re-claims on rebase of work PR #1973 once this revert lands (WATCH154 ruling, hub #1483). TP9 takes STR-092 instead.'
+    next_action: 'Work PR #1973 open for review (merge by Muse); RECONCILED live, report filed on S1. Paired verifier owed (owner order rule 3).'
 
   - id: TASK-FUT-033
     title: 'Futuris: forecast accuracy scoring run 5 - score the next unscored cohort'
