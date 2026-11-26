@@ -48,6 +48,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.models import Asset, PublishJob, RenderJob, Source, VideoProject, utcnow
+from app.services import held_render_qa as hrq
 from app.services import viral_quality as vq
 from app.services import viral_remix as vr
 from app.services.scene_analysis import analyze_scene, record_visual_defects, scene_text
@@ -1065,6 +1066,135 @@ def framed_cues(
         })
     cues.sort(key=lambda item: (item["start"], item["end"]))
     return vr._sanitize_cues(cues)
+
+
+def repair_doubled_ass(
+    ass_path: Path | str,
+    destination: Path | str,
+    *,
+    hook_text: str | None = None,
+    payoff_text: str | None = None,
+) -> dict[str, Any]:
+    """Repair a doubled framed-render .ass to a single speech track.
+
+    TASK-VYR-072-FIX-01. The Nov 18 cycle-2 framed renders (job 802,
+    ``framed--bh5VGbrbLI-5970f1``) carry their hook and payoff lines in
+    the same AntonBold style as the source-speech cues — they predate
+    TASK-VYR-022 (2026-11-19), which moved framing lines to the
+    AntonFraming top band. The framing lines overlap the speech cues in
+    time and zone, so the .ass counts two speech tracks
+    (``multiple_caption_tracks:2``).
+
+    The repair re-authors the .ass through the production writer
+    (:func:`viral_remix._write_ass`): events matching the supplied
+    hook/payoff texts are re-styled to AntonFraming (the top band);
+    speech events that merely duplicate a framing line are dropped
+    (the framing line carries those words, as in :func:`framed_cues`);
+    every other event is kept as speech. The writer's own per-style
+    overlap validation is the first proof, and the repaired file is
+    re-parsed and must count exactly one speech track
+    (``held_render_qa.ass_caption_track_count``) — otherwise the
+    repair raises instead of claiming success.
+
+    ``hook_text`` / ``payoff_text`` are the framing lines from the job
+    record (at least one is required). Matching reuses
+    :func:`_duplicates_framing_line` (token-subset / >=50% Jaccard),
+    so case and punctuation do not matter. When several events match
+    one framing line, the longest is the framing line and the rest are
+    dropped as speech duplicates. The source .ass is never overwritten;
+    the repaired file is written to ``destination``.
+
+    Returns a report dict (source, destination, events in/out, the
+    re-styled framing events, the dropped duplicates, and the final
+    ``ass_caption_tracks``). Raises ValueError when a supplied framing
+    text matches no event, or when the repaired file is not a single
+    speech track.
+    """
+    framing_texts = [t for t in (hook_text, payoff_text) if t]
+    if not framing_texts:
+        raise ValueError(
+            "repair_doubled_ass needs the hook and/or payoff text from the "
+            "job record to identify the framing lines"
+        )
+    source = Path(ass_path)
+    events, malformed = hrq.parse_ass_dialogue(source)
+    if malformed:
+        raise ValueError(
+            f"repair_doubled_ass refuses a malformed .ass: {malformed} "
+            f"malformed Dialogue lines in {source}"
+        )
+    if not events:
+        raise ValueError(f"repair_doubled_ass found no Dialogue events in {source}")
+
+    # Which events are the framing lines: match each supplied framing
+    # text; when several events match one line, the longest is the
+    # framing line itself and the rest are speech duplicates of it.
+    framing_indexes: set[int] = set()
+    dropped_indexes: set[int] = set()
+    for framing_text in framing_texts:
+        matches = [
+            index for index, event in enumerate(events)
+            if _duplicates_framing_line(event["text"], framing_text)
+        ]
+        if not matches:
+            raise ValueError(
+                "repair_doubled_ass found no event matching the framing "
+                f"line {framing_text[:60]!r} in {source}"
+            )
+        matches.sort(key=lambda index: (
+            events[index]["end"] - events[index]["start"],
+            events[index]["start"],
+        ))
+        framing_indexes.add(matches[-1])
+        dropped_indexes.update(matches[:-1])
+
+    cues: list[dict[str, Any]] = []
+    for index, event in enumerate(events):
+        if index in dropped_indexes:
+            continue
+        cues.append({
+            "start": event["start"],
+            "end": event["end"],
+            "text": event["text"],
+            "framing": index in framing_indexes,
+        })
+    cues.sort(key=lambda item: (item["start"], item["end"]))
+    dest = Path(destination)
+    vr._write_ass(cues, dest)
+    repaired_events, repaired_malformed = hrq.parse_ass_dialogue(dest)
+    if repaired_malformed:
+        raise ValueError(
+            f"repair_doubled_ass wrote a malformed .ass: {repaired_malformed} "
+            f"malformed Dialogue lines in {dest}"
+        )
+    track_count = hrq.ass_caption_track_count(
+        hrq.speech_events(repaired_events)
+    )
+    if track_count != 1:
+        raise ValueError(
+            "repair_doubled_ass did not reach a single speech track: "
+            f"ass_caption_track_count={track_count} in {dest}"
+        )
+    return {
+        "source": str(source),
+        "destination": str(dest),
+        "events_in": len(events),
+        "events_out": len(repaired_events),
+        "framing_restyled": [
+            {
+                "start": events[index]["start"],
+                "end": events[index]["end"],
+                "text": events[index]["text"],
+            }
+            for index in sorted(framing_indexes)
+        ],
+        "dropped_duplicates": [
+            {"start": events[index]["start"], "end": events[index]["end"],
+             "text": events[index]["text"]}
+            for index in sorted(dropped_indexes)
+        ],
+        "ass_caption_tracks": track_count,
+    }
 
 
 def render_framed(
