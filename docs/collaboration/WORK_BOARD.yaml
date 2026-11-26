@@ -21694,14 +21694,14 @@ tasks:
 
   - id: TASK-LAP-003
     title: 'REPO-IMPLEMENT: laptop/phone repos - AURA / aura-android-use (adapt), ARTEMIS (adapt), scrcpy (adopt), Browser Use (a... (wave 2)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_12
     branch: muse12/task-lap-003-laptop-phone-wave2
-    pr: null
+    pr: 1933
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-26T05:11:00+05:30'
+    updated_at: '2026-11-26T07:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -21713,8 +21713,9 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Assigned to Muse 12 as queue position 2 by coordinator watch116 (2026-11-26, hub #1483 comment 7173089848); P1 laptop/phone repos wave 2.'
     - 'Double-scope claim by Muse 12 (hub #1483 comment 7175149244, 2026-11-26 ~02:53 IST; usage-truth directive order 2, 28% < 50%): LAP-003 claimed alongside TASK-REL-099 checkpoint 2. Board verified first-hand on main 489a1b3b; branch recreated from current main at checkpoint 2.'
+    - 'Checkpoint 1 filed as work PR #1933 (head 916e7532, 2026-11-26 ~07:1x IST): upstream re-verified (AURA v1.0.712, ARTEMIS no releases, scrcpy v5.0.1, browser-use 1.0.8), three tests wired into FRIDAY tier-1 CI; live legs gated on the owner stop order.'
     blockers: []
-    next_action: 'Muse 12 double-scope with TASK-REL-099; EARN-029 next.'
+    next_action: 'Checkpoint 1 filed as work PR #1933 (Muse 12); live legs gated on the owner stop order; EARN-029 next.'
 
   - id: TASK-LAP-004
     title: 'REPO-IMPLEMENT: laptop/phone repos - ULTRON / arditbe UltronAI (reference-only), ULTRON / AbuZar-Ansarii (reference-o... (wave 2)'
