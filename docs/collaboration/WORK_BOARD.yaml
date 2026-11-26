@@ -21859,14 +21859,14 @@ tasks:
     next_action: 'MERGED via PR #1903 (merge bf5a08b7). No pitch sent; prices [VERIFY]; live preview links are an owner/coordinator decision.'
   - id: TASK-EARN-029
     title: 'EARN: freelance client lead-gen - Yello directory + AI contact extraction for Dubai/UAE businesses, personalised pitches for the live Fiverr gigs'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_12
-    branch: null
-    pr: null
+    branch: muse12/task-earn-029-uae-lead-gen
+    pr: 1945
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T01:58:39+05:30'
+    updated_at: '2026-11-26T09:05:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -21879,6 +21879,7 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
     - 'RENUMBERED 2026-11-25 by Muse (coordinator): this record was filed as TASK-EARN-018 in PR #1727, but a parallel earning-lane filing reached main first using TASK-EARN-018 for different content; renumbered to TASK-EARN-029 to restore unique task IDs. Content unchanged.'
     - 'Assigned to Muse 12 as queue position 3 (earning lane) by coordinator WATCH115 (2026-11-26, hub #1483 comment 7172614241); freelance lead-gen lane.'
+    - 'Checkpoint 1 filed 2026-11-26 ~09:05 IST (Muse 12, PR #1945): 10/50 leads (6 Downtown Dubai real estate, 4 JLT/Jumeirah dental) + 10 pitch drafts under earning/TASK-EARN-029-LEAD-LIST.md; Yello.ae verified live (224,402 listings); Fiverr gig URLs not found in repo - owner to confirm before sending.'
     blockers: []
     next_action: 'Assigned to muse_12 as queue position 3 (earning lane) by coordinator WATCH115 (2026-11-26, hub #1483); claim via hub #1483 when it reaches queue head.'
   - id: TASK-EARN-030
@@ -21955,17 +21956,20 @@ tasks:
     next_action: 'Re-slotted to muse_2 by coordinator watch132 (queue position 3, earning lane); claim via hub #1483 when it reaches queue head. Copy only, no publish until Level 1 (10 slots).'
   - id: TASK-EARN-020
     title: 'EARN: itch.io Direct second product (owner order 2026-11-25: implement all) - owner account + tax interview, product page live from existing packs'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_1
-    branch: null
+    branch: muse1/task-earn-020-itchio-direct-product-2
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T08:00:00+05:30'
+    updated_at: '2026-11-26T09:03:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
-    - earning/
+    - earning/itchio/product-3/README-listing.md
+    - earning/itchio/product-3/source/01-the-7-day-email-list-starter-kit.md
+    - earning/itchio/product-3/source/02-day-1-worksheet.md
+    - docs/collaboration/TASK-EARN-020-EVIDENCE.md
     acceptance:
     - 'OWNER ONE-TIME: create the itch.io account and complete the itch.io Direct tax interview (lane was GAP-LIST owner-decision item 5 on 2026-11-24; owner ordered implementation 2026-11-25).'
     - 'Product page live: a second digital product built from existing material (the lead-magnet eBook from TASK-EARN-004, or the 30-day social content pack), with files, page copy and pricing filed via PR under earning/.'
@@ -22019,17 +22023,18 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483. Earning lane: max one EARN task per worker, queue position 3 only, never displaces a FRIDAY head.'
   - id: TASK-EARN-023
     title: 'EARN: Swiggy Builders Club option (corpus reel DYg_b2ZTK70) - prototype agent concept + application pack drafted; owner submits the application'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_tp6
-    branch: null
-    pr: null
+    branch: musetp6/task-earn-023-swiggy-builders-club
+    pr: 1948
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T23:20:00+05:30'
+    updated_at: '2026-11-26T09:23:34+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
+    - earning/TASK-EARN-023-SWIGGY-BUILDERS-CLUB-PACK.md
     acceptance:
     - 'Source (full-watch corpus item DYg_b2ZTK70, @lavin_creator): Swiggy Builders Club (mcp.swiggy.com) lets developers build AI agents/apps on Swiggy Food / Instamart / Dineout APIs. Monetisation is INDIRECT (partnerships, co-branding, hiring, startups - no app-store cut) and access is invite-led through an application form.'
     - 'Deliverable: a one-page prototype concept (e.g. a FRIDAY voice food-ordering / auto-restock agent on the Swiggy MCP) plus the full application answers, drafted under earning/.'
@@ -22037,8 +22042,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
     - 'Coordinator watch110 (2026-11-25): assigned to muse_tp6 as queue position-3 earning top-up (queue VYR-084 -> VYR-078 -> EARN-023); verified AVAILABLE / owner null on main 3efe8b04.'
+    - 'Muse TP6 work PR #1948 (branch musetp6/task-earn-023-swiggy-builders-club, head 22c7b8e3): prototype concept + application pack filed under earning/; Developer form fields verified live first-hand 2026-11-26; demo video and production redirect URIs still owed before the owner can submit.'
     blockers: []
-    next_action: 'Assigned to muse_tp6 by coordinator watch110 (position 3, earning lane); claim via hub #1483 when it reaches queue head.'
+    next_action: 'Claimed by muse_tp6 (hub 7181154926); work PR #1948 open, head 22c7b8e3; owner one-time submits the application after the demo video and production URIs exist.'
   - id: TASK-VYR-081
     title: 'VyralX: GTA 6 content series in her existing model - short excerpts, her English narration, subtitles, BGM, unlisted review-first (growth play, NOT a YouTube-revenue play)'
     status: AVAILABLE
@@ -23011,14 +23017,14 @@ tasks:
     next_action: 'Work PR #1925 open (head 0f3ab624); merge HELD on contracts - pre-existing Futuris time-bomb, fix is TASK-REL-101 (Muse TP10). Rebase onto main once REL-101 lands.'
   - id: TASK-DB-008
     title: 'DB: Back up FRIDAY local state files on FRIDAY-Server (S3) - friday.db + JSON state'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_16
-    branch: null
-    pr: null
+    branch: muse16/task-db-008-friday-state-backup
+    pr: 1944
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-25T22:36:00+05:30'
+    updated_at: '2026-11-26T09:35:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
@@ -23027,8 +23033,9 @@ tasks:
     evidence:
     - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): FRIDAY local state files (S3): FRIDAY/backups empty, .backups newest 2026-11-04; ADB schema backup covers the schema only. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
     - 'Coordinator watch108 (2026-11-25): assigned to muse_16 as queue position 3 behind TASK-INT-039 and TASK-VYR-049; FRIDAY local-state backup.'
+    - 'Checkpoint 1 merged via PR #1944 (merge 2893a6e8, coordinator watch137, 2026-11-26): scoping doc docs/collaboration/TASK-DB-008-FRIDAY-STATE-BACKUP.md - DB-007 overlap DISTINCT, no existing backup covers the acceptance files, baseline friday.db 344K stale 2026-10-27. Live backup + restore proof gated on bridge approval 7113152293.'
     blockers: []
-    next_action: 'Assigned to muse_16 as queue position 3 by coordinator watch108; claim via hub #1483 when it reaches queue head.'
+    next_action: 'Checkpoint 1 merged via PR #1944 (merge 2893a6e8, coordinator watch137): scoping filed - FRIDAY local-state backup gaps proven, no live backup yet. Muse 16 continues to checkpoint 2 (dated backup + restore/read-back proof on S3, gated on bridge approval 7113152293).'
   - id: TASK-DB-009
     title: 'DB: Back up Sentinel local audit ledger on Oracle Server 1 - audit.jsonl, 33 entries'
     status: AVAILABLE
@@ -23381,13 +23388,13 @@ tasks:
   - id: TASK-REL-101
     title: 'Fix the Futuris FUT-030 calendar-test date rollover that fails contracts on main'
     status: AVAILABLE
-    owner: muse_tp10
+    owner: muse_4
     branch: null
     pr: null
     contributors: []
     priority: P0
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T08:10:00+05:30'
+    updated_at: '2026-11-26T09:00:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-REL-101-EVIDENCE.md
@@ -23400,8 +23407,9 @@ tasks:
     - 'Assigned to Muse TP10 as queue position 2 by coordinator watch131 (2026-11-26, hub #1483): TP10 holds FRG-031 (blocked head, contracts HOLD) and asked for this fix in hub #1769; blocked-head rule - take REL-101 now, FRG-031 resumes once contracts is green.'
     - 'Re-slotted to Muse 19 by coordinator watch133 (2026-11-26, hub #1483): TP10 silent since assignment - the watch132 demand for a status report produced no hub post and no branch; per the lag rule the task moves. TP10 keeps FRD-046 + FRG-031 + DB-011. Contracts HOLD on PRs #1920/#1921/#1925/#1927 + #1787 stands until REL-101 lands. Muse 19 burn 15% - a substantial unblocking task fits the low-burn rule.'
     - 'CORRECTION by coordinator watch133 (2026-11-26 ~08:10 IST): REL-101 was briefly re-slotted to Muse 19 in the watch133 board build on the premise TP10 had not reported - TP10 had in fact CLAIMED it at 07:32 IST (hub #1483 comment 7180392839, blocked-head pull after FRG-031), minutes after the watch132 hub read; the re-slot is VOID, TP10 keeps the task. The re-slot line below is superseded, kept for audit.'
+    - 'Re-slotted to Muse 4 by Muse (coordinator) watch136 (2026-11-26, hub #1483): TP10 claimed 07:32 IST (hub 7180392839) but branch musetp10/task-rel-101 still @ 9392738d (claim base, zero work commits) after ~90 min; the watch135 demand for a status report went unanswered and TP10 has posted nothing since the claim. Per the lag rule the P0 moves. TP10 keeps FRD-046 + FRG-031 (blocked head) + DB-011 and takes FRD-046 next per the blocked-head rule until contracts is green. M4 is free (SEN-027 MERGED; REL-102 claimed 08:45 IST but not started) and holds the REL lane; REL-101 unblocks contracts on main + PRs #1787/#1920/#1921/#1925/#1927.'
     blockers: []
-    next_action: 'Claimed by muse_tp10 2026-11-26 ~07:32 IST (hub #1483 comment 7180392839, blocked-head pull after FRG-031); fresh branch + work PR when the fix lands. FRG-031 resumes once contracts is green.'
+    next_action: 'Re-slotted to muse_4 by coordinator watch136 (hub #1483): queue head for Muse 4, ahead of TASK-REL-102 (position 2); fix the FUT-030 date rollover, prove contracts green on main + the 5 held PRs. Claim via hub #1483 + branch push.'
   - id: TASK-VYR-086
     title: 'VyralX supervised-cycle candidate pool run-6 (most-popular discovery + machine QA gates)'
     status: AVAILABLE
@@ -23643,13 +23651,13 @@ tasks:
   - id: TASK-REL-102
     title: 'Fleet CD repair route - diagnose the broken CD path end-to-end and file the smallest safe repair'
     status: AVAILABLE
-    owner: null
+    owner: muse_4
     branch: null
     pr: null
     contributors: []
     priority: P0
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T07:55:00+05:30'
+    updated_at: '2026-11-26T09:10:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -23657,28 +23665,32 @@ tasks:
     - 'No production deploy until coordinator hub clearance.'
     evidence:
     - 'Filed by Muse (coordinator) watch133 (2026-11-26, hub #1483): carried gap - the fleet CD path is broken (LAP-003 / REL-099 / FRG-025 live legs gated on it). Adjacent safety work: REL-098 failed-deploy guard (IN_REVIEW, PR #1668). Unassigned pool feedstock.'
+    - 'Assigned to Muse 4 by Muse (coordinator) watch135 (2026-11-26, hub #1483): Muse 4 free-requested work (SEN-027 MERGED; its 6 other records are IN_REVIEW checkpoint-era tasks with live legs gated on the owner stop order, nothing claimable). REL-102 is P0 and unblocks the most agents - it diagnoses the broken CD path that gates those live legs. Usage 60% at request.'
     blockers: []
-    next_action: 'In the pool - claim via hub #1483 when assigned.'
+    next_action: 'Assigned to muse_4 by coordinator watch135 (free-agent request, hub #1483): claim via hub #1483 + branch push; P0, unblocks the broken fleet CD path that gates live legs.'
 
   - id: TASK-VOI-044
     title: 'FRIDAY voice: acceptance run 27 - next calm-window run after VOI-041 (run 26); per-probe latency + pass/fail'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-voi-044-acceptance-run-27
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T07:55:00+05:30'
+    updated_at: '2026-11-26T09:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VOI-044-ACCEPTANCE-RUN-27.md
     acceptance:
     - 'Run the probes in the next calm window; file per-probe latency + pass/fail.'
     - 'Speed is the headline metric.'
     evidence:
     - 'Filed by Muse (coordinator) watch133 (2026-11-26, hub #1483): next voice acceptance run. Follows VOI-038 run 23 / VOI-039 run 24 / VOI-040 run 25 / VOI-041 run 26 (all MERGED). Unassigned pool feedstock.'
+    - 'Assigned to Muse 10 by Muse (coordinator) watch135 (2026-11-26, hub #1483): Muse 10 free-requested work (queue head VOICE-E2E-003 do-not-execute, CTX-009 gated on it, INT-045 MERGED PR #1771 - its awaiting-merge note is stale; nothing claimable). VOI-044 is the P1 voice acceptance run 27, fits the Muse 10 voice lane. Usage ~55% at request.'
+    - 'Run 27 filed 2026-11-26 ~09:31 IST (Muse 10): room friday-frd005-20261126-035014, greeting onset 0.54 s vs 8 s bar, latency PASS 7/7; scorer overall UNVERIFIED on the followup attribution leg only; first-hand journal read verifies clock/recall/followup/delegation/goodbye content; one real defect - truncated fragment (VOI-043 symptom, pre-VOI-043 build). Evidence: docs/collaboration/TASK-VOI-044-ACCEPTANCE-RUN-27.md.'
     blockers: []
-    next_action: 'In the pool - claim via hub #1483 when assigned.'
+    next_action: 'Checkpoint 1 filed 2026-11-26 ~09:31 IST (Muse 10): run 27 complete, latency PASS 7/7, greeting 0.54 s vs 8 s bar; scorer overall UNVERIFIED (followup attribution only); merge by Muse.'
 
   - id: TASK-MEM-034
     title: 'Memora: auto-promotion proof run 3 - one lesson promoted private -> universal by repeated use'
