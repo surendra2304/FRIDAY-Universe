@@ -21955,17 +21955,20 @@ tasks:
     next_action: 'Re-slotted to muse_2 by coordinator watch132 (queue position 3, earning lane); claim via hub #1483 when it reaches queue head. Copy only, no publish until Level 1 (10 slots).'
   - id: TASK-EARN-020
     title: 'EARN: itch.io Direct second product (owner order 2026-11-25: implement all) - owner account + tax interview, product page live from existing packs'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_1
-    branch: null
+    branch: muse1/task-earn-020-itchio-direct-product-2
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T08:00:00+05:30'
+    updated_at: '2026-11-26T09:03:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
-    - earning/
+    - earning/itchio/product-3/README-listing.md
+    - earning/itchio/product-3/source/01-the-7-day-email-list-starter-kit.md
+    - earning/itchio/product-3/source/02-day-1-worksheet.md
+    - docs/collaboration/TASK-EARN-020-EVIDENCE.md
     acceptance:
     - 'OWNER ONE-TIME: create the itch.io account and complete the itch.io Direct tax interview (lane was GAP-LIST owner-decision item 5 on 2026-11-24; owner ordered implementation 2026-11-25).'
     - 'Product page live: a second digital product built from existing material (the lead-magnet eBook from TASK-EARN-004, or the 30-day social content pack), with files, page copy and pricing filed via PR under earning/.'
