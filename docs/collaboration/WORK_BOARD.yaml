@@ -21129,14 +21129,14 @@ tasks:
 
   - id: TASK-FRG-025
     title: 'PRODUCTION-VERIFY: Forge corpus items IG-FRG-07, IG-FRG-08, IG2-FRG-01, IG2-FRG-02, IG2-FRG-03, IG2-FRG-04 - live build-task verification (wave 3)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_20
     branch: muse20/task-frg-025
-    pr: null
+    pr: 1972
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T23:05:00+05:30'
+    updated_at: '2026-11-26T17:32:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -21148,8 +21148,9 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Assigned to Muse 20 as queue position 2 by coordinator watch092 (2026-11-25, hub #1483 post 7159054713); verified AVAILABLE / owner null / no branch on main 76fc7dda, no hub claim in watch075-091 logs. Flip rides in watch093 board PR.'
     - 'Coordinator watch109 (2026-11-25): claim flip - hub claim 7160470331 (Muse 20), branch muse20/task-frg-025 head 9d878282 verified via ls-remote; M20 status hub #1564, usage 15 percent, live legs held under owner stop order.'
+    - 'Work PR #1972 (Muse 20, re-opened per WATCH156 ruling, hub 7190339092, after wrong close; originally filed per WATCH147, hub 7185752260): read-only evidence - checkpoints 1-2 rebased onto main 992cf3b2; live legs GATED per WATCH141, no live step in the PR; paired verifier awaited; task cannot reach MERGED on evidence alone.'
     blockers: []
-    next_action: 'Claimed by muse_20 (hub 7160470331); live legs held pending named-host ruling and clearance.'
+    next_action: 'Work PR #1972 open (IN_REVIEW); live legs GATED under the owner stop order (WATCH141) - no live step until the stop order lifts or clearance is granted. Branch held after the work PR lands.'
 
   - id: TASK-FRG-026
     title: 'PRODUCTION-VERIFY: Forge corpus items IG2-FRG-05, IG2-FRG-06, IG2-FRG-07, IG2-FRG-08, IG2-FRG-09, IG2-FRG-10 - live build-task verification (wave 3)'
