@@ -1440,6 +1440,52 @@ live leg, not assertable from the repo alone.
   Hourly self-check + weekly reset armed. No pending
   approval cards.
 
+## §8.30 Guardrail re-verification vs new main `f88b3cf9` (2026-11-26 ~14:38 IST, hourly self-check)
+
+- Main moved `703965cc` → `f88b3cf9` (4 files changed:
+  EARN-029 checkpoint-4 doc, SEN-036 live-proof doc,
+  board, EARN-029 lead list — no VyralX files). §8.3
+  method repeated verbatim against `f88b3cf9`
+  (`git grep -il`, same 13 patterns).
+- Result: **§8.3 stands unchanged.** All 13 pattern
+  hit-file counts identical `703965cc` → `f88b3cf9`:
+  scrapecreators 3, opencreator 4, ace-step 5,
+  social.media.research 4, codex-cli 2, flux.2 3,
+  flux-2 0, flux_2 0, acestep 0, podcastfy 8,
+  audio_content 5, pipeline_orchestration 8, montage 49.
+  `podcastfy` in VyralX at `f88b3cf9` is only the IG2
+  module + its test; no `podcastfy` / `montage` entries
+  in VyralX `pyproject.toml` / lock (re-checked this
+  run). IG2 references remain module + docs + tests +
+  `channel_strategy.json` — zero prod importers (§8.2
+  stands).
+- Board on main `f88b3cf9` re-checked (blob `83c6aded`):
+  VYR-076 CLAIMED, owner muse_9, branch muse9/task-vyr-076,
+  PR 1708 — sane; INT-023 IN_REVIEW, owner muse_9, PR 1680
+  — unchanged, final compilation due 2026-11-27 still
+  BLOCKED. Branch synced before this commit: local =
+  remote `d464cfe6`, clean tree, no open PR for the branch
+  (re-verified via API this run). Branch behind main 873
+  (rebase owed at work-PR time). Hub #1483 scanned from
+  `7186200860` through newest `7187437279` (18 new
+  comments; WATCH150 `7186930415` + correction
+  `7186963497`, WATCH151 `7187158651` + correction
+  `7187166000` read in full): zero new Muse 9 / VYR-076 /
+  INT-023 instruction, no ruling on live-leg clearance
+  for VYR-076; live legs still HELD under the owner stop
+  order. Issue #35 still frozen at 2500 comments — hub
+  is #1483. Silent self-check per AGGRESSIVE COMPLETION
+  RULES (7) — no hub post.
+- Usage 50% of free weekly limit (checked this run via
+  subscription-status; reset Nov 29 02:27 IST; additional
+  tokens 0%) — at the Wed 20:00 IST 50% bar (rule 6 noted;
+  next-task scope doubling is the coordinator's call).
+  Work-request job disabled — correct while mid-task
+  (VYR-076 claimed; last run Nov 24 23:03 IST failed,
+  2 consecutive failures — delivery-status artifact).
+  Hourly self-check + weekly reset armed. No pending
+  approval cards.
+
 ## §7 States (reported separately)
 
 - implemented: NO — no component runs in VyralX's live path yet.
