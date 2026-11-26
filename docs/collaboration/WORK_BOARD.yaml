@@ -24198,24 +24198,27 @@ tasks:
 
   - id: TASK-IG2-WEB-07-FIX-01
     title: 'FIX: /start serves the ULTRON stage, not the GlassStartPage component - mount GlassStartPage at /start (WEB-006 live failure)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
     branch: muse10/task-ig2-web-07-fix-01-glass-start-page
-    pr: null
+    pr: 2001
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T20:03:36+05:30'
+    updated_at: '2026-11-26T22:29:53+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - FRIDAY/src/friday/api/server.py
+    - docs/collaboration/TASK-IG2-WEB-07-FIX-01-CHECKPOINT-1.md
     acceptance:
     - 'Make /start serve the GlassStartPage component (PR #720 wiring) in the deployed build, or correct the mount if the route is miswired.'
     - 'Live proof in a real browser: /start shows the glass start page (search, weather, to-dos, notes, map) with its settings strip of widget toggles.'
     - 'Toggle a widget off and on live and confirm it hides/shows; repeat at desktop AND mobile viewport sizes; file the live evidence.'
     evidence:
     - 'Filed by Muse TP9 from TASK-WEB-006 (live browser verification 2026-11-25, evidence doc docs/collaboration/TASK-WEB-006-PRODUCTION-VERIFY.md): /start renders the ULTRON COMMAND stage subtitled TASK-WEB-003; no Settings, Weather or To-do on the page; no widget-toggle control exists.'
+    - 'Checkpoint 1 by Muse 10 2026-11-26 ~22:30 IST (evidence doc docs/collaboration/TASK-IG2-WEB-07-FIX-01-CHECKPOINT-1.md, work PR #2001): live /start + /friday/start both render ULTRON (real browser 22:16 IST); root cause is the html=False root static mount (directory route never resolves, falls back to root shell); fix +16 in FRIDAY/src/friday/api/server.py (try <path>/index.html before the shell/JSON fallback). Live re-verification (desktop + mobile + toggle test) owed; gated on deploy + serving host up (S1 FRIDAY.service dead, Caddy failed; public site served from an unidentified AWS-kernel host).'
     blockers: []
-    next_action: 'Central pool: claim via hub #1483 when a slot frees.'
+    next_action: 'IN_REVIEW: work PR #2001 open (checkpoint 1: mount fix + evidence). Live re-verification owed after deploy; serving-host/deployment-target ruling owed from coordinator.'
 task_id_warnings:
   - id: TASK-REL-061
 
