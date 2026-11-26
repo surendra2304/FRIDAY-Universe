@@ -28,8 +28,8 @@ from friday.workflows import signal_brief as sb  # noqa: E402
 NOW = datetime(2026, 11, 25, 14, 0, tzinfo=timezone.utc)
 
 
-def _envelope(*, watch="watch-ai", title="Signal title", score=80, hours_ago=2, alert_class="digest", dedupe="k1"):
-    fired = NOW - timedelta(hours=hours_ago)
+def _envelope(*, watch="watch-ai", title="Signal title", score=80, hours_ago=2, alert_class="digest", dedupe="k1", base=NOW):
+    fired = base - timedelta(hours=hours_ago)
     return {
         "schema": "intelx.watch_alert/1",
         "envelope_id": f"env-{dedupe}",
@@ -168,7 +168,7 @@ def test_generate_brief_missing_outbox_is_honest_empty(tmp_path, monkeypatch):
 
 
 def test_tool_returns_brief_and_metadata(tmp_path, monkeypatch):
-    main = _write_outbox(tmp_path / "outbox.jsonl", [_envelope(title="Tool signal", score=88, dedupe="t1")])
+    main = _write_outbox(tmp_path / "outbox.jsonl", [_envelope(title="Tool signal", score=88, dedupe="t1", base=datetime.now(timezone.utc))])
     instant = tmp_path / "instant.jsonl"
     instant.write_text("", encoding="utf-8")
     monkeypatch.setattr(sb, "resolve_outbox_path", lambda: main)
