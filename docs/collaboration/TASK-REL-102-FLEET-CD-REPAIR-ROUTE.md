@@ -166,6 +166,44 @@ receive it. This is a real coverage hole that the 5 failures mask (nothing
 deploys anywhere right now), but fixing it means building AWS deploy jobs
 — a scoped follow-up task, not part of the smallest safe repair.
 
+The read-only CD mapping commissioned in this run (subagent, worktree
+`5aafed1e`, no live contact) adds four more structural items, all verified
+against the workflow files on main:
+
+- **No CI gate on deploy.** Neither deploy job has `needs` on any CI job;
+  `friday-universe-ci.yml` and `owner-workflows.yml` run in parallel with
+  the deploy on the same `push: main` event. A broken-contracts merge
+  still triggers a full fleet restart. (The contracts HOLD applies to
+  merges, not to the deploy that fires once something does merge.)
+- **S1 has no OBS-019 baseline.** The pre-deploy health baseline +
+  pre-existing-degradation filter exist only in the S2 job. A
+  pre-existing degraded Memora / Forge / Sentinel fails the S1 job on an
+  otherwise healthy deploy — the exact failure mode OBS-019 fixed on S2
+  after run 45122467146 failed on pre-existing Futuris / IntelX 503s.
+- **S1 still installs the Stratex timer on the wrong server.** The
+  STR-044 timer-install block copies
+  `Stratex/deployment/friday-stratex-reconciliation.{service,timer}` and
+  enables the timer on Server 1, where Stratex no longer runs; the timer
+  belongs on Stratex-Server. (Dead branches in the S1 health-gate `case`
+  still map FRIDAY / Inference / Stratex ports, but `SERVER1_AGENTS`
+  excludes them, so those are harmless.)
+- **Three layouts disagree.** CD puts IntelX + Futuris + Cortex on Oracle
+  Server 2; the 2026-11-24 owner fleet order puts IntelX + Futuris on
+  IntelX-Server and Cortex on Oracle Server 1; `DEPLOYMENT_GUIDE.md` and
+  `deploy/setup_fleet.sh` still provision the pre-move layout. Only one
+  layout can be right — resolving it needs one live-verified fleet map
+  (follow-up, not this PR).
+- **Rollback re-deploy trap.** After `rollback_deploy.sh` resets a server
+  to a good commit, `main` still points at the bad commit — the next CD
+  push re-deploys the bad head unless a revert lands first. Worth a line
+  in the runbook, not a code change here.
+- **REL-098 board record is stale (flagged, not flipped here).** PR #1668
+  is merged (merge `404f5014`, 2026-11-24 13:18:30 UTC) and its guard
+  commit `c8e83ab9` is an ancestor of HEAD — the recovery guard is live on
+  main — but the board still reads REL-098 IN_REVIEW / pr 1668. The
+  correction belongs to the coordinator's board route (or Muse 9), not to
+  this PR's diff, which touches only the REL-102 record.
+
 ## 4. Smallest safe repair (runbook — needs coordinator hub clearance)
 
 No production deploy by the worker; each step is a fleet-side state
@@ -257,5 +295,9 @@ with neighbours (`test_fleet_cd_branch_guard.py`,
   they are wanted work) is for the coordinator to determine from the
   on-server diff at runbook step 2 — it does not change the diagnosis.
 - Subagent mapping of the CD path (workflows + `deploy/` + docs) was
-  commissioned in this run; its report, if it adds anything beyond §2,
-  will be folded in by a follow-up commit.
+  commissioned in this run (read-only, worktree `5aafed1e`, no live
+  contact) and its report was recovered and folded in above (§3.5):
+  the AWS coverage gap, the missing CI gate, the S1 OBS-019 gap, the
+  misplaced STR-044 timer, the three-way layout conflict, and the
+  rollback re-deploy trap all come from that mapping, verified against
+  the workflow files on main.
