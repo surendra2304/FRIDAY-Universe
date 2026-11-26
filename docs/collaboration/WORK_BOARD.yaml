@@ -19294,14 +19294,14 @@ tasks:
 
   - id: TASK-REL-099
     title: 'Git-style incremental fleet backup for Oracle Cloud (owner order 2026-11-26): only modified files stored, versioned snapshots with enforced retention, no duplicated VyralX media piling up on Oracle Server 2'
-    status: IN_PROGRESS
+    status: IN_REVIEW
     owner: muse_12
     branch: muse12/task-rel-099-incremental-fleet-backup
-    pr: 1887
+    pr: 1916
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T03:17:00+05:30'
+    updated_at: '2026-11-26T05:11:00+05:30'
     files:
       - scripts/backup_fleet_databases.py
       - tests/test_rel096_backup_fleet_state.py
@@ -21669,12 +21669,12 @@ tasks:
     title: 'REPO-IMPLEMENT: laptop/phone repos - AURA / aura-android-use (adapt), ARTEMIS (adapt), scrcpy (adopt), Browser Use (a... (wave 2)'
     status: CLAIMED
     owner: muse_12
-    branch: null
+    branch: muse12/task-lap-003-laptop-phone-wave2
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-26T03:17:00+05:30'
+    updated_at: '2026-11-26T05:11:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
