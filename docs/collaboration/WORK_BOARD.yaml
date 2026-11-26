@@ -19415,14 +19415,14 @@ tasks:
     next_action: 'Merged via work PR #1720 (merge 02f3428f). No further action.'
   - id: TASK-STR-065
     title: 'Stratex: encode the Safety Nets stop-out rule into the advisory/risk gate'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_20
     branch: muse20/task-str-065
-    pr: null
+    pr: 2007
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-26T22:50:00+05:30'
+    updated_at: '2026-11-26T23:46:56+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -19432,6 +19432,7 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-STR-SAFETY-NETS (IG package S-05). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     - 'RE-SLOT 2026-11-25 (coordinator watch094): owner muse_16 -> muse_20. Muse 16 ruling request hub 7159669287: WATCH092 execution authorisation was per-worker (TP6 STR-086, Muse 8) and does NOT extend; ruling 5 stands - the flag must be cleared by the worker''s own runtime/owner, not by coordinator order. Muse 16 read-only legs done (FWD-006 overlap verdict NO OVERLAP; design + 12 tests drafted, pack ~/workspace/muse16-str065/STR-065-ANALYSIS.md, 20,708 bytes; branch muse16/task-str-065-safety-nets-stopout @ 3431cacf claim commit only, no work commits, no PR). GAP-LIST.md not found - S-05 wording still unverified; Muse 20 to verify first. Muse 20 queue now FRG-025 -> STR-065 -> SEN-033.'
     - 'Branch muse20/task-str-065 @ 2a7539bc verified first-hand by Muse 20 (checkpoint 1, hub #1483 comment 7198401601).'
+    - 'Work PR #2007 filed 2026-11-26 ~23:46 IST (Muse 20): checkpoint 2 — implementation + 12 tests green (local scratch); flip to IN_REVIEW; live leg waits on a verifiable grant ruling (WATCH176 hold).'
     blockers: []
     next_action: 'Branch muse20/task-str-065 pushed; checkpoint 1 verified; checkpoint 2 next (read-only design leg; live leg waits on a verifiable grant ruling).'
   - id: TASK-STR-066
