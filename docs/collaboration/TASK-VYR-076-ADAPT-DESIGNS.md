@@ -1250,6 +1250,51 @@ live leg, not assertable from the repo alone.
   failures — delivery-status artifact). Hourly self-check +
   weekly reset armed. No pending approval cards.
 
+## §8.26 Guardrail re-verification vs new main `530fdb02` (2026-11-26 ~09:38 IST, hourly self-check)
+
+- Main moved `f53ce7f5` → `530fdb02` (merges #1940/#1941 board
+  watch135/135b, #1943 board watch136, #1944 DB-008 checkpoint 1,
+  #1945 EARN-029 checkpoint 1, #1946 EARN-020, #1947 board
+  watch137; WATCH135 hub `7181402891` + WATCH136 hub
+  `7181836172` read in full). §8.3 method repeated verbatim
+  against `530fdb02` (`git grep -il`, same 13 patterns;
+  hit-file sets compared after stripping revision prefixes).
+- Result: **§8.3 stands unchanged.** All 13 pattern hit-file
+  sets are identical `f53ce7f5` → `530fdb02`: scrapecreators 3,
+  opencreator 4, ace-step 5, social.media.research 4, codex-cli 2,
+  flux.2 3, flux-2 0, flux_2 0, acestep 0, podcastfy 8,
+  audio_content 5, pipeline_orchestration 8, montage 49. No new
+  hit-file at all. No new VyralX production hit, import, or wiring.
+- `git diff --name-only f53ce7f5..530fdb02 -- VyralX` is empty
+  — no VyralX file changed at all in this range (8 files total:
+  DB-008/EARN-020/EARN-029 evidence docs, board, EARN-029 lead
+  list + itchio product files). IG2 modules remain unwired
+  (§8.2 stands).
+- Board on main `530fdb02` re-checked (blob `d066ad22`):
+  VYR-076 CLAIMED, owner muse_9, branch muse9/task-vyr-076,
+  PR 1708 — sane; INT-023 IN_REVIEW, owner muse_9 — unchanged,
+  final compilation due 2026-11-27 still BLOCKED. TASK-INT-041
+  still AVAILABLE / owner null — noted, not claimed this run
+  (VYR-076 remains current; INT-023 still held). Branch synced
+  before this commit: local = remote `6e0c0e1e`, clean tree, no
+  open PR for the branch (verified via API this run). Branch
+  behind main 757 (rebase owed at work-PR time). Hub #1483
+  scanned through newest `7182127093` (WATCH135 + WATCH136 read
+  in full): zero new Muse 9 / VYR-076 / INT-023 instruction,
+  no ruling on live-leg clearance for VYR-076; live legs still
+  HELD under the owner stop order. M9 burn 48% carried in
+  WATCH136 — no demand owed. Issue #35 still frozen at 2500
+  comments — hub is #1483. Silent self-check per AGGRESSIVE
+  COMPLETION RULES (7) — no hub post.
+- Usage 49% of free weekly limit (checked this run via
+  subscription-status; reset Nov 29 02:27 IST; additional
+  tokens 0%) — under the Wed 20:00 IST 50% bar (rule 6 noted;
+  next-task scope doubling is the coordinator's call).
+  Work-request job disabled — correct while mid-task (VYR-076
+  claimed; last run Nov 24 23:03 IST failed, 2 consecutive
+  failures — delivery-status artifact). Hourly self-check +
+  weekly reset armed. No pending approval cards.
+
 ## §7 States (reported separately)
 
 - implemented: NO — no component runs in VyralX's live path yet.
