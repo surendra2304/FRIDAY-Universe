@@ -21859,14 +21859,14 @@ tasks:
     next_action: 'MERGED via PR #1903 (merge bf5a08b7). No pitch sent; prices [VERIFY]; live preview links are an owner/coordinator decision.'
   - id: TASK-EARN-029
     title: 'EARN: freelance client lead-gen - Yello directory + AI contact extraction for Dubai/UAE businesses, personalised pitches for the live Fiverr gigs'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_12
     branch: muse12/task-earn-029-uae-lead-gen
-    pr: 1945
+    pr: 1953
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T09:05:00+05:30'
+    updated_at: '2026-11-26T10:51:05+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -21880,8 +21880,10 @@ tasks:
     - 'RENUMBERED 2026-11-25 by Muse (coordinator): this record was filed as TASK-EARN-018 in PR #1727, but a parallel earning-lane filing reached main first using TASK-EARN-018 for different content; renumbered to TASK-EARN-029 to restore unique task IDs. Content unchanged.'
     - 'Assigned to Muse 12 as queue position 3 (earning lane) by coordinator WATCH115 (2026-11-26, hub #1483 comment 7172614241); freelance lead-gen lane.'
     - 'Checkpoint 1 filed 2026-11-26 ~09:05 IST (Muse 12, PR #1945): 10/50 leads (6 Downtown Dubai real estate, 4 JLT/Jumeirah dental) + 10 pitch drafts under earning/TASK-EARN-029-LEAD-LIST.md; Yello.ae verified live (224,402 listings); Fiverr gig URLs not found in repo - owner to confirm before sending.'
+    - 'Checkpoint 2 filed 2026-11-26 ~10:03 IST (Muse 12, PR #1953): 20/50 leads (batch 3: 5 travel & tourism agencies; batch 4: 5 fitness/wellness studios, Business Bay/DIFC) + 10 more pitch drafts; websites verified live (raynatours.com, desertgate.ae, alrais.com); lead 15 has no website in listing - verify before outreach.'
+    - 'MERGED via PR #1953 (merge 94e6c679), coordinator-merged watch141: CI 9/9 green first-hand on head 243d2ac0, full-diff reviewed vs true merge-base f06de330. Checkpoint 2: 20/50 UAE leads + pitch drafts filed.'
     blockers: []
-    next_action: 'Assigned to muse_12 as queue position 3 (earning lane) by coordinator WATCH115 (2026-11-26, hub #1483); claim via hub #1483 when it reaches queue head.'
+    next_action: 'MERGED via PR #1953 (checkpoint 2). 20/50 UAE leads + pitch drafts filed; task complete as a checkpoint record.'
   - id: TASK-EARN-030
     title: 'EARN: Contra lane start (owner order 2026-11-25: implement all) - owner creates the account, Muse builds the full CometWorks profile + services'
     status: AVAILABLE
@@ -22100,14 +22102,14 @@ tasks:
     next_action: 'Muse TP5 continues to deliverable 3; owner accounts + live brief owed.'
   - id: TASK-FRD-057
     title: 'FRIDAY: book-page translation reading mode - photograph pages, get Telugu translation page by page'
-    status: CLAIMED
+    status: MERGED
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-frd-057-book-translation
+    pr: 1927
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T06:16:00+05:30'
+    updated_at: '2026-11-26T10:51:05+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - FRIDAY/
@@ -22119,8 +22121,10 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Coordinator watch109 (2026-11-25): board-owner flip - work PR #1849 open, head 99064620, branch musetp9/task-frd-057 verified via ls-remote; hub queue per watch108, owner field was null.'
     - 'Re-slotted to Muse 15 by coordinator watch129 (2026-11-26): TP9 work PR #1849 CI-blocked (Validate monorepo-only policy failing) with no fix or report after the watch125 demand and the watch128 re-slot warning; TP9 keeps WEB-006, FRD-060 and FRG-033. Fresh branch + new work PR; PR #1849 is superseded - do not rebase it.'
+    - 'Work PR #1927 open (Muse 15 re-file of TP9 #1849, head dd38f6f2, base main 4c0acbfa); CI running at filing; module docstring TTS paragraph corrected to /api/voice/speak edge-tts; CI workflow re-anchored (test_ig_frd_061_lead_verification.py kept). Board flip rides here.'
+    - 'MERGED via PR #1927 (merge 3606b528), coordinator-merged watch141: CI 10/10 green first-hand on head 9ed313d6, full-diff reviewed vs true merge-base f06de330. Live proof (one real page on production FRIDAY) still owed.'
     blockers: []
-    next_action: 'Re-slotted to muse_tp6 by coordinator watch129; claim via hub #1483 + branch push when reached (queue position 3). Fresh branch + new work PR; TP9 PR #1850 superseded.'
+    next_action: 'MERGED via PR #1927. Live proof still owed: one real book page translated end to end on production FRIDAY (gated - owner stop order).'
   - id: TASK-FRD-058
     title: 'FRIDAY: RSVP speed-reading aid - word-by-word reader for pasted text and articles'
     status: CLAIMED
@@ -22130,7 +22134,7 @@ tasks:
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T06:16:00+05:30'
+    updated_at: '2026-11-26T10:51:05+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - FRIDAY/
@@ -22144,7 +22148,7 @@ tasks:
     - 'Re-slotted to Muse TP6 by coordinator watch129 (2026-11-26): TP9 work PR #1850 CI-blocked (test failing) with no fix or report after the watch125 demand and the watch128 re-slot warning; TP9 keeps WEB-006, FRD-060 and FRG-033. Fresh branch + new work PR; PR #1850 is superseded - do not rebase it.'
     - 'Re-slotted to Muse TP7 by coordinator watch129 (2026-11-26): TP9 work PR #1848 CI-blocked (Validate roster, task IDs and file ownership failing) with no fix or report after the watch125 demand and the watch128 re-slot warning; TP9 keeps WEB-006, FRD-060 and FRG-033. Fresh branch + new work PR; PR #1848 is superseded - do not rebase it.'
     blockers: []
-    next_action: 'Re-slotted to muse_tp7 by coordinator watch129; claim via hub #1483 + branch push when reached (queue position 4). Fresh branch + new work PR; TP9 PR #1848 superseded.'
+    next_action: 'Claimed by Muse TP6 (hub 7182957572); branch musetp6/task-frd-058-rsvp-reader; checkpoint 1 filed (commit b67d2dc6). Repo leg in progress; live leg (one real article read on production FRIDAY at two rates) gated - clearance owed. CORRECTION: coordinator board PR watch141 fixed this record''s next_action, which wrongly carried FRD-059 text (muse_tp7 / PR #1848).'
   - id: TASK-FRD-059
     title: 'FRIDAY: job-hunt lane completion - curated per-step tool stack plus scheduled board searches matched to the owner''s CV'
     status: CLAIMED
@@ -22305,14 +22309,14 @@ tasks:
     next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483.'
   - id: TASK-FRG-031
     title: 'Forge: builder-environment upgrades - live preview of generated web output plus the Claude-Code-in-VS-Code setup recipe recorded'
-    status: CLAIMED
+    status: MERGED
     owner: muse_tp10
-    branch: null
-    pr: null
+    branch: musetp10/task-frg-031
+    pr: 1921
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T05:21:04+05:30'
+    updated_at: '2026-11-26T10:51:05+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Forge/
@@ -22325,8 +22329,9 @@ tasks:
     - 'Coordinator watch113 (2026-11-26): assigned to muse_tp6 as queue position 3 behind VYR-078 and EARN-023, refilling the slot left by the VYR-084 merge; verified AVAILABLE / owner null on main 93409b9f.'
     - 'Returned to the pool by coordinator watch116 (2026-11-26, hub #1483 comment 7173089848); TP6 took FRD-056 + VYR-078 instead.'
     - 'Assigned to Muse TP10 by coordinator watch122 (queue pos 3; WF-002 released to pool).'
+    - 'MERGED via PR #1921 (merge 064806e3), coordinator-merged watch141: CI 11/11 green incl contracts first-hand on head f38df2c7, full-diff reviewed vs true merge-base e8f50ef6. Live leg gated (owner stop order).'
     blockers: []
-    next_action: 'Available in the pool; claim via hub #1483 when a slot frees.'
+    next_action: 'MERGED via PR #1921. Live leg gated (owner stop order).'
   - id: TASK-FRG-032
     title: 'Forge: MQL5 EA codegen workflow - prompt to MetaEditor-compiled Expert Advisor, proven on the EMA 5/11 example'
     status: AVAILABLE
@@ -23388,14 +23393,14 @@ tasks:
 
   - id: TASK-REL-101
     title: 'Fix the Futuris FUT-030 calendar-test date rollover that fails contracts on main'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-rel-101-futuris-contracts-date-rollover
     pr: 1949
     contributors: []
     priority: P0
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T09:38:56+05:30'
+    updated_at: '2026-11-26T10:35:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-REL-101-EVIDENCE.md
@@ -23410,8 +23415,9 @@ tasks:
     - 'CORRECTION by coordinator watch133 (2026-11-26 ~08:10 IST): REL-101 was briefly re-slotted to Muse 19 in the watch133 board build on the premise TP10 had not reported - TP10 had in fact CLAIMED it at 07:32 IST (hub #1483 comment 7180392839, blocked-head pull after FRG-031), minutes after the watch132 hub read; the re-slot is VOID, TP10 keeps the task. The re-slot line below is superseded, kept for audit.'
     - 'Re-slotted to Muse 4 by Muse (coordinator) watch136 (2026-11-26, hub #1483): TP10 claimed 07:32 IST (hub 7180392839) but branch musetp10/task-rel-101 still @ 9392738d (claim base, zero work commits) after ~90 min; the watch135 demand for a status report went unanswered and TP10 has posted nothing since the claim. Per the lag rule the P0 moves. TP10 keeps FRD-046 + FRG-031 (blocked head) + DB-011 and takes FRD-046 next per the blocked-head rule until contracts is green. M4 is free (SEN-027 MERGED; REL-102 claimed 08:45 IST but not started) and holds the REL lane; REL-101 unblocks contracts on main + PRs #1787/#1920/#1921/#1925/#1927.'
     - 'Claim: hub #1483 comment 7182014034 (Muse 4, 2026-11-26 ~09:20 IST, WATCH136 re-slot TP10 -> Muse 4); branch muse4/task-rel-101-futuris-contracts-date-rollover from main 036fb2da; work PR #1949 (fix: unpin calendar tests from the fixed date; local 18/18 + full contracts-step list 103/103).'
+    - 'Merged by Muse (coordinator) watch139 (2026-11-26, hub #1483): work PR #1949 merged as f06de330; CI 9/9 green on head 0f572753 at merge time (7 success + 2 skipped); diff reviewed first-hand via API patch (two Futuris calendar test files unpinned; production code untouched). Contracts-green push-run proof on the new main head still owed at merge time (no push run had appeared by ~10:08 IST); held PRs #1950/#1787/#1920/#1921/#1925/#1927 to rebase onto f06de330 and confirm contracts green.'
     blockers: []
-    next_action: 'Claimed by muse_4 2026-11-26 ~09:20 IST (hub #1483 comment 7182014034, WATCH136 re-slot TP10 -> Muse 4); work PR #1949 open, CI pending; merge by coordinator on green.'
+    next_action: 'MERGED 2026-11-26 (work PR #1949, merge f06de330). Held PRs rebase onto f06de330; contracts-green proof on main owed via the next push workflow run.'
   - id: TASK-VYR-086
     title: 'VyralX supervised-cycle candidate pool run-6 (most-popular discovery + machine QA gates)'
     status: AVAILABLE
@@ -23458,14 +23464,14 @@ tasks:
     next_action: 'Assigned to muse_tp11 by coordinator watch131 (queue position 2, after VYR-081); claim via hub #1483 + branch push when reached.'
   - id: TASK-FUT-032
     title: 'Futuris forecast accuracy scoring run-3 (verify last 3 scheduler cycles + score oldest unscored)'
-    status: AVAILABLE
+    status: MERGED
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-fut-032-forecast-accuracy-run-3
+    pr: 1956
     contributors: []
     priority: P2
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T06:55:00+05:30'
+    updated_at: '2026-11-26T10:51:05+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-FUT-032-EVIDENCE.md
@@ -23475,8 +23481,10 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch131 (2026-11-26, hub #1483): FUT-027 scoring run-2 landed; no run-3 scoring task was open. Outcome-bearing: scored accuracy is the Futuris scoreboard input.'
     - 'Assigned to Muse 15 as queue position 3 by coordinator watch131 (2026-11-26, hub #1483): Muse 15 queue was depth 2 (FRD-043 HELD + FRD-057) after EARN-031 merged; top-up from the new pool.'
+    - 'Claimed by Muse 15 2026-11-26 ~09:02 IST (hub 7181805602); work PR #1956 open (head 44b93e84, base main f06de330): cycle proof filed - 39 ACTIVE forecasts, full 9-target refreshes 01/03/04 UTC, 02:xx UTC silent-zero; scoring leg BLOCKED (S2 Futuris/.env missing, no DATABASE_URL, tracker probe cannot run). Live Futuris answers from 32.236.185.237:8004, not S2 systemd (unit dead).'
+    - 'MERGED via PR #1956 (merge fe06362a), coordinator-merged watch141: CI 9/9 green first-hand on head 63170c26, full-diff reviewed vs true merge-base e8f50ef6. Cycle proof filed; scoring leg BLOCKED on DB access (S2 Futuris/.env restore needs hub clearance).'
     blockers: []
-    next_action: 'Assigned to muse_15 by coordinator watch131 (queue position 3, after FRD-043 + FRD-057); claim via hub #1483 + branch push when reached.'
+    next_action: 'MERGED via PR #1956. Scoring leg BLOCKED on DB access (S2 Futuris/.env restore needs hub clearance); cycle proof filed.'
   - id: TASK-STR-088
     title: 'Stratex forward-window fills audit run-6 (daemon ledger vs venue positions/history)'
     status: MERGED
@@ -23502,13 +23510,13 @@ tasks:
   - id: TASK-MEM-033
     title: 'Memora three-section proof run-4 (one real write/read/promotion cycle, live service)'
     status: AVAILABLE
-    owner: null
+    owner: muse_15
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T08:15:00+05:30'
+    updated_at: '2026-11-26T10:51:05+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-MEM-033-EVIDENCE.md
@@ -23519,8 +23527,9 @@ tasks:
     - 'Filed by Muse (coordinator) watch131 (2026-11-26, hub #1483): MEM-023/024/025 proof runs landed; no run-4 task was open. Unassigned pool feedstock.'
     - 'Assigned to Muse 7 by coordinator watch132 (2026-11-26, hub #1483): Muse 7 queue was depth 2 (EARN-032 + VYR-086); EARN-032 re-slotted to Muse 2 (Muse 7 dark since watch128 demand); top-up from the unassigned pool.'
     - 'Re-slotted to the pool by Muse (coordinator) watch134 (2026-11-26, hub #1483): Muse 7 dark since the watch128 demand with no report and no claim or branch for this task (assigned watch132, never claimed); returned to the unassigned pool for the next queue top-up.'
+    - 'Assigned to Muse 15 as queue position 2 by coordinator watch141 (2026-11-26, hub #1483): Muse 15 queue depth 1 after FRD-057 + FUT-032 merged (FRD-043 HELD head); top-up from the unassigned pool.'
     blockers: []
-    next_action: 'In the unassigned pool - next Memora queue top-up when a slot opens; claim via hub #1483 + branch push when assigned.'
+    next_action: 'Assigned to muse_15 by coordinator watch141 (queue position 2, after FRD-043); claim via hub #1483 + branch push when reached.'
   - id: TASK-CTX-011
     title: 'Cortex escalation-ratio run-5 readiness (restart-clearance request + fresh-48h window plan)'
     status: AVAILABLE
@@ -23652,14 +23661,14 @@ tasks:
 
   - id: TASK-REL-102
     title: 'Fleet CD repair route - diagnose the broken CD path end-to-end and file the smallest safe repair'
-    status: AVAILABLE
+    status: MERGED
     owner: muse_4
-    branch: null
-    pr: null
+    branch: muse4/task-rel-102-fleet-cd-repair-route
+    pr: 1954
     contributors: []
     priority: P0
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T09:10:00+05:30'
+    updated_at: '2026-11-26T10:51:05+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -23668,29 +23677,34 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch133 (2026-11-26, hub #1483): carried gap - the fleet CD path is broken (LAP-003 / REL-099 / FRG-025 live legs gated on it). Adjacent safety work: REL-098 failed-deploy guard (IN_REVIEW, PR #1668). Unassigned pool feedstock.'
     - 'Assigned to Muse 4 by Muse (coordinator) watch135 (2026-11-26, hub #1483): Muse 4 free-requested work (SEN-027 MERGED; its 6 other records are IN_REVIEW checkpoint-era tasks with live legs gated on the owner stop order, nothing claimable). REL-102 is P0 and unblocks the most agents - it diagnoses the broken CD path that gates those live legs. Usage 60% at request.'
+    - 'Claim: hub #1483 comment 7181480891 by Muse 4, 2026-11-26 ~08:45 IST. Board verified AVAILABLE / owner muse_4 on main f53ce7f5; no competing claim, branch or PR.'
+    - 'Diagnosis (first-hand, 2026-11-26): last 30 deploy-monorepo runs - 0 deploys (25 vacuous skips, 5 failed). S1 trips the dirty-tree guard (M Futuris memora_cloud_fallback + test, D VyralX test_vyr057, bridge read-only); S2 trips the TASK-OBS-005 branch guard (checkout parked on muse10/task-voi-044-acceptance-run-27 @ pushed tip 73b2ec2e, no stranded work). Workflow behaving correctly; repair is the fleet-side runbook in the evidence doc. Work PR #1954 (head 64a9dde4): evidence doc + 6 staged-proof tests (6/6 local, 37/37 with neighbours) + comment-only dirty-tree-guard markers; board flip rides in this PR.'
+    - 'MERGED via PR #1954 (merge 3c729d65), coordinator-merged watch141: CI 10/10 green incl contracts first-hand on head 051746ff, full-diff reviewed vs true merge-base bf41a6c4. Live leg gated: runbook execution + green deploy on coordinator clearance.'
     blockers: []
-    next_action: 'Assigned to muse_4 by coordinator watch135 (free-agent request, hub #1483): claim via hub #1483 + branch push; P0, unblocks the broken fleet CD path that gates live legs.'
+    next_action: 'MERGED via PR #1954. Live leg gated: runbook execution + green deploy on coordinator clearance.'
 
   - id: TASK-VOI-044
     title: 'FRIDAY voice: acceptance run 27 - next calm-window run after VOI-041 (run 26); per-probe latency + pass/fail'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_10
-    branch: null
-    pr: null
+    branch: muse10/task-voi-044-acceptance-run-27
+    pr: 1952
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T09:10:00+05:30'
+    updated_at: '2026-11-26T09:55:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VOI-044-ACCEPTANCE-RUN-27.md
     acceptance:
     - 'Run the probes in the next calm window; file per-probe latency + pass/fail.'
     - 'Speed is the headline metric.'
     evidence:
     - 'Filed by Muse (coordinator) watch133 (2026-11-26, hub #1483): next voice acceptance run. Follows VOI-038 run 23 / VOI-039 run 24 / VOI-040 run 25 / VOI-041 run 26 (all MERGED). Unassigned pool feedstock.'
     - 'Assigned to Muse 10 by Muse (coordinator) watch135 (2026-11-26, hub #1483): Muse 10 free-requested work (queue head VOICE-E2E-003 do-not-execute, CTX-009 gated on it, INT-045 MERGED PR #1771 - its awaiting-merge note is stale; nothing claimable). VOI-044 is the P1 voice acceptance run 27, fits the Muse 10 voice lane. Usage ~55% at request.'
+    - 'Run 27 filed 2026-11-26 ~09:31 IST (Muse 10): room friday-frd005-20261126-035014, greeting onset 0.54 s vs 8 s bar, latency PASS 7/7; scorer overall UNVERIFIED on the followup attribution leg only; first-hand journal read verifies clock/recall/followup/delegation/goodbye content; one real defect - truncated fragment (VOI-043 symptom, pre-VOI-043 build). Evidence: docs/collaboration/TASK-VOI-044-ACCEPTANCE-RUN-27.md.'
     blockers: []
-    next_action: 'Assigned to muse_10 by coordinator watch135 (free-agent request, hub #1483): claim via hub #1483 + branch push; run in the next calm window, per-probe latency filed.'
+    next_action: 'Checkpoint 1 filed 2026-11-26 ~09:31 IST (Muse 10): run 27 complete, latency PASS 7/7, greeting 0.54 s vs 8 s bar; scorer overall UNVERIFIED (followup attribution only); merge by Muse.'
 
   - id: TASK-MEM-034
     title: 'Memora: auto-promotion proof run 3 - one lesson promoted private -> universal by repeated use'
@@ -23714,13 +23728,13 @@ tasks:
   - id: TASK-INT-041
     title: 'IntelX: fast-lane final compilation - compile the INT-019/023/036/038/039 evidence into the final proof (due 2026-11-27)'
     status: AVAILABLE
-    owner: null
+    owner: muse_15
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T07:55:00+05:30'
+    updated_at: '2026-11-26T10:51:05+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -23728,8 +23742,9 @@ tasks:
     - 'Filed as an evidence doc.'
     evidence:
     - 'Filed by Muse (coordinator) watch133 (2026-11-26, hub #1483): the record was MISSING from the board though queued for Muse 9 after INT-023 (REL-098 evidence, hub watch 7131396444: queue REL-098 -> INT-023 (due 2026-11-27) -> INT-041; REL-098 doc line 7). Filed to the pool - Muse 9 queue is 6 deep; assign when a slot opens.'
+    - 'Assigned to Muse 15 as queue position 3 by coordinator watch141 (2026-11-26, hub #1483): Muse 15 queue depth 1 after FRD-057 + FUT-032 merged (FRD-043 HELD head); top-up from the unassigned pool.'
     blockers: []
-    next_action: 'In the pool - Muse 9 next IntelX item when a queue slot opens; claim via hub #1483 when assigned.'
+    next_action: 'Assigned to muse_15 by coordinator watch141 (queue position 3, after MEM-033); claim via hub #1483 + branch push when reached.'
 
   - id: TASK-INT-042
     title: 'IntelX: running-home consolidation - answer where IntelX runs after the S1/S2 consolidation, with gates'

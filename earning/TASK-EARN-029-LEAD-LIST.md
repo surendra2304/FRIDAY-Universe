@@ -1,10 +1,13 @@
-# TASK-EARN-029 — Lead list, checkpoint 1: 10 of 50 leads (UAE/Dubai)
+# TASK-EARN-029 — Lead list, checkpoint 2: 20 of 50 leads (UAE/Dubai)
 
-Researched 2026-11-26 ~09:0x IST by Muse 12 worker. Method: Yello business
-directory verified live as the source directory (see checkpoint doc), leads
-drawn from live public directory/place listings for the named businesses.
-Every business below appeared in live search results with the phone number
-and website shown.
+Researched 2026-11-26 ~09:0x IST by Muse 12 worker (checkpoint 1: leads
+1–10). Checkpoint 2 added 2026-11-26 ~10:0x IST: leads 11–20 (travel &
+tourism agencies + fitness/wellness studios, Business Bay / DIFC / Al
+Barsha). Method: Yello business directory verified live as the source
+directory (see checkpoint doc), leads drawn from live public
+directory/place listings for the named businesses. Every business below
+appeared in live search results with the phone number and website shown
+(except lead 15 — no website in the listing, flagged).
 
 **Verification caveat, stated plainly (same honesty bar as TASK-EARN-027):**
 phone numbers are as shown in the public listings; none were called to
@@ -57,7 +60,39 @@ pages.
 | 9 | Magnum Dental Clinic | Indigo Tower, Cluster D, JLT | +971544522332 | https://www.magnumclinic.ae/dental-clinic-jlt | S1 + S3 |
 | 10 | Hey Dental Clinic | Goldcrest Executive, Cluster C, JLT | +97144508717 | https://heydental.ae/ | S1 + S3 |
 
-## Pitch drafts (10 — one per lead)
+## Batch 3 — Travel & tourism agencies, Dubai (5)
+
+Travel agencies publish constantly — destination guides, holiday packages,
+visa explainers, tour videos — and pay for content that brings booking
+enquiries. YouTube scripts (S2) are the natural match: hook-first scripts
+for faceless destination/tour videos, plus SEO articles (S1) for the
+holiday and visa searches travellers make first.
+
+| # | Business | Area | Phone | Website / route | Matched service |
+|---|----------|------|-------|-----------------|-----------------|
+| 11 | Holidayys (Holidays Tours LLC) | Wilson Building B, Shop 35, 2nd December St, Al Jafiliya | +97145890001 (mobile +971555202244; email info@holidayys.com shown in listing) | https://holidayys.com | S2 + S1 |
+| 12 | Rayna Tours & Travels | Dubai (est. 2006) | +97142087444 (also +971567857259) | https://www.raynatours.com/ | S2 + S1 |
+| 13 | Desert Gate Tourism LLC | I-Rise Tower, Hessa St, Al Barsha Heights | +97144421155 (email info@desertgate.ae) | https://desertgate.ae/ | S2 + S1 |
+| 14 | Al Rais Travel & Shipping Agencies LLC | Al Quoz 4, Dubai (est. 1977) | +97143933333 (email info@alrais.com) | https://www.alrais.com/ | S2 + S1 |
+| 15 | The World At Her Feet | Nos 17, The Iridium Building, Umm Suqeim Rd, Al Barsha | +97143873461 (also +971505092037) | No website shown in listing — verify before outreach | S2 + S1 |
+
+## Batch 4 — Fitness & wellness studios, Business Bay / DIFC (5)
+
+Studios and gyms live on social proof: class content, trainer tips, member
+stories, programme guides. All five are independent/small businesses with
+their own websites and publishable service pages — the social pack (S3)
+plus SEO articles (S1) fit; the spa also fits product descriptions (S4)
+for its treatment packages.
+
+| # | Business | Area | Phone | Website / route | Matched service |
+|---|----------|------|-------|-----------------|-----------------|
+| 16 | The Platform Studios | The Index Building, DIFC | +97145844708 | http://www.theplatformstudios.com/ | S3 + S1 |
+| 17 | The Warehouse Gym | Zone D, Gate Avenue, DIFC | +97142095335 | https://www.whgym.com/ | S3 + S1 |
+| 18 | VitalFit UAE | Parklane Tower 3206, Business Bay | +971565258441 | https://www.vitalfituae.com/ | S3 + S1 |
+| 19 | Body Time | Silver Tower, Office 1810, Business Bay | +971585818904 | http://www.bodytime.ae/ | S3 + S1 |
+| 20 | Cozy Bay Spa | Spa 2304, The Exchange Tower, Business Bay | +971566126684 | http://www.cozybayspa.com/ | S3 + S4 |
+
+## Pitch drafts (20 — one per lead; 1–10 from checkpoint 1, 11–20 new in checkpoint 2)
 
 All drafts are templates for the owner to send in his own words, one business
 at a time. Replace `[Owner name]` before sending. Never send two businesses
@@ -170,6 +205,115 @@ draft — the owner confirms pricing before quoting (same rule as EARN-028).
 > free. My work is at https://payhip.com/cometworks — shall I send the
 > sample?
 
+### 11. Holidayys — Holidays Tours LLC (Al Jafiliya)
+
+> Hi, this is [Owner name] from CometWorks. I found Holidayys while
+> looking at travel agencies in Dubai — you arrange tours to the best
+> parts of the world, and travellers choose the agency whose videos and
+> guides they saw first. I write hook-first YouTube scripts for faceless
+> channels and SEO holiday guides for small businesses, researched and
+> human-edited. Happy to write you one sample destination script first,
+> free, so you can judge the quality. My work is at
+> https://payhip.com/cometworks — shall I send the sample?
+
+### 12. Rayna Tours & Travels (Dubai, est. 2006)
+
+> Hi, this is [Owner name] from CometWorks. I came across Rayna Tours
+> while looking at travel agencies in Dubai — twenty years of holidays,
+> desert safaris and city tours is a library of stories, and YouTube
+> scripts plus SEO guides are how new travellers find them. I write
+> hook-first YouTube scripts and SEO articles for small businesses,
+> researched and human-edited. I would like to write you one sample
+> destination script first, free, so you can judge the quality. My work
+> is at https://payhip.com/cometworks — shall I send it?
+
+### 13. Desert Gate Tourism LLC (Al Barsha Heights)
+
+> Hi, this is [Owner name] from CometWorks. I found Desert Gate while
+> looking at travel agencies in Dubai — a premium destination management
+> company across six destinations has more worth showing than most: themed
+> excursions, desert camps, partner stories. I write hook-first YouTube
+> scripts and SEO articles for small businesses, researched and
+> human-edited. Happy to write one sample script first, free, for you to
+> judge. My work is at https://payhip.com/cometworks — shall I send the
+> sample?
+
+### 14. Al Rais Travel & Shipping Agencies LLC (Al Quoz)
+
+> Hi, this is [Owner name] from CometWorks. I came across Al Rais while
+> looking at travel agencies in Dubai — in business since 1977, one of the
+> most trusted travel brands in the UAE, and travellers still search
+> holidays, visas and tours before they ever call. I write hook-first
+> YouTube scripts and SEO articles for small businesses, researched and
+> human-edited. I would like to write you one sample destination script
+> first, free. My work is at https://payhip.com/cometworks — shall I
+> send it?
+
+### 15. The World At Her Feet (Al Barsha)
+
+> Hi, this is [Owner name] from CometWorks. I found The World At Her Feet
+> while looking at travel agencies in Dubai — a boutique agency with your
+> own Iridium Building base, and travellers pick the agency whose guides
+> they read first. I write hook-first YouTube scripts and SEO articles
+> for small businesses, researched and human-edited. Happy to write one
+> sample destination script first, free, so you can judge the quality. My
+> work is at https://payhip.com/cometworks — shall I send the sample?
+
+### 16. The Platform Studios (DIFC)
+
+> Hi, this is [Owner name] from CometWorks. I found The Platform Studios
+> while looking at fitness studios in DIFC — a studio lives on its
+> classes and its coaches, and the studios that post steady, useful
+> content fill their mats first. I write 30-day social content packs and
+> SEO articles for small businesses, researched and human-edited. Happy
+> to draft you a week's social posts first, free, so you can judge the
+> quality. My work is at https://payhip.com/cometworks — shall I send
+> the sample?
+
+### 17. The Warehouse Gym (DIFC, Gate Avenue)
+
+> Hi, this is [Owner name] from CometWorks. I came across The Warehouse
+> Gym while looking at gyms in DIFC — a serious training gym with your
+> following deserves content that matches it: training guides, programme
+> explainers, and a month of social posts that keep members coming back.
+> I write SEO articles and 30-day social packs for small businesses,
+> researched and human-edited. I would like to draft you a week's social
+> posts first, free. My work is at https://payhip.com/cometworks — shall
+> I send them?
+
+### 18. VitalFit UAE (Business Bay)
+
+> Hi, this is [Owner name] from CometWorks. I found VitalFit while
+> looking at fitness studios in Business Bay — personal training is a
+> trust business, and the trainers who publish useful guides win the
+> clients. I write SEO articles and 30-day social content packs for small
+> businesses, researched and human-edited. Happy to draft you a week's
+> social posts first, free, for you to judge. My work is at
+> https://payhip.com/cometworks — shall I send the sample?
+
+### 19. Body Time (Business Bay)
+
+> Hi, this is [Owner name] from CometWorks. I came across Body Time while
+> looking at wellness studios in Business Bay — EMS training, weight
+> loss, toning: people search all of it before they book, so the studio
+> with the clearest guides wins the enquiry. I write SEO articles and
+> 30-day social packs for small businesses, researched and human-edited.
+> I would like to draft you a week's social posts first, free. My work is
+> at https://payhip.com/cometworks — shall I send them?
+
+### 20. Cozy Bay Spa (Business Bay, Exchange Tower)
+
+> Hi, this is [Owner name] from CometWorks. I found Cozy Bay Spa while
+> looking at wellness studios in Business Bay — a spa open round the clock
+> with your treatment range has more worth saying than most: treatment
+> descriptions that sell the experience, plus social content that keeps
+> you booked. I write product descriptions and 30-day social packs for
+> small businesses, researched and human-edited. Happy to draft you a
+> week's social posts first, free, so you can judge the quality. My work
+> is at https://payhip.com/cometworks — shall I send the sample?
+
+
+
 ## Flags for the owner / coordinator (before any pitch is sent)
 
 - [ ] **Fiverr gig links:** the four live Fiverr gig URLs were not found in
@@ -182,16 +326,17 @@ draft — the owner confirms pricing before quoting (same rule as EARN-028).
   listing on the day of pitching.
 - [ ] **Leads 5 and 6:** no website in the listing — verify the business and
   find a contact route (website or official social) before pitching.
+- [ ] **Lead 15:** no website in the listing — verify the business and
+  find a contact route (website or official social) before pitching.
 - [ ] **Prices:** no prices quoted in drafts. Owner confirms pricing before
   quoting any lead.
 
-## Checkpoint 2 (remaining 40 leads)
+## Checkpoint 3 (remaining 30 leads)
 
-Niches to cover next: restaurants/cafes (social + YouTube), travel and
-tourism agencies (YouTube scripts + SEO), e-commerce/retail stores (product
-descriptions, S4), fitness/wellness studios (social + SEO), and a second
-real-estate batch outside Downtown (Marina, Business Bay). Each new lead
-gets the same treatment: Yello.ae profile cross-check first, then a
-personalised pitch draft pointing at the matching service.
+Niches to cover next: restaurants/cafes (social + YouTube), e-commerce/
+retail stores (product descriptions, S4), and a second real-estate batch
+outside Downtown (Marina, Business Bay). Each new lead gets the same
+treatment: Yello.ae profile cross-check first, then a personalised pitch
+draft pointing at the matching service.
 
-— Muse 12, checkpoint 1, 2026-11-26 ~09:0x IST
+— Muse 12, checkpoint 2, 2026-11-26 ~10:0x IST
