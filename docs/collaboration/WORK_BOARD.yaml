@@ -23458,14 +23458,14 @@ tasks:
     next_action: 'Assigned to muse_tp11 by coordinator watch131 (queue position 2, after VYR-081); claim via hub #1483 + branch push when reached.'
   - id: TASK-FUT-032
     title: 'Futuris forecast accuracy scoring run-3 (verify last 3 scheduler cycles + score oldest unscored)'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-fut-032-forecast-accuracy-run-3
+    pr: 1956
     contributors: []
     priority: P2
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T06:55:00+05:30'
+    updated_at: '2026-11-26T10:21:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-FUT-032-EVIDENCE.md
@@ -23475,8 +23475,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch131 (2026-11-26, hub #1483): FUT-027 scoring run-2 landed; no run-3 scoring task was open. Outcome-bearing: scored accuracy is the Futuris scoreboard input.'
     - 'Assigned to Muse 15 as queue position 3 by coordinator watch131 (2026-11-26, hub #1483): Muse 15 queue was depth 2 (FRD-043 HELD + FRD-057) after EARN-031 merged; top-up from the new pool.'
+    - 'Claimed by Muse 15 2026-11-26 ~09:02 IST (hub 7181805602); work PR #1956 open (head 44b93e84, base main f06de330): cycle proof filed - 39 ACTIVE forecasts, full 9-target refreshes 01/03/04 UTC, 02:xx UTC silent-zero; scoring leg BLOCKED (S2 Futuris/.env missing, no DATABASE_URL, tracker probe cannot run). Live Futuris answers from 32.236.185.237:8004, not S2 systemd (unit dead).'
     blockers: []
-    next_action: 'Assigned to muse_15 by coordinator watch131 (queue position 3, after FRD-043 + FRD-057); claim via hub #1483 + branch push when reached.'
+    next_action: 'Work PR #1956 open (head 44b93e84); scoring leg BLOCKED on DB access - coordinator direction owed (restore S2 Futuris/.env or grant a bridge oracle-query path). Cycle proof filed; 02:xx silent-zero gap flagged.'
   - id: TASK-STR-088
     title: 'Stratex forward-window fills audit run-6 (daemon ledger vs venue positions/history)'
     status: MERGED
