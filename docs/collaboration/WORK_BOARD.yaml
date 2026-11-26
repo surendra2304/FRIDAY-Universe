@@ -15688,14 +15688,14 @@ tasks:
   - id: TASK-WF-002
 
     title: 'Integration: fresh multi-agent trace, one end-to-end task across at least three agents'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
-    branch: null
-    pr: null
+    branch: muse10/task-wf-002-live-leg
+    pr: 1935
     contributors: []
     priority: P2
     created_at: '2026-11-22'
-    updated_at: '2026-11-26T06:16:00+05:30'
+    updated_at: '2026-11-26T07:18:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-WF-002-CODE-LEVEL-TRACE.md
@@ -15711,8 +15711,9 @@ tasks:
     - 'Released to the pool by coordinator watch122 - TP10 branch still at claim base, zero commits; watch121 demand produced no report or commit.'
     - 'Assigned to Muse 7 by coordinator watch128 (hub #1483): queue head after Muse 7 INF-022 merged (PR #1386) left its queue empty; Muse 7 silent, status demanded in the same post.'
     - 'Re-slotted to Muse 10 by coordinator watch129 (2026-11-26): Muse 7 dark 6h+ with no status report after the watch128 demand (queue assigned 06:05 IST, no claim, no post); VOI-029 and EARN-032 stay queued for Muse 7 pending its return, re-slotted next run if still dark.'
+    - 'Claimed by Muse 10, 2026-11-26 ~07:15 IST (hub #1483 comment 7180113377; branch muse10/task-wf-002-live-leg from main ac042a23). Checkpoint 1 filed as work PR #1935: live leg GATED (owner stop order in force per WATCH131; 401 gate persists, VAL-007/D-023); code-level leg re-verified on main (doc blob b5ecb3f7).'
     blockers: []
-    next_action: 'Re-slotted to muse_10 by coordinator watch129; claim via hub #1483 + branch push when reached (queue position 5).'
+    next_action: 'IN_REVIEW in work PR #1935 (checkpoint 1: live leg GATED - stop order + 401; code-level leg re-verified on main). Live leg needs stop-order lift or coordinator clearance + 401 gate cleared.'
   - id: TASK-VAL-010
 
     title: 'FRIDAY: run one long multi-step task against the action limit live; file where the limit binds, or proof it completes within limits'
