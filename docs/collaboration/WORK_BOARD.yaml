@@ -24128,7 +24128,7 @@ tasks:
     status: CLAIMED
     owner: muse_13
     branch: muse13/task-fut-035-forecast-scoring-run-7
-    pr: null
+    pr: 1991
     contributors: []
     priority: P2
     created_at: '2026-11-26'
