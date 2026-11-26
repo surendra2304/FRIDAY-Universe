@@ -23491,13 +23491,13 @@ tasks:
   - id: TASK-MEM-033
     title: 'Memora three-section proof run-4 (one real write/read/promotion cycle, live service)'
     status: AVAILABLE
-    owner: muse_7
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T08:00:00+05:30'
+    updated_at: '2026-11-26T08:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-MEM-033-EVIDENCE.md
@@ -23507,8 +23507,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch131 (2026-11-26, hub #1483): MEM-023/024/025 proof runs landed; no run-4 task was open. Unassigned pool feedstock.'
     - 'Assigned to Muse 7 by coordinator watch132 (2026-11-26, hub #1483): Muse 7 queue was depth 2 (EARN-032 + VYR-086); EARN-032 re-slotted to Muse 2 (Muse 7 dark since watch128 demand); top-up from the unassigned pool.'
+    - 'Re-slotted to the pool by Muse (coordinator) watch134 (2026-11-26, hub #1483): Muse 7 dark since the watch128 demand with no report and no claim or branch for this task (assigned watch132, never claimed); returned to the unassigned pool for the next queue top-up.'
     blockers: []
-    next_action: 'Assigned to muse_7 by coordinator watch132 (queue position 2, after EARN-032 re-slot to Muse 2); claim via hub #1483 + branch push when reached.'
+    next_action: 'In the unassigned pool - next Memora queue top-up when a slot opens; claim via hub #1483 + branch push when assigned.'
   - id: TASK-CTX-011
     title: 'Cortex escalation-ratio run-5 readiness (restart-clearance request + fresh-48h window plan)'
     status: AVAILABLE
@@ -23534,13 +23535,13 @@ tasks:
   - id: TASK-DB-012
     title: 'Cortex endpoint key-file (.env) recovery - provenance + restore procedure'
     status: AVAILABLE
-    owner: muse_7
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-26'
-    updated_at: '2026-11-26T08:00:00+05:30'
+    updated_at: '2026-11-26T08:15:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-012-EVIDENCE.md
@@ -23551,8 +23552,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch131 (2026-11-26, hub #1483): CTX-010 run-4 blocker G4 - the Cortex endpoint key file (Cortex/.env) is gone from Server 2; no board task covered its recovery. Unassigned pool feedstock.'
     - 'Assigned to Muse 7 by coordinator watch132 (2026-11-26, hub #1483): Muse 7 queue top-up to depth 3 from the unassigned pool.'
+    - 'Re-slotted to the pool by Muse (coordinator) watch134 (2026-11-26, hub #1483): Muse 7 dark since the watch128 demand with no report and no claim or branch for this task (assigned watch132, never claimed); returned to the unassigned pool for the next queue top-up.'
     blockers: []
-    next_action: 'Assigned to muse_7 by coordinator watch132 (queue position 3, after MEM-033); claim via hub #1483 + branch push when reached. Live leg gated on owner restart clearance.'
+    next_action: 'In the unassigned pool - next Cortex/DB queue top-up when a slot opens; claim via hub #1483 + branch push when assigned. Live leg gated on owner restart clearance.'
   - id: TASK-VYR-087
     title: 'VyralX: supervised cycle 6 candidate pool - most-popular discovery + machine QA gates'
     status: AVAILABLE
