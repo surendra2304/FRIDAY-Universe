@@ -80,11 +80,14 @@ jobs:
             fi
             echo "Branch guard (TASK-OBS-005): checkout is on 'main'; proceeding."
             # END MAIN-BRANCH GUARD (TASK-OBS-005)
+            # BEGIN DIRTY-TREE GUARD (TASK-REL-102) — executed by
+            # tests/test_fleet_cd_rel102_checkout_guards.py; keep the markers.
             OLD_REV=$(git rev-parse HEAD)
             if ! git diff --quiet || ! git diff --cached --quiet; then
               echo "::error::Tracked collaborator changes present; refusing deployment without modifying them."
               exit 1
             fi
+            # END DIRTY-TREE GUARD (TASK-REL-102)
             git fetch --no-tags origin "$DEPLOY_REV"
             git cat-file -e "$DEPLOY_REV^{commit}"
             if ! git merge-base --is-ancestor "$OLD_REV" "$DEPLOY_REV"; then
@@ -341,11 +344,14 @@ jobs:
             fi
             echo "Branch guard (TASK-OBS-005): checkout is on 'main'; proceeding."
             # END MAIN-BRANCH GUARD (TASK-OBS-005)
+            # BEGIN DIRTY-TREE GUARD (TASK-REL-102) — executed by
+            # tests/test_fleet_cd_rel102_checkout_guards.py; keep the markers.
             OLD_REV=$(git rev-parse HEAD)
             if ! git diff --quiet || ! git diff --cached --quiet; then
               echo "::error::Tracked collaborator changes present; refusing deployment without modifying them."
               exit 1
             fi
+            # END DIRTY-TREE GUARD (TASK-REL-102)
             git fetch --no-tags origin "$DEPLOY_REV"
             git cat-file -e "$DEPLOY_REV^{commit}"
             if ! git merge-base --is-ancestor "$OLD_REV" "$DEPLOY_REV"; then
