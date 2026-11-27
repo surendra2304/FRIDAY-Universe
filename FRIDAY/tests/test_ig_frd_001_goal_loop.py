@@ -218,7 +218,17 @@ def test_default_executor_timeout_is_failure_not_success(monkeypatch):
     _stub_brain(monkeypatch, timing_out_brain)
     ok, out = _default_executor("Do the thing")
     assert ok is False
-    assert "chat_timeout" in out
+    # The timeout reply itself is the evidence; the error code is what is
+    # returned when the brain has no reply text at all.
+    assert "still running" in out
+
+    def silent_timeout_brain(instruction):
+        return {"reply": "", "metadata": {"success": False, "timeout": True, "error": "chat_timeout"}}
+
+    _stub_brain(monkeypatch, silent_timeout_brain)
+    ok2, out2 = _default_executor("Do the thing")
+    assert ok2 is False
+    assert "chat_timeout" in out2
 
 
 def test_default_executor_unavailable_brain_is_failure(monkeypatch):
