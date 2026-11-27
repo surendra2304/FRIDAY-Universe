@@ -234,6 +234,32 @@ def evaluate_criterion(
     return {"met": bool(met), "why": str(why or "")}
 
 
+def _coerce_brain_result(result: Any) -> dict[str, Any]:
+    """Coerce a brain-call result to the dispatch dict shape.
+
+    ``_run_brain_sync`` returns the ``/api/command`` endpoint's return
+    value, which is usually the ``{"reply", "metadata"}`` dict — but
+    the endpoint returns a ``JSONResponse`` (not a dict) on its error
+    paths (refusal 403, dispatch exception 500, failed turn 502). A
+    failed nested turn therefore arrives here as a response object;
+    reading ``.body`` recovers the same dict. Anything else is an
+    honest failure, never an exception: an executor that raises aborts
+    the whole loop run (live 2026-11-27: ``AttributeError`` on a
+    502 ``JSONResponse`` crashed ``start_goal_loop`` mid-cycle).
+    """
+    if isinstance(result, dict):
+        return result
+    body = getattr(result, "body", None)
+    if isinstance(body, (bytes, bytearray)):
+        try:
+            parsed = json.loads(bytes(body).decode("utf-8"))
+        except Exception:
+            parsed = None
+        if isinstance(parsed, dict):
+            return parsed
+    raise ValueError(f"brain returned an unreadable result: {type(result).__name__}")
+
+
 def _default_executor(instruction: str) -> "tuple[bool, str]":
     """Production executor: the real chat brain.
 
@@ -267,9 +293,9 @@ def _default_executor(instruction: str) -> "tuple[bool, str]":
         return False, f"brain executor unavailable: {type(exc).__name__}: {exc}"
     try:
         result = _run_brain_sync(instruction)
+        result = _coerce_brain_result(result)
     except Exception as exc:
         return False, f"brain executor error: {type(exc).__name__}: {exc}"
-    result = result or {}
     reply = str(result.get("reply") or "").strip()
     metadata = result.get("metadata") or {}
     refused = bool(metadata.get("refused") or metadata.get("security_blocked"))
@@ -453,7 +479,15 @@ class GoalLoopStore:
             if step.get("status") == "done":
                 continue
             step["attempts"] = int(step.get("attempts") or 0) + 1
-            ok, output = executor(step["instruction"])
+            try:
+                ok, output = executor(step["instruction"])
+            except Exception as exc:
+                # An executor must return (ok, output), never raise — but
+                # a raising executor must fail the STEP, not the loop run
+                # (TASK-IG-FRD-001-FIX-01: the brain executor raised
+                # AttributeError on a 502 JSONResponse and aborted the
+                # whole tool call mid-cycle).
+                ok, output = False, f"executor error: {type(exc).__name__}: {exc}"
             step["result"] = (output or "")[:4000]
             if ok:
                 step["status"] = "done"
