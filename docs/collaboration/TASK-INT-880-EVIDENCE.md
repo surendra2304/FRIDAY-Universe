@@ -1,8 +1,8 @@
 # TASK-INT-880 — Fast-lane live proof run 8
 
 **Task:** TASK-INT-880 (IntelX: fast-lane live proof run 8 — one real alert end-to-end, sequel to INT-058 run 7)
-**Claim:** hub #2045 comment 7215432895, 2026-11-27 ~15:39 IST (Muse 4); branch `muse4/task-int-880-fast-lane-run-8` @ main `841bec7f`
-**Verification:** 2026-11-27 ~15:38–15:50 IST (10:08–10:20 UTC), read-only bridge probes on the live hosts under standing clearance 7200564540. No config changed by this run, no restart by this run, no trigger fired, kill switch untouched. Bridge `run_shell` verified working on IntelX-Server (6) and FRIDAY-Server (3).
+**Claim:** hub #2045 comment 7215432895, 2026-11-27 ~15:34 IST (Muse 4); branch `muse4/task-int-880-fast-lane-run-8` @ main `841bec7f`
+**Verification:** 2026-11-27 ~15:37–15:40 IST (10:07–10:10 UTC), read-only bridge probes on the live hosts under standing clearance 7200564540. No config changed by this run, no restart by this run, no trigger fired, kill switch untouched. Bridge `run_shell` verified working on IntelX-Server (6) and FRIDAY-Server (3).
 
 ## Outcome
 
@@ -16,7 +16,7 @@
 - **FRIDAY-Server:** `FRIDAY.service` active (PID 100296, since 2026-11-27 09:37:09 UTC — OOM restart, see TP10 15:20 post; not this run's doing). The three remote-source env names (`INTELX_WATCH_OUTBOX_URL`, `INTELX_WATCH_API_KEY`, `INTELX_WATCH_INSTANT_OUTBOX_URL`) are all **absent** from `FRIDAY/.env` (presence checked by name only; no values read or printed). The gateway endpoint also returned HTTP **404** for `?lane=main`. The drainer therefore still uses the local-file source.
 - **Blocker:** deploy of the IntelX endpoint plus FRIDAY env wiring/restart. INT-060's evidence doc reserves that deploy to the coordinator after merge; no deploy assignment to any chat was found on hub #2045 through comment 7215274604 (TP10, ~15:26 IST). No deploy was attempted in this proof leg. The deploy remains Muse 7's queued step per INT-878's finding.
 
-## Producer state (IntelX-Server, probed 2026-11-27 ~15:44 IST)
+## Producer state (IntelX-Server, probed 2026-11-27 ~15:38 IST)
 
 - `IntelX.service` active running; `/health` 200 (`degraded`, pre-existing). Polls live every 30 min. Journal watch cycles at 06:13, 06:43, 07:13, 07:43, 08:13, 08:43, 09:13 and 09:43 UTC (11:43–15:13 IST) all reported `alerted=0` on both watches. Latest cycle (09:43:47 UTC): `ai_model_releases fetched=2368 alerted=0 dup=2368`; `india_tech_regulatory fetched=64 alerted=0 dup=61 below=3`.
 - Outbox `/opt/friday_universe/IntelX/data/watches/outbox.jsonl`: 4,662 bytes, mtime 2026-11-27T07:20:34Z; **5 envelopes, all `alert_class=digest`**, scores `[4, 5, 3, 4, 4]` — max score 5, below the instant bar of 6:
@@ -28,10 +28,10 @@
 - No `instant_outbox.jsonl` on the producer: no instant-class envelope has ever been produced.
 - `state.json`: 1,501,511 bytes, mtime 2026-11-27T09:43 UTC. Top-level keys `version` + `watches`; per-watch `ai_model_releases` seen 2374, `india_tech_regulatory` seen 788. Per-watch `alerts_by_day` holds 2 day-entries each (file tail: 2026-11-23 and 2026-11-24). Note: the INT-878 probe envelope is present in the outbox, but no 2026-11-27 entry is visible in the current `state.json` day counts — the probe ran via the engine's Fetcher seam outside the service's own timer cycles, so its state update did not land in the service file. Open question, not a conclusion; the envelope in the outbox is the durable alert-leg receipt.
 
-## Consumer state (FRIDAY-Server, probed 2026-11-27 ~15:42 IST)
+## Consumer state (FRIDAY-Server, probed 2026-11-27 ~15:37 IST)
 
 - `FRIDAY.service` active running. Watch state is enabled (kill switch OFF; watch on), untouched.
-- Drainer state `/opt/friday_universe/FRIDAY/state/proactive_intelx_watch.json` is live: `baseline_done=true`, `instant_baseline_done=true`, `offset=6571`, `instant_offset=0`, `delivered_keys=7`, `held=[]`, `alert_log=10`, `malformed_total=0` — **unchanged since run 7 (12:29 IST)**. The INT-878 probe envelope (`54ed70ea`, dedupe `intelx.watch:ai_model_releases:3ea0b457abd6933e`) is **not** in `delivered_keys`: still undelivered, 8+ hours after firing.
+- Drainer state `/opt/friday_universe/FRIDAY/state/proactive_intelx_watch.json` is live: `baseline_done=true`, `instant_baseline_done=true`, `offset=6571`, `instant_offset=0`, `delivered_keys=7`, `held=[]`, `alert_log=10`, `malformed_total=0` — **unchanged since run 7 (12:29 IST)**. The INT-878 probe envelope (`54ed70ea`, dedupe `intelx.watch:ai_model_releases:3ea0b457abd6933e`) is **not** in `delivered_keys`: still undelivered, ~2h50m after firing.
 - Local consumer outbox `/opt/friday_universe/IntelX/data/watches/outbox.jsonl`: 6,571 bytes, 7 lines, mtime 2026-11-27T05:04:41Z — the INT-060 manual handoff state, unchanged. No `instant_outbox.jsonl` on the consumer either.
 - Journal confirms no new IntelX drain/post lines in the last 4 hours; consumer offsets remain `offset=6571`, `delivered_keys=7`.
 
@@ -44,7 +44,7 @@
 ## Five states (TASK-INT-880)
 
 - implemented: N/A (verification task; evidence doc only)
-- tested: YES (armed-state + wait-state verified first-hand 2026-11-27 ~15:38–15:50 IST)
+- tested: YES (armed-state + wait-state verified first-hand 2026-11-27 ~15:37–15:40 IST)
 - merged: NO
 - deployed: N/A
 - production-verified: NO — no real alert traversed end-to-end, and the standing HTTP transport is not deployed
