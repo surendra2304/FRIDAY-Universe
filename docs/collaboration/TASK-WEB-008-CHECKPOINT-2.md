@@ -1,19 +1,25 @@
 # TASK-WEB-008 — Checkpoint 2 (components + demo page, filed 2026-11-27 ~21:25 IST)
 
 Muse 17 | TASK-WEB-008 | Website: design-technique components for the FRIDAY site UI kit
-plus the LumiList start-page pattern | Branch `muse17/web-008` | Work PR #2158
+plus the LumiList start-page pattern | Branch `muse17/web-008` |
+Checkpoint-1 PR #2158 MERGED `06b32a81`; checkpoint-2 PR #2167
 
 ## Claim verified first-hand (restated from checkpoint 1)
-- Board on live main `55a5a622`: TASK-WEB-008 AVAILABLE / owner `muse_17`,
-  branch null, pr null (flip to CLAIMED rides coordinator board PR #2151,
-  HELD for YAML repair — WATCH227 §B; coordinator-only, not this PR).
+- Board on live main `5806c273`: TASK-WEB-008 AVAILABLE / owner `muse_17`,
+  branch null, pr null (flip to IN_REVIEW rides coordinator board PR #2151,
+  HELD for YAML repair — WATCH227 §B / WATCH228 §B; coordinator-only,
+  not this PR).
 - Stale local checkout showed CLAIMED/muse_tp8 (updated 11:00 IST) — that
   record predates the 19:05 IST AVAILABLE/muse_17 read on live main; TP8's
   earlier claim/release is history, not current state. No double-claim.
-- Branch `muse17/web-008` @ `e20cd796` on origin; PR #2158 open, CI 9/9
-  green on checkpoint-1 head (7 success + 2 skipped, 0 fail, verified
-  first-hand ~21:05 IST). Paired verifier Muse 5, due ~22:00 IST
-  (WATCH227 §C, restated BE 20:54 §C — NOT Muse 2).
+- Branch `muse17/web-008` re-created at `1249e106` (checkpoint-2 commit;
+  same tree as the worktree commit `12629d77`); PR #2167 open.
+  PR #2158 MERGED 21:06 IST (`06b32a81`, M2 VERIFIED review 6090179821 —
+  filed under BE 20:32's assignment before the BE 20:54 correction to M5
+  reached the chats; M5 stands down on #2158, WATCH228 §A).
+  Checkpoint-1 head CI was 9/9 green (7 success + 2 skipped, 0 fail,
+  verified first-hand ~21:05 IST). Paired verifier for #2167 owed —
+  coordinator/BE names it.
 
 ## Built (checkpoint 2)
 New kit under `FRIDAY/ui/components/kit/` (barrel `index.ts`):
@@ -97,6 +103,7 @@ New kit under `FRIDAY/ui/components/kit/` (barrel `index.ts`):
   the components; no invented data anywhere in the demo.
 
 ## Next
-Paired verification (Muse 5, due ~22:00 IST) on the checkpoint-2
-head; then merge PR #2158, board flip to MERGED rides the next
-board PR (coordinator-only). 2h no-output bar: ~23:05 IST.
+Paired verification on PR #2167 (verifier owed — coordinator/BE names
+it); then merge; board flip (WEB-008 → IN_REVIEW, then MERGED) rides
+the repaired board PR #2151 (coordinator-only). 2h no-output bar:
+~23:05 IST.
