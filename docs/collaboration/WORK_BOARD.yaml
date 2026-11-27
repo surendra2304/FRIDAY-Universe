@@ -8495,14 +8495,14 @@ tasks:
 
   - id: TASK-CTX-009
     title: 'PRODUCTION-VERIFY: Cortex budget gate (IG2-COR-01) - forced-breach live verification (wave 3)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_10
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T17:20:00+05:30'
+    updated_at: '2026-11-28T01:39:37+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -8514,7 +8514,7 @@ tasks:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Coordinator watch097 (2026-11-25): assigned to Muse 10 as queue position 3 behind EARN-027 and VOICE-E2E-003 (CTX lane top-up).'
     blockers: []
-    next_action: 'Queue position 3 for Muse 10 behind EARN-027 and VOICE-E2E-003 (coordinator watch097): Cortex budget-gate live verification. Claim via hub #1483 when VOICE-E2E-003 closes.'
+    next_action: 'Claimed by Muse 10 as next head (WATCH238 claims noted; claim via hub + branch push).'
 
   - id: TASK-STR-078
     title: 'REPO-IMPLEMENT: Stratex repos - FinRL (reference-only), Lumibot (reference-only), Vibe-Trading (adapt), AutoHedg... (wave 1)'
@@ -8671,14 +8671,14 @@ tasks:
     next_action: 'MERGED via PR #2075 (merge bb503981).'
   - id: TASK-EARN-026
     title: 'EARN: bug-bounty lane (owner order 2026-11-25: PURSUE) - adopt the Claude-BugHunter workflow, hunt beginner-scope programmes, human-reviewed reports only'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_14
     branch: muse14/task-earn-026
     pr: 2185
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-28T00:42:13+05:30'
+    updated_at: '2026-11-28T01:39:37+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -8696,8 +8696,9 @@ tasks:
     - 'watch211: RE-SLOTTED to pool (BE §D, adopted CORR §2) - M8 silent 1h41m, remaining leg owner-gated. M8 claims TASK-FRG-032 as head now, or posts a one-line block.'
     - 'watch225: assigned to Muse 14 by burn enforcer 19:14 as queue pos 2 behind INT-046-FIX-01 (coordinator ruling watch225); claim owed.'
     - 'watch237: M14 claimed hub 7225780922, checkpoint 3 filed hub 7226001098; PR #2185 open head c9becee8, CI 8/8 green; paired verifier M6 due ~02:00 IST.'
+    - 'watch239: PR #2185 merged 2026-11-28 (merge 4374be00); M6 VERIFIED review 6092760784 (bundle re-pin + Shopify/GitHub programme pages re-read first-hand); coordinator CI 8/8 first-hand on head c9becee8 (roster check did not run on this head - verified, not missing); diff read: 2 files evidence-only, no board hunk.'
     blockers: []
-    next_action: 'PR #2185 open; paired verdict (M6) due ~02:00 IST.'
+    next_action: 'MERGED via PR #2185.'
   - id: TASK-EARN-030
     title: 'EARN: Contra lane start (owner order 2026-11-25: implement all) - owner creates the account, Muse builds the full CometWorks profile + services'
     status: MERGED
@@ -8778,14 +8779,14 @@ tasks:
     next_action: 'Returned to pool by coordinator watch196 (2026-11-27); unassigned - the coordinator watch assigns it to the next free worker.'
   - id: TASK-EARN-021
     title: 'EARN: Adobe Stock labelled-AI seeding (owner order 2026-11-25: implement all) - owner contributor account, compliant AI-labelled asset batch uploaded'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_tp12
     branch: null
     pr: null
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-27T08:34:00+05:30'
+    updated_at: '2026-11-28T01:39:37+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - earning/
@@ -8797,7 +8798,7 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 under the owner''s Instagram adoption re-audit order (02:16 IST: ''implement all those'' + ''why didn''t you adopt them properly - not only earning, there are many''). Source records read first-hand in the re-audit sweep of the full Instagram evidence base (53 recent verbatim watches + 522-row full-watch programme). Verified no board task existed for this lane against the live board at main e5a6876fb3d69af06b07e691004cc33fca7e4fdc.'
     - 'Assigned to muse_tp12 as queue position 3 by coordinator watch197 (earning task in position 3 only; queue rebuild). Verified AVAILABLE / owner null on main 5fd32fdf.'
     blockers: []
-    next_action: 'Assigned to muse_tp12 as queue position 3 by coordinator watch197 (2026-11-27, hub #2045); claim via hub + branch push when reached.'
+    next_action: 'Claimed by Muse TP12 as next head (WATCH238 claims noted; claim via hub + branch push).'
   - id: TASK-EARN-022
     title: 'EARN: KDP ebook (owner order 2026-11-25: implement all) - owner KDP account + tax interview, full short ebook built from the EARN-004 lead magnet, listing live'
     status: AVAILABLE
@@ -10941,14 +10942,14 @@ tasks:
 
   - id: TASK-SEN-022
     title: 'Sentinel: startup self-check + backup manifest verification (POOL 8)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_tp13
     branch: musetp13/task-sen-022
     pr: 2181
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T23:59:00+05:30'
+    updated_at: '2026-11-28T01:39:37+05:30'
     files:
     - Sentinel/
     - docs/collaboration/WORK_BOARD.yaml
@@ -10961,8 +10962,9 @@ tasks:
     - 'watch213: queued pos 3 for muse_11 (queue top-up after FRG-021 re-slot; behind STR-074, IG-FRD-003-FIX-01). POOL 8 item.'
     - 'watch229: assigned to Muse TP13 by WATCH228 section E (pool draft head); claim owed.'
     - 'watch235: TP13 checkpoint 1 filed hub 7225230170; PR #2181 open head 5b5523d1; paired verifier TP8 assigned WATCH235.'
+    - 'watch239: PR #2181 merged 2026-11-28 (merge 8be27783); M7 VERIFIED review 6092865502 (filed ~01:35 IST, ~35 min late vs ~01:00 due - landed, no re-slot needed); coordinator CI 9/9 first-hand on head 5b5523d1; diff read: 1 file evidence-only.'
     blockers: []
-    next_action: 'PR #2181 open; paired verdict (TP8) due next run.'
+    next_action: 'MERGED via PR #2181.'
 
   - id: TASK-REL-114
     title: 'Reliability: board validator evidence gate - terminal flips need all five evidence keys + live_proof_route (SPEED ROUND 2)'
@@ -11236,7 +11238,7 @@ tasks:
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T23:59:00+05:30'
+    updated_at: '2026-11-28T01:39:37+05:30'
     files:
     - earning/
     - docs/collaboration/WORK_BOARD.yaml
@@ -11247,8 +11249,9 @@ tasks:
     - 'Filed by Muse (coordinator) watch214 (2026-11-27, hub #2045): earning-lane feedstock; Level-1 queue Gig Pack #2 (podcast scripts/show notes) from the 2026-11-23 plan. Live-proof route: REPO-ONLY (sales copy draft under earning/; no live leg - gig publishing is gated on Fiverr Level 1).'
     - 'watch232: claimed by Muse 9 as head (hub #2045 comment 7223671579, 2026-11-27 ~22:17 IST); paired verifier #2166 taken first.'
     - 'watch235: PR #2171 merged 2026-11-27 (merge 94f68194); M12 VERIFIED; board flip carried from WATCH234.'
+    - 'watch239: cp2 PR #2186 merged 2026-11-28 (merge 5e900c99); M5 VERIFIED review 6092819469; coordinator CI 9/9 first-hand on head c93399da; diff read: 2 files evidence-only, no board hunk. Record already MERGED via cp1 #2171; no status change.'
     blockers: []
-    next_action: 'MERGED via PR #2171.'
+    next_action: 'MERGED via PR #2171; cp2 #2186 merged watch239.'
 
   - id: TASK-EARN-042
     title: 'EARN: Contra portfolio sample 4 - SEO-posts sample (earning lane)'
@@ -11590,7 +11593,7 @@ tasks:
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T01:10:05+05:30'
+    updated_at: '2026-11-28T01:39:37+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -11598,19 +11601,20 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch235 (2026-11-27, hub #2045): fresh pool draft from MASTER_PLAN open items + board follow-ups; pool floor (10) was breached. Live-proof route: Stratex-Server daemon ledger + venue history (read-only probes under standing clearance 7200564540).'
     - 'watch238: M3 PR #2188 open head fd2c1c6f, mergeable True, CI in progress; live run 9 RECONCILED per M3 hub 7226189102; paired verifier TP11 due ~02:30 IST.'
+    - 'watch239 CORRECTION: paired verifier is TP8 per WATCH238 section C ruling (BE 00:59 section B stands; it is the only sighted assignment); the #2194 TP11 line is superseded. PR #2188 open, no verdict yet.'
     blockers: []
-    next_action: 'PR #2188 open; paired verdict (TP11) due ~02:30 IST.'
+    next_action: 'PR #2188 open; paired verdict (TP8) due ~02:30 IST.'
 
   - id: TASK-MEM-042
     title: 'Memora: three-section live proof run 8 - one real write/read/promotion cycle (follow-up MEM-041 run 7)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_12
     branch: muse12/ta***REDACTED***
     pr: 2187
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T01:10:05+05:30'
+    updated_at: '2026-11-28T01:39:37+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -11619,8 +11623,9 @@ tasks:
     - 'Filed by Muse (coordinator) watch235 (2026-11-27, hub #2045): fresh pool draft from MASTER_PLAN open items + board follow-ups; pool floor (10) was breached. Live-proof route: live Memora service on Oracle Server 1.'
     - 'watch237: M12 COMPLETE hub 7225971941 (live cycle PRIVATE to SHARED to UNIVERSAL, marker 1 hit); PR #2187 open head 8091506a; paired verifier TP11 due ~02:00 IST.'
     - 'watch238 CORRECTION: paired verifier is TP6 per Burn Enforcer 00:35 §C (earlier assignment governs; WATCH237 §D TP11 line withdrawn).'
+    - 'watch239: PR #2187 merged watch238 (merge c516895c); TP11 VERIFIED review 6092725160; coordinator CI 9/9 first-hand on head 8091506a. CORRECTION: paired verifier is TP11 per WATCH238 section C ruling (coordinator later post governs); the #2194 TP6 line is superseded.'
     blockers: []
-    next_action: 'PR #2187 open; paired verdict (TP6) due ~01:35 IST.'
+    next_action: 'MERGED via PR #2187.'
 
   - id: TASK-SEN-041
     title: 'Sentinel: approval-path live proof run 5 (follow-up SEN-040 run 4)'
@@ -11878,6 +11883,26 @@ tasks:
     live_proof_route: 'Live Memora service on Oracle Server 1.'
     blockers: []
     next_action: 'Available pool (WATCH238 draft).'
+
+  - id: TASK-FRD-068
+    title: 'FRIDAY: memory reporting - host memory vs 200 MB cgroup memory + guard-notice mismatch (follow-up FRD-067)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T01:39:37+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'FRIDAY reports its own cgroup memory (200 MB limit), not host memory, in every status/memory path; the OOM guard notice matches the value FRIDAY reports; evidence filed with before/after probes on the live FRIDAY service.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch239 (2026-11-28, hub #2045): WATCH238 section C ruling on M8 direction ask (BE 00:59 section F) - M8 verdict on FRD-067 stands NOT VERIFIED 0/3 (FRIDAY reports host memory; OOM kill between runs 1-2); M8 re-probes after FRD-068 lands. Live-proof route: live FRIDAY service on FRIDAY-Server.'
+    live_proof_route: 'Live FRIDAY service on FRIDAY-Server; before/after memory probes.'
+    blockers: []
+    next_action: 'Available pool (WATCH239 draft).'
 
 task_id_warnings:
   - id: TASK-REL-061
