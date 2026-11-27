@@ -473,6 +473,141 @@ def test_reconcile_window_discrepancy():
     assert identity["residual"] == pytest.approx(142.71)
 
 
+def test_reconcile_window_carry_run10_numbers():
+    # STR-103 run 10 live numbers: without the carry the identity is
+    # DISCREPANCY at +18.3375 (the aged-out ETHUSDT close's +19.9399
+    # on top of run 9's -1.6024); carrying it at its income amount
+    # restores run 9's residual and RECONCILED (STR-104).
+    base = dict(
+        ledger_window_net=-87.9231,
+        ledger_window_fees=3.3171,
+        venue_realized=-67.4283,
+        missing_closes_realized=-1.1598,
+        baseline_equity=10459.03,
+    )
+    without = job.reconcile_window(**base)
+    assert without["residual"] == pytest.approx(18.3375)
+    assert without["status"] == "DISCREPANCY"
+    with_carry = job.reconcile_window(**base, aged_out_carry_realized=19.9399)
+    assert with_carry["residual"] == pytest.approx(-1.6024)
+    assert with_carry["status"] == "RECONCILED"
+    assert with_carry["aged_out_carry_realized"] == pytest.approx(19.9399)
+
+
+# -- aged-out carry (STR-104) ----------------------------------------------------
+
+
+def _missing(order_id="16876077891", symbol="ETHUSDT", pnl=19.9399,
+             first_ms=None, last_ms=None):
+    first_ms = START_MS + 5 * 86400_000 if first_ms is None else first_ms
+    return {
+        "symbol": symbol,
+        "order_id": order_id,
+        "side": "BUY",
+        "qty": 1.0,
+        "realized_pnl": pnl,
+        "commission": 0.1,
+        "fills": 1,
+        "first_fill_time": first_ms,
+        "last_fill_time": first_ms if last_ms is None else last_ms,
+    }
+
+
+def _income(symbol="ETHUSDT", amount="19.9399", time_ms=None):
+    return {
+        "incomeType": "REALIZED_PNL",
+        "symbol": symbol,
+        "asset": "USDT",
+        "income": amount,
+        "time": START_MS + 5 * 86400_000 if time_ms is None else time_ms,
+        "tranId": "1",
+    }
+
+
+def test_find_aged_out_carry_confirmed_by_income():
+    prior = [_missing()]
+    # Fills window now starts after the close's fill: aged out.
+    trades = {"ETHUSDT": [_trade(time=START_MS + 9 * 86400_000)]}
+    carry, unconfirmed = job.find_aged_out_carry(
+        [_income()], prior, [], trades
+    )
+    assert unconfirmed == []
+    assert len(carry) == 1
+    assert carry[0]["realized_pnl"] == pytest.approx(19.9399)
+    assert carry[0]["income_confirmed"] is True
+    assert carry[0]["income_rows"] == 1
+
+
+def test_find_aged_out_carry_unconfirmed_without_income():
+    prior = [_missing()]
+    trades = {"ETHUSDT": [_trade(time=START_MS + 9 * 86400_000)]}
+    carry, unconfirmed = job.find_aged_out_carry([], prior, [], trades)
+    assert carry == []
+    assert len(unconfirmed) == 1
+    assert unconfirmed[0]["income_confirmed"] is False
+    assert unconfirmed[0]["income_window_sum"] is None
+
+
+def test_find_aged_out_carry_skips_still_visible():
+    entry = _missing()
+    trades = {"ETHUSDT": [_trade(time=START_MS + 9 * 86400_000)]}
+    carry, unconfirmed = job.find_aged_out_carry(
+        [_income()], [entry], [entry], trades
+    )
+    assert carry == [] and unconfirmed == []
+
+
+def test_find_aged_out_carry_skips_when_fills_still_cover():
+    # Fills window starts before the close's fill: not aged out, the
+    # fills side governs — no carry even though income confirms.
+    prior = [_missing()]
+    trades = {"ETHUSDT": [_trade(time=START_MS + 4 * 86400_000)]}
+    carry, unconfirmed = job.find_aged_out_carry(
+        [_income()], prior, [], trades
+    )
+    assert carry == [] and unconfirmed == []
+
+
+def test_load_prior_missing_closes_union(tmp_path):
+    out_dir = tmp_path / "recon"
+    out_dir.mkdir()
+    (out_dir / "daily_2026-11-27.json").write_text(json.dumps({
+        "missing_closes": {"orders": [_missing(pnl=19.0)]}
+    }))
+    (out_dir / "daily_2026-11-28.json").write_text(json.dumps({
+        "missing_closes": {"orders": [
+            _missing(pnl=19.9399),
+            _missing(order_id="1100728824", symbol="SUIUSDT", pnl=30.5009),
+        ]}
+    }))
+    (out_dir / "daily_2026-11-26.json").write_text("not json")
+    prior = job.load_prior_missing_closes(out_dir)
+    assert [p["order_id"] for p in prior] == ["16876077891", "1100728824"]
+    assert prior[0]["realized_pnl"] == pytest.approx(19.9399)  # latest wins
+
+
+def test_run_offline_lists_unconfirmed_carry(tmp_path):
+    # Offline (no income read): an aged-out prior missing close is
+    # listed unconfirmed and never carried.
+    state_dir = tmp_path / "state"
+    state_dir.mkdir()
+    with open(state_dir / "fill_ledger.jsonl", "w") as fh:
+        fh.write(json.dumps(_fill()) + "\n")
+    out_dir = tmp_path / "recon"
+    out_dir.mkdir()
+    (out_dir / "daily_2026-11-27.json").write_text(json.dumps({
+        "missing_closes": {"orders": [_missing()]},
+        "resets_detected": [],
+    }))
+    report, _ = job.run(
+        state_dir=state_dir, out_dir=out_dir,
+        date_str="2026-11-28", venue_offline=True,
+    )
+    assert report["aged_out_carry"]["count"] == 0
+    assert report["aged_out_unconfirmed"]["count"] == 1
+    assert report["window_identity"]["aged_out_carry_realized"] == 0.0
+
+
 def test_reconcile_window_is_binance_scoped(tmp_path):
     # An oanda row inside the forward window must not bias the binance
     # identity: the 2026-11-23 proof run residual (-17.15) was exactly

@@ -16,6 +16,13 @@ This is the recurring form of the one-off verification in
   * row-by-row match (side, qty, VWAP, time) into BOTH / ENTRY_ONLY /
     EXIT_ONLY / NO_MATCH,
   * venue closes with no ledger row, with their realized P&L,
+  * aged-out missing closes carried in the window identity: the
+    venue's fills window (~7 days) drops a missing close long before
+    the income endpoint stops reporting its realised P&L, so a close
+    filed as missing by an earlier report and since aged out of the
+    fills window is carried at its income-endpoint amount (STR-104;
+    bounding the identity to the fills window instead would drop
+    real P&L),
   * equity walk split at detected faucet resets (a reset wipes open
     positions and re-grants the balance; a single-segment walk across
     one reports a phantom DISCREPANCY — LEDGER-001 section 6),
@@ -102,6 +109,13 @@ RECON_TOLERANCE_FRAC = 0.001
 # from a breakeven close; it is listed under unmatched fills, not
 # counted as a missing close (see find_missing_closes).
 MISSING_CLOSE_MIN_ABS_PNL = 0.005
+
+# STR-104: an aged-out missing close is carried only when the income
+# endpoint still reports its realised P&L — the REALIZED_PNL rows for
+# its symbol around its fill times must sum to the recorded amount
+# within this tolerance (amounts are filed to 4 dp; the slack covers
+# per-fill rounding only, never a different close).
+CARRY_INCOME_TOL_USD = 0.05
 
 
 def _finite(value: Any, default: float = 0.0) -> float:
@@ -717,6 +731,140 @@ def find_missing_closes(
     return missing, unmatched_zero
 
 
+def load_prior_missing_closes(out_dir: Path) -> List[Dict[str, Any]]:
+    """Missing closes filed by earlier reports, unioned by order id.
+
+    The dated reports are the persistent registry: a missing close
+    stays on record there after its fills age out of the venue's
+    retention window (STR-103 run 10: the ETHUSDT close aged out
+    between runs 9 and 10 and the identity broke by its amount).
+    Later reports win per order id; malformed files are skipped.
+    """
+    by_order: Dict[str, Dict[str, Any]] = {}
+    if not out_dir.exists():
+        return []
+    for existing in sorted(out_dir.glob("daily_*.json")):
+        try:
+            prev = json.loads(existing.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        orders = (prev.get("missing_closes") or {}).get("orders") or []
+        for entry in orders:
+            order_id = str(entry.get("order_id") or "")
+            if order_id:
+                by_order[order_id] = entry
+    return sorted(
+        by_order.values(), key=lambda e: int(e.get("first_fill_time") or 0)
+    )
+
+
+def find_aged_out_carry(
+    income_rows: List[Dict[str, Any]],
+    prior_missing: List[Dict[str, Any]],
+    current_missing: List[Dict[str, Any]],
+    trades_by_symbol: Dict[str, List[Dict[str, Any]]],
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Missing closes aged out of the fills window, carried via income.
+
+    The identity's venue side (income REALIZED_PNL since the reset)
+    keeps counting a missing close after its fills leave the venue's
+    ~7-day userTrades/allOrders window, while find_missing_closes can
+    no longer see it — the residual then breaks by exactly its amount
+    (STR-103 run 10: +18.3375 = run 9's -1.6024 + the aged-out
+    ETHUSDT close's +19.9399). Per the WATCH242 ruling the fix carries
+    the aged-out close in the identity at its income-endpoint amount;
+    bounding the identity to the fills window is rejected because it
+    would drop real P&L.
+
+    A prior missing close is carried only when all three hold: it is
+    not a current missing close, its fills predate the symbol's
+    current fills window (aged out — if the window still covers its
+    fill times the fills side governs and there is nothing to carry),
+    and the income endpoint still reports its realised P&L (the
+    REALIZED_PNL rows for its symbol within TIME_TOL_MS of its fill
+    times sum to the recorded amount within CARRY_INCOME_TOL_USD).
+    The carried amount is that income sum, never the residual — the
+    identity stays an independent check. Aged-out closes the income
+    endpoint no longer confirms are returned separately as
+    unconfirmed: listed in the report, never silently carried or
+    dropped (if income dropped the close too, both sides of the
+    identity dropped it and no carry is owed).
+    """
+    current_ids = {str(m.get("order_id") or "") for m in current_missing}
+    fills_start: Dict[str, Optional[int]] = {}
+    for symbol, trades in trades_by_symbol.items():
+        times = [int(t.get("time") or 0) for t in trades]
+        fills_start[symbol] = min(times) if times else None
+    realized_by_symbol: Dict[str, List[Dict[str, Any]]] = {}
+    for row in income_rows:
+        if str(row.get("incomeType") or "") != "REALIZED_PNL":
+            continue
+        realized_by_symbol.setdefault(str(row.get("symbol") or ""), []).append(
+            row
+        )
+    consumed: set = set()
+    carry: List[Dict[str, Any]] = []
+    unconfirmed: List[Dict[str, Any]] = []
+    for entry in prior_missing:
+        order_id = str(entry.get("order_id") or "")
+        if not order_id or order_id in current_ids:
+            continue
+        first_fill = int(entry.get("first_fill_time") or 0)
+        last_fill = int(entry.get("last_fill_time") or 0)
+        if first_fill < FORWARD_WINDOW_START_MS:
+            continue
+        symbol = str(entry.get("symbol") or "")
+        start = fills_start.get(symbol)
+        if start is not None and last_fill >= start:
+            continue  # fills window still covers it; nothing aged out
+        recorded = _finite(entry.get("realized_pnl"))
+        window_rows = [
+            (idx, row)
+            for idx, row in enumerate(realized_by_symbol.get(symbol) or [])
+            if (symbol, idx) not in consumed
+            and first_fill - TIME_TOL_MS
+            <= int(row.get("time") or 0)
+            <= last_fill + TIME_TOL_MS
+        ]
+        income_sum = round(
+            sum(_finite(row.get("income")) for _, row in window_rows), 4
+        )
+        base = {
+            "symbol": symbol,
+            "order_id": order_id,
+            "side": str(entry.get("side") or ""),
+            "qty": _finite(entry.get("qty")),
+            "recorded_realized_pnl": round(recorded, 4),
+            "commission": _finite(entry.get("commission")),
+            "fills": int(entry.get("fills") or 0),
+            "first_fill_time": first_fill,
+            "last_fill_time": last_fill,
+        }
+        if window_rows and abs(income_sum - recorded) <= CARRY_INCOME_TOL_USD:
+            for idx, _row in window_rows:
+                consumed.add((symbol, idx))
+            carry.append(
+                {
+                    **base,
+                    "realized_pnl": income_sum,
+                    "income_rows": len(window_rows),
+                    "income_confirmed": True,
+                }
+            )
+        else:
+            unconfirmed.append(
+                {
+                    **base,
+                    "realized_pnl": round(recorded, 4),
+                    "income_window_sum": income_sum if window_rows else None,
+                    "income_confirmed": False,
+                }
+            )
+    carry.sort(key=lambda e: e["first_fill_time"])
+    unconfirmed.sort(key=lambda e: e["first_fill_time"])
+    return carry, unconfirmed
+
+
 # ---------------------------------------------------------------------------
 # Resets + equity walk
 # ---------------------------------------------------------------------------
@@ -775,14 +923,22 @@ def reconcile_window(
     venue_realized: float,
     missing_closes_realized: float,
     baseline_equity: float,
+    aged_out_carry_realized: float = 0.0,
 ) -> Dict[str, Any]:
     """LEDGER-001 section 6 identity, whole forward window.
 
-    venue realized == ledger window net + missing closes + ledger fees
-    (within rounding). A residual beyond tolerance is a DISCREPANCY
-    finding, filed in the report — never absorbed.
+    venue realized == ledger window net + missing closes still in the
+    fills window + aged-out missing closes carried from the income
+    endpoint (STR-104) + ledger fees (within rounding). A residual
+    beyond tolerance is a DISCREPANCY finding, filed in the report —
+    never absorbed.
     """
-    expected = ledger_window_net + missing_closes_realized + ledger_window_fees
+    expected = (
+        ledger_window_net
+        + missing_closes_realized
+        + aged_out_carry_realized
+        + ledger_window_fees
+    )
     residual = round(venue_realized - expected, 4)
     tolerance = round(
         max(RECON_TOLERANCE_USD, RECON_TOLERANCE_FRAC * abs(baseline_equity)),
@@ -792,6 +948,7 @@ def reconcile_window(
         "venue_realized_pnl": round(venue_realized, 4),
         "ledger_window_net": round(ledger_window_net, 4),
         "missing_closes_realized": round(missing_closes_realized, 4),
+        "aged_out_carry_realized": round(aged_out_carry_realized, 4),
         "ledger_window_fees": round(ledger_window_fees, 4),
         "expected_venue_realized": round(expected, 4),
         "residual": residual,
@@ -834,7 +991,11 @@ def build_report(
     income_rows: List[Dict[str, Any]],
     window_identity: Dict[str, Any],
     errors: List[str],
+    aged_out_carry: Optional[List[Dict[str, Any]]] = None,
+    aged_out_unconfirmed: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
+    aged_out_carry = aged_out_carry or []
+    aged_out_unconfirmed = aged_out_unconfirmed or []
     window_rows = [
         r
         for r in ledger_rows
@@ -885,6 +1046,42 @@ def build_report(
                     f"{m['symbol']} {m['realized_pnl']:+.2f}"
                     for m in sorted(
                         missing_closes,
+                        key=lambda e: -abs(_finite(e.get("realized_pnl"))),
+                    )[:5]
+                ),
+            )
+        )
+    if aged_out_carry:
+        gaps.append(
+            "G1-carry — %d aged-out missing close(s) carried in the "
+            "identity from income-endpoint realised P&L (%+.2f USDT): %s"
+            % (
+                len(aged_out_carry),
+                sum(_finite(m.get("realized_pnl")) for m in aged_out_carry),
+                ", ".join(
+                    f"{m['symbol']} {m['realized_pnl']:+.2f}"
+                    for m in sorted(
+                        aged_out_carry,
+                        key=lambda e: -abs(_finite(e.get("realized_pnl"))),
+                    )[:5]
+                ),
+            )
+        )
+    if aged_out_unconfirmed:
+        gaps.append(
+            "G1-carry-unconfirmed — %d aged-out missing close(s) the "
+            "income endpoint no longer confirms (%+.2f USDT recorded): "
+            "%s — listed, not carried"
+            % (
+                len(aged_out_unconfirmed),
+                sum(
+                    _finite(m.get("realized_pnl"))
+                    for m in aged_out_unconfirmed
+                ),
+                ", ".join(
+                    f"{m['symbol']} {m['realized_pnl']:+.2f}"
+                    for m in sorted(
+                        aged_out_unconfirmed,
                         key=lambda e: -abs(_finite(e.get("realized_pnl"))),
                     )[:5]
                 ),
@@ -995,6 +1192,24 @@ def build_report(
             "count": len(unmatched_zero),
             "orders": unmatched_zero,
         },
+        "aged_out_carry": {
+            "count": len(aged_out_carry),
+            "realized_pnl": round(
+                sum(_finite(m.get("realized_pnl")) for m in aged_out_carry), 4
+            ),
+            "orders": aged_out_carry,
+        },
+        "aged_out_unconfirmed": {
+            "count": len(aged_out_unconfirmed),
+            "realized_pnl": round(
+                sum(
+                    _finite(m.get("realized_pnl"))
+                    for m in aged_out_unconfirmed
+                ),
+                4,
+            ),
+            "orders": aged_out_unconfirmed,
+        },
         "resets_detected": resets,
         "new_resets": new_resets,
         "income_since_reset": income_sums(
@@ -1013,13 +1228,17 @@ def build_report(
                     for m in missing_closes
                     if m["first_fill_time"] >= FORWARD_WINDOW_START_MS
                 ]
-            ),
+            )
+            + len(aged_out_carry),
             "venue_true_net_pnl": round(
                 sum(_finite(r.get("net_pnl")) for r in window_rows)
                 + sum(
                     _finite(m.get("realized_pnl"))
                     for m in missing_closes
                     if m["first_fill_time"] >= FORWARD_WINDOW_START_MS
+                )
+                + sum(
+                    _finite(m.get("realized_pnl")) for m in aged_out_carry
                 ),
                 4,
             ),
@@ -1160,6 +1379,14 @@ def run(
             used_fill_ids[(res["symbol"], str(fill_id))] = 1
     groups = group_venue_orders(trades_by_symbol, orders_by_symbol)
     missing_closes, unmatched_zero = find_missing_closes(groups, used_fill_ids)
+    # STR-104: carry missing closes that aged out of the fills window
+    # (registry: earlier dated reports; amount: income endpoint).
+    aged_out_carry, aged_out_unconfirmed = find_aged_out_carry(
+        income_rows,
+        load_prior_missing_closes(out_dir),
+        missing_closes,
+        trades_by_symbol,
+    )
 
     resets, new_resets = detect_resets(income_rows, known_resets)
     venue_realized = round(
@@ -1199,6 +1426,9 @@ def run(
             4,
         ),
         baseline_equity=baseline_equity,
+        aged_out_carry_realized=round(
+            sum(_finite(m.get("realized_pnl")) for m in aged_out_carry), 4
+        ),
     )
 
     report = build_report(
@@ -1217,6 +1447,8 @@ def run(
         income_rows=income_rows,
         window_identity=window_identity,
         errors=errors,
+        aged_out_carry=aged_out_carry,
+        aged_out_unconfirmed=aged_out_unconfirmed,
     )
     _atomic_write_json(out_dir / f"daily_{date_str}.json", report)
     print(
@@ -1225,6 +1457,8 @@ def run(
         f"{ledger_summary['window_net_pnl']:+.2f}), matching "
         f"{match_counts}, missing closes {len(missing_closes)} "
         f"({report['missing_closes']['realized_pnl']:+.2f}), "
+        f"aged-out carry {len(aged_out_carry)} "
+        f"({report['aged_out_carry']['realized_pnl']:+.2f}), "
         f"resets {len(resets)} ({len(new_resets)} new), "
         f"status {report['status']} -> {out_dir / f'daily_{date_str}.json'}"
     )
