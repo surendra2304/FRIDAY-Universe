@@ -5,7 +5,7 @@ tier: defensive
 domain: soc-operations
 attack: [T1110, T1110.001, T1078]
 csf: [DE.CM, DE.AE]
-d3fend: [D3-UBA, D3-AL]
+d3fend: [D3-UA, D3-AL]
 ---
 
 # Detecting SSH brute force

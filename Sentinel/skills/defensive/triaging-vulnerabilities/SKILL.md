@@ -5,7 +5,7 @@ tier: defensive
 domain: vulnerability-management
 attack: [T1190]
 csf: [ID.RA, PR.PS]
-d3fend: [D3-SU]
+d3fend: [D3-PM]
 ---
 
 # Triaging vulnerabilities

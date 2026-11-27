@@ -433,6 +433,10 @@ jobs:
       # it was collected by no CI job (REL-068 --full: UNCOLLECTED), so
       # the SE-01 pixel tests had never run in PR CI. Triage file proven
       # locally: 11 passed, 0 failed; tier-1 total with it: 37 passed.
+      # TASK-SEN-033: Sentinel-local defensive-skills wiring/guardrail
+      # test added to this tier-1 set. The repo-root pack tests run in
+      # the monorepo validation root suites; running them from this
+      # Sentinel working directory would load the root conftest.
       - name: Run Sentinel tier-1 tests
         if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.sentinel == 'true'
         working-directory: Sentinel
@@ -448,7 +452,7 @@ jobs:
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
             -- .venv-sentinel-ci/bin/python -m pytest -q \
-            tests/security/test_health_readiness.py tests/security/test_health_durability_truthfulness.py tests/unit/test_foundation.py tests/unit/test_ig_sen_device_posture.py tests/test_ig2_sen_extortion_mail_triage.py
+            tests/security/test_health_readiness.py tests/security/test_health_durability_truthfulness.py tests/unit/test_foundation.py tests/unit/test_ig_sen_device_posture.py tests/test_ig2_sen_extortion_mail_triage.py tests/security/test_sen033_sentinel_repo_implement.py
 
       # TASK-REL-088: IntelX tier-1 set (health-contract core files; no
       # tier-1-named suite exists). Own venv from IntelX/requirements.txt

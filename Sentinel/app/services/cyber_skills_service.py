@@ -19,6 +19,12 @@ NIST CSF 2.0 categories, D3FEND controls, ATLAS/AI-RMF and F3 fraud tactics.
 ``incident_routes.triage_incident`` calls ``triage`` so every triaged incident
 carries its ATT&CK crosswalk, and ``security_posture_assessor.get_report``
 adds the CSF function scores.
+
+TASK-SEN-033 wires the defensive-only Anthropic Cybersecurity Skills pack
+(``Sentinel/skills/defensive/``) into this service at construction time. The
+pack loader is fail-closed: an offensive, dual-use, excluded-name or
+excluded-category skill makes service construction raise instead of silently
+joining Sentinel's always-on skill set.
 """
 from __future__ import annotations
 
@@ -37,6 +43,19 @@ else:
     sys.modules["sentinel_cyber_skills"] = cs
     _spec.loader.exec_module(cs)  # type: ignore[union-attr]
 
+try:
+    from Sentinel.app.services import defensive_skills as ds
+except ImportError:  # Sentinel runtime imports use the app package path
+    try:
+        from app.services import defensive_skills as ds
+    except ImportError:
+        _ds_path = Path(__file__).resolve().parent / "defensive_skills.py"
+        _ds_spec = importlib.util.spec_from_file_location(
+            "sentinel_defensive_skills", _ds_path)
+        ds = importlib.util.module_from_spec(_ds_spec)  # type: ignore[arg-type]
+        sys.modules["sentinel_defensive_skills"] = ds
+        _ds_spec.loader.exec_module(ds)  # type: ignore[union-attr]
+
 try:  # pragma: no cover - only when FastAPI is installed
     from fastapi import APIRouter, HTTPException
     from pydantic import BaseModel, Field
@@ -53,12 +72,73 @@ except Exception:  # pragma: no cover
     _ROUTER_AVAILABLE = False
 
 
+def _defensive_skill_to_security_skill(skill: Any) -> Any:
+    """Convert one policy-verified defensive pack skill to a catalog skill."""
+    return cs.SecuritySkill(
+        skill_id=skill.name,
+        name=skill.name.replace("-", " "),
+        domain=skill.domain,
+        tier=skill.tier,
+        summary=skill.description,
+        mapping=cs.FrameworkMapping(
+            attack=list(skill.attack),
+            csf=list(skill.csf),
+            d3fend=list(skill.d3fend),
+            atlas=list(skill.atlas),
+        ),
+        workflow=list(skill.workflow),
+        tools=[],
+        evidence=[f"Sentinel/skills/defensive/{skill.name}/SKILL.md"],
+        requires_authorization=False,
+    )
+
+
+def _catalog_with_defensive_pack(base_catalog: Any, pack: Any) -> Any:
+    """Return a catalog with the defensive pack merged in, fail-closed."""
+    skills = list(base_catalog.skills.values())
+    seen = {skill.skill_id for skill in skills}
+    for pack_skill in pack.skills.values():
+        if pack_skill.name in seen:
+            raise ds.DefensiveSkillPolicyError(
+                f"defensive pack skill {pack_skill.name!r} duplicates a "
+                "catalog skill_id; refusing to overwrite it silently"
+            )
+        skills.append(_defensive_skill_to_security_skill(pack_skill))
+        seen.add(pack_skill.name)
+    return cs.SkillCatalog(skills)
+
+
 class CyberSkillsService:
     """Security-skills facade used by Sentinel's API and incident pipeline."""
 
-    def __init__(self, engine: Any | None = None) -> None:
-        self.engine = engine or cs.CyberSkillsEngine()
-        self.catalog = self.engine.catalog
+    def __init__(
+        self,
+        engine: Any | None = None,
+        defensive_pack_root: str | Path | None = None,
+        load_defensive_pack: bool = True,
+    ) -> None:
+        base_engine = engine or cs.CyberSkillsEngine()
+        base_catalog = base_engine.catalog
+        self.defensive_pack = None
+        catalog = base_catalog
+        if load_defensive_pack:
+            pack_root = (
+                Path(defensive_pack_root)
+                if defensive_pack_root is not None
+                else None
+            )
+            self.defensive_pack = ds.load_defensive_skill_pack(pack_root)
+            catalog = _catalog_with_defensive_pack(base_catalog, self.defensive_pack)
+        self.catalog = catalog
+        if engine is None:
+            self.engine = cs.CyberSkillsEngine(catalog)
+        else:
+            self.engine = base_engine
+            self.engine.catalog = catalog
+            self.engine.resolver = cs.TechniqueResolver(catalog)
+            self.engine.recommender = cs.SkillRecommender(catalog)
+            self.engine.composer = cs.PlaybookComposer(catalog)
+            self.engine.fraud = cs.FraudMapper(catalog)
         self.assessor = cs.NistCsfAssessor()
 
     # -- triage -----------------------------------------------------------
@@ -75,7 +155,7 @@ class CyberSkillsService:
         ]
         if not prepared:
             raise ValueError("at least one incident event is required")
-        report = cs.IncidentReport(title)
+        report = cs.IncidentReport(title, self.catalog)
         for event in prepared:
             report.add_event(event)
         payload = report.build()
@@ -220,6 +300,9 @@ class CyberSkillsService:
             "domains": report["domains"],
             "frameworks": report["frameworks"],
             "tactics_covered": len(report.get("tactics_covered", [])),
+            "defensive_skill_pack": (
+                self.defensive_pack.audit() if self.defensive_pack else None
+            ),
         }
 
 
@@ -353,6 +436,7 @@ else:  # pragma: no cover
 __all__ = [
     "CyberSkillsService",
     "cs",
+    "ds",
     "get_service",
     "reset_service",
     "router",

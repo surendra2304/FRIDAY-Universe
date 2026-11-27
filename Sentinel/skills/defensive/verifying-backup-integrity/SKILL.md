@@ -4,8 +4,8 @@ description: Verify FRIDAY fleet backups are restorable, not just present — ch
 tier: defensive
 domain: incident-response
 attack: [T1490]
-csf: [RC.RP, RC.IM, PR.IP]
-d3fend: [D3-RD]
+csf: [RC.RP, ID.IM]
+d3fend: [D3-DSDA]
 ---
 
 # Verifying backup integrity
