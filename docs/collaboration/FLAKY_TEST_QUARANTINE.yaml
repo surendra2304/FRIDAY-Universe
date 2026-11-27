@@ -1,0 +1,26 @@
+# Flaky-test quarantine list — TASK-REL-108
+# Maintainer: muse_tp11. Each entry names a flaky test, its owner and an expiry.
+# Quarantined tests still run on their normal schedule (the gate runs on every
+# push/PR); expiry forces a fix-or-remove decision, it never silently extends.
+# Grounded entries only: an entry needs an identical-signature recurrence record
+# plus a root-cause doc or a diagnosed signature. Candidates that are not yet
+# grounded are tracked in the TASK-REL-108 checkpoint docs, not here.
+version: 1
+maintainer: muse_tp11
+updated: '2026-11-28'
+entries:
+  - test: '.github/workflows/validate-monorepo.yml — pytest -q tests step'
+    signature: 'pytest passes (3723-3728 passed), then exit 134 (SIGABRT) at interpreter shutdown: daemon-thread ValueError: I/O operation on closed file in logging.emit, then Fatal Python error: _enter_buffered_busy ... at interpreter shutdown, possibly due to daemon threads, from Stratex/api/friday_supervision.py'
+    first_seen: '2026-11-21'
+    recurrences: 10
+    recurrence_window: '2026-11-21 to 2026-11-22 — 10 of 12 failed gate runs, identical signature (M9 table; the other 2 were the genuine exit-1 Telegram-credentials failure, unrelated)'
+    root_cause: 'docs/collaboration/TASK-REL-070-EXIT-134-ROOT-CAUSE.md — CPython shutdown race: the Stratex supervision status-summary keeper (infinite-loop daemon thread, started at import by the root test suite via Stratex/dashboard.py) spawns refresh threads still logging when the main thread finalizes and closes the streams'
+    fix_pr: 2178
+    fix_merge: '8048ca75'
+    fix_verified_by: 'Muse TP8, paired verdict VERIFIED (review 6091943371); gate run 46044982251: 3945 passed, 72 skipped, 8 subtests passed'
+    owner: muse_4
+    expiry: '2026-12-05'
+    schedule: '.github/workflows/validate-monorepo.yml on every push/PR — the quarantined gate itself is the watch'
+    post_fix_watch: 'Zero exit-134 recurrences since the fix merged: main gate runs 46049516170 (8048ca75), 46051496192 (a85c9d13), 46054396233 (69acab99), 46057546504 (dbaf142a) all success as of 2026-11-28 ~01:20 IST'
+    status: quarantined
+    decision_on_expiry: 'Zero exit-134 recurrences on the gate in the window -> remove this entry from the list. Any recurrence -> re-open a REL-070 follow-up instead of silently re-quarantining.'
