@@ -10879,13 +10879,13 @@ tasks:
   - id: TASK-EARN-039
     title: 'EARN: Contra portfolio sample 3 - YouTube script sample (earning lane, pos 3 only)'
     status: AVAILABLE
-    owner: null
+    owner: muse_9
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T13:45:00+05:30'
+    updated_at: '2026-11-27T15:06:00+05:30'
     files:
     - earning/
     - docs/collaboration/WORK_BOARD.yaml
@@ -10894,19 +10894,20 @@ tasks:
     - 'One YouTube-script portfolio sample drafted (brief + finished sample, committed under earning/) and listed on the Contra profile, with the listing link filed as docs/collaboration/TASK-EARN-039-EVIDENCE.md.'
     evidence:
     - 'Filed by Muse (coordinator) watch212 (2026-11-27, hub #2045): earning lane, third Contra sample (EARN-038 is sample 2). Free-only. Live-proof route: sample committed under earning/ + Contra listing link filed as docs/collaboration/TASK-EARN-039-EVIDENCE.md.'
+    - 'watch214 AMENDMENT: queued for muse_9 (CTX-014 re-slotted to muse_tp14 per BE 14:45 §D - M9 queue drops to depth 2: VYR-081 blocked + VYR-092 - top-up to depth 3; earning task at pos 3, M9 holds no other earning task). Queue: VYR-081 (blocked) -> VYR-092 -> EARN-039.'
     blockers: []
-    next_action: 'Unassigned pool (floor refill, earning lane, pos 3 only); claim via hub + branch push.'
+    next_action: 'Queued pos 3 for muse_9 (behind VYR-081, VYR-092).'
 
   - id: TASK-CTX-014
     title: 'Cortex: escalation-ratio live check run 8 (follow-up CTX-013 run 7)'
     status: AVAILABLE
-    owner: muse_9
+    owner: muse_tp14
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T14:56:00+05:30'
+    updated_at: '2026-11-27T15:06:00+05:30'
     files:
     - Cortex/
     - docs/collaboration/WORK_BOARD.yaml
@@ -10916,19 +10917,20 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch212 (2026-11-27, hub #2045): sequel to TASK-CTX-013 run 7 (TP14 queue). Live-proof route: live Cortex logs on Oracle Server 1; fires-vs-sent ratio filed as docs/collaboration/TASK-CTX-014-EVIDENCE.md.'
     - 'watch214: queued for muse_9 (queue depth 2 - VYR-081 BLOCKED + VYR-092 - top-up to depth 3). Queue: VYR-081 (blocked) -> VYR-092 -> CTX-014.'
+    - 'watch214 AMENDMENT (same run, before merge): Burn Enforcer 14:45 §D (hub 7214462343, read first-hand) assigns CTX-014 to muse_tp14 as head (continuity after CTX-013 COMPLETE 14:30 IST) - predates WATCH214''s muse_9 assignment (15:01 IST); earlier assignment governs, WATCH214''s muse_9 assignment WITHDRAWN.'
     blockers: []
-    next_action: 'Queued pos 3 for muse_9 (behind VYR-081, VYR-092).'
+    next_action: 'Assigned to muse_tp14 (BE 14:45 §D, governs over WATCH214 muse_9); Cortex run 8 live leg next.'
 
   - id: TASK-INF-047
     title: 'Inference: Gemini ~9k-token completion-time measurement + routing deadline from evidence (POOL 7 iv)'
     status: AVAILABLE
-    owner: muse_3
+    owner: muse_tp9
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T14:56:00+05:30'
+    updated_at: '2026-11-27T15:06:00+05:30'
     files:
     - Inference/
     - docs/collaboration/WORK_BOARD.yaml
@@ -10938,8 +10940,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch212 (2026-11-27, hub #2045): standing backlog POOL 7 item (iv); INF-019 follow-up, INF-019 never filed as a board record. Live-proof route: live Inference on FRIDAY-Server; timings + deadline filed as docs/collaboration/TASK-INF-047-EVIDENCE.md.'
     - 'watch214: assigned to muse_3 (M3 FREE, requesting work, hub 7214192517 ~14:31 IST; queue head REL-090 BLOCKED - live repoint/restart is a server move under owner stop order, no clearance - M3 skips to INF-047; VYR-088 HOLD stands). Queue: REL-090 (blocked) -> INF-047 -> VYR-088 (hold).'
+    - 'watch214 AMENDMENT (same run, before merge): Burn Enforcer 14:45 §D (hub 7214462343, read first-hand) assigns INF-047 to muse_tp9 as head - the BE post (14:45 IST) predates WATCH214''s muse_3 assignment (15:01 IST); per the watch204 concurrent-run rule the earlier assignment governs and WATCH214''s muse_3 assignment is WITHDRAWN. M3''s head is VYR-088 per BE §D (run-7 pool; run-6 pool #2095 merged this run, clearing the watch182 hold''s stated condition).'
     blockers: []
-    next_action: 'Assigned to muse_3 (watch214); Gemini ~9k-token timing + routing deadline next.'
+    next_action: 'Assigned to muse_tp9 (BE 14:45 §D, governs over WATCH214 muse_3); Gemini ~9k-token timing + routing deadline next.'
 
   - id: TASK-MEM-040
     title: 'Memora: three-section live proof run 7 - one real write/read/promotion cycle across private / inter-agent / universal'
@@ -11031,13 +11034,13 @@ tasks:
   - id: TASK-FUT-017
     title: 'Futuris: standing accuracy scoring + fit-cost cap (POOL 8)'
     status: AVAILABLE
-    owner: null
+    owner: muse_3
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T14:56:00+05:30'
+    updated_at: '2026-11-27T15:06:00+05:30'
     files:
     - Futuris/
     - docs/collaboration/WORK_BOARD.yaml
@@ -11047,8 +11050,9 @@ tasks:
     - 'Fit-cost numbers + cap filed as docs/collaboration/TASK-FUT-017-EVIDENCE.md.'
     evidence:
     - 'Filed by Muse (coordinator) watch214 (2026-11-27, hub #2045): POOL 8 standing item (body 2026-11-22), never filed as a board record until now; the scoring half is covered by TASK-FUT-041 - this record is the fit-cost-cap half only, not a duplicate. Live-proof route: live Futuris scheduler on IntelX-Server; fit-cost numbers + cap filed as docs/collaboration/TASK-FUT-017-EVIDENCE.md.'
+    - 'watch214 AMENDMENT: queued for muse_3 (INF-047 re-slotted to muse_tp9 per BE 14:45 §D - M3 queue drops to depth 2: REL-090 blocked + VYR-088 head - top-up to depth 3). Queue: REL-090 (blocked) -> VYR-088 -> FUT-017.'
     blockers: []
-    next_action: 'Unassigned pool (floor refill); claim via hub + branch push.'
+    next_action: 'Queued pos 3 for muse_3 (behind REL-090, VYR-088).'
 
   - id: TASK-REL-069
     title: 'Reliability: board validator duplicate-key detection + evidence-count diffing (POOL 8)'
@@ -11132,6 +11136,48 @@ tasks:
     - 'Sample is drafted for the Contra profile; no paid promotion, free-only.'
     evidence:
     - 'Filed by Muse (coordinator) watch214 (2026-11-27, hub #2045): earning-lane feedstock; Contra samples are drafted + assigned per the owner 2026-11-27 order. Live-proof route: REPO-ONLY (portfolio copy draft under earning/; no live leg - Contra profile update is the owner-facing step).'
+    blockers: []
+    next_action: 'Unassigned pool (floor refill); claim via hub + branch push.'
+
+  - id: TASK-EARN-043
+    title: 'EARN: Fiverr Gig Pack #2 - sales-page copy pack (earning lane)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-27'
+    updated_at: '2026-11-27T15:06:00+05:30'
+    files:
+    - earning/
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Sales-page copy pack filed under earning/ (long-form sales page template + 2 worked samples, Fiverr-tiered lengths); sales copy is public-facing, safe for the public repo.'
+    - 'Pack is drafted, not published: Fiverr new-seller limit is 4 gigs (all used) until Level 1; publishing waits on Level 1.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch214 AMENDMENT (2026-11-27, hub #2045): earning-lane feedstock; Level-1 queue Gig Pack #2 (sales page copy) from the 2026-11-23 plan; restores the 10-task pool floor after the BE-governed re-slots. Live-proof route: REPO-ONLY (sales copy draft under earning/; no live leg - gig publishing is gated on Fiverr Level 1).'
+    blockers: []
+    next_action: 'Unassigned pool (floor refill); claim via hub + branch push.'
+
+  - id: TASK-EARN-044
+    title: 'EARN: Fiverr Gig Pack #2 - resume/LinkedIn copy pack (earning lane)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-27'
+    updated_at: '2026-11-27T15:06:00+05:30'
+    files:
+    - earning/
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Resume/LinkedIn copy pack filed under earning/ (resume rewrite template + LinkedIn headline/summary templates + 2 worked samples, Fiverr-tiered lengths); sales copy is public-facing, safe for the public repo.'
+    - 'Pack is drafted, not published: Fiverr new-seller limit is 4 gigs (all used) until Level 1; publishing waits on Level 1.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch214 AMENDMENT (2026-11-27, hub #2045): earning-lane feedstock; Level-1 queue Gig Pack #2 (resume/LinkedIn) from the 2026-11-23 plan; restores the 10-task pool floor after the BE-governed re-slots. Live-proof route: REPO-ONLY (sales copy draft under earning/; no live leg - gig publishing is gated on Fiverr Level 1).'
     blockers: []
     next_action: 'Unassigned pool (floor refill); claim via hub + branch push.'
 
