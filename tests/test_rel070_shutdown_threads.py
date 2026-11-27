@@ -155,3 +155,78 @@ class TestRel070ShutdownThreads:
             assert _count_named(REFRESH_NAME) == 0
         finally:
             self.sup._STATUS_SUMMARY_KEEPER_STOP.clear()
+
+
+class TestRel070PurgeOrphan:
+    """A repo_isolation purge must not orphan supervision threads.
+
+    Regression (TASK-REL-070 follow-up): the Nov 23 fix joins the keeper
+    at ``pytest_sessionfinish`` via the ``api.friday_supervision`` module
+    object in ``sys.modules`` — but ``tests/test_e2e_real_repo_integration.py``
+    calls ``purge_ambiguous_modules()`` after the dashboard import started
+    the keeper, and the purge drops ``api.*`` from ``sys.modules`` (``"api"``
+    is in ``AMBIGUOUS_TOP_LEVEL_NAMES``). The keeper thread keeps running
+    on the orphaned module object, the sessionfinish hook can no longer
+    find the module to stop it, and the gate still aborts at interpreter
+    shutdown — runs 45157161309 (Nov 23), 45505142262 + 45514408464*
+    (Nov 24), 45756595864 (Nov 26): all tests pass, then ``Fatal Python
+    error: _enter_buffered_busy ... at interpreter shutdown, possibly due
+    to daemon threads`` with the ``friday_supervision.py`` refresh frames,
+    exit 250 (SIGABRT, returncode -6, via the REL-081 runner's
+    ``sys.exit(-6)``). (*45514408464's base predates the Nov 23 fix, so it
+    is a pre-fix occurrence, not a recurrence.)
+    """
+
+    def test_purge_does_not_orphan_supervision_keeper(self):
+        from repo_isolation import purge_ambiguous_modules
+
+        sup = sys.modules.get("api.friday_supervision") or sys.modules.get(
+            "Stratex.api.friday_supervision"
+        )
+        if sup is None:
+            import api.friday_supervision as sup
+        sup.stop_status_summary_keeper(timeout=30)
+        thread = sup.start_status_summary_keeper()
+        assert thread is not None and thread.is_alive()
+        try:
+            purge_ambiguous_modules()
+            assert "api.friday_supervision" not in sys.modules
+            # The invariant: after a purge, no supervision thread may be
+            # alive that the sessionfinish hook can no longer reach. The
+            # purge must stop the keeper before dropping the module.
+            assert not thread.is_alive(), (
+                "purge orphaned the supervision keeper: the keeper thread "
+                "is still alive but api.friday_supervision is gone from "
+                "sys.modules, so pytest_sessionfinish cannot stop it and "
+                "the gate can abort at interpreter shutdown"
+            )
+            assert _count_named(KEEPER_NAME) == 0
+            assert _count_named(REFRESH_NAME) == 0
+        finally:
+            # Clean up via the held reference — the sessionfinish hook
+            # cannot reach this module object any more (that is the bug).
+            sup.stop_status_summary_keeper(timeout=30)
+
+    def test_dashboard_import_under_pytest_starts_no_keeper(self):
+        """Importing the Stratex dashboard under pytest must not start the keeper.
+
+        The keeper is a production warming optimisation; under pytest the
+        dashboard import must not start it (TASK-REL-070 follow-up). A
+        keeper started at import time is orphaned by the suite's
+        repo_isolation purges and aborts the gate at interpreter shutdown.
+        Tests that need the keeper call start_status_summary_keeper()
+        directly (as TestRel070ShutdownThreads does).
+        """
+        for name in (
+            "Stratex.dashboard",
+            "api.friday_supervision",
+            "Stratex.api.friday_supervision",
+        ):
+            sys.modules.pop(name, None)
+        before = _count_named(KEEPER_NAME)
+        import Stratex.dashboard  # noqa: F401  (import starts the keeper pre-fix)
+
+        assert _count_named(KEEPER_NAME) == before, (
+            "dashboard import under pytest started the supervision keeper; "
+            "the keeper must only start outside a test process"
+        )

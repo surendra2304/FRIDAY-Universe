@@ -21,7 +21,10 @@ occurrence identify itself:
 - exit 134 gets an explicit EXIT-134 RECURRENCE banner plus a check of
   the known REL-070 signature markers, and a pointer to the REL-070
   evidence doc, so the reader knows immediately whether this is the
-  known shutdown race or a new abort.
+  known shutdown race or a new abort. The banner keys on both abort
+  forms: exit 134 (the shell's 128+6 when it runs pytest directly) and
+  returncode -6 (pytest killed by SIGABRT under this runner, surfacing
+  as shell exit 250) — every post-fix recurrence arrived as -6/250.
 
 Locally (no GITHUB_STEP_SUMMARY / GITHUB_RUN_ID) the runner behaves the
 same except the summary goes only to stdout — the exit code is identical.
@@ -42,6 +45,19 @@ TAIL_LINES = 40
 REL070_DOC = "docs/collaboration/TASK-REL-070-EXIT-134-ROOT-CAUSE.md"
 
 EXIT_134 = 134
+
+# subprocess returncode when pytest dies of SIGABRT itself: the runner's
+# child was killed by signal 6, so Popen reports -6 and the runner's
+# sys.exit(-6) surfaces as shell exit 250. Same abort as exit 134 (the
+# shell's 128+6 form when it runs pytest directly) — every post-fix
+# recurrence (runs 45157161309, 45505142262, 45514408464, 45756595864)
+# arrived as -6/250, so the recurrence banner must key on both forms.
+EXIT_134_SIGNAL = -6
+
+
+def _is_exit134(exit_code):
+    """True when *exit_code* is the SIGABRT abort, in either form."""
+    return exit_code in (EXIT_134, EXIT_134_SIGNAL)
 
 # Substrings of the REL-070 failure signature (from run 45082613824 and the
 # 9 other identical occurrences). If the tail contains them, the abort is
@@ -99,7 +115,8 @@ def summary_lines(ctx, exit_code, tail, full_log=""):
     gets the recurrence banner and the REL-070 signature check.
     """
     lines = []
-    if exit_code == EXIT_134:
+    is_abort = _is_exit134(exit_code)
+    if is_abort:
         lines.append("## Fleet-layout gate — EXIT-134 RECURRENCE (test step failed)")
     else:
         lines.append("## Fleet-layout gate — test step FAILED (exit %d)" % exit_code)
@@ -113,15 +130,18 @@ def summary_lines(ctx, exit_code, tail, full_log=""):
     lines.append("- Ref: %s (attempt %s)" % (ctx["ref"], ctx["attempt"]))
     lines.append("- Commit: %s" % ctx["sha"])
     lines.append("- Exit code: %d" % exit_code)
+    if exit_code == EXIT_134_SIGNAL:
+        lines.append("  (pytest died of SIGABRT, returncode -6 — the same abort "
+                     "as exit 134; the shell reports it as exit 250)")
     summary = pytest_summary_line(full_log)
     if summary:
         lines.append("- Pytest result line: `%s`" % summary)
-        if exit_code == EXIT_134:
+        if is_abort:
             lines.append("  (tests passed — the abort happened at interpreter "
                          "shutdown, after the summary; this is the REL-070 "
                          "failure shape, not a test failure)")
     lines.append("")
-    if exit_code == EXIT_134:
+    if is_abort:
         found = detect_exit134_signature(full_log)
         lines.append("### Is this the known REL-070 shutdown race?")
         lines.append("")

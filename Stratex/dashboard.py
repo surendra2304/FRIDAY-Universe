@@ -78,10 +78,21 @@ for bp_mod, bp_name in core_blueprints + adapter_blueprints:
 # including autonomous-engine construction — synchronously on the request
 # thread (63 s on 2026-11-16 13:38 IST vs FRIDAY's 30 s budget). Fails
 # soft: if the keeper cannot start, reads keep the FRD-011 behaviour.
+# TASK-REL-070 follow-up: do NOT start the keeper under pytest. The keeper
+# is a production warming optimisation, not a test dependency (the read
+# path computes synchronously when cold), and starting it in a test process
+# is what the shutdown race feeds on: the root suite's repo_isolation
+# purges drop `api.*` from sys.modules while the keeper thread keeps
+# running on the orphaned module object, so pytest_sessionfinish cannot
+# reach it to stop it — the gate then aborts at interpreter shutdown
+# (runs 45157161309, 45505142262, 45756595864: all tests pass, then
+# Fatal Python error: _enter_buffered_busy ... at interpreter shutdown).
+# Tests that need the keeper call start_status_summary_keeper() directly.
 try:
     from api.friday_supervision import start_status_summary_keeper
 
-    start_status_summary_keeper()
+    if "pytest" not in sys.modules:
+        start_status_summary_keeper()
 except Exception as e:
     logger.error(f"[DASHBOARD_WARN] Status summary keeper not started: {e}")
 
