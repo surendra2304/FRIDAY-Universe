@@ -78,3 +78,39 @@ Reading note: the bridge `oracle_check_service` tool reports the leftover masked
 - No live writes were made in this checkpoint; all probes were reads.
 
 — Muse 10
+
+## 5. CHECKPOINT 2 — re-probe (16:08–16:11 IST) + acceptance-leg status
+
+- Probe window: 2026-11-27 ~16:08–16:11 IST. Both Oracle servers ONLINE (`get_system_info`). Base: main `f5374e4c`. Branch re-created post-merge as `muse10/task-val-001-fleet-validation-reprobe` (checkpoint-1 branch was deleted after PR #2094 merged, per team practice).
+- All probes in this checkpoint were reads. No live writes made.
+
+### 5.1 Gateway rollup re-probe — `GET https://friday-universe.duckdns.org/api/agents/status`
+
+- HTTP 200 in 9.2s (direct read 16:08 IST). Overall: **degraded**. 9 agents: ONLINE 1, REACHABLE 5, DEGRADED 3, UNREACHABLE 0, OFFLINE 0. Payload timestamp: 2026-11-27T10:38:09Z.
+- Same counts and same three DEGRADED agents as checkpoint 1 (13:10 IST). Latencies up slightly: stratex 5788→6847 ms, intelx 4044→4580 ms, futuris 2186→2705 ms; memora ONLINE 832 ms (was 256 ms); inference REACHABLE 36 ms; cortex 805 ms; forge 815 ms; sentinel 812 ms; vyralx 1300 ms.
+- `GET /friday/health`: HTTP 200 in 3.2s, overall healthy, observed 2026-11-27T10:38:11Z (service `friday_core` v2.0.0, agent FRIDAY; Oracle SELECT 1 ok; disk 40243.8 MB free; peer_mesh `CONFIG_UNVERIFIED` — unchanged).
+
+### 5.2 systemd re-probe — first-hand via bridge `run_shell` (16:09 IST)
+
+- Server 1 (up 44d, load 0.08, disk 97G 48% used, 51G free — was 51% at checkpoint 1): UNCHANGED — Memora/Forge/Sentinel/Cortex active (running), enabled; FRIDAY/Inference/Stratex inactive, disabled (Stratex dead since 2026-11-24 13:42:11 IST); Stratex-Daemon failed; IntelX failed, masked; Futuris inactive, masked; FRIDAY-Voice inactive, disabled; caddy failed, enabled (since 2026-11-25).
+- Server 2 (up 35d, load 0.37): UNCHANGED — caddy active (serves the public gateway); friday-bridge active; Cortex/IntelX/Futuris/Sentinel inactive, masked (leftovers); VyralX failed, masked; VyralX-Daemon inactive, masked; fleet-health-watcher inactive (static — not running).
+
+### 5.3 WATCH — Server 2 disk deteriorating (NEW)
+
+- S2 `/`: **95% used, 2.9G free at 16:11 IST** — confirmed twice this run (94% / 3.0G at 16:09 → 95% / 2.9G at 16:11). Was 90% / 5.0G at 13:05 (checkpoint 1) and 91% / 4.9G at 15:40 (TP8, hub 7215574847). Below the 10% headroom threshold and falling.
+- Largest consumers: `/tmp` 4.1G; `/opt/friday_universe` 5.0G (venv 1.8G + venv312 1.6G + FRIDAY 723M + Cortex 279M + Memora 271M); `/var/log` 432M; journals 212M.
+- No cleanup done — no clearance, and `/tmp` may hold other workers' live work. Coordinator ruling owed before any S2 write.
+
+### 5.4 Acceptance leg — one real request per agent: NOT RUN this checkpoint
+
+- Still owed (all 10): Memora write/read cycle; Forge real build execution; Sentinel low-risk auto-approve + high-risk Telegram prompt; Cortex real dispatch/CRM check; Inference model completion; Stratex market-data read; IntelX one real research cycle; Futuris one real forecast; VyralX process/DB/worker checks; FRIDAY one spoken-command round via the gateway.
+- Reason: this run is the hourly self-check; the acceptance leg is multi-hour live work, and the per-agent real-request routes are not the `/health` paths the gateway reports — each route must be resolved first. Next work run: resolve routes, then run the leg.
+- The three DEGRADED agents (Stratex, IntelX, Futuris) still have unknown capability — no live probe/model probe exists for them yet.
+
+### 5.5 Checkpoint-2 verdicts
+
+- UNCHANGED (gateway + systemctl legs): same degraded rollup, same unit states as checkpoint 1.
+- NEW ALERT: S2 disk 95% / 2.9G free and falling — coordinator ruling owed.
+- Task stays IN_REVIEW; validation NOT renewed (acceptance leg outstanding; three agents still DEGRADED with unknown capability).
+
+— Muse 10
