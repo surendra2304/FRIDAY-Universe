@@ -7550,14 +7550,14 @@ tasks:
   - id: TASK-VOI-029
 
     title: 'Voice: prove M5 workflow 5, 3 consecutive live voice sessions (consumes the VOI-027 verdict)'
-    status: CLAIMED
-    owner: muse_9
+    status: AVAILABLE
+    owner: muse_6
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-22'
-    updated_at: '2026-11-27T12:11:00+05:30'
+    updated_at: '2026-11-27T12:17:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -7568,9 +7568,9 @@ tasks:
     - 'Re-slotted to Muse 7 by coordinator watch128 (stale muse_ai owner; P1 voice proof, consumes the VOI-027 verdict); queue position 2 behind WF-002.'
     - 'Re-slotted to Muse 13 by coordinator watch130 (2026-11-26): Muse 7 dark with no status report after the watch128 demand and the watch129 re-slot warning (WF-002 already re-slotted off Muse 7); VOI-029 unclaimed, branch null. Muse 7 keeps TASK-EARN-032 (queue position 2, not yet reached). Fresh branch + new work PR when claimed.'
     - 'Claimed by Muse 1 (hub #2045 comment 7207821435, 07:35 IST): branch muse1/task-voi-029-m5-three-live-sessions @ bc2d5d11 verified via ls-remote by coordinator watch196; queue VOI-029 -> VOI-030 -> FRD-064. Re-slotted from muse_13 (WATCH195 section 2 + burn section E).'
-    - 'watch209: re-slotted muse_1 -> muse_9 (BE 11:58 assignment; M1 receipt 7211642064 confirms); M9 claim via hub + branch push.'
+    - 'watch209: re-slotted muse_1 -> muse_6 pos 3 (WATCH208 §4; BE 11:58 M9 routing superseded by M9 VYR-091 claim 7211752062).'
     blockers: []
-    next_action: 'Owned by muse_9; claim via hub + branch push.'
+    next_action: 'Queued pos 3 for muse_6 (behind REL-104, VOI-027).'
   - id: TASK-VYR-040
 
     title: 'VyralX: supervised cycle 2 from FRESH most-popular candidates (not the VYR-037 pool), machine QA gates first, renders held unlisted'
@@ -7597,14 +7597,14 @@ tasks:
   - id: TASK-VOI-030
 
     title: 'Voice: acceptance run 17 - prove the pacing fix plus greeting onset on a calm box, per-probe latency filed'
-    status: CLAIMED
+    status: AVAILABLE
     owner: muse_1
     branch: muse13/task-voi-030-acceptance-run-17
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-23'
-    updated_at: '2026-11-27T12:11:00+05:30'
+    updated_at: '2026-11-27T12:17:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -7614,9 +7614,8 @@ tasks:
     - 'Assigned to Muse 13 in coordinator watch 2026-11-23 ~15:45 IST as queue position 2 (queue: OBS-011 -> VOI-030 -> REL-085). Board owner filing for the 2026-11-23 ~12:53 IST assignment.'
     - 'Claim: issue #1483 comment 7099081834 by Muse 13, 2026-11-23 ~16:37 IST, on assignment in coordinator watch 7098354619 (~16:12 IST) and nudge in watch 7098694215 (~16:25 IST). Board record verified AVAILABLE, owner muse_13, on main 958cc133 (board blob f2cef67c, verified against the git blobs API before editing). No prior claim, branch or PR. Branch muse13/task-voi-030-acceptance-run-17.'
     - 'Re-slotted to muse_1 queue position 2 by coordinator watch196 (WATCH195 section 2 + burn section E; from muse_13); M13 branch muse13/task-voi-030-acceptance-run-17 retained for adoption; M1 claims fresh when reached.'
-    - 'watch209: claimed by muse_1 as queue head (free/requesting 7211642064); calm-window acceptance run 17 next.'
     blockers: []
-    next_action: 'Claimed by muse_1; calm-window acceptance run 17 next.'
+    next_action: 'Assigned to muse_1 as queue position 2 by coordinator watch196 (2026-11-27, hub #2045); claim via hub + branch push when reached.'
   - id: TASK-INT-023
 
     title: 'IntelX: compile the INT-876 soak 7-day chain evidence for the D4 enablement judgement due 2026-11-27'
@@ -7821,13 +7820,13 @@ tasks:
   - id: TASK-FRD-043
     title: 'FRIDAY: deploy the FRD-041 OOM memory guard live with staged pressure proof and Telegram delivery'
     status: CLAIMED
-    owner: muse_4
-    branch: null
+    owner: muse_1
+    branch: muse1/task-frd-043-oom-memory-guard-deploy
     pr: 2064
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-27T12:11:00+05:30'
+    updated_at: '2026-11-27T12:17:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -7837,9 +7836,9 @@ tasks:
       - 'Assigned to Muse 15 by coordinator watch 2026-11-24 ~03:55 IST (hub #1483) — queue head, after STR-050; EARN-006 sits queue position 3. Claim it now (hub claim + branch push from main 107814b4).'
       - 'Claimed by Muse 15 2026-11-25 ~18:25 IST (hub 7163026128) per WATCH099; HOLD STANDS per WATCH100 (7163804244) — no deploy clearance, fleet CD broken (repair needs owner word); no live change. Branch muse15/task-frd-043-oom-memory-guard at b9a4c8cf (behind current main — fast-forward owed when clearance lands).'
       - 'PR #2064 open (head 915c863b, mergeable clean, CI 10/10); verifier muse_17.'
-      - 'watch209: deploy leg muse_15 -> muse_4 (BE 11:58; WATCH208 M1 assignment withdrawn watch209); staged pressure proof + Telegram next.'
+      - 'watch209: claimed by muse_1 (hub 7211687320, WATCH208 §4); deploy leg in flight; BE 11:58 M4 routing superseded (M4 confirms 7211754184, no double-claim).'
     blockers: []
-    next_action: 'Deploy leg owned by muse_4; staged pressure proof + Telegram next.'
+    next_action: 'Claimed by muse_1; deploy live + staged pressure proof + Telegram next.'
 
   - id: TASK-REL-094
     title: 'Reliability: backup restore re-drill after the REL-091 CLOB fix - prove JSON/CLOB fidelity on a fresh backup'
@@ -9229,13 +9228,13 @@ tasks:
   - id: TASK-VYR-086
     title: 'VyralX supervised-cycle candidate pool run-6 (most-popular discovery + machine QA gates)'
     status: AVAILABLE
-    owner: muse_6
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-26'
-    updated_at: '2026-11-27T12:11:00+05:30'
+    updated_at: '2026-11-27T12:17:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-VYR-086-EVIDENCE.md
@@ -9251,9 +9250,9 @@ tasks:
     - 'Re-slotted to Muse 3 by coordinator watch177: TP11 stall - claimed 2026-11-26 ~21:10 IST, zero commits beyond the claim push, no hub post and no work PR/checkpoint by the WATCH176 re-slot deadline (next run). TP11 branch musetp11/task-vyr-086-supervised-cycle-pool-run-6 @ 49cfd862 stands; M3 continues from it or pushes its own branch.'
     - 'Ownership ruling watch181 (2026-11-27): board owner muse_3 STANDS. Muse 9 claim (hub 7201405786) conflicts — M9 releases VYR-086; its branch muse9/task-vyr-086 @ 6182a9f3 has no commits. TP11 branch musetp11/task-vyr-086 @ 49cfd862 and TP14 branch musetp14/task-vyr-088 @ 4cf9c897 are claim-only duplicates of main merge commits (#1992 / #1997) — owners to delete them. Branch field corrected to muse_3 claim branch muse3/task-vyr-086-supervised-cycle-pool-run-6. M9 S2 discovery leg NOT run from the flagged fetch (safety flag in hub 7201405786); the leg is M3s to run under clearance 7200564540.'
     - 'Released by Muse 3 (hub 7202036053) per the Burn Enforcer; re-assigned to Muse 9 by coordinator watch182 follow-up (claim hub 7201315044, branch muse9/task-vyr-086, zero commits on M3''s branch). Live discovery step HELD on the safety flag (M9 hub 7202423840); no execution until the coordinator rules. Board flip watch183.'
-    - 'watch209: re-slotted to pool watch207; queued pos 3 for muse_6 watch209.'
+    - 'watch209: re-slotted to pool watch207; M6 pos-3 assignment withdrawn watch209 (M6 queue full: REL-104/VOI-027/VOI-029).'
     blockers: []
-    next_action: 'Queued pos 3 for muse_6 (behind VOI-027, REL-104).'
+    next_action: 'In pool; first headless chat to claim takes it.'
   - id: TASK-SEN-035
     title: 'Sentinel approval-path live proof run-4 (one auto-approved low-risk + one Telegram-prompted high-risk)'
     status: AVAILABLE
@@ -9921,14 +9920,14 @@ tasks:
 
   - id: TASK-REL-104
     title: 'scripts/live_probe.py - one command per agent: gateway health + one real request, output filed as evidence'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_6
-    branch: null
+    branch: muse6/task-rel-104-live-probe
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T08:54:01+05:30'
+    updated_at: '2026-11-27T12:17:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - scripts/live_probe.py
@@ -9937,8 +9936,9 @@ tasks:
     - 'No new always-on service; the script runs on demand from the sandbox or CI.'
     evidence:
     - 'Filed by Muse (coordinator) watch199 (2026-11-27, hub #2045): SPEED ROUND 2 order 7203732206 task (b). Live-proof route: run scripts/live_probe.py against the live gateway; per-agent health + real-request output filed as evidence.'
+    - 'watch209: claimed by muse_6 (hub 7211795458, WATCH206 §3.1 ruling); branch muse6/task-rel-104-live-probe.'
     blockers: []
-    next_action: 'Assigned to muse_6 as queue position 3 by coordinator watch199 (2026-11-27, hub #2045); claim via hub + branch push when reached.'
+    next_action: 'Claimed by muse_6; live_probe.py implementation next.'
 
   - id: TASK-REL-105
     title: 'CI test selection - pytest-testmon on the PR path with cached data; full suite on merge-to-main/nightly'
@@ -10047,14 +10047,14 @@ tasks:
 
   - id: TASK-VYR-091
     title: 'VyralX: supervised-cycle candidate pool run 2 (follow-up VYR-089 re-slot)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_9
-    branch: null
+    branch: muse9/task-vyr-091
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T09:55:00+05:30'
+    updated_at: '2026-11-27T12:17:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-VYR-091-POOL.json
@@ -10063,8 +10063,9 @@ tasks:
     - 'Loop stays OFF, uploader stays paused, renders held unlisted.'
     evidence:
     - 'Filed by Muse (coordinator) watch201 (hub #2045): VyralX candidate pool run 2. Live-proof route: discovery + machine QA gates against live VyralX data; pool filed as docs/collaboration/TASK-VYR-091-POOL.json.'
+    - 'watch209: claimed by muse_9 (hub 7211752062, WATCH208 §4); branch muse9/task-vyr-091.'
     blockers: []
-    next_action: 'Assigned to muse_9 as queue position 2 by coordinator watch201 (hub #2045); claim via hub + branch push when reached.'
+    next_action: 'Claimed by muse_9; supervised-cycle pool run 2 next.'
 
   - id: TASK-VYR-092
     title: 'VyralX: BGM batch verification run 2 (follow-up VYR-047)'
@@ -10384,6 +10385,27 @@ tasks:
     - 'Filed by Muse (coordinator) watch206 (hub #2045): Inference Gemini completion-time measurement on ~9k-token prompts. Live-proof route: timed prompts against the live Inference service; routing deadline set from the measured numbers and filed as docs/verification/INF046_GEMINI_TIMING.md.'
     blockers: []
     next_action: 'Assigned to muse_tp12 as queue position 3 by coordinator watch206 (hub #2045); claim via hub + branch push when reached.'
+  - id: TASK-INT-878
+    title: 'IntelX: alert/burst live leg follow-up to INT-049 - run the granted alert + burst verification live and file the receipts'
+    status: CLAIMED
+    owner: muse_4
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-27'
+    updated_at: '2026-11-27T12:17:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-INT-878-EVIDENCE.md
+    acceptance:
+    - 'Run the INT-049 alert/burst live leg against the live IntelX service and file per-leg receipts as docs/collaboration/TASK-INT-878-EVIDENCE.md.'
+    - 'No live-money or destructive action; read-only probes plus the granted alert/burst leg only (grant WATCH205 §4.1).'
+    evidence:
+    - 'Filed by Muse (coordinator) watch209 (2026-11-27, hub #2045): follow-up to INT-049 (PR #2070 merged). Live-proof route: live IntelX on Oracle Server 1; per-leg receipts filed as docs/collaboration/TASK-INT-878-EVIDENCE.md. Grant: WATCH205 §4.1. Muse 4 named it ready (hub 7211754184).'
+    blockers: []
+    next_action: 'Claimed by muse_4; run the alert/burst leg live next.'
+
 task_id_warnings:
   - id: TASK-REL-061
 
