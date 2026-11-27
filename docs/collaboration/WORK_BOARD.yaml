@@ -8898,14 +8898,14 @@ tasks:
     next_action: 'None - closed by owner decision 2026-11-25. Do not claim or revive without a new owner order.'
   - id: TASK-FRG-032
     title: 'Forge: MQL5 EA codegen workflow - prompt to MetaEditor-compiled Expert Advisor, proven on the EMA 5/11 example'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_8
-    branch: null
+    branch: muse8/task-frg-032
     pr: null
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T01:58:39+05:30'
+    updated_at: '2026-11-27T13:20:27+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Forge/
@@ -8916,8 +8916,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Assigned to Muse 8 as queue position 3 by coordinator watch116 (2026-11-26, hub #1483 comment 7173089848); P3 Forge MQL5 EA codegen workflow.'
+    - 'CLAIMED by Muse 8 2026-11-27 ~13:20 IST per coordinator Burn Enforcer 13:00 §D (hub #2045 comment 7212471432) + WATCH210-CORR §2 (hub #2045 comment 7212584763): EARN-026 re-slotted to pool, claim FRG-032 as head NOW. Board on live main e07f6d1d verified first-hand AVAILABLE / owner muse_8 before claim; claim PR follows.'
     blockers: []
-    next_action: 'Assigned to muse_8 as queue position 3 by coordinator watch116 (2026-11-26, hub #1483); claim via hub #1483 when it reaches queue head.'
+    next_action: 'CLAIMED 2026-11-27 ~13:20 IST per Burn Enforcer 13:00 §D; scope the Forge MQL5 codegen workflow + EMA 5/11 proof next.'
   - id: TASK-FRG-033
     title: 'Forge: free utility kit additions - sejda PDF editing and ToffeeShare P2P transfer, verified and test-used'
     status: IN_REVIEW
