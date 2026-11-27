@@ -10110,12 +10110,12 @@ tasks:
     title: 'Stratex: forward-window fill-ledger audit run 6 (follow-up STR-092 run 3 + STR-097 trial 3980 proven)'
     status: CLAIMED
     owner: muse_tp4
-    branch: null
+    branch: musetp4/task-str-099-fill-ledger-audit-run6
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T14:15:00+05:30'
+    updated_at: '2026-11-27T17:36:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-STR-099-EVIDENCE.md
@@ -10125,8 +10125,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch201 (hub #2045): Stratex fill-ledger audit run 6. Live-proof route: read the daemon fill/close ledger on S1 end-to-end, reconcile against venue positions/history, file the forward-window state as docs/collaboration/TASK-STR-099-EVIDENCE.md.'
     - 'watch213: checkpoint 1 FILED by muse_tp4 (hub 7213592133, ~13:53 IST); one-line record names STR-099 as head; live leg granted but not executed.'
+    - 'watch219: live leg EXECUTED by coordinator (WATCH210-CORR §5 grant, standing clearance 7200564540): 6 read-only S1 commands via bridge run_shell, run ~17:04-17:06 IST. S1 ledger STALE 80 rows (sha 2b6fd0fb, last modified Nov 24 01:10); S1 trial counter 3988 vs S4 4000; stratex-daemon.service not found on S1; reconciliation timer active, next trigger Nov 28 01:00 IST. Reconciler exit 0, report daily_2026-11-27.json: window 71 rows net -56.3092 (Binance -56.2613, OANDA -0.0478), all-time net +138.7507; matching BOTH 16 / EXIT_ONLY 15 / NO_MATCH 47; missing closes 8 (-12.6397); status RECONCILED; no diffs over 0.5. TP4 files checkpoint 2 (TASK-STR-099-EVIDENCE.md) from these numbers.'
     blockers: []
-    next_action: 'Checkpoint 1 filed by muse_tp4; live leg next.'
+    next_action: 'Live leg executed by coordinator (watch219); TP4 files checkpoint 2 / TASK-STR-099-EVIDENCE.md next.'
 
   - id: TASK-VYR-091
     title: 'VyralX: supervised-cycle candidate pool run 2 (follow-up VYR-089 re-slot)'
@@ -10575,14 +10576,14 @@ tasks:
 
   - id: TASK-INF-LLM-002
     title: 'Inference: provider failover drill under simulated outage (MASTER_PLAN §6)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_15
-    branch: null
+    branch: muse15/task-inf-llm-002-failover-drill
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T12:45:00+05:30'
+    updated_at: '2026-11-27T17:36:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-LLM-002-EVIDENCE.md
@@ -10592,8 +10593,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch210 (2026-11-27, hub #2045): MASTER_PLAN §6 standing backlog. Live-proof route: live Inference service on FRIDAY-Server; drill receipts filed as docs/collaboration/TASK-INF-LLM-002-EVIDENCE.md.'
     - 'watch210: queued pos 3 for muse_15 (VYR-086 moved to muse_14).'
+    - 'watch219: M15 CLAIMED hub 7217161116 (17:02 IST, read first-hand) per BE 17:01 §C; branch muse15/task-inf-llm-002-failover-drill @ 382f971a verified via ls-remote; EARN-035 merged this run (PR #2121).'
     blockers: []
-    next_action: 'Queued pos 3 for muse_15 (behind MEM-037, EARN-035).'
+    next_action: 'Claimed by muse_15; failover drill next.'
 
   - id: TASK-INT-879
     title: 'IntelX: alert-suppression ordering follow-up to the INT-876 soak - define and prove the suppression order for burst alerts'
@@ -10975,14 +10977,14 @@ tasks:
 
   - id: TASK-INF-047
     title: 'Inference: Gemini ~9k-token completion-time measurement + routing deadline from evidence (POOL 7 iv)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_tp9
     branch: musetp9/task-inf-047
     pr: 2118
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T16:20:00+05:30'
+    updated_at: '2026-11-27T17:36:00+05:30'
     files:
     - Inference/
     - docs/collaboration/WORK_BOARD.yaml
@@ -10994,8 +10996,9 @@ tasks:
     - 'watch214: assigned to muse_3 (M3 FREE, requesting work, hub 7214192517 ~14:31 IST; queue head REL-090 BLOCKED - live repoint/restart is a server move under owner stop order, no clearance - M3 skips to INF-047; VYR-088 HOLD stands). Queue: REL-090 (blocked) -> INF-047 -> VYR-088 (hold).'
     - 'watch214 AMENDMENT (same run, before merge): Burn Enforcer 14:45 §D (hub 7214462343, read first-hand) assigns INF-047 to muse_tp9 as head - the BE post (14:45 IST) predates WATCH214''s muse_3 assignment (15:01 IST); per the watch204 concurrent-run rule the earlier assignment governs and WATCH214''s muse_3 assignment is WITHDRAWN. M3''s head is VYR-088 per BE §D (run-7 pool; run-6 pool #2095 merged this run, clearing the watch182 hold''s stated condition).'
     - 'watch216-AMEND: TP9 COMPLETE hub 7215855671 (16:05 IST, read first-hand); work PR #2118 open, head a1583ff9, 2 files evidence + config citation, no behaviour change. Numbers: direct n=5 median 113.62 s, 0/5 inside the 15 s slice; combined n=13 median 67.32 s; decision KEEP 60.0/0.6/15.0. Paired verifier Muse 15 named by Burn Enforcer 16:00 §B (due ~17:00 IST).'
+    - 'watch219: PR #2118 MERGED 2026-11-27 (merge 487e1264, ~17:32 IST, verified first-hand); M15 VERIFIED review 6087467045 (17:00 IST, read first-hand: head a1583ff9, CI 9/9, mergeable True/clean, 2 files evidence + config citation); coordinator CI first-hand 9 runs (7 success + 2 skipped, 0 fail) on head a1583ff9; no board hunk.'
     blockers: []
-    next_action: 'PR #2118 open; paired verdict owed (M15, ~17:00 IST).'
+    next_action: 'MERGED via PR #2118.'
 
   - id: TASK-MEM-040
     title: 'Memora: three-section live proof run 7 - one real write/read/promotion cycle across private / inter-agent / universal'
