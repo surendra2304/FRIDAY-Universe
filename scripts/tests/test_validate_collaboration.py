@@ -18,12 +18,15 @@ Cases:
      count differs from the raw text fails even with duplicate-key
      detection bypassed (defence in depth).
   F. MERGED-with-null-pr (TASK-REL-087): flipping the TASK-REL-087 record
-     to MERGED while its ``pr`` stays null fails, exit 1.
+     to MERGED while its ``pr`` stays null fails, exit 1. The record is
+     synthesised by the fixture (see ``ensure_rel087_record``): the
+     2026-11-27 board shrink archived REL-087 off the live board.
   G. MERGED-with-unmerged-pr (TASK-REL-087): flipping it to MERGED citing
      PR 999999, with a merged-PR list built from every PR the live board
      cites, fails -- the cited PR is not in the merged set.
-  H. Positive control: the same flip citing PR 1372 (in the merged-PR
-     list) passes, exit 0.
+  H. Positive control: the same flip citing a PR drawn from the
+     merged-PR list (``live_merged_prs``) passes, exit 0. The old
+     hard-coded PR 1372 is cited 0x on the shrunk live board.
 """
 
 from __future__ import annotations
@@ -80,19 +83,51 @@ def run_validator(tree: Path, args: tuple[str, ...] = ()) -> subprocess.Complete
     )
 
 
+def ensure_rel087_record(board_path: Path) -> None:
+    """Insert a synthetic TASK-REL-087 record if the live board lacks one.
+
+    The 2026-11-27 board shrink archived REL-087 (and REL-069) off the
+    live board, so cases F/G/H synthesise the record in the fixture:
+    created 2026-11-23, CLAIMED, pr null, no owner -- the REL-087 rule
+    applies to it either way. It is inserted before the
+    ``task_id_warnings:`` key, i.e. at the end of the ``tasks:`` list,
+    and carries every field the validator requires (title, next_action,
+    files) so the pristine-board checks still pass with it present.
+    """
+    text = board_path.read_text(encoding="utf-8")
+    if "  - id: TASK-REL-087\n" in text:
+        return
+    marker = "\ntask_id_warnings:\n"
+    assert text.count(marker) == 1, "task_id_warnings key not found exactly once"
+    record = (
+        "  - id: TASK-REL-087\n"
+        "    title: \"Fixture record for TASK-REL-069 validator tests (synthesised: archived off the live board by the 2026-11-27 shrink)\"\n"
+        "    status: CLAIMED\n"
+        "    owner: null\n"
+        "    branch: null\n"
+        "    pr: null\n"
+        "    contributors: []\n"
+        "    priority: P2\n"
+        "    created_at: \"2026-11-23T00:00:00+05:30\"\n"
+        "    updated_at: \"2026-11-23T00:00:00+05:30\"\n"
+        "    evidence: []\n"
+        "    blockers: []\n"
+        "    next_action: \"Fixture record for the validator regression tests; not a real task.\"\n"
+        "    files: []\n"
+    )
+    board_path.write_text(text.replace(marker, "\n" + record + "task_id_warnings:\n", 1), encoding="utf-8")
+
+
 def set_rel087_merged(board_path: Path, pr: str | None) -> None:
     """Flip the TASK-REL-087 record to MERGED with the given ``pr`` line.
 
     Anchored on the record's own segment so edits to other records do not
     move it. The status and ``pr`` lines are replaced whatever they
-    currently say -- the fixture must not assume CLAIMED/null: the very
-    PR under test already flips this record to IN_REVIEW/pr 1536, and
-    the test suite runs against that checkout in CI (the original
-    CLAIMED-anchored version failed there with "REL-087 status line not
-    found"). ``pr=None`` forces ``pr: null`` (case F); otherwise the
+    currently say. ``pr=None`` forces ``pr: null`` (case F); otherwise the
     record cites that PR number (cases G/H). The record was created
     2026-11-23, so the REL-087 rule applies to it either way.
     """
+    ensure_rel087_record(board_path)
     text = board_path.read_text(encoding="utf-8")
     start = text.index("  - id: TASK-REL-087\n")
     next_record = text.find("\n  - id: ", start + 1)
@@ -145,19 +180,23 @@ def live_merged_prs(tree: Path) -> set[int]:
 
 
 def inject_duplicate_evidence_key(board_path: Path) -> None:
-    """Add a second ``evidence:`` block to the TASK-REL-069 record.
+    """Add a second ``evidence:`` block to the TASK-INTENT-001 record.
 
     Mirrors the PR #1241 defect: the plain parse keeps only the second
     block and drops the real evidence while reporting VALID. The
     injection is anchored on the record's own ``blockers:`` line so it
-    survives edits to the record's other fields.
+    survives edits to the record's other fields. TASK-INTENT-001 is the
+    first record on the live board with exactly one ``evidence:`` block
+    and one ``blockers: []`` line (verified against the 2026-11-27 shrunk
+    board); the old TASK-REL-069 anchor was archived off the live board
+    by that shrink.
     """
     text = board_path.read_text(encoding="utf-8")
-    start = text.index("  - id: TASK-REL-069\n")
+    start = text.index("  - id: TASK-INTENT-001\n")
     next_record = text.find("\n  - id: ", start + 1)
     end = len(text) if next_record == -1 else next_record + 1
     segment = text[start:end]
-    assert segment.count("    blockers: []\n") == 1, "REL-069 blockers line not found"
+    assert segment.count("    blockers: []\n") == 1, "INTENT-001 blockers line not found"
     duplicate = (
         "    evidence:\n"
         "    - 'DUPLICATE-KEY FIXTURE - this line must never survive a parse silently'\n"
@@ -287,15 +326,16 @@ def case_h_merged_cited_pr_ok() -> None:
     with tempfile.TemporaryDirectory(prefix="rel087-merged-pr-ok-") as tmp:
         tree = build_tree(Path(tmp))
         merged = live_merged_prs(tree)  # pristine board, before the mutation
-        assert 1372 in merged
-        set_rel087_merged(tree / "docs/collaboration/WORK_BOARD.yaml", "1372")
+        assert merged, "live board cites no merged PRs"
+        good_pr = sorted(merged)[0]
+        set_rel087_merged(tree / "docs/collaboration/WORK_BOARD.yaml", str(good_pr))
         prs_file = tree / "merged_prs.txt"
         prs_file.write_text("\n".join(str(n) for n in sorted(merged)) + "\n", encoding="utf-8")
         result = run_validator(tree, ("--merged-prs", "merged_prs.txt"))
     assert result.returncode == 0, f"MERGED citing a merged PR must be VALID:\n{result.stderr}"
     assert "COLLABORATION REGISTRY VALID" in result.stdout
     assert "verified against" in result.stdout and "merged PRs" in result.stdout, result.stdout
-    print("H. MERGED citing merged PR 1372 -> VALID (exit 0)")
+    print(f"H. MERGED citing merged PR {good_pr} -> VALID (exit 0)")
 
 
 def main() -> int:
