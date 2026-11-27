@@ -52,15 +52,18 @@ TASK-IG2-SEN-01 had already cherry-picked a defensive-only pack:
 - `CyberSkillsService.triage` now builds its incident report with the merged
   catalog, so pack skills appear in triage crosswalks and recommendations.
 - `capabilities()` now includes the defensive pack audit.
+- Pack framework mappings were normalized to Sentinel's framework tables
+  (CSF 2.0 `PR.AA`/`ID.IM`, valid D3FEND IDs, and ATT&CK `T1557` added to
+  `TECHNIQUE_TACTICS`) so the merged catalog keeps
+  `invalid_mappings == []`.
 - `.github/workflows/friday-universe-ci.yml` now collects
-  `../tests/test_ig2_sen_defensive_skills.py` and
-  `../tests/test_sen033_sentinel_repo_implement.py` in the Sentinel tier-1
-  set.
-- `tests/test_sen033_sentinel_repo_implement.py` proves the wiring:
-  pack loaded into catalog, T1110 triage recommends
-  `detecting-ssh-brute-force`, search/authorise work for the pack skill,
-  offensive authorise is denied under a defensive scope, and offensive or
-  missing packs fail closed.
+  `Sentinel/tests/security/test_sen033_sentinel_repo_implement.py` in the
+  Sentinel tier-1 set; the repo-root defensive/SEN-033 tests run in the
+  monorepo validation root suites.
+- The SEN-033 tests prove the wiring: pack loaded into catalog, T1110
+  triage recommends `detecting-ssh-brute-force`, search/authorise work for
+  the pack skill, offensive authorise is denied under a defensive scope,
+  offensive or missing packs fail closed, and catalog mappings are valid.
 
 ### Repo-side end-to-end proof run
 

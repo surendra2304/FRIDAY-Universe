@@ -90,6 +90,7 @@ TECHNIQUE_TACTICS: dict[str, list[str]] = {
     "T1110": ["Credential Access"],
     "T1555": ["Credential Access"],
     "T1528": ["Credential Access"],
+    "T1557": ["Credential Access", "Collection"],
     "T1046": ["Discovery"],
     "T1018": ["Discovery"],
     "T1082": ["Discovery"],

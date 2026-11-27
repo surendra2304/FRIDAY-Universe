@@ -4,8 +4,8 @@ description: Baseline hardening checklist for FRIDAY's own Linux fleet hosts —
 tier: defensive
 domain: cloud-security
 attack: [T1078, T1190, T1133]
-csf: [PR.AC, PR.PS, ID.RA]
-d3fend: [D3-PH, D3-FA, D3-SPP]
+csf: [PR.AA, PR.PS, ID.RA]
+d3fend: [D3-CBAN, D3-MFA, D3-EAL]
 ---
 
 # Hardening Linux fleet hosts

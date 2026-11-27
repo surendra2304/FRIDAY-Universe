@@ -5,7 +5,7 @@ tier: defensive
 domain: ai-security
 attack: []
 atlas: [AML.T0051, AML.T0057]
-csf: [PR.AC, DE.CM]
+csf: [PR.AA, DE.CM]
 d3fend: []
 ---
 

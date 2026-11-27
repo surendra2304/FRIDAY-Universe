@@ -5,7 +5,7 @@ tier: defensive
 domain: threat-hunting
 attack: [T1053, T1071, T1547, T1059]
 csf: [DE.CM, DE.AE]
-d3fend: [D3-DA, D3-NTA]
+d3fend: [D3-PSA, D3-NTA]
 ---
 
 # Threat hunting in fleet logs

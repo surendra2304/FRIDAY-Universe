@@ -4,8 +4,8 @@ description: Least-privilege review of FRIDAY's own accounts, API keys and servi
 tier: defensive
 domain: iam
 attack: [T1078, T1098]
-csf: [PR.AC, PR.AT]
-d3fend: [D3-UAP]
+csf: [PR.AA, PR.AT]
+d3fend: [D3-CBAN]
 ---
 
 # Reviewing IAM least privilege

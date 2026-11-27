@@ -5,7 +5,7 @@ tier: defensive
 domain: cloud-security
 attack: [T1557]
 csf: [PR.DS, ID.AM]
-d3fend: [D3-TLS]
+d3fend: [D3-NTA]
 ---
 
 # TLS certificate hygiene
