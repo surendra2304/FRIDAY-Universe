@@ -18,8 +18,9 @@ What this module adds:
 - A deterministic default planner: one work step per success criterion,
   plus an opening "work the goal" step — no LLM needed to structure a loop.
 - A cycle runner: each cycle executes the pending steps through an
-  injected executor (production default: ``friday.tools.execute_command``,
-  the same brain entry the mission queue executes through), accumulates
+  injected executor (production default: the real chat brain via
+  ``_run_brain_sync`` in ``friday.api.server`` — the same brain entry
+  the mission queue executes through), accumulates
   the step outputs as evidence, and evaluates EVERY criterion against
   that evidence.
 - Criteria checks: ``contains`` / ``not_contains`` (evidence text),
@@ -234,22 +235,55 @@ def evaluate_criterion(
 
 
 def _default_executor(instruction: str) -> "tuple[bool, str]":
-    """Production executor: the same brain entry the mission queue uses.
+    """Production executor: the real chat brain.
 
-    Lazy import — constructing the brain is heavy and tests always inject
-    their own executor.
+    Routes the step instruction through ``_run_brain_sync`` (the chat
+    dispatch in ``friday.api.server``) — the same brain entry the
+    mission queue, the Telegram gateway and the WhatsApp gateway
+    execute through. It is NOT ``friday.tools.execute_command``: that
+    name belongs to a read-only shell-command tool whose
+    Windows-flavoured allowlist rejects natural-language steps
+    ("Command 'work'/'for' is not allowed") — the exact FRD-051 leg-1
+    failure this task fixes (TASK-IG-FRD-001-FIX-01). The planner
+    writes brain instructions; the executor must run them through
+    the brain.
+
+    Result mapping mirrors the mission queue (``execute_pending``):
+    the brain's ``reply`` is the output; a refusal (``refused`` /
+    ``security_blocked`` in metadata) or a failed / timed-out turn is
+    an honest step failure, never a silent pass. Unlike the mission
+    queue's mapping, success is read from BOTH the top level and the
+    metadata: the chat endpoint reports it only inside ``metadata``
+    (a timed-out turn carries ``metadata.success=False`` with no
+    top-level flag), so checking the top level alone would score a
+    timeout as a success.
+
+    Lazy import — the server module is heavy and this module is also
+    imported by tests, which always inject their own executor.
     """
     try:
-        from friday.tools.execute_command import execute_command
-
-        result = execute_command(instruction)
+        from friday.api.server import _run_brain_sync
     except Exception as exc:
-        return False, f"executor unavailable: {type(exc).__name__}: {exc}"
-    if isinstance(result, dict):
-        output = str(result.get("output") or result.get("response") or result)
-        ok = not bool(result.get("is_error") or result.get("error"))
-        return ok, output
-    return True, str(result)
+        return False, f"brain executor unavailable: {type(exc).__name__}: {exc}"
+    try:
+        result = _run_brain_sync(instruction)
+    except Exception as exc:
+        return False, f"brain executor error: {type(exc).__name__}: {exc}"
+    result = result or {}
+    reply = str(result.get("reply") or "").strip()
+    metadata = result.get("metadata") or {}
+    refused = bool(metadata.get("refused") or metadata.get("security_blocked"))
+    timed_out = bool(metadata.get("timeout"))
+    success = result.get("success")
+    if success is None:
+        success = metadata.get("success")
+    ok = not refused and not timed_out and success is not False
+    if not ok:
+        reason = str(
+            metadata.get("error") or result.get("error") or "engine reported failure"
+        )
+        return False, (reply or reason)[:4000]
+    return True, reply[:4000]
 
 
 class GoalLoopStore:
