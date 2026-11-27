@@ -7795,13 +7795,13 @@ tasks:
   - id: TASK-MEM-026
     title: 'Memora: three-section proof run 4 - repeat the write/read/promotion cycle after the next FRIDAY deploy'
     status: CLAIMED
-    owner: muse_16
+    owner: muse_2
     branch: muse2/task-mem-026-three-section-proof-run4
     pr: 1886
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-27T12:41:00+05:30'
+    updated_at: '2026-11-27T12:45:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-MEM-026-GROUNDING.md
@@ -7816,19 +7816,20 @@ tasks:
       - 'Assigned to Muse 2 as queue position 3 by coordinator watch100 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main f216e1ba. P2 Memora three-section proof run 4 (write/read/promotion cycle).'
       - 'Claimed by Muse 2 2026-11-26 ~00:42 IST (hub #1483 comment 7171966591); board verified AVAILABLE / owner muse_2 on main 14a72d15; branch muse2/task-mem-026-three-section-proof-run4; checkpoint-2 re-grounding in work PR #1886; live cycle gated on FRIDAY deploy + route grant.'
       - 'watch210: re-slotted muse_2 -> muse_16 - M2 silent ~9h, no status after WATCH209 demand; M16 to claim + report.'
+      - 'watch210 corr: re-slot WITHDRAWN - M2 reported 12:40 IST (hub 7212215476): MEM-026 HELD on the uncleared FRIDAY deploy gate (checkpoint-2 PR #1886 merged 01:50 IST); the block is the deploy gate, not silence. M2 holds the task.'
     blockers: []
-    next_action: 'Owned by muse_16; claim + report status.'
+    next_action: 'Held by muse_2 on the FRIDAY deploy gate; claim FRG-024 when head + gate clears.'
 
   - id: TASK-FRD-043
     title: 'FRIDAY: deploy the FRD-041 OOM memory guard live with staged pressure proof and Telegram delivery'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_1
     branch: muse1/task-frd-043-oom-memory-guard-deploy
-    pr: 2064
+    pr: 2088
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-27T12:17:00+05:30'
+    updated_at: '2026-11-27T12:45:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -7839,8 +7840,9 @@ tasks:
       - 'Claimed by Muse 15 2026-11-25 ~18:25 IST (hub 7163026128) per WATCH099; HOLD STANDS per WATCH100 (7163804244) — no deploy clearance, fleet CD broken (repair needs owner word); no live change. Branch muse15/task-frd-043-oom-memory-guard at b9a4c8cf (behind current main — fast-forward owed when clearance lands).'
       - 'PR #2064 open (head 915c863b, mergeable clean, CI 10/10); verifier muse_17.'
       - 'watch209: claimed by muse_1 (hub 7211687320, WATCH208 §4); deploy leg in flight; BE 11:58 M4 routing superseded (M4 confirms 7211754184, no double-claim).'
+      - 'watch210: M1 filed deploy-leg PR #2088 (hub 7212151876); merged guard live on FRIDAY-Server, staged proof re-run; head a734ac33.'
     blockers: []
-    next_action: 'Claimed by muse_1; deploy live + staged pressure proof + Telegram next.'
+    next_action: 'PR #2088 open; paired verdict owed.'
 
   - id: TASK-REL-094
     title: 'Reliability: backup restore re-drill after the REL-091 CLOB fix - prove JSON/CLOB fidelity on a fresh backup'
@@ -8007,14 +8009,14 @@ tasks:
     next_action: 'Owner creates the listed free accounts when ready. A worker then claims the 30-day plan execution (labs only) as its single EARN queue item and files weekly lab evidence to this record.'
   - id: TASK-FRD-046
     title: 'FRIDAY (laptop lane): storage-repair sequences in the pc_health guidance set'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_tp13
-    branch: null
+    branch: musetp13/task-frd-046-storage-repair-sequences
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-27T09:40:00+05:30'
+    updated_at: '2026-11-27T12:45:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -8026,8 +8028,9 @@ tasks:
     - 'Assigned to Muse TP6 by Muse (coordinator) watch151 (2026-11-26, hub #1483): TP6 queue position 2 behind VYR-087 (FRD-058 MERGED; TP6 queue depth 1). FRIDAY laptop-lane storage-repair, P2. Board flip in coordinator board PR watch152.'
     - 'Re-slotted to pool by coordinator watch199 (2026-11-27): TP6 silent all morning with no production evidence (Burn Enforcer 08:21 §D re-slot, confirmed 08:45 §A.4); WATCH198 §5 ''CLAIMED stand'' was a reading, not a ruling - the re-slot is ruled here per the ruling SLA. TP6 branch (none) - task returns unassigned.'
     - 'Assigned to Muse TP13 as queue position 2 by coordinator watch200 (2026-11-27, hub #2045): FRIDAY laptop-lane storage-repair sequences in the pc_health guidance set (re-slotted from TP6 by watch199; TP13 queue position 2 behind API-007).'
+    - 'watch210: claimed by muse_tp13 (hub 7212110150); mid-task, no stall.'
     blockers: []
-    next_action: 'Returned to pool by coordinator watch199 (2026-11-27); unassigned - the coordinator watch assigns it to the next free worker.'
+    next_action: 'Claimed by muse_tp13; storage-repair sequences next.'
   - id: TASK-VYR-059
     title: 'VyralX: competitor-ad scanning in the creative audit'
     status: IN_REVIEW
@@ -9234,13 +9237,13 @@ tasks:
   - id: TASK-VYR-086
     title: 'VyralX supervised-cycle candidate pool run-6 (most-popular discovery + machine QA gates)'
     status: AVAILABLE
-    owner: muse_15
+    owner: muse_14
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-26'
-    updated_at: '2026-11-27T12:41:00+05:30'
+    updated_at: '2026-11-27T12:45:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-VYR-086-EVIDENCE.md
@@ -9258,8 +9261,9 @@ tasks:
     - 'Released by Muse 3 (hub 7202036053) per the Burn Enforcer; re-assigned to Muse 9 by coordinator watch182 follow-up (claim hub 7201315044, branch muse9/task-vyr-086, zero commits on M3''s branch). Live discovery step HELD on the safety flag (M9 hub 7202423840); no execution until the coordinator rules. Board flip watch183.'
     - 'watch209: re-slotted to pool watch207; M6 pos-3 assignment withdrawn watch209 (M6 queue full: REL-104/VOI-027/VOI-029).'
     - 'watch210: queued pos 3 for muse_15.'
+    - 'watch210 corr: BE 12:32 §D directs muse_14 to claim VYR-086 as next head (VYR-089 merged 11:43); moved from muse_15 queue.'
     blockers: []
-    next_action: 'Queued pos 3 for muse_15 (behind MEM-037, EARN-035).'
+    next_action: 'BE 12:32: claim as head by muse_14.'
   - id: TASK-SEN-035
     title: 'Sentinel approval-path live proof run-4 (one auto-approved low-risk + one Telegram-prompted high-risk)'
     status: AVAILABLE
@@ -10466,13 +10470,13 @@ tasks:
   - id: TASK-REL-004
     title: 'Reliability: health-endpoint honesty - agents report capability state, not just process liveness (MASTER_PLAN M5)'
     status: AVAILABLE
-    owner: null
+    owner: muse_16
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T12:41:00+05:30'
+    updated_at: '2026-11-27T12:45:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-REL-004-EVIDENCE.md
@@ -10481,19 +10485,20 @@ tasks:
     - 'Live probe through the gateway shows a degraded agent presenting as degraded, not simply ok; evidence filed as docs/collaboration/TASK-REL-004-EVIDENCE.md.'
     evidence:
     - 'Filed by Muse (coordinator) watch210 (2026-11-27, hub #2045): MASTER_PLAN M5 TASK-REL-004 (design task; health is liveness-only per the 2026-11-14 snapshot). Live-proof route: public gateway health endpoints on the live fleet.'
+    - 'watch210: queued pos 3 for muse_16 (MEM-026 re-slot withdrawn; M16 holds MEM-028 live-leg retry + #2081 verdict).'
     blockers: []
-    next_action: 'Unassigned pool (floor refill); claim via hub + branch push.'
+    next_action: 'Queued pos 3 for muse_16 (behind REL-105, REL-107).'
 
   - id: TASK-INF-LLM-002
     title: 'Inference: provider failover drill under simulated outage (MASTER_PLAN §6)'
     status: AVAILABLE
-    owner: null
+    owner: muse_15
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T12:41:00+05:30'
+    updated_at: '2026-11-27T12:45:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-LLM-002-EVIDENCE.md
@@ -10502,19 +10507,20 @@ tasks:
     - 'No production traffic dropped in a way the drill cannot account for; drill is sandbox-first where the provider surface allows it.'
     evidence:
     - 'Filed by Muse (coordinator) watch210 (2026-11-27, hub #2045): MASTER_PLAN §6 standing backlog. Live-proof route: live Inference service on FRIDAY-Server; drill receipts filed as docs/collaboration/TASK-INF-LLM-002-EVIDENCE.md.'
+    - 'watch210: queued pos 3 for muse_15 (VYR-086 moved to muse_14).'
     blockers: []
-    next_action: 'Unassigned pool (floor refill); claim via hub + branch push.'
+    next_action: 'Queued pos 3 for muse_15 (behind MEM-037, EARN-035).'
 
   - id: TASK-INT-879
     title: 'IntelX: alert-suppression ordering follow-up to the INT-876 soak - define and prove the suppression order for burst alerts'
     status: AVAILABLE
-    owner: null
+    owner: muse_tp9
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T12:41:00+05:30'
+    updated_at: '2026-11-27T12:45:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INT-879-EVIDENCE.md
@@ -10523,19 +10529,20 @@ tasks:
     - 'One burst sequence run live proving the order (what suppressed, what fired, in which order), filed as docs/collaboration/TASK-INT-879-EVIDENCE.md.'
     evidence:
     - 'Filed by Muse (coordinator) watch210 (2026-11-27, hub #2045): follow-up to the INT-876 soak (runs separately; do not duplicate the soak). Live-proof route: live IntelX on IntelX-Server; burst-sequence receipts filed as docs/collaboration/TASK-INT-879-EVIDENCE.md.'
+    - 'watch210: assigned to muse_tp9 as head (TP9 free after INT-877 merged; IntelX lane).'
     blockers: []
-    next_action: 'Unassigned pool (floor refill); claim via hub + branch push.'
+    next_action: 'Head for muse_tp9; suppression-ordering follow-up next.'
 
   - id: TASK-VAL-001
     title: 'Reliability: full fleet validation re-probe on live servers with per-agent evidence (MASTER_PLAN M4; §2 7-day rule)'
     status: AVAILABLE
-    owner: null
+    owner: muse_10
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T12:41:00+05:30'
+    updated_at: '2026-11-27T12:45:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-VAL-001-EVIDENCE.md
@@ -10544,8 +10551,9 @@ tasks:
     - 'Any agent found degraded gets a named follow-up task; a clean pass renews the validation for 7 days under the MASTER_PLAN §2 rule.'
     evidence:
     - 'Filed by Muse (coordinator) watch210 (2026-11-27, hub #2045): MASTER_PLAN M4 TASK-VAL-001, STALE-UNVERIFIED since 2026-11-10; last fleet validation 2026-11-10, past the 7-day re-verification rule. Live-proof route: public gateway + live server state via the bridge.'
+    - 'watch210: assigned to muse_10 as head (M10 free; VOICE-E2E-003 waits on the main deploy per BE 12:32 §C).'
     blockers: []
-    next_action: 'Unassigned pool (floor refill); claim via hub + branch push.'
+    next_action: 'Head for muse_10; fleet validation re-probe next.'
 
 
 task_id_warnings:
