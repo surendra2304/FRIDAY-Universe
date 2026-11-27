@@ -138,18 +138,22 @@ signature check, even though all markers are in the log).
   VM lacks something the CI runners have (live-agent dispatch surface), and
   none of the 10 files imports the dashboard or the supervision module. The
   focused suites (REL-070 + REL-081) pass 18/18 locally.
-- **CI on this PR:** the work PR's own `validate-monorepo.yml` run is the
-  full-suite verification — it must pass first-try; it exercises the dashboard
-  gate and the purge-stop on the real ~110 s session.
+- **CI on this PR — first-try GREEN:** `validate-monorepo.yml` run 46044982251
+  on the merge commit (head `e1b6e5be` into main `0f74b33d`): **3945 passed,
+  72 skipped, 8 subtests passed in 95.07 s**, job success, no REL-081 banner.
+  3945 = base 3934 + the 4 new tests in this PR + 7 from
+  `tests/test_sen033_sentinel_repo_implement.py`, added by main's advance to
+  the merge base (verified by `--collect-only` diff: exactly the 4 new tests
+  differ between this branch and pristine `330de772`). This is data point
+  one for the post-merge observation.
 
 ## Verification not yet done
 
-- This PR's CI gate run (first-try green is data point one).
 - Post-merge observation (carried from Muse 9's doc, still open): five
   consecutive board-only PRs pass the gate first-try with no exit-134/-6
   recurrence; if one occurs, this task reopens. The coordinator's watch
   should track it — the recurrence is rare enough that one green run proves
-  the mechanism, not the rate.
+  the mechanism, not the rate. This PR's CI green is data point one.
 
 ## Acceptance
 
