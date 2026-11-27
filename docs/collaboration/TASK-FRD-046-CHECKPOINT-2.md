@@ -17,10 +17,13 @@
 
 The "Linux fsck equivalent" sequence overlaps the existing repair function (`chkdsk /f`, `fsck -y`). Resolved as a distinct sequence, not an extension: `laptop_storage_repair` stays the single-volume repair entry point; `fsck_equivalent` is the guided routine that routes by platform (Linux `fsck -y`, macOS `diskutil repairVolume`, Windows refuses and points at `laptop_storage_repair`/`chkdsk /f`). No existing behaviour changed.
 
-## Live leg (results pending — to be filled after the Server 2 run)
+## Live leg (run 2026-11-27 ~19:50 IST on Oracle Server 2, branch @ `094dedb2`)
 
-- Test suite: `FRIDAY/tests/test_laptop_pc_care.py` to be run on Oracle Server 2 against this branch (pytest, hermetic — client handlers driven through monkeypatched seams, tools through stubbed dispatch; no laptop connected).
-- Live enumerate/dry-run probe on Server 2 (Linux, read-only): `lsblk` volume inventory + `fsck -N` dry-run + the plan builder run live for all four sequences.
-- Windows-only sequences (diskpart repartition, diskpart write-protection removal, DISM cleanup): no Windows host exists in the fleet, so no live Windows execution is claimed — validated by unit tests + generated-script inspection; live Windows execution awaits the owner's laptop.
+- **Test suite: 29 passed in 28.09s, exit 0** — `FRIDAY/.venv-friday-ci/bin/python -m pytest FRIDAY/tests/test_laptop_pc_care.py -q` (pytest 9.2.0), run first-hand on Server 2 against the PR head. 16 pre-existing + 13 new; no failures, no skips. (One PytestDeprecationWarning about `asyncio_default_fixture_loop_scope` — pre-existing, unrelated.)
+- **Live enumerate (read-only):** `lsblk` on Server 2 — `sda` 50G, `sda1` 49.9G mounted at `/` (88% used), `sda15` 106M `/boot/efi`; no unmounted data volume exists on this host, so no `fsck -y` apply run was possible or attempted.
+- **`fsck -N` dry-run (read-only) on `/dev/sda1`:** `fsck from util-linux 2.37.2`, `[/usr/sbin/fsck.ext4 (1) -- /] fsck.ext4 /dev/sda1` — prints what would be done, changes nothing.
+- **Plan builder run live** (same venv, `FRIDAY_MEMORY_BACKEND=sqlite` per `FRIDAY/tests/conftest.py` — a bare import fails on the Oracle-backend config check without `DATABASE_URL`; that is environmental, not a code defect; the suite runs under the conftest env): all four plans print exactly as specified — diskpart repartition script `list disk / select disk 2 / clean / create partition primary / format fs=ntfs quick / assign`; write-protect script `list disk / select disk 1 / attributes disk clear readonly`; fsck `["fsck", "-y", "/dev/sdb1"]`; DISM `[["DISM", "/Online", "/Cleanup-Image", "/Analyze"], ["DISM", "/Online", "/Cleanup-Image", "/StartComponentCleanup"]]`. Exit 0.
+- **Windows-only sequences (diskpart repartition, diskpart write-protection removal, DISM cleanup): no Windows host exists in the fleet, so no live Windows execution is claimed** — validated by unit tests (script content captured verbatim from the handler) + generated-script inspection; live Windows execution awaits the owner's laptop.
+- **CI on PR #2153:** checked after filing (see hub status post for the read); mergeable re-checked at the same time.
 
 — Muse TP13
