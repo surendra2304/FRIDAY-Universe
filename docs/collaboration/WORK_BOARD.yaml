@@ -8916,14 +8916,14 @@ tasks:
     next_action: 'None - closed by owner decision 2026-11-25. Do not claim or revive without a new owner order.'
   - id: TASK-FRG-032
     title: 'Forge: MQL5 EA codegen workflow - prompt to MetaEditor-compiled Expert Advisor, proven on the EMA 5/11 example'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_8
     branch: muse8/task-frg-032
     pr: 2107
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-27T15:31:00+05:30'
+    updated_at: '2026-11-27T15:47:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Forge/
@@ -8936,8 +8936,9 @@ tasks:
     - 'Assigned to Muse 8 as queue position 3 by coordinator watch116 (2026-11-26, hub #1483 comment 7173089848); P3 Forge MQL5 EA codegen workflow.'
     - 'watch211: claimed by muse_8 (hub 7212890764, 13:22 IST) as head after EARN-026 re-slot; branch push owed.'
     - 'watch215: work PR #2107 open, head cfa68fcd, mergeable True; paired verifier Muse TP10 named by watch214 (due ~15:45 IST). Compile-proof leg HELD pending owner decision on the Wine + MetaEditor server-side install (WATCH214-CORR ruling; outside standing clearance 7200564540).'
+    - 'watch215-amend: PR #2107 merged 2026-11-27 (merge cb3a9c6d, verified first-hand); TP10 VERIFIED comment 7215268323 (15:25 IST, read first-hand: head cfa68fcd, 1 file +78/-0 checkpoint-1 scope, CI 9 runs 0 fail, EMA blobs + pattern-library insertion point verified on main); coordinator CI first-hand 9 runs (7 success + 2 skipped, 0 fail, 0 pending) on head cfa68fcd; mergeable True/clean. Checkpoint-1 scope; compile proof stays gated.'
     blockers: []
-    next_action: 'PR #2107 open; paired verdict owed (TP10, ~15:45 IST); compile-proof leg held on owner decision.'
+    next_action: 'MERGED via PR #2107 (checkpoint 1; compile proof stays gated on the Wine-install ruling / owner Windows step).'
   - id: TASK-FRG-033
     title: 'Forge: free utility kit additions - sejda PDF editing and ToffeeShare P2P transfer, verified and test-used'
     status: IN_REVIEW
@@ -9844,7 +9845,7 @@ tasks:
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T15:31:00+05:30'
+    updated_at: '2026-11-27T15:47:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-MEM-037-EVIDENCE.md
@@ -9856,9 +9857,9 @@ tasks:
     - 'Assigned to muse_15 queue position 2 by coordinator watch196 (queue top-up; M15 depth 1); verified AVAILABLE / owner null on main 63538e60.'
     - 'watch209: claimed by muse_15 (hub 7211582420); live Memora cycle next.'
     - 'watch213 RULING (hub post): M15 ask (hub 7213627256) DECIDED - steps 1-3 read-only recall probes are COVERED by standing clearance 7200564540; step-4 test-memory write GRANTED as a one-off live-verification write under the same clearance, test data only (key/tag MEM-037-TEST), read back + cleaned up, receipts filed. MEM-037 live leg proceeds.'
-    - 'watch215: M15 COMPLETE hub 7214954377 (15:10 IST, read first-hand): live universal-search cycle done on Oracle Server 1 (Memora.service active, /health 200); cross-agent recall verified (sentinel PRIVATE write, promoted to UNIVERSAL copy, GET 200 as friday + futuris, marker search rank 1); cleanup verified (orig + copy hard-deleted, GET 404/404). Work PR #2112 open, head b74557de, 2 commits, 1 file +78/-0 evidence-only. Paired verifier Muse TP6 named by watch215 (due ~16:30 IST).'
+    - 'watch215: M15 COMPLETE hub 7214954377 (15:10 IST, read first-hand): live universal-search cycle done on Oracle Server 1 (Memora.service active, /health 200); cross-agent recall verified (sentinel PRIVATE write, promoted to UNIVERSAL copy, GET 200 as friday + futuris, marker search rank 1); cleanup verified (orig + copy hard-deleted, GET 404/404). Work PR #2112 open, head b74557de, 2 commits, 1 file +78/-0 evidence-only. Paired verifier Muse 13 named by the Burn Enforcer (hub 7215121634, 15:20 IST; due ~16:15 IST) - WATCH215 TP6 naming withdrawn, BE governs (earlier post).'
     blockers: []
-    next_action: 'PR #2112 open; paired verdict owed (TP6, ~16:30 IST).'
+    next_action: 'PR #2112 open; paired verdict owed (M13, ~16:15 IST).'
 
 
   - id: TASK-EARN-035
@@ -10754,13 +10755,13 @@ tasks:
   - id: TASK-REL-113
     title: 'Reliability: flaky-test quarantine list with named owners and expiry - fleet-layout SIGABRT flake first entry (SPEED ROUND 2)'
     status: AVAILABLE
-    owner: null
+    owner: muse_8
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T13:27:00+05:30'
+    updated_at: '2026-11-27T15:47:00+05:30'
     files:
     - .github/workflows/friday-universe-ci.yml
     - docs/collaboration/WORK_BOARD.yaml
@@ -10770,8 +10771,9 @@ tasks:
     - 'Quarantined tests run in a separate quarantine job (not the main gate); main CI is green with the quarantine in place and the list is filed as docs/collaboration/TASK-REL-113-EVIDENCE.md.'
     evidence:
     - 'Filed by Muse (coordinator) watch211 (2026-11-27, hub #2045): SPEED ROUND 2 order 7203732206 task (e). Live-proof route: CI on main - quarantine job runs, main gate green, list filed as docs/collaboration/TASK-REL-113-EVIDENCE.md.'
+    - 'watch215-amend: queued for muse_8 (FRG-032 -> MERGED drops M8 queue to depth 2 - LAP-004 + DB-006 - top-up to depth 3). Queue: LAP-004 -> DB-006 -> REL-113.'
     blockers: []
-    next_action: 'Unassigned pool (floor refill); claim via hub + branch push.'
+    next_action: 'Queued pos 3 for muse_8 (behind LAP-004, DB-006).'
 
   - id: TASK-INT-880
     title: 'IntelX: fast-lane live proof run 8 - one real alert end-to-end (sequel to INT-058 run 7)'
