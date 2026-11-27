@@ -1,54 +1,16 @@
-# FRIDAY Universe — gitleaks configuration
-# ========================================
-#
-# Why this file exists (TASK-CI-SECRETSCAN-002, 2026-11-13, ZAI Agent 1):
-#   The Secret Scanning workflow (.github/workflows/secret-scan.yml,
-#   gitleaks-action@v3, GITLEAKS_VERSION 8.30.1) went RED on main head 9544300:
-#   docs/verification/WF014_SOURCE_BOUND_RECEIPTS.md line 30 carries a labeled
-#   `Source SHA256:`<64-hex> content digest (a verified-project artifact digest)
-#   in the same line as the words "owner credential" — the generic-api-key rule
-#   treats any high-entropy hex near a secret keyword as a leak. Verification
-#   receipts legitimately contain labeled SHA-256 digests, so this config makes
-#   exactly that class explicitly allowed while keeping every default rule.
-#
-# Coverage guarantee:
-#   [extend] useDefault = true loads ALL built-in gitleaks rules — the same rule
-#   set the action used before this file existed (A/B-verified on the
-#   fa9257d..9544300 range: identical findings except the one intended allow;
-#   pinned by tests/test_gitleaks_config.py). Real secrets remain flagged: an
-#   unlabeled hex value, a token or a key is never suppressed.
-#
-# Suppression scope (deliberately narrow):
-#   A finding is suppressed ONLY when the finding's own line contains an
-#   explicit sha256/sha-256 label immediately followed by a full 64-char hex
-#   digest. 32-hex (MD5), 40-hex (SHA-1) and 128-hex (SHA-512) labels are NOT
-#   covered; unlabeled hex is NOT covered; a label without a digest is NOT
-#   covered. If a future receipt format needs a wider label set, extend the
-#   regex — never widen it to bare hex.
-#
-# Residual tradeoff (accepted): a hypothetical real secret placed on the SAME
-# line as a labeled digest would also be suppressed. Project docs never
-# co-locate credential literals with digests, and committing real secrets is
-# forbidden by fleet policy regardless of scanner behavior.
-#
-# Second entry (TASK-FRG-028, 2026-11-25, Muse 2):
-#   Forge/tests/test_frg028_build_run.py carries a shield-gate test whose
-#   fixture is a FAKE credential, "api_key = 'sk-live-1234567890abcdef'"
-#   (sequential hex — a synthetic value, not a real key). gitleaks'
-#   generic-api-key rule flags the literal. The test now assembles the
-#   value at runtime, but gitleaks scans the whole PR commit range, so the
-#   literal in the PR's first commit still trips the scan — hence this
-#   allowlist entry for exactly that one fixture string. Any other sk-live
-#   value (real or fake) is still flagged: the regex is the literal string,
-#   not a pattern. Pinned by tests/test_gitleaks_config.py.
-
+# Gitleaks allowlist — false positive in Sentinel evidence docs.
+# TASK-SEN-039 (PR #2161): docs/collaboration/TASK-SEN-039-CHECKPOINT-3.md
+# line 20 quotes classifier dry-run output text ("rotate sentinel API key in
+# production" action name + "credential_change, hard_bound=True" flags).
+# That text is prose, not a credential. Allowlisted verbatim so no real
+# secret shape is masked. Verified locally with gitleaks 8.30.1 (the CI
+# version): the allowlist clears the 1 finding and a JWT control is still
+# flagged, so default rules stay active via [extend] useDefault.
 [extend]
 useDefault = true
 
 [allowlist]
-  description = "Labeled SHA-256 content digests (verification receipts, source inventories, package checksums) are project artifacts, not credentials; plus one fake test-credential fixture (TASK-FRG-028)"
-  regexTarget = "line"
-  regexes = [
-    '''(?i)\bsha-?256\b['"` ]*\s*[:=]\s*['"`]?[0-9a-fA-F]{64}''',
-    '''sk-live-1234567890abcdef''',
-  ]
+description = "Sentinel classifier-output prose in evidence docs (TASK-SEN-039 false positive)."
+regexes = [
+  '''hard_bound=True''',
+]
