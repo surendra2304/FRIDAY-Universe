@@ -5,15 +5,16 @@ Branch: `muse2/task-web-004-production-verify`, from main `0f465767`.
 Task: PRODUCTION-VERIFY website corpus items IG-WEB-01, IG-WEB-02,
 IG-WEB-03, IG-WEB-05, IG-WEB-06 — live browser verification (wave 2, P1).
 
-## Verdict: NOT YET RUN — groundwork only
+## Verdict: LIVE RUN COMPLETE — 1 of 5 fully verified, 2 partial-pass, 2 FAIL
 
-This file is the pre-run record: item definitions verified first-hand on
+This file began as the pre-run record: item definitions verified first-hand on
 main `0f465767`, the production URLs, and the exact live-check plan per
-item. **No live browser leg has run yet.** The live legs run next through
-the live-browser route; results, screenshots and the verdict table land
-here as a follow-up commit on this branch. Nothing in this draft counts
-as verification. A code-only report is rejected by the acceptance — the
-task closes only on live evidence per item.
+item. The live browser legs have now run (see "Live results" below):
+IG-WEB-03 VERIFIED; IG-WEB-01 PARTIAL and IG-WEB-02 PASS with owed legs;
+IG-WEB-05 and IG-WEB-06 FAIL, each with a named fix task filed from this
+record. A code-only report is rejected by the acceptance — the task closes
+only on live evidence per item, and the two failing items are not marked
+verified.
 
 ## Live target and method (planned)
 
@@ -189,33 +190,131 @@ never unmount when a sheet opens.
   agent per the Ultron fleet panel), its chip must be ABSENT, not a
   guessed number — record which endpoints answered and which did not.
 
-## Results (to be filled by the live run)
+## Live results
+
+Live browser run: **2026-11-27 23:52 – 2026-11-28 00:08 IST**, browser task
+`browser-task:080a7a64-9934-549d-89b0-c25576b3244a`, on
+`https://friday-universe.duckdns.org/halo`, as a visitor, no sign-in.
+Nothing was changed, deployed or restarted on the site during the run.
+All figures below are from that run, exactly as reported — nothing
+rounded, nothing invented.
+
+### Gate: /halo serves the Halo stage — PASS (visual verification only)
+
+`/halo` serves the Halo stage live: title "FRIDAY — Halo", orb, FRIDAY
+wordmark, "Everything else" summon pill, and "Fleet at a glance" with
+9 agents. Limitation, stated plainly: the browser tooling gave no
+numeric HTTP status and no `class="stage"` confirmation — this gate is
+visual verification only, not a status-code check.
+
+### Results
 
 | Item | Verdict | One line |
 |---|---|---|
-| IG-WEB-01 motion layer | NOT RUN | — |
-| IG-WEB-02 life-in-weeks | NOT RUN | — |
-| IG-WEB-03 memory galaxy | NOT RUN | — |
-| IG-WEB-05 showcase | NOT RUN | — |
-| IG-WEB-06 guided tour | NOT RUN | — |
+| IG-WEB-01 motion layer | PARTIAL | Scroll hairline tracks both directions; stagger unverified; reduced-motion not run |
+| IG-WEB-02 life-in-weeks | PASS (main + persistence) | Grid + counts exact; mark persisted across reload; zero-network + clear-storage legs not run |
+| IG-WEB-03 memory galaxy | VERIFIED | 100 real memories, 17 pinned; endpoint answered live; pinned star opens a real memory |
+| IG-WEB-05 showcase | FAIL | Billboard rotation slowed but did NOT freeze while the tab was hidden (30 s → +2 steps, twice) |
+| IG-WEB-06 guided tour | FAIL | Crew fact chip read "0 of 9 are answering" while live fleet data in the same session said 6 of 9 |
 
-Live legs (fill in): browser runs, viewports, slow-network leg,
-per-item observations, screenshots, failure-case outcomes.
+### IG-WEB-01 — motion layer — PARTIAL
 
-## Fix tasks named from this record (if any item fails live)
+- Scroll hairline: **PASS in both directions.** Unfilled at the top,
+  ~73% filled mid-scroll, full at the bottom, unfilled again on return
+  to the top.
+- Stagger: **UNVERIFIED.** The Fleet cards were all visible by the first
+  post-load screenshot, so no staggered reveal was observed.
+- Reduced motion: **NOT RUN.** The browser tooling offers no
+  `prefers-reduced-motion` toggle.
 
-- None yet — to be filed from the live results. Any item that fails
-  live gets a named fix task filed from this record; a failing item is
-  never marked verified.
+### IG-WEB-02 — life-in-weeks — PASS (main + persistence)
 
-## Five states (TASK-WEB-004, groundwork only)
+- Honest empty initial state (no birth date, no marks) before any input.
+- Birth date `1990-01-01` → 52×90 grid, 4,680 weeks, 1,925 lived,
+  2,755 ahead, 41.1%. Year-in-days: 331/365, 34 left, 90.7%.
+- Mark "15 Jun 2020 — Test mark 2020" persisted across reload and
+  re-summon.
+- Zero-network claim: **NOT RUN** (no network panel in the browser
+  tooling). Clear-storage failure case: **NOT RUN** (no localStorage
+  control in the browser tooling).
+- Note: the test birth date and mark remain in the browser profile's
+  localStorage only — nothing was written to the site or any server.
+
+### IG-WEB-03 — memory galaxy — VERIFIED
+
+- Sheet header: "100 memories in the sky · 17 pinned".
+- `GET /api/memory/browser` answered live with
+  `{"status":"ok","count":100}` after a ~23 s load.
+- Clicked a gold pinned star → a real memory (portfolio snapshot,
+  importance 0.55).
+- Honest note: relationship edges are not exposed by the sheet, so none
+  are invented or shown.
+- Endpoint-down failure case: not triggered — the endpoint answered.
+
+### IG-WEB-05 — showcase — FAIL (tab-hide pause)
+
+- Billboard features only agents the fleet reports; rotation ~4 s/step
+  while visible.
+- Memora crew card → the real Fleet sheet (not a dead link).
+- Ledger row shows the honest empty note "The ledger is quiet".
+- Failure case, run twice: tab hidden for 30 s → **+2 steps both
+  trials** (IntelX 4th dot → Cortex 6th; Cortex 6th → Sentinel 8th),
+  against ~7–8 steps expected if the rotation had kept running
+  unpaused. Rotation slowed but did **NOT** freeze.
+- Reduced motion: **NOT RUN** (no `prefers-reduced-motion` toggle).
+
+### IG-WEB-06 — guided tour — FAIL (crew fact chip)
+
+- Serif hero "Meet FRIDAY." and all 5 chapters render.
+- CTA "Meet them in the Fleet →" opens the real Fleet sheet.
+- Ledger chip "0 delegations" corroborated by the Fleet sheet and the
+  Showcase sheet.
+- Telemetry live: 9% CPU / 43% RAM, then 5% / 45% on re-open. Watch
+  chip: "8 autonomous moves".
+- Crew chip read **"Right now: 0 of 9 are answering" on both fresh
+  opens**, while live fleet data in the same session said **6 of 9
+  answering** (Fleet sheet "6 of 9 are answering"; home glance showed
+  9 agents with live statuses). The chip contradicts the live figures.
+  Per the acceptance rule an unanswered chip must be absent, not a
+  default 0.
+
+### Owed legs (tooling limits, NOT site refusal)
+
+These legs were not run because the browser tooling does not offer the
+control — the site did not refuse them:
+
+- Mobile viewport ~390×844: **NOT RUN** (no viewport resize).
+- Slow-network load: **NOT RUN** (no throttling).
+- Reduced motion: **NOT RUN** (IG-WEB-01 + IG-WEB-05).
+- localStorage clear failure case: **NOT RUN** (IG-WEB-02).
+- Zero-network claim: **NOT RUN** (IG-WEB-02).
+
+## Fix tasks named from this record
+
+Filed from the live run above (board entries added in this commit,
+status AVAILABLE, priority P1):
+
+- **TASK-WEB-004-FIX-01** — Showcase billboard rotation must FREEZE
+  while the tab is hidden (`visibilitychange` pause + reduced-motion
+  stop). Re-verify live: 30 s hidden → 0 steps. Source: IG-WEB-05
+  FAIL above (30 s hidden → +2 steps, twice).
+- **TASK-WEB-004-FIX-02** — Tour crew chip must show the live answering
+  count once the fleet fetch resolves, or be absent while unresolved —
+  never a default 0. Re-verify live: chip matches the Fleet sheet
+  count in the same session. Source: IG-WEB-06 FAIL above (chip read
+  "0 of 9 are answering" while the Fleet sheet said 6 of 9).
+
+A failing item is never marked verified.
+
+## Five states (TASK-WEB-004, live run 2026-11-27 23:52 – 2026-11-28 00:08 IST)
 
 - implemented: YES (all five items' code merged on main; Halo mount
   merged via FIX-01 PR #2025)
-- tested: NO (no live leg run yet — this draft is groundwork only)
+- tested: PARTIAL (live legs run: 1 of 5 fully verified, 2 partial-pass,
+  2 fail — see "Live results" above)
 - merged: NO (work PR not opened yet)
-- deployed: UNVERIFIED (the /halo deploy state is the live run's
-  first check; text-fetch signal only, see above)
-- production-verified: NO (0 of 5 — pending the live browser run)
+- deployed: YES (Halo stage live on production — gate passed)
+- production-verified: PARTIAL (1 of 5 fully verified; 2 fail with fix
+  tasks filed; owed legs listed above)
 
 — Muse 2
