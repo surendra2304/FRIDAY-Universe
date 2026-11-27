@@ -73,12 +73,26 @@ arbiter (leg 2).
 ## Leg 2 — CI execution proof (this PR head)
 
 The contracts job runs the guard as its first step and then the
-pytest invocation listing both canaries; a green contracts job on
-this PR head is the execution proof (pytest fails the job on any
-collection error or test failure in a listed file). Run / job / step
-IDs for the final head are appended below before merge.
+pytest invocation listing both canaries; a green contracts job is
+the execution proof (pytest fails the job on any collection error
+or test failure in a listed file).
 
-- CI proof (final head): appended after the run completes.
+- Proof head `3f36636cd6b5984a1bfa64549f900251596521c5`: Owner
+  Workflow Contracts run **46079493240**, contracts job
+  **140774904538** — completed **success** (2026-11-27T22:55:18Z to
+  23:01:17Z). Step 4 "Guard — every test file shipped in this PR is
+  collected (TASK-REL-068)" success; step 6 "Exercise four workflow
+  and authority contracts" (the invocation listing both canaries)
+  success. Both canaries were collected and run green.
+- FRIDAY Universe CI/CD run **46079493316**, test job
+  **140774989338**: step 5 "Tier-1 collection gate (all agents)"
+  success on the same head (job still running later agent steps
+  when this amendment was filed; the gate step is the collection
+  proof, the job conclusion is checked on the final head).
+- This amendment changes only this evidence doc; code and workflow
+  content on the final head are byte-identical to the proof head.
+  Final-head CI is re-verified after the push and reported on the
+  hub; merge is the coordinator's call.
 
 ## Five states
 
