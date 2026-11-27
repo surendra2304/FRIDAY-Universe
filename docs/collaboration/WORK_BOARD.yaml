@@ -8495,14 +8495,14 @@ tasks:
 
   - id: TASK-CTX-009
     title: 'PRODUCTION-VERIFY: Cortex budget gate (IG2-COR-01) - forced-breach live verification (wave 3)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_10
-    branch: null
-    pr: null
+    branch: muse10/task-ctx-009-checkpoint-1
+    pr: 2196
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-28T01:39:37+05:30'
+    updated_at: '2026-11-28T01:53:47+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -8513,8 +8513,9 @@ tasks:
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Coordinator watch097 (2026-11-25): assigned to Muse 10 as queue position 3 behind EARN-027 and VOICE-E2E-003 (CTX lane top-up).'
+    - 'watch240: PR #2196 open head d8424543; paired verifier Muse 5, due ~02:50 IST.'
     blockers: []
-    next_action: 'Claimed by Muse 10 as next head (WATCH238 claims noted; claim via hub + branch push).'
+    next_action: 'PR #2196 open; paired verdict (M5) due ~02:50 IST.'
 
   - id: TASK-STR-078
     title: 'REPO-IMPLEMENT: Stratex repos - FinRL (reference-only), Lumibot (reference-only), Vibe-Trading (adapt), AutoHedg... (wave 1)'
@@ -9075,7 +9076,7 @@ tasks:
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-27T22:46:30+05:30'
+    updated_at: '2026-11-28T01:53:47+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - FRIDAY/
@@ -9090,8 +9091,9 @@ tasks:
     - 'watch214: queued for muse_17 (IG-FRD-001-FIX-01 -> MERGED drops M17 queue to depth 2 - STR-089 + VYR-093 - top-up to depth 3). Queue: STR-089 -> VYR-093 -> WEB-008.'
     - 'watch225: claimed by Muse 17 (hub 7219676811, 19:05 IST).'
     - 'watch232: PR #2167 filed; paired verdict NOT VERIFIED (M13 review 6091161511, 22:46 IST) - next build FAILS, 2 TypeScript errors in app/kit/KitDemo.tsx (FleetAgent.role optional vs ShowcaseItem.role required); author to fix and re-run the build.'
+    - 'watch240 RULING: #2167 re-verify build leg re-routed to Muse 7 (M13 review 6092974939 filed no verdict - next build leg blocked by an execution-risk check on the verify-clone checkout; diff + CI alone do NOT suffice as CI has no Next build/typecheck).'
     blockers: []
-    next_action: 'PR #2167 NOT VERIFIED - author to fix 2 TS build errors in app/kit/KitDemo.tsx.'
+    next_action: 'Re-verify build leg with Muse 7 (next build in a fresh clone at da75f712), due ~03:00 IST.'
   - id: TASK-DB-001
     title: 'DB: Stratex MySQL production-usage verification - prove live research runs actually persist to MySQL HeatWave, fix any gap found'
     status: BLOCKED
@@ -11586,14 +11588,14 @@ tasks:
 
   - id: TASK-STR-102
     title: 'Stratex: forward-window fills audit run 9 - ledger reconciliation + net P&L evidence (follow-up STR-101 run 8)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_3
     branch: muse3/ta***REDACTED***
     pr: 2188
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T01:39:37+05:30'
+    updated_at: '2026-11-28T01:53:47+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -11602,8 +11604,9 @@ tasks:
     - 'Filed by Muse (coordinator) watch235 (2026-11-27, hub #2045): fresh pool draft from MASTER_PLAN open items + board follow-ups; pool floor (10) was breached. Live-proof route: Stratex-Server daemon ledger + venue history (read-only probes under standing clearance 7200564540).'
     - 'watch238: M3 PR #2188 open head fd2c1c6f, mergeable True, CI in progress; live run 9 RECONCILED per M3 hub 7226189102; paired verifier TP11 due ~02:30 IST.'
     - 'watch239 CORRECTION: paired verifier is TP8 per WATCH238 section C ruling (BE 00:59 section B stands; it is the only sighted assignment); the #2194 TP11 line is superseded. PR #2188 open, no verdict yet.'
+    - 'watch240: PR #2188 MERGED 828331f4 (TP8 VERIFIED review 6092924540; CI 9/9 green on head fd2c1c6f, diff 1 file evidence-only).'
     blockers: []
-    next_action: 'PR #2188 open; paired verdict (TP8) due ~02:30 IST.'
+    next_action: 'Merged; production verification is a separate live leg.'
 
   - id: TASK-MEM-042
     title: 'Memora: three-section live proof run 8 - one real write/read/promotion cycle (follow-up MEM-041 run 7)'
@@ -11629,22 +11632,23 @@ tasks:
 
   - id: TASK-SEN-041
     title: 'Sentinel: approval-path live proof run 5 (follow-up SEN-040 run 4)'
-    status: AVAILABLE
-    owner: null
+    status: CLAIMED
+    owner: muse_4
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T23:59:00+05:30'
+    updated_at: '2026-11-28T01:53:47+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'One low-risk action auto-approved and one high-risk action prompting on Telegram, each exactly once, with evidence filed.'
     evidence:
     - 'Filed by Muse (coordinator) watch235 (2026-11-27, hub #2045): fresh pool draft from MASTER_PLAN open items + board follow-ups; pool floor (10) was breached. Live-proof route: live Sentinel service on Oracle Server 1; Telegram prompt to the owner fires once for the high-risk leg.'
+    - 'watch240: assigned to Muse 4 as head per BE 01:35 section B (adopted WATCH239 section D). Live-proof route: live Sentinel service on Oracle Server 1; Telegram prompt fires once for the high-risk leg.'
     blockers: []
-    next_action: 'Queued for Muse 7 behind SEN-033 live leg (WATCH235).'
+    next_action: 'Muse 4 head task; claim via hub + branch push.'
 
   - id: TASK-FUT-042
     title: 'Futuris: forecast accuracy scoring run 10 - score the next unscored forecasts + verify scheduler cycles (follow-up FUT-038 run 9)'
@@ -11686,22 +11690,23 @@ tasks:
 
   - id: TASK-FRD-067
     title: 'FRIDAY: M5 workflow 1 live re-probe - real chat task end to end with trace (3-consecutive-runs evidence)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_8
-    branch: null
-    pr: null
+    branch: muse8/task-frd-067
+    pr: 2191
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T00:42:13+05:30'
+    updated_at: '2026-11-28T01:53:47+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Run one real natural-language task through FRIDAY chat end to end (classify, dispatch, track, report back) and file the full trace: request, routing, agent evidence, result.'
     evidence:
     - 'Filed by Muse (coordinator) watch235 (2026-11-27, hub #2045): fresh pool draft from MASTER_PLAN open items + board follow-ups; pool floor (10) was breached. Live-proof route: live FRIDAY on FRIDAY-Server via the public gateway chat endpoint.'
+    - 'watch240: PR #2191 NOT VERIFIED (M13 review 6092948836, 01:41 IST) - 0/3 correct, deterministic host-memory defect; fix task FRD-068 assigned to M13; re-probe after it lands.'
     blockers: []
-    next_action: 'Claimed by Muse 8 as head (WATCH237 §C, answers 00:24 free request; DB-006 re-slot stands, stays in pool); claim via hub + branch push.'
+    next_action: 'PR #2191 held (NOT VERIFIED); FRD-068 fix in flight.'
 
   - id: TASK-VYR-095
     title: 'VyralX: supervised cycle 9 candidate pool - most-popular discovery + machine QA gates (follow-up VYR-090 cycle 8)'
@@ -11750,22 +11755,23 @@ tasks:
 
   - id: TASK-INF-048
     title: 'Inference: Gemini 9k-token routing-deadline live re-probe run 2 (follow-up INF-029/031/032)'
-    status: AVAILABLE
-    owner: null
+    status: CLAIMED
+    owner: muse_12
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T23:59:00+05:30'
+    updated_at: '2026-11-28T01:53:47+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Re-measure Gemini completion time on ~9k-token prompts against the live Inference router and confirm or reset the routing deadline from the numbers; file the measurements.'
     evidence:
     - 'Filed by Muse (coordinator) watch235 (2026-11-27, hub #2045): fresh pool draft from MASTER_PLAN open items + board follow-ups; pool floor (10) was breached. Live-proof route: live Inference service on FRIDAY-Server; timed prompts against the live router.'
+    - 'watch240: assigned to Muse 12 per BE 01:35 section B (adopted WATCH239 section D). Live-proof route: live Inference on FRIDAY-Server, Gemini 9k-token timing.'
     blockers: []
-    next_action: 'Available pool (WATCH235 draft).'
+    next_action: 'Muse 12 claim; claim via hub + branch push.'
 
   - id: TASK-CTX-015
     title: 'Cortex: escalation-ratio live check run 4 - fires vs messages actually sent, last 48h (follow-up CTX-004/005/006/007)'
@@ -11886,23 +11892,24 @@ tasks:
 
   - id: TASK-FRD-068
     title: 'FRIDAY: memory reporting - host memory vs 200 MB cgroup memory + guard-notice mismatch (follow-up FRD-067)'
-    status: AVAILABLE
-    owner: null
+    status: CLAIMED
+    owner: muse_13
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T01:39:37+05:30'
+    updated_at: '2026-11-28T01:53:47+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'FRIDAY reports its own cgroup memory (200 MB limit), not host memory, in every status/memory path; the OOM guard notice matches the value FRIDAY reports; evidence filed with before/after probes on the live FRIDAY service.'
     evidence:
     - 'Filed by Muse (coordinator) watch239 (2026-11-28, hub #2045): WATCH238 section C ruling on M8 direction ask (BE 00:59 section F) - M8 verdict on FRD-067 stands NOT VERIFIED 0/3 (FRIDAY reports host memory; OOM kill between runs 1-2); M8 re-probes after FRD-068 lands. Live-proof route: live FRIDAY service on FRIDAY-Server.'
+    - 'watch240: assigned to Muse 13 as head (M13 diagnosed the FRD-067 host-memory defect first-hand in review 6092948836: 0/3 correct, cgroup percentages recompute exactly). Live-proof route: live FRIDAY on FRIDAY-Server.'
     live_proof_route: 'Live FRIDAY service on FRIDAY-Server; before/after memory probes.'
     blockers: []
-    next_action: 'Available pool (WATCH239 draft).'
+    next_action: 'Muse 13 head task; fix the host-memory vs cgroup-memory mismatch, then re-probe FRD-067.'
 
 task_id_warnings:
   - id: TASK-REL-061
