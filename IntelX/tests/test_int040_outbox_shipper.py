@@ -287,5 +287,31 @@ class TestSshTransportCommand(ShipperTestBase):
             build_live_transport()
 
 
+
+class TestReadOutboxEnvelopes(unittest.TestCase):
+    """TASK-INT-060: producer-side snapshot behind GET /v1/watches/outbox."""
+
+    def test_missing_outbox_is_empty_not_an_error(self):
+        from intelx.watches.engine import read_outbox_envelopes
+
+        with tempfile.TemporaryDirectory() as tmp:
+            snap = read_outbox_envelopes(Path(tmp) / "outbox.jsonl")
+        self.assertEqual(snap, {"size": 0, "envelopes": [], "malformed": 0})
+
+    def test_valid_and_malformed_lines(self):
+        from intelx.watches.engine import read_outbox_envelopes
+
+        env = make_envelope("w1", "t", "https://x/1", "2026-11-23T16:33:00+00:00")
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "outbox.jsonl"
+            write_outbox(path, [env], partial_tail="{not json\n")
+            with path.open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps({"schema": "other/9"}) + "\n")
+            snap = read_outbox_envelopes(path)
+        self.assertEqual([e["envelope_id"] for e in snap["envelopes"]], [env["envelope_id"]])
+        self.assertEqual(snap["malformed"], 2)
+        self.assertGreater(snap["size"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

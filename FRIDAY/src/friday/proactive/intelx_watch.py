@@ -66,6 +66,8 @@ import json
 import logging
 import os
 import threading
+import urllib.error
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
@@ -143,6 +145,50 @@ def resolve_instant_outbox_path(main_outbox_path: Path | None = None) -> Path:
     return main.parent / "instant_outbox.jsonl"
 
 
+def resolve_outbox_url() -> str:
+    """TASK-INT-060: remote outbox endpoint, when configured.
+
+    The producer (IntelX) and this drainer no longer share a
+    filesystem (fleet split: IntelX-Server vs FRIDAY-Server), so the
+    sibling-file tail above can never see new envelopes. When
+    ``INTELX_WATCH_OUTBOX_URL`` names IntelX's read-only
+    ``GET /v1/watches/outbox`` endpoint, the drainer pulls envelopes
+    over HTTP instead; the persisted ``delivered_keys`` dedupe makes
+    re-fetching the full envelope list safe.
+    """
+    return (os.getenv("INTELX_WATCH_OUTBOX_URL") or "").strip()
+
+
+def resolve_instant_outbox_url() -> str:
+    """Instant-lane remote endpoint: explicit env wins, else the main
+    endpoint with ``lane=instant`` (the producer's lane parameter)."""
+    override = (os.getenv("INTELX_WATCH_INSTANT_OUTBOX_URL") or "").strip()
+    if override:
+        return override
+    main = resolve_outbox_url()
+    if not main:
+        return ""
+    sep = "&" if "?" in main else "?"
+    return f"{main}{sep}lane=instant"
+
+
+def _fetch_remote_payload(url: str) -> Any:
+    """GET the producer's outbox payload (stdlib only).
+
+    Sends ``INTELX_WATCH_API_KEY`` as ``X-API-Key`` when set — the
+    producer endpoint sits behind the same Friday API-key auth as
+    every other IntelX route. Raises on transport/HTTP/JSON failure;
+    the caller records it as a source error and never wedges.
+    """
+    headers = {"Accept": "application/json"}
+    api_key = (os.getenv("INTELX_WATCH_API_KEY") or "").strip()
+    if api_key:
+        headers["X-API-Key"] = api_key
+    req = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
 # ---------------------------------------------------------------------------
 # the drainer
 # ---------------------------------------------------------------------------
@@ -213,6 +259,9 @@ class IntelxWatchDrainer:
         instant_outbox_path: Path | None = None,
         state_path: Path | None = None,
         enabled_fn: Callable[[], bool] = drain_enabled,
+        outbox_url: str | None = None,
+        instant_outbox_url: str | None = None,
+        fetch_fn: Callable[[str], Any] | None = None,
     ) -> None:
         self._outbox_path = outbox_path if outbox_path is not None else resolve_outbox_path()
         self._instant_outbox_path = (
@@ -221,6 +270,13 @@ class IntelxWatchDrainer:
             else resolve_instant_outbox_path(self._outbox_path)
         )
         self._state_path = state_path if state_path is not None else _default_state_path()
+        self._outbox_url = outbox_url if outbox_url is not None else resolve_outbox_url()
+        self._instant_outbox_url = (
+            instant_outbox_url
+            if instant_outbox_url is not None
+            else resolve_instant_outbox_url()
+        )
+        self._fetch_fn = fetch_fn if fetch_fn is not None else _fetch_remote_payload
         self._enabled_fn = enabled_fn
         self._lock = threading.Lock()
         self._state: dict[str, Any] | None = None
@@ -263,6 +319,7 @@ class IntelxWatchDrainer:
         path: Path | None = None,
         offset_key: str = "offset",
         present_key: str = "outbox_present",
+        remote_url: str = "",
     ) -> list[dict[str, Any]]:
         """Envelopes from complete lines past the persisted offset.
 
@@ -274,6 +331,8 @@ class IntelxWatchDrainer:
         Defaults read the main outbox; the TASK-INT-016 fast lane passes
         the instant outbox with its own offset/presence keys.
         """
+        if remote_url:
+            return self._fetch_remote_envelopes(state, report, remote_url, present_key)
         path = path if path is not None else self._outbox_path
         try:
             size = path.stat().st_size
@@ -333,6 +392,49 @@ class IntelxWatchDrainer:
                 report["malformed"] += 1
                 state["malformed_total"] = int(state.get("malformed_total") or 0) + 1
                 logger.warning(f"intelx watch drain: skipping envelope without dedupe_key: {line[:120]!r}")
+                continue
+            envelopes.append(row)
+        return envelopes
+
+    def _fetch_remote_envelopes(
+        self,
+        state: dict[str, Any],
+        report: dict[str, Any],
+        url: str,
+        present_key: str,
+    ) -> list[dict[str, Any]]:
+        """TASK-INT-060: envelopes pulled from the producer over HTTP.
+
+        The endpoint returns the producer's full envelope list; byte
+        offsets do not apply remotely, so dedupe rests entirely on
+        the persisted ``delivered_keys`` / held queue (the same guard
+        that already covers a rebuilt local outbox). Validation
+        mirrors the file tail: wrong schema or a missing dedupe_key
+        is malformed, counted, never wedging. Any fetch failure is a
+        source error and yields no envelopes this cycle.
+        """
+        try:
+            payload = self._fetch_fn(url)
+        except Exception as exc:  # transport, HTTP, or JSON failure
+            report["source_errors"].append(f"remote outbox fetch failed: {exc}")
+            return []
+        rows = payload.get("envelopes") if isinstance(payload, dict) else None
+        if not isinstance(rows, list):
+            report["source_errors"].append("remote outbox payload has no envelopes list")
+            return []
+        report[present_key] = True
+        envelopes: list[dict[str, Any]] = []
+        for row in rows:
+            report["lines_read"] += 1
+            if not isinstance(row, dict) or row.get("schema") != ENVELOPE_SCHEMA:
+                report["malformed"] += 1
+                state["malformed_total"] = int(state.get("malformed_total") or 0) + 1
+                logger.warning("intelx watch drain: skipping non-envelope remote row")
+                continue
+            if not str(row.get("dedupe_key") or "").strip():
+                report["malformed"] += 1
+                state["malformed_total"] = int(state.get("malformed_total") or 0) + 1
+                logger.warning("intelx watch drain: skipping remote envelope without dedupe_key")
                 continue
             envelopes.append(row)
         return envelopes
@@ -539,7 +641,7 @@ class IntelxWatchDrainer:
                 moment = now or now_owner_tz()
                 state = self._load_state()
 
-                envelopes = self._read_new_envelopes(state, report)
+                envelopes = self._read_new_envelopes(state, report, remote_url=self._outbox_url)
                 report["envelopes"] = len(envelopes)
 
                 if not state["baseline_done"]:
@@ -624,6 +726,7 @@ class IntelxWatchDrainer:
                     path=self._instant_outbox_path,
                     offset_key="instant_offset",
                     present_key="instant_outbox_present",
+                    remote_url=self._instant_outbox_url,
                 )
                 report["envelopes"] = len(envelopes)
 
