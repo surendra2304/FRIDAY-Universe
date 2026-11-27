@@ -21,6 +21,14 @@ from friday.tools.builtin.escrcpy_control import (
     EscrcpyAutomationTool,
     EscrcpyLaunchPlanTool,
 )
+from friday.tools.builtin.crm_tools import (
+    CrmContactAddTool,
+    CrmContactGetTool,
+    CrmContactListTool,
+    CrmDealAddTool,
+    CrmDealStageTool,
+    CrmFollowupsDueTool,
+)
 from friday.tools.builtin.lead_gen_tools import LeadGenerateTool
 from friday.tools.builtin.meeting_followup_tools import (
     MeetingFollowUpCreateTool,
@@ -38,6 +46,13 @@ EXPECTED = {
     "meeting_followup_create": MeetingFollowUpCreateTool,
     "meeting_followup_list": MeetingFollowUpListTool,
     "meeting_followup_decide": MeetingFollowUpDecideTool,
+    # TASK-FRD-062 — CRM workspace surface (contacts, deals, follow-ups).
+    "crm_contact_add": CrmContactAddTool,
+    "crm_contact_get": CrmContactGetTool,
+    "crm_contact_list": CrmContactListTool,
+    "crm_deal_add": CrmDealAddTool,
+    "crm_deal_stage": CrmDealStageTool,
+    "crm_followups_due": CrmFollowupsDueTool,
 }
 
 

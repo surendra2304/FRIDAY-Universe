@@ -97,6 +97,14 @@ from friday.tools.builtin.followup_tools import (
     FollowUpCompleteTool,
     FollowUpListTool,
 )
+from friday.tools.builtin.crm_tools import (
+    CrmContactAddTool,
+    CrmContactGetTool,
+    CrmContactListTool,
+    CrmDealAddTool,
+    CrmDealStageTool,
+    CrmFollowupsDueTool,
+)
 from friday.tools.builtin.git_tools import GitCommitTool, GitPushTool, GitStatusTool
 from friday.tools.builtin.workflow_template_tools import (
     WorkflowTemplateListTool,
@@ -239,6 +247,12 @@ __all__ = [
     "CloseApplicationTool",
     "ControlLightTool",
     "ControlPlugTool",
+    "CrmContactAddTool",
+    "CrmContactGetTool",
+    "CrmContactListTool",
+    "CrmDealAddTool",
+    "CrmDealStageTool",
+    "CrmFollowupsDueTool",
     "CreateGitBranchTool",
     "CreateGitHubIssueTool",
     "DictionaryTool",
