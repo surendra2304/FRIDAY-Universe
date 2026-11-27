@@ -180,6 +180,32 @@ def read_cgroup_memory() -> CgroupMemory | None:
     )
 
 
+def service_memory() -> dict[str, Any] | None:
+    """The service's own memory accounting, for status/memory reporting.
+
+    TASK-FRD-068: every path that reports memory to the user must quote the
+    service's own cgroup (the 200 MB cap on the live host), not host RAM.
+    FRD-067 proved the chat answers host memory (875 MB of 1,905 MB) while
+    the cgroup sat at 95–99.9% of its cap, and claimed "no active alerts"
+    while the guard notices listed 93–100% readings — 0/3 correct.
+
+    Returns ``{"percent", "used_mb", "limit_mb", "scope": "cgroup"}`` when
+    this process runs under a capped memory cgroup, else None — callers
+    then report host memory exactly as before (dev machines, CI, Windows,
+    containers without a cap). A present-but-unlimited cap also yields
+    None: without a limit there is no service figure to report.
+    """
+    cg = read_cgroup_memory()
+    if cg is None or cg.percent is None or cg.limit_bytes is None:
+        return None
+    return {
+        "percent": cg.percent,
+        "used_mb": round(cg.used_bytes / (1024 ** 2), 1),
+        "limit_mb": round(cg.limit_bytes / (1024 ** 2), 1),
+        "scope": "cgroup",
+    }
+
+
 @dataclass
 class SystemSnapshot:
     """A single point-in-time reading of system health."""

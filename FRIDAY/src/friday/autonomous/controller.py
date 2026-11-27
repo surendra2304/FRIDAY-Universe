@@ -704,8 +704,21 @@ class AutonomousController:
                 checks.append({"name": "zombie_processes", "status": "ERROR", "evidence": type(exc).__name__})
 
             try:
-                vm = psutil.virtual_memory()
-                checks.append({"name": "memory", "status": "DEGRADED" if vm.percent >= 90 else "PASS", "evidence": f"{vm.percent:.1f}% used; {vm.available / 1024**3:.2f} GiB available."})
+                # TASK-FRD-068: the kill threshold is the service's own
+                # cgroup cap, not host RAM — a 46%-used host can hide a
+                # 98%-full service cgroup (FRD-067, 0/3). Without a capped
+                # cgroup the host check runs as before.
+                try:
+                    from friday.observability.proactive_engine import service_memory
+
+                    svc = service_memory()
+                except Exception:
+                    svc = None
+                if svc is not None:
+                    checks.append({"name": "memory", "status": "DEGRADED" if svc["percent"] >= 90 else "PASS", "evidence": f"{svc['percent']:.1f}% used; {svc['limit_mb'] - svc['used_mb']:.1f} MB of the {svc['limit_mb']:.0f} MB service limit available."})
+                else:
+                    vm = psutil.virtual_memory()
+                    checks.append({"name": "memory", "status": "DEGRADED" if vm.percent >= 90 else "PASS", "evidence": f"{vm.percent:.1f}% used; {vm.available / 1024**3:.2f} GiB available."})
             except Exception as exc:
                 checks.append({"name": "memory", "status": "ERROR", "evidence": type(exc).__name__})
 

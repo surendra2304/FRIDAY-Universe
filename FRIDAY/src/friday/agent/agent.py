@@ -1416,11 +1416,30 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
     def get_system_diagnostics(self) -> dict[str, Any]:
         """Return live system telemetry for the HUD / UI."""
         snap = self.proactive.last_snapshot or capture_snapshot()
+        # TASK-FRD-068: the RAM figures are the service's own memory (its
+        # cgroup cap), not host RAM — the HUD must show what the kernel
+        # will enforce (FRD-067, 0/3). Host RAM stays available under
+        # explicit host_* keys. Without a cgroup the host figures are used
+        # as before.
+        if snap.cgroup_mem_percent is not None and snap.cgroup_mem_limit_mb:
+            ram_percent = snap.cgroup_mem_percent
+            ram_used_gb = round(snap.cgroup_mem_used_mb / 1024, 2) if snap.cgroup_mem_used_mb is not None else None
+            ram_total_gb = round(snap.cgroup_mem_limit_mb / 1024, 2)
+            memory_scope = "cgroup"
+        else:
+            ram_percent = snap.ram_percent
+            ram_used_gb = snap.ram_used_gb
+            ram_total_gb = snap.ram_total_gb
+            memory_scope = "host"
         return {
             "cpu_percent": snap.cpu_percent,
-            "ram_percent": snap.ram_percent,
-            "ram_used_gb": snap.ram_used_gb,
-            "ram_total_gb": snap.ram_total_gb,
+            "ram_percent": ram_percent,
+            "ram_used_gb": ram_used_gb,
+            "ram_total_gb": ram_total_gb,
+            "memory_scope": memory_scope,
+            "host_ram_percent": snap.ram_percent,
+            "host_ram_used_gb": snap.ram_used_gb,
+            "host_ram_total_gb": snap.ram_total_gb,
             # Memory guard (TASK-FRD-041): the service's own cgroup cap is
             # the real kill threshold — surface it so the HUD shows what
             # the kernel will enforce, not just system RAM.

@@ -242,6 +242,11 @@ jobs:
           # invocation so the REL-068 guard sees it collected (uncollected
           # since IG-LAP-03 landed; the four storage-repair sequences run
           # in this venv — see docs/collaboration/TASK-FRD-046-CHECKPOINT-2.md).
+          # TASK-FRD-068: tests/test_frd068_memory_reporting.py rides in
+          # this invocation so the REL-068 guard sees it collected (a PR
+          # test must run in PR CI); it runs in this venv (fabricated
+          # cgroup trees + mocked psutil, no live server — see
+          # docs/collaboration/TASK-FRD-068-EVIDENCE.md).
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
             --check "test-job" \
@@ -261,6 +266,7 @@ jobs:
             tests/test_phone_ui_automation.py tests/test_browser_use_integration.py \
             tests/test_laptop_browser_agent.py \
             tests/test_laptop_pc_care.py \
+            tests/test_frd068_memory_reporting.py \
             --deselect tests/test_reliability.py::test_retry_on_network_failure \
             --deselect tests/test_reliability.py::test_retry_on_rate_limit \
             --deselect tests/test_reliability.py::test_no_retry_on_auth_error
