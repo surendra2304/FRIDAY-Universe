@@ -8246,13 +8246,13 @@ tasks:
   - id: TASK-STR-074
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG2-STR-09, IG2-STR-10, IG2-STR-11, IG2-STR-12, IG2-STR-13 - live extreme-condition verification (wave 1)'
     status: AVAILABLE
-    owner: null
+    owner: muse_11
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-24'
-    updated_at: '2026-11-27T16:13:00+05:30'
+    updated_at: '2026-11-27T16:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -8265,8 +8265,9 @@ tasks:
     - 'Assigned to Muse TP4 (claim of record; branch musetp4/task-str-074-production-verify-wave1 @ 1c3481a9); verified AVAILABLE / owner null on main 64e97ece.'
     - 'watch209: queued pos 3 for muse_11 (watch204).'
     - 'watch216: RE-SLOTTED to pool - muse_11 silent since before 11:57 IST (~4h, multiple hub demands unanswered); branch muse11/task-str-074-production-verify-wave1 @ eb7f81d0 equals main (no commits pushed). M11 reports status on return; task re-assigns from the pool.'
+    - 'watch216-AMEND: re-slot WITHDRAWN - Burn Enforcer 16:00 §D (hub 7215985438, read first-hand) rules claim-on-return stands for muse_11 (BE 15:20 §D, WATCH215 §6); the watch216 re-slot to pool is withdrawn before merge. M11 posts a one-line status + claims STR-074 on return.'
     blockers: []
-    next_action: 'Ownerless pool; re-assign to the next free worker.'
+    next_action: 'Claim on return (muse_11); post a one-line status + claim when back.'
 
   - id: TASK-VYR-070-FIX-01
     title: 'IG-VYR-02 has no live implementation: content_factory.py was retired by TASK-VYR-033 with no successor named - decide: retire IG-VYR-02 from the verification programme or specify a replacement module, then verify it live'
@@ -9892,14 +9893,14 @@ tasks:
     next_action: 'Claimed by muse_15; Contra sample check (profile already live?) next.'
   - id: TASK-FRD-064
     title: 'FRIDAY: investigate + fix FRIDAY.service OOM-kills under chat turns'
-    status: CLAIMED
-    owner: muse_1
+    status: AVAILABLE
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T14:15:00+05:30'
+    updated_at: '2026-11-27T16:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -9909,8 +9910,9 @@ tasks:
     - 'Drafted by Muse (coordinator) watch194 (2026-11-27, hub #2045) from the TASK-FRD-051 production-verify record (PR #2044, merge d6ca83b8): OOM-kills observed mid-verification in legs 2 and 4; auto-restart recovers but the owner-facing assistant dying under a chat turn is a real defect. Hub verdicts 7205056708, 7205437623, 7206115187.'
     - 'Assigned to muse_1 queue position 3 by coordinator watch196 (WATCH195 section 2); verified AVAILABLE / owner null on main 63538e60.'
     - 'watch213: claimed by muse_1 (hub 7213239303, 13:40 IST) as queue head after VOI-030 COMPLETE; branch verified via API at claim time.'
+    - 'watch216-AMEND: M1 WRAP-UP hub 7215915452 (15:57 IST, allowance 100% exhausted, reset Sat Nov 28 21:57 IST); FRD-064 -> POOL TOP PRIORITY per Burn Enforcer 16:00 §C (hub 7215985438, read first-hand). Handover: branch muse1/task-frd-064 @ b1fe4365, zero commits, notes current (WORK_NOTES.md), core defect identified (fresh workers climb to 74% of the 200 MB cap within 60s). VOI-045 firing (TP10) waits on this fix. Next chat to post free/completion claims FRD-064 FIRST.'
     blockers: []
-    next_action: 'Claimed by muse_1; FRD-064 live leg next.'
+    next_action: 'Ownerless pool, TOP PRIORITY; next free/completing chat claims it first.'
 
   - id: TASK-IG-FRD-001-FIX-01
     title: 'FRIDAY: fix goal-loop engine step-allowlist + chat-turn timeout (IG-FRD-001 follow-up)'
@@ -10049,14 +10051,14 @@ tasks:
 
   - id: TASK-REL-107
     title: 'Board validator evidence gate - terminal flips need all five evidence keys; new records need a live_proof_route'
-    status: CLAIMED
-    owner: muse_16
+    status: AVAILABLE
+    owner: null
     branch: muse16/task-rel-107-validator-evidence-gate
     pr: 2093
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T15:31:00+05:30'
+    updated_at: '2026-11-27T16:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - scripts/validate_collaboration.py
@@ -10068,8 +10070,9 @@ tasks:
     - 'Assigned to Muse 16 as queue position 2 by coordinator watch200 (2026-11-27, hub #2045): validator evidence gate (extends REL-069); live-proof route: validator rejects terminal flips without all five evidence keys.'
     - 'watch211: claimed by muse_16 (hub 7212599403); PR #2093 open head d22782ef, mergeable True, CI in progress 0 fail. Queue: MEM-028 (head, HELD) -> REL-107 -> REL-105 -> REL-004.'
     - 'watch215: claim PR #2093 merged 2026-11-27 (merge e9f7231f, verified first-hand); TP6 VERIFIED review 6086258484 (15:17 IST, read first-hand: head d22782ef, 1 file +59/-0 claim-only, CI 9 runs 0 fail); coordinator CI first-hand 9 runs (7 success + 2 skipped, 0 fail, 0 pending) on head d22782ef; mergeable True/clean.'
+    - 'watch216-AMEND: RE-SLOTTED to pool - muse_16 silent since 13:04 IST (~2h55m, Burn Enforcer 16:00 §D hub 7215985438, read first-hand); no REL-107 implementation PR open. M16 posts a one-line status on return; reclaims REL-107 from the pool if still unclaimed.'
     blockers: []
-    next_action: 'Claim PR #2093 merged (e9f7231f); implementation next.'
+    next_action: 'Ownerless pool; re-assign to the next free worker.'
 
   - id: TASK-REL-108
     title: 'Flaky-test quarantine list with named owners and expiry (fleet-layout SIGABRT first entry)'
@@ -10145,7 +10148,7 @@ tasks:
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T16:13:00+05:30'
+    updated_at: '2026-11-27T16:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-VYR-092-EVIDENCE.md
@@ -10155,8 +10158,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch201 (hub #2045): VyralX BGM batch verification run 2. Live-proof route: machine QA gates (BGM presence, loudness) on the held renders; results filed as docs/collaboration/TASK-VYR-092-EVIDENCE.md.'
     - 'watch216: work PR #2117 opened 15:49 IST, head a19e8552, 1 file +166/-0 BGM batch verification run 2 evidence. Paired verifier Muse 3 named by watch216 (due ~16:45 IST).'
+    - 'watch216-AMEND: verifier CORRECTION - Burn Enforcer 16:00 §B (hub 7215985438, read first-hand) names Muse 13 for PR #2117 (due ~17:00 IST); the watch216 M3 naming in #2119 is withdrawn, BE governs (earlier post).'
     blockers: []
-    next_action: 'PR #2117 open; paired verdict owed (M3, ~16:45 IST).'
+    next_action: 'PR #2117 open; paired verdict owed (M13, ~17:00 IST).'
 
   - id: TASK-FUT-039
     title: 'Futuris: forecast accuracy scoring run 8 (follow-up FUT-035 run 7)'
@@ -10447,14 +10451,14 @@ tasks:
 
   - id: TASK-INF-046
     title: 'Inference: Gemini completion time on ~9k-token prompts (INF-019 follow-up) - set the routing deadline from the evidence'
-    status: AVAILABLE
+    status: CLOSED
     owner: muse_tp12
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T11:30:00+05:30'
+    updated_at: '2026-11-27T16:20:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/verification/INF046_GEMINI_TIMING.md
@@ -10463,8 +10467,9 @@ tasks:
     - 'Follow-up to INF-019 (Gemini deadline open question).'
     evidence:
     - 'Filed by Muse (coordinator) watch206 (hub #2045): Inference Gemini completion-time measurement on ~9k-token prompts. Live-proof route: timed prompts against the live Inference service; routing deadline set from the measured numbers and filed as docs/verification/INF046_GEMINI_TIMING.md.'
+    - 'watch216-AMEND: CLOSED as DUPLICATE of TASK-INF-047 - same Gemini ~9k-token completion-time measurement + routing deadline; INF-047 done by TP9 (PR #2118 open, head a1583ff9, decision KEEP 60.0/0.6/15.0). TP9 flagged the near-duplicate in its COMPLETE post hub 7215855671; BE 16:00 §F asked for the resolution. TP12 top-up is TASK-STR-101.'
     blockers: []
-    next_action: 'Assigned to muse_tp12 as queue position 3 by coordinator watch206 (hub #2045); claim via hub + branch push when reached.'
+    next_action: 'Closed as DUPLICATE of INF-047.'
   - id: TASK-INT-878
     title: 'IntelX: alert/burst live leg follow-up to INT-049 - run the granted alert + burst verification live and file the receipts'
     status: MERGED
@@ -10796,7 +10801,7 @@ tasks:
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T16:13:00+05:30'
+    updated_at: '2026-11-27T16:20:00+05:30'
     files:
     - IntelX/
     - docs/collaboration/WORK_BOARD.yaml
@@ -10807,8 +10812,9 @@ tasks:
     - 'Filed by Muse (coordinator) watch211 (2026-11-27, hub #2045): sequel to TASK-INT-058 run 7 (PR #2087 open). Live-proof route: live IntelX on IntelX-Server; alert receipt filed as docs/collaboration/TASK-INT-880-EVIDENCE.md.'
     - 'watch212: queued pos 3 for muse_4 (queue depth 2 -> top-up; behind EARN-033, INT-878). IntelX fast-lane run 8.'
     - 'watch216: M4 CLAIMED hub 7215432895 (15:34 IST, read first-hand) + work PR #2116 opened 15:41 IST, head 95cb12bb, 1 file +66/-0 wait-state evidence. Paired verifier Muse TP6 named by watch216 (due ~16:45 IST).'
+    - 'watch216-AMEND: verifier CORRECTION - Burn Enforcer 16:00 §B (hub 7215985438, read first-hand) names Muse 3 for PR #2116 (due ~17:00 IST); the watch216 TP6 naming in #2119 is withdrawn, BE governs (earlier post).'
     blockers: []
-    next_action: 'PR #2116 open; paired verdict owed (TP6, ~16:45 IST).'
+    next_action: 'PR #2116 open; paired verdict owed (M3, ~17:00 IST).'
 
   - id: TASK-FRD-066
     title: 'FRIDAY: OOM memory-guard live proof - the FRD-043 guard trips before memory exhaustion on FRIDAY-Server'
@@ -10949,14 +10955,14 @@ tasks:
 
   - id: TASK-INF-047
     title: 'Inference: Gemini ~9k-token completion-time measurement + routing deadline from evidence (POOL 7 iv)'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_tp9
-    branch: null
-    pr: null
+    branch: musetp9/task-inf-047
+    pr: 2118
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T15:06:00+05:30'
+    updated_at: '2026-11-27T16:20:00+05:30'
     files:
     - Inference/
     - docs/collaboration/WORK_BOARD.yaml
@@ -10967,8 +10973,9 @@ tasks:
     - 'Filed by Muse (coordinator) watch212 (2026-11-27, hub #2045): standing backlog POOL 7 item (iv); INF-019 follow-up, INF-019 never filed as a board record. Live-proof route: live Inference on FRIDAY-Server; timings + deadline filed as docs/collaboration/TASK-INF-047-EVIDENCE.md.'
     - 'watch214: assigned to muse_3 (M3 FREE, requesting work, hub 7214192517 ~14:31 IST; queue head REL-090 BLOCKED - live repoint/restart is a server move under owner stop order, no clearance - M3 skips to INF-047; VYR-088 HOLD stands). Queue: REL-090 (blocked) -> INF-047 -> VYR-088 (hold).'
     - 'watch214 AMENDMENT (same run, before merge): Burn Enforcer 14:45 §D (hub 7214462343, read first-hand) assigns INF-047 to muse_tp9 as head - the BE post (14:45 IST) predates WATCH214''s muse_3 assignment (15:01 IST); per the watch204 concurrent-run rule the earlier assignment governs and WATCH214''s muse_3 assignment is WITHDRAWN. M3''s head is VYR-088 per BE §D (run-7 pool; run-6 pool #2095 merged this run, clearing the watch182 hold''s stated condition).'
+    - 'watch216-AMEND: TP9 COMPLETE hub 7215855671 (16:05 IST, read first-hand); work PR #2118 open, head a1583ff9, 2 files evidence + config citation, no behaviour change. Numbers: direct n=5 median 113.62 s, 0/5 inside the 15 s slice; combined n=13 median 67.32 s; decision KEEP 60.0/0.6/15.0. Paired verifier Muse 15 named by Burn Enforcer 16:00 §B (due ~17:00 IST).'
     blockers: []
-    next_action: 'Assigned to muse_tp9 (BE 14:45 §D, governs over WATCH214 muse_3); Gemini ~9k-token timing + routing deadline next.'
+    next_action: 'PR #2118 open; paired verdict owed (M15, ~17:00 IST).'
 
   - id: TASK-MEM-040
     title: 'Memora: three-section live proof run 7 - one real write/read/promotion cycle across private / inter-agent / universal'
@@ -11335,21 +11342,22 @@ tasks:
   - id: TASK-STR-101
     title: 'Stratex: forward-window fills audit run 8 - ledger reconciliation + net P&L'
     status: AVAILABLE
-    owner: null
+    owner: muse_tp12
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T16:13:00+05:30'
+    updated_at: '2026-11-27T16:20:00+05:30'
     files:
     - docs/collaboration/TASK-STR-101-EVIDENCE.md
     acceptance:
     - 'Daemon fill/close ledger read end-to-end and reconciled against venue positions/history; forward-window state (fills, closes, net P&L) filed as evidence.'
     evidence:
     - 'Filed by Muse (coordinator) watch216 (2026-11-27, hub #2045): sequel to STR-100 run 7 (PR #2083 merged, RECONCILED). Live-proof route: live Stratex daemon on Stratex-Server; evidence filed as docs/collaboration/TASK-STR-101-EVIDENCE.md.'
+    - 'watch216-AMEND: assigned to muse_tp12 as queue top-up (depth 2 -> 3 after INF-046 closed as duplicate of INF-047). Forward-window fills audit run 8.'
     blockers: []
-    next_action: 'Unassigned pool (floor refill); claim via hub + branch push.'
+    next_action: 'Queued for muse_tp12 (pos 3); claim via hub + branch push.'
 
 task_id_warnings:
   - id: TASK-REL-061
