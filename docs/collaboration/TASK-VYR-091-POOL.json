@@ -1,0 +1,62 @@
+{
+ "branch": "muse9/task-vyr-091",
+ "candidates": [
+  {
+   "caution": null,
+   "duration_seconds": 41,
+   "gates": {
+    "bgm_presence": "BLOCKED",
+    "caption_track_count": "BLOCKED",
+    "duration_15_60s": "PASS",
+    "licence": "PENDING",
+    "loudness": "BLOCKED",
+    "watermark": "BLOCKED"
+   },
+   "id": "OfEaVD7TtXM",
+   "query": "satisfying pottery wheel throwing short",
+   "rank": 1,
+   "title": "Satisfying Pottery Spiral Designs #Shorts",
+   "uploader": "Ingleton Pottery",
+   "url": "https://youtube.com/shorts/OfEaVD7TtXM",
+   "views": 3617
+  },
+  {
+   "caution": "Title names a specific performing artist (Svetlana Telbukh); audition judges suitability.",
+   "duration_seconds": 31,
+   "gates": {
+    "bgm_presence": "BLOCKED",
+    "caption_track_count": "BLOCKED",
+    "duration_15_60s": "PASS",
+    "licence": "PENDING",
+    "loudness": "BLOCKED",
+    "watermark": "BLOCKED"
+   },
+   "id": "3YSpfNhut_w",
+   "query": "incredible sand art animation short",
+   "rank": 2,
+   "title": "Svetlana Telbukh sand artist. Sand show. Sand animation",
+   "uploader": "Sand Elf",
+   "url": "https://youtube.com/shorts/3YSpfNhut_w",
+   "views": 1697
+  },
+  {
+   "caution": "174 views \u2014 essentially unviewed, last by the most-popular ranking.",
+   "duration_seconds": 36,
+   "gates": {
+    "bgm_presence": "BLOCKED",
+    "caption_track_count": "BLOCKED",
+    "duration_15_60s": "PASS",
+    "licence": "PENDING",
+    "loudness": "BLOCKED",
+    "watermark": "BLOCKED"
+   },
+   "id": "uj57NSz8Yqw",
+   "query": "mesmerizing calligraphy writing short",
+   "rank": 3,
+   "title": "Captivating Calligraphy: Writing \u201cAnshi\u201d with Style and Grace",
+   "uploader": "HandWritten Delight with SP",
+   "url": "https://youtube.com/shorts/uj57NSz8Yqw",
+   "views": 174
+  }
+ ]
+}
