@@ -1,0 +1,144 @@
+<!doctype html>
+<!-- diagram-design (FRIDAY adoption, TASK-IG2-WEB-01) — minimal-dark Architecture diagram.
+     TASK-WEB-007 checkpoint 2: the live-path proof diagram (Diagram Design end-to-end use).
+     Self-contained: inline SVG, no JavaScript, no external images.
+     Geometry on the 4px grid; hairline borders; no shadows; accent on the focal nodes only.
+     Type: Architecture. Budget check: 6 nodes, 5 arrows, 2 accent elements, 1 callout.
+     Taste gate (§9) ledger: docs/collaboration/TASK-WEB-007-CHECKPOINT-2.md -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-WEB-007 — Three legs, one gate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#030409; --paper-2:#0a0e1d; --ink:#eef1ff; --muted:#8b93b8; --soft:#5b6284;
+    --rule:rgba(148,163,255,.18); --rule-solid:rgba(148,163,255,.35);
+    --accent:#8f9bff; --accent-tint:rgba(99,102,241,.16); --link:#7dd3fc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:Manrope,system-ui,sans-serif;padding:40px 24px}
+  .wrap{max-width:1000px;margin:0 auto}
+  .eyebrow{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.18em;color:var(--muted);margin:0 0 8px}
+  h1{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:32px;margin:0 0 8px}
+  .lede{color:var(--muted);font-size:15px;margin:0 0 28px;max-width:640px}
+  .svg-scroll{overflow-x:auto}
+  svg{display:block;min-width:1000px}
+  .node-name{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:16px;fill:var(--ink)}
+  .node-sub{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.08em;fill:var(--muted)}
+  .tag{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.1em;fill:var(--muted)}
+  .arrow-label{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.12em;fill:var(--muted)}
+  .legend{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.08em;fill:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">FRIDAY UNIVERSE · TASK-WEB-007 · ARCHITECTURE</p>
+  <h1>Three legs, one gate</h1>
+  <p class="lede">Toprank and Orb reach the live site only through the /halo deploy; Diagram Design runs in the fleet tooling today — this diagram is its live-path proof.</p>
+  <div class="svg-scroll">
+  <svg viewBox="0 0 1000 408" role="img" aria-labelledby="web007-title web007-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="web007-title">TASK-WEB-007 — live-path diagram</title>
+    <desc id="web007-desc">Merged code on main 56ebae7d feeds two paths. The sheet legs, Toprank and Orb, wait behind the /halo deploy gate, which needs G2 clearance, before they can be summoned on the live /halo route. The Diagram Design leg bypasses the gate: the adopted skill runs in the fleet tooling now, and this diagram is its end-to-end proof. Browser proof at real viewports and slow-network load is still owed for the sheet legs.</desc>
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#8b93b8"/>
+      </marker>
+      <marker id="arr-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#8f9bff"/>
+      </marker>
+    </defs>
+
+    <!-- arrows first: lines sit behind nodes -->
+    <!-- main -> deploy gate (headline path) -->
+    <path d="M248,72 H360" fill="none" stroke="#8f9bff" stroke-width="1.5" marker-end="url(#arr-accent)"/>
+    <rect x="280" y="64" width="48" height="16" fill="#030409"/>
+    <!-- deploy gate -> live /halo (gated, dashed) -->
+    <path d="M568,72 H680" fill="none" stroke="#8b93b8" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+    <rect x="596" y="64" width="56" height="16" fill="#030409"/>
+    <!-- live /halo -> Toprank leg (gated, dashed; elbows r=8) -->
+    <path d="M760,104 V144 Q760,152 752,152 H188 Q180,152 180,160 V200" fill="none" stroke="#8b93b8" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+    <rect x="438" y="144" width="64" height="16" fill="#030409"/>
+    <!-- live /halo -> Orb leg (gated, dashed; elbows r=8; routed 24px below the Toprank route) -->
+    <path d="M880,104 V168 Q880,176 872,176 H508 Q500,176 500,184 V200" fill="none" stroke="#8b93b8" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+    <rect x="658" y="168" width="64" height="16" fill="#030409"/>
+    <!-- main -> Diagram Design (tooling path, routed below the sheets) -->
+    <path d="M40,72 H36 Q28,72 28,80 V288 Q28,296 36,296 H812 Q820,296 820,288 V264" fill="none" stroke="#8b93b8" stroke-width="1" marker-end="url(#arr)"/>
+    <rect x="392" y="288" width="64" height="16" fill="#030409"/>
+
+    <!-- arrow labels (on paper masks, on their segments) -->
+    <text class="arrow-label" x="304" y="76" text-anchor="middle">SHIP</text>
+    <text class="arrow-label" x="624" y="76" text-anchor="middle">PENDING</text>
+    <text class="arrow-label" x="470" y="156" text-anchor="middle">SUMMONS</text>
+    <text class="arrow-label" x="690" y="180" text-anchor="middle">SUMMONS</text>
+    <text class="arrow-label" x="424" y="300" text-anchor="middle">ADOPTED</text>
+
+    <!-- nodes: opaque mask, hairline box rx=6, tag rx=2, name, mono sublabel -->
+    <!-- main 56ebae7d -->
+    <rect x="40" y="40" width="208" height="64" fill="#030409"/>
+    <rect x="40" y="40" width="208" height="64" rx="6" fill="#0a0e1d" stroke="rgba(148,163,255,.35)"/>
+    <rect x="192" y="48" width="48" height="14" rx="2" fill="none" stroke="rgba(148,163,255,.18)"/>
+    <text class="tag" x="216" y="58" text-anchor="middle">MERGED</text>
+    <text class="node-name" x="56" y="76">main 56ebae7d</text>
+    <text class="node-sub" x="56" y="94">FIX-01 + SHEETS IN</text>
+
+    <!-- deploy gate (focal) -->
+    <rect x="360" y="40" width="208" height="64" fill="#030409"/>
+    <rect x="360" y="40" width="208" height="64" rx="6" fill="rgba(99,102,241,.16)" stroke="#8f9bff"/>
+    <rect x="516" y="48" width="44" height="14" rx="2" fill="none" stroke="rgba(148,163,255,.35)"/>
+    <text class="tag" x="538" y="58" text-anchor="middle">GATED</text>
+    <text class="node-name" x="376" y="76">/halo deploy</text>
+    <text class="node-sub" x="376" y="94">G2 CLEARANCE OWED</text>
+
+    <!-- live /halo -->
+    <rect x="680" y="40" width="280" height="64" fill="#030409"/>
+    <rect x="680" y="40" width="280" height="64" rx="6" fill="#0a0e1d" stroke="rgba(148,163,255,.35)"/>
+    <rect x="908" y="48" width="44" height="14" rx="2" fill="none" stroke="rgba(148,163,255,.18)"/>
+    <text class="tag" x="930" y="58" text-anchor="middle">ROUTE</text>
+    <text class="node-name" x="696" y="76">Live /halo</text>
+    <text class="node-sub" x="696" y="94">FRIDAY-UNIVERSE.DUCKDNS.ORG</text>
+
+    <!-- Toprank live leg -->
+    <rect x="40" y="200" width="280" height="64" fill="#030409"/>
+    <rect x="40" y="200" width="280" height="64" rx="6" fill="#0a0e1d" stroke="rgba(148,163,255,.35)"/>
+    <rect x="272" y="208" width="44" height="14" rx="2" fill="none" stroke="rgba(148,163,255,.18)"/>
+    <text class="tag" x="294" y="218" text-anchor="middle">SHEET</text>
+    <text class="node-name" x="56" y="236">Toprank live leg</text>
+    <text class="node-sub" x="56" y="254">RANKSHEET → RANKBOARD</text>
+
+    <!-- Orb live leg -->
+    <rect x="360" y="200" width="280" height="64" fill="#030409"/>
+    <rect x="360" y="200" width="280" height="64" rx="6" fill="#0a0e1d" stroke="rgba(148,163,255,.35)"/>
+    <rect x="592" y="208" width="44" height="14" rx="2" fill="none" stroke="rgba(148,163,255,.18)"/>
+    <text class="tag" x="614" y="218" text-anchor="middle">SHEET</text>
+    <text class="node-name" x="376" y="236">Orb live leg</text>
+    <text class="node-sub" x="376" y="254">ORBSHEET → ORB · PHASE</text>
+
+    <!-- Diagram Design (focal) -->
+    <rect x="680" y="200" width="280" height="64" fill="#030409"/>
+    <rect x="680" y="200" width="280" height="64" rx="6" fill="rgba(99,102,241,.16)" stroke="#8f9bff"/>
+    <rect x="900" y="208" width="52" height="14" rx="2" fill="none" stroke="rgba(148,163,255,.35)"/>
+    <text class="tag" x="926" y="218" text-anchor="middle">TOOLING</text>
+    <text class="node-name" x="696" y="236">Diagram Design</text>
+    <text class="node-sub" x="696" y="254">THIS DIAGRAM · §9 GATE</text>
+
+    <!-- legend: horizontal bottom strip -->
+    <line x1="40" y1="336" x2="960" y2="336" stroke="rgba(148,163,255,.18)"/>
+    <rect x="40" y="348" width="16" height="10" rx="2" fill="rgba(99,102,241,.16)" stroke="#8f9bff"/>
+    <text class="legend" x="64" y="357">FOCAL NODE</text>
+    <rect x="180" y="348" width="16" height="10" rx="2" fill="#0a0e1d" stroke="rgba(148,163,255,.35)"/>
+    <text class="legend" x="204" y="357">CODE / SERVICE</text>
+    <line x1="340" y1="353" x2="368" y2="353" stroke="#8f9bff" stroke-width="1.5"/>
+    <text class="legend" x="376" y="357">HEADLINE PATH</text>
+    <line x1="520" y1="353" x2="548" y2="353" stroke="#8b93b8"/>
+    <text class="legend" x="556" y="357">CALL / SUMMONS</text>
+    <line x1="700" y1="353" x2="728" y2="353" stroke="#8b93b8" stroke-dasharray="5,4"/>
+    <text class="legend" x="736" y="357">GATED — NOT LIVE YET</text>
+    <text class="legend" x="40" y="384">BROWSER PROOF OWED: REAL VIEWPORTS + SLOW-NETWORK — LIVE LEGS NEED THE DEPLOY FIRST</text>
+  </svg>
+  </div>
+</div>
+</body>
+</html>
