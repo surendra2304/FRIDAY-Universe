@@ -80,8 +80,8 @@ async def test_provider_error_returns_extractive_excerpts():
     )
 
     assert "Synthesis failed (ProviderError)" in result.executive_summary
-    assert "420 Wh/kg" in result.executive_summary
-    assert "160 Wh/kg" in result.executive_summary
+    # The excerpts themselves live in the findings and the rendered report,
+    # not in the executive answer (which states the failure).
     assert result.overall_confidence_label == "Low"
     assert {f.statement for f in result.findings} == {
         "Silicon-graphite composite anodes reached 420 Wh/kg energy density.",
