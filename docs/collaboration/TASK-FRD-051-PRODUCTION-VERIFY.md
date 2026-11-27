@@ -47,10 +47,10 @@
 - Injected 2026-11-27 ~06:22 IST: `FRIDAY-Voice.service` (LiveKit voice agent worker, pid 58831, up 18h) stopped on FRIDAY-Server. Verified inactive, old pid gone. FRIDAY.service untouched (pid 75069, active).
 - Probe while down (~06:22 IST): chat turn "Can you talk to me by voice right now?", HTTP 200 in 52.6s. Reply: "I don't have a way to check the real-time voice subsystem right now, so I can't confirm that a spoken channel is active. At the moment I'm only able to reply in text." No false voice claim; text chat kept working with the voice worker down (graceful degradation). Note: FRIDAY cannot sense the voice subsystem state directly — it answered from that limitation honestly rather than inventing a status.
 - Restored ~06:25 IST: service restarted, verified active with new pid 78200 (checked 00:55:53 UTC); FRIDAY.service still active pid 75069. Downtime ~3m21s. Voice was already P0 NOT WORKING (owner test 2026-11-26) before the injection, so no owner-facing capability was lost.
-- Observed (not injected) failure, same class: FRIDAY.service OOM-killed under chat turns during legs 2 and 4 (restart counter 3; twice more ~23:34 UTC pid 70495→73891 and ~23:51 UTC 73891→75069). Follow-up registry and errand store both survived auto-restart — see TASK-FRD-052 draft below.
+- Observed (not injected) failure, same class: FRIDAY.service OOM-killed under chat turns during legs 2 and 4 (restart counter 3; twice more ~23:34 UTC pid 70495→73891 and ~23:51 UTC 73891→75069). Follow-up registry and errand store both survived auto-restart — see TASK-FRD-064 draft below.
 
 ## Live findings routed to Muse (not item failures)
-1. FRIDAY.service OOM-killed under chat turns, repeatedly (legs 2, 4) — see TASK-FRD-052 draft.
+1. FRIDAY.service OOM-killed under chat turns, repeatedly (legs 2, 4) — see TASK-FRD-064 draft.
 2. Errand store lands at `FRIDAY/FRIDAY/.data/errands/errands.json` (doubled path; same cwd-relative class as the leg-2 followup-registry fallback) — one-line fix in the same routing.
 3. Chat-turn routing flaky: turns answer via DIRECT_REASONING without invoking the named tool (legs 1, 3, 4, 5-turn-1); a clean rephrase usually executes. Same defect class as TASK-IG-FRD-001-FIX-01.
 4. Chat-turn latency: turns take 52–136s wall; one turn (leg 1, attempt 2) hung the full 300s client timeout though the loop finished in <1s; one turn (leg 3) never returned within 280s.
@@ -61,7 +61,7 @@
 - **TASK-IG-FRD-003-FIX-01** — job-hunt extractor reads only `application/ld+json` JobPosting; live Greenhouse pages carry none (JS-rendered shell) → 0/0 on real postings; supported-hosts honesty owed.
 
 ## Draft for the pool (coordinator to file on next board PR)
-- **TASK-FRD-052 (draft)** — Investigate + fix FRIDAY.service OOM-kills under chat turns (200M memory peak, restart counter 3+; killed mid-verification in legs 2 and 4; auto-restart recovers but the owner-facing assistant dying under a chat turn is a real defect). Evidence: this record + hub verdicts 7205056708, 7205437623, 7206115187. Owed to the pool per WATCH189/WATCH190.
+- **TASK-FRD-064 (draft)** — Investigate + fix FRIDAY.service OOM-kills under chat turns (200M memory peak, restart counter 3+; killed mid-verification in legs 2 and 4; auto-restart recovers but the owner-facing assistant dying under a chat turn is a real defect). Evidence: this record + hub verdicts 7205056708, 7205437623, 7206115187. Owed to the pool per WATCH189/WATCH190; id corrected to TASK-FRD-064 by WATCH191 (TASK-FRD-052 already exists, MERGED via PR #1867).
 
 ## Queue
 - FRD-051 done on live evidence (this PR). Pre-staged next: VYR-085 (double-scope). IG-FRD-001-FIX-01 assigned M17 queue pos 2 per WATCH189 — board to confirm order (VYR-085 vs FIX-01) on the next board PR.
