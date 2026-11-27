@@ -97,7 +97,7 @@ export function KitDemo() {
           const item: ShowcaseItem = {
             id: agent.name,
             name: agent.name,
-            role: agent.role,
+            role: agent.role ?? "",
             status: agent.status,
             flag: liveAgent?.in_flight ? "working" : undefined,
           };
@@ -209,7 +209,7 @@ export function KitDemo() {
           featuredPool={featuredPool.map((agent) => ({
             id: agent.name,
             name: agent.name,
-            role: agent.role,
+            role: agent.role ?? "",
             status: agent.status,
             meta:
               typeof agent.latency_ms === "number"
