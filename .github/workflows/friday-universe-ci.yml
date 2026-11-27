@@ -690,6 +690,7 @@ jobs:
             tests/test_voice_greeting_trigger.py \
             tests/test_voice_instant_routing.py \
             tests/test_voice_session_build_overlap.py \
+            tests/test_voice_task_board.py \
             tests/test_voice_place_finder.py
 
   docker:
