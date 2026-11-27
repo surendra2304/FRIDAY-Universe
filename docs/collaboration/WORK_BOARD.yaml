@@ -10756,14 +10756,14 @@ tasks:
 
   - id: TASK-VYR-094
     title: 'VyralX: supervised-cycle candidate pool run 3 - most-popular-video discovery + machine QA gates (caption-track count, BGM, watermark, loudness)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_tp14
-    branch: null
+    branch: musetp14/task-vyr-094-candidate-pool-run-3
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T13:27:00+05:30'
+    updated_at: '2026-11-27T16:45:00+05:30'
     files:
     - VyralX/
     - docs/collaboration/WORK_BOARD.yaml
