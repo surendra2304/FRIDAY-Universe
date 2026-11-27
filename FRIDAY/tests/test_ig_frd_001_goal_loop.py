@@ -331,7 +331,9 @@ def test_default_executor_reads_jsonresponse_body(monkeypatch):
     _stub_brain(monkeypatch, failing_brain)
     ok, out = _default_executor("Do the thing")
     assert ok is False
-    assert "LLMProviderError" in out
+    # The reply text is the evidence when present (the error code
+    # surfaces when the reply is empty — see the timeout test).
+    assert "LLM generation failed" in out
 
     def ok_brain(instruction):
         return _FakeResponse({"reply": "done it", "metadata": {"success": True}})
