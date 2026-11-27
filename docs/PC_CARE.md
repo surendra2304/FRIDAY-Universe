@@ -60,7 +60,7 @@ tests until the owner's laptop is connected.
 
 Implemented + unit-tested (client handlers driven through monkeypatched
 platform seams; tools through stubbed dispatch —
-FRIDAY/tests/test_laptop_pc_care.py, 15 tests). The owner's laptop is
+FRIDAY/tests/test_laptop_pc_care.py, 29 tests). The owner's laptop is
 **not yet connected**, so no device verification is claimed. One real
 bug was caught by these tests before shipping: the system-volume
 refusal compared a normalised path against an un-normalised one and
