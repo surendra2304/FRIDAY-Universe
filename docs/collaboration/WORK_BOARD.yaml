@@ -7804,7 +7804,7 @@ tasks:
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-27T12:45:00+05:30'
+    updated_at: '2026-11-27T15:31:00+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
       - docs/collaboration/TASK-MEM-026-GROUNDING.md
@@ -7820,8 +7820,9 @@ tasks:
       - 'Claimed by Muse 2 2026-11-26 ~00:42 IST (hub #1483 comment 7171966591); board verified AVAILABLE / owner muse_2 on main 14a72d15; branch muse2/task-mem-026-three-section-proof-run4; checkpoint-2 re-grounding in work PR #1886; live cycle gated on FRIDAY deploy + route grant.'
       - 'watch210: re-slotted muse_2 -> muse_16 - M2 silent ~9h, no status after WATCH209 demand; M16 to claim + report.'
       - 'watch210 corr: re-slot WITHDRAWN - M2 reported 12:40 IST (hub 7212215476): MEM-026 HELD on the uncleared FRIDAY deploy gate (checkpoint-2 PR #1886 merged 01:50 IST); the block is the deploy gate, not silence. M2 holds the task.'
+      - 'watch215: M2 gate evidence hub 7214471474 (14:47 IST, read first-hand): no CD deploy of current main - CD runs skipped by paths-filter on recent mains; the one triggered run 45969056089 (head 7175b9b0) FAILED at the SSH deploy step on both servers. Coordinator verified run 45969056089 first-hand via actions API (conclusion failure, head 7175b9b0). RULING watch215: gate NOT cleared; MEM-026 stays HELD; CD failure filed as TASK-REL-116.'
     blockers: []
-    next_action: 'Held by muse_2 on the FRIDAY deploy gate; claim FRG-024 when head + gate clears.'
+    next_action: 'HELD on the gate (coordinator ruling watch215): no deploy of current main proven; CD failure is TASK-REL-116.'
 
   - id: TASK-FRD-043
     title: 'FRIDAY: deploy the FRD-041 OOM memory guard live with staged pressure proof and Telegram delivery'
@@ -8013,14 +8014,14 @@ tasks:
     next_action: 'Owner creates the listed free accounts when ready. A worker then claims the 30-day plan execution (labs only) as its single EARN queue item and files weekly lab evidence to this record.'
   - id: TASK-FRD-046
     title: 'FRIDAY (laptop lane): storage-repair sequences in the pc_health guidance set'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_tp13
     branch: musetp13/task-frd-046-storage-repair-sequences
-    pr: null
+    pr: 2103
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-27T12:45:00+05:30'
+    updated_at: '2026-11-27T15:31:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -8033,8 +8034,9 @@ tasks:
     - 'Re-slotted to pool by coordinator watch199 (2026-11-27): TP6 silent all morning with no production evidence (Burn Enforcer 08:21 §D re-slot, confirmed 08:45 §A.4); WATCH198 §5 ''CLAIMED stand'' was a reading, not a ruling - the re-slot is ruled here per the ruling SLA. TP6 branch (none) - task returns unassigned.'
     - 'Assigned to Muse TP13 as queue position 2 by coordinator watch200 (2026-11-27, hub #2045): FRIDAY laptop-lane storage-repair sequences in the pc_health guidance set (re-slotted from TP6 by watch199; TP13 queue position 2 behind API-007).'
     - 'watch210: claimed by muse_tp13 (hub 7212110150); mid-task, no stall.'
+    - 'watch215: PR #2103 merged 2026-11-27 (merge 841bec7f, verified first-hand); M3 VERIFIED review 6086088105 (15:02 IST, read first-hand: head 17368e04, 1 file +26/-0 evidence-only checkpoint-1 scoping, CI 9/9, mergeable True/clean); coordinator CI first-hand 9 runs (7 success + 2 skipped, 0 fail, 0 pending) on head 17368e04. Checkpoint-1 scope; checkpoint 2 (implementation + tests + live leg) rides next.'
     blockers: []
-    next_action: 'Claimed by muse_tp13; storage-repair sequences next.'
+    next_action: 'PR #2103 merged (checkpoint 1); checkpoint 2 next.'
   - id: TASK-VYR-059
     title: 'VyralX: competitor-ad scanning in the creative audit'
     status: MERGED
@@ -8223,14 +8225,14 @@ tasks:
     next_action: 'Queue for muse_tp3 (coordinator watch099): queue position 2 behind VYR-077. Claim via hub #1483.'
   - id: TASK-FRD-049
     title: 'FRIDAY: voice-drawn on-screen task board'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_tp7
-    branch: null
-    pr: null
+    branch: musetp7/task-frd-049-voice-task-board
+    pr: 2104
     contributors: []
     priority: P3
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T18:15:00+05:30'
+    updated_at: '2026-11-27T15:31:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -8238,8 +8240,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST) and no-rest expansion order (21:09 IST); source: CLASSIFICATION-2026-11-24.md section 1, item 9 (watch record DgB9CDDlc4b, @jabirbuilds talk-to-Mac Jarvis). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     - 'Coordinator watch099 (2026-11-25): assigned to muse_tp7 - queue position 3 behind FRD-052 and FRD-047. Verified AVAILABLE / owner null on main c4b64284.'
+    - 'watch215: PR #2104 OPEN, head 14070bf6, CI 9/10 - contracts FAILED (REL-068 collection guard: new FRIDAY/tests/test_voice_task_board.py collected by no PR-triggered workflow; root cause proven first-hand by TP7 + confirmed by reading by M6). M6 PARTIAL verdict review 6086210942 (15:20 IST, read first-hand: merge-blocked until contracts green on a new head; re-verdict owed after the fix). TP7 fix ready (add the file to the voice-regressions pytest list before the last entry, locally verified); fix commit HELD on a content-safety flag - coordinator ruling watch215: commit the fix on the clean local branch, no fetch/rebase on flagged content, push; M6 re-verdicts the new head (due ~16:30 IST). Verifier is Muse 6 (BE 14:44 section C + WATCH214-CORR govern; TP7 correction 7214841260 naming M12 predates the CORR and is superseded).'
     blockers: []
-    next_action: 'Queue for muse_tp7 (coordinator watch099): queue position 3 behind FRD-052 and FRD-047. Claim via hub #1483.'
+    next_action: 'PR #2104 open, CI red (contracts); TP7 lands the fix commit (no rebase), M6 re-verdicts the new head.'
   - id: TASK-STR-074
     title: 'PRODUCTION-VERIFY: Stratex corpus items IG2-STR-09, IG2-STR-10, IG2-STR-11, IG2-STR-12, IG2-STR-13 - live extreme-condition verification (wave 1)'
     status: AVAILABLE
@@ -8867,14 +8870,14 @@ tasks:
     next_action: 'PR #1848 rebased 2026-11-26 onto main 49cfd862 (code already on main - identical blobs; only the board flip outstanding). Awaiting peer review/merge. Digest half still needs owner CV + target roles.'
   - id: TASK-FRD-062
     title: 'FRIDAY: CRM workspace surface - contacts, deals and follow-ups managed by voice and chat'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_tp1
     branch: musetp1/task-frd-062-crm-workspace-surface
-    pr: null
+    pr: 2108
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-27T12:41:00+05:30'
+    updated_at: '2026-11-27T15:31:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - FRIDAY/
@@ -8886,8 +8889,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Assigned to Muse TP1 as queue position 3 by coordinator watch102 (2026-11-25, hub #1483); verified AVAILABLE / owner null on main 14181d3c. TP1 queue position 3 behind WEB-005 and WEB-007 (WEB-006 corrected to TP9 this PR).'
     - 'watch210: claimed by muse_tp1 (hub 7212004537); branch pushed @ 06ff9ee6.'
+    - 'watch215: TP1 status hub 7214981502 (15:11 IST, read first-hand): checkpoint 2 build filed, work PR #2108 open, head 01f4c0db, CI green; paired verifier Muse 20 named by watch214 (due ~15:45 IST).'
     blockers: []
-    next_action: 'Claimed by muse_tp1; CRM surface scoping next.'
+    next_action: 'PR #2108 open; paired verdict owed (M20, ~15:45 IST).'
   - id: TASK-LAP-006
     title: 'Laptop/phone: life-in-weeks auto-wallpaper delivery - MacroDroid macro plus daily wallpaper generator'
     status: CLOSED
@@ -8912,14 +8916,14 @@ tasks:
     next_action: 'None - closed by owner decision 2026-11-25. Do not claim or revive without a new owner order.'
   - id: TASK-FRG-032
     title: 'Forge: MQL5 EA codegen workflow - prompt to MetaEditor-compiled Expert Advisor, proven on the EMA 5/11 example'
-    status: CLAIMED
+    status: MERGED
     owner: muse_8
-    branch: null
-    pr: null
+    branch: muse8/task-frg-032
+    pr: 2107
     contributors: []
     priority: P3
     created_at: '2026-11-25'
-    updated_at: '2026-11-27T13:27:00+05:30'
+    updated_at: '2026-11-27T15:47:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - Forge/
@@ -8931,8 +8935,10 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Assigned to Muse 8 as queue position 3 by coordinator watch116 (2026-11-26, hub #1483 comment 7173089848); P3 Forge MQL5 EA codegen workflow.'
     - 'watch211: claimed by muse_8 (hub 7212890764, 13:22 IST) as head after EARN-026 re-slot; branch push owed.'
+    - 'watch215: work PR #2107 open, head cfa68fcd, mergeable True; paired verifier Muse TP10 named by watch214 (due ~15:45 IST). Compile-proof leg HELD pending owner decision on the Wine + MetaEditor server-side install (WATCH214-CORR ruling; outside standing clearance 7200564540).'
+    - 'watch215-amend: PR #2107 merged 2026-11-27 (merge cb3a9c6d, verified first-hand); TP10 VERIFIED comment 7215268323 (15:25 IST, read first-hand: head cfa68fcd, 1 file +78/-0 checkpoint-1 scope, CI 9 runs 0 fail, EMA blobs + pattern-library insertion point verified on main); coordinator CI first-hand 9 runs (7 success + 2 skipped, 0 fail, 0 pending) on head cfa68fcd; mergeable True/clean. Checkpoint-1 scope; compile proof stays gated.'
     blockers: []
-    next_action: 'Claimed by muse_8 as head; branch push next.'
+    next_action: 'MERGED via PR #2107 (checkpoint 1; compile proof stays gated on the Wine-install ruling / owner Windows step).'
   - id: TASK-FRG-033
     title: 'Forge: free utility kit additions - sejda PDF editing and ToffeeShare P2P transfer, verified and test-used'
     status: IN_REVIEW
@@ -9502,14 +9508,14 @@ tasks:
 
   - id: TASK-VYR-088
     title: 'VyralX: supervised-cycle candidate pool run 7 + machine-QA dry-run over the run-6 pool (most-popular discovery, caption/BGM/watermark/loudness gates, renders held unlisted)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_3
-    branch: null
+    branch: muse3/task-vyr-088-candidate-pool-prep-run-7
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-27T09:40:00+05:30'
+    updated_at: '2026-11-27T15:31:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-VYR-088-EVIDENCE.md
@@ -9522,8 +9528,9 @@ tasks:
     - 'Assigned to Muse 3 as queue position 2 by coordinator watch177 (hub post this run), behind VYR-086 (re-slotted head): M3 free since STR-071 merged (PR #1713) and VYR-078 lost to TP6 (merged PR #1934); no claimable pool task existed, so this run drafted it.'
     - 'Released by Muse 3 (hub 7202036053); pool/HOLD by coordinator watch182 follow-up - owner null; no execution by any chat until the coordinator rules (safety-flag HOLD stands). TP14''s claim (hub 7198307780) does not start the task. Board flip watch183.'
     - 'Assigned to Muse 3 as queue position 3 by coordinator watch200 (2026-11-27, hub #2045): VyralX supervised-cycle candidate pool run 7 + machine-QA dry-run; adopts existing branch muse3/task-vyr-088-candidate-pool-prep-run-7 on claim.'
+    - 'watch215: M3 CLAIMED as head hub 7214778014 (15:01 IST, read first-hand; BE 14:44 section D, run-7 pool; run-6 pool #2095 merged 14:47 IST clearing the watch182 hold condition). Branch muse3/task-vyr-088-candidate-pool-prep-run-7 @ 8f65ab9d verified via ls-remote. M3 also holds the #2103 verdict (filed VERIFIED 15:02 IST).'
     blockers: []
-    next_action: 'Queue position 2 for Muse 3 (behind VYR-086); claim via hub #1483 + branch push when reached. Loop OFF, uploader paused, renders unlisted.'
+    next_action: 'Claimed by muse_3 as head; candidate-pool prep run 7 next.'
 
   - id: TASK-MEM-028
     title: 'Memora: three-section live proof run 5 - one real write/read/promotion cycle across private / inter-agent / universal'
@@ -9831,14 +9838,14 @@ tasks:
 
   - id: TASK-MEM-037
     title: 'Memora: universal search live proof run 2 - cross-agent recall against the live service'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_15
-    branch: null
-    pr: null
+    branch: muse15/task-mem-037-universal-search-run-2
+    pr: 2112
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T14:15:00+05:30'
+    updated_at: '2026-11-27T15:47:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-MEM-037-EVIDENCE.md
@@ -9850,8 +9857,9 @@ tasks:
     - 'Assigned to muse_15 queue position 2 by coordinator watch196 (queue top-up; M15 depth 1); verified AVAILABLE / owner null on main 63538e60.'
     - 'watch209: claimed by muse_15 (hub 7211582420); live Memora cycle next.'
     - 'watch213 RULING (hub post): M15 ask (hub 7213627256) DECIDED - steps 1-3 read-only recall probes are COVERED by standing clearance 7200564540; step-4 test-memory write GRANTED as a one-off live-verification write under the same clearance, test data only (key/tag MEM-037-TEST), read back + cleaned up, receipts filed. MEM-037 live leg proceeds.'
+    - 'watch215: M15 COMPLETE hub 7214954377 (15:10 IST, read first-hand): live universal-search cycle done on Oracle Server 1 (Memora.service active, /health 200); cross-agent recall verified (sentinel PRIVATE write, promoted to UNIVERSAL copy, GET 200 as friday + futuris, marker search rank 1); cleanup verified (orig + copy hard-deleted, GET 404/404). Work PR #2112 open, head b74557de, 2 commits, 1 file +78/-0 evidence-only. Paired verifier Muse 13 named by the Burn Enforcer (hub 7215121634, 15:20 IST; due ~16:15 IST) - WATCH215 TP6 naming withdrawn, BE governs (earlier post).'
     blockers: []
-    next_action: 'Claimed by muse_15; live Memora cycle next (steps 1-3 read-only + step-4 test-write granted watch213).'
+    next_action: 'PR #2112 open; paired verdict owed (M13, ~16:15 IST).'
 
 
   - id: TASK-EARN-035
@@ -9969,14 +9977,14 @@ tasks:
 
   - id: TASK-REL-104
     title: 'scripts/live_probe.py - one command per agent: gateway health + one real request, output filed as evidence'
-    status: CLAIMED
+    status: MERGED
     owner: muse_6
     branch: muse6/task-rel-104-live-probe
-    pr: null
+    pr: 2105
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T12:17:00+05:30'
+    updated_at: '2026-11-27T15:31:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - scripts/live_probe.py
@@ -9986,8 +9994,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch199 (2026-11-27, hub #2045): SPEED ROUND 2 order 7203732206 task (b). Live-proof route: run scripts/live_probe.py against the live gateway; per-agent health + real-request output filed as evidence.'
     - 'watch209: claimed by muse_6 (hub 7211795458, WATCH206 §3.1 ruling); branch muse6/task-rel-104-live-probe.'
+    - 'watch215: PR #2105 merged 2026-11-27 (merge e9b91a9f, verified first-hand); M13 VERIFIED comment 7214675704 (14:56 IST, read first-hand: head 1d1b241b, 4 new files +823/-0, CI 10/10, tests re-run 8/8 first-hand); coordinator CI first-hand 10 runs (8 success + 2 skipped, 0 fail, 0 pending) on head 1d1b241b; mergeable True/clean.'
     blockers: []
-    next_action: 'Claimed by muse_6; live_probe.py implementation next.'
+    next_action: 'MERGED via PR #2105 (scripts/live_probe.py - one command per agent; live run owed as follow-up).'
 
   - id: TASK-REL-105
     title: 'CI test selection - pytest-testmon on the PR path with cached data; full suite on merge-to-main/nightly'
@@ -10012,14 +10021,14 @@ tasks:
 
   - id: TASK-REL-106
     title: 'CI path filters per agent subtree + per-job duration reporting'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_7
-    branch: null
-    pr: null
+    branch: muse7/task-rel-106-ci-path-filters
+    pr: 2110
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T09:40:00+05:30'
+    updated_at: '2026-11-27T15:31:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -10028,8 +10037,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch199 (2026-11-27, hub #2045): SPEED ROUND 2 order 7203732206 task (d). Live-proof route: CI runs on a board-only PR and on a single-agent PR showing the filter behaviour, with duration lines in the logs.'
     - 'Assigned to Muse 7 as queue position 3 by coordinator watch200 (2026-11-27, hub #2045): CI path filters per agent subtree + per-job duration reporting; live-proof route: CI run showing per-subtree jobs + durations.'
+    - 'watch215: work PR #2110 open, head 43519b63, CI green 9 checks; paired verifier Muse TP12 named by watch214 (due ~15:45 IST). Duplicate ruling stands: REL-112 closes as duplicate of REL-106 when #2110 merges (TP4 gets a replacement queue item then).'
     blockers: []
-    next_action: 'Unassigned pool (coordinator watch199); claim via hub #2045 when assigned.'
+    next_action: 'PR #2110 open; paired verdict owed (TP12, ~15:45 IST).'
 
   - id: TASK-REL-107
     title: 'Board validator evidence gate - terminal flips need all five evidence keys; new records need a live_proof_route'
@@ -10040,7 +10050,7 @@ tasks:
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T13:19:00+05:30'
+    updated_at: '2026-11-27T15:31:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - scripts/validate_collaboration.py
@@ -10051,8 +10061,9 @@ tasks:
     - 'Filed by Muse (coordinator) watch199 (2026-11-27, hub #2045): SPEED ROUND 2 order 7203732206 task (a); extends TASK-REL-069 (MERGED). Live-proof route: validator run against a board fixture that fails both gates, then passes after the fix.'
     - 'Assigned to Muse 16 as queue position 2 by coordinator watch200 (2026-11-27, hub #2045): validator evidence gate (extends REL-069); live-proof route: validator rejects terminal flips without all five evidence keys.'
     - 'watch211: claimed by muse_16 (hub 7212599403); PR #2093 open head d22782ef, mergeable True, CI in progress 0 fail. Queue: MEM-028 (head, HELD) -> REL-107 -> REL-105 -> REL-004.'
+    - 'watch215: claim PR #2093 merged 2026-11-27 (merge e9f7231f, verified first-hand); TP6 VERIFIED review 6086258484 (15:17 IST, read first-hand: head d22782ef, 1 file +59/-0 claim-only, CI 9 runs 0 fail); coordinator CI first-hand 9 runs (7 success + 2 skipped, 0 fail, 0 pending) on head d22782ef; mergeable True/clean.'
     blockers: []
-    next_action: 'Claimed by muse_16; PR #2093 open (evidence only).'
+    next_action: 'Claim PR #2093 merged (e9f7231f); implementation next.'
 
   - id: TASK-REL-108
     title: 'Flaky-test quarantine list with named owners and expiry (fleet-layout SIGABRT first entry)'
@@ -10744,13 +10755,13 @@ tasks:
   - id: TASK-REL-113
     title: 'Reliability: flaky-test quarantine list with named owners and expiry - fleet-layout SIGABRT flake first entry (SPEED ROUND 2)'
     status: AVAILABLE
-    owner: null
+    owner: muse_8
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T13:27:00+05:30'
+    updated_at: '2026-11-27T15:47:00+05:30'
     files:
     - .github/workflows/friday-universe-ci.yml
     - docs/collaboration/WORK_BOARD.yaml
@@ -10760,8 +10771,9 @@ tasks:
     - 'Quarantined tests run in a separate quarantine job (not the main gate); main CI is green with the quarantine in place and the list is filed as docs/collaboration/TASK-REL-113-EVIDENCE.md.'
     evidence:
     - 'Filed by Muse (coordinator) watch211 (2026-11-27, hub #2045): SPEED ROUND 2 order 7203732206 task (e). Live-proof route: CI on main - quarantine job runs, main gate green, list filed as docs/collaboration/TASK-REL-113-EVIDENCE.md.'
+    - 'watch215-amend: queued for muse_8 (FRG-032 -> MERGED drops M8 queue to depth 2 - LAP-004 + DB-006 - top-up to depth 3). Queue: LAP-004 -> DB-006 -> REL-113.'
     blockers: []
-    next_action: 'Unassigned pool (floor refill); claim via hub + branch push.'
+    next_action: 'Queued pos 3 for muse_8 (behind LAP-004, DB-006).'
 
   - id: TASK-INT-880
     title: 'IntelX: fast-lane live proof run 8 - one real alert end-to-end (sequel to INT-058 run 7)'
@@ -11178,6 +11190,49 @@ tasks:
     - 'Pack is drafted, not published: Fiverr new-seller limit is 4 gigs (all used) until Level 1; publishing waits on Level 1.'
     evidence:
     - 'Filed by Muse (coordinator) watch214 AMENDMENT (2026-11-27, hub #2045): earning-lane feedstock; Level-1 queue Gig Pack #2 (resume/LinkedIn) from the 2026-11-23 plan; restores the 10-task pool floor after the BE-governed re-slots. Live-proof route: REPO-ONLY (sales copy draft under earning/; no live leg - gig publishing is gated on Fiverr Level 1).'
+    blockers: []
+    next_action: 'Unassigned pool (floor refill); claim via hub + branch push.'
+
+  - id: TASK-REL-115
+    title: 'Reliability: re-validate REL-053 staggered-restart need on the current fleet layout'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-27'
+    updated_at: '2026-11-27T15:31:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-REL-115-EVIDENCE.md
+    acceptance:
+    - 'Re-validation verdict filed: whether staggered restarts are still needed on the current layout (gateway on Oracle Server 2 since 2026-11-25; FRIDAY on FRIDAY-Server; Oracle Server 1 Caddy stopped).'
+    - 'REL-053 closes as moot only if the re-validation shows it moot; otherwise the staggered-restart change is re-scoped to the current layout.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch215 (2026-11-27, hub #2045): WATCH214 section 3 SPLIT ruling on issue #929 (REL-053) - no PR is linked from the issue body and the 2026-11-17 S1-restart diagnosis predates the 2026-11-25 gateway move, so the change is NOT applied as filed. Live-proof route: current-layout check + restart-order evidence filed as docs/collaboration/TASK-REL-115-EVIDENCE.md.'
+    blockers: []
+    next_action: 'Unassigned pool (floor refill); claim via hub + branch push.'
+
+  - id: TASK-REL-116
+    title: 'Reliability: diagnose CD deploy failure on triggered runs (SSH deploy step fails on both servers)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-27'
+    updated_at: '2026-11-27T15:31:00+05:30'
+    files:
+    - .github/workflows/deploy-monorepo.yml
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-REL-116-EVIDENCE.md
+    acceptance:
+    - 'Root cause of the SSH deploy-step failure on triggered CD runs identified (run 45969056089, head 7175b9b0, both deploy jobs FAILED at Update Changed Agents on Server 1/2).'
+    - 'Fix proven by a triggered CD run green on main, or the failing step fixed and the proof filed as docs/collaboration/TASK-REL-116-EVIDENCE.md. Workflow edits ride a coordinator-reviewed PR (fleet config is coordinator-only).'
+    evidence:
+    - 'Filed by Muse (coordinator) watch215 (2026-11-27, hub #2045): first-hand finding this run - M2 gate evidence hub 7214471474 (14:47 IST) + coordinator verification of CD run 45969056089 via actions API (conclusion failure, head 7175b9b0). CD skips by paths-filter when nothing deployable changed and fails when it triggers; no CD deploy has succeeded on any recent main head. This blocks the MEM-026 gate. Live-proof route: triggered CD run green on main.'
     blockers: []
     next_action: 'Unassigned pool (floor refill); claim via hub + branch push.'
 
