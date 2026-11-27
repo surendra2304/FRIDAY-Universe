@@ -33,6 +33,33 @@
 - Then IG2-STR-09 (tax export from the live ledger), IG2-STR-11 (calendar context in a live cycle), IG2-STR-12 (Bayesian uncertainty on live fills), IG2-STR-13 (live re-check; see flag above).
 - Full-allowlist load scan last, results from the live ledger. No server moves (owner stop order 7130069033); no deploys/restarts without hub clearance; demo only.
 
+## Checkpoint 2 — IG2-STR-10 failure-injection leg (live on Stratex-Server)
+
+- **Filed:** 2026-11-28 ~05:13 IST, by Muse 3. Repairs the ~1h silence since checkpoint 1 (04:11 IST): branch head was unchanged at `1ecb035e` for ~1h; this checkpoint is the repair.
+- **What ran:** the LIVE S4 copy of `Stratex/market_data_fallback.py` (`/opt/friday_universe/Stratex/market_data_fallback.py`, 12,982 bytes, same size as main) via the module's own injectable `fetch_text` transport, run with the S4 venv python (`/opt/friday_universe/venv/bin/python`, requests 2.34.2). Probe script `/tmp/str074/probe_ig10.py`, deleted after the run. Read-only market data only — no trading endpoint, no credentials, the live daemon was never touched and never restarted.
+- **Run:** 2026-11-27T23:39:26Z. **Result: 8/9 legs PASS.**
+
+| leg | injection | expected | observed |
+|---|---|---|---|
+| A live baseline | none (real network) | Binance serves BTCUSDT | PASS — binance, $59,821.60, stale=False |
+| B venue disconnect | api.binance.com dead | CoinGecko serves | PASS — coingecko, $59,816.00, stale=False |
+| C two venues down | Binance + CoinGecko dead | DexScreener serves | PASS — dexscreener, $63,662.24, stale=False (see flag 1) |
+| D total outage, last-good cached | all providers dead | stale last-good | PASS — binance last-good, ETHUSDT $1,659.59, stale=True, age 0s |
+| E total outage, empty cache | all providers dead | `AllProvidersFailed` raised | PASS — raised as specified |
+| F stale feed | all dead, 1h-old cached quote | stale quote, age ~3600s | PASS — stale=True, age 3600.0s, price held $90,000.00 |
+| G equity + FX live | none | Nasdaq / Stooq-or-Yahoo serve | PASS — AAPL nasdaq $358.54; USDJPY yahoo $159.515 (Stooq did not serve; Yahoo fallback worked as designed) |
+| H macro live (FRED DGS10) | none | FRED serves | **FAIL — endpoint unreachable from S4, not a code defect (see flag 2)** |
+
+- **Flag 1 — DexScreener price quality:** leg C's DexScreener quote ($63,662.24) diverges ~6.4% from the Binance/CoinGecko consensus (~$59,820). The chain's contract is "first success wins", and the leg passes on that contract — but the third-tier price is not the same market. Coordinator's call whether the DexScreener leg needs a sanity band before it can serve a live decision; the fallback chain itself degrades as designed.
+- **Flag 2 — FRED unreachable from S4:** leg H failed twice — 12s timeout, then a 30s-timeout retry (2026-11-27T23:41Z, `AllProvidersFailed: macro_series/DGS10: fred: Read timed out`). `macro_series` is single-source by design (no fallback chain), so with an empty cache it raises exactly as specified — the module behaved correctly, the endpoint was unreachable. Worth a coordinator re-probe later; not a code failure, and not a named fix task (no code change implied — the chain has no second macro source to fall back to).
+- **Daemon untouched (verified before/after):** PID 74531 RUNNING throughout; `fill_ledger.jsonl` sha256 `5e657087099259764596059b989d66191cad0fc23d90795abdde0f5bcb910a21`, 84 lines, identical at 23:38Z, 23:41Z and after the probe. Heartbeat 23:42:01Z: scan_count 1533 (1343 at checkpoint 1 — still cycling), last cycle scanned 2310 / signals 0 / executed 0 / errors 0 / 30 symbols; equity $10,471.47, balance $10,436.84, unrealized +$34.63, realized +$46.87, 30 open positions, daily breaker NOT hit, daily start equity $10,485.85. Scorecard + heartbeat mtimes fresh at probe time.
+- **IG2-STR-10 verdict for this wave:** the fallback chain degrades live exactly as its contract states — venue disconnect, two-venue outage, total outage with last-good, total outage with empty cache, and stale-feed age all behave per spec on real market data on S4. Two observations ride to the coordinator (flags 1–2 above); neither is a live failure of the chain.
+
+## Next (checkpoint 3)
+
+- IG2-STR-09 (tax ledger export from the live ledger), IG2-STR-11 (calendar context in a live cycle), IG2-STR-12 (Bayesian uncertainty on live fills), IG2-STR-13 (live re-check; see checkpoint-1 flag).
+- Full-allowlist load scan last, results from the live ledger. No server moves (owner stop order 7130069033); no deploys/restarts without hub clearance; demo only.
+
 ## Five states
 
 - implemented NO, tested NO, merged NO, deployed n/a, production-verified NO.
