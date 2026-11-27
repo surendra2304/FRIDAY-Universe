@@ -182,9 +182,14 @@ def _capture_framed(monkeypatch, tmp_path, *, bed="real"):
         bed_path.write_bytes(b"")
     else:
         bed_path = None
+    # TASK-VYR-072-FIX-01: the cue list is the current production shape
+    # (what framed_cues emits) — the hook carries "framing": True and
+    # the list is sorted by start. The pre-VYR-022 shape (an unflagged
+    # hook overlapping the speech cue in AntonBold) is exactly the
+    # doubled-track defect _write_ass now refuses to author.
     cues = [
+        {"start": 0.0, "end": 4.0, "text": "watch what he does next", "framing": True},
         {"start": 1.0, "end": 2.5, "text": "the moment lands", "speech": True},
-        {"start": 0.0, "end": 4.0, "text": "watch what he does next"},
     ]
     viral_framing.render_framed(
         tmp_path / "source.mp4",
