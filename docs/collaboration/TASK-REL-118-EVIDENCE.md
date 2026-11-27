@@ -119,3 +119,24 @@ and the existing `test_fleet_cd_branch_guard.py` +
 - **Board record:** TASK-REL-118 is not on the board yet; the NEW
   record (CLAIMED muse_13) rides the next coordinator board PR per
   WATCH223 §E. This PR carries no board hunk.
+
+## CI follow-up — 2026-11-27 ~20:06 IST (head ac044c1a)
+
+CI on head ac044c1a finished 6 success / 2 skipped / 2 failure. Both
+failures were the same new test,
+`test_live_git_process_refuses_and_preserves_lock`, in the fleet-layout
+and monorepo validator jobs; the `test` (tier-1) and `contracts` checks
+passed. Root cause, read from the job logs (runs 46015835460 /
+46015835266): the test faked a live `git` process by copying /bin/sleep
+to a file named `git`; on the GitHub runner /bin/sleep is the coreutils
+multicall binary, so the copy exits immediately with
+"coreutils: unknown program 'git'" and pgrep finds no live process —
+the block then removes the lock (exit 0) and the test's
+`assert returncode == 1` fails. The production block is not at fault:
+real git's comm is `git`; only the test's fake was non-portable.
+Fix (commit on this branch, after ac044c1a): the fake process is now a
+Python child that sets its own comm to `git` via prctl(PR_SET_NAME) and
+sleeps — no dependency on /bin/sleep's nature. Verified locally: all 6
+tests pass (pytest 9.2.0); the prctl mechanism was probed directly
+(pgrep -x git finds the child, /proc/PID/comm == "git", cwd == repo).
+CI re-running on the new head.

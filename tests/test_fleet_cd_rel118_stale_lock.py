@@ -42,9 +42,8 @@ its job's dirty-tree guard.
 
 from __future__ import annotations
 
-import os
-import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -114,17 +113,28 @@ def _run(block: str, repo: Path) -> subprocess.CompletedProcess:
 def _fake_git_process(cwd: Path) -> subprocess.Popen:
     """A live process whose comm is `git`, running in `cwd`.
 
-    Copies /bin/sleep to a file named `git` and executes it: the kernel
-    comm follows the executed file's basename, so `pgrep -x git` matches
-    it exactly like a real git process, without touching any repo.
+    Spawns a Python child that sets its own comm to `git` via
+    prctl(PR_SET_NAME) and then sleeps: `pgrep -x git` matches it
+    exactly like a real git process, without touching any repo.
+
+    Do NOT fake it by copying /bin/sleep to a file named `git`: on
+    systems where /bin/sleep is the coreutils multicall binary (the
+    GitHub runners), the copy exits immediately with
+    "coreutils: unknown program 'git'", so pgrep finds no live
+    process and the block wrongly treats the lock as stale. That is
+    exactly how test_live_git_process_refuses_and_preserves_lock
+    failed in CI on head ac044c1a while passing locally.
     """
-    fakebin = cwd.parent / "fakebin"
-    fakebin.mkdir(exist_ok=True)
-    fake_git = fakebin / "git"
-    if not fake_git.exists():
-        shutil.copy("/bin/sleep", fake_git)
+    code = (
+        "import ctypes, time; "
+        "ctypes.CDLL('libc.so.6', use_errno=True).prctl(15, b'git', 0, 0, 0); "
+        "time.sleep(30)"
+    )
     proc = subprocess.Popen(
-        [str(fake_git), "30"], cwd=cwd, stdout=subprocess.DEVNULL
+        [sys.executable, "-c", code],
+        cwd=cwd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
     for _ in range(50):
         found = subprocess.run(
@@ -133,6 +143,8 @@ def _fake_git_process(cwd: Path) -> subprocess.Popen:
         if str(proc.pid) in found:
             return proc
         time.sleep(0.1)
+    proc.terminate()
+    proc.wait(timeout=10)
     raise AssertionError("fake git process did not appear under pgrep -x git")
 
 
