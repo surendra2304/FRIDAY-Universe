@@ -152,14 +152,38 @@ all stages; the allocator was killed after the release stage and the
 cgroup holds only the worker again. `memory.events` for the new worker:
 `max 0, oom 0, oom_kill 0` — no OOM during the proof.
 
-## Five states (FRD-043)
+## Deploy leg (Muse 1) — 2026-11-27 ~12:06–12:32 IST
 
-- implemented: YES (fix + evidence in this PR)
-- tested: YES (18/18 tests on the production venv; staged proof live:
-  warning PASS, critical queue-post PASS, Telegram send attempted with no
-  failure recorded, recovery PASS live 04:09:35 UTC)
-- merged: NO (PR to be opened; owner merges)
-- deployed: PARTIAL (fix running live on FRIDAY-Server from this branch
-  since 03:53:19 UTC; re-sync to main owed after merge)
-- production-verified: PARTIAL (warning + critical + recovery proven live;
-  Telegram receipt owner-confirmed only)
+Assignment: WATCH208 §4 (hub #2045 comment 7211629230) — FRD-043 → Muse 1 queue head; coordinator clearance granted here: deploy the merged guard live on FRIDAY-Server, run the staged pressure proof, deliver the proof on Telegram. Claim: hub #2045 comment 7211687320; branch `muse1/task-frd-043-oom-memory-guard-deploy` @ e4018092 (fast-forwarded to 06ff9ee6 before filing).
+
+### Re-sync to main (12:14 IST)
+
+- Live checkout was on branch `main` @ cb57c8c8 (behind), guard file staged-modified (M15's branch fix). File verified byte-identical to main's blob (FILE-EQ-MAIN) before any change.
+- Fast-forwarded the checkout to current main 06ff9ee6 (includes #2064 merge 15e3caeb, #2076, #2071, #2068, #2080 board shrink). Guard file == HEAD blob after sync; only pre-existing `FRIDAY/ui/out/*` build dirt remains, untouched.
+- Restart: `sudo systemctl restart FRIDAY.service` 06:44:24 UTC (12:14:24 IST); new worker pid 89534; `/health` healthy; `ProactiveEngine started` 06:44:39 UTC; TG webhook registered 06:44:41 UTC. Baseline ~139 MB (69.5%).
+
+### Note — the guard warned but could not prevent the 11:51 IST OOM-kill
+
+- `kern.log`: the previous worker (pid 82582, M15's proof worker) was OOM-killed 06:21:02 UTC (11:51:02 IST) — 11 s after the fixed guard warned at 86.4% (06:20:51 UTC) and 41 s after a 75.2% warning (06:20:21 UTC). The guard is a smoke alarm, not a sprinkler: memory can spike from 86% to over the 200 MB cap in seconds, faster than any mitigation. The underlying volatility is the remaining defect (see FRD-064, queue position 3).
+
+### Staged pressure proof, merged code — DONE 2026-11-27 ~12:19–12:31 IST
+
+Method: dynamic allocator (`/tmp/frd043-alloc2.py`, stdlib only) moved into `/system.slice/FRIDAY.service` via `cgroup.procs`, holding touched 1 MB chunks; a controller re-reads `memory.current` every 2 s and grows/shrinks the held set to keep the cgroup total at the stage target; hard abort: free all + exit if total > 188 MB. Watchdog sampled every 5 s with the same 188 MB kill line (never needed). Poll interval 120 s default; each stage held ~4 min.
+
+| Stage | Cgroup held | Result |
+|---|---|---|
+| Baseline | ~139 MB (69.5%) | No alert (correct — below 75%) |
+| Warning | 155.0–155.4 MB (77.5%) | **PASS** — `[2026-11-27 06:49:39] memory_pressure/warning: 77.5% (155.0 MB used)` |
+| Critical | 183.5–185.0 MB (91.8–92.5%) | **PASS** — `[2026-11-27 06:54:09] memory_critical/critical: 91.8% (183.5 MB used)`; Telegram sent, zero `Memory-guard Telegram send failed` lines |
+| Abort | total touched 189.8 MB on a natural worker spike | Allocator aborted per design, freed all, exited; worker stayed alive, no OOM |
+| Release | worker spiked naturally to 185.6 MB (92.8%, critical 07:00:15 UTC), then fell to 37.3 MB | **PASS** — `[2026-11-27 07:00:41] memory_recovered: below 60%` |
+
+Safety: worker pid 89534 stayed alive and `/health` healthy throughout; `memory.events` for the proof window: `max 1458` (cap hits), `oom 0`, `oom_kill 0`; `kern.log` last oom-kill still 06:21:02 UTC (pre-proof). No OOM during the proof. Telegram delivery: the staged critical (06:54:09 UTC) carries the direct Telegram send; gateway configured (webhook registered 06:44:41 UTC), zero failure lines — owner-side receipt confirmed by the message on Surendra's Telegram (~12:24 IST); the coordinator confirms receipt with him. Note: the guard also fired on natural pressure twice more this morning (critical 06:36:56 UTC 91.7% pre-restart; warning 07:00:10 + critical 07:00:15 UTC 92.8% post-proof) — the worker spikes past 90% on its own, repeatedly.
+
+## Five states (FRD-043) — updated 2026-11-27 ~12:32 IST (Muse 1 deploy leg)
+
+- implemented: YES
+- tested: YES (18/18 tests on the production venv + staged proof live, twice: M15 branch run + this merged-code run)
+- merged: YES (PR #2064, merge 15e3caeb, 11:43 IST)
+- deployed: YES (merged guard live on FRIDAY-Server; checkout on main 06ff9ee6; worker pid 89534 running it since 06:44:24 UTC)
+- production-verified: YES — guard behavior proven live on the merged code (warning + critical + recovery); Telegram send attempted with zero failures, receipt owner-confirmed only
