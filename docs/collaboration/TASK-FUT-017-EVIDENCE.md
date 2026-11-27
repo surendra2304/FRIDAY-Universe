@@ -101,10 +101,81 @@
 
 - implemented NO (no code change owed — implementation merged as #1368;
   this task's deliverable is the live measurement + cap evidence) /
-  tested NO (live measurement leg not yet run — checkpoint 2) /
+  tested YES (measurement leg live first-hand; enforcement leg
+  sandbox-proven on the deployed module — see §5; a live over-cap cycle
+  has never occurred, so the live over-cap flag remains unobserved) /
   merged NO / deployed n/a (no code change; no live change made) /
   production-verified NO.
-- Next: checkpoint 2 — rebuild the server-3 store probe, sample live
-  fit-cost metadata across cycles, set the cap from the measured numbers.
+- Next: work PR with this evidence doc; paired verification owed; board
+  flip rides the coordinator board PR.
+
+## 5. Checkpoint 2 — live fit-cost measurement + cap from measured numbers (2026-11-27 ~19:19 IST)
+
+- Probe: `/tmp/fut017_fitcost_v2.py` (sha256 `1352b0d3…`, read back
+  byte-identical before running), run 2026-11-27 13:49:37 UTC / 19:19:37
+  IST from `/opt/friday_universe/Futuris` with venv312 python, Futuris's
+  own `async_session_factory` + `ForecastModel`. Read-only, no commit.
+  Sample: 300 most recent forecasts, 35 cycles 2026-11-26 13:33 →
+  2026-11-27 13:33 UTC. Hourly `:33` cycles carry 11 forecasts each,
+  0 capped in every cycle; the 13:33 cycle showed 4 rows at probe time
+  (cycle still landing — earlier cycles full 11/11).
+- Route correction to checkpoint 1: the FUT-041 probe scripts were NOT
+  gone. `read_file` reported "File not found" for `/tmp/fut036_probe.py`,
+  but `run_shell` lists it (5,015 bytes, Nov 26 17:52) and its sha256 is
+  `d017df1b…` — identical to the FUT-041 verified script. Likewise
+  `/tmp/fut040_cycles.py` `48bee79c…` and `/tmp/fut041_cycle0833.py`
+  `efa94e8c…` match FUT-041. The 4 probe files are hash-identical to
+  main: `db.py 4d945dcd…`, `score_repository.py 39ed9216…`,
+  `models.py 16794c0f…`, `forecast_tracker.py 2b429615…`. Server-3
+  checkout `/opt/friday_universe` @ `06ff9ee6` main;
+  `Futuris/.env` present, 1 DATABASE_URL line. The checkpoint-1
+  "gone" claim was a `read_file` transport/view disagreement, not a
+  missing file — corrected here.
+- Measured numbers (n=300): budget `256.0` MB on all 247 fit-keyed rows
+  (single value — the configured default). `fit_cost_capped` **0/247**;
+  `final_fit_cost_capped` **0/212**; candidates dropped **0**;
+  candidates skipped for fit-cost **0**. `final_fit_estimate_mb`
+  (n=212): min **2.823008**, max **71.544592**, median **2.823008** MB.
+  `auto_arima` estimate constant **66.75688** MB (n=220 — the most
+  expensive candidate). Sum of all candidate estimates (n=247): min
+  1.000736, max **103.7708**, median 103.7708 MB. Even fitting every
+  candidate costs at most ~103.8 MB — far below the 256 MB cap.
+- Store quirk: the fit-cost numbers come back as Decimal (TolerantJSON /
+  Oracle JSON path), so the v1 probe's float-only check counted them
+  absent; v2 coerces via `float()` and the numbers above are the
+  corrected read.
+- `fit_memory_kept_total_mb`: present on **0/300** rows, and
+  `candidates_dropped_by_fit_cost_cap` on **0/300** — by construction,
+  not by chance. `FitCostShortlist.as_metadata()` (the only writer of
+  those two keys, `fit_cost.py:155`) has NO caller in the deployed tree
+  (grep: only `fit_cost.py` contains `as_metadata`);
+  `SelectionOutcome.metadata()` writes budget / estimates / capped only,
+  and dropped candidates would surface as `candidates_skipped`
+  (0 rows — consistent with capped=0). The kept-total distribution the
+  task asked for cannot be measured live until that fragment is wired
+  in — follow-up for the coordinator (small code item, not this task).
+- No-fit-keys cohort: **53** rows carry no fit-cost key at all — all
+  `intelx:research:finding_volume_24h` (27) +
+  `vyralx:trends:topic_volume_24h` (26), spanning the whole sample
+  window. Those two hourly recurring targets never carry fit-cost
+  metadata (different write path, not the selection pipeline).
+- CAP DECISION: the cap STAYS **256 MB** as configured, now
+  evidence-backed — measured max all-candidate cost 103.77 MB and max
+  final refit 71.54 MB sit far below it, with zero capped cycles in 35
+  cycles. The cap binds only on genuinely large frames.
+- Enforcement drill (sandbox, deployed module byte-identical to main —
+  `fit_cost.py` sha256 `00c26d1e…`, 10,149 bytes both sides; no DB, no
+  live state): `resolve_fit_memory_budget(None)` → **256.0**. Over-cap
+  frame (200k rows × 10 features): shortlist drops `auto_ets`,
+  `mean_ensemble`, `auto_arima`, keeps the 3 cheap baselines,
+  `capped=true`, `total_kept_mb` 107.1 ≤ 256, `as_metadata()` carries
+  kept-total + dropped names. Final refit of `auto_arima` on that frame:
+  `within_budget=false`, estimate **1009.3** MB → the pipeline falls
+  back to naive and flags it. Live-scale frame: all kept, capped false.
+  The over-cap branch flags and drops instead of silently running.
+- Follow-ups for the coordinator: (1) wire `as_metadata()` into
+  `SelectionOutcome.metadata()` so kept-total + dropped names are
+  recorded live; (2) the intelx/vyralx recurring targets bypass
+  fit-cost provenance entirely.
 
 — Muse 3
