@@ -53,7 +53,14 @@ class MasterDailyBriefingWorkflow:
         if snapshot.measurement_error:
             return f"Measurements unavailable: {snapshot.measurement_error}."
         cpu = f"{snapshot.cpu_percent:.1f}%" if snapshot.cpu_percent is not None else "unavailable"
-        memory = f"{snapshot.ram_percent:.1f}%" if snapshot.ram_percent is not None else "unavailable"
+        # TASK-FRD-068: the briefing's memory figure is the service's own
+        # cgroup memory, not host RAM (FRD-067, 0/3).
+        if snapshot.cgroup_mem_percent is not None:
+            memory = f"{snapshot.cgroup_mem_percent:.1f}% of the service limit"
+        elif snapshot.ram_percent is not None:
+            memory = f"{snapshot.ram_percent:.1f}%"
+        else:
+            memory = "unavailable"
         disk = f"{snapshot.disk_percent:.1f}%" if snapshot.disk_percent is not None else "unavailable"
         battery = (
             f"{snapshot.battery_percent:.0f}%"

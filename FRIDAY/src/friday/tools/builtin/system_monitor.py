@@ -12,10 +12,27 @@ def get_current_system_resources() -> dict[str, Any]:
     try:
         import psutil
         cpu_percent = psutil.cpu_percent(interval=0.1)
+        # TASK-FRD-068: the RAM figures are the service's own memory (its
+        # cgroup cap), not host RAM — host RAM can read 46% while the
+        # service is at 98% of its 200 MB cap (FRD-067, 0/3). Without a
+        # capped cgroup (dev/CI/Windows) the host figures are used as before.
+        try:
+            from friday.observability.proactive_engine import service_memory
+
+            svc = service_memory()
+        except Exception:
+            svc = None
         virtual_mem = psutil.virtual_memory()
-        ram_percent = virtual_mem.percent
-        total_ram_gb = round(virtual_mem.total / (1024 ** 3), 2)
-        used_ram_gb = round(virtual_mem.used / (1024 ** 3), 2)
+        if svc is not None:
+            ram_percent = svc["percent"]
+            total_ram_gb = round(svc["limit_mb"] / 1024, 2)
+            used_ram_gb = round(svc["used_mb"] / 1024, 2)
+            memory_scope = "cgroup"
+        else:
+            ram_percent = virtual_mem.percent
+            total_ram_gb = round(virtual_mem.total / (1024 ** 3), 2)
+            used_ram_gb = round(virtual_mem.used / (1024 ** 3), 2)
+            memory_scope = "host"
 
         processes = []
         for p in psutil.process_iter(['pid', 'name', 'memory_info', 'cpu_percent']):
@@ -49,14 +66,27 @@ def get_current_system_resources() -> dict[str, Any]:
         except Exception:
             battery_data = None
 
-        return {
+        result: dict[str, Any] = {
             "cpu_percent": cpu_percent,
             "ram_percent": ram_percent,
             "total_ram_gb": total_ram_gb,
             "used_ram_gb": used_ram_gb,
+            "memory_scope": memory_scope,
+            # Host RAM stays available for diagnostics, under an explicit
+            # name, so nothing that quotes "RAM" can mistake it for the
+            # service's own memory.
+            "host_ram_percent": virtual_mem.percent,
+            "host_total_ram_gb": round(virtual_mem.total / (1024 ** 3), 2),
+            "host_used_ram_gb": round(virtual_mem.used / (1024 ** 3), 2),
             "top_processes": top_processes,
             "battery": battery_data,
         }
+        if svc is not None:
+            # MB figures for the content line: GB rounding would print
+            # the 200 MB cap as "0.2 GB / 0.2 GB".
+            result["ram_used_mb"] = svc["used_mb"]
+            result["ram_total_mb"] = svc["limit_mb"]
+        return result
     except Exception as e:
         logger.warning(f"Failed to query system resources: {e}")
         return {
@@ -64,6 +94,7 @@ def get_current_system_resources() -> dict[str, Any]:
             "ram_percent": 0.0,
             "total_ram_gb": 0.0,
             "used_ram_gb": 0.0,
+            "memory_scope": "host",
             "top_processes": [],
             "battery": None,
             "error": str(e),
@@ -126,9 +157,20 @@ class GetSystemResourcesTool(BaseTool):
                 metadata=res,
             )
 
+        # TASK-FRD-068: name the service limit when the figures are the
+        # service's own cgroup memory (MB, so the 200 MB cap does not
+        # collapse to "0.2 GB / 0.2 GB"), so the reply cannot be read as
+        # host RAM.
+        if res.get("memory_scope") == "cgroup":
+            ram_line = (
+                f"RAM Usage: {res['ram_percent']}% "
+                f"({res['ram_used_mb']} MB / {res['ram_total_mb']} MB service limit)"
+            )
+        else:
+            ram_line = f"RAM Usage: {res['ram_percent']}% ({res['used_ram_gb']} GB / {res['total_ram_gb']} GB)"
         lines = [
             f"CPU Usage: {res['cpu_percent']}%",
-            f"RAM Usage: {res['ram_percent']}% ({res['used_ram_gb']} GB / {res['total_ram_gb']} GB)",
+            ram_line,
         ]
 
         # Battery reporting

@@ -59,6 +59,14 @@ class SystemControlTool(BaseTool):
         if act == "system_status":
             try:
                 cpu = psutil.cpu_percent(interval=0.1)
+                # TASK-FRD-068: the RAM figure is the service's own memory
+                # (its cgroup cap), not host RAM (FRD-067, 0/3).
+                try:
+                    from friday.observability.proactive_engine import service_memory
+
+                    svc = service_memory()
+                except Exception:
+                    svc = None
                 ram = psutil.virtual_memory()
                 from friday.tools.builtin.health_monitor import disk_mount_point
 
@@ -66,10 +74,14 @@ class SystemControlTool(BaseTool):
                 disk = psutil.disk_usage(disk_mount)
                 battery = psutil.sensors_battery() if hasattr(psutil, "sensors_battery") else None
                 batt_str = f"{battery.percent:.0f}% ({'Plugged in' if battery.power_plugged else 'Battery'})" if battery else "N/A"
+                if svc is not None:
+                    ram_line = f"- RAM: {svc['percent']:.1f}% used ({svc['used_mb']:,} MB / {svc['limit_mb']:,} MB service limit)"
+                else:
+                    ram_line = f"- RAM: {ram.percent:.1f}% used ({ram.used // (1024**2):,} MB / {ram.total // (1024**2):,} MB)"
                 report = (
                     f"System Status:\n"
                     f"- CPU Usage: {cpu:.1f}%\n"
-                    f"- RAM: {ram.percent:.1f}% used ({ram.used // (1024**2):,} MB / {ram.total // (1024**2):,} MB)\n"
+                    f"{ram_line}\n"
                     f"- Disk ({disk_mount}): {disk.percent:.1f}% used ({disk.free // (1024**3):,} GB free)\n"
                     f"- Battery: {batt_str}"
                 )
