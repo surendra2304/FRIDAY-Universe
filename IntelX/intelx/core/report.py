@@ -572,6 +572,13 @@ def render_report_markdown(
             "Non-mock mode was configured, but no synthesis model call was made. This is not "
             "evidence of successful live research."
         )
+    elif mode_label == "SYNTHESIS FAILED / EXTRACTIVE FALLBACK":
+        # TASK-INT-056: the synthesis provider failed; the answer is the
+        # extractive excerpts of the verified claims, not a model synthesis.
+        mode_note = (
+            "The synthesis provider failed, so no model synthesis was produced; "
+            "the answer is the extractive excerpts of the verified claims."
+        )
     else:
         mode_label = "UNSPECIFIED"
         mode_note = "Runtime provenance is unavailable; do not infer that this is live research."
