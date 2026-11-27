@@ -143,6 +143,90 @@ def test_read_cgroup_memory_v1_fallback(tmp_path):
     assert result.swap_percent == 100.0
 
 
+# -- own-cgroup resolution (TASK-FRD-043) -----------------------------------
+#
+# The FRD-041 reader looked only under CGROUP_BASE (``/sys/fs/cgroup``),
+# i.e. the hierarchy root. On the live host the root carries no memory.*
+# files, so read_cgroup_memory() returned None and the guard could never
+# fire — while the service cgroup itself hit its 200 MB cap and the kernel
+# OOM-killed FRIDAY on 2026-11-27 00:56 UTC with no warning. The reader
+# must resolve the process's OWN cgroup from /proc/self/cgroup first.
+
+
+def test_own_cgroup_relpath_v2(tmp_path):
+    proc = tmp_path / "cgroup"
+    proc.write_text("0::/system.slice/FRIDAY.service\n")
+    assert engine_module._own_cgroup_relpath(str(proc)) == "/system.slice/FRIDAY.service"
+
+
+def test_own_cgroup_relpath_v1_memory_controller(tmp_path):
+    proc = tmp_path / "cgroup"
+    proc.write_text(
+        "12:devices:/system.slice/FRIDAY.service\n"
+        "8:memory:/system.slice/FRIDAY.service\n"
+    )
+    assert engine_module._own_cgroup_relpath(str(proc)) == "/system.slice/FRIDAY.service"
+
+
+def test_own_cgroup_relpath_missing(tmp_path):
+    assert engine_module._own_cgroup_relpath(str(tmp_path / "nope")) is None
+
+
+def _write_cgroup_v2_at(base: Path, *, limit=209715200, used=157286400,
+                        swap_limit=201326592, swap_used=100663296):
+    base.mkdir(parents=True, exist_ok=True)
+    _write_cgroup_v2(base, limit=limit, used=used,
+                     swap_limit=swap_limit, swap_used=swap_used)
+
+
+def test_read_cgroup_memory_own_cgroup(tmp_path, monkeypatch):
+    service = tmp_path / "system.slice" / "FRIDAY.service"
+    _write_cgroup_v2_at(service)
+    monkeypatch.setattr(engine_module, "CGROUP_BASE", str(tmp_path))
+    monkeypatch.setattr(
+        engine_module, "_own_cgroup_relpath",
+        lambda path="/proc/self/cgroup": "/system.slice/FRIDAY.service",
+    )
+    result = read_cgroup_memory()
+    assert result is not None
+    assert result.limit_bytes == 209715200
+    assert result.used_bytes == 157286400
+    assert result.percent == 75.0
+    assert result.swap_percent == 50.0
+
+
+def test_read_cgroup_memory_own_cgroup_beats_root_decoy(tmp_path, monkeypatch):
+    # Root carries whole-system numbers; the service cgroup must win.
+    _write_cgroup_v2(tmp_path, limit=1073741824, used=107374182,
+                     swap_limit=1073741824, swap_used=0)
+    service = tmp_path / "system.slice" / "FRIDAY.service"
+    _write_cgroup_v2_at(service)
+    monkeypatch.setattr(engine_module, "CGROUP_BASE", str(tmp_path))
+    monkeypatch.setattr(
+        engine_module, "_own_cgroup_relpath",
+        lambda path="/proc/self/cgroup": "/system.slice/FRIDAY.service",
+    )
+    result = read_cgroup_memory()
+    assert result is not None
+    assert result.percent == 75.0
+    assert result.limit_bytes == 209715200
+
+
+def test_read_cgroup_memory_missing_root_but_present_in_service(tmp_path, monkeypatch):
+    # The exact production shape: no memory.* files at the hierarchy root,
+    # files present in the service cgroup. The old reader returned None here.
+    service = tmp_path / "system.slice" / "FRIDAY.service"
+    _write_cgroup_v2_at(service, used=188743680)  # 90% of 200 MB
+    monkeypatch.setattr(engine_module, "CGROUP_BASE", str(tmp_path))
+    monkeypatch.setattr(
+        engine_module, "_own_cgroup_relpath",
+        lambda path="/proc/self/cgroup": "/system.slice/FRIDAY.service",
+    )
+    result = read_cgroup_memory()
+    assert result is not None
+    assert result.percent == 90.0
+
+
 # -- thresholds -------------------------------------------------------------
 
 
