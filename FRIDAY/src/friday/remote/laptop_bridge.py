@@ -70,11 +70,13 @@ ALLOWED_LAPTOP_COMMANDS = frozenset(
         # TASK-IG-LAP-03: PC care pack — health report, temp cleanup,
         # hotkeys, storage check/repair (client handlers carry the
         # destructive-action gates; see laptop_pc_care tools).
+        # TASK-FRD-046: the four guided storage-repair sequences.
         "pc_health",
         "pc_cleanup",
         "hotkey",
         "storage_check",
         "storage_repair",
+        "storage_sequences",
         # TASK-FRD-044: Spotify playback control by voice — media keys
         # plus the session read-back that proves playback changed.
         "media_key",
@@ -532,3 +534,4 @@ __all__ = [
     "normalise_laptop_id",
     "shell_execution_enabled",
 ]
+

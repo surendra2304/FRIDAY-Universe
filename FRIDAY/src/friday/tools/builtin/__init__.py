@@ -145,6 +145,7 @@ from friday.tools.builtin.laptop_pc_care import (
     LaptopPcHealthTool,
     LaptopStorageCheckTool,
     LaptopStorageRepairTool,
+    LaptopStorageSequencesTool,
 )
 from friday.tools.builtin.laptop_browser_control import LaptopBrowserTaskTool
 from friday.tools.builtin.laptop_screen_vision import LaptopDescribeScreenTool
@@ -307,6 +308,7 @@ __all__ = [
     "LaptopPcHealthTool",
     "LaptopStorageCheckTool",
     "LaptopStorageRepairTool",
+    "LaptopStorageSequencesTool",
     "LaptopBrowserTaskTool",
     "LaptopTypeTextTool",
     "ListGitHubIssuesTool",
@@ -370,3 +372,4 @@ __all__ = [
     "WriteCodeFileTool",
     "YouTubeTool",
 ]
+

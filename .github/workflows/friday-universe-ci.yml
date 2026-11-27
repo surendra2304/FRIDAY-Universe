@@ -238,6 +238,10 @@ jobs:
           # IG-LAP-01 / IG-LAP-04 landed; stdlib + friday.* imports only,
           # run in this venv). Upstream pins scrcpy v5.0.1 / browser-use
           # 1.0.8 — see docs/collaboration/TASK-LAP-003-CHECKPOINT-1.md.
+          # TASK-FRD-046: tests/test_laptop_pc_care.py rides in this
+          # invocation so the REL-068 guard sees it collected (uncollected
+          # since IG-LAP-03 landed; the four storage-repair sequences run
+          # in this venv — see docs/collaboration/TASK-FRD-046-CHECKPOINT-2.md).
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
             --check "test-job" \
@@ -256,6 +260,7 @@ jobs:
             tests/test_reliability.py tests/test_ig2_lap01_escrcpy.py \
             tests/test_phone_ui_automation.py tests/test_browser_use_integration.py \
             tests/test_laptop_browser_agent.py \
+            tests/test_laptop_pc_care.py \
             --deselect tests/test_reliability.py::test_retry_on_network_failure \
             --deselect tests/test_reliability.py::test_retry_on_rate_limit \
             --deselect tests/test_reliability.py::test_no_retry_on_auth_error
@@ -871,3 +876,4 @@ jobs:
           elapsed=$((end - start))
           echo "Job duration: ${elapsed}s"
           echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
+

@@ -6,7 +6,9 @@ DefKD7YKzol), the productivity shortcut set (DVekxHGCFWT), and the
 storage-repair utilities (DVlGJaNEal2). All of it rides the LAP-001
 laptop bridge — five new commands, implemented in
 `FRIDAY/scripts/laptop_bridge_client.py`, with tools in
-`FRIDAY/src/friday/tools/builtin/laptop_pc_care.py`.
+`FRIDAY/src/friday/tools/builtin/laptop_pc_care.py`. TASK-FRD-046 adds a
+sixth command, `storage_sequences` — four guided storage-repair
+sequences; see the section below.
 
 | Tool | Class | What it does |
 |---|---|---|
@@ -15,6 +17,7 @@ laptop bridge — five new commands, implemented in
 | `laptop_hotkey` | SENSITIVE | Named shortcuts (copy, paste, undo, redo, save, find, new_tab, close_tab, reopen_tab, address_bar, refresh, switch_window, show_desktop, lock, back, forward, …) or an explicit key combo. Key names are allowlist-validated on the server AND the laptop; `mod` resolves to ctrl (Windows/Linux) or command (macOS) on the laptop. A few named shortcuts are Windows-flavoured — macOS owners pass explicit keys. |
 | `laptop_storage_check` | SAFE | Read-only filesystem check: `chkdsk` scan (Windows), `diskutil verifyVolume` (macOS), `fsck -n` (Linux). On Linux a **mounted** volume is reported as skipped, honestly — fsck must not run on a mounted filesystem. |
 | `laptop_storage_repair` | DANGEROUS | `chkdsk /f` / `fsck -y` / `diskutil repairVolume`. Requires an explicit volume AND `confirm=true` in the same call, validated by the tool AND the laptop. The laptop refuses the system volume outright, and (outside Windows, where chkdsk manages its own lock) any mounted volume. Repair usually needs the laptop client running with administrator/root rights; a permission failure is reported as such, never as success. |
+| `laptop_storage_sequences` | DANGEROUS | Four guided storage-repair sequences (TASK-FRD-046): diskpart repartition, diskpart write-protection removal, the Linux fsck equivalent, DISM component-store cleanup. **Dry-run by default** — with `apply` unset/false it returns only the ordered plan (steps + exact commands) and runs nothing; `apply=true` additionally needs `confirm=true`. Disk 0 and the system volume are always refused. See the section below. |
 
 ## Typical owner flow for a corrupted USB/SD card
 
@@ -25,11 +28,39 @@ laptop bridge — five new commands, implemented in
 3. If errors are reported, FRIDAY shows the result and asks; only then
    `laptop_storage_repair` with `confirm=true`.
 
+## Storage-repair sequences (TASK-FRD-046)
+
+One tool, `laptop_storage_sequences`, four sequences — each an
+enumerate-first, dry-run-by-default guided routine alongside
+`pc_health` / `pc_cleanup`. The tool validates the sequence name and
+the target, then returns the ordered plan (steps + the exact commands)
+without touching anything. Only `apply=true` **and** `confirm=true` in
+the same call dispatches to the laptop, and the laptop client
+re-validates everything (sequence, target, platform, mounted/system
+volume) before running a command it builds itself — the server never
+supplies argv.
+
+| Sequence | Platform | What it does | Refusals |
+|---|---|---|---|
+| `diskpart_repartition` | Windows | Wipe a non-system disk, create one primary partition, quick-format NTFS, assign a letter (`diskpart`: `list disk` → `select disk N` → `clean` → `create partition primary` → `format fs=ntfs quick` → `assign`). | Disk 0, non-numeric target, non-Windows host. Destructive: erases the disk. |
+| `diskpart_writeprotect_off` | Windows | Clear a disk's read-only flag (`attributes disk clear readonly`). | Disk 0, non-numeric target, non-Windows host. |
+| `fsck_equivalent` | Linux | `fsck -y` on an unmounted device. On macOS the client runs `diskutil repairVolume`; on Windows it refuses and points at `laptop_storage_repair` (`chkdsk /f`) — the same repair, already covered there (see checkpoint 1 overlap note). | System volume, mounted volume, Windows host. |
+| `dism_cleanup` | Windows | `DISM /Online /Cleanup-Image /Analyze` (read-only) then `/StartComponentCleanup`. | Non-Windows host. |
+
+Typical owner flow: ask FRIDAY for the plan first ("what would
+repartitioning disk 2 do?") — the dry-run answer lists every step and
+command. Only after the owner has seen it, re-run with `apply=true`
+and `confirm=true`. The laptop client needs administrator/root rights
+for the destructive steps; a permission failure is reported as such,
+never as success. Windows-only sequences have no live fleet host to
+run on — their live leg is the generated-script inspection plus unit
+tests until the owner's laptop is connected.
+
 ## Verification status
 
 Implemented + unit-tested (client handlers driven through monkeypatched
 platform seams; tools through stubbed dispatch —
-FRIDAY/tests/test_laptop_pc_care.py, 15 tests). The owner's laptop is
+FRIDAY/tests/test_laptop_pc_care.py, 29 tests). The owner's laptop is
 **not yet connected**, so no device verification is claimed. One real
 bug was caught by these tests before shipping: the system-volume
 refusal compared a normalised path against an un-normalised one and
@@ -174,3 +205,4 @@ metric for these services — SysMain's preload is by design (cached
 memory Windows would free under pressure), and no such drop is
 attributable to disabling the trio. FRIDAY must not repeat the
 graphic as evidence.
+

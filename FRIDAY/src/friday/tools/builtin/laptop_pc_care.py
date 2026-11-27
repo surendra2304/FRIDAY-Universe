@@ -17,6 +17,13 @@ Three corpus idea groups, one cluster over the LAP-001 laptop bridge:
   volume + ``confirm=true`` required in the same call; the client
   additionally refuses the system volume and, outside Windows, any
   mounted volume).
+* **Storage-repair sequences** (TASK-FRD-046) — ``laptop_storage_sequences``
+  (DANGEROUS on apply): four guided routines — diskpart repartition,
+  diskpart write-protection removal, the Linux fsck equivalent, and DISM
+  component-store cleanup. Dry-run by default: with ``apply`` unset/false
+  the tool returns only the ordered plan (steps + exact commands) and runs
+  nothing; ``apply=true`` additionally needs ``confirm=true`` and the
+  laptop client re-validates sequence, target and platform before running.
 
 All real work happens in the laptop client handlers
 (``scripts/laptop_bridge_client.py``); these tools validate, dispatch
@@ -309,4 +316,251 @@ class LaptopStorageRepairTool(_LaptopTool):
             return error
         return self._evidence_result(
             evidence, f"Storage repair of {target} on laptop '{evidence.get('laptop_id')}':\n{evidence.get('output', '')}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Storage-repair sequences (TASK-FRD-046)
+# ---------------------------------------------------------------------------
+
+# Canonical platform per sequence. The plan builder emits the commands for
+# the sequence's home platform; the laptop client routes or refuses per
+# the machine it actually runs on (diskpart/DISM are Windows-only,
+# fsck -y is the Linux leg — on Windows the same repair is chkdsk /f via
+# laptop_storage_repair, on macOS diskutil repairVolume).
+STORAGE_SEQUENCES: dict[str, dict[str, Any]] = {
+    "diskpart_repartition": {
+        "platform": "Windows",
+        "destructive": True,
+        "summary": (
+            "Wipe a non-system disk and create one fresh NTFS partition "
+            "(diskpart clean + create partition primary + format quick)."
+        ),
+        "steps": [
+            "List disks and confirm the target disk number",
+            "Select the target disk",
+            "Clean the disk (removes all partitions and data)",
+            "Create one primary partition",
+            "Quick-format it NTFS",
+            "Assign a drive letter",
+        ],
+    },
+    "diskpart_writeprotect_off": {
+        "platform": "Windows",
+        "destructive": False,
+        "summary": (
+            "Clear the read-only attribute on a disk "
+            "(diskpart attributes disk clear readonly)."
+        ),
+        "steps": [
+            "List disks and confirm the target disk number",
+            "Select the target disk",
+            "Clear the read-only attribute",
+        ],
+    },
+    "fsck_equivalent": {
+        "platform": "Linux",
+        "destructive": False,
+        "summary": (
+            "Filesystem repair on an unmounted device (fsck -y; "
+            "diskutil repairVolume on macOS, chkdsk /f on Windows via "
+            "laptop_storage_repair)."
+        ),
+        "steps": [
+            "Confirm the device is unmounted",
+            "Run the filesystem check with automatic repair",
+        ],
+    },
+    "dism_cleanup": {
+        "platform": "Windows",
+        "destructive": False,
+        "summary": (
+            "Clean the Windows component store "
+            "(DISM /Online /Cleanup-Image /StartComponentCleanup), "
+            "after a read-only /Analyze."
+        ),
+        "steps": [
+            "Analyse the component store (read-only)",
+            "Clean the component store",
+        ],
+    },
+}
+
+
+def _normalise_target(value: str) -> str:
+    """Normalise a repair target for the system-volume check."""
+    text = value.strip().rstrip("/\\")
+    if len(text) == 2 and text[1] == ":" and text[0].isalpha():
+        return text.upper()
+    return text
+
+
+def _disk_number(target: str) -> str | None:
+    """Return the diskpart disk number for '1' / 'disk 1', else None."""
+    text = target.strip().lower()
+    if text.startswith("disk "):
+        text = text[5:].strip()
+    return text if text.isdigit() else None
+
+
+def build_storage_sequence_plan(sequence: str, target: str = "") -> dict[str, Any]:
+    """Return the ordered plan (steps + exact commands) for a sequence.
+
+    Pure function — no laptop, no subprocess. Raises ValueError for an
+    unknown sequence, a missing target, the system volume, or disk 0
+    (diskpart targets: disk 0 is the system disk on a normal Windows
+    install and is never a repartition/write-protect target).
+    """
+    name = (sequence or "").strip().lower()
+    spec = STORAGE_SEQUENCES.get(name)
+    if spec is None:
+        raise ValueError(
+            f"Unknown storage sequence '{sequence}'. Known: "
+            + ", ".join(sorted(STORAGE_SEQUENCES))
+            + "."
+        )
+    cleaned = (target or "").strip()
+    if name == "dism_cleanup":
+        cleaned = cleaned or "online"
+    if not cleaned:
+        raise ValueError(f"Sequence '{name}' needs a target (disk, device or volume).")
+    if _normalise_target(cleaned) in ("", "/", "C:"):
+        raise ValueError(f"Refusing the system volume ({target}) as a repair target.")
+    plan: dict[str, Any] = {
+        "sequence": name,
+        "target": cleaned,
+        "platform": spec["platform"],
+        "destructive": spec["destructive"],
+        "summary": spec["summary"],
+        "steps": list(spec["steps"]),
+    }
+    if name in ("diskpart_repartition", "diskpart_writeprotect_off"):
+        disk = _disk_number(cleaned)
+        if disk is None:
+            raise ValueError(
+                f"Sequence '{name}' needs a disk number target "
+                f"(e.g. '1' or 'disk 1'), got '{target}'."
+            )
+        if disk == "0":
+            raise ValueError(
+                "Refusing disk 0 — on a normal Windows install that is "
+                "the system disk."
+            )
+        script = ["list disk", f"select disk {disk}"]
+        if name == "diskpart_repartition":
+            script += ["clean", "create partition primary", "format fs=ntfs quick", "assign"]
+        else:
+            script += ["attributes disk clear readonly"]
+        plan["script"] = "\n".join(script)
+        plan["commands"] = [["diskpart", "/s", "<script-file>"]]
+    elif name == "fsck_equivalent":
+        plan["commands"] = [["fsck", "-y", cleaned]]
+        plan["platform_note"] = (
+            "Linux leg (fsck -y); the laptop client runs diskutil "
+            "repairVolume on macOS and refuses on Windows — use "
+            "laptop_storage_repair (chkdsk /f) there."
+        )
+    else:  # dism_cleanup
+        plan["commands"] = [
+            ["DISM", "/Online", "/Cleanup-Image", "/Analyze"],
+            ["DISM", "/Online", "/Cleanup-Image", "/StartComponentCleanup"],
+        ]
+    return plan
+
+
+class LaptopStorageSequencesTool(_LaptopTool):
+    """Run one guided storage-repair sequence — dry-run by default."""
+
+    name = "laptop_storage_sequences"
+    description = (
+        "Run one guided storage-repair sequence on the owner's laptop: "
+        "'diskpart_repartition' (Windows: wipe a non-system disk, one fresh NTFS partition), "
+        "'diskpart_writeprotect_off' (Windows: clear a disk's read-only flag), "
+        "'fsck_equivalent' (Linux: fsck -y on an unmounted device; macOS diskutil repairVolume; on Windows use laptop_storage_repair), "
+        "'dism_cleanup' (Windows: DISM component-store cleanup after a read-only /Analyze). "
+        "DRY-RUN BY DEFAULT: with apply=false (or omitted) it only returns the ordered plan — steps plus the exact commands — and runs nothing. "
+        "With apply=true it additionally needs confirm=true in the same call, and the laptop re-validates the sequence, the target and the platform before running anything. "
+        "Disk 0 and the system volume are always refused."
+    )
+    safety_level = SafetyLevel.DANGEROUS
+    command = "storage_sequences"
+    default_timeout = 280.0
+    parameters = {
+        "type": "object",
+        "properties": {
+            "sequence": {
+                "type": "string",
+                "description": "One of: diskpart_repartition, diskpart_writeprotect_off, fsck_equivalent, dism_cleanup.",
+            },
+            "target": {
+                "type": "string",
+                "description": "Disk number ('1' / 'disk 1') for diskpart, device path ('/dev/sdb1') for fsck; 'online' (default) for dism_cleanup.",
+            },
+            "apply": {
+                "type": "boolean",
+                "description": "false (default): return the plan only, run nothing. true: run the sequence on the laptop (needs confirm=true).",
+            },
+            "confirm": {
+                "type": "boolean",
+                "description": "Must be true with apply=true — acknowledges the sequence can modify storage.",
+            },
+            "laptop_id": {"type": "string", "description": "Optional laptop id."},
+        },
+        "required": ["sequence"],
+    }
+
+    def execute(
+        self,
+        sequence: str = "",
+        target: str = "",
+        apply: bool = False,
+        confirm: bool = False,
+        laptop_id: str = "",
+        **kwargs: Any,
+    ) -> ToolResult:
+        try:
+            plan = build_storage_sequence_plan(sequence, target)
+        except ValueError as exc:
+            return self._error(str(exc))
+        if not apply:
+            lines = [
+                f"Plan for '{plan['sequence']}' on {plan['target']} ({plan['platform']}):",
+                plan["summary"],
+            ]
+            for i, step in enumerate(plan["steps"], 1):
+                lines.append(f"{i}. {step}")
+            if plan.get("platform_note"):
+                lines.append(plan["platform_note"])
+            lines.append("Commands that would run:")
+            for argv in plan["commands"]:
+                lines.append("  " + " ".join(argv))
+            if plan.get("script"):
+                lines.append("diskpart script:")
+                lines.extend("  " + line for line in plan["script"].splitlines())
+            lines.append(
+                "Nothing was run — re-run with apply=true and confirm=true "
+                "to execute on the laptop."
+            )
+            return ToolResult(
+                name=self.name,
+                content="\n".join(lines),
+                is_error=False,
+                safety_level=self.safety_level,
+            )
+        if confirm is not True:
+            return self._error(
+                "Refused: this sequence can modify storage. Re-run with "
+                "apply=true AND confirm=true in the same call, only after "
+                "the owner has seen the plan."
+            )
+        evidence, error = self._dispatch(
+            {"sequence": plan["sequence"], "target": plan["target"], "confirm": True},
+            laptop_id or None,
+        )
+        if error is not None:
+            return error
+        return self._evidence_result(
+            evidence,
+            f"Storage sequence '{plan['sequence']}' on {plan['target']} "
+            f"({evidence.get('laptop_id')}):\n{evidence.get('output', '')}",
         )
