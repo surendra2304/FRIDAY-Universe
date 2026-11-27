@@ -85,6 +85,13 @@ def pytest_sessionfinish(session, exitstatus):
     Only touches the module if the suite already imported it; never fails
     the session from teardown.
     """
+    # TASK-REL-070 follow-up: stop EVERY supervision module object, not
+    # just the first found. The suite can hold the module under both
+    # spellings (``api.friday_supervision`` via the dashboard import and
+    # ``Stratex.api.friday_supervision`` via a direct import) as two
+    # distinct objects with two keepers; returning after the first would
+    # leave the second keeper running into interpreter shutdown.
+    stopped_any = False
     for mod_name in ("api.friday_supervision", "Stratex.api.friday_supervision"):
         module = sys.modules.get(mod_name)
         if module is None:
@@ -96,10 +103,11 @@ def pytest_sessionfinish(session, exitstatus):
             stopped = stop()
         except Exception as exc:  # noqa: BLE001 - teardown must not fail the run
             print(f"TASK-REL-070: stop_status_summary_keeper raised: {exc}")
-            return
+            continue
+        stopped_any = True
         if not stopped:
             print(
                 "TASK-REL-070: WARNING supervision threads still alive after stop; "
                 "interpreter-shutdown abort (exit 134) remains possible"
             )
-        return
+    return

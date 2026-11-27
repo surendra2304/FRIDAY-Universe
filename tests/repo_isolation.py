@@ -52,6 +52,27 @@ def purge_ambiguous_modules(extra: tuple[str, ...] = ()) -> None:
     example ``cortex_api``) when the agent app must be re-imported to pick up
     test-time environment changes made after an earlier import.
     """
+    # TASK-REL-070: stop the Stratex supervision keeper BEFORE dropping
+    # `api.*`. The keeper is a daemon thread owned by the
+    # `api.friday_supervision` module object; dropping the module from
+    # sys.modules while the thread runs orphans it — the thread keeps
+    # running (and spawning refresh threads) on a module object no stop
+    # call can reach, so pytest_sessionfinish cannot stop it and the gate
+    # aborts at interpreter shutdown (runs 45157161309, 45505142262,
+    # 45756595864). Best-effort: a stop failure must not break the purge
+    # (the hook remains the last line of defence), and the 90 s bound
+    # covers the documented 69 s worst-case refresh.
+    for mod_name in ("api.friday_supervision", "Stratex.api.friday_supervision"):
+        module = sys.modules.get(mod_name)
+        if module is None:
+            continue
+        stop = getattr(module, "stop_status_summary_keeper", None)
+        if stop is None:
+            continue
+        try:
+            stop(timeout=90.0)
+        except Exception:
+            pass
     targets = frozenset(AMBIGUOUS_TOP_LEVEL_NAMES) | frozenset(extra)
     for name in list(sys.modules):
         top_level = name.split(".", 1)[0]

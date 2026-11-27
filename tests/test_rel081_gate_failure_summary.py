@@ -141,6 +141,24 @@ def test_summary_134_without_signature_says_new_cause():
     assert "NEW abort cause" in text
 
 
+def test_summary_minus6_is_the_same_abort_as_134():
+    """A SIGABRT death under the runner reports returncode -6 (shell 250).
+
+    TASK-REL-070 follow-up: every post-fix recurrence arrived as -6/250,
+    not 134, so the banner and the signature check must key on -6 too.
+    """
+    module = load_script()
+    ctx = module.github_context()
+    lines = module.summary_lines(
+        ctx, -6, REAL_134_LOG.splitlines()[-5:], REAL_134_LOG)
+    text = "\n".join(lines)
+    assert "EXIT-134 RECURRENCE" in text
+    assert "Exit code: -6" in text
+    assert "SIGABRT" in text
+    assert "tests passed" in text
+    assert "all 6 REL-070 signature markers present" in text
+
+
 # ---------------------------------------------------------------------------
 # Subprocess integration tests (the runner as the gate runs it)
 # ---------------------------------------------------------------------------
@@ -189,6 +207,29 @@ def test_exit134_recurrence_preserves_code_and_names_signature(tmp_path):
     assert "all 6 REL-070 signature markers present" in text
     assert "friday_supervision.py" in text
     assert "(core dumped)" in text
+
+
+def test_sigabrt_death_reports_250_and_names_recurrence(tmp_path):
+    """A real SIGABRT death under the runner is returncode -6 -> exit 250.
+
+    TASK-REL-070 follow-up: the post-fix recurrences all arrived in this
+    shape (the runner's subprocess was killed by signal 6), and the old
+    banner keyed on 134 only, so none of them was recognised.
+    """
+    fake = make_fake_pytest(
+        tmp_path, "fake_abort_sig.py",
+        "import os, sys\n"
+        "sys.stdout.write(%r)\n" % REAL_134_LOG +
+        "sys.stdout.flush()\n"
+        "os.abort()\n")
+    proc, summary_path = run_runner(tmp_path, fake)
+    assert proc.returncode == 250
+    text = summary_path.read_text(encoding="utf-8")
+    assert "EXIT-134 RECURRENCE" in text
+    assert "Exit code: -6" in text
+    assert "SIGABRT" in text
+    assert "3728 passed, 72 skipped" in text
+    assert "all 6 REL-070 signature markers present" in text
 
 
 def test_summary_still_written_without_github_env(tmp_path):
