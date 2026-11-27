@@ -22,6 +22,18 @@ Strictness notes (TASK-REL-069):
   grandfathered while untouched. The "cited PR actually merged" half
   needs a merged-PR list (``--merged-prs`` file, one number per line);
   without it only the null/invalid-citation half is checked.
+- (TASK-REL-107) Two evidence gates. A record flipped to a terminal
+  state (VERIFIED, CLOSED) on/after the gate's effective date must carry
+  an ``evidence_keys`` mapping with all five keys -- diff, CI link,
+  deploy proof, live-probe output, non-author verdict -- each a
+  non-empty string. A record created on/after the effective date must
+  carry a non-empty ``live_proof_route`` field. The effective date is
+  2026-11-28, not the landing day: measured on the 2026-11-27 board
+  (454 records), 2026-11-27 would put 2 VERIFIED records (TASK-FUT-033,
+  TASK-STR-094) under gate 1 and 73 records created that day under
+  gate 2, all without the new fields, so the live board would go red
+  on landing; with 2026-11-28 zero records are in scope and the board
+  stays VALID. Same grandfathering mechanism as REL-087.
 """
 
 from __future__ import annotations
@@ -82,6 +94,29 @@ POST_MERGE_STATES = {"MERGED", "DEPLOYED", "VERIFIED"}
 # pr: null are grandfathered (95 MERGED + 80 DEPLOYED/VERIFIED on the
 # 2026-11-23 board predate the convention).
 MERGED_PR_RULE_EFFECTIVE = "2026-11-23"
+
+# TASK-REL-107: terminal-flip evidence gate + new-record live_proof_route.
+EVIDENCE_KEYS = (
+    "diff",
+    "ci_link",
+    "deploy_proof",
+    "live_probe_output",
+    "non_author_verdict",
+)
+# Terminal states whose flips must carry all five evidence keys.
+TERMINAL_STATES = {"VERIFIED", "CLOSED"}
+# First date the evidence gate applies. Records created or updated on/after
+# this date must carry the five evidence keys when terminal (gate 1), and
+# records created on/after it must carry live_proof_route (gate 2).
+# Measured on the 2026-11-27 board (454 records): with 2026-11-27 as the
+# effective date, 2 VERIFIED records (TASK-FUT-033, TASK-STR-094) lack
+# evidence_keys and 73 records created that day lack live_proof_route, so
+# the live board would go red on landing; with 2026-11-28, zero records
+# are in scope and the board stays VALID. The gate enforces from the next
+# day's flips and new records onward. Same grandfathering mechanism as
+# REL-087: touching a record (which bumps its updated_at) brings it under
+# gate 1, and the fix is adding the five keys.
+EVIDENCE_GATE_EFFECTIVE = "2026-11-28"
 
 
 class RegistryValidationError(Exception):
@@ -280,6 +315,92 @@ def check_board_merged_pr_citations(
         )
 
 
+def check_board_evidence_keys(board: dict[str, Any]) -> None:
+    """Fail when a terminal record lacks any of the five evidence keys (TASK-REL-107).
+
+    A record in a terminal state (VERIFIED, CLOSED) created or updated
+    on/after EVIDENCE_GATE_EFFECTIVE must carry an ``evidence_keys``
+    mapping with all five keys -- diff, ci_link, deploy_proof,
+    live_probe_output, non_author_verdict -- each a non-empty string.
+    Earlier records are grandfathered while untouched; touching one
+    (which bumps its ``updated_at``) brings it under the rule, and the
+    fix is adding the five keys.
+    """
+    tasks = board.get("tasks")
+    if not isinstance(tasks, list):
+        return
+    errors: list[str] = []
+    for task in tasks:
+        if not isinstance(task, dict):
+            continue
+        status = task.get("status")
+        if status not in TERMINAL_STATES:
+            continue
+        created = _record_date(task.get("created_at"))
+        updated = _record_date(task.get("updated_at"))
+        in_scope = (
+            created is not None and created >= EVIDENCE_GATE_EFFECTIVE
+        ) or (updated is not None and updated >= EVIDENCE_GATE_EFFECTIVE)
+        if not in_scope:
+            continue
+        task_id = task.get("id")
+        keys = task.get("evidence_keys")
+        if not isinstance(keys, dict):
+            errors.append(
+                f"{task_id}: status {status} without an evidence_keys mapping "
+                "(must carry diff, ci_link, deploy_proof, live_probe_output, "
+                "non_author_verdict)"
+            )
+            continue
+        missing = [
+            key
+            for key in EVIDENCE_KEYS
+            if not isinstance(keys.get(key), str) or not keys.get(key).strip()
+        ]
+        if missing:
+            errors.append(
+                f"{task_id}: status {status} missing evidence keys: "
+                + ", ".join(missing)
+            )
+    if errors:
+        raise RegistryValidationError(
+            "WORK_BOARD.yaml: terminal records without all five evidence keys: "
+            + "; ".join(errors)
+        )
+
+
+def check_board_live_proof_route(board: dict[str, Any]) -> None:
+    """Fail when a new record lacks a live_proof_route field (TASK-REL-107).
+
+    Records created on/after EVIDENCE_GATE_EFFECTIVE must carry a
+    non-empty ``live_proof_route`` string naming how the task is proven
+    against the live service. Earlier records are grandfathered: the rule
+    is about new records, so only ``created_at`` brings a record under it.
+    """
+    tasks = board.get("tasks")
+    if not isinstance(tasks, list):
+        return
+    errors: list[str] = []
+    for task in tasks:
+        if not isinstance(task, dict):
+            continue
+        created = _record_date(task.get("created_at"))
+        if created is None or created < EVIDENCE_GATE_EFFECTIVE:
+            continue
+        task_id = task.get("id")
+        route = task.get("live_proof_route")
+        if not isinstance(route, str) or not route.strip():
+            errors.append(
+                f"{task_id}: created {created} without a live_proof_route "
+                "(must name the live-proof route)"
+            )
+    if errors:
+        raise RegistryValidationError(
+            "WORK_BOARD.yaml: new records without a live_proof_route: "
+            + "; ".join(errors)
+        )
+
+
 def load_merged_prs(path: Path) -> set[int]:
     """Load a merged-PR list: one PR number per line, blanks ignored."""
     try:
@@ -379,6 +500,8 @@ def validate_registry(merged_prs: set[int] | None = None) -> list[str]:
 
     check_board_evidence_counts(COLLAB / "WORK_BOARD.yaml", board)
     check_board_merged_pr_citations(board, merged_prs)
+    check_board_evidence_keys(board)
+    check_board_live_proof_route(board)
 
     claims = ownership.get("claims")
     require(isinstance(claims, list), "FILE_OWNERSHIP.yaml: claims must be a list")
@@ -478,6 +601,13 @@ def main(argv: list[str] | None = None) -> int:
             if merged_prs is not None
             else " (no merged-PR list supplied; open/unmerged citations not checked)"
         )
+    )
+    print(
+        "Evidence gate (TASK-REL-107): terminal (VERIFIED/CLOSED) records "
+        f"created or updated on/after {EVIDENCE_GATE_EFFECTIVE} carry all "
+        "five evidence keys (diff, ci_link, deploy_proof, live_probe_output, "
+        "non_author_verdict); records created on/after "
+        f"{EVIDENCE_GATE_EFFECTIVE} carry a live_proof_route"
     )
     return 0
 

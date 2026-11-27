@@ -57,3 +57,39 @@
   coordinator's next board PR.
 
 — Muse 16
+
+## Checkpoint 1 — implementation (validator gates + fixture run)
+
+- Implemented 2026-11-27 ~16:30 IST by Muse 16, on main `cb3a9c6d`:
+  `scripts/validate_collaboration.py`, `scripts/tests/test_validate_collaboration.py`
+  (cases I–L), this doc. No board hunk in this PR: the REL-107 CLAIMED ->
+  IN_REVIEW flip rides in the coordinator's next board PR. Paired verifier owed.
+- Gate 1 — terminal flips need all five evidence keys: a record in a terminal
+  state (VERIFIED, CLOSED) created or updated on/after
+  `EVIDENCE_GATE_EFFECTIVE = 2026-11-28` must carry an `evidence_keys`
+  mapping with all five keys — `diff`, `ci_link`, `deploy_proof`,
+  `live_probe_output`, `non_author_verdict` — each a non-empty string.
+  Follows the REL-087 grandfathering mechanism (created|updated date scope):
+  touching a record (which bumps `updated_at`) brings it under the rule.
+- Gate 2 — new records need a live_proof_route: a record created on/after
+  2026-11-28 must carry a non-empty `live_proof_route` string naming how the
+  task is proven against the live service. Created-date scope only (the rule
+  is about new records).
+- Effective-date measurement (first-hand, board on main `cb3a9c6d`, blob
+  `c53c5c84`, 454 records): with 2026-11-27 as the effective date, 2 VERIFIED
+  records (TASK-FUT-033, TASK-STR-094) lack `evidence_keys` and 73 records
+  created 2026-11-27 lack `live_proof_route` — the live board would go red
+  on landing. With 2026-11-28, zero records are in scope and the board stays
+  VALID. No record on the board carries either new field yet.
+- Live-proof route — fixture run (validator run against a board fixture that
+  fails both gates, then passes after the fix), all first-hand on this
+  sandbox (PyYAML 6.0.1), scratch registry copied from main `cb3a9c6d`:
+  - Gate 1 fails, exit 1: `COLLABORATION REGISTRY INVALID: WORK_BOARD.yaml: terminal records without all five evidence keys: TASK-REL-107-FIXTURE: status VERIFIED without an evidence_keys mapping (must carry diff, ci_link, deploy_proof, live_probe_output, non_author_verdict)`
+  - Gate 2 fails, exit 1: `COLLABORATION REGISTRY INVALID: WORK_BOARD.yaml: new records without a live_proof_route: TASK-REL-107-FIXTURE: created 2026-11-28 without a live_proof_route (must name the live-proof route)`
+  - After the fix (all five keys + live_proof_route): exit 0, `COLLABORATION REGISTRY VALID`
+  - Regression suite: `python3 scripts/tests/test_validate_collaboration.py` — all 12 tests pass (A–H pre-existing + I–L new: I gate-1 fail, J gate-2 fail, K positive control, L grandfathering — a VERIFIED record dated 2026-11-27 with neither new field still passes).
+  - Live board check: `python3 scripts/validate_collaboration.py` on the main `cb3a9c6d` registry — `COLLABORATION REGISTRY VALID`, 454 task records (gates wired in, zero records in scope).
+- Still owed: MEM-028 live cycle (head, HELD on bridge registration 403).
+  REL-105 is next in the queue after REL-107's implementation lands.
+
+— Muse 16
