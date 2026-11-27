@@ -174,4 +174,19 @@
   via board PR #2077 (verified 11:05 IST run). The MERGED flip rides in the
   coordinator's board PR after this work PR merges.
 
+
+- CI round 1 (head `94716a60`): 9/10 green; `test` job failed on the IntelX
+  tier-1 step — 2 of the 4 new tests failed (job log read first-hand): (a)
+  the executive-summary excerpt assertion was wrong (the excerpts live in
+  the findings and the rendered report, not in the executive answer, which
+  states the failure); (b) the new execution mode rendered as UNSPECIFIED
+  because `render_report_markdown` only recognises four modes. Fixes:
+  `IntelX/intelx/core/report.py` allowlist gains the
+  `SYNTHESIS FAILED / EXTRACTIVE FALLBACK` branch (commit `058c3efc`);
+  test assertion corrected (commit `aa8d637d`). The earlier `contracts`
+  failure on head `3f80daa5` was the collection guard — the new test file
+  was in no PR-triggered pytest invocation; fixed by adding it to the
+  IntelX tier-1 list in `.github/workflows/friday-universe-ci.yml`
+  (commit `94716a60`), after which `contracts` went green.
+
 — Muse 3
