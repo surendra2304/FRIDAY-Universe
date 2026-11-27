@@ -15,6 +15,7 @@ from intelx.agents.critic import CritiqueReport
 from intelx.core.citation_integrity import check_claims, label_unbacked_findings
 from intelx.core.confidence import get_confidence_label
 from intelx.core.enums import ClaimStatus
+from intelx.core.errors import ProviderError, StructuredOutputError
 from intelx.core.report import (
     filter_and_ground_findings,
     render_report_markdown,
@@ -248,6 +249,10 @@ class SynthesizerAgent(BaseAgent):
         # Keep execution provenance explicit even when the insufficient-evidence path
         # skips the synthesis provider call entirely.
         llm_res = None
+        # TASK-INT-056: set when the synthesis provider call fails; the answer
+        # then carries the extractive excerpts of the verified claims.
+        synthesis_failed = False
+        synthesis_failure: str | None = None
 
         # Insufficient evidence path
         if not claims:
@@ -373,13 +378,70 @@ class SynthesizerAgent(BaseAgent):
                 {"role": "user", "content": user_prompt},
             ]
 
-            llm_res = await self.gateway.complete(
-                messages=messages,
-                role=self.role,
-                schema_model=DraftReport,
-                run_id=run_id,
-            )
-            draft: DraftReport = llm_res.parsed
+            try:
+                llm_res = await self.gateway.complete(
+                    messages=messages,
+                    role=self.role,
+                    schema_model=DraftReport,
+                    run_id=run_id,
+                )
+            except (ProviderError, StructuredOutputError) as exc:
+                # TASK-INT-056: a synthesis-provider failure must not discard
+                # the verified claims — answer with their extractive excerpts.
+                synthesis_failed = True
+                synthesis_failure = (
+                    f"Synthesis provider failed ({type(exc).__name__}); "
+                    "answer is extractive excerpts from verified claims."
+                )
+                logger.warning(
+                    "Synthesis provider failed, using extractive fallback: %s",
+                    exc,
+                )
+                llm_res = None
+                excerpt_findings: list[DraftFinding] = []
+                for c in sorted_claims[:5]:
+                    cid = getattr(c, "id", None) or (
+                        c.get("id") if isinstance(c, dict) else None
+                    )
+                    ctext = getattr(c, "text", None) or (
+                        c.get("text") if isinstance(c, dict) else None
+                    )
+                    # Same accessor shape as claim_priority above: getattr
+                    # with a None default so dict claims keep their confidence.
+                    cconf = (
+                        getattr(c, "confidence", None)
+                        or (c.get("confidence") if isinstance(c, dict) else 0.85)
+                        or 0.85
+                    )
+                    try:
+                        conf_val = float(cconf)
+                    except (ValueError, TypeError):
+                        conf_val = 0.85
+                    conf_val = max(0.05, min(0.95, conf_val))
+                    if ctext:
+                        excerpt_findings.append(
+                            DraftFinding(
+                                statement=ctext,
+                                confidence=conf_val,
+                                confidence_label=get_confidence_label(conf_val),
+                                claim_ids=[cid] if cid else [],
+                            )
+                        )
+                draft = DraftReport(
+                    executive_answer=(
+                        f"Synthesis failed ({type(exc).__name__}); the answer "
+                        "below is the extractive excerpts of the verified "
+                        "claims, not a model synthesis."
+                    ),
+                    key_findings=excerpt_findings,
+                    gaps=[
+                        f"Synthesis provider failed ({type(exc).__name__}); "
+                        "no model synthesis was produced.",
+                        "Findings below are verbatim excerpts of the verified claims.",
+                    ],
+                )
+            else:
+                draft: DraftReport = llm_res.parsed
 
             # Groundedness Check (citation-integrity aware when the map exists)
             raw_findings = [f.model_dump() for f in draft.key_findings]
@@ -417,6 +479,10 @@ class SynthesizerAgent(BaseAgent):
                 overall_conf_label = get_confidence_label(max_conf)
             else:
                 overall_conf_label = "Low"
+            if synthesis_failed:
+                # The excerpts are verified claims, but no model synthesis ran —
+                # the report must not present model-grade confidence.
+                overall_conf_label = "Low"
 
         # Clean any draft thinking artifacts / preambles from executive answer
         clean_exec_answer = draft.executive_answer or ""
@@ -442,7 +508,9 @@ class SynthesizerAgent(BaseAgent):
         critique_dict = critique.model_dump() if isinstance(critique, CritiqueReport) else critique
         mode = kwargs.get("research_mode") or kwargs.get("domain_hint")
         gateway_settings = getattr(self.gateway, "settings", None)
-        if getattr(gateway_settings, "MOCK_MODE", False):
+        if synthesis_failed:
+            execution_mode = "SYNTHESIS FAILED / EXTRACTIVE FALLBACK"
+        elif getattr(gateway_settings, "MOCK_MODE", False):
             execution_mode = "MOCK"
         elif llm_res is None:
             execution_mode = "LIVE CONFIGURED / NO SYNTHESIS"
@@ -465,6 +533,8 @@ class SynthesizerAgent(BaseAgent):
         ]
         if integrity_degradation:
             degradations = [*(degradations or []), integrity_degradation]
+        if synthesis_failure:
+            degradations = [*(degradations or []), synthesis_failure]
         report_md = render_report_markdown(
             objective=objective,
             executive_answer=clean_exec_answer,
