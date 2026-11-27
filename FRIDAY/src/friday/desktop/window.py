@@ -67,6 +67,30 @@ class DesktopOverlay(QWidget):
         self.move(100, 100)
 
         self._setup_shortcuts()
+        # TASK-FRD-049: show the persisted voice task board, if one exists.
+        self.task_board = None
+        self.refresh_task_board()
+
+    def refresh_task_board(self) -> None:
+        """Re-read the persisted task board and show it in its corner.
+
+        TASK-FRD-049: the board survives restarts via the JSON state file;
+        the overlay re-reads it here (and the voice tool can call this
+        after a draw). Any failure leaves the overlay working without a
+        board — it never breaks the assistant surface.
+        """
+        try:
+            from friday.desktop.task_board_widget import TaskBoardWidget
+            from friday.tools.builtin.task_board import TaskBoardStore
+        except Exception:
+            return
+        try:
+            board = TaskBoardStore().load()
+            if self.task_board is None:
+                self.task_board = TaskBoardWidget(board)
+            self.task_board.set_board(board)
+        except Exception:
+            return
 
     def _setup_shortcuts(self) -> None:
         """Register in-app keyboard shortcut: Ctrl + Shift + Space."""

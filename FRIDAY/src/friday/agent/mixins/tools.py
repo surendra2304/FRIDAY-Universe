@@ -128,6 +128,7 @@ from friday.tools.builtin import (
     ReadGmailInboxTool,
     InboxDraftsTool,
     TriageInboxTool,
+    TaskBoardTool,
     ReadOwnCodebaseTool,
     ReadScreenTextTool,
     RsvpControlTool,
@@ -340,6 +341,7 @@ class ToolExecutionMixin:
             registry.register(NewsTool())
             registry.register(ManageTasksTool())
             registry.register(OpenWebsiteTool())
+            registry.register(TaskBoardTool())
             registry.register(YouTubeTool())
             registry.register(LocationMapsTool())
             registry.register(WikipediaTool())
