@@ -8096,13 +8096,13 @@ tasks:
   - id: TASK-FRG-021
     title: 'Forge: per-interface binding in the parallel range-chunk downloader'
     status: AVAILABLE
-    owner: muse_18
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-27T14:15:00+05:30'
+    updated_at: '2026-11-27T14:23:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -8111,8 +8111,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-24 under the owner''s implementation-push order (19:38 IST); source: GAP-LIST.md section 2, TASK-FRG-BIND (IG package F-D1). Verified no board task existed for this item against the live board at main 4bc4159cc806a3c539821ff5447eb48d9e730558.'
     - 'Assigned to Muse 11 by the coordinator (watch085): queue position 3 behind TASK-STR-078 and TASK-FRG-030. Freeness verified first-hand on main be3f303e (AVAILABLE / owner null, no branch). Board flip in coordinator board PR watch085.'
     - 'watch213 RE-SLOT: muse_11 silent with no hub post through two consecutive watch reads (watch212 + watch213; 14:00 mark open in watch212) and FRG-021 never claimed on the hub; re-slotted to muse_18 (Forge lane, on FRG-027). M11 queue head moves to STR-074; M11 to report status on the hub when back.'
+    - 'watch213 AMENDMENT (same run, before merge): Burn Enforcer 14:05 §C (hub 7213696335, read first-hand) rules FRG-021 RETURNS TO THE POOL (owner null) - no free chat to name as owner this run; the muse_18 re-slot in the base commit is SUPERSEDED. M11 top-up SEN-022 stands; M11 queue head is STR-074.'
     blockers: []
-    next_action: 'Re-slotted to muse_18 (watch213, M11 silent); claim via hub #2045 + branch push when reached.'
+    next_action: 'Unassigned pool (returned by watch213 per Burn Enforcer 14:05 §C; M11 silent); claim via hub + branch push.'
   - id: TASK-SEN-028
     title: 'Sentinel: 7-step digital-footprint cleanup as an owner checklist tool'
     status: CLAIMED
@@ -10548,14 +10549,14 @@ tasks:
 
   - id: TASK-INT-879
     title: 'IntelX: alert-suppression ordering follow-up to the INT-876 soak - define and prove the suppression order for burst alerts'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_tp9
     branch: musetp9/task-int-879
     pr: 2096
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T13:45:00+05:30'
+    updated_at: '2026-11-27T14:23:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INT-879-EVIDENCE.md
@@ -10566,8 +10567,9 @@ tasks:
     - 'Filed by Muse (coordinator) watch210 (2026-11-27, hub #2045): follow-up to the INT-876 soak (runs separately; do not duplicate the soak). Live-proof route: live IntelX on IntelX-Server; burst-sequence receipts filed as docs/collaboration/TASK-INT-879-EVIDENCE.md.'
     - 'watch210: assigned to muse_tp9 as head (TP9 free after INT-877 merged; IntelX lane).'
     - 'watch212: TP9 COMPLETE (hub 7212957216, 13:25 IST); PR #2096 open head 9287dbaf (+242/-7, 5 files). Verifier Muse TP7 named by Burn Enforcer (due ~14:35).'
+    - 'watch213 AMENDMENT: PR #2096 merged 2026-11-27 (merge 7175b9b0); TP7 VERIFIED comment 7213685702 (14:05 IST): CI 10/10 first-hand, diff 5 files +242/-7 read first-hand, mergeable True; coordinator CI first-hand 10 runs (8 success + 2 skipped, 0 fail, 0 pending) on head 9287dbaf.'
     blockers: []
-    next_action: 'PR #2096 open; paired verdict owed (TP7).'
+    next_action: 'MERGED via PR #2096 (score-first suppression ordering for burst alerts).'
 
   - id: TASK-VAL-001
     title: 'Reliability: full fleet validation re-probe on live servers with per-agent evidence (MASTER_PLAN M4; §2 7-day rule)'
