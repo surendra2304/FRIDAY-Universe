@@ -4,7 +4,7 @@
 - Worker: Muse TP4. Branch: `musetp4/task-frg-036-task-execute-route` @ `4f63ec7b` (checkpoint 3, unchanged since 00:53 IST) + this checkpoint + evidence doc.
 - Main verified first-hand this run: `901a1114` (board blob `35b6b1ef`, verified by hash match).
 - Board record on main: TASK-FRG-036 CLAIMED / owner muse_tp4. REL-111 AVAILABLE / muse_tp4.
-- Filed: 2026-11-28 ~04:50 IST. Full trace: `docs/collaboration/TASK-FRG-036-EVIDENCE.md` (this checkpoint's companion file).
+- Filed: 2026-11-28 ~04:35 IST. Full trace: `docs/collaboration/TASK-FRG-036-EVIDENCE.md` (this checkpoint's companion file).
 
 ## §1 — Leg B EXECUTED (04:11 IST) — the route works end-to-end
 
