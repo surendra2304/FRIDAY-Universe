@@ -90,11 +90,14 @@ funding rounds and product launches. *Budget:* 1/poll, 2/day, poll 60 min.
    `score_reasons`, so any alert can be explained after the fact.
    Below-bar and excluded items are marked seen — a headline edit does
    not resurrect them.
-5. **Budget.** Candidates are sorted newest-first. At most
-   `max_alerts_per_poll` fire, and never more than
-   `max_alerts_per_day` per IST day. Significant items over budget are
-   marked `suppressed_budget` and listed in the poll result — visible,
-   counted, never drip-fed later.
+5. **Budget.** Candidates are ordered by score (highest first), ties
+   broken newest-first (TASK-INT-879: the INT-876 soak's day-7 anomaly —
+   a score-5 item suppressed by budget while a newer score-3 item
+   alerted — showed newest-first alone lets a lower-value alert take
+   the single per-poll slot). At most `max_alerts_per_poll` fire, and
+   never more than `max_alerts_per_day` per IST day. Significant items
+   over budget are marked `suppressed_budget` and listed in the poll
+   result — visible, counted, never drip-fed later.
 
 State lives in one JSON file (atomic replace on save, 90-day pruning of
 non-alert records): `./data/watches/state.json`, overridable with

@@ -17,6 +17,7 @@ from pathlib import Path
 from intelx.watches.engine import (
     WATCHES,
     WATCH_AI_MODEL_RELEASES,
+    WATCH_CRYPTO_MARKET_STRUCTURE,
     FeedSource,
     WatchService,
     normalize_url,
@@ -275,3 +276,119 @@ def test_outbox_is_jsonl(tmp_path: Path) -> None:
     state = json.loads((tmp_path / "state.json").read_text(encoding="utf-8"))
     seen = state["watches"]["ai_model_releases"]["seen"]
     assert sum(1 for r in seen.values() if r["status"] == "alerted") == 1
+
+
+# --- suppression ordering (TASK-INT-879) ---------------------------------------
+#
+# The INT-876 soak's day-7 anomaly: a score-5 item (UK FCA DeFi rules) was
+# suppressed by budget while a newer score-3 item (Binance withdrawals
+# restored) alerted. Budget allocation is now score-first — the highest
+# score takes the per-poll slot — with ties broken newest-first (the v1
+# behaviour within equal scores). The burst below replays the exact day-7
+# items, with their live scores, against the crypto watch.
+
+CRYPTO_BURST_RSS = b"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+<title>Crypto burst</title>
+<item><title>Binance says customer withdrawals are fully restored, four weeks after the $6.3 billion hack</title>
+<link>https://example.com/binance-restored</link>
+<description>Withdrawals are fully restored.</description>
+<pubDate>Fri, 27 Nov 2026 04:45:47 GMT</pubDate></item>
+<item><title>UK regulator plans tighter DeFi rules, citing $6.3B Binance hack: Report</title>
+<link>https://example.com/uk-defi-rules</link>
+<description>The UK regulator plans tighter DeFi rules.</description>
+<pubDate>Thu, 26 Nov 2026 18:00:00 GMT</pubDate></item>
+<item><title>South Korean crypto exchange Bithumb warns of phishing after deeper October breach probe</title>
+<link>https://example.com/bithumb-phishing</link>
+<description>Bithumb warns of phishing after a deeper probe.</description>
+<pubDate>Wed, 25 Nov 2026 10:00:00 GMT</pubDate></item>
+</channel></rss>"""
+
+CRYPTO_INSTANT_RSS = b"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+<title>Crypto instant burst</title>
+<item><title>SEC approves spot Bitcoin ETF as Binance lists new margin contracts</title>
+<link>https://example.com/sec-etf-binance</link>
+<description>The SEC approved the ETF as Binance lists new contracts.</description>
+<pubDate>Wed, 25 Nov 2026 09:00:00 GMT</pubDate></item>
+<item><title>Binance says customer withdrawals are fully restored, four weeks after the $6.3 billion hack</title>
+<link>https://example.com/binance-restored</link>
+<description>Withdrawals are fully restored.</description>
+<pubDate>Fri, 27 Nov 2026 04:45:47 GMT</pubDate></item>
+</channel></rss>"""
+
+BURST_NOW = datetime(2026, 11, 27, 8, 0, tzinfo=UTC)
+
+
+def crypto_burst_watch():
+    return with_overrides(
+        WATCH_CRYPTO_MARKET_STRUCTURE,
+        sources=(FeedSource("https://feed.example/crypto.xml", "Crypto Burst"),),
+    )
+
+
+def crypto_burst_fetcher(feed: bytes = CRYPTO_BURST_RSS) -> FakeFetcher:
+    return FakeFetcher({"https://feed.example/crypto.xml": (200, feed)})
+
+
+def test_burst_item_scores_are_pinned() -> None:
+    # The fixture's scores are the day-7 live scores (INT-877 §2): the UK
+    # item scores 5 (regulation 2 + venue_incident 3), the other two 3
+    # (venue_incident). If a rule changes, this fails first, loudly.
+    items = parse_feed(
+        CRYPTO_BURST_RSS, FeedSource("https://feed.example/crypto.xml", "Crypto Burst")
+    )
+    assert len(items) == 3
+    scores = {item.title: score_item(WATCH_CRYPTO_MARKET_STRUCTURE, item)[0] for item in items}
+    assert scores["UK regulator plans tighter DeFi rules, citing $6.3B Binance hack: Report"] == 5
+    assert scores["Binance says customer withdrawals are fully restored, four weeks after the $6.3 billion hack"] == 3
+    assert scores["South Korean crypto exchange Bithumb warns of phishing after deeper October breach probe"] == 3
+
+
+def test_burst_highest_score_alerts_despite_newer_lower_score(tmp_path: Path) -> None:
+    # Day-7 replay: the older score-5 UK item must take the single slot
+    # ahead of the newer score-3 Binance item. Under the old newest-first
+    # sort this test fails (the score-3 item alerts instead).
+    service = make_service(tmp_path, crypto_burst_fetcher())
+    result = poll(service, crypto_burst_watch(), now=BURST_NOW)
+    assert result.fetched == 3
+    assert len(result.alerted) == 1
+    assert result.alerted[0]["title"].startswith("UK regulator")
+    assert result.alerted[0]["score"] == 5
+    suppressed = {s["title"] for s in result.suppressed_budget}
+    assert len(suppressed) == 2
+    assert any(t.startswith("Binance says") for t in suppressed)
+    assert any(t.startswith("South Korean") for t in suppressed)
+
+
+def test_burst_equal_scores_break_ties_newest_first(tmp_path: Path) -> None:
+    # Both candidates score 3; the newer one keeps the v1 behaviour and
+    # takes the slot. Guards against overcorrecting into score-only order.
+    feed = CRYPTO_BURST_RSS.replace(
+        b"<item><title>UK regulator plans tighter DeFi rules, citing $6.3B Binance hack: Report</title>\n<link>https://example.com/uk-defi-rules</link>\n<description>The UK regulator plans tighter DeFi rules.</description>\n<pubDate>Thu, 26 Nov 2026 18:00:00 GMT</pubDate></item>\n",
+        b"",
+    )
+    service = make_service(tmp_path, crypto_burst_fetcher(feed))
+    result = poll(service, crypto_burst_watch(), now=BURST_NOW)
+    assert result.fetched == 2
+    assert len(result.alerted) == 1
+    assert result.alerted[0]["title"].startswith("Binance says")
+    assert result.alerted[0]["score"] == 3
+    assert len(result.suppressed_budget) == 1
+    assert result.suppressed_budget[0]["title"].startswith("South Korean")
+
+
+def test_burst_instant_class_never_loses_slot_to_digest(tmp_path: Path) -> None:
+    # Score-8 instant item (etf_decision 3 + exchange_structure 3 +
+    # regulation 2; over the watch's instant bar of 6) is the oldest; the
+    # newer score-3 digest item must not take its slot.
+    service = make_service(tmp_path, crypto_burst_fetcher(CRYPTO_INSTANT_RSS))
+    result = poll(service, crypto_burst_watch(), now=BURST_NOW)
+    assert result.fetched == 2
+    assert len(result.alerted) == 1
+    assert result.alerted[0]["title"].startswith("SEC approves")
+    assert result.alerted[0]["score"] == 8
+    assert result.alerted[0]["alert_class"] == "instant"
+    assert result.alerted_instant == 1
+    assert len(result.suppressed_budget) == 1
+    assert result.suppressed_budget[0]["title"].startswith("Binance says")
