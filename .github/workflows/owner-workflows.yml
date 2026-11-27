@@ -175,7 +175,8 @@ jobs:
             Forge/tests/test_frg022_workflow_passes.py \
             Forge/tests/test_ig2_frg02_code_graph.py \
             Forge/tests/test_ig2_frg03_ocr_review.py \
-            Forge/tests/test_frg028_build_run.py
+            Forge/tests/test_frg028_build_run.py \
+            Forge/tests/test_frg030_gradio_layer.py
       - name: Direct memory evidence outranks graph-only context
         env:
           PYTHONPATH: Memora

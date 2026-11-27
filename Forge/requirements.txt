@@ -18,3 +18,7 @@ openai>=1.0.0,<4.0.0
 anthropic>=0.20.0,<2.0.0
 psutil>=5.9.0,<8.0.0
 beautifulsoup4>=4.12.0,<5.0.0
+
+# TASK-FRG-030 (2026-11-26): Gradio instant-UI delivery layer (free, PyPI) + PyYAML for the board lookup tool.
+gradio>=5.0.0,<7.0.0
+pyyaml>=6.0.0,<7.0.0
