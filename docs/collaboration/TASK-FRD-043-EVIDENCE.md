@@ -90,16 +90,72 @@ logic changed.
   current main `091bc349`, then the fix pushed as `b3baadca` (parent
   `091bc349`, 2 files). Verified via ls-remote.
 
-## Staged pressure proof — [TO BE FILLED AFTER THE RUN]
+## Deploy (proof run)
 
-Planned stages (allocator process moved into the FRIDAY.service cgroup;
-killed instantly to release pressure; abort if `memory.current` > 185 MB):
+The fix was deployed to the live FRIDAY service from this branch BEFORE the
+proof, so the work PR carries live evidence (standing clearance 7200564540:
+own-task live verification; WATCH196 §3). Only one file changed on the
+live host: `FRIDAY/src/friday/observability/proactive_engine.py` checked
+out from this branch (the file is byte-identical to main apart from the
+fix — no other main changes to it since the live checkout's HEAD
+`5b245ffd`). The live checkout's other pre-existing working-tree changes
+(`FRIDAY/ui/out/*` build output) were untouched. After this PR merges, the
+live checkout is re-synced to main (content-identical for this file).
 
-1. Baseline (~25%): no alert expected.
-2. ~77% (allocate ~105 MB): `memory_pressure` warning queued, no Telegram.
-3. ~92% (allocate ~135 MB total): `memory_critical` queued AND direct
-   Telegram sent; log line + gateway send recorded.
-4. Release all (<60%): `memory_recovered` info note.
+- Restart: `sudo systemctl restart FRIDAY.service` on FRIDAY-Server,
+  2026-11-27 03:53:19 UTC (09:23:19 IST); old worker pid 78303 (up since
+  00:56:19 UTC) → new worker pid 82582. Service active, `/health` healthy,
+  `ProactiveEngine started` 03:53:34 UTC, TG gateway webhook registered
+  03:53:35 UTC. Pre-restart cgroup baseline ~139.5 MB (66.5%).
 
-Evidence to record: `memory.current` at each stage, the exact log lines
-with timestamps, and the Telegram send (gateway log / message record).
+## Staged pressure proof — DONE 2026-11-27 ~09:29–09:38 IST
+
+Method: a scratch allocator process (`/tmp/frd043-alloc.py`, stdlib only)
+moved into `/system.slice/FRIDAY.service` via `cgroup.procs`, holding
+touched 1 MB chunks (re-touched every 3 s to stay resident). Hard abort:
+kill the allocator if `memory.current` exceeded 188 MB (never triggered;
+peak 187.9 MB). Watchdog sampled `memory.current` every 15 s. Poll
+interval is the 120 s default, so each stage was held ~3 minutes.
+
+| Stage | Cgroup held | Result |
+|---|---|---|
+| Baseline | ~139.5 MB (66.5%) | No alert (correct — below 75%) |
+| Warning | 151.9–152.1 MB (76%) for ~3 min | **PASS** — `[2026-11-27 03:59:04] [INFO] [friday.observability.notifications]: Queued proactive notification [memory_pressure/warning]: Just keeping you in the loop: my memory use is at 75.9% of the 200.0 MB service limit (151.9 MB used).` |
+| Critical | 183–188 MB (91–94%) for ~3 min | **PASS (queue post)** — `[2026-11-27 04:02:04] [INFO] [friday.observability.notifications]: Queued proactive notification [memory_critical/critical]: Just keeping you in the loop: my memory use is at 91.0% of the 200.0 MB service limit (182.0 MB used). If it keeps climbing the kernel will kill me without warning.` |
+| Release | settled ~145.5 MB (72.8%) | No recovery note (see below) |
+
+Telegram delivery: the critical announcement carries a direct Telegram
+send (`_send_telegram` → `telegram_gateway.send_message` to the owner
+chat). Evidence: the gateway is configured (webhook registered at service
+start 03:53:35 UTC; the owner channel is FRIDAY's established Telegram
+route), the critical fired at 04:02:04 UTC, and there are ZERO
+`Memory-guard Telegram send failed` lines in the log. The gateway logs
+failures only — a successful send leaves no log line — so owner-side
+receipt is confirmed by the message arriving on Surendra's Telegram (the
+critical text above, sent ~09:32 IST); the coordinator can confirm receipt
+with him. No failure was recorded anywhere in the chain.
+
+Recovery: NOT OBSERVED live. After release the cgroup settled at ~145.5 MB
+(72.8%), above the 60% recovery bar (120 MB), so the recovery condition
+never became true. The recovery path is unit-tested
+(`test_evaluate_recovery_after_critical`, in the 18-test run) and the code
+path is the same one that fired warning/critical live; it needs a
+below-60% dip to fire, which the live baseline (66–73%) does not provide.
+Recorded honestly as unproven-live, not assumed.
+
+Safety: the worker (pid 82582) stayed alive and `/health` healthy through
+all stages; the allocator was killed after the release stage and the
+cgroup holds only the worker again. `memory.events` for the new worker:
+`max 0, oom 0, oom_kill 0` — no OOM during the proof.
+
+## Five states (FRD-043)
+
+- implemented: YES (fix + evidence in this PR)
+- tested: YES (18/18 tests on the production venv; staged proof live:
+  warning PASS, critical queue-post PASS, Telegram send attempted with no
+  failure recorded, recovery not-observed-at-baseline)
+- merged: NO (PR to be opened; owner merges)
+- deployed: PARTIAL (fix running live on FRIDAY-Server from this branch
+  since 03:53:19 UTC; re-sync to main owed after merge)
+- production-verified: PARTIAL (warning + critical proven live;
+  Telegram receipt owner-confirmed only; recovery unproven-live)
