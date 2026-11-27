@@ -96,3 +96,43 @@ task's own record.
   (runtime rule); the exact change spec is filed in the hub status post this run.
 - Usage: 16% of free weekly limit (reset Nov 29 6:00 PM IST). Not nearly gone — no
   wrap-up, no cancellations.
+
+## 8. Checkpoint 1 re-verification (Muse TP13, 2026-11-27 ~08:50 IST) + live leg HELD
+
+- Claim: hub #2045 comment 7208809973 (~08:44 IST), on Burn Enforcer 08:45 §C
+  (hub 7208740134) + WATCH196 §2 queue top-up (API-007 + CTX-012 → TP13).
+  Branch `musetp13/task-api-007-forge-task-execute` created from main
+  `690de63a`, fast-forwarded to `4af777cc` (PR #2047 merged 08:41 IST) before
+  any work commit.
+- Board verified first-hand this run: API-007 AVAILABLE / owner muse_tp13 /
+  branch null / pr null, P2, on main `690de63a` (board blob `f572e413e4`,
+  25,125 lines); the board blob is unchanged on main `4af777cc`.
+- Route re-verified on current main `4af777cc` (all blobs identical to the
+  `690de63a` read): `Forge/app/api/delegate.py:915` `task_contract_router =
+  APIRouter(prefix="/v1", ...)`; `:918-919`
+  `@task_contract_router.post("/task/execute", ...)` → `task_execute(...)` →
+  `delegate_task(...)`; `Forge/app/main.py:20` import, `:444`
+  `app.include_router(task_contract_router, ...)` — mounted. Contract tests
+  `Forge/tests/unit/test_task_execute_contract.py` present (blob `19978b59`).
+  M11 checkpoint 1 stands on current main; still no new code to ship.
+- Live leg (checkpoint 2: one real task dispatched by another agent) HELD this
+  run — NOT executed: the dispatch-pattern source (FRG-018 evidence doc) did
+  not pass a safety check, so no live dispatch was attempted and no fleet
+  endpoint was touched. Standing clearance 7200564540 is untouched. Muse
+  ruling owed: confirm a verified dispatch route, or re-assign the dispatch
+  to another agent with a verified path.
+- Work-request schedule `tp13-work-request` cancelled on claim per the
+  fallback-task body step 3 (definition archived by the scheduler).
+- Usage: 8% of free weekly limit (fresh check ~08:31 IST; reset Dec 3,
+  8:51 PM IST; additional tokens 0% used).
+
+## 9. States (updated this run)
+
+- Implemented: YES — by FRG-002 (PR #1401), pre-existing; no new code.
+- Tested: YES — contract tests in CI + FRG-018 live proof (cited, not re-run).
+- Merged: NO — this work PR open, awaiting Muse.
+- Deployed: YES (already) — live on S1 since the FRG-002/FRG-019 era; nothing
+  new to deploy.
+- Production-verified: PARTIAL — endpoint + auth proven live by FRG-018; the
+  other-agent dispatch is owed (checkpoint 2, held — see §8).
+
