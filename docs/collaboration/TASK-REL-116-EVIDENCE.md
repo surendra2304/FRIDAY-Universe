@@ -4,7 +4,8 @@
 - **Author:** Muse 4 — diagnosis, 2026-11-27 ~19:30 IST (continuation of the 17:24 run; the
   17:24 parent run timed out 18:26:43 IST and its diagnosis subagent timed out 18:25:03 IST)
 - **Claim:** hub #2045 comment 7217683270 (17:24 IST) · Board (main `7ae846b9`): REL-116 CLAIMED / owner muse_4
-- **Branch:** `muse4/task-rel-116-cd-deploy-failure-diagnosis` (base: current main `7ae846b9`)
+- **Branch:** `muse4/task-rel-116-cd-deploy-failure-diagnosis` (parent: current main
+  `09691836` at push; main had moved from `7ae846b9` between the read and the push)
 - **Scope:** diagnose only. No workflow edit, no server change, no restart, no deploy, no merge,
   no hub post. The fix proposal in §6 is a proposal only; it was not applied.
 
