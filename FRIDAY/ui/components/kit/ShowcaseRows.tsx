@@ -116,6 +116,7 @@ export function ShowcaseRows({
 }: ShowcaseRowsProps) {
   const [featuredIdx, setFeaturedIdx] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [tabHidden, setTabHidden] = useState(false);
 
   useEffect(() => {
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -127,16 +128,31 @@ export function ShowcaseRows({
     return () => motion.removeEventListener("change", onChange);
   }, []);
 
-  /* The billboard rotates through the pool — slowly, never under
-     reduced motion, never behind a hidden tab. */
+  /* Tab visibility is a live input alongside reduced motion: the
+     rotation stops the moment the tab hides, and resumes on return. */
   useEffect(() => {
-    if (reducedMotion || featuredPool.length < 2) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTabHidden(document.hidden);
+    const onVisibilityChange = () => setTabHidden(document.hidden);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, []);
+
+  /* The billboard rotates through the pool — slowly, never under
+     reduced motion, never behind a hidden tab. The timer only
+     exists while the tab is visible: hiding the tab tears it down,
+     so no tick can fire while hidden; showing the tab starts a
+     fresh phase from the same index. The document.hidden check
+     inside the callback covers a tick already queued when
+     visibility flips. */
+  useEffect(() => {
+    if (reducedMotion || tabHidden || featuredPool.length < 2) return;
     const timer = window.setInterval(() => {
       if (document.hidden) return;
       setFeaturedIdx((idx) => (idx + 1) % featuredPool.length);
     }, rotateMs);
     return () => window.clearInterval(timer);
-  }, [featuredPool, reducedMotion, rotateMs]);
+  }, [featuredPool, reducedMotion, rotateMs, tabHidden]);
 
   const featured: ShowcaseItem | undefined =
     featuredPool[featuredIdx % Math.max(featuredPool.length, 1)];

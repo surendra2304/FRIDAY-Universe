@@ -67,10 +67,9 @@ export function ShowcaseSheet({ onSummon }: { onSummon: (kind: RoomKind) => void
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [featuredIdx, setFeaturedIdx] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [tabHidden, setTabHidden] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setReducedMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     let cancelled = false;
     (async () => {
       try {
@@ -97,6 +96,24 @@ export function ShowcaseSheet({ onSummon }: { onSummon: (kind: RoomKind) => void
     };
   }, []);
 
+  /* Reduced motion + tab visibility are live inputs: the rotation
+     stops the moment either flips, and resumes when both clear. */
+  useEffect(() => {
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setReducedMotion(motion.matches);
+    const onMotionChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    motion.addEventListener("change", onMotionChange);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTabHidden(document.hidden);
+    const onVisibilityChange = () => setTabHidden(document.hidden);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      motion.removeEventListener("change", onMotionChange);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
+
   const agents = useMemo(() => fleet?.agents ?? [], [fleet]);
   const featuredPool = useMemo(() => {
     const online = agents.filter((a) => a.status === "online");
@@ -104,15 +121,20 @@ export function ShowcaseSheet({ onSummon }: { onSummon: (kind: RoomKind) => void
   }, [agents]);
 
   /* The billboard rotates through whoever is awake — slowly,
-     never under reduced motion, never behind a hidden tab. */
+     never under reduced motion, never behind a hidden tab. The
+     timer only exists while the tab is visible: hiding the tab
+     tears it down, so no tick can fire while hidden; showing the
+     tab starts a fresh 7 s phase from the same index. The
+     document.hidden check inside the callback covers a tick
+     already queued when visibility flips. */
   useEffect(() => {
-    if (reducedMotion || featuredPool.length < 2) return;
+    if (reducedMotion || tabHidden || featuredPool.length < 2) return;
     const timer = window.setInterval(() => {
       if (document.hidden) return;
       setFeaturedIdx((idx) => (idx + 1) % featuredPool.length);
     }, 7000);
     return () => window.clearInterval(timer);
-  }, [featuredPool, reducedMotion]);
+  }, [featuredPool, reducedMotion, tabHidden]);
 
   const featured: FleetAgent | undefined = featuredPool[featuredIdx % Math.max(featuredPool.length, 1)];
   const liveById = useMemo(
