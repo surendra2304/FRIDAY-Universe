@@ -223,6 +223,29 @@ def test_drill_all_keys_quarantined_fails_closed(monkeypatch):
 
 
 # --------------------------------------------------------------------------
+# Double-provider failures (TASK-INF-LLM-002, M15 re-drill 2026-11-27):
+# M2's 2026-11-22 live drill never exercised the waterfall rung (G2) —
+# the OpenRouter rung always served first. With groq AND openrouter both
+# down, the ladder must reach the waterfall's gemini rung and serve.
+# --------------------------------------------------------------------------
+
+def test_drill_groq_and_openrouter_down_waterfall_serves_gemini(monkeypatch):
+    script = _all("ok")
+    script["groq"] = "e503"
+    script["openrouter"] = "e503"
+    gateway = _gateway(monkeypatch, script)
+    start = time.perf_counter()
+    resp = asyncio.run(gateway.execute("groq", _request()))
+    elapsed = time.perf_counter() - start
+    assert resp.content == "answer:gemini"
+    assert resp.provider == "gemini"
+    provenance = (resp.raw_response or {}).get("fallback_provenance") or {}
+    assert provenance.get("requested_provider") == "groq"
+    assert provenance.get("actual_provider") == "gemini"
+    assert elapsed < 10.0
+
+
+# --------------------------------------------------------------------------
 # Total failures: typed errors, inside the deadline, never a hang.
 # --------------------------------------------------------------------------
 
