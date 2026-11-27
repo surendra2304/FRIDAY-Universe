@@ -731,6 +731,39 @@ class Outbox:
             fh.write(json.dumps(envelope, ensure_ascii=False) + "\n")
 
 
+def read_outbox_envelopes(path: Path) -> dict[str, Any]:
+    """Read-only outbox snapshot for the TASK-INT-060 HTTP handoff.
+
+    The FRIDAY drainer no longer shares a filesystem with this
+    producer (fleet split), so envelopes cross over HTTP instead of
+    a sibling-file tail. Returns every complete, parseable envelope
+    line plus the file size and a malformed count; a missing outbox
+    is the normal watches-not-enabled state (empty, size 0). The
+    consumer dedupes on ``dedupe_key``, so returning the full list
+    every poll is safe.
+    """
+    try:
+        data = path.read_bytes()
+    except FileNotFoundError:
+        return {"size": 0, "envelopes": [], "malformed": 0}
+    envelopes: list[dict[str, Any]] = []
+    malformed = 0
+    for raw_line in data.split(b"\n"):
+        line = raw_line.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError):
+            malformed += 1
+            continue
+        if not isinstance(row, dict) or row.get("schema") != ENVELOPE_SCHEMA:
+            malformed += 1
+            continue
+        envelopes.append(row)
+    return {"size": len(data), "envelopes": envelopes, "malformed": malformed}
+
+
 def build_envelope(
     watch: WatchDefinition,
     item: FeedItem,

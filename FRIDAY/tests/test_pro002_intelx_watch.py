@@ -390,3 +390,88 @@ def test_failed_post_is_held_and_retried_via_digest(world):
     assert report["flushed"] == 1
     assert len(world.notifications.posted) == 1
     assert "Introducing Images 2.6" in world.notifications.posted[0]["message"]
+
+
+# ---------------------------------------------------------------------------
+# TASK-INT-060: remote (HTTP) outbox source
+# ---------------------------------------------------------------------------
+
+
+class _RemoteWorld:
+    """Drainer wired to a fake remote outbox endpoint (TASK-INT-060)."""
+
+    def __init__(self, tmp_path: Path):
+        self.state_path = tmp_path / "drainer_state.json"
+        self.notifications = _FakeNotifications()
+        self.payload: dict = {"lane": "main", "size": 0, "envelopes": [], "malformed": 0}
+        self.fail = False
+
+    def fetch(self, url: str):
+        if self.fail:
+            raise OSError("connection refused")
+        return self.payload
+
+    def drainer(self) -> iw.IntelxWatchDrainer:
+        return iw.IntelxWatchDrainer(
+            state_path=self.state_path,
+            enabled_fn=lambda: True,
+            outbox_url="https://intelx.example/v1/watches/outbox",
+            fetch_fn=self.fetch,
+        )
+
+
+@pytest.fixture()
+def remote_world(tmp_path) -> _RemoteWorld:
+    return _RemoteWorld(tmp_path)
+
+
+def test_remote_baseline_records_existing_envelopes_as_seen(remote_world):
+    remote_world.payload["envelopes"] = [_envelope()]
+    drainer = remote_world.drainer()
+
+    report = drainer.run_cycle(remote_world.notifications, now=_at(10, 0))
+
+    assert report["baseline"] is True
+    assert report["outbox_present"] is True
+    assert report["posted"] == 0
+    assert remote_world.notifications.posted == []
+
+
+def test_remote_new_envelope_delivered_once_across_refetches(remote_world):
+    drainer = remote_world.drainer()
+    drainer.run_cycle(remote_world.notifications, now=_at(10, 0))  # baseline, empty
+
+    env = _envelope()
+    remote_world.payload["envelopes"] = [env]
+    report = drainer.run_cycle(remote_world.notifications, now=_at(10, 5))
+    assert report["posted"] == 1
+    assert remote_world.notifications.posted[0]["metadata"]["dedupe_key"] == env["dedupe_key"]
+
+    # The endpoint returns the full list every poll; dedupe keys guard it.
+    report = drainer.run_cycle(remote_world.notifications, now=_at(10, 10))
+    assert report["posted"] == 0
+    assert report["duplicates"] == 1
+    assert len(remote_world.notifications.posted) == 1
+
+
+def test_remote_fetch_failure_is_a_source_error_not_a_crash(remote_world):
+    drainer = remote_world.drainer()
+    drainer.run_cycle(remote_world.notifications, now=_at(10, 0))
+
+    remote_world.fail = True
+    report = drainer.run_cycle(remote_world.notifications, now=_at(10, 5))
+
+    assert report["posted"] == 0
+    assert any("remote outbox fetch failed" in e for e in report["source_errors"])
+
+
+def test_remote_malformed_rows_are_counted_and_skipped(remote_world):
+    drainer = remote_world.drainer()
+    drainer.run_cycle(remote_world.notifications, now=_at(10, 0))
+
+    bad = _envelope("aaaaaaaaaaaaaaaa", schema="other/9")
+    remote_world.payload["envelopes"] = [bad, _envelope()]
+    report = drainer.run_cycle(remote_world.notifications, now=_at(10, 5))
+
+    assert report["malformed"] == 1
+    assert report["posted"] == 1
