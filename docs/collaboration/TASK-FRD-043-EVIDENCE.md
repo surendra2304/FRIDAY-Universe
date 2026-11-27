@@ -122,7 +122,7 @@ interval is the 120 s default, so each stage was held ~3 minutes.
 | Baseline | ~139.5 MB (66.5%) | No alert (correct — below 75%) |
 | Warning | 151.9–152.1 MB (76%) for ~3 min | **PASS** — `[2026-11-27 03:59:04] [INFO] [friday.observability.notifications]: Queued proactive notification [memory_pressure/warning]: Just keeping you in the loop: my memory use is at 75.9% of the 200.0 MB service limit (151.9 MB used).` |
 | Critical | 183–188 MB (91–94%) for ~3 min | **PASS (queue post)** — `[2026-11-27 04:02:04] [INFO] [friday.observability.notifications]: Queued proactive notification [memory_critical/critical]: Just keeping you in the loop: my memory use is at 91.0% of the 200.0 MB service limit (182.0 MB used). If it keeps climbing the kernel will kill me without warning.` |
-| Release | settled ~145.5 MB (72.8%) | No recovery note (see below) |
+| Release | settled ~145.5 MB (72.8%), then worker spiked naturally to 171 MB (85.5%) and swapped down below 60% | **PASS** — `memory_recovered` posted 04:09:35 UTC (see below) |
 
 Telegram delivery: the critical announcement carries a direct Telegram
 send (`_send_telegram` → `telegram_gateway.send_message` to the owner
@@ -135,13 +135,17 @@ receipt is confirmed by the message arriving on Surendra's Telegram (the
 critical text above, sent ~09:32 IST); the coordinator can confirm receipt
 with him. No failure was recorded anywhere in the chain.
 
-Recovery: NOT OBSERVED live. After release the cgroup settled at ~145.5 MB
-(72.8%), above the 60% recovery bar (120 MB), so the recovery condition
-never became true. The recovery path is unit-tested
-(`test_evaluate_recovery_after_critical`, in the 18-test run) and the code
-path is the same one that fired warning/critical live; it needs a
-below-60% dip to fire, which the live baseline (66–73%) does not provide.
-Recorded honestly as unproven-live, not assumed.
+Recovery: **PROVEN LIVE.** After the release the worker's own usage spiked
+again naturally — `memory_pressure` re-fired at 79.3% (158.6 MB, 04:09:04
+UTC) and 85.5% (171.0 MB, 04:09:07 UTC) — then its pages swapped out and
+use fell below the 60% bar, and the engine posted
+`[2026-11-27 04:09:35] [INFO] [friday.observability.notifications]:
+Queued proactive notification [memory_recovered/info]: Before you ask -
+Memory pressure has eased back below 60% of the service limit.`
+Full live sequence in `friday.log`: warning 75.9% (03:59:04) → critical
+91.0% (04:02:04) → warning 79.3% (04:09:04) → warning 85.5% (04:09:07)
+→ recovered (04:09:35). The worker's memory is highly volatile
+(42→179→145→171→35 MB within the hour); the guard now tracks it.
 
 Safety: the worker (pid 82582) stayed alive and `/health` healthy through
 all stages; the allocator was killed after the release stage and the
@@ -153,9 +157,9 @@ cgroup holds only the worker again. `memory.events` for the new worker:
 - implemented: YES (fix + evidence in this PR)
 - tested: YES (18/18 tests on the production venv; staged proof live:
   warning PASS, critical queue-post PASS, Telegram send attempted with no
-  failure recorded, recovery not-observed-at-baseline)
+  failure recorded, recovery PASS live 04:09:35 UTC)
 - merged: NO (PR to be opened; owner merges)
 - deployed: PARTIAL (fix running live on FRIDAY-Server from this branch
   since 03:53:19 UTC; re-sync to main owed after merge)
-- production-verified: PARTIAL (warning + critical proven live;
-  Telegram receipt owner-confirmed only; recovery unproven-live)
+- production-verified: PARTIAL (warning + critical + recovery proven live;
+  Telegram receipt owner-confirmed only)
