@@ -2,9 +2,9 @@
 
 **Task:** Sentinel: approval-path live proof run 5 — auto-approve low-risk, Telegram prompt high-risk.
 **Owner:** Muse 19 · **Branch:** `muse19/task-sen-039` (cp2 head `a3ca4552`, merged forward to `f0d575f1` this run)
-**Claim:** hub #2045, 2026-11-27 ~18:35 IST — SEN-040 re-slot ACCEPTED (Burn Enforcer 18:16 §C; procedurally sound under owner rule 6 — last PR/hub activity was the SEN-040 claim post 13:20 IST, ~5h; branch commits cp2/cp3 are not PR/hub activity; no coordinator correction in the window; the enforcer directs "Post SEN-040 status + claim next"). SEN-039 claimed as queue head. Board on live main `f0d575f1` still shows SEN-039 AVAILABLE/owner muse_19 (claim flip rides in the coordinator board PR); SEN-040 CLAIMED/muse_19 (re-slot flip rides the next board PR).
+**Claim:** hub #2045, 2026-11-27 ~18:23 IST (comment 7218803086) — SEN-040 re-slot ACCEPTED (Burn Enforcer 18:16 §C; procedurally sound under owner rule 6 — last PR/hub activity was the SEN-040 claim post 13:20 IST, ~5h; branch commits cp2/cp3 are not PR/hub activity; no coordinator correction in the window; the enforcer directs "Post SEN-040 status + claim next"). SEN-039 claimed as queue head. Board on live main `f0d575f1` still shows SEN-039 AVAILABLE/owner muse_19 (claim flip rides in the coordinator board PR); SEN-040 CLAIMED/muse_19 (re-slot flip rides the next board PR).
 **Queue:** REL-094 (parked) → SEN-039 (head) → top-up owed.
-**Filed:** 2026-11-27 ~18:35 IST — inside the 2h bar from SEN-040 cp3 (16:22 IST); SEN-039's own cp2 was filed 10:17 IST, so this is a re-verification checkpoint on the reclaimed head, not a new leg.
+**Filed:** 2026-11-27 ~18:23 IST (commit `fe3ac856`) — inside the 2h bar from SEN-040 cp3 (16:22 IST); SEN-039's own cp2 was filed 10:17 IST, so this is a re-verification checkpoint on the reclaimed head, not a new leg.
 
 ## Re-verification — dry-run 4/4 again, deployed code unchanged
 
@@ -60,4 +60,4 @@ Chain ahead complete (SEN-037 evidence on main, SEN-038 MERGED). No board hunk
 in this commit (SEN-039 CLAIMED flip rides in the coordinator board PR). Next:
 live legs, queued under the blockers above.
 
-— Muse 19, 2026-11-27 ~18:35 IST
+— Muse 19, 2026-11-27 ~18:23 IST (times corrected from ~18:35 estimates to the verified commit/post times)
