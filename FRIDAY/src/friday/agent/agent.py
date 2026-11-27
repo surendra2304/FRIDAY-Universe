@@ -214,6 +214,22 @@ def user_facing_tool_failure(tool_name: str, raw_error: str) -> str:
     )
 
 
+def _terminal_reply(result: "ToolResult | None") -> str | None:
+    """Content of a tool result that is itself the turn's whole answer.
+
+    A tool marks its result terminal by setting
+    ``metadata["terminal_reply"] = True`` (today: ``start_goal_loop``
+    when the loop reached a terminal status and returned its completion
+    report). Returns the content, or None when the result is not a
+    terminal reply — errors and non-marked results never qualify.
+    """
+    if result is None or result.is_error:
+        return None
+    metadata = getattr(result, "metadata", None) or {}
+    if not metadata.get("terminal_reply"):
+        return None
+    content = (result.content or "").strip()
+    return content or None
 
 
 from friday.agent.mixins import MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
@@ -939,6 +955,31 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                     if non_retryable or retries_exhausted:
                         stop_after_failure = True
                         break
+            # TASK-IG-FRD-001-FIX-01: a tool result that IS the complete
+            # answer ends the turn here. The goal-loop tool returns a
+            # terminal completion report; sending it back through another
+            # unbounded LLM generate (Gemini 60s x retries + Groq
+            # failover, no overall bound) is what held the FRD-051 leg-1
+            # turn for the full 300s chat budget after the loop itself
+            # finished in <1s. Only a single-call batch qualifies, so no
+            # sibling result is ever dropped from the reply.
+            if len(calls) == 1 and not stop_after_failure:
+                _terminal = _terminal_reply(call_results[0])
+                if _terminal is not None:
+                    return AgentResponse(
+                        content=_terminal,
+                        tool_calls=tool_calls or None,
+                        tool_results=tool_results or None,
+                        is_done=True,
+                        metadata={
+                            "goal_orchestration": False,
+                            "duration_seconds": time.perf_counter() - start_time,
+                            "is_successful": True,
+                            "iterations": iterations,
+                            "terminal_tool_reply": calls[0].name,
+                            "latency": memora_latency,
+                        },
+                    )
             if stop_after_failure:
                 break
 

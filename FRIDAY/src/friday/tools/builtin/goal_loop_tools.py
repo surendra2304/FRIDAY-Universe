@@ -42,6 +42,12 @@ class StartGoalLoopTool(BaseTool):
     )
     safety_level = SafetyLevel.SENSITIVE
     risk_level = "SENSITIVE"
+    # TASK-IG-FRD-001-FIX-01: a multi-step loop runs each step through the
+    # chat brain (a full turn per step) and cannot fit the 30s tool
+    # default. 240s stays inside the 300s chat-turn budget; the declared
+    # timeout is honoured by the agent (TASK-IG-FRD-006-FIX-01 precedent:
+    # intelx_research declares 125s).
+    timeout = 240
     parameters = {
         "type": "object",
         "properties": {
@@ -152,16 +158,28 @@ class StartGoalLoopTool(BaseTool):
             if run_now:
                 loop = store.run_until_terminal(loop["id"])
             report = loop.get("report") or ""
-            from friday.autonomous.goal_loop import format_loop_summary
+            from friday.autonomous.goal_loop import (
+                TERMINAL_STATUSES,
+                format_loop_summary,
+            )
 
             content = format_loop_summary(loop)
             if report:
                 content = f"{content}\n\n{report}"
+            terminal = loop.get("status") in TERMINAL_STATUSES
             return ToolResult(
                 name=self.name,
                 content=content,
                 is_error=False,
-                metadata={"loop_id": loop["id"], "status": loop["status"]},
+                metadata={
+                    "loop_id": loop["id"],
+                    "status": loop["status"],
+                    # TASK-IG-FRD-001-FIX-01: a terminal loop's report IS
+                    # the turn's answer — the agent loop returns it
+                    # directly instead of paying another (unbounded) LLM
+                    # round-trip after the work is already done.
+                    "terminal_reply": terminal,
+                },
             )
         except (ValueError, KeyError) as exc:
             return ToolResult(
