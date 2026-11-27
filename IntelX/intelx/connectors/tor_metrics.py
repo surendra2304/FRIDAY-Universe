@@ -15,9 +15,15 @@ What is fetched (all public, all keyless):
   * ``/bandwidth`` — per-relay bandwidth history (write/read histories).
     The traffic metric.
   * ``/weights`` — per-relay consensus weight. The traffic-share metric.
-  * ``/clients`` — estimated Tor users by country (average clients).
-    The censorship metric: a country's client count is the observable
-    that moves when access is blocked or restored.
+  * ``/clients`` — estimated Tor users per bridge (average clients).
+    The censorship metric: a bridge's client count is the observable
+    that moves when access is blocked or restored. NOTE (live Onionoo
+    8.0, verified 2026-11-27): the document carries per-BRIDGE average
+    clients only — entries have ``fingerprint`` + ``average_clients``
+    (a period-keyed history map) and NO country field, and ``relays``
+    is empty. There is no per-country breakdown in this endpoint, so
+    the snapshot reports bridge client totals and no country rows
+    (TASK-INT-047-FIX-01).
   * ``/uptime`` — per-relay uptime history. The reliability metric.
 
 Fail-closed, throughout: a non-200 response, malformed JSON, or a
@@ -136,12 +142,22 @@ class TorBandwidth:
 
 @dataclass(frozen=True)
 class TorWeights:
-    """Consensus weight for one relay."""
+    """Consensus weight for one relay.
+
+    Live Onionoo 8.0 serves ``consensus_weight`` /
+    ``consensus_weight_fraction`` as period-keyed history maps, not
+    plain numbers (TASK-INT-047-FIX-01). The scalar fields are the
+    latest value of the best period's history, scaled by its factor
+    (``value * factor`` per the Onionoo spec); the history fields keep
+    the full series so the evidence is not discarded.
+    """
 
     fingerprint: str
     nickname: str
     consensus_weight: int | None
     consensus_weight_fraction: float | None
+    consensus_weight_history: TorHistory | None = None
+    consensus_weight_fraction_history: TorHistory | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -149,6 +165,12 @@ class TorWeights:
             "nickname": self.nickname,
             "consensus_weight": self.consensus_weight,
             "consensus_weight_fraction": self.consensus_weight_fraction,
+            "consensus_weight_history": self.consensus_weight_history.to_dict()
+            if self.consensus_weight_history
+            else None,
+            "consensus_weight_fraction_history": self.consensus_weight_fraction_history.to_dict()
+            if self.consensus_weight_fraction_history
+            else None,
         }
 
 
@@ -170,13 +192,38 @@ class TorUptime:
 
 @dataclass(frozen=True)
 class TorCountryClients:
-    """Estimated Tor users in one country (from the clients document)."""
+    """Estimated Tor users in one country (from the clients document).
+
+    Retained for the snapshot shape. NOTE: the live Onionoo 8.0
+    ``/clients`` document carries NO country field at all (entries are
+    per-bridge ``fingerprint`` + ``average_clients``), so this is
+    always empty from live data — see :class:`TorBridgeClients`
+    (TASK-INT-047-FIX-01).
+    """
 
     country: str
     average_clients: int | None
 
     def to_dict(self) -> dict:
         return {"country": self.country, "average_clients": self.average_clients}
+
+
+@dataclass(frozen=True)
+class TorBridgeClients:
+    """Estimated Tor users of one bridge (from the clients document).
+
+    Live Onionoo 8.0 ``/clients`` entries carry only ``fingerprint``
+    and ``average_clients`` (a period-keyed history map, no country).
+    ``average_clients`` is the latest value of the best period's
+    history, scaled by its factor (``value * factor`` per the Onionoo
+    spec); ``None`` when the bridge carries no parseable history.
+    """
+
+    fingerprint: str
+    average_clients: int | None
+
+    def to_dict(self) -> dict:
+        return {"fingerprint": self.fingerprint, "average_clients": self.average_clients}
 
 
 @dataclass(frozen=True)
@@ -201,6 +248,11 @@ class TorNetworkMetrics:
     bridges_published: str
     fetched_at: datetime
     source_urls: list[str] = field(default_factory=list)
+    # Per-bridge average clients from the live /clients document
+    # (TASK-INT-047-FIX-01). ``total_average_clients`` is the sum of
+    # these (users connecting via bridges); ``countries`` is empty from
+    # live data because /clients carries no country field.
+    bridge_clients: list[TorBridgeClients] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -209,6 +261,7 @@ class TorNetworkMetrics:
             "running_relays": self.running_relays,
             "running_bridges": self.running_bridges,
             "countries": [c.to_dict() for c in self.countries],
+            "bridge_clients": [b.to_dict() for b in self.bridge_clients],
             "total_average_clients": self.total_average_clients,
             "version": self.version,
             "relays_published": self.relays_published,
@@ -238,9 +291,15 @@ class TorNetworkMetrics:
             )
         if self.total_average_clients is not None:
             lines.append(
-                f"Estimated Tor users (all countries, average clients): "
-                f"{self.total_average_clients}."
+                f"Estimated Tor users connecting via bridges (average "
+                f"clients): {self.total_average_clients}."
             )
+            if not self.countries:
+                lines.append(
+                    "No per-country breakdown is published in the "
+                    "Onionoo clients document (entries carry fingerprint "
+                    "and average clients only)."
+                )
         for country in self.countries[:10]:
             if country.average_clients is not None:
                 lines.append(
@@ -309,9 +368,9 @@ class TorNetworkMetrics:
                 {
                     "id": f"{base}-clients-total",
                     "text": (
-                        f"Estimated Tor users across all countries averaged "
-                        f"{self.total_average_clients} (Onionoo clients "
-                        f"document, relays published "
+                        f"Estimated Tor users connecting via bridges "
+                        f"averaged {self.total_average_clients} (Onionoo "
+                        f"clients document, relays published "
                         f"{self.relays_published})."
                     ),
                     "source_id": base,
@@ -346,7 +405,44 @@ async def _default_fetch(url: str) -> tuple[int, str, bytes]:
     return result.status_code, result.final_url, result.content
 
 
-_HISTORY_PERIODS = ("1_month", "1_week", "3_days", "3_months", "1_year", "5_years")
+_HISTORY_PERIODS = (
+    "1_month",
+    "1_week",
+    "3_days",
+    "3_months",
+    "6_months",
+    "1_year",
+    "5_years",
+)
+
+
+def _entry_fingerprint(entry: dict) -> str:
+    """A relay entry's fingerprint.
+
+    Live Onionoo 8.0 /bandwidth, /weights and /uptime key entries by
+    ``fingerprint``; the short key ``f`` exists only in /summary
+    (TASK-INT-047-FIX-01). Prefer ``fingerprint``, fall back to ``f``
+    so older / assumed shapes still match.
+    """
+    return str(entry.get("fingerprint", "") or entry.get("f", ""))
+
+
+def _latest_value(raw: object) -> float | None:
+    """Latest value of a scalar or a period-keyed history map.
+
+    Plain numbers pass through. Dicts are parsed as Onionoo histories
+    (best period first) and the latest value is scaled by the
+    history's factor (``value * factor`` per the Onionoo spec:
+    "Factor by which subsequent data values need to be multiplied to
+    obtain original values"). Returns None when the value is absent,
+    empty, or unparseable — never fabricated.
+    """
+    if isinstance(raw, (int, float)):
+        return float(raw)
+    history = _parse_history(raw if isinstance(raw, dict) else None)
+    if history is None or not history.values:
+        return None
+    return history.values[-1] * history.factor
 
 
 def _parse_history(raw: dict | None) -> TorHistory | None:
@@ -444,7 +540,9 @@ class TorMetricsClient:
             "/bandwidth", {"search": fingerprint, "limit": "1"}
         )
         relays, _ = self._relays(payload)
-        entry = next((r for r in relays if str(r.get("f", "")) == fingerprint), None)
+        entry = next(
+            (r for r in relays if _entry_fingerprint(r) == fingerprint), None
+        )
         if entry is None:
             raise TorMetricsUnavailable(
                 f"Onionoo has no bandwidth document for relay {fingerprint!r}"
@@ -457,7 +555,14 @@ class TorMetricsClient:
         )
 
     async def relay_weights(self, fingerprint: str) -> TorWeights:
-        """Consensus weight for one relay (weights doc)."""
+        """Consensus weight for one relay (weights doc).
+
+        Live Onionoo 8.0 serves ``consensus_weight`` /
+        ``consensus_weight_fraction`` as period-keyed history maps, not
+        plain numbers — they are parsed as histories and the scalars
+        are the latest values scaled by the history factor
+        (TASK-INT-047-FIX-01).
+        """
         fingerprint = (fingerprint or "").strip()
         if not fingerprint:
             raise TorMetricsUnavailable("a relay fingerprint is required")
@@ -465,18 +570,24 @@ class TorMetricsClient:
             "/weights", {"search": fingerprint, "limit": "1"}
         )
         relays, _ = self._relays(payload)
-        entry = next((r for r in relays if str(r.get("f", "")) == fingerprint), None)
+        entry = next(
+            (r for r in relays if _entry_fingerprint(r) == fingerprint), None
+        )
         if entry is None:
             raise TorMetricsUnavailable(
                 f"Onionoo has no weights document for relay {fingerprint!r}"
             )
-        weight = entry.get("consensus_weight")
-        fraction = entry.get("consensus_weight_fraction")
+        weight_hist = _parse_history(entry.get("consensus_weight"))
+        fraction_hist = _parse_history(entry.get("consensus_weight_fraction"))
+        weight = _latest_value(entry.get("consensus_weight"))
+        fraction = _latest_value(entry.get("consensus_weight_fraction"))
         return TorWeights(
             fingerprint=fingerprint,
             nickname=str(entry.get("n", "")),
-            consensus_weight=int(weight) if isinstance(weight, (int, float)) else None,
-            consensus_weight_fraction=float(fraction) if isinstance(fraction, (int, float)) else None,
+            consensus_weight=int(round(weight)) if weight is not None else None,
+            consensus_weight_fraction=float(fraction) if fraction is not None else None,
+            consensus_weight_history=weight_hist,
+            consensus_weight_fraction_history=fraction_hist,
         )
 
     async def relay_uptime(self, fingerprint: str) -> TorUptime:
@@ -488,7 +599,9 @@ class TorMetricsClient:
             "/uptime", {"search": fingerprint, "limit": "1"}
         )
         relays, _ = self._relays(payload)
-        entry = next((r for r in relays if str(r.get("f", "")) == fingerprint), None)
+        entry = next(
+            (r for r in relays if _entry_fingerprint(r) == fingerprint), None
+        )
         if entry is None:
             raise TorMetricsUnavailable(
                 f"Onionoo has no uptime document for relay {fingerprint!r}"
@@ -499,20 +612,28 @@ class TorMetricsClient:
             uptime=_parse_history(entry.get("uptime")),
         )
 
-    async def network_clients(self) -> list[TorCountryClients]:
-        """Estimated Tor users by country (clients doc)."""
+    async def network_clients(self) -> list[TorBridgeClients]:
+        """Estimated Tor users per bridge (clients doc).
+
+        Live Onionoo 8.0 /clients carries per-BRIDGE average clients
+        only: ``relays`` is empty and bridge entries have
+        ``fingerprint`` + ``average_clients`` (a period-keyed history
+        map), no country field (TASK-INT-047-FIX-01). There is no
+        per-country breakdown in this endpoint; the returned rows are
+        per-bridge, latest value scaled by the history factor.
+        """
         payload = await self._get_document("/clients")
-        relays, _ = self._relays(payload)
-        out: list[TorCountryClients] = []
-        for entry in relays:
-            country = str(entry.get("country", ""))
-            if not country:
+        _, bridges = self._relays(payload)
+        out: list[TorBridgeClients] = []
+        for entry in bridges:
+            fingerprint = _entry_fingerprint(entry)
+            if not fingerprint:
                 continue
-            clients = entry.get("average_clients")
+            value = _latest_value(entry.get("average_clients"))
             out.append(
-                TorCountryClients(
-                    country=country,
-                    average_clients=int(clients) if isinstance(clients, (int, float)) else None,
+                TorBridgeClients(
+                    fingerprint=fingerprint,
+                    average_clients=int(round(value)) if value is not None else None,
                 )
             )
         return out
@@ -520,10 +641,14 @@ class TorMetricsClient:
     async def network_snapshot(
         self, query: str, limit: int = 10
     ) -> TorNetworkMetrics:
-        """A network-monitoring snapshot: relay census + client counts.
+        """A network-monitoring snapshot: relay census + bridge clients.
 
         Two Onionoo calls: ``/summary`` (the relay census for the query)
-        and ``/clients`` (users by country — the censorship metric).
+        and ``/clients`` (per-bridge average clients — the censorship
+        metric). Live /clients carries no per-country breakdown, so
+        ``countries`` is empty and ``total_average_clients`` is the sum
+        of per-bridge average clients (users connecting via bridges)
+        (TASK-INT-047-FIX-01).
         """
         query = (query or "").strip()
         if not query:
@@ -537,7 +662,6 @@ class TorMetricsClient:
             "/summary",
             {"search": query, "limit": str(max(1, min(limit, 50))), "running": "true"},
         )
-        clients_payload = await self._get_document("/clients")
         relays, bridges = self._relays(summary)
         summaries: list[TorRelaySummary] = []
         running_relays = 0
@@ -560,30 +684,24 @@ class TorMetricsClient:
         for entry in bridges:
             if str(entry.get("f", "")) and bool(entry.get("r", False)):
                 running_bridges += 1
-        client_rows, _ = self._relays(clients_payload)
+        client_rows = await self.network_clients()
         countries: list[TorCountryClients] = []
         total: int | None = None
         running_total = 0
         saw_any = False
-        for entry in client_rows:
-            country = str(entry.get("country", ""))
-            if not country:
-                continue
-            clients = entry.get("average_clients")
-            value = int(clients) if isinstance(clients, (int, float)) else None
-            if value is not None:
-                running_total += value
+        for row in client_rows:
+            if row.average_clients is not None:
+                running_total += row.average_clients
                 saw_any = True
-            countries.append(TorCountryClients(country=country, average_clients=value))
         if saw_any:
             total = running_total
-        countries.sort(key=lambda c: (c.average_clients is None, -(c.average_clients or 0)))
         return TorNetworkMetrics(
             query=query,
             relays=summaries,
             running_relays=running_relays,
             running_bridges=running_bridges,
             countries=countries,
+            bridge_clients=client_rows,
             total_average_clients=total,
             version=str(summary.get("version", "")),
             relays_published=str(summary.get("relays_published", "")),
@@ -597,6 +715,7 @@ __all__ = [
     "ONIONOO_BASE",
     "METRICS_HOME",
     "TorBandwidth",
+    "TorBridgeClients",
     "TorCountryClients",
     "TorHistory",
     "TorMetricsClient",

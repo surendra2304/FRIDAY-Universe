@@ -1,9 +1,12 @@
-"""Tests for the Tor Metrics source (TASK-INT-047).
+"""Tests for the Tor Metrics source (TASK-INT-047, TASK-INT-047-FIX-01).
 
 Hermetic: the Onionoo fetcher is an injected fake; no live Tor Metrics
-call is made. Fixture JSON follows the real Onionoo protocol shape
-(version / relays_published / relays+bridges arrays; summary fields
-n/f/a/r; bandwidth + uptime histories keyed by period).
+call is made. Fixture JSON follows the real Onionoo 8.0 protocol shape
+(verified live 2026-11-27): /summary fields n/f/a/r; /bandwidth,
+/weights and /uptime entries keyed by ``fingerprint`` (no ``f``/``n``);
+consensus_weight(_fraction) and average_clients as period-keyed
+history maps; /clients as per-bridge fingerprint + average_clients
+histories with NO country field and an empty ``relays`` array.
 """
 
 from __future__ import annotations
@@ -56,8 +59,10 @@ BANDWIDTH_DOC = {
     "bridges_published": "2026-11-27 04:00:00",
     "relays": [
         {
-            "f": FP1,
-            "n": "moria1",
+            # Live Onionoo 8.0 shape (TASK-INT-047-FIX-01): entries are
+            # keyed by ``fingerprint`` and carry NO ``n`` nickname and
+            # NO short ``f`` key. Histories are period-keyed maps.
+            "fingerprint": FP1,
             "write_history": {
                 "1_month": {
                     "first": "2026-10-28 00:00:00",
@@ -65,6 +70,13 @@ BANDWIDTH_DOC = {
                     "interval": 86400,
                     "factor": 1.0,
                     "values": [1200000, 1350000, 1100000],
+                },
+                "6_months": {
+                    "first": "2026-05-28 00:00:00",
+                    "last": "2026-11-27 00:00:00",
+                    "interval": 86400,
+                    "factor": 1.0,
+                    "values": [1000000, 1100000],
                 },
                 "1_week": {
                     "first": "2026-11-20 00:00:00",
@@ -94,10 +106,28 @@ WEIGHTS_DOC = {
     "bridges_published": "2026-11-27 04:00:00",
     "relays": [
         {
-            "f": FP1,
-            "n": "moria1",
-            "consensus_weight": 123456,
-            "consensus_weight_fraction": 0.0021,
+            # Live Onionoo 8.0 shape (TASK-INT-047-FIX-01):
+            # ``fingerprint`` key; consensus_weight(_fraction) are
+            # period-keyed history maps, not plain numbers.
+            "fingerprint": FP1,
+            "consensus_weight": {
+                "1_month": {
+                    "first": "2026-10-28 00:00:00",
+                    "last": "2026-11-27 00:00:00",
+                    "interval": 14400,
+                    "factor": 0.02,
+                    "values": [990, 999],
+                },
+            },
+            "consensus_weight_fraction": {
+                "1_month": {
+                    "first": "2026-10-28 00:00:00",
+                    "last": "2026-11-27 00:00:00",
+                    "interval": 14400,
+                    "factor": 1e-10,
+                    "values": [880, 887],
+                },
+            },
         }
     ],
     "bridges": [],
@@ -107,12 +137,36 @@ CLIENTS_DOC = {
     "version": "9.0",
     "relays_published": "2026-11-27 04:00:00",
     "bridges_published": "2026-11-27 04:00:00",
-    "relays": [
-        {"country": "us", "average_clients": 500000},
-        {"country": "de", "average_clients": 250000},
-        {"country": "ir", "average_clients": 120000},
+    # Live Onionoo 8.0 shape (TASK-INT-047-FIX-01): ``relays`` is empty;
+    # bridge entries carry ONLY ``fingerprint`` + ``average_clients``
+    # (a period-keyed history map). NO country field exists.
+    "relays": [],
+    "bridges": [
+        {
+            "fingerprint": FP1,
+            "average_clients": {
+                "1_month": {
+                    "first": "2026-10-28 00:00:00",
+                    "last": "2026-11-27 00:00:00",
+                    "interval": 86400,
+                    "factor": 0.5,
+                    "values": [100, 200],
+                },
+            },
+        },
+        {
+            "fingerprint": FP2,
+            "average_clients": {
+                "1_month": {
+                    "first": "2026-10-28 00:00:00",
+                    "last": "2026-11-27 00:00:00",
+                    "interval": 86400,
+                    "factor": 1.0,
+                    "values": [50, 60],
+                },
+            },
+        },
     ],
-    "bridges": [],
 }
 
 UPTIME_DOC = {
@@ -121,8 +175,9 @@ UPTIME_DOC = {
     "bridges_published": "2026-11-27 04:00:00",
     "relays": [
         {
-            "f": FP1,
-            "n": "moria1",
+            # Live Onionoo 8.0 shape (TASK-INT-047-FIX-01): entries are
+            # keyed by ``fingerprint`` and carry NO ``n`` nickname.
+            "fingerprint": FP1,
             "uptime": {
                 "1_month": {
                     "first": "2026-10-28 00:00:00",
@@ -225,12 +280,40 @@ async def test_relay_bandwidth_prefers_1_month_history():
     client = tm.TorMetricsClient(fetch=make_fetch({"/bandwidth": BANDWIDTH_DOC}))
     bw = await client.relay_bandwidth(FP1)
     assert bw.fingerprint == FP1
-    assert bw.nickname == "moria1"
+    # Live /bandwidth carries no nickname field (TASK-INT-047-FIX-01).
+    assert bw.nickname == ""
     assert bw.write_history is not None
     assert bw.write_history.period == "1_month"
     assert bw.write_history.values == [1200000, 1350000, 1100000]
     assert bw.read_history is not None
     assert bw.read_history.values == [900000, 950000, 880000]
+
+
+@pytest.mark.asyncio
+async def test_relay_bandwidth_matches_fingerprint_key_not_short_f():
+    # TASK-INT-047-FIX-01: live /bandwidth entries are keyed by
+    # ``fingerprint``; the old client matched the short ``f`` key
+    # (which exists only in /summary) and raised for every relay.
+    client = tm.TorMetricsClient(fetch=make_fetch({"/bandwidth": BANDWIDTH_DOC}))
+    bw = await client.relay_bandwidth(FP1)
+    assert bw.fingerprint == FP1
+    assert bw.write_history is not None
+
+
+@pytest.mark.asyncio
+async def test_relay_bandwidth_short_f_key_still_matches():
+    # Tolerance: an entry keyed by the old short ``f`` still matches.
+    doc = {
+        "version": "9.0",
+        "relays_published": "2026-11-27 04:00:00",
+        "bridges_published": "2026-11-27 04:00:00",
+        "relays": [{"f": FP1, "n": "moria1", "write_history": BANDWIDTH_DOC["relays"][0]["write_history"]}],
+        "bridges": [],
+    }
+    client = tm.TorMetricsClient(fetch=make_fetch({"/bandwidth": doc}))
+    bw = await client.relay_bandwidth(FP1)
+    assert bw.fingerprint == FP1
+    assert bw.nickname == "moria1"
 
 
 @pytest.mark.asyncio
@@ -242,10 +325,37 @@ async def test_relay_bandwidth_unknown_fingerprint_fails_closed():
 
 @pytest.mark.asyncio
 async def test_relay_weights_reports_consensus_weight():
+    # TASK-INT-047-FIX-01: live consensus_weight(_fraction) are
+    # period-keyed history maps; the scalars are the latest values
+    # scaled by the history factor (999 * 0.02 = 20; 887 * 1e-10).
     client = tm.TorMetricsClient(fetch=make_fetch({"/weights": WEIGHTS_DOC}))
+    weights = await client.relay_weights(FP1)
+    assert weights.consensus_weight == 20
+    assert weights.consensus_weight_fraction == pytest.approx(8.87e-08)
+    # The full histories are preserved, not discarded.
+    assert weights.consensus_weight_history is not None
+    assert weights.consensus_weight_history.period == "1_month"
+    assert weights.consensus_weight_history.values == [990, 999]
+    assert weights.consensus_weight_fraction_history is not None
+    assert weights.consensus_weight_fraction_history.values == [880, 887]
+
+
+@pytest.mark.asyncio
+async def test_relay_weights_plain_number_shape_still_passes_through():
+    # Tolerance: a plain-number weight (the pre-fix assumed shape)
+    # still parses instead of failing.
+    doc = {
+        "version": "9.0",
+        "relays_published": "2026-11-27 04:00:00",
+        "bridges_published": "2026-11-27 04:00:00",
+        "relays": [{"fingerprint": FP1, "consensus_weight": 123456, "consensus_weight_fraction": 0.0021}],
+        "bridges": [],
+    }
+    client = tm.TorMetricsClient(fetch=make_fetch({"/weights": doc}))
     weights = await client.relay_weights(FP1)
     assert weights.consensus_weight == 123456
     assert weights.consensus_weight_fraction == 0.0021
+    assert weights.consensus_weight_history is None
 
 
 @pytest.mark.asyncio
@@ -254,7 +364,7 @@ async def test_relay_weights_missing_weight_is_none_not_fabricated():
         "version": "9.0",
         "relays_published": "2026-11-27 04:00:00",
         "bridges_published": "2026-11-27 04:00:00",
-        "relays": [{"f": FP1, "n": "moria1"}],
+        "relays": [{"fingerprint": FP1}],
         "bridges": [],
     }
     client = tm.TorMetricsClient(fetch=make_fetch({"/weights": doc}))
@@ -264,12 +374,47 @@ async def test_relay_weights_missing_weight_is_none_not_fabricated():
 
 
 @pytest.mark.asyncio
-async def test_relay_uptime_reports_history():
+async def test_relay_uptime_matches_fingerprint_key():
+    # TASK-INT-047-FIX-01: live /uptime entries are keyed by
+    # ``fingerprint`` (no ``f``, no ``n``).
     client = tm.TorMetricsClient(fetch=make_fetch({"/uptime": UPTIME_DOC}))
     uptime = await client.relay_uptime(FP1)
+    assert uptime.fingerprint == FP1
+    assert uptime.nickname == ""
     assert uptime.uptime is not None
     assert uptime.uptime.period == "1_month"
     assert uptime.uptime.values == [100, 100, 99]
+
+
+def test_parse_history_prefers_1_month_over_6_months():
+    # TASK-INT-047-FIX-01: live history maps now carry a ``6_months``
+    # period; it must be parseable but lose to ``1_month``.
+    raw = {
+        "6_months": {
+            "first": "2026-05-28 00:00:00",
+            "last": "2026-11-27 00:00:00",
+            "interval": 86400,
+            "factor": 2.0,
+            "values": [10, 20],
+        },
+        "1_month": {
+            "first": "2026-10-28 00:00:00",
+            "last": "2026-11-27 00:00:00",
+            "interval": 86400,
+            "factor": 1.0,
+            "values": [1, 2, 3],
+        },
+    }
+    hist = tm._parse_history(raw)
+    assert hist is not None
+    assert hist.period == "1_month"
+    assert hist.values == [1, 2, 3]
+    # And 6_months alone parses (period recorded).
+    hist6 = tm._parse_history({"6_months": raw["6_months"]})
+    assert hist6 is not None
+    assert hist6.period == "6_months"
+    assert hist6.values == [10, 20]
+    assert hist6.factor == 2.0
 
 
 # ---------------------------------------------------------------------------
@@ -278,12 +423,29 @@ async def test_relay_uptime_reports_history():
 
 
 @pytest.mark.asyncio
-async def test_network_clients_returns_country_breakdown():
+async def test_network_clients_returns_bridge_clients():
+    # TASK-INT-047-FIX-01: live /clients carries per-BRIDGE average
+    # clients only (fingerprint + average_clients history map, no
+    # country field, relays empty). Scalars are latest values scaled
+    # by the history factor: 200 * 0.5 = 100; 60 * 1.0 = 60.
     client = tm.TorMetricsClient(fetch=make_fetch({"/clients": CLIENTS_DOC}))
-    countries = await client.network_clients()
-    assert [c.country for c in countries] == ["us", "de", "ir"]
-    assert countries[0].average_clients == 500000
-    assert countries[2].average_clients == 120000
+    rows = await client.network_clients()
+    assert [r.fingerprint for r in rows] == [FP1, FP2]
+    assert rows[0].average_clients == 100
+    assert rows[1].average_clients == 60
+
+
+@pytest.mark.asyncio
+async def test_network_clients_empty_when_no_bridges():
+    doc = {
+        "version": "9.0",
+        "relays_published": "2026-11-27 04:00:00",
+        "bridges_published": "2026-11-27 04:00:00",
+        "relays": [],
+        "bridges": [],
+    }
+    client = tm.TorMetricsClient(fetch=make_fetch({"/clients": doc}))
+    assert await client.network_clients() == []
 
 
 @pytest.mark.asyncio
@@ -295,8 +457,12 @@ async def test_network_snapshot_combines_census_and_clients():
     assert snapshot.running_relays == 2
     assert snapshot.running_bridges == 1
     assert len(snapshot.relays) == 3
-    assert snapshot.total_average_clients == 870000
-    assert snapshot.countries[0].country == "us"
+    # TASK-INT-047-FIX-01: total is the sum of per-bridge average
+    # clients (100 + 60 = 160); no per-country breakdown exists in
+    # the live /clients document, so countries is empty.
+    assert snapshot.total_average_clients == 160
+    assert snapshot.countries == []
+    assert [b.fingerprint for b in snapshot.bridge_clients] == [FP1, FP2]
     assert snapshot.version == "9.0"
     assert snapshot.relays_published == "2026-11-27 04:00:00"
     assert len(snapshot.source_urls) == 2
@@ -329,7 +495,11 @@ async def test_snapshot_source_record_shape_for_report_pipeline():
     assert source["url"].startswith("https://onionoo.torproject.org/summary")
     assert source["injection_risk"] is False
     assert "moria1" in source["text"]
-    assert "500000" in source["text"]
+    # TASK-INT-047-FIX-01: the total is bridge users (160), and the
+    # text says so honestly (no per-country breakdown in /clients).
+    assert "160" in source["text"]
+    assert "bridges" in source["text"]
+    assert "No per-country breakdown" in source["text"]
 
 
 @pytest.mark.asyncio
@@ -343,7 +513,10 @@ async def test_snapshot_claims_ground_findings_in_report_pipeline():
     assert all(c["source_id"] == source["id"] for c in claims)
     assert all(c["status"] == "ACTIVE" for c in claims)
     assert any("2 relays" in c["text"] for c in claims)
-    assert any("us" in c["text"] and "500000" in c["text"] for c in claims)
+    # TASK-INT-047-FIX-01: the clients claim is the bridge-users total
+    # (160), not a per-country row — /clients has no country field.
+    assert any("via bridges" in c["text"] and "160" in c["text"] for c in claims)
+    assert not any("countries" in c["text"] for c in claims)
     # The report pipeline grounds a finding that cites these claims.
     claims_by_id = {c["id"]: c for c in claims}
     findings = [
