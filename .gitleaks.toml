@@ -42,13 +42,30 @@
 #   value (real or fake) is still flagged: the regex is the literal string,
 #   not a pattern. Pinned by tests/test_gitleaks_config.py.
 
+# Third entry (TASK-SEN-039, 2026-11-27, Muse 19):
+#   docs/collaboration/TASK-SEN-039-CHECKPOINT-3.md line 20 carries the
+#   Sentinel classifier table row for RUN5-LEG2, whose Result cell reads
+#   "OWNER_PROMPT / credential_change, hard_bound=True" next to the literal
+#   action name "rotate sentinel API key in production". gitleaks'
+#   generic-api-key rule flags that classifier fragment (paired verifier
+#   TP13 reproduced it first-hand with gitleaks 8.30.1 + this config:
+#   exactly 1 finding on PR #2161). It is a classifier label, not a
+#   credential - no key material anywhere in the row. The scan covers the
+#   whole PR commit range (base^..head), so rewording the doc in a new
+#   commit cannot clear it - the flagged string stays in the earlier
+#   commit (same FRG-028 shape). Hence this allowlist entry for exactly
+#   that one literal fragment. Any other credential-like value is still
+#   flagged: the regex is the literal string, not a pattern. Pinned by
+#   tests/test_gitleaks_config.py.
+#
 [extend]
 useDefault = true
 
 [allowlist]
-  description = "Labeled SHA-256 content digests (verification receipts, source inventories, package checksums) are project artifacts, not credentials; plus one fake test-credential fixture (TASK-FRG-028)"
+  description = "Labeled SHA-256 content digests (verification receipts, source inventories, package checksums) are project artifacts, not credentials; plus one fake test-credential fixture (TASK-FRG-028) and one classifier-label fragment (TASK-SEN-039)"
   regexTarget = "line"
   regexes = [
     '''(?i)\bsha-?256\b['"` ]*\s*[:=]\s*['"`]?[0-9a-fA-F]{64}''',
     '''sk-live-1234567890abcdef''',
+    '''credential_change, hard_bound=True''',
   ]

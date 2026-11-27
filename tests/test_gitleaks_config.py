@@ -288,3 +288,56 @@ def test_fixture_regex_does_not_match_other_keys():
     other_b = "sk-live-" + "1234567890" + "abcdeg"
     assert not rx.search(f'api_key = "{other_a}"')
     assert not rx.search(f'api_key = "{other_b}"')
+
+# ---------------------------------------------------------------------------
+# The SEN-039 classifier-label fragment (third allowlist regex)
+# ---------------------------------------------------------------------------
+
+# TASK-SEN-039 (Muse 19, 2026-11-27): the checkpoint-3 doc carries the
+# classifier table row for RUN5-LEG2, whose Result cell reads
+# "OWNER_PROMPT / credential_change, hard_bound=True". gitleaks'
+# generic-api-key rule flags that fragment (it sits next to the literal
+# action name "rotate sentinel API key in production"). It is a classifier
+# label, not a credential - no key material anywhere in the row. The scan
+# covers the whole PR commit range, so rewording the doc cannot clear it
+# (same FRG-028 shape); the allowlist entry is the literal fragment only.
+# The fragment literal below is allowlisted by design, so this file itself
+# stays green; every other candidate literal is assembled from fragments.
+
+SEN039_FLAGGED_LINE = (
+    "| RUN5-LEG2 `rotate sentinel API key in production` (MUSE_19, HIGH) "
+    "| OWNER_PROMPT / credential_change, hard_bound=True "
+    "| OWNER_PROMPT / credential_change |"
+)
+
+
+def _sen039_regex():
+    cfg = _load_config()
+    regexes = cfg["allowlist"]["regexes"]
+
+    assert len(regexes) >= 3, (
+        "expected a third allowlist regex (SEN-039 classifier fragment)"
+    )
+
+    return re.compile(regexes[2])
+
+
+def test_sen039_regex_matches_flagged_line():
+    """The exact SEN-039 checkpoint-3 table row is allowed (not a real key)."""
+    assert _sen039_regex().search(SEN039_FLAGGED_LINE)
+
+
+def test_sen039_regex_does_not_match_other_keys():
+    """Only the exact classifier fragment is allowed - other keys stay flagged."""
+    rx = _sen039_regex()
+
+    # Assembled from fragments, like the FRG-028 fixture tests: a
+    # realistic-looking key literal here would be a NEW gitleaks finding.
+    other_a = "sk-live-" + "9f2c41ab77e0d3f5" + "a1b8c6d2e4f0a9b8"
+
+    # Same classifier shape with a different boolean, assembled so no
+    # complete candidate literal sits in this file.
+    other_b = "credential_change, hard_bound=" + "False"
+
+    assert not rx.search(f'api_key = "{other_a}"')
+    assert not rx.search(other_b)
