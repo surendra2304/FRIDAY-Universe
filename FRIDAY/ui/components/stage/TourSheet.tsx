@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  countAnswering,
   fetchAutonomy,
   fetchFleet,
   fetchLive,
@@ -70,7 +71,10 @@ export function TourSheet({ onSummon }: { onSummon: (kind: RoomKind) => void }) 
     };
   }, []);
 
-  const answering = facts.fleet?.agents.filter((a) => a.status === "online").length;
+  // TASK-WEB-004-FIX-02: one shared rule with the Fleet sheet — the old
+  // `status === "online"` exact match counted 0 of 9 on live data (the
+  // backend ships UPPERCASE statuses; REACHABLE also answers).
+  const answering = facts.fleet ? countAnswering(facts.fleet.agents) : undefined;
   const crewTotal = facts.fleet?.agents.length;
   const recentMoves = facts.autonomy?.recent_actions?.length;
 
@@ -200,3 +204,4 @@ export function TourSheet({ onSummon }: { onSummon: (kind: RoomKind) => void }) 
     </div>
   );
 }
+

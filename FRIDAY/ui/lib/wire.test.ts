@@ -195,4 +195,43 @@ import {
   }
 }
 
+// TASK-WEB-004-FIX-02: the Tour crew chip and the Fleet sheet must count
+// "answering" the same way. The live /api/agents/status snapshot below is
+// from 2026-11-28 05:17 IST (bridge curl, HTTP 200): 1 ONLINE + 4
+// REACHABLE + 4 DEGRADED. The Tour sheet's old rule
+// (status === "online", exact lowercase) counted 0 of 9 on this snapshot
+// while the Fleet sheet (toneFor === "good") counted 5 — the IG-WEB-06
+// FAIL. countAnswering is the one shared rule both sheets use.
+import { countAnswering, toneFor, type FleetAgent } from "./wire.ts";
+
+const liveAgents: FleetAgent[] = [
+  { id: "inference", name: "Inference", status: "REACHABLE" },
+  { id: "memora", name: "Memora", status: "ONLINE" },
+  { id: "stratex", name: "Stratex", status: "DEGRADED" },
+  { id: "intelx", name: "IntelX", status: "DEGRADED" },
+  { id: "futuris", name: "Futuris", status: "DEGRADED" },
+  { id: "cortex", name: "Cortex", status: "REACHABLE" },
+  { id: "forge", name: "Forge", status: "DEGRADED" },
+  { id: "sentinel", name: "Sentinel", status: "REACHABLE" },
+  { id: "vyralx", name: "VyralX", status: "REACHABLE" },
+];
+assert.equal(countAnswering(liveAgents), 5);
+// The Fleet sheet's inline rule agrees with the shared helper on the
+// same snapshot — the two counts can no longer diverge.
+assert.equal(
+  countAnswering(liveAgents),
+  liveAgents.filter((a) => toneFor(a.status) === "good").length,
+);
+// Tone classes: only "good" counts. DEGRADED is warn, not answering;
+// OFFLINE/UNREACHABLE are bad; unknown or missing status is muted.
+assert.equal(countAnswering([
+  { id: "a", name: "A", status: "OK" },
+  { id: "b", name: "B", status: "HEALTHY" },
+  { id: "c", name: "C", status: "DEGRADED" },
+  { id: "d", name: "D", status: "OFFLINE" },
+  { id: "e", name: "E", status: "SOMETHING-NEW" },
+  { id: "f", name: "F", status: "" },
+]), 2);
+assert.equal(countAnswering([]), 0);
+
 console.log("wire.test.ts: all expectations passed");
