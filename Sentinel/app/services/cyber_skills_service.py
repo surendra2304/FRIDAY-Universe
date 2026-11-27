@@ -44,10 +44,10 @@ else:
     _spec.loader.exec_module(cs)  # type: ignore[union-attr]
 
 try:
-    from app.services import defensive_skills as ds
-except ImportError:  # repo-root test imports use the Sentinel package path
+    from Sentinel.app.services import defensive_skills as ds
+except ImportError:  # Sentinel runtime imports use the app package path
     try:
-        from Sentinel.app.services import defensive_skills as ds
+        from app.services import defensive_skills as ds
     except ImportError:
         _ds_path = Path(__file__).resolve().parent / "defensive_skills.py"
         _ds_spec = importlib.util.spec_from_file_location(

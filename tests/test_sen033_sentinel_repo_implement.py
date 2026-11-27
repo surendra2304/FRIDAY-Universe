@@ -8,8 +8,8 @@ loader test. PentAGI is reference-only: Sentinel may bank its role-design
 notes, but no PentAGI code, import or dependency may enter the runtime.
 """
 
-import ast
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -113,23 +113,15 @@ def test_pentagi_is_not_imported_or_depended_on_by_sentinel_runtime():
         REPO_ROOT / "Sentinel" / "app",
         REPO_ROOT / "Sentinel" / "sentinel",
     ]
+    import_re = re.compile(
+        r"^\s*(?:import|from)\s+(pentagi|vxcontrol)\b", re.IGNORECASE
+    )
     for root in runtime_roots:
         if not root.exists():
             continue
         for path in root.rglob("*.py"):
-            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-            for node in ast.walk(tree):
-                if isinstance(node, ast.Import):
-                    imported = [alias.name for alias in node.names]
-                elif isinstance(node, ast.ImportFrom):
-                    imported = [node.module or ""]
-                else:
-                    continue
-                for name in imported:
-                    assert name.split(".")[0].lower() not in {
-                        "pentagi",
-                        "vxcontrol",
-                    }, f"{path} imports {name}"
+            for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+                assert not import_re.search(line), f"{path} imports PentAGI: {line}"
 
     for relpath in [
         "Sentinel/pyproject.toml",
