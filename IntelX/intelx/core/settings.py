@@ -447,6 +447,15 @@ class Settings(BaseSettings):
             "t.me/s/ preview); the flag stays off until the live leg proves the route."
         ),
     )
+    ENABLE_TOR_METRICS: bool = Field(
+        default=False,
+        description=(
+            "Enable the Tor Metrics route GET /api/v1/osint/tor-metrics "
+            "(TASK-INT-047). Tor Metrics data is public and keyless "
+            "(Onionoo API); the flag stays off by default until the live "
+            "leg proves the fetch against the real API."
+        ),
+    )
 
     # Auth & Storage
     SESSION_TTL_SECONDS: int = Field(

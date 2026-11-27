@@ -34,6 +34,13 @@ TASK-INT-051 additions (same consumer pattern, one route per library):
     /research/investigations/{id}/follow-up; creation now saves the
     run and returns its id.
 
+TASK-INT-047 addition (same consumer pattern, one route per library):
+
+  * ``TorMetricsClient`` (Tor Metrics / Onionoo, public relay/traffic/
+    censorship metrics) -> GET /osint/tor-metrics (flag-gated, default
+    off): a network-monitoring snapshot for a query, plus the source
+    record and claim dicts an IntelX report type cites.
+
 The footprint audit stays keyless-only: sections that need a paid key
 or a dark-web source are reported UNAVAILABLE by the audit itself, and
 the breach section's email leg stays fail-closed (no HIBP key exists;
@@ -202,6 +209,62 @@ async def telegram_topic_search(
         "query": build_search_query(topic),
         "count": len(candidates),
         "candidates": [c.to_dict() for c in candidates],
+    }
+
+
+# TorMetrics consumer (TASK-INT-047)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/osint/tor-metrics", summary="Tor Metrics network-monitoring snapshot")
+async def tor_metrics(
+    q: str = Query(..., min_length=2, max_length=200),
+    limit: int = Query(default=10, ge=1, le=50),
+    fingerprint: str | None = Query(default=None, min_length=40, max_length=40),
+) -> dict:
+    """Return a Tor Metrics network-monitoring snapshot for a query.
+
+    TASK-INT-047: public Tor Metrics data (relay/traffic/censorship
+    metrics only) from the Onionoo API — credential-free, fail-closed.
+    The snapshot carries the relay census for the query plus the
+    client-count-by-country document, and the source record + claim
+    dicts an IntelX report type cites (``filter_and_ground_findings`` /
+    ``render_report_markdown`` shapes). With ``fingerprint`` given, the
+    relay's bandwidth / consensus-weight / uptime documents are included
+    too. Flag-gated: the route answers 503 while
+    ``ENABLE_TOR_METRICS`` is off (default).
+    """
+    if not get_settings().ENABLE_TOR_METRICS:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Tor Metrics is disabled; enable "
+                "ENABLE_TOR_METRICS to use this route "
+                "(TASK-INT-047, flag off by default until the live leg proves it)"
+            ),
+        )
+    from intelx.connectors.tor_metrics import TorMetricsClient, TorMetricsUnavailable
+
+    client = TorMetricsClient()
+    try:
+        snapshot = await client.network_snapshot(q, limit=limit)
+        detail: dict = {}
+        if fingerprint:
+            bandwidth = await client.relay_bandwidth(fingerprint)
+            weights = await client.relay_weights(fingerprint)
+            uptime = await client.relay_uptime(fingerprint)
+            detail = {
+                "bandwidth": bandwidth.to_dict(),
+                "weights": weights.to_dict(),
+                "uptime": uptime.to_dict(),
+            }
+    except TorMetricsUnavailable as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return {
+        "snapshot": snapshot.to_dict(),
+        "source": snapshot.to_source(),
+        "claims": snapshot.to_claims(),
+        "detail": detail,
     }
 
 
