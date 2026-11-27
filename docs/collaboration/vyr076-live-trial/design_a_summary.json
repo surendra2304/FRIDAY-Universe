@@ -1,0 +1,43 @@
+{
+  "trial": "design_a_v4",
+  "module_version": "ig2-vyr01-1",
+  "note": "v4 of the Design A trial. v1: 1.87 min (below window). v2: 4.47 min, longest sentence was the External-links list. v3: prose filter too strict (1 sentence, 44s). v4: adaptive widening with header/link exclusions.",
+  "source_url": "https://en.wikipedia.org/wiki/James_Webb_Space_Telescope",
+  "source_extract_chars": 63618,
+  "selection_method": "4 longest prose sentences (>=35 words, headers/links/lists excluded) from an adaptively widened window until >=300 words, original order",
+  "selection_window_chars": 63618,
+  "sentences_used": 4,
+  "sentence_word_counts": [
+    78,
+    56,
+    72,
+    73
+  ],
+  "source_words_total": 279,
+  "estimated_minutes": 2.24,
+  "within_target_window": true,
+  "turns": 10,
+  "segments_rendered": 10,
+  "segments_total": 10,
+  "ffmpeg_rc": 0,
+  "episode_duration_seconds": 154.92,
+  "episode_bytes": 929757,
+  "episode_sha256": "841e5ac954d40f9b905a15800817ca9c92eba59dff297f7af205f88e24bfd137",
+  "episode_path": "/opt/friday_universe/VyralX/data/vyr076_live_trial/design_a_v4/episode.mp3",
+  "failure_cases": [
+    {
+      "case": "empty_source",
+      "result": "AudioContentError: source_text produced no sentences"
+    },
+    {
+      "case": "paid_provider_openai",
+      "result": "AudioContentError: TTS provider 'openai' is paid; free paths only ('edge', 'gemini')"
+    },
+    {
+      "case": "finance_advice_source",
+      "result": "AudioContentError: dialogue blocked by finance-advice screen: [{'pattern': 'direct recommendation to the viewer', 'matched_text': 'You should buy'}, {'pattern': 'promised returns', 'matched_text': 'guaranteed returns'}]"
+    }
+  ],
+  "publish": false,
+  "privacy_if_published": "unlisted"
+}

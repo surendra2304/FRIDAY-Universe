@@ -187,12 +187,17 @@ class AdvisoryGate:
         telemetry_freshness_sec: float | None = None,
         trade_count: int | None = None,
         current_drawdown_pct: float | None = None,
+        session_pnl_pct_prev: float | None = None,
+        session_pnl_pct_now: float | None = None,
+        drawdown_pct_prev: float | None = None,
+        drawdown_pct_now: float | None = None,
         inconsistent_state: bool = False,
         require_separate_auth: bool = False
     ) -> AdvisoryResult:
         """
         Validates an AIUniverseDecision against strict quantitative safety bounds,
-        telemetry freshness, sufficient data, drawdown thresholds, and consistency checks.
+        telemetry freshness, sufficient data, drawdown thresholds, consistency checks,
+        and Safety Nets stop-out onset triggers (TASK-STR-065).
         """
         decision_id = str(decision.get("decision_id", "UNKNOWN_DECISION"))
         parameter_changes = decision.get("parameter_changes", [])
@@ -279,6 +284,51 @@ class AdvisoryGate:
                 decision_id=decision_id,
                 rationale=rationale,
                 rejected_changes=[{"change": c, "reason": "Excessive drawdown breach"} for c in parameter_changes],
+                bounds_checked=bounds_checked
+            )
+
+        # Check: Safety Nets stop-out triggers (TASK-STR-065, source item S-05).
+        # Onset / sign-change signals in the advisory layer, evaluated before
+        # any authorization or bounds logic so a stop-out condition can never
+        # be masked by an otherwise passing decision: (1) the session flips
+        # from profit to loss; (2) capital drawdown starts. Either trigger
+        # rejects the whole decision. None inputs skip that trigger, matching
+        # the telemetry / trade-count / drawdown None-skip pattern.
+        safety_net_reasons: list[str] = []
+        if (
+            session_pnl_pct_prev is not None
+            and session_pnl_pct_now is not None
+            and session_pnl_pct_prev >= 0
+            and session_pnl_pct_now < 0
+        ):
+            safety_net_reasons.append(
+                f"Session flipped from profit to loss ({session_pnl_pct_prev:.2f}% -> "
+                f"{session_pnl_pct_now:.2f}%) (TASK-STR-065 Safety Nets stop-out rule)"
+            )
+        if (
+            drawdown_pct_prev is not None
+            and drawdown_pct_now is not None
+            and drawdown_pct_prev == 0
+            and drawdown_pct_now > 0
+        ):
+            safety_net_reasons.append(
+                f"Capital drawdown started ({drawdown_pct_prev:.2f}% -> "
+                f"{drawdown_pct_now:.2f}%) (TASK-STR-065 Safety Nets stop-out rule)"
+            )
+        if safety_net_reasons:
+            rationale = "Safety Nets stop-out rule triggered: " + "; ".join(safety_net_reasons) + ". Advisory rejected."
+            get_audit_manager().record_event(
+                event_type="RECOMMENDATION_REJECTED",
+                actor="advisory_gate",
+                details={"decision_id": decision_id, "reason": "SAFETY_NETS_STOP_OUT", "triggers": safety_net_reasons},
+                rationale=rationale,
+                status="REJECTED"
+            )
+            return AdvisoryResult(
+                verdict="REJECT",
+                decision_id=decision_id,
+                rationale=rationale,
+                rejected_changes=[{"change": c, "reason": "; ".join(safety_net_reasons)} for c in parameter_changes],
                 bounds_checked=bounds_checked
             )
 
@@ -510,6 +560,11 @@ class AdvisoryGate:
         """
         Validates a single bounded recommendation against the mandatory 8 fields and bounds.
         Returns (is_valid, rejection_reason, normalized_dict).
+
+        STR-065 parity decision: NOT-APPLICABLE. The Safety Nets stop-out
+        triggers are not evaluated here — this path receives no session PnL /
+        drawdown telemetry, so onset triggers cannot be computed. They are
+        enforced in validate(), which is the path that receives telemetry.
         """
         raw = recommendation.to_dict() if isinstance(recommendation, BoundedRecommendation) else dict(recommendation)
 

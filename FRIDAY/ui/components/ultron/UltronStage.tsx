@@ -45,7 +45,7 @@ import { getWakeArmedSnapshot, setWakeArmedPref, subscribeWakeArmed } from "@/li
        call's phase, not a microphone measurement.
    The Halo sheets and veil are Halo surfaces; this stage's own
    panels carry the fleet and the machine live instead. Halo
-   itself remains one switch away (see components/ThemeRoot.tsx).
+   itself lives one route away, at /halo (TASK-WEB-005-FIX-01).
    ================================================================ */
 
 const VoiceCall = dynamic(() => import("../VoiceCall").then((m) => m.VoiceCall), { ssr: false });

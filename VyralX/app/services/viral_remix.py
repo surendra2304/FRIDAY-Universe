@@ -1360,6 +1360,16 @@ _ASS_FRAMING_STYLE = (
     "&H99000000,0,0,0,0,100,100,1.2,0,3,12.0,0,8,50,50,150,1"
 )
 
+# TASK-VYR-072-FIX-01: same-band overlap tolerance, in seconds. _write_ass
+# refuses to author a doubled track (two cues in the same style overlapping
+# by more than this), but caption rows legitimately micro-overlap: _row_cue
+# extends each row by 0.06 s, so consecutive rows from fast speech can
+# overlap by up to ~0.06 s plus centisecond rounding. The Nov 18 doubled
+# class overlaps by 1.0 s or more — an order of magnitude above the
+# tolerance — so the tolerance keeps the deliberate row extension while
+# rejecting every real doubling.
+_ASS_SAME_BAND_OVERLAP_TOLERANCE_S = 0.1
+
 
 def _write_ass(cues: list[dict[str, Any]], ass_path: Path) -> Path:
     """Anton 120pt uppercase captions, one solid accent colour per row.
@@ -1373,8 +1383,19 @@ def _write_ass(cues: list[dict[str, Any]], ass_path: Path) -> Path:
     uses the AntonFraming style instead — the top band defined in
     ``_ASS_FRAMING_STYLE`` — so VyralX's own lines never share a screen
     zone with the source's captions (TASK-VYR-022).
+
+    TASK-VYR-072-FIX-01: fail-closed on a doubled track. Two cues in the
+    SAME style overlapping by more than
+    ``_ASS_SAME_BAND_OVERLAP_TOLERANCE_S`` raise ValueError instead of
+    writing a .ass that burns two captions in one screen zone at once
+    (the Nov 18 cycle-2 class: hook/payoff lines in AntonBold over the
+    source speech). Framing cues may overlap speech cues in time —
+    different bands by design (TASK-VYR-022) — so the check is per style,
+    after centisecond rounding (the timestamps libass actually sees), the
+    same semantics as ``captions.write_ass``.
     """
     events: list[str] = []
+    prev_by_style: dict[str, tuple[int, int]] = {}
     for cue_index, cue in enumerate(cues):
         # TASK-VYR-038: strip emoji at the burn-in boundary — the Anton
         # style carries no emoji glyphs, so one in a cue renders as a
@@ -1388,6 +1409,31 @@ def _write_ass(cues: list[dict[str, Any]], ass_path: Path) -> Path:
             continue
         start = float(cue["start"])
         end = float(cue["end"]) if float(cue["end"]) > start else start + 0.6
+        style = _FRAMING_STYLE_NAME if cue.get("framing") else "AntonBold"
+        start_cs = round(start * 100)
+        end_cs = round(end * 100)
+        if end_cs <= start_cs:
+            raise ValueError(
+                "Caption cue must span at least 1 centisecond after ASS "
+                f"timestamp rounding: {text[:60]!r}"
+            )
+        prev_start_cs, prev_end_cs = prev_by_style.get(style, (-1, -1))
+        if start_cs < prev_start_cs:
+            raise ValueError(
+                "Caption cues in style "
+                f"{style} must be ordered by start time after ASS timestamp "
+                f"rounding: {text[:60]!r} starts at {start_cs / 100:.2f}s"
+            )
+        overlap_cs = prev_end_cs - start_cs
+        if overlap_cs > round(_ASS_SAME_BAND_OVERLAP_TOLERANCE_S * 100):
+            raise ValueError(
+                "Caption cues in style "
+                f"{style} must not overlap by more than "
+                f"{_ASS_SAME_BAND_OVERLAP_TOLERANCE_S:.2f}s: {text[:60]!r} "
+                f"starts at {start_cs / 100:.2f}s while the previous {style} "
+                f"cue runs to {prev_end_cs / 100:.2f}s"
+            )
+        prev_by_style[style] = (start_cs, end_cs)
         accent = _ASS_PALETTE[cue_index % len(_ASS_PALETTE)]
         styled: list[str] = [accent]
         for word in text.split():
@@ -1397,7 +1443,6 @@ def _write_ass(cues: list[dict[str, Any]], ass_path: Path) -> Path:
                 styled.append(f"{_ASS_WHITE}{_ASS_POP}{word}{accent}")
             else:
                 styled.append(word)
-        style = _FRAMING_STYLE_NAME if cue.get("framing") else "AntonBold"
         events.append(
             f"Dialogue: 0,{_ass_time(start)},{_ass_time(end)},{style},,0,0,0,,"
             + " ".join(styled)

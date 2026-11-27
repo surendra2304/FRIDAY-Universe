@@ -106,6 +106,28 @@ All verified first-hand on main `489a1b3b`:
    ranking, fail-closed on fetch failure, flag-off route behaviour. No live Telegram calls
    in tests.
 
+## Design decision: watch inclusion — MANUAL (recorded before implementation)
+
+**Decision: inclusion stays a manual step in this task; no new Telegram-channel
+source kind is built here.**
+
+- `WatchDefinition.sources` is a `tuple[FeedSource, ...]` and `FeedSource` is an
+  RSS/Atom URL + publisher (`IntelX/intelx/watches/engine.py:74`). A Telegram
+  channel has no RSS feed, so a `t.me/s/<handle>` URL cannot be appended as a
+  `FeedSource` — the poller parses feeds, and an HTML preview page would break
+  it. "Propose for watch inclusion" therefore cannot mean "append a FeedSource".
+- The alternative — a new Telegram-channel source kind polled via the `t.me/s/`
+  preview (same credential-free pattern as SEN-03) — needs a new source-kind
+  type, a poller path, and a watch-definition change. That is a separate
+  adapter task with its own acceptance, not part of INT-046.
+- What INT-046 delivers for "propose": every candidate carries a structured
+  `proposal` (channel handle, preview URL, title, description, relevance
+  score, provenance, `inclusion: "manual"` + the reason, and the suggested
+  watch-source record a human/coordinator would add). The route returns
+  candidates with proposals; a human reviews and adds the channel manually
+  (or a follow-up task builds the adapter). Nothing in this task pretends
+  the channel is already a watch source.
+
 ## Gated items (not attempted; exact reason each)
 
 - **Live discovery verification** (a real topic query returning real channels): needs live

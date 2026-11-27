@@ -54,6 +54,25 @@
       "url": "https://youtube.com/shorts/SnVtdyiFjFM",
       "views": "2.6K",
       "watermark": "BLOCKED"
+    },
+    {
+      "bgm_presence": "BLOCKED",
+      "caption_track_count": "BLOCKED",
+      "discovery_round": 3,
+      "discovery_route": "S2 flat-playlist (bridge run_shell, 2026-11-27 ~03:30 IST)",
+      "duration_gate_15_60s": "PASS",
+      "duration_seconds": 45,
+      "id": "TLRhJ2zlhx8",
+      "licence": "PENDING",
+      "loudness": "BLOCKED",
+      "niche_guard": "CAUTION - 'Screenlink' in title signals a possible screen-capture/simulation format; script-side VYR-065 guard passed (rejected_niche 0), but format needs a guard re-check at QA stage (same treatment as candidate 3)",
+      "query": "amazing domino art chain reaction short",
+      "rank": null,
+      "title": "Satisfying RAINBOW Domino Screenlink (Amazing Domino Effects) (Massive Chain Reaction)",
+      "uploader": "The Domino Toppler",
+      "url": "https://youtube.com/shorts/TLRhJ2zlhx8",
+      "views": "103988",
+      "watermark": "BLOCKED"
     }
   ],
   "discovery": {
@@ -63,7 +82,8 @@
       "View counts on public search pages are rounded ('116M views'), unlike yt-dlp's exact integers; recorded here as shown, as strings.",
       "Sponsored ads (queries 2 and 6, between results 6 and 7) and a timestamp/key-moment link inside query 2 result 6 were not counted as video results.",
       "Round 2 (deeper results, ranks 11-30, 2026-11-27 01:22-01:37 IST): view counts on the sorted pages are not strictly descending in a few places (query 1 rank 29, query 2 rank 25, query 3 rank 29, query 5 rank 28/30) - recorded as shown. Two durations verified from element text (query 1 rank 29: 9 minutes 59 seconds; query 5 rank 17: 7 minutes 16 seconds); several long-video durations came from truncated list text ('12 minutes', '1 hour,') with thumbnail badges where visible. YNC8bJnwwxo appears twice (query 1 rank 26 and query 3 rank 16, same video). Query 5 ranks 18-21, 24, 28, 30 are separate uploads with the same title/channel/duration (5:19) and different IDs/view counts.",
-      "Round 2 sub-60s count: 5 of 120 (query 6 only): 0:52, 0:15 (excluded - in set), 0:16, 0:56, 1:00 (screened out - niche guard). All other queries: 0 Shorts-length in ranks 11-30."
+      "Round 2 sub-60s count: 5 of 120 (query 6 only): 0:52, 0:15 (excluded - in set), 0:16, 0:56, 1:00 (screened out - niche guard). All other queries: 0 Shorts-length in ranks 11-30.",
+      "S2 round (2026-11-27 ~03:25-03:40 IST, bridge run_shell, WATCH185 section 4(d) retry; no safety flag fired): 6 queries x ytsearch10 flat-playlist = 60 results; shorts-length 0/1/0/4/0/3 per query; S2-fresh 8 (Gq0GO14QiGM, JxAMNzlUFFE, 5uHUVyy3rNw, TLRhJ2zlhx8, 0QYrrGrwpzs, Z-k4pfVfz_g, o8NRDVVO0Lo, XwMLwKG5WrY). Post-filter vs the 20-ID set: 7 excluded/already in pool; 1 new candidate TLRhJ2zlhx8 (domino, 45s, 103,988 views, The Domino Toppler; CAUTION on 'Screenlink' title). S2 VyralX/ tree mirrors repo layout (no top-level flat scripts, no data/ dir) - checkpoint 2 flat-path reading superseded. No cookie jar on S2 (WARNING each query, no bot-block); S2 exclusion = CpQGaTtppnU only; 84-ID gap stands."
     ],
     "excluded_ids": [
       "-Cl9AAsXzk8",
@@ -135,6 +155,59 @@
         "when": "2026-11-27 01:22-01:37 IST"
       }
     ],
+    "s2_round": {
+      "queries": [
+        {
+          "query": "most satisfying video ever short",
+          "returned": 10,
+          "s2_fresh": [],
+          "shorts_len": 0
+        },
+        {
+          "query": "incredible street magic revealed short",
+          "returned": 10,
+          "s2_fresh": [
+            "Gq0GO14QiGM"
+          ],
+          "shorts_len": 1
+        },
+        {
+          "query": "satisfying hydraulic press crushing short",
+          "returned": 10,
+          "s2_fresh": [],
+          "shorts_len": 0
+        },
+        {
+          "query": "amazing domino art chain reaction short",
+          "returned": 10,
+          "s2_fresh": [
+            "JxAMNzlUFFE",
+            "5uHUVyy3rNw",
+            "TLRhJ2zlhx8",
+            "0QYrrGrwpzs"
+          ],
+          "shorts_len": 4
+        },
+        {
+          "query": "oddly satisfying soap carving short",
+          "returned": 10,
+          "s2_fresh": [],
+          "shorts_len": 0
+        },
+        {
+          "query": "epic basketball trick shot short",
+          "returned": 10,
+          "s2_fresh": [
+            "Z-k4pfVfz_g",
+            "o8NRDVVO0Lo",
+            "XwMLwKG5WrY"
+          ],
+          "shorts_len": 3
+        }
+      ],
+      "ran_at": "2026-11-27 ~03:25-03:40 IST",
+      "route": "bridge run_shell, server 2, VyralX/scripts/find_viral_candidates_flat.py --query-index 0..5"
+    },
     "shorts_length": 7,
     "shorts_length_detail": [
       {
@@ -200,7 +273,7 @@
     ],
     "zero_yield": "SUPERSEDED by round 2: 3 fresh candidates from 120 deeper results (ranks 11-30). Round 1 alone was 0 fresh from 60 results; the 6-query set is now exhausted at top-30 depth on the public route (round 1 + round 2 = 180 results read). Next discovery direction needs a coordinator decision (new queries, deeper still, or the S2 route)."
   },
-  "generated_at": "2026-11-27T01:40:00+05:30",
+  "generated_at": "2026-11-27T03:40:00+05:30",
   "media_gates_blocked": {
     "gates": [
       "licence",
@@ -209,8 +282,8 @@
       "watermark",
       "loudness"
     ],
-    "reason": "3 candidates exist; the media gates still need a download: yt-dlp download broken on S2 since 2026-11-24 (YouTube n-challenge unsolvable, SABR-only streaming experiment, zero formats). VYR-056 leg CLOSED as unachievable (coordinator ruling 4). WATCH151 ruling 1: gates PENDING/BLOCKED acceptable for the VYR-087 pool, proceed. Gates recorded PENDING (licence) / BLOCKED (caption_track_count, bgm_presence, watermark, loudness) per candidate; the S2 discovery leg that could change this is blocked (see checkpoint 3)."
+    "reason": "4 candidates exist; the media gates still need a download: yt-dlp download broken on S2 since 2026-11-24 (YouTube n-challenge unsolvable, SABR-only streaming experiment, zero formats). VYR-056 leg CLOSED as unachievable (coordinator ruling 4). WATCH151 ruling 1: gates PENDING/BLOCKED acceptable for the VYR-087 pool, proceed. Gates recorded PENDING (licence) / BLOCKED (caption_track_count, bgm_presence, watermark, loudness) per candidate; the S2 discovery leg ran 2026-11-27 ~03:30 IST (1 new candidate) and changed no gate."
   },
-  "s2_leg": "BLOCKED 2026-11-27 ~01:20 IST: run_shell added to the bridge client per WATCH180 section 2(b) (grant settled, owner tap 2026-11-26 18:25:56 IST; clarification 7200651240; standing clearance 7200564540), but the first live-leg execution attempt was stopped by a safety flag and was NOT retried. No S2 change was made; no S2 command ran. Coordinator ruling owed on the execution route before the S2 discovery leg can run.",
+  "s2_leg": "DONE 2026-11-27 ~03:25-03:40 IST (WATCH185 section 4(d) retry via bridge run_shell; no safety flag fired on the retry; grant settled, standing clearance 7200564540). Commands: ls of /opt/friday_universe/VyralX/ (exit 0; tree mirrors repo layout, scripts/ at VyralX/scripts/, no top-level flat scripts, no data/ dir) + python3 find_viral_candidates_flat.py --query-index 0..5 (cwd VyralX/scripts, timeout 300, each exit 0 in ~12-15s, --skip-download, read-only). 60 results (10/query); shorts-length 0/1/0/4/0/3; S2-fresh 8; post-filtered against the repo 20-ID exclusion set: 7 excluded/already in pool, 1 new candidate TLrhJ2zlhx8 (candidate 4). No cookie jar (VyralX/data/youtube_cookies.txt absent; WARNING on every query, no bot-block); excluded_known 1 per query (CpQGaTtppnU only) - the 84-ID exclusion gap stands as documented. Guard note: script-side VYR-065 guard passed all 8 (rejected_niche 0), including Rumble Viral XwMLwKG5WrY; checkpoint-3 precedent applied by hand. No S2 change made; no fleet action taken.",
   "task": "TASK-VYR-087"
 }
