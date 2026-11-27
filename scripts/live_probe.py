@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """TASK-REL-104 — live_probe.py: one command per agent, output filed as evidence.
 
-Probes the live Inference gateway (Server 1, port 8001) once per agent:
+Two modes (TASK-REL-119 added --public; the keyed mode below is REL-104):
 
+  KEYED mode (default): probes the live Inference gateway (Server 1,
+      port 8001) once per agent:
   leg A (health, genuinely per-agent): ``POST /v1/mesh/ping/{agent_id}``
       — the gateway pings that peer's ``/health`` with a 2.0 s deadline and
       returns ``reachable`` / ``status_code`` / ``latency_ms``
@@ -14,25 +16,51 @@ Probes the live Inference gateway (Server 1, port 8001) once per agent:
       proof — not a bare 200: the result carries model/provider, latency and
       the gateway's ``verification_evidence``.
 
+  PUBLIC mode (--public, TASK-REL-119): probes the PUBLIC gateway
+      ``https://friday-universe.duckdns.org`` with no API key at all:
+  leg A (health, genuinely per-agent): ``GET /{agent}/health`` — each
+      agent's own health endpoint behind the public ingress, verified live
+      2026-11-28 ~00:47 IST (7x 200, 3x 503 degraded: stratex, intelx,
+      futuris — see TASK-REL-119-EVIDENCE.md). A 503/degraded health
+      FAILS that agent; it is data, not a reason to re-run.
+  leg B (one real request per agent): ``GET`` of one genuine read-only
+      endpoint of that agent's own app (see PUBLIC_REAL_REQUEST): a second
+      status/health read for most agents, the agent's root status object
+      for memora, the VyralX Control Room page for vyralx (its only other
+      public read — every other candidate 404s), and ``/intelx/healthz``
+      for intelx (its root 404s). All GETs; nothing is mutated, no trade
+      is placed, no LLM call is made. Leg B passes on HTTP 200; the
+      body's own status (when JSON carries one) is recorded, so a 200
+      that self-reports unhealthy stays visible (forge: /status reports
+      unhealthy / database disconnected while /health reports ok).
+
 CODE-READ CAVEAT (checkpoint 2, verified first-hand on main): leg B reasons
-IN-GATEWAY. ``execute_task`` (``Inference/app/api/universal_task_routes.py``)
+IN-GATEWAY in keyed mode. ``execute_task`` (``Inference/app/api/universal_task_routes.py``)
 never forwards to the peer: it detects specialist requirements from
 ``source_agent`` / ``action`` and runs the LLM call in Inference, and the
-receipt always names ``target: "inference"``. So leg B proves the gateway's
+receipt always names ``target: "inference"``. So keyed leg B proves the gateway's
 real-request path per ``target_agent`` label; leg A is the proof the request
 path actually reaches each peer. Do not read leg B as peer execution.
+In PUBLIC mode there is no such caveat: both legs hit the agent's own app
+directly through the public ingress.
 
 Auth: mesh and task routes require the Inference API key
 (``require_inference_api_key``: ``X-Inference-API-Key`` / ``X-API-Key`` /
 ``X-Friday-API-Key`` / ``Authorization: Bearer``). The key comes from the
 environment (default ``INFERENCE_API_KEY``) — never a CLI argument, never
-pasted into output. ``GET /v1/health`` needs no key.
+pasted into output. ``GET /v1/health`` needs no key. Public mode needs no
+key at all: ``GET /{agent}/health`` and the leg-B endpoints are unauthenticated
+behind the public ingress (verified live; ``/v1/health`` under /inference
+is NOT — it 401s without a key, which is why public mode does not use it).
 
 Usage:
     INFERENCE_API_KEY=<key> python scripts/live_probe.py
     INFERENCE_API_KEY=<key> python scripts/live_probe.py --gateway https://friday-universe.duckdns.org/inference
     INFERENCE_API_KEY=<key> python scripts/live_probe.py --agents friday,memora --output /tmp/probe.json
     python scripts/live_probe.py --health-only        # no LLM calls, key still needed for ping
+    python scripts/live_probe.py --public              # no key; public gateway, per-agent /{agent}/health + one real read
+    python scripts/live_probe.py --public --health-only
+    python scripts/live_probe.py --public --output /tmp/probe-public.json
 
 Exit code: 0 when every probed agent passes both legs, 1 when any agent
 fails a leg, 2 when the gateway itself is unreachable or misconfigured.
@@ -73,6 +101,30 @@ PEERS = [a for a in AGENTS if a != "inference"]
 DEFAULT_GATEWAY = "http://10.0.0.121:8001"
 PUBLIC_GATEWAY = "https://friday-universe.duckdns.org/inference"
 DEFAULT_KEY_ENV = "INFERENCE_API_KEY"
+
+# TASK-REL-119: public-gateway base (no /inference suffix — leg A/B hit each
+# agent's own mount point) and one genuine read-only request per agent.
+# Verified live 2026-11-28 ~00:47 IST against the public ingress; every
+# other candidate probed for these agents 404'd (vyralx, memora) or the
+# root 404'd (intelx — hence /healthz). See TASK-REL-119-EVIDENCE.md §2.
+PUBLIC_BASE = "https://friday-universe.duckdns.org"
+PUBLIC_REAL_REQUEST = {
+    "friday": "/friday/api/health",
+    "inference": "/inference/status",
+    "memora": "/memora/",
+    "stratex": "/stratex/api/status",
+    "futuris": "/futuris/status",
+    "intelx": "/intelx/healthz",
+    "forge": "/forge/status",
+    "sentinel": "/sentinel/status",
+    "cortex": "/cortex/status",
+    "vyralx": "/vyralx/",
+}
+
+# A public health body counts as healthy only when it says so itself:
+# {"status": "healthy"|"ok"} or {"overall": "healthy"|"ok"}. A 503 with
+# {"status": "degraded"} fails, as does any non-200.
+HEALTHY_VALUES = {"healthy", "ok"}
 
 # Tiny, read-only probe prompt. Kept minimal on purpose: the gateway bills
 # max(100, len(payload)//4) estimated tokens per execute call, and the
@@ -268,6 +320,83 @@ def probe_agent(
     return record
 
 
+def _public_health_ok(status: int | None, body: dict | str | None) -> bool:
+    """Public leg-A pass rule: HTTP 200 and the body self-reports healthy/ok."""
+    if status != 200 or not isinstance(body, dict):
+        return False
+    for key in ("status", "overall"):
+        value = body.get(key)
+        if isinstance(value, str) and value.lower() in HEALTHY_VALUES:
+            return True
+    return False
+
+
+def _body_snippet(body: dict | str | None, limit: int = 120) -> str:
+    """Short evidence snippet of a leg-B body (no huge HTML dumps)."""
+    if isinstance(body, dict):
+        text = json.dumps(body, sort_keys=True)
+    elif isinstance(body, str):
+        text = body
+    else:
+        text = str(body)
+    return " ".join(text.split())[:limit]
+
+
+def probe_agent_public(
+    agent: str,
+    gateway: str,
+    timeout: float,
+    health_only: bool,
+    started_at: str,
+) -> dict:
+    """TASK-REL-119 public probe: GET /{agent}/health + one real GET, no key."""
+    record: dict = {
+        "agent": agent,
+        "started_at": started_at,
+        "health": None,
+        "execute": None,
+        "pass": False,
+        "notes": [],
+    }
+
+    # --- Leg A: the agent's own health endpoint behind the public ingress --
+    status, body, latency_ms = _request(
+        "GET", f"{gateway}/{agent}/health", None, None, timeout
+    )
+    healthy = _public_health_ok(status, body)
+    record["health"] = {
+        "via": f"GET /{agent}/health",
+        "status_code": status,
+        "latency_ms": latency_ms,
+        "reachable": healthy,
+        "body_status": body.get("status") if isinstance(body, dict) else None,
+        "detail": _body_snippet(body) if not healthy else None,
+    }
+    health_ok = healthy
+
+    # --- Leg B: one genuine read-only request to the agent's own app ------
+    if health_only:
+        record["notes"].append("real-request leg skipped (--health-only)")
+        record["pass"] = health_ok
+        return record
+    path = PUBLIC_REAL_REQUEST[agent]
+    status, body, latency_ms = _request(
+        "GET", f"{gateway}{path}", None, None, timeout
+    )
+    real_ok = status == 200
+    record["execute"] = {
+        "via": f"GET {path}",
+        "status_code": status,
+        "latency_ms": latency_ms,
+        "result_status": "SUCCESS" if real_ok else "FAILED",
+        "body_status": body.get("status") if isinstance(body, dict) else None,
+        "body_overall": body.get("overall") if isinstance(body, dict) else None,
+        "content_receipt": _body_snippet(body),
+    }
+    record["pass"] = health_ok and real_ok
+    return record
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Probe the live Inference gateway once per agent: "
@@ -302,6 +431,14 @@ def main(argv: list[str] | None = None) -> int:
         help="Run only the health leg (no LLM calls).",
     )
     parser.add_argument(
+        "--public",
+        action="store_true",
+        help="Public mode (TASK-REL-119): probe the public gateway "
+        f"{PUBLIC_BASE} with no API key — GET /{{agent}}/health plus one "
+        "genuine read-only GET per agent. Default gateway becomes "
+        f"{PUBLIC_BASE} unless --gateway is given.",
+    )
+    parser.add_argument(
         "--output",
         default=None,
         help="Write the JSON evidence record to this file as well as stdout.",
@@ -313,9 +450,14 @@ def main(argv: list[str] | None = None) -> int:
     if unknown:
         print(f"unknown agent(s): {', '.join(unknown)}", file=sys.stderr)
         return 2
-    gateway = args.gateway.rstrip("/")
+    if args.public and args.gateway == os.environ.get(
+        "LIVE_PROBE_GATEWAY", DEFAULT_GATEWAY
+    ):
+        gateway = PUBLIC_BASE
+    else:
+        gateway = args.gateway.rstrip("/")
     api_key = os.environ.get(args.api_key_env)
-    if not api_key:
+    if not api_key and not args.public:
         print(
             f"warning: no API key in ${args.api_key_env} — "
             "mesh ping / task execute legs will fail or skip",
@@ -323,24 +465,40 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     started_at = _iso_now()
-    gateway_health: dict = {"via": "GET /v1/health"}
-    status, body, latency_ms = _request(
-        "GET", f"{gateway}/v1/health", None, None, args.timeout
-    )
-    gateway_health.update(
-        {
-            "status_code": status,
-            "latency_ms": latency_ms,
-            "reachable": status == 200
-            and isinstance(body, dict)
-            and body.get("status") == "healthy",
-            "detail": body if status != 200 or not isinstance(body, dict) else body.get("service"),
-        }
-    )
+    if args.public:
+        gateway_health: dict = {"via": "GET /health"}
+        status, body, latency_ms = _request(
+            "GET", f"{gateway}/health", None, None, args.timeout
+        )
+        gateway_health.update(
+            {
+                "status_code": status,
+                "latency_ms": latency_ms,
+                "reachable": _public_health_ok(status, body),
+                "detail": body.get("overall") if isinstance(body, dict) else body,
+            }
+        )
+    else:
+        gateway_health = {"via": "GET /v1/health"}
+        status, body, latency_ms = _request(
+            "GET", f"{gateway}/v1/health", None, None, args.timeout
+        )
+        gateway_health.update(
+            {
+                "status_code": status,
+                "latency_ms": latency_ms,
+                "reachable": status == 200
+                and isinstance(body, dict)
+                and body.get("status") == "healthy",
+                "detail": body if status != 200 or not isinstance(body, dict) else body.get("service"),
+            }
+        )
     if not gateway_health["reachable"]:
+        gate_via = gateway_health["via"]
         evidence = {
             "tool": "live_probe.py",
-            "task": "TASK-REL-104",
+            "task": "TASK-REL-119" if args.public else "TASK-REL-104",
+            "mode": "public" if args.public else "gateway",
             "gateway": gateway,
             "started_at": started_at,
             "finished_at": _iso_now(),
@@ -349,7 +507,7 @@ def main(argv: list[str] | None = None) -> int:
             "passed": 0,
             "failed": len(agents),
             "ok": False,
-            "error": "gateway /v1/health unreachable or unhealthy — no per-agent probes run",
+            "error": f"gateway {gate_via} unreachable or unhealthy — no per-agent probes run",
         }
         print(json.dumps(evidence, indent=2))
         if args.output:
@@ -357,14 +515,21 @@ def main(argv: list[str] | None = None) -> int:
                 json.dump(evidence, fh, indent=2)
         return 2
 
-    records = [
-        probe_agent(a, gateway, api_key, args.timeout, args.health_only, started_at)
-        for a in agents
-    ]
+    if args.public:
+        records = [
+            probe_agent_public(a, gateway, args.timeout, args.health_only, started_at)
+            for a in agents
+        ]
+    else:
+        records = [
+            probe_agent(a, gateway, api_key, args.timeout, args.health_only, started_at)
+            for a in agents
+        ]
     passed = sum(1 for r in records if r["pass"])
     evidence = {
         "tool": "live_probe.py",
-        "task": "TASK-REL-104",
+        "task": "TASK-REL-119" if args.public else "TASK-REL-104",
+        "mode": "public" if args.public else "gateway",
         "gateway": gateway,
         "started_at": started_at,
         "finished_at": _iso_now(),
@@ -374,9 +539,18 @@ def main(argv: list[str] | None = None) -> int:
         "failed": len(records) - passed,
         "ok": passed == len(records),
         "caveat": (
-            "Leg B (/v1/task/execute) reasons in-gateway; its receipt always "
-            "names target 'inference'. Leg A (mesh ping) is the per-agent "
-            "reach proof. See the script docstring."
+            (
+                "Public mode: both legs hit each agent's own app through the "
+                "public ingress, no key, no LLM call, no mutation. A 503 "
+                "/degraded health fails that agent; a 200 whose body "
+                "self-reports unhealthy stays visible in body_status."
+            )
+            if args.public
+            else (
+                "Leg B (/v1/task/execute) reasons in-gateway; its receipt always "
+                "names target 'inference'. Leg A (mesh ping) is the per-agent "
+                "reach proof. See the script docstring."
+            )
         ),
     }
     text = json.dumps(evidence, indent=2)
