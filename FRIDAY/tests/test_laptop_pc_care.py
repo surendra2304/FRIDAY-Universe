@@ -22,11 +22,14 @@ from friday.core.types import ToolResult  # noqa: E402
 from friday.remote.laptop_bridge import ALLOWED_LAPTOP_COMMANDS  # noqa: E402
 from friday.tools.builtin.laptop_pc_care import (  # noqa: E402
     NAMED_SHORTCUTS,
+    STORAGE_SEQUENCES,
     LaptopHotkeyTool,
     LaptopPcCleanupTool,
     LaptopPcHealthTool,
     LaptopStorageCheckTool,
     LaptopStorageRepairTool,
+    LaptopStorageSequencesTool,
+    build_storage_sequence_plan,
     validate_keys,
 )
 
@@ -42,7 +45,7 @@ _spec.loader.exec_module(_client)
 
 
 def test_pc_care_commands_allowed_on_both_sides():
-    for command in ("pc_health", "pc_cleanup", "hotkey", "storage_check", "storage_repair"):
+    for command in ("pc_health", "pc_cleanup", "hotkey", "storage_check", "storage_repair", "storage_sequences"):
         assert command in ALLOWED_LAPTOP_COMMANDS
         assert command in _client.ALLOWED_COMMANDS
         assert command in _client._COMMANDS
@@ -277,3 +280,208 @@ def test_validate_keys_and_shortcut_map_integrity():
     assert validate_keys([]) is None
     for name, combo in NAMED_SHORTCUTS.items():
         assert validate_keys(combo) is not None, name
+
+
+# ---------------------------------------------------------------------------
+# storage sequences (TASK-FRD-046)
+# ---------------------------------------------------------------------------
+
+
+def test_sequence_registry_has_four_sequences():
+    assert sorted(STORAGE_SEQUENCES) == [
+        "diskpart_repartition",
+        "diskpart_writeprotect_off",
+        "dism_cleanup",
+        "fsck_equivalent",
+    ]
+
+
+def test_sequence_plan_diskpart_repartition():
+    plan = build_storage_sequence_plan("diskpart_repartition", "1")
+    assert plan["platform"] == "Windows" and plan["destructive"] is True
+    assert plan["script"].splitlines() == [
+        "list disk",
+        "select disk 1",
+        "clean",
+        "create partition primary",
+        "format fs=ntfs quick",
+        "assign",
+    ]
+    assert plan["commands"] == [["diskpart", "/s", "<script-file>"]]
+    assert build_storage_sequence_plan("diskpart_repartition", "disk 2")["target"] == "disk 2"
+
+
+def test_sequence_plan_writeprotect_and_dism():
+    plan = build_storage_sequence_plan("diskpart_writeprotect_off", "disk 3")
+    assert plan["destructive"] is False
+    assert "attributes disk clear readonly" in plan["script"]
+    plan = build_storage_sequence_plan("dism_cleanup", "")
+    assert plan["target"] == "online"
+    assert plan["commands"] == [
+        ["DISM", "/Online", "/Cleanup-Image", "/Analyze"],
+        ["DISM", "/Online", "/Cleanup-Image", "/StartComponentCleanup"],
+    ]
+
+
+def test_sequence_plan_fsck():
+    plan = build_storage_sequence_plan("fsck_equivalent", "/dev/sdb1")
+    assert plan["commands"] == [["fsck", "-y", "/dev/sdb1"]]
+    assert "unmounted" in " ".join(plan["steps"]).lower()
+
+
+def test_sequence_plan_refusals():
+    bad = [
+        ("defrag_the_moon", "1"),
+        ("diskpart_repartition", ""),
+        ("fsck_equivalent", "/"),
+        ("fsck_equivalent", "C:"),
+        ("diskpart_repartition", "0"),
+        ("diskpart_repartition", "/dev/sdb1"),
+    ]
+    for sequence, target in bad:
+        try:
+            build_storage_sequence_plan(sequence, target)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"expected refusal for {sequence!r} on {target!r}")
+
+
+def test_sequences_tool_preview_runs_nothing():
+    recorder = _Recorder()
+    tool = _with_dispatch(LaptopStorageSequencesTool(), recorder)
+    result = tool.execute(sequence="dism_cleanup")
+    assert not result.is_error
+    assert "StartComponentCleanup" in result.content
+    assert "Nothing was run" in result.content
+    assert recorder.calls == []  # preview never dispatches
+
+
+def test_sequences_tool_apply_needs_confirm():
+    recorder = _Recorder()
+    tool = _with_dispatch(LaptopStorageSequencesTool(), recorder)
+    assert str(tool.safety_level).upper().endswith("DANGEROUS")
+    assert tool.execute(sequence="fsck_equivalent", target="/dev/sdb1", apply=True).is_error
+    assert recorder.calls == []  # refused before dispatch
+    assert not tool.execute(
+        sequence="fsck_equivalent", target="/dev/sdb1", apply=True, confirm=True
+    ).is_error
+    assert recorder.calls[0] == {
+        "sequence": "fsck_equivalent",
+        "target": "/dev/sdb1",
+        "confirm": True,
+    }
+
+
+def test_sequences_tool_refuses_bad_input():
+    recorder = _Recorder()
+    tool = _with_dispatch(LaptopStorageSequencesTool(), recorder)
+    assert tool.execute(sequence="defrag_the_moon", target="1").is_error
+    assert tool.execute(sequence="diskpart_repartition", target="0").is_error
+    assert tool.execute(sequence="fsck_equivalent", target="/").is_error
+    assert recorder.calls == []  # refusals never reached the laptop
+
+
+def test_client_sequences_diskpart_script(monkeypatch):
+    monkeypatch.setattr(_client.platform, "system", lambda: "Windows")
+    seen: dict[str, Any] = {}
+
+    def fake_run(argv, timeout):
+        seen["argv"] = argv
+        seen["script"] = Path(argv[2]).read_text()
+        return 0, "DiskPart succeeded", ""
+
+    monkeypatch.setattr(_client, "_run_capture", fake_run)
+    ok, payload, _ = _client._cmd_storage_sequences(
+        {"sequence": "diskpart_repartition", "target": "2", "confirm": True}, 30.0
+    )
+    assert ok and seen["argv"][:2] == ["diskpart", "/s"]
+    assert seen["script"].splitlines() == [
+        "list disk",
+        "select disk 2",
+        "clean",
+        "create partition primary",
+        "format fs=ntfs quick",
+        "assign",
+    ]
+    assert json.loads(payload)["sequence"] == "diskpart_repartition"
+
+
+def test_client_sequences_writeprotect_script(monkeypatch):
+    monkeypatch.setattr(_client.platform, "system", lambda: "Windows")
+    seen: dict[str, Any] = {}
+
+    def fake_run(argv, timeout):
+        seen["script"] = Path(argv[2]).read_text()
+        return 0, "DiskPart succeeded", ""
+
+    monkeypatch.setattr(_client, "_run_capture", fake_run)
+    ok, _, _ = _client._cmd_storage_sequences(
+        {"sequence": "diskpart_writeprotect_off", "target": "disk 1", "confirm": True}, 30.0
+    )
+    assert ok
+    assert seen["script"].splitlines() == [
+        "list disk",
+        "select disk 1",
+        "attributes disk clear readonly",
+    ]
+
+
+def test_client_sequences_refusals(monkeypatch):
+    ok, _, error = _client._cmd_storage_sequences({"sequence": "dism_cleanup", "target": "online"}, 30.0)
+    assert not ok and "confirm=true" in (error or "")
+    ok, _, error = _client._cmd_storage_sequences({"sequence": "nope", "confirm": True}, 30.0)
+    assert not ok and "unknown storage sequence" in (error or "")
+    _linux(monkeypatch, [{"device": "/dev/sdb1", "mount": "/media/usb", "fstype": "vfat"}])
+    ok, _, error = _client._cmd_storage_sequences(
+        {"sequence": "diskpart_repartition", "target": "1", "confirm": True}, 30.0
+    )
+    assert not ok and "Windows-only" in (error or "")
+    ok, _, error = _client._cmd_storage_sequences(
+        {"sequence": "dism_cleanup", "target": "online", "confirm": True}, 30.0
+    )
+    assert not ok and "Windows-only" in (error or "")
+    ok, _, error = _client._cmd_storage_sequences(
+        {"sequence": "fsck_equivalent", "target": "/dev/sdb1", "confirm": True}, 30.0
+    )
+    assert not ok and "mounted" in (error or "")
+    ok, _, error = _client._cmd_storage_sequences(
+        {"sequence": "fsck_equivalent", "target": "/", "confirm": True}, 30.0
+    )
+    assert not ok and "system volume" in (error or "")
+
+
+def test_client_sequences_fsck_runs_on_unmounted(monkeypatch):
+    _linux(monkeypatch, [{"device": "/dev/sda1", "mount": "/", "fstype": "ext4"}])
+    seen: dict[str, Any] = {}
+
+    def fake_run(argv, timeout):
+        seen["argv"] = argv
+        return 0, "clean", ""
+
+    monkeypatch.setattr(_client, "_run_capture", fake_run)
+    ok, payload, _ = _client._cmd_storage_sequences(
+        {"sequence": "fsck_equivalent", "target": "/dev/sdb1", "confirm": True}, 30.0
+    )
+    assert ok and seen["argv"] == ["fsck", "-y", "/dev/sdb1"]
+    assert json.loads(payload)["command"] == "fsck -y /dev/sdb1"
+
+
+def test_client_sequences_dism_runs_analyze_then_cleanup(monkeypatch):
+    monkeypatch.setattr(_client.platform, "system", lambda: "Windows")
+    seen: list[list[str]] = []
+
+    def fake_run(argv, timeout):
+        seen.append(argv)
+        return 0, "ok", ""
+
+    monkeypatch.setattr(_client, "_run_capture", fake_run)
+    ok, payload, _ = _client._cmd_storage_sequences(
+        {"sequence": "dism_cleanup", "target": "online", "confirm": True}, 30.0
+    )
+    assert ok
+    assert seen == [
+        ["DISM", "/Online", "/Cleanup-Image", "/Analyze"],
+        ["DISM", "/Online", "/Cleanup-Image", "/StartComponentCleanup"],
+    ]
+    assert json.loads(payload)["sequence"] == "dism_cleanup"

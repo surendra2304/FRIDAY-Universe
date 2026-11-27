@@ -41,7 +41,8 @@ as a base64 JPEG attachment so FRIDAY can actually see the screen),
 and ``click`` * (keyboard/mouse via pyautogui, or xdotool on Linux),
 ``list_files``, ``read_file``, ``run_shell``, ``system_info``, ``notify``,
 plus the TASK-IG-LAP-03 PC care pack: ``pc_health``, ``pc_cleanup``,
-``hotkey``, ``storage_check``, ``storage_repair``, and the TASK-FRD-044
+``hotkey``, ``storage_check``, ``storage_repair``, ``storage_sequences`` (TASK-FRD-046),
+and the TASK-FRD-044
 media pair: ``media_key`` (Windows media keys) and ``media_status``
 (SystemMediaTransportControls read-back — the proof leg for Spotify
 control; needs the ``winrt`` package on the laptop).
@@ -121,6 +122,8 @@ ALLOWED_COMMANDS = frozenset(
         "hotkey",
         "storage_check",
         "storage_repair",
+        # TASK-FRD-046: the four guided storage-repair sequences.
+        "storage_sequences",
         # TASK-FRD-044: Spotify playback control by voice — media keys
         # land here because this client runs on the owner's Windows
         # laptop; media_status reads the session back so a key press is
@@ -1084,6 +1087,14 @@ def _cmd_media_status(args: dict[str, Any], timeout: float) -> tuple[bool, Any, 
     return True, json.dumps(result), None
 
 
+def _disk_number(target: str) -> str | None:
+    """Return the diskpart disk number for '1' / 'disk 1', else None."""
+    text = target.strip().lower()
+    if text.startswith("disk "):
+        text = text[5:].strip()
+    return text if text.isdigit() else None
+
+
 def _normalise_volume(value: Any) -> str:
     text = str(value or "").strip().rstrip("/\\")
     if re.fullmatch(r"[A-Za-z]:", text or ""):
@@ -1215,6 +1226,156 @@ def _cmd_storage_repair(args: dict[str, Any], timeout: float) -> tuple[bool, Any
                              "output_tail": tail}), None
 
 
+def _cmd_storage_sequences(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | None]:
+    """One guided storage-repair sequence (TASK-FRD-046). Hard refusals,
+    in order: unknown sequence, no confirm=true, wrong platform, disk 0 /
+    the system volume, and (for the fsck leg, outside Windows) a mounted
+    volume. Commands are built here from the sequence + target only — the
+    server never supplies argv."""
+    sequence = str(args.get("sequence") or "").strip().lower()
+    target = str(args.get("target") or "").strip()
+    known = (
+        "diskpart_repartition",
+        "diskpart_writeprotect_off",
+        "fsck_equivalent",
+        "dism_cleanup",
+    )
+    if sequence not in known:
+        return False, "", f"unknown storage sequence '{sequence}'; known: {', '.join(known)}"
+    if args.get("confirm") is not True:
+        return (
+            False,
+            "",
+            "storage_sequences can modify storage: pass confirm=true in the "
+            "same call to proceed",
+        )
+    system = platform.system()
+    if sequence in ("diskpart_repartition", "diskpart_writeprotect_off"):
+        if system != "Windows":
+            return (
+                False,
+                "",
+                f"sequence '{sequence}' is Windows-only (diskpart); this machine is {system}",
+            )
+        disk = _disk_number(target)
+        if disk is None:
+            return (
+                False,
+                "",
+                f"sequence '{sequence}' needs a disk number target (e.g. '1'), got '{target}'",
+            )
+        if disk == "0":
+            return (
+                False,
+                "",
+                "refusing disk 0 — on a normal Windows install that is the system disk",
+            )
+        lines = ["list disk", f"select disk {disk}"]
+        if sequence == "diskpart_repartition":
+            lines += ["clean", "create partition primary", "format fs=ntfs quick", "assign"]
+        else:
+            lines += ["attributes disk clear readonly"]
+        script_path = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                "w", suffix=".txt", delete=False, encoding="utf-8"
+            ) as handle:
+                handle.write("\n".join(lines) + "\n")
+                script_path = handle.name
+            rc, out, err = _run_capture(["diskpart", "/s", script_path], timeout)
+        finally:
+            if script_path:
+                try:
+                    os.unlink(script_path)
+                except OSError:
+                    pass
+        if rc is None:
+            return False, "", err
+        tail = (out + err)[-2000:]
+        if rc != 0:
+            return (
+                False,
+                tail,
+                f"diskpart exited {rc}; administrator rights are commonly required",
+            )
+        return (
+            True,
+            json.dumps(
+                {"sequence": sequence, "target": target, "script": "\n".join(lines), "output_tail": tail}
+            ),
+            None,
+        )
+    if sequence == "fsck_equivalent":
+        if _normalise_volume(target) == _normalise_volume(_system_volume()):
+            return False, "", f"refusing to repair the system volume ({target})"
+        match = _match_volume(target)
+        if system == "Windows":
+            return (
+                False,
+                "",
+                "fsck_equivalent is the Linux leg; on Windows use "
+                "laptop_storage_repair (chkdsk /f)",
+            )
+        if match is not None:
+            return (
+                False,
+                "",
+                f"volume {target} is mounted at {match['mount']}; unmount/eject it "
+                "before repair (repairing a mounted filesystem can corrupt it)",
+            )
+        device = (match or {}).get("device", target)
+        if system == "Darwin":
+            argv = ["diskutil", "repairVolume", target]
+        else:
+            argv = ["fsck", "-y", device]
+        rc, out, err = _run_capture(argv, timeout)
+        if rc is None:
+            return False, "", err
+        tail = (out + err)[-2000:]
+        if rc != 0:
+            return (
+                False,
+                tail,
+                f"repair command exited {rc}; administrator/root rights are "
+                "commonly required for filesystem repair",
+            )
+        return (
+            True,
+            json.dumps({"sequence": sequence, "target": target, "command": " ".join(argv), "output_tail": tail}),
+            None,
+        )
+    # dism_cleanup
+    if system != "Windows":
+        return (
+            False,
+            "",
+            f"sequence 'dism_cleanup' is Windows-only (DISM); this machine is {system}",
+        )
+    rc, out, err = _run_capture(["DISM", "/Online", "/Cleanup-Image", "/Analyze"], timeout)
+    if rc is None:
+        return False, "", err
+    analyse = (out + err)[-1500:]
+    rc2, out2, err2 = _run_capture(
+        ["DISM", "/Online", "/Cleanup-Image", "/StartComponentCleanup"], timeout
+    )
+    if rc2 is None:
+        return False, "", err2
+    tail = (out2 + err2)[-2000:]
+    if rc2 != 0:
+        return (
+            False,
+            tail,
+            f"DISM cleanup exited {rc2}; administrator rights are commonly required",
+        )
+    return (
+        True,
+        json.dumps(
+            {"sequence": sequence, "target": "online", "analyse_tail": analyse, "output_tail": tail}
+        ),
+        None,
+    )
+
+
 _COMMANDS = {
     "screenshot": _cmd_screenshot,
     "screenshot_data": _cmd_screenshot_data,
@@ -1233,6 +1394,7 @@ _COMMANDS = {
     "hotkey": _cmd_hotkey,
     "storage_check": _cmd_storage_check,
     "storage_repair": _cmd_storage_repair,
+    "storage_sequences": _cmd_storage_sequences,
     "media_key": _cmd_media_key,
     "media_status": _cmd_media_status,
 }
@@ -1458,3 +1620,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
