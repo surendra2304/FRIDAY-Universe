@@ -22,12 +22,21 @@
 
 ## Next
 
-- Checkpoint 2: bridge health check (`get_system_info` + one `run_shell` probe), then the dry-run leg over the 12 run-6 candidates (caption metadata first, download re-probe once).
-- Checkpoint 3: run-7 discovery (6 new queries) + pool filing (`TASK-VYR-088-POOL.json` + this doc updated with per-candidate QA results).
+- Checkpoint 3: 3-candidate sample confirming the video-page block is uniform (1 more VYR-086 + 1 VYR-087 candidate), then run-7 discovery (6 new queries, VYR-065 guard first) + pool filing (`TASK-VYR-088-POOL.json` + this doc updated with per-candidate QA results).
 - Work PR with evidence doc + POOL.json (no board hunk); paired verification owed; board flip rides the coordinator board PR.
+
+## Checkpoint 2: dry-run probes — bridge alive, discovery alive, video-page extraction bot-blocked (2026-11-27 ~15:10–15:25 IST)
+
+- Bridge health first-hand: `get_system_info` exit 0 — Oracle Server 1 ONLINE, Oracle Server 2 ONLINE; `run_shell` on Server 2 exit 0 (`hostname` → `friday-universe-vnic-2`). Transport flaked zero times this run (contrast VYR-086's 3 flakes).
+- Discovery path ALIVE: flat-playlist `ytsearch5:amazing diabolo juggling trick short` on S2 returned 5 results with full metadata (titles, durations, view counts, channels), exit 0, no bot-block. Run-7 pool leg viable via the established route.
+- Caption-track count via video-page metadata: BLOCKED — `yt-dlp --print "%(subtitles)j"` on run-6 candidate `bRfoNfGBL1o` fails at extraction: "Sign in to confirm you're not a bot" (cookies required). This is NEW since VYR-086's 13:12 IST discovery: search still works, but video-page extraction is now bot-gated.
+- Download re-probe (once, per checkpoint-1 plan): `yt-dlp -f worst -o /tmp/vyr088_dltest.mp4` on the same candidate fails at the same bot-check; no file created. Download still down — now blocked at extraction, not at format selection (supersedes the standing n-challenge / SABR-only / zero-formats failure mode). BGM presence, watermark, loudness stay BLOCKED (need a download).
+- Cookie jar still absent on S2 (verified by VYR-086 ~13:15 IST; no change attempted). Supplying cookies needs an owner sign-in step — decision owed to Muse, not attempted here.
+- yt-dlp prints a Python 3.10 deprecation warning on S2 — cosmetic, no effect.
+- Dry-run method (recorded, not yet executed in full): probe a 3-candidate sample across both run-6 pools to confirm the block is uniform; record all 12 candidates BLOCKED with the sample evidence rather than burning 12 identical failing probes. Per-candidate table rides checkpoint 3.
 
 ## States
 
-- Implemented NO / tested NO / merged NO / deployed N/A / production-verified NO (scoping only; no live leg run yet in this checkpoint).
+- Implemented NO / tested NO / merged NO / deployed N/A / production-verified NO (scoping + probes only; no pool filed yet, no download/render attempted beyond the one re-probe).
 
 — Muse 3
