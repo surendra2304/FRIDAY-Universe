@@ -304,3 +304,61 @@ def test_terminal_reply_helper():
     )
     assert _terminal_reply(errored) is None
     assert _terminal_reply(None) is None
+
+
+def test_default_executor_reads_jsonresponse_body(monkeypatch):
+    # Live 2026-11-27: a failed nested turn comes back from
+    # _run_brain_sync as a JSONResponse (502), not a dict — the first
+    # version of this executor called .get() on it and crashed the
+    # whole tool call mid-cycle. The response body carries the same
+    # dispatch dict; read it.
+    import json
+
+    from friday.autonomous.goal_loop import _default_executor
+
+    class _FakeResponse:
+        def __init__(self, payload):
+            self.body = json.dumps(payload).encode("utf-8")
+
+    def failing_brain(instruction):
+        return _FakeResponse(
+            {
+                "reply": "LLM generation failed.",
+                "metadata": {"success": False, "error": "LLMProviderError"},
+            }
+        )
+
+    _stub_brain(monkeypatch, failing_brain)
+    ok, out = _default_executor("Do the thing")
+    assert ok is False
+    assert "LLMProviderError" in out
+
+    def ok_brain(instruction):
+        return _FakeResponse({"reply": "done it", "metadata": {"success": True}})
+
+    _stub_brain(monkeypatch, ok_brain)
+    ok2, out2 = _default_executor("Do the thing")
+    assert ok2 is True
+    assert out2 == "done it"
+
+
+def test_default_executor_unreadable_result_is_failure(monkeypatch):
+    from friday.autonomous.goal_loop import _default_executor
+
+    _stub_brain(monkeypatch, lambda instruction: object())
+    ok, out = _default_executor("Do the thing")
+    assert ok is False
+    assert "brain executor error" in out
+
+
+def test_raising_executor_fails_step_not_loop(store):
+    # Defense in depth: an executor that raises must fail the step
+    # (and, after attempts, block the loop) — never abort the run.
+    def raising_executor(instruction: str):
+        raise RuntimeError("boom")
+
+    loop = store.create("Do the thing", _contains_criteria(), max_cycles=5)
+    done = store.run_until_terminal(loop["id"], executor=raising_executor)
+    assert done["status"] == STATUS_BLOCKED
+    assert any(s["status"] == "failed" for s in done["steps"])
+    assert "executor error" in done["steps"][0]["result"]
