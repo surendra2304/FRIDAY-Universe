@@ -80,6 +80,38 @@ jobs:
             fi
             echo "Branch guard (TASK-OBS-005): checkout is on 'main'; proceeding."
             # END MAIN-BRANCH GUARD (TASK-OBS-005)
+            # BEGIN STALE-LOCK RECOVERY (TASK-REL-118) — executed by
+            # tests/test_fleet_cd_rel118_stale_lock.py; keep the markers.
+            # Runs 45969056089 (2026-11-27 14:22 IST) and 46006566115 (18:52 IST)
+            # both failed the ff-only merge on Server 1 with
+            # "Unable to create '/opt/friday_universe/.git/index.lock': File exists"
+            # — a lock left by a crashed/interrupted git process, stranding the
+            # checkout at bf3c76c9 across both attempts 4.5h apart. Remove the
+            # lock ONLY when no git process is working in this checkout
+            # (cwd-scoped pgrep); a live git process means a real concurrent
+            # operation — refuse loudly and re-run the deploy. Never remove
+            # the lock blindly: deleting a live process's lock corrupts the
+            # index it is writing.
+            if [ -e .git/index.lock ]; then
+              if ! command -v pgrep >/dev/null 2>&1; then
+                echo "::error::TASK-REL-118 stale-lock recovery refused: .git/index.lock exists but pgrep is not available, so a live git process cannot be ruled out. Remove the lock manually on the server and re-run this deploy."
+                exit 1
+              fi
+              LIVE_GIT_PID=""
+              for GIT_PID in $(pgrep -x git 2>/dev/null || true); do
+                if [ "$(readlink "/proc/$GIT_PID/cwd" 2>/dev/null)" = "$PWD" ]; then
+                  LIVE_GIT_PID="$GIT_PID"
+                  break
+                fi
+              done
+              if [ -n "$LIVE_GIT_PID" ]; then
+                echo "::error::TASK-REL-118 stale-lock recovery refused: .git/index.lock exists and git process $LIVE_GIT_PID is running in this checkout — a concurrent git operation is in progress. Re-run this deploy."
+                exit 1
+              fi
+              echo "Stale .git/index.lock found with no git process running in this checkout — removing it (left by a crashed/interrupted git process) and proceeding."
+              rm -f .git/index.lock
+            fi
+            # END STALE-LOCK RECOVERY (TASK-REL-118)
             # BEGIN DIRTY-TREE GUARD (TASK-REL-102) — executed by
             # tests/test_fleet_cd_rel102_checkout_guards.py; keep the markers.
             OLD_REV=$(git rev-parse HEAD)
@@ -344,6 +376,38 @@ jobs:
             fi
             echo "Branch guard (TASK-OBS-005): checkout is on 'main'; proceeding."
             # END MAIN-BRANCH GUARD (TASK-OBS-005)
+            # BEGIN STALE-LOCK RECOVERY (TASK-REL-118) — executed by
+            # tests/test_fleet_cd_rel118_stale_lock.py; keep the markers.
+            # Runs 45969056089 (2026-11-27 14:22 IST) and 46006566115 (18:52 IST)
+            # both failed the ff-only merge on Server 1 with
+            # "Unable to create '/opt/friday_universe/.git/index.lock': File exists"
+            # — a lock left by a crashed/interrupted git process, stranding the
+            # checkout at bf3c76c9 across both attempts 4.5h apart. Remove the
+            # lock ONLY when no git process is working in this checkout
+            # (cwd-scoped pgrep); a live git process means a real concurrent
+            # operation — refuse loudly and re-run the deploy. Never remove
+            # the lock blindly: deleting a live process's lock corrupts the
+            # index it is writing.
+            if [ -e .git/index.lock ]; then
+              if ! command -v pgrep >/dev/null 2>&1; then
+                echo "::error::TASK-REL-118 stale-lock recovery refused: .git/index.lock exists but pgrep is not available, so a live git process cannot be ruled out. Remove the lock manually on the server and re-run this deploy."
+                exit 1
+              fi
+              LIVE_GIT_PID=""
+              for GIT_PID in $(pgrep -x git 2>/dev/null || true); do
+                if [ "$(readlink "/proc/$GIT_PID/cwd" 2>/dev/null)" = "$PWD" ]; then
+                  LIVE_GIT_PID="$GIT_PID"
+                  break
+                fi
+              done
+              if [ -n "$LIVE_GIT_PID" ]; then
+                echo "::error::TASK-REL-118 stale-lock recovery refused: .git/index.lock exists and git process $LIVE_GIT_PID is running in this checkout — a concurrent git operation is in progress. Re-run this deploy."
+                exit 1
+              fi
+              echo "Stale .git/index.lock found with no git process running in this checkout — removing it (left by a crashed/interrupted git process) and proceeding."
+              rm -f .git/index.lock
+            fi
+            # END STALE-LOCK RECOVERY (TASK-REL-118)
             # BEGIN DIRTY-TREE GUARD (TASK-REL-102) — executed by
             # tests/test_fleet_cd_rel102_checkout_guards.py; keep the markers.
             OLD_REV=$(git rev-parse HEAD)
