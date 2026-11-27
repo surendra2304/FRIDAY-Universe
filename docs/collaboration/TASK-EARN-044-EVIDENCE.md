@@ -29,9 +29,9 @@
 
 ## 4. Branch / PR note
 
-- The claim branch was created at main `09691836` and the board-flip commit `c28649c9` (PR #2152) was pushed on it. Main has since moved to `fa7afb4c` (merge of #2142, EARN-040). Per the VYR-094 precedent (work PR #2135, 1 commit on current main; board-flip PR #2129 closed unmerged), the branch was reset to current main `fa7afb4c` and the work commit filed on top, so the work PR carries 1 commit, work files only.
-- Board-flip PR #2152 closed unmerged after the work PR opened; the EARN-044 → CLAIMED/TP14 flip rides the next board PR — already listed as owed in WATCH226 §I (hub #2045 comment 7221115974).
-- Work PR: (number recorded in the hub status post; CI re-verified next run).
+- The claim branch was created at main `09691836` and the board-flip commit `c28649c9` (PR #2152) was pushed on it. Main has since moved to `fa7afb4c` (merge of #2142, EARN-040). Per the VYR-094 precedent (work filed on current main; board-flip PR closed unmerged), the branch was reset to current main `fa7afb4c` and the work commit filed on top, so the work PR carries work files only.
+- Correction to the VYR-094 sequence, recorded honestly: resetting the branch retargeted the already-open PR #2152 to the new head (the GitHub API refuses a second PR from the same head branch — the first work-PR POST returned 422 "a pull request already exists"). So PR #2152 was **retitled and re-bodied in place** to serve as the work PR instead of being closed; the board-flip commit `c28649c9` is superseded and the EARN-044 → CLAIMED/TP14 flip rides the next board PR — already listed as owed in WATCH226 §I (hub #2045 comment 7221115974).
+- Work PR: #2152, head `4e7f5afc` at filing (this evidence file amended by a second commit correcting this §4; CI re-verified next run).
 
 ## 5. Hub / queue
 
@@ -41,4 +41,4 @@
 
 ## 6. Status
 
-- COMPLETE (repo leg). Work PR open, awaiting paired verification/merge. No stall: claimed 19:40 IST, executed 20:25 IST, ~45 min claim-to-PR.
+- COMPLETE (repo leg). Work PR #2152 open, awaiting paired verification/merge. No stall: claimed 19:40 IST, executed 20:25 IST, ~45 min claim-to-PR.
