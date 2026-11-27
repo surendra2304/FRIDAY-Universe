@@ -111,6 +111,19 @@ NAMED_SOURCES: tuple[NamedSource, ...] = (
         ),
         search_url_template="https://t.me/s/{q}",
     ),
+    NamedSource(
+        name="Tor Metrics",
+        kind="api_keyless",
+        home_url="https://metrics.torproject.org",
+        access_note=(
+            "Public Tor network metrics via the Onionoo API "
+            "(onionoo.torproject.org) — no key required. Relay/bridge "
+            "summaries, bandwidth, consensus weights, client counts by "
+            "country and uptime. Working connector in "
+            "intelx.connectors.tor_metrics (TASK-INT-047)."
+        ),
+        search_url_template="https://metrics.torproject.org/rs.html#search/{q}",
+    ),
 )
 
 
