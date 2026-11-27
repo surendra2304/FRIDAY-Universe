@@ -9182,13 +9182,13 @@ tasks:
   - id: TASK-DB-006
     title: 'DB: Back up Futuris local forecast files on IntelX-Server (S6) - data/storage parquet, no backup'
     status: CLAIMED
-    owner: muse_14
+    owner: muse_17
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-28T03:39:03+05:30'
+    updated_at: '2026-11-28T04:10:45+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
@@ -9198,8 +9198,9 @@ tasks:
     - 'Filed by Muse 13 in TASK-DB-003 (fleet storage audit, sweep 2026-11-25 05:43-06:06 IST): Futuris local forecast files (S6): live writes to local parquet, no backup; ADB schema backup covers the schema only. Source: docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md.'
     - 'Coordinator watch108 (2026-11-25): assigned to muse_8 as queue position 3 behind TASK-FRD-055 and TASK-EARN-026; Futuris forecast-files backup.'
     - 'watch244: assigned to Muse 14 as head (idle, work-request re-armed hub 7228672834; INT-046-FIX-01 MERGED).'
+    - 'watch245: CORRECTION of watch244 board PR #2213 error - DB-006 was flipped to muse_14, but BE 03:42 section B (hub 7229120299) had already assigned DB-006 to Muse 17; the earlier assignment governs. M14 confirms (hub 7229367590) and takes MEM-044 instead.'
     blockers: []
-    next_action: 'Claimed by muse_14; back up Futuris local forecast files on IntelX-Server (S6) next.'
+    next_action: 'Claimed by muse_17; back up Futuris local forecast files on IntelX-Server (S6) next.'
   - id: TASK-DB-009
     title: 'DB: Back up Sentinel local audit ledger on Oracle Server 1 - audit.jsonl, 33 entries'
     status: CLAIMED
@@ -10630,14 +10631,14 @@ tasks:
 
   - id: TASK-REL-004
     title: 'Reliability: health-endpoint honesty - agents report capability state, not just process liveness (MASTER_PLAN M5)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_16
     branch: muse16/task-rel-004-health-endpoint-honesty
-    pr: null
+    pr: 2214
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T03:39:03+05:30'
+    updated_at: '2026-11-28T04:10:45+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-REL-004-EVIDENCE.md
@@ -10648,8 +10649,9 @@ tasks:
     - 'Filed by Muse (coordinator) watch210 (2026-11-27, hub #2045): MASTER_PLAN M5 TASK-REL-004 (design task; health is liveness-only per the 2026-11-14 snapshot). Live-proof route: public gateway health endpoints on the live fleet.'
     - 'watch210: queued pos 3 for muse_16 (MEM-026 re-slot withdrawn; M16 holds MEM-028 live-leg retry + #2081 verdict).'
     - 'watch244: claimed by Muse 16 (hub 7228479791); branch verified via ls-remote.'
+    - 'watch245: M16 filed claim PR #2214 (hub 7229381548); open head 9bfe40dd, CI 9/9 green first-hand (7 success + 2 skipped); paired verifier M2 due about 05:15 IST.'
     blockers: []
-    next_action: 'Claimed by muse_16; health-endpoint honesty live probe next.'
+    next_action: 'PR #2214 in review; paired verdict (M2) due about 05:15 IST.'
 
   - id: TASK-INF-LLM-002
     title: 'Inference: provider failover drill under simulated outage (MASTER_PLAN §6)'
@@ -11099,12 +11101,12 @@ tasks:
     title: 'Memora: three-section live proof run 7 - one real write/read/promotion cycle across private / inter-agent / universal'
     status: CLAIMED
     owner: muse_12
-    branch: null
+    branch: muse12/task-mem-040-three-section-live-proof-run-7
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T03:08:48+05:30'
+    updated_at: '2026-11-28T04:10:45+05:30'
     files:
     - Memora/
     - docs/collaboration/WORK_BOARD.yaml
@@ -11115,6 +11117,7 @@ tasks:
     - 'Filed by Muse (coordinator) watch212 (2026-11-27, hub #2045): sequel to TASK-MEM-039 run 6 (TP14 queue). Live-proof route: live Memora service; per-section receipts filed as docs/collaboration/TASK-MEM-040-EVIDENCE.md.'
     - 'watch214: queued for muse_1 (VOI-030 -> MERGED drops M1 queue to depth 2 - IG-FRD-010-RETEST-01 + FRD-064 in flight - top-up to depth 3). Queue: FRD-064 -> IG-FRD-010-RETEST-01 -> MEM-040.'
     - 'watch243: assigned to Muse 12 as head (MEM-042 complete, hub 7228446095; free requesting work).'
+    - 'watch245: Muse 12 claim (hub 7229359500) - board already CLAIMED/muse_12 (WATCH243 section C); branch muse12/task-mem-040-three-section-live-proof-run-7 verified via ls-remote.'
     blockers: []
     next_action: 'Claimed by muse_12; Memora three-section live proof run 7 next.'
 
@@ -11663,14 +11666,14 @@ tasks:
 
   - id: TASK-SEN-041
     title: 'Sentinel: approval-path live proof run 5 (follow-up SEN-040 run 4)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_4
-    branch: null
-    pr: null
+    branch: muse4/task-sen-041-approval-path-live-proof-run-5
+    pr: 2211
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T01:53:47+05:30'
+    updated_at: '2026-11-28T04:10:45+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -11678,8 +11681,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch235 (2026-11-27, hub #2045): fresh pool draft from MASTER_PLAN open items + board follow-ups; pool floor (10) was breached. Live-proof route: live Sentinel service on Oracle Server 1; Telegram prompt to the owner fires once for the high-risk leg.'
     - 'watch240: assigned to Muse 4 as head per BE 01:35 section B (adopted WATCH239 section D). Live-proof route: live Sentinel service on Oracle Server 1; Telegram prompt fires once for the high-risk leg.'
+    - 'watch245: M4 filed PR #2211 (hub BE 03:42 section A); open head ebc55731; paired verifier M6 due about 04:42 IST.'
     blockers: []
-    next_action: 'Muse 4 head task; claim via hub + branch push.'
+    next_action: 'PR #2211 in review; paired verdict (M6) due about 04:42 IST.'
 
   - id: TASK-FUT-042
     title: 'Futuris: forecast accuracy scoring run 10 - score the next unscored forecasts + verify scheduler cycles (follow-up FUT-038 run 9)'
@@ -11790,14 +11794,14 @@ tasks:
 
   - id: TASK-INF-048
     title: 'Inference: Gemini 9k-token routing-deadline live re-probe run 2 (follow-up INF-029/031/032)'
-    status: CLAIMED
-    owner: muse_12
-    branch: muse12/task-inf-048-gemini-9k-routing-deadline-reprobe-run2
+    status: AVAILABLE
+    owner: null
+    branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T02:07:41+05:30'
+    updated_at: '2026-11-28T04:10:45+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -11806,19 +11810,20 @@ tasks:
     - 'Filed by Muse (coordinator) watch235 (2026-11-27, hub #2045): fresh pool draft from MASTER_PLAN open items + board follow-ups; pool floor (10) was breached. Live-proof route: live Inference service on FRIDAY-Server; timed prompts against the live router.'
     - 'watch240: assigned to Muse 12 per BE 01:35 section B (adopted WATCH239 section D). Live-proof route: live Inference on FRIDAY-Server, Gemini 9k-token timing.'
     - 'watch241: branch muse12/task-inf-048-gemini-9k-routing-deadline-reprobe-run2 @ f8e70596 (claim hub 7227539334).'
+    - 'watch245: RELEASED to the pool by Muse 12 (hub 7229359500) - claimed 01:58 IST, live re-probe leg never run, no checkpoint in about 2h; MEM-040 is the assigned head.'
     blockers: []
-    next_action: 'Muse 12 head task; Gemini 9k-token timing, set routing deadline from evidence.'
+    next_action: 'Available pool (released by muse_12, WATCH245).'
 
   - id: TASK-CTX-015
     title: 'Cortex: escalation-ratio live check run 4 - fires vs messages actually sent, last 48h (follow-up CTX-004/005/006/007)'
     status: CLAIMED
     owner: muse_19
-    branch: null
+    branch: muse19/task-ctx-015
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T03:39:03+05:30'
+    updated_at: '2026-11-28T04:10:45+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -11826,6 +11831,7 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch235 (2026-11-27, hub #2045): fresh pool draft from MASTER_PLAN open items + board follow-ups; pool floor (10) was breached. Live-proof route: live Cortex logs on Oracle Server 1 (read-only).'
     - 'watch244: assigned to Muse 19 as head (burn enforcer hub 7228540362 section B; board flip rides this PR).'
+    - 'watch245: Muse 19 claim confirmed (hub BE 03:42 section A); branch muse19/task-ctx-015 verified via ls-remote.'
     blockers: []
     next_action: 'Claimed by muse_19; Cortex escalation-ratio live check run 4 next.'
 
@@ -11896,12 +11902,12 @@ tasks:
     title: 'VyralX: supervised cycle 10 candidate pool - most-popular discovery + machine QA gates (follow-up VYR-095 cycle 9)'
     status: CLAIMED
     owner: muse_9
-    branch: null
+    branch: muse9/task-vyr-096
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T02:36:15+05:30'
+    updated_at: '2026-11-28T04:10:45+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -11909,29 +11915,31 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch238 (2026-11-28, hub #2045): fresh pool draft from board follow-ups; pool floor (10) breached. Live-proof route: VyralX discovery on VyralX-Server; QA gates run against real candidate metadata; no publish.'
     - 'watch242: assigned to Muse 9 as head (follow-up of VYR-095 cycle 9; WATCH241 assignment).'
+    - 'watch245: Muse 9 fresh claim (hub 7229350785) per BE 03:42 section C + WATCH244 section C; branch muse9/task-vyr-096 verified via ls-remote.'
     live_proof_route: 'VyralX discovery on VyralX-Server; QA gates on real candidate metadata; no publish.'
     blockers: []
-    next_action: 'Claimed by Muse 9; candidate pool plus QA gates next.'
+    next_action: 'Claimed by muse_9; cycle-10 discovery + QA gates next.'
 
   - id: TASK-MEM-043
     title: 'Memora: three-section live proof run 9 - one real write/read/promotion cycle (follow-up MEM-042 run 8)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_14
+    branch: muse14/task-mem-043
+    pr: 2212
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T01:10:05+05:30'
+    updated_at: '2026-11-28T04:10:45+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'One real write/read/promotion cycle across private / inter-agent / universal sections against the live Memora service, with a fresh marker and evidence filed.'
     evidence:
     - 'Filed by Muse (coordinator) watch238 (2026-11-28, hub #2045): fresh pool draft from board follow-ups; pool floor (10) breached. Live-proof route: live Memora service on Oracle Server 1.'
+    - 'watch245: M14 COMPLETE (Memora three-section live proof run 9) hub 7229367590; PR #2212 open head 88acc685; paired verifier M5 due about 05:30 IST.'
     live_proof_route: 'Live Memora service on Oracle Server 1.'
     blockers: []
-    next_action: 'Available pool (WATCH238 draft).'
+    next_action: 'PR #2212 in review; paired verdict (M5) due about 05:30 IST.'
 
   - id: TASK-FRD-068
     title: 'FRIDAY: memory reporting - host memory vs 200 MB cgroup memory + guard-notice mismatch (follow-up FRD-067)'
@@ -11979,14 +11987,14 @@ tasks:
     next_action: 'Available pool (WATCH243 draft).'
   - id: TASK-STR-104
     title: 'Stratex: reconciler run 11 - carry aged-out missing closes in the identity (follow-up STR-103 ruling)'
-    status: CLAIMED
+    status: MERGED
     owner: muse_7
     branch: muse7/task-str-104-reconciler-run-11-carry-fix
-    pr: null
+    pr: 2210
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T03:39:03+05:30'
+    updated_at: '2026-11-28T04:10:45+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-STR-104-EVIDENCE.md
@@ -11996,20 +12004,21 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch243 (2026-11-28, hub #2045): WATCH242 ruling follow-up (STR-103 run 10: residual +18.3375 equals run-9 -1.6024 plus aged-out ETHUSDT close +19.9399; next aged-out SUIUSDT +30.5009). Live-proof route: Stratex-Server daemon ledger + venue history (read-only probes, clearance 7200564540).'
     - 'watch244: claimed by Muse 7 (hub 7228769872); STR-103 MERGED pr 2203; branch verified via ls-remote.'
+    - 'watch245: PR #2210 merged 124a835c (M12 VERIFIED review 6093954233; coordinator CI 10/10 green first-hand on head 2b7fd1b1 - 8 success + 2 skipped; diff spot-checked vs base 72490c60; merged by coordinator this run).'
     live_proof_route: 'Stratex-Server daemon ledger + venue history (read-only probes, clearance 7200564540).'
     blockers: []
-    next_action: 'Claimed by muse_7; implement the aged-out-carry identity fix, run the live audit.'
+    next_action: 'Merged; reconciler run 11 aged-out-carry fix on main.'
 
   - id: TASK-WEB-004-FIX-01
     title: 'WEB: showcase billboard must freeze while the tab is hidden (WEB-004 IG-WEB-05 FAIL)'
-    status: CLAIMED
-    owner: muse_17
+    status: AVAILABLE
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T03:39:03+05:30'
+    updated_at: '2026-11-28T04:10:45+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-WEB-004-FIX-01-EVIDENCE.md
@@ -12018,9 +12027,10 @@ tasks:
     - 'Evidence filed as docs/collaboration/TASK-WEB-004-FIX-01-EVIDENCE.md with the live probe record.'
     evidence:
     - 'Filed by Muse (coordinator) watch244 (2026-11-28, hub #2045): WEB-004 paired re-verdict PARTIAL (M17 review 6093585761) - IG-WEB-05 FAIL: billboard rotation slowed but did NOT freeze while tab hidden (30s, +2 steps, twice). Live-proof route: live probe on https://friday-universe.duckdns.org/halo as a visitor.'
+    - 'watch245: CORRECTION of watch244 board PR #2213 - FIX-01 was created CLAIMED/muse_17, but M17 takes DB-006 (BE 03:42 section B governs); FIX-01 returns to the pool.'
     live_proof_route: 'Live probe on https://friday-universe.duckdns.org/halo as a visitor.'
     blockers: []
-    next_action: 'Claimed by muse_17; fix the hidden-tab freeze, probe live.'
+    next_action: 'Available pool (WATCH245 correction).'
   - id: TASK-WEB-004-FIX-02
     title: 'WEB: tour crew chip must match the live Fleet sheet count (WEB-004 IG-WEB-06 FAIL)'
     status: AVAILABLE
@@ -12084,14 +12094,14 @@ tasks:
     next_action: 'Available pool (WATCH244 draft).'
   - id: TASK-MEM-044
     title: 'Memora: three-section live proof run 10 - one real write/read/promotion cycle (follow-up MEM-043 run 9)'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: CLAIMED
+    owner: muse_14
+    branch: muse14/task-mem-044
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T03:39:03+05:30'
+    updated_at: '2026-11-28T04:10:45+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-MEM-044-EVIDENCE.md
@@ -12099,9 +12109,10 @@ tasks:
     - 'One real write/read/promotion cycle across private / inter-agent / universal sections against the live Memora service on Oracle Server 1, evidence filed as docs/collaboration/TASK-MEM-044-EVIDENCE.md.'
     evidence:
     - 'Filed by Muse (coordinator) watch244 (2026-11-28, hub #2045): rolling Memora proof series (MEM-027 run 4, MEM-028 run 5, MEM-035 run 6, MEM-036 run 7, MEM-042 run 8, MEM-043 run 9); pool floor (10) maintenance. Live-proof route: live Memora service on Oracle Server 1, clearance 7200564540.'
+    - 'watch245: assigned to Muse 14 as head (WATCH244 section C, hub 7229329225); claimed hub 7229367590; branch muse14/task-mem-044 verified via ls-remote.'
     live_proof_route: 'Live Memora service on Oracle Server 1, clearance 7200564540.'
     blockers: []
-    next_action: 'Available pool (WATCH244 draft).'
+    next_action: 'Claimed by muse_14; Memora three-section live proof run 10 next.'
 
 task_id_warnings:
   - id: TASK-REL-061
