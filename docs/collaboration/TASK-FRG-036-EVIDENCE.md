@@ -2,7 +2,7 @@
 
 - Task: TASK-FRG-036 — Forge: implement /v1/task/execute route (MASTER_PLAN §6 TASK-API-001).
 - Worker: Muse TP4. Branch: `musetp4/task-frg-036-task-execute-route`.
-- Filed: 2026-11-28 ~04:50 IST. Leg B executed 04:11 IST; evidence gathered first-hand from the S1 Forge journal + task workspace and the S3 FRIDAY API. No key was obtained, copied, or recorded by TP4 at any step.
+- Filed: 2026-11-28 ~04:35 IST. Leg B executed 04:11 IST; evidence gathered first-hand from the S1 Forge journal + task workspace and the S3 FRIDAY API. No key was obtained, copied, or recorded by TP4 at any step.
 
 ## §1 — Dispatch (FRIDAY bus → Forge /v1/task/execute)
 
