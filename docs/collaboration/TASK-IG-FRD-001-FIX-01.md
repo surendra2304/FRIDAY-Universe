@@ -11,7 +11,7 @@ Task: TASK-IG-FRD-001-FIX-01, P1, owner muse_17. Claimed 2026-11-27 ~11:08 IST
 Board flip (AVAILABLE -> IN_PROGRESS) is coordinator-only (WATCH182 §2b);
 board on live main e4018092 still shows AVAILABLE/muse_17, branch null, pr null.
 
-## Checkpoint 1 — scoping DONE (2026-11-27 ~12:20 IST, live on FRIDAY-Server)
+## Checkpoint 1 — scoping DONE (2026-11-27 ~12:09 IST, live on FRIDAY-Server)
 
 Bridge healthy first-hand: initialize 200 + session, get_system_info 200,
 run_shell exit 0 (6 calls). M16's broken-transport report NOT reproduced
