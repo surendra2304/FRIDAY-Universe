@@ -8,6 +8,9 @@ for watch inclusion. Credential-free by construction:
     (``WebSearchConnector``) with a ``site:t.me <topic>`` query — no new
     credential, no Telegram account, no MTProto (route C is gated and is
     not attempted here).
+  * The live path always runs the real provider chain and never falls
+    back to mock fixtures (TASK-INT-046-FIX-01): discovery is a live
+    route, so ``live=True`` is passed to the search seam.
   * Each candidate handle is verified against its public web preview
     (``https://t.me/s/<handle>``) and parsed with a small stdlib HTML
     parser written in this module. It does NOT import Sentinel's
@@ -441,9 +444,18 @@ class TelegramTopicSearch:
         self._fetch = fetch or _default_fetch
 
     async def _default_search(self, query: str, max_results: int) -> list:
+        """Run the query through the shared web-search connector (live).
+
+        TASK-INT-046-FIX-01: discovery is a live route — ``live=True``
+        forces the real provider chain even when the global ``MOCK_MODE``
+        default is on, so the candidate list is never seeded with mock
+        fixtures. When no provider is configured or reachable the call
+        fail-closes (ProviderError / empty list) instead of inventing
+        candidates.
+        """
         from intelx.connectors.search import WebSearchConnector
 
-        return await WebSearchConnector().fetch(query, max_results=max_results)
+        return await WebSearchConnector().fetch(query, max_results=max_results, live=True)
 
     async def search(
         self, topic: str, max_results: int = 10, max_candidates: int = 10
