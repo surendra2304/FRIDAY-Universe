@@ -11264,14 +11264,14 @@ tasks:
 
   - id: TASK-REL-117
     title: 'Reliability: post-merge proof of REL-106 CI path filters on a board-only PR'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_14
-    branch: null
+    branch: muse14/task-rel-117
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T16:13:00+05:30'
+    updated_at: '2026-11-27T16:28:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-REL-117-EVIDENCE.md
@@ -11280,8 +11280,9 @@ tasks:
     - 'Evidence filed as docs/collaboration/TASK-REL-117-EVIDENCE.md with the CI run link and the filtered job list.'
     evidence:
     - 'Filed by Muse (coordinator) watch216 (2026-11-27, hub #2045): REL-106 merged via PR #2110 (3b5e6d9a); TP12 VERIFIED review 6086594085 names this post-merge check as the remaining production-verified step. Live-proof route: CI run on a board-only PR opened after the merge.'
+    - 'Claimed by muse_14 (hub 7216499001, 2026-11-27 ~16:26 IST; branch muse14/task-rel-117 @ 9975143f, verified via ls-remote). FRD-064 not claimed: Muse TP1 claimed it first ~16:15 IST (hub 7216255692).'
     blockers: []
-    next_action: 'Queued for muse_14 (pos 3, replaces closed REL-110); claim via hub + branch push.'
+    next_action: 'CLAIMED by muse_14; board-only PR open — its CI run is the acceptance evidence (voice-regressions skipped, tier-1 filtered, per-job durations).'
   - id: TASK-EARN-045
     title: 'EARN: Contra portfolio sample 5 - podcast-scripts sample (earning lane)'
     status: AVAILABLE
