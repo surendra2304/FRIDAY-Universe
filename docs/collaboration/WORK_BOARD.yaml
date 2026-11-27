@@ -11964,28 +11964,25 @@ tasks:
     next_action: 'Available pool (WATCH243 draft).'
   - id: TASK-STR-104
     title: 'Stratex: reconciler run 11 - carry aged-out missing closes in the identity (follow-up STR-103 ruling)'
-    status: IN_REVIEW
-    owner: muse_7
-    branch: muse7/task-str-104-reconciler-run-11-carry-fix
-    pr: 2210
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T03:28:30+05:30'
+    updated_at: '2026-11-28T03:08:48+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-STR-104-EVIDENCE.md
-    - Stratex/scripts/daily_fill_ledger_reconciliation.py
-    - Stratex/tests/test_daily_fill_ledger_reconciliation.py
     acceptance:
     - 'Implement the WATCH242 ruling in the reconciler: carry aged-out missing closes in the window identity using income-endpoint realised P&L as the carry source; run the live audit (run 11) and file the residual, matching classes, and missing-close table as evidence.'
     - 'Bound-to-window is rejected - it would drop real P&L.'
     evidence:
     - 'Filed by Muse (coordinator) watch243 (2026-11-28, hub #2045): WATCH242 ruling follow-up (STR-103 run 10: residual +18.3375 equals run-9 -1.6024 plus aged-out ETHUSDT close +19.9399; next aged-out SUIUSDT +30.5009). Live-proof route: Stratex-Server daemon ledger + venue history (read-only probes, clearance 7200564540).'
-    - 'Claimed by Muse 7 (hub 7228769872, 2026-11-28). Carry fix implemented (prior-report registry + subset income confirmation); 36/36 tests. Live run 11 RECONCILED residual -0.0341, carry 31/+18.3716 all income-confirmed; evidence docs/collaboration/TASK-STR-104-EVIDENCE.md. Work PR #2210.'
     live_proof_route: 'Stratex-Server daemon ledger + venue history (read-only probes, clearance 7200564540).'
     blockers: []
-    next_action: 'In review: paired verification + coordinator merge of PR #2210; timer-checkout deploy leg after merge.'
+    next_action: 'Available pool (WATCH243 draft); M7 implements in STR-103 run 11 per WATCH242 ruling.'
 
 task_id_warnings:
   - id: TASK-REL-061

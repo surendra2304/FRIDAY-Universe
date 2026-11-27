@@ -538,6 +538,23 @@ def test_find_aged_out_carry_confirmed_by_income():
     assert carry[0]["income_rows"] == 1
 
 
+def test_find_aged_out_carry_sui_next_aged_out_case():
+    # STR-104 next aging candidate from run 10/11: the visible SUIUSDT
+    # missing close (+30.5009) must move to the carry, at its income
+    # amount, once the SUI fills window starts after its fill.
+    prior = [_missing(order_id="1100728824", symbol="SUIUSDT", pnl=30.5009)]
+    trades = {"SUIUSDT": [_trade(symbol="SUIUSDT", time=START_MS + 9 * 86400_000)]}
+    carry, unconfirmed = job.find_aged_out_carry(
+        [_income(symbol="SUIUSDT", amount="30.5009")], prior, [], trades
+    )
+    assert unconfirmed == []
+    assert len(carry) == 1
+    assert carry[0]["symbol"] == "SUIUSDT"
+    assert carry[0]["order_id"] == "1100728824"
+    assert carry[0]["realized_pnl"] == pytest.approx(30.5009)
+    assert carry[0]["income_confirmed"] is True
+
+
 def test_find_aged_out_carry_subset_match_ignores_ledger_income():
     # The Nov-19 wipe put ledger-close income rows in the same symbol
     # window; the carry must match its own rows, not the window sum.

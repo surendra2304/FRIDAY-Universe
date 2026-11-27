@@ -18,7 +18,7 @@ The identity's two venue inputs age at different rates: `userTrades`/`allOrders`
 - `reconcile_window(..., aged_out_carry_realized)` — expected = ledger net + visible missing + aged-out carry + fees; the carry is filed in the identity block.
 - Report: new `aged_out_carry` / `aged_out_unconfirmed` sections, `G1-carry` gap lines, and the forward-window venue closes / true net now include carried closes (110 closes, −70.7591).
 
-Tests (`Stratex/tests/test_daily_fill_ledger_reconciliation.py`, +8): run-10 live numbers reconcile only with the carry (+18.3375 DISCREPANCY without, −1.6024 RECONCILED with the ETH carry alone); carry confirmed / unconfirmed / still-visible / fills-still-cover cases; subset match ignoring ledger-close income rows; prior-report union; offline run lists unconfirmed and carries nothing. **36/36 passed** locally on the exact blobs shipped (reconciler sha256 `c1da1c1399de7ea0e4c04c1832845e16a03e84cb820c254bce4bf85b0b3d08f1`, test sha256 `d9dbfd8ae192077cd81aff26a10da409ba98dc8a6a8ac88176e74c556ee435c7`; baseline 28/28 before the change).
+Tests (`Stratex/tests/test_daily_fill_ledger_reconciliation.py`, +9): run-10 live numbers reconcile only with the carry (+18.3375 DISCREPANCY without, −1.6024 RECONCILED with the ETH carry alone); carry confirmed / unconfirmed / still-visible / fills-still-cover cases; the SUIUSDT +30.5009 next-aged-out case; subset match ignoring ledger-close income rows; prior-report union; offline run lists unconfirmed and carries nothing. **37/37 passed** locally on the exact blobs shipped (reconciler sha256 `c1da1c1399de7ea0e4c04c1832845e16a03e84cb820c254bce4bf85b0b3d08f1`, test sha256 `fa0831288a732e1708d3e42e9650ae58456839bb4636b810e15b5286e3ebba9a`; baseline 28/28 before the change).
 
 ## §2 — Run 11 numbers (2026-11-27T21:55:24Z / 2026-11-28 03:25 IST)
 
@@ -63,8 +63,8 @@ Sum: +19.9399 − 1.5683 = **+18.3716**. Registry proof: all 31 appear in `daily
 
 ## Five states
 
-- Implemented: YES (carry fix + 8 tests on branch; evidence filed)
-- Tested: YES (36/36 unit tests on the exact shipped blobs; live run 11 completed end to end)
+- Implemented: YES (carry fix + 9 tests on branch; evidence filed)
+- Tested: YES (37/37 unit tests on the exact shipped blobs; live run 11 completed end to end)
 - Merged: NO (work PR open, awaiting coordinator merge)
 - Deployed: NO (the live timer checkout on Stratex-Server is still `3db55adf`; run 11 executed the fixed code from a `/tmp` extract — deploying the fix to the timer checkout is the coordinator/CD leg)
 - Production-verified: YES for the audit leg (live run 11 on Stratex-Server against live state + venue: RECONCILED, residual −0.0341, carry 31/+18.3716 all income-confirmed, ledger untouched) — the deployed-timer leg remains NO until the checkout updates
@@ -72,8 +72,7 @@ Sum: +19.9399 − 1.5683 = **+18.3716**. Registry proof: all 31 appear in `daily
 ## Files changed
 
 - `Stratex/scripts/daily_fill_ledger_reconciliation.py` (carry fix)
-- `Stratex/tests/test_daily_fill_ledger_reconciliation.py` (+8 tests)
+- `Stratex/tests/test_daily_fill_ledger_reconciliation.py` (+9 tests)
 - `docs/collaboration/TASK-STR-104-EVIDENCE.md` (new, this file)
-- `docs/collaboration/WORK_BOARD.yaml` (STR-104 flip)
 
 — Muse 7
