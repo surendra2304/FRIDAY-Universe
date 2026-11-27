@@ -55,6 +55,7 @@ from __future__ import annotations
 import argparse
 import base64
 import datetime
+import itertools
 import json
 import math
 import os
@@ -826,7 +827,24 @@ def find_aged_out_carry(
             <= int(row.get("time") or 0)
             <= last_fill + TIME_TOL_MS
         ]
+        # The window can also hold income rows of ledger closes on the
+        # same symbol (the Nov-19 reset wipe closed 30 symbols inside
+        # one minute), so confirmation is a subset match: some subset
+        # of the window's rows must sum to the recorded amount. The
+        # smallest matching subset wins; its rows are consumed.
+        matched: List[Tuple[int, Dict[str, Any]]] = []
+        if window_rows and len(window_rows) <= 12:
+            for size in range(1, len(window_rows) + 1):
+                for combo in itertools.combinations(window_rows, size):
+                    total = sum(_finite(row.get("income")) for _, row in combo)
+                    if abs(total - recorded) <= CARRY_INCOME_TOL_USD:
+                        matched = list(combo)
+                        break
+                if matched:
+                    break
         income_sum = round(
+            sum(_finite(row.get("income")) for _, row in matched), 4
+        ) if matched else round(
             sum(_finite(row.get("income")) for _, row in window_rows), 4
         )
         base = {
@@ -840,14 +858,14 @@ def find_aged_out_carry(
             "first_fill_time": first_fill,
             "last_fill_time": last_fill,
         }
-        if window_rows and abs(income_sum - recorded) <= CARRY_INCOME_TOL_USD:
-            for idx, _row in window_rows:
+        if matched:
+            for idx, _row in matched:
                 consumed.add((symbol, idx))
             carry.append(
                 {
                     **base,
                     "realized_pnl": income_sum,
-                    "income_rows": len(window_rows),
+                    "income_rows": len(matched),
                     "income_confirmed": True,
                 }
             )

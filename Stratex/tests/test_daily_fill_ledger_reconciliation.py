@@ -538,6 +538,22 @@ def test_find_aged_out_carry_confirmed_by_income():
     assert carry[0]["income_rows"] == 1
 
 
+def test_find_aged_out_carry_subset_match_ignores_ledger_income():
+    # The Nov-19 wipe put ledger-close income rows in the same symbol
+    # window; the carry must match its own rows, not the window sum.
+    prior = [_missing(pnl=-0.0389)]
+    trades = {"ETHUSDT": [_trade(time=START_MS + 9 * 86400_000)]}
+    income = [
+        _income(amount="-0.0389"),
+        _income(amount="12.5000"),  # a ledger close in the same window
+    ]
+    carry, unconfirmed = job.find_aged_out_carry(income, prior, [], trades)
+    assert unconfirmed == []
+    assert len(carry) == 1
+    assert carry[0]["realized_pnl"] == pytest.approx(-0.0389)
+    assert carry[0]["income_rows"] == 1
+
+
 def test_find_aged_out_carry_unconfirmed_without_income():
     prior = [_missing()]
     trades = {"ETHUSDT": [_trade(time=START_MS + 9 * 86400_000)]}
