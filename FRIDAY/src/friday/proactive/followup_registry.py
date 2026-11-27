@@ -169,7 +169,13 @@ class FollowUpRegistry:
         *,
         due_at: Optional[float] = None,
         source: str = "chat",
+        contact_id: Optional[str] = None,
+        deal_id: Optional[str] = None,
     ) -> dict[str, Any]:
+        """Add a follow-up. ``contact_id`` / ``deal_id`` (TASK-FRD-062) link
+        a CRM follow-up to its contact/deal without a second store: the
+        registry record carries the link and ``list`` / ``due_followups``
+        filter on it."""
         title_text = (title or "").strip()
         if not title_text:
             raise ValueError("a follow-up needs a title")
@@ -179,6 +185,8 @@ class FollowUpRegistry:
             "detail": (detail or "").strip(),
             "status": STATUS_OPEN,
             "source": source,
+            "contact_id": (contact_id or "").strip() or None,
+            "deal_id": (deal_id or "").strip() or None,
             "created_at": _now(),
             "due_at": due_at,
             "closed_at": None,
@@ -199,11 +207,21 @@ class FollowUpRegistry:
                     return json.loads(json.dumps(item))
         return None
 
-    def list(self, status: Optional[str] = STATUS_OPEN) -> list[dict[str, Any]]:
+    def list(
+        self,
+        status: Optional[str] = STATUS_OPEN,
+        *,
+        contact_id: Optional[str] = None,
+        deal_id: Optional[str] = None,
+    ) -> list[dict[str, Any]]:
         with self._lock:
             items = json.loads(json.dumps(self._load()))
         if status:
             items = [i for i in items if i.get("status") == status]
+        if contact_id:
+            items = [i for i in items if i.get("contact_id") == contact_id]
+        if deal_id:
+            items = [i for i in items if i.get("deal_id") == deal_id]
         items.sort(key=lambda i: i.get("created_at") or 0)
         return items
 
@@ -241,15 +259,21 @@ class FollowUpRegistry:
         now_epoch: Optional[float] = None,
         undated_stale_hours: float = UNDATED_STALE_HOURS,
         limit: int = 10,
+        contact_id: Optional[str] = None,
+        deal_id: Optional[str] = None,
     ) -> list[dict[str, Any]]:
         """Open follow-ups that need the owner's eye now, oldest first.
 
         Due = has a due_at in the past, or has no due_at and is older
         than the stale window. Returns [] when nothing is due.
+        ``contact_id`` / ``deal_id`` (TASK-FRD-062) restrict to one CRM
+        record's follow-ups.
         """
         now = now_epoch if now_epoch is not None else _now()
         due: list[dict[str, Any]] = []
-        for item in self.list(status=STATUS_OPEN):
+        for item in self.list(
+            status=STATUS_OPEN, contact_id=contact_id, deal_id=deal_id
+        ):
             due_at = item.get("due_at")
             if due_at is not None:
                 if float(due_at) <= now:

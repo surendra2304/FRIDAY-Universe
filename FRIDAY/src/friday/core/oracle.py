@@ -421,6 +421,50 @@ _index("ix_conv_hist_ts", conversation_history_table, "entry_ts")
 
 
 # ---------------------------------------------------------------------------
+# CRM workspace surface (TASK-FRD-062)
+# ---------------------------------------------------------------------------
+# The owner's personal contacts and deals, operable by voice and chat.
+# Distinct from Cortex's multi-tenant website CRM: Cortex holds
+# visitor/lead data in its Oracle ``CORTEX`` schema (AGENTS.md §4) and has
+# no contacts/deals tables; these tables live in FRIDAY's own schema.
+# Follow-ups stay in the existing file-backed follow-up registry
+# (``friday.proactive.followup_registry``); CRM follow-ups carry
+# ``contact_id`` / ``deal_id`` on the registry record instead of a third
+# table here. ``notes_json`` on deals holds the append-only stage history.
+contacts_table = Table(
+    "contacts",
+    metadata,
+    Column("id", UUID, primary_key=True),
+    Column("name", NAME, nullable=False),
+    Column("email", NAME, unique=True),
+    Column("phone", SHORT),
+    Column("company", NAME),
+    Column("source", SHORT),
+    Column("notes_json", BODY),
+    Column("created_at", ISO, nullable=False),
+    Column("updated_at", ISO, nullable=False),
+)
+_index("ix_contacts_name", contacts_table, "name")
+_index("ix_contacts_company", contacts_table, "company")
+
+deals_table = Table(
+    "deals",
+    metadata,
+    Column("id", UUID, primary_key=True),
+    Column("contact_id", UUID, nullable=False),
+    Column("title", TITLE, nullable=False),
+    Column("stage", SHORT, nullable=False),
+    Column("value_text", NAME),
+    Column("notes_json", BODY),
+    Column("created_at", ISO, nullable=False),
+    Column("updated_at", ISO, nullable=False),
+    Column("stage_changed_at", ISO, nullable=False),
+)
+_index("ix_deals_contact", deals_table, "contact_id")
+_index("ix_deals_stage", deals_table, "stage")
+
+
+# ---------------------------------------------------------------------------
 # DSN resolution
 # ---------------------------------------------------------------------------
 def resolve_database_url(explicit: str | None = None) -> str | None:
@@ -728,8 +772,10 @@ __all__ = [
     "DATABASE_URL_ENV_KEYS",
     "SCHEMA_OWNER",
     "background_tasks_table",
+    "contacts_table",
     "conversations_table",
     "daily_goals_table",
+    "deals_table",
     "dispose_engines",
     "embeddings_table",
     "ensure_schema",
