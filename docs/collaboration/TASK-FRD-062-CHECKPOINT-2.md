@@ -48,7 +48,10 @@ Per the checkpoint-1 design (§3), no scope change:
   `registry.register(...)` line fails the suite.
 - **CI collection** — `tests/test_frd062_crm.py` added to the FRIDAY
   tier-1 invocation in `.github/workflows/friday-universe-ci.yml` (REL-068
-  guard: a PR test must be collected by a PR-triggered workflow).
+  guard: a PR test must be collected by a PR-triggered workflow). The
+  same PR touches `tests/test_ig_tool_registry_wiring.py` (CRM tools
+  added to EXPECTED), so that file rides the same invocation too — it
+  was uncollected pre-existing debt, surfaced by this PR's change.
 
 Out of scope, as designed: no outreach of any kind; no lead→contact
 import; no desktop/UI widget; no currency math; owner-only, single-user.
@@ -84,9 +87,12 @@ Local venv (`/home/hatch/.venvs/friday-frd062`, FRIDAY `requirements.txt`
 - **`ruff check src/friday`: all checks passed** (whole tree, CI lint
   command). `ruff format` is not enforced in CI; formatting left as-is.
 - **REL-068 collection guard** (`scripts/ci_test_collection_audit.py
-  --base origin/main`): run before commit it flags the workflow
+  --base origin/main`): first run (pre-commit) flagged the workflow
   reference as stale only because the test file was still untracked;
-  re-run after the commit (see work PR checks).
+  second run (post-commit) flagged `test_ig_tool_registry_wiring.py`
+  as uncollected because this PR modifies it — fixed by adding it to
+  the same tier-1 invocation; re-run after the fixup commit, guard
+  green (see work PR checks).
 
 ## 3. States
 

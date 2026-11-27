@@ -195,6 +195,10 @@ jobs:
       # TASK-FRD-062: tests/test_frd062_crm.py rides in this invocation
       # for the same REL-068 reason; it runs in this venv (stdlib +
       # friday.* imports only; in-memory SQLite engine, no Oracle DSN).
+      # The same PR also touches tests/test_ig_tool_registry_wiring.py
+      # (CRM tools added to EXPECTED), so that file rides here too —
+      # it was uncollected pre-existing debt, surfaced by this PR's
+      # change; it runs in this venv (registry build with stub memory).
       # FRIDAY/requirements.txt + pytest + pytest-asyncio (the suite uses
       # @pytest.mark.asyncio; requirements.txt lacks the plugin). Proven
       # locally on current main: 86 passed, 0 failed, 0 deselects - see
@@ -237,7 +241,7 @@ jobs:
             tests/test_mem029_production_callers.py \
             tests/test_ig_frd_001_goal_loop.py tests/test_frd_045_woop.py \
             tests/test_capability_routing.py tests/test_ig2_frd03_lead_generation.py tests/test_ig_frd_061_lead_verification.py tests/test_ig_frd_057_book_translation.py \
-            tests/test_ig_frd_058_rsvp.py tests/test_ig_frd_060_signal_brief.py tests/test_frd062_crm.py \
+            tests/test_ig_frd_058_rsvp.py tests/test_ig_frd_060_signal_brief.py tests/test_frd062_crm.py tests/test_ig_tool_registry_wiring.py \
             tests/test_reliability.py tests/test_ig2_lap01_escrcpy.py \
             tests/test_phone_ui_automation.py tests/test_browser_use_integration.py \
             tests/test_laptop_browser_agent.py \
