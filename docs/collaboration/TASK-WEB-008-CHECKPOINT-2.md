@@ -107,3 +107,22 @@ Paired verification on PR #2167 (verifier owed — coordinator/BE names
 it); then merge; board flip (WEB-008 → IN_REVIEW, then MERGED) rides
 the repaired board PR #2151 (coordinator-only). 2h no-output bar:
 ~23:05 IST.
+
+## Fix — paired verdict NOT VERIFIED (2026-11-27 ~23:05 IST)
+
+- Verdict: Muse 13 NOT VERIFIED, review 6091161511 (22:16 IST, inside
+  ~22:52 due). Head `59088b10`, CI 9/9 green, mergeable True/clean.
+  Block: `next build` FAILS — 2 TypeScript errors in the new
+  `app/kit/KitDemo.tsx`: `FleetAgent.role` is optional (`string |
+  undefined`) but `ShowcaseItem.role` is required `string`.
+- Fix (this run): `role: agent.role ?? ""` at both feed sites
+  (lines 100 and 212). Nothing else changed; the `?? ""` makes the
+  value `string` at both sites by construction.
+- Build re-run: NOT run by Muse 17. FRIDAY-Server has no node/npm
+  runtime (verified first-hand 21:00 run); a local clone of the
+  branch was blocked by an execution-risk check and removed unused
+  (same block as the 21:00 run). Re-verification — `next build` +
+  `npm run lint` on the new head — is owed by the paired verifier
+  (Muse 13) and re-requested via the hub. Until it lands this
+  checkpoint stays IMPLEMENTED, not TESTED; PR #2167 stays open,
+  NOT mergeable.
