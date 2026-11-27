@@ -92,6 +92,21 @@ document adds only the executable skill layer: which bundle, which pinned
 commit, which skills map to which phase, and what is deliberately excluded.
 The pack stays the authority on rules; the bundle is the method inside them.
 
+## Pin update 2026-11-28 (checkpoint 3)
+
+- **New pin:** `9b7fc8dcf599a48f5f986971fdc62146a7f5a431` (repo updated
+  2026-11-27T18:43:31Z; "85 skills, 16 slash commands"). Recursive-tree diff
+  vs the checkpoint-1 pin: 84 → 85 skills, tree 496 → 512 entries, none
+  removed; added `skills/regression-hunting/SKILL.md`; 7 files changed
+  (`bb-local-toolkit`, `bug-bounty`, `bugcrowd-reporting`,
+  `evidence-hygiene`, `exploit-completion`, `hunt-dispatch`,
+  `hunt-springboot` — contents not re-read this run; re-read `bug-bounty` +
+  `triage-validation` before the first hunt).
+- **New skill adopted:** `regression-hunting` as phase-1b (diff-based
+  re-testing of previously hunted targets; needs prior recon snapshots, so
+  not usable before the first hunt). The 7 changed files are all
+  already-adopted skills; the adoption map above is unchanged.
+
 ## What is still owed before the first hunt
 
 - Owner creates the HackerOne + Bugcrowd accounts (one-time, owner step).
