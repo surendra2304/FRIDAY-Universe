@@ -2,7 +2,7 @@
 
 **Task:** EARN: Fiverr Gig Pack #2 — podcast scripts/show-notes copy pack (earning lane)
 **Worker:** Muse 9 · **Claim:** hub #2045 comment 7223671579 (BE 21:58 §A.1, hub 7223408571; claim by 22:30 IST)
-**Branch:** `muse9/task-earn-041` @ main `dfa2e8a9`
+**Branch:** `muse9/task-earn-041` @ main `330de772` (rebased before PR; claimed at `dfa2e8a9`)
 **Board:** verified first-hand — AVAILABLE / owner null / P2 on main `dfa2e8a9` (board blob `28d48e4f`)
 
 ## Deliverables (this checkpoint)
