@@ -67,6 +67,12 @@ from friday.tools.builtin import (
     FollowUpAddTool,
     FollowUpCompleteTool,
     FollowUpListTool,
+    CrmContactAddTool,
+    CrmContactGetTool,
+    CrmContactListTool,
+    CrmDealAddTool,
+    CrmDealStageTool,
+    CrmFollowupsDueTool,
     FindOnScreenTool,
     GetActiveAppContextTool,
     GetAIUniverseStatusTool,
@@ -128,6 +134,7 @@ from friday.tools.builtin import (
     ReadGmailInboxTool,
     InboxDraftsTool,
     TriageInboxTool,
+    TaskBoardTool,
     ReadOwnCodebaseTool,
     ReadScreenTextTool,
     RsvpControlTool,
@@ -229,6 +236,15 @@ class ToolExecutionMixin:
             registry.register(FollowUpAddTool())
             registry.register(FollowUpListTool())
             registry.register(FollowUpCompleteTool())
+            # TASK-FRD-062: CRM workspace surface — contacts, deals and
+            # follow-ups by voice and chat. All SAFE, so the Gemini Live
+            # session offers them (voice-only offers SAFE tools).
+            registry.register(CrmContactAddTool())
+            registry.register(CrmContactGetTool())
+            registry.register(CrmContactListTool())
+            registry.register(CrmDealAddTool())
+            registry.register(CrmDealStageTool())
+            registry.register(CrmFollowupsDueTool())
             registry.register(FileListingTool())
             registry.register(MemorySearchTool(self.memory))
             registry.register(ScreenSnapshotTool())
@@ -340,6 +356,7 @@ class ToolExecutionMixin:
             registry.register(NewsTool())
             registry.register(ManageTasksTool())
             registry.register(OpenWebsiteTool())
+            registry.register(TaskBoardTool())
             registry.register(YouTubeTool())
             registry.register(LocationMapsTool())
             registry.register(WikipediaTool())

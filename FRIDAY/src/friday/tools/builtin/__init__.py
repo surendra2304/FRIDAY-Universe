@@ -97,6 +97,14 @@ from friday.tools.builtin.followup_tools import (
     FollowUpCompleteTool,
     FollowUpListTool,
 )
+from friday.tools.builtin.crm_tools import (
+    CrmContactAddTool,
+    CrmContactGetTool,
+    CrmContactListTool,
+    CrmDealAddTool,
+    CrmDealStageTool,
+    CrmFollowupsDueTool,
+)
 from friday.tools.builtin.git_tools import GitCommitTool, GitPushTool, GitStatusTool
 from friday.tools.builtin.workflow_template_tools import (
     WorkflowTemplateListTool,
@@ -163,6 +171,7 @@ from friday.tools.builtin.self_development import (
     SelfDevelopTool,
     SelfRepairTool,
 )
+from friday.tools.builtin.task_board import TaskBoardTool
 from friday.tools.builtin.screen_ocr import (
     FindOnScreenTool,
     GetActiveAppContextTool,
@@ -239,6 +248,12 @@ __all__ = [
     "CloseApplicationTool",
     "ControlLightTool",
     "ControlPlugTool",
+    "CrmContactAddTool",
+    "CrmContactGetTool",
+    "CrmContactListTool",
+    "CrmDealAddTool",
+    "CrmDealStageTool",
+    "CrmFollowupsDueTool",
     "CreateGitBranchTool",
     "CreateGitHubIssueTool",
     "DictionaryTool",
@@ -327,6 +342,7 @@ __all__ = [
     "SystemControlTool",
     "FleetDispatchTool",
     "FleetStatusTool",
+    "TaskBoardTool",
     "TaskStatusQueryTool",
     "ForgeCodeTool",
     "IntelXResearchTool",

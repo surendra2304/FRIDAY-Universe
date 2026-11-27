@@ -102,6 +102,27 @@ root_api_router.include_router(stratex_root_router, prefix="/v1")
 root_api_router.include_router(cortex_root_router, prefix="/v1")
 
 
+@root_api_router.get("/v1/watches/outbox", tags=["Standing Watches"])
+async def watch_outbox(lane: str = "main", api_key: ApiKey = Depends(get_friday_api_key)):
+    """TASK-INT-060: read-only standing-watch outbox for the FRIDAY drainer.
+
+    Producer and consumer no longer share a filesystem, so envelopes
+    cross over HTTP: FRIDAY's drainer pulls this endpoint (lane=main
+    or lane=instant) and dedupes on ``dedupe_key``. A missing outbox
+    file is the normal watches-not-enabled state, not an error.
+    """
+    from intelx.watches.engine import (
+        default_instant_outbox_path,
+        default_outbox_path,
+        read_outbox_envelopes,
+    )
+
+    main_path = default_outbox_path()
+    path = default_instant_outbox_path(main_path) if lane == "instant" else main_path
+    snapshot = read_outbox_envelopes(path)
+    return {"lane": "instant" if lane == "instant" else "main", **snapshot}
+
+
 @root_api_router.post("/v1/task/execute", tags=["Universal Task Protocol"])
 async def execute_task(body: dict, request: Request, api_key: ApiKey = Depends(get_friday_api_key)):
     """Universal Task Protocol endpoint for IntelX."""

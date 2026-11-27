@@ -47,25 +47,74 @@ MEMORY_RECOVERED_PERCENT = 60.0
 CGROUP_BASE = "/sys/fs/cgroup"
 
 
+def _own_cgroup_relpath(path: str = "/proc/self/cgroup") -> str | None:
+    """This process's cgroup path, e.g. ``/system.slice/FRIDAY.service``.
+
+    Read from /proc/self/cgroup: the ``0::`` line is the cgroup v2 unified
+    path; a ``memory`` entry is the cgroup v1 controller path. Returns None
+    when the file cannot be read or has no usable entry.
+    """
+    try:
+        with open(path, encoding="utf-8") as handle:
+            lines = handle.read().splitlines()
+    except OSError:
+        return None
+    for line in lines:
+        parts = line.split(":")
+        if len(parts) == 3 and parts[0] == "0" and parts[2]:
+            return parts[2]
+    for line in lines:
+        parts = line.split(":")
+        if len(parts) == 3 and "memory" in parts[1].split(",") and parts[2]:
+            return parts[2]
+    return None
+
+
+def _cgroup_file_bases() -> list[str]:
+    """Directories holding this process's cgroup files, best first.
+
+    TASK-FRD-043: the original reader looked only under CGROUP_BASE
+    (``/sys/fs/cgroup``), i.e. the hierarchy root. On the live host the
+    root carries no memory.* files, so read_cgroup_memory() returned None
+    and the guard could never fire — while the service cgroup itself hit
+    its 200 MB cap and the kernel OOM-killed FRIDAY on 2026-11-27 00:56 UTC.
+    The process's own cgroup (from /proc/self/cgroup) comes first; the
+    bare root is kept last so dev machines and containers without a
+    service cgroup behave exactly as before.
+    """
+    bases: list[str] = []
+    own = _own_cgroup_relpath()
+    if own:
+        rel = own.lstrip("/")
+        bases.append(os.path.join(CGROUP_BASE, rel))
+        bases.append(os.path.join(CGROUP_BASE, "memory", rel))
+    bases.append(CGROUP_BASE)
+    bases.append(os.path.join(CGROUP_BASE, "memory"))
+    return bases
+
+
 def _read_cgroup_int(*relative_paths: str) -> int | None:
     """Read the first readable cgroup value file; None when absent/unlimited.
 
-    A file containing ``max`` means the resource is unlimited and is treated
-    as no limit (None). Any read/parse failure returns None — the guard
-    degrades to "no cgroup data" instead of raising.
+    Searches each candidate base directory (own cgroup first, hierarchy
+    root last) for each relative name in order. A file containing ``max``
+    means the resource is unlimited and is treated as no limit (None). Any
+    read/parse failure returns None — the guard degrades to "no cgroup
+    data" instead of raising.
     """
-    for relative in relative_paths:
-        try:
-            with open(os.path.join(CGROUP_BASE, relative), encoding="utf-8") as handle:
-                raw = handle.read().strip()
-        except (OSError, ValueError):
-            continue
-        if raw in ("", "max"):
-            return None
-        try:
-            return int(raw)
-        except ValueError:
-            continue
+    for base in _cgroup_file_bases():
+        for relative in relative_paths:
+            try:
+                with open(os.path.join(base, relative), encoding="utf-8") as handle:
+                    raw = handle.read().strip()
+            except (OSError, ValueError):
+                continue
+            if raw in ("", "max"):
+                return None
+            try:
+                return int(raw)
+            except ValueError:
+                continue
     return None
 
 
@@ -96,14 +145,17 @@ class CgroupMemory:
 def read_cgroup_memory() -> CgroupMemory | None:
     """Read this process's memory-cgroup accounting; None when unavailable.
 
-    Prefers cgroup v2 (memory.max / memory.current / memory.swap.*) and falls
-    back to v1 (memory/memory.limit_in_bytes / memory/memory.usage_in_bytes /
+    Reads the process's OWN cgroup (resolved from /proc/self/cgroup, e.g.
+    ``/system.slice/FRIDAY.service`` under the hierarchy root), preferring
+    cgroup v2 (memory.max / memory.current / memory.swap.*) with a v1
+    fallback (memory/memory.limit_in_bytes / memory/memory.usage_in_bytes /
     memory/memory.memsw.*). Returns None when no cgroup files exist at all
     (dev machines, containers without limits) or the used value cannot be read.
     A present-but-unlimited cap yields limit_bytes=None with a real used_bytes.
     """
     used = _read_cgroup_int(
         "memory.current",
+        "memory.usage_in_bytes",
         "memory/memory.usage_in_bytes",
     )
     if used is None:
@@ -111,15 +163,18 @@ def read_cgroup_memory() -> CgroupMemory | None:
     return CgroupMemory(
         limit_bytes=_read_cgroup_int(
             "memory.max",
+            "memory.limit_in_bytes",
             "memory/memory.limit_in_bytes",
         ),
         used_bytes=used,
         swap_limit_bytes=_read_cgroup_int(
             "memory.swap.max",
+            "memory.memsw.limit_in_bytes",
             "memory/memory.memsw.limit_in_bytes",
         ),
         swap_used_bytes=_read_cgroup_int(
             "memory.swap.current",
+            "memory.memsw.usage_in_bytes",
             "memory/memory.memsw.usage_in_bytes",
         ),
     )

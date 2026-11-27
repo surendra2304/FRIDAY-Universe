@@ -9,9 +9,12 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    needs: detect-voice-changes
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: '3.11'
@@ -24,6 +27,7 @@ jobs:
         run: python3 scripts/tier1_collection_gate.py
 
       - name: Install dependencies
+        if: needs.detect-voice-changes.outputs.any_code == 'true'
         run: |
           pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas ruff
 
@@ -32,6 +36,7 @@ jobs:
       # F13.4 (Tier-1 spec): lint before tests so style/import errors fail
       # fast with a readable report.
       - name: Lint (ruff check)
+        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.friday == 'true'
         # Net widened 2026-11-12 (ZAI Agent 2): the tools/builtin exclusion was
         # stale — the legacy nest held only 2 trivial f-string findings, fixed.
         # The lint now covers the entire friday package.
@@ -42,6 +47,7 @@ jobs:
       # constructors, wrong loop variables. All fixed; F821 now gated in CI so
       # the bug class can never land again.
       - name: Lint siblings (ruff F821 — undefined names)
+        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.siblings == 'true'
         run: |
           ruff check Memora Stratex Inference Sentinel IntelX Futuris VyralX Forge \
             --select F821 --output-format=concise
@@ -49,6 +55,7 @@ jobs:
       # regression-class floors in tests/COVERAGE_MANIFEST.json. A PR that
       # deletes/breaks the tests for a covered module fails here, not silently.
       - name: Run engine test suites with coverage
+        if: needs.detect-voice-changes.outputs.any_code == 'true'
         # TASK-REL-086: on failure the wrapper prints the failing test
         # names + log tail into the check-run summary, so the exact
         # failing test is recoverable without sign-in-gated logs.
@@ -75,10 +82,12 @@ jobs:
             --cov-report=json:coverage_ci.json
 
       - name: Coverage gate (regression classes — checklist I5)
+        if: needs.detect-voice-changes.outputs.any_code == 'true'
         run: |
           python3 scripts/coverage_gate.py coverage_ci.json
 
       - name: Run Memora vector tenant and transaction regressions
+        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.memora == 'true'
         working-directory: Memora
         env:
           MEMORA_ENV: testing
@@ -136,6 +145,7 @@ jobs:
       # F16.3/F16.4 in both files (README/.env.example lack POSTGRES_DSN)
       # and F8.3 in tests/e2e (stale pre-COR-005 assertion).
       - name: Run Cortex tier-1 tests
+        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.cortex == 'true'
         working-directory: Cortex
         run: |
           python3 -m venv .venv-cortex-ci
@@ -192,11 +202,19 @@ jobs:
       # the SESSION_DIR / extract_article_text API the superseded PR
       # #1850 test file expected but never got — see
       # docs/collaboration/TASK-FRD-058-CHECKPOINT-2.md.
+      # TASK-FRD-062: tests/test_frd062_crm.py rides in this invocation
+      # for the same REL-068 reason; it runs in this venv (stdlib +
+      # friday.* imports only; in-memory SQLite engine, no Oracle DSN).
+      # The same PR also touches tests/test_ig_tool_registry_wiring.py
+      # (CRM tools added to EXPECTED), so that file rides here too —
+      # it was uncollected pre-existing debt, surfaced by this PR's
+      # change; it runs in this venv (registry build with stub memory).
       # FRIDAY/requirements.txt + pytest + pytest-asyncio (the suite uses
       # @pytest.mark.asyncio; requirements.txt lacks the plugin). Proven
       # locally on current main: 86 passed, 0 failed, 0 deselects - see
       # docs/collaboration/TASK-REL-088-TIER1-ALL-AGENTS.md.
       - name: Run FRIDAY tier-1 tests
+        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.friday == 'true'
         working-directory: FRIDAY
         run: |
           python3 -m venv .venv-friday-ci
@@ -234,7 +252,7 @@ jobs:
             tests/test_mem029_production_callers.py \
             tests/test_ig_frd_001_goal_loop.py tests/test_frd_045_woop.py \
             tests/test_capability_routing.py tests/test_ig2_frd03_lead_generation.py tests/test_ig_frd_061_lead_verification.py tests/test_ig_frd_057_book_translation.py \
-            tests/test_ig_frd_058_rsvp.py tests/test_ig_frd_060_signal_brief.py \
+            tests/test_ig_frd_058_rsvp.py tests/test_ig_frd_060_signal_brief.py tests/test_frd062_crm.py tests/test_ig_tool_registry_wiring.py \
             tests/test_reliability.py tests/test_ig2_lap01_escrcpy.py \
             tests/test_phone_ui_automation.py tests/test_browser_use_integration.py \
             tests/test_laptop_browser_agent.py \
@@ -249,6 +267,7 @@ jobs:
       # pre-existing failures proven on current main - see the evidence
       # doc: /health returns 503 and /ready omits the "wal" key.
       - name: Run Memora tier-1 tests
+        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.memora == 'true'
         working-directory: Memora
         env:
           MEMORA_ENV: testing
@@ -296,6 +315,7 @@ jobs:
       # so the REL-068 collection guard passes — a PR test must run in
       # PR CI (contracts guard failed PR #2007 while it was uncollected).
       - name: Run Stratex tier-1 tests
+        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.stratex == 'true'
         working-directory: Stratex
         run: |
           python3 -m venv .venv-stratex-ci
@@ -331,6 +351,7 @@ jobs:
       # Oracle ADB in the test env), db_path TypeError x2, postgres URL
       # translation RuntimeError, PRAGMA no-op expectation.
       - name: Run Forge tier-1 tests
+        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.forge == 'true'
         working-directory: Forge
         env:
           # Forge/app imports the repo-root `mesh` package
@@ -367,6 +388,7 @@ jobs:
       # import fails without it). Proven locally on current main: 12
       # passed, 0 failed, 0 deselects - see the evidence doc.
       - name: Run Inference tier-1 tests
+        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.inference == 'true'
         working-directory: Inference
         run: |
           python3 -m venv .venv-inference-ci
@@ -403,6 +425,7 @@ jobs:
       # the SE-01 pixel tests had never run in PR CI. Triage file proven
       # locally: 11 passed, 0 failed; tier-1 total with it: 37 passed.
       - name: Run Sentinel tier-1 tests
+        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.sentinel == 'true'
         working-directory: Sentinel
         run: |
           python3 -m venv .venv-sentinel-ci
@@ -441,7 +464,12 @@ jobs:
       # TASK-INT-047: tests/test_ig_intelx_tor_metrics.py added —
       # 18 tests for the Tor Metrics (Onionoo) source. Proven locally:
       # 18 passed.
+      # TASK-INT-879: tests/test_standing_watches.py added — the
+      # standing-watch poll semantics (incl. the suppression-ordering
+      # tests) were collected by no CI job (same uncollected-test failure
+      # mode as FUT-030 / PR-936). CI is the proof run for this file.
       - name: Run IntelX tier-1 tests
+        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.intelx == 'true'
         working-directory: IntelX
         run: |
           python3 -m venv .venv-intelx-ci
@@ -455,7 +483,7 @@ jobs:
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
             -- .venv-intelx-ci/bin/python -m pytest -q \
-            tests/test_intelx_health_contract.py tests/test_health.py tests/test_healthz_liveness.py tests/test_ig_intelx_wiring_feeds.py tests/test_db002_watch_seen.py tests/test_db002_watch_envelopes.py tests/test_db002_migration.py tests/test_int051_intelx_repos_wave3.py tests/test_ig_intelx_telegram_topic_search.py tests/test_ig_intelx_tor_metrics.py
+            tests/test_intelx_health_contract.py tests/test_health.py tests/test_healthz_liveness.py tests/test_ig_intelx_wiring_feeds.py tests/test_db002_watch_seen.py tests/test_db002_watch_envelopes.py tests/test_db002_migration.py tests/test_int051_intelx_repos_wave3.py tests/test_ig_intelx_telegram_topic_search.py tests/test_ig_intelx_tor_metrics.py tests/test_int056_synthesis_failure.py tests/test_standing_watches.py
 
       # TASK-REL-088: Futuris tier-1 set (health-contract core files; no
       # tier-1-named suite exists). Own venv from Futuris/requirements.txt
@@ -465,6 +493,7 @@ jobs:
       # live Oracle is needed. Proven locally on current main: 8 passed
       # (2 health files), 0 failed, 0 deselects - see the evidence doc.
       - name: Run Futuris tier-1 tests
+        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.futuris == 'true'
         working-directory: Futuris
         env:
           DATABASE_URL: oracle+oracledb://dummy:dummy@localhost:1521/dummy
@@ -516,8 +545,10 @@ jobs:
       # encode/probe real media and must not depend on whatever the
       # runner image happens to ship.
       - name: Install ffmpeg for VyralX real-render tests
+        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.vyralx == 'true'
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Run VyralX tier-1 tests
+        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.vyralx == 'true'
         working-directory: VyralX
         run: |
           python3 -m venv .venv-vyralx-ci
@@ -541,6 +572,7 @@ jobs:
             tests/test_vyr032_doubled_caption.py tests/test_viral_framing.py  # TASK-VYR-072-FIX-01: collected here for the same reason (REL-068 guard)
 
       - name: Start API server and run HTTP tests
+        if: needs.detect-voice-changes.outputs.any_code == 'true'
         run: |
           PYTHONPATH=FRIDAY/apps/core/src:Inference/app:Inference:Memora:Stratex:Forge/app/services:Sentinel/app/services:IntelX/intelx/services:Futuris/futuris/core:VyralX/app/services \
           python3 -m uvicorn friday_core.real_api_server:app --host 0.0.0.0 --port 8000 &
@@ -565,7 +597,14 @@ jobs:
             **/*.json
             .pytest_cache/
           retention-days: 7
-
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
   detect-voice-changes:
     runs-on: ubuntu-latest
     permissions:
@@ -573,10 +612,25 @@ jobs:
       pull-requests: read
     outputs:
       voice: ${{ steps.filter.outputs.voice }}
+      shared: ${{ steps.filter.outputs.shared }}
+      any_code: ${{ steps.filter.outputs.any_code }}
+      siblings: ${{ steps.filter.outputs.siblings }}
+      friday: ${{ steps.filter.outputs.friday }}
+      memora: ${{ steps.filter.outputs.memora }}
+      cortex: ${{ steps.filter.outputs.cortex }}
+      stratex: ${{ steps.filter.outputs.stratex }}
+      forge: ${{ steps.filter.outputs.forge }}
+      inference: ${{ steps.filter.outputs.inference }}
+      sentinel: ${{ steps.filter.outputs.sentinel }}
+      intelx: ${{ steps.filter.outputs.intelx }}
+      futuris: ${{ steps.filter.outputs.futuris }}
+      vyralx: ${{ steps.filter.outputs.vyralx }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
         id: filter
         with:
@@ -596,7 +650,77 @@ jobs:
               - 'FRIDAY/pyproject.toml'
               - 'FRIDAY/.env.example'
               - 'FRIDAY/src/friday/core/config.py'
-
+            # TASK-REL-106: per-agent-subtree path filters. `shared` covers
+            # CI config, shared scripts/tests and root config — any hit runs
+            # the full suite. Board/docs-only PRs match nothing here, so the
+            # test job skips every agent suite and still reports green.
+            shared:
+              - '.github/workflows/friday-universe-ci.yml'
+              - 'scripts/**'
+              - 'tests/**'
+              - 'pyproject.toml'
+              - 'setup.cfg'
+              - 'requirements*.txt'
+              - 'Dockerfile'
+              - 'docker-compose*.yml'
+              - 'docker-compose*.yaml'
+            any_code:
+              - '.github/workflows/friday-universe-ci.yml'
+              - 'scripts/**'
+              - 'tests/**'
+              - 'pyproject.toml'
+              - 'setup.cfg'
+              - 'requirements*.txt'
+              - 'Dockerfile'
+              - 'docker-compose*.yml'
+              - 'docker-compose*.yaml'
+              - 'FRIDAY/**'
+              - 'Memora/**'
+              - 'Cortex/**'
+              - 'Stratex/**'
+              - 'Forge/**'
+              - 'Inference/**'
+              - 'Sentinel/**'
+              - 'IntelX/**'
+              - 'Futuris/**'
+              - 'VyralX/**'
+            siblings:
+              - 'Memora/**'
+              - 'Stratex/**'
+              - 'Inference/**'
+              - 'Sentinel/**'
+              - 'IntelX/**'
+              - 'Futuris/**'
+              - 'VyralX/**'
+              - 'Forge/**'
+            friday:
+              - 'FRIDAY/**'
+            memora:
+              - 'Memora/**'
+            cortex:
+              - 'Cortex/**'
+            stratex:
+              - 'Stratex/**'
+            forge:
+              - 'Forge/**'
+            inference:
+              - 'Inference/**'
+            sentinel:
+              - 'Sentinel/**'
+            intelx:
+              - 'IntelX/**'
+            futuris:
+              - 'Futuris/**'
+            vyralx:
+              - 'VyralX/**'
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
   voice-regressions:
     runs-on: ubuntu-latest
     needs: detect-voice-changes
@@ -612,6 +736,8 @@ jobs:
           python-version: "3.11"
           cache: pip
           cache-dependency-path: FRIDAY/requirements.txt
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
       - name: Install FRIDAY production and test dependencies
         run: |
           python -m pip install --upgrade pip
@@ -690,8 +816,16 @@ jobs:
             tests/test_voice_greeting_trigger.py \
             tests/test_voice_instant_routing.py \
             tests/test_voice_session_build_overlap.py \
+            tests/test_voice_task_board.py \
             tests/test_voice_place_finder.py
-
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
   docker:
     runs-on: ubuntu-latest
     needs: test
@@ -699,6 +833,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
       - name: Build Docker image
         run: docker build -t friday-universe:3.0.0 .
 
@@ -723,4 +859,11 @@ jobs:
 
       - name: Docker compose down
         run: docker compose down
-
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"

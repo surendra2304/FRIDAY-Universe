@@ -731,6 +731,39 @@ class Outbox:
             fh.write(json.dumps(envelope, ensure_ascii=False) + "\n")
 
 
+def read_outbox_envelopes(path: Path) -> dict[str, Any]:
+    """Read-only outbox snapshot for the TASK-INT-060 HTTP handoff.
+
+    The FRIDAY drainer no longer shares a filesystem with this
+    producer (fleet split), so envelopes cross over HTTP instead of
+    a sibling-file tail. Returns every complete, parseable envelope
+    line plus the file size and a malformed count; a missing outbox
+    is the normal watches-not-enabled state (empty, size 0). The
+    consumer dedupes on ``dedupe_key``, so returning the full list
+    every poll is safe.
+    """
+    try:
+        data = path.read_bytes()
+    except FileNotFoundError:
+        return {"size": 0, "envelopes": [], "malformed": 0}
+    envelopes: list[dict[str, Any]] = []
+    malformed = 0
+    for raw_line in data.split(b"\n"):
+        line = raw_line.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError):
+            malformed += 1
+            continue
+        if not isinstance(row, dict) or row.get("schema") != ENVELOPE_SCHEMA:
+            malformed += 1
+            continue
+        envelopes.append(row)
+    return {"size": len(data), "envelopes": envelopes, "malformed": malformed}
+
+
 def build_envelope(
     watch: WatchDefinition,
     item: FeedItem,
@@ -931,8 +964,19 @@ class WatchService:
                 continue
             candidates.append((item, score, reasons))
 
+        # TASK-INT-879: suppression order is score-first, recency second.
+        # The INT-876 soak's day-7 anomaly (a score-5 item suppressed by
+        # budget while a newer score-3 item alerted) showed newest-first
+        # lets a lower-value alert take the single per-poll slot. Score is
+        # the watch's judgement of importance, so the highest score takes
+        # the slot; ties still break newest-first (the v1 behaviour). An
+        # instant-class item (score >= instant_min_score) can therefore
+        # never lose its slot to a lower-score digest item in the same poll.
         candidates.sort(
-            key=lambda c: c[0].published_at or datetime.min.replace(tzinfo=UTC),
+            key=lambda c: (
+                c[1],
+                c[0].published_at or datetime.min.replace(tzinfo=UTC),
+            ),
             reverse=True,
         )
         budget_left = watch.max_alerts_per_day - self.store.alerts_today(watch.id, now)
