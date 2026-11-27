@@ -1,0 +1,144 @@
+[
+  {
+    "event": "run_created",
+    "pipeline": "explainer_short",
+    "lane": "space_science",
+    "stages": [
+      "research",
+      "script",
+      "storyboard",
+      "assets",
+      "voice",
+      "compose",
+      "quality",
+      "approval",
+      "publish_plan"
+    ],
+    "stage_runs": {
+      "research": "on_fleet",
+      "script": "on_fleet",
+      "storyboard": "on_fleet",
+      "assets": "on_fleet",
+      "voice": "off_fleet",
+      "compose": "off_fleet",
+      "quality": "on_fleet",
+      "approval": "on_fleet",
+      "publish_plan": "on_fleet"
+    }
+  },
+  {
+    "event": "provider_selection",
+    "selected": "edge_tts_free",
+    "scored": [
+      {
+        "name": "edge_tts_free",
+        "eligible": true,
+        "score": 92.5,
+        "reasons": []
+      },
+      {
+        "name": "paid_cloud_tts",
+        "eligible": false,
+        "score": 0.0,
+        "reasons": [
+          "cost $0.40 exceeds budget $0.00"
+        ]
+      },
+      {
+        "name": "local_gpu_video_gen",
+        "eligible": false,
+        "score": 0.0,
+        "reasons": [
+          "requires GPU (fleet has none)"
+        ]
+      }
+    ]
+  },
+  {
+    "event": "provider_selection_paid_only",
+    "result": "OrchestrationError: no eligible provider within budget $0.00: [{'name': 'paid_cloud_tts', 'eligible': False, 'score': 0.0, 'reasons': ['cost $0.40 exceeds budget $0.00']}]"
+  },
+  {
+    "event": "advanced",
+    "current": "script"
+  },
+  {
+    "event": "advanced",
+    "current": "storyboard"
+  },
+  {
+    "event": "storyboard_gate_no_approval",
+    "result": "OrchestrationError: storyboard approval gate: a human must approve the storyboard before production stages run"
+  },
+  {
+    "event": "state_after_storyboard_refusal",
+    "current": "storyboard"
+  },
+  {
+    "event": "advanced_with_approval",
+    "current": "assets"
+  },
+  {
+    "event": "advanced",
+    "current": "voice"
+  },
+  {
+    "event": "advanced",
+    "current": "compose",
+    "note_text": "voice stage is off_fleet: state advanced, no render executed"
+  },
+  {
+    "event": "advanced",
+    "current": "quality",
+    "note_text": "compose stage is off_fleet: state advanced, no render executed"
+  },
+  {
+    "event": "missing_bgm_gate_probe",
+    "artifact": {
+      "kind": "video",
+      "duration_seconds": 45,
+      "has_captions": true,
+      "provenance": "wikipedia:JWST",
+      "has_bgm": false
+    },
+    "gate": {
+      "passed": true,
+      "checks": {
+        "duration_within_cap": true,
+        "captions_present": true,
+        "provenance_present": true
+      },
+      "pipeline": "explainer_short"
+    }
+  },
+  {
+    "event": "finance_advice_script_gate_probe",
+    "gate": {
+      "passed": false,
+      "checks": {
+        "no_finance_advice": false
+      },
+      "pipeline": "explainer_short"
+    }
+  },
+  {
+    "event": "quality_gate_bad_artifact",
+    "result": "OrchestrationError: quality gate failed: {'passed': False, 'checks': {'duration_within_cap': False, 'captions_present': False, 'provenance_present': False}, 'pipeline': 'explainer_short'}"
+  },
+  {
+    "event": "state_after_quality_refusal",
+    "current": "quality"
+  },
+  {
+    "event": "advanced",
+    "current": "approval"
+  },
+  {
+    "event": "advanced",
+    "current": "publish_plan"
+  },
+  {
+    "event": "advanced",
+    "current": "complete"
+  }
+]

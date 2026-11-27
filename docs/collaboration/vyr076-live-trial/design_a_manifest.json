@@ -1,0 +1,145 @@
+{
+  "version": "ig2-vyr01-1",
+  "kind": "vyralx.audio_content_job",
+  "execution": "batch_offline",
+  "resident_service": false,
+  "fleet_note": "Audio rendering runs off the resident VyralX service (~180MB cap): batch on the owner's machine or post-ARM. Upstream Podcastfy needs Python 3.11+; this native port runs on the fleet's Python 3.10.",
+  "script": {
+    "version": "ig2-vyr01-1",
+    "topic": "James Webb Space Telescope",
+    "lane": "space_science",
+    "mode": "short",
+    "turns": [
+      {
+        "speaker": "host_b",
+        "text": "Welcome back. Today we're digging into James Webb Space Telescope \u2014 where do we start?"
+      },
+      {
+        "speaker": "host_a",
+        "text": "The design emphasizes the near to mid-infrared for several reasons:  high-redshift (very early and distant) objects have their visible emissions shifted into the infrared, and therefore their light can be observed only via infrared astronomy; infrared light passes more easily through dust clouds than visible light; colder objects such as debris disks and planets emit most strongly in the infrared; These infrared bands are difficult to study from the ground or by earlier space telescopes such as Hubble."
+      },
+      {
+        "speaker": "host_b",
+        "text": "Wait \u2014 can you break that down for me?"
+      },
+      {
+        "speaker": "host_a",
+        "text": "Preparation for the 2000 Astronomy and Astrophysics Decadal Survey (a literature review produced by the United States National Research Council that includes identifying research priorities and making recommendations for the upcoming decade) included further development of the scientific program for what became known as the Next Generation Space Telescope, and advancements in relevant technologies by NASA."
+      },
+      {
+        "speaker": "host_b",
+        "text": "That's wild. So what does that actually mean?"
+      },
+      {
+        "speaker": "host_a",
+        "text": "The primary contractor was Northrop Grumman Aerospace Systems, responsible for developing and building the spacecraft element, which included the satellite bus, sunshield, Deployable Tower Assembly (DTA) which connects the Optical Telescope Element to the spacecraft bus, and the Mid Boom Assembly (MBA) which helps to deploy the large sunshields on orbit, while Ball Aerospace & Technologies was subcontracted to develop and build the OTE itself, and the Integrated Science Instrument Module (ISIM)."
+      },
+      {
+        "speaker": "host_b",
+        "text": "Okay, but why does that matter?"
+      },
+      {
+        "speaker": "host_a",
+        "text": "Other targets included:  Moving targets: Jupiter's rings and moons (particularly Europa, Thebe and Metis), asteroids 2516 Roman, 118 Peitho, 6481 Tenzing, 1773 Rumpelstilz, 216 Kleopatra, 2035 Stearns, 4015 Wilson-Harrington and 2004 JX20 NIRCam grism time-series, NIRISS SOSS and NIRSpec BOTS mode: the Jupiter-sized planet HAT-P-14b NIRISS aperture masking interferometry (AMI): A precise detection of the very low-mass companion star AB Doradus C, which had a separation of only 0.3 arcseconds to the primary."
+      },
+      {
+        "speaker": "host_b",
+        "text": "Give me the part most people get wrong."
+      },
+      {
+        "speaker": "host_a",
+        "text": "That is genuinely fascinating \u2014 and that's our story for today."
+      }
+    ],
+    "estimated_minutes": 2.24,
+    "within_target_window": true,
+    "finance_advice_hits": [],
+    "source": "podcastfy-pattern (Apache-2.0), FRIDAY-native port"
+  },
+  "tts_segments": [
+    {
+      "index": 0,
+      "speaker": "host_b",
+      "voice": "en-US-GuyNeural",
+      "provider": "edge",
+      "text": "Welcome back. Today we're digging into James Webb Space Telescope \u2014 where do we start?",
+      "paid": false
+    },
+    {
+      "index": 1,
+      "speaker": "host_a",
+      "voice": "en-US-AriaNeural",
+      "provider": "edge",
+      "text": "The design emphasizes the near to mid-infrared for several reasons:  high-redshift (very early and distant) objects have their visible emissions shifted into the infrared, and therefore their light can be observed only via infrared astronomy; infrared light passes more easily through dust clouds than visible light; colder objects such as debris disks and planets emit most strongly in the infrared; These infrared bands are difficult to study from the ground or by earlier space telescopes such as Hubble.",
+      "paid": false
+    },
+    {
+      "index": 2,
+      "speaker": "host_b",
+      "voice": "en-US-GuyNeural",
+      "provider": "edge",
+      "text": "Wait \u2014 can you break that down for me?",
+      "paid": false
+    },
+    {
+      "index": 3,
+      "speaker": "host_a",
+      "voice": "en-US-AriaNeural",
+      "provider": "edge",
+      "text": "Preparation for the 2000 Astronomy and Astrophysics Decadal Survey (a literature review produced by the United States National Research Council that includes identifying research priorities and making recommendations for the upcoming decade) included further development of the scientific program for what became known as the Next Generation Space Telescope, and advancements in relevant technologies by NASA.",
+      "paid": false
+    },
+    {
+      "index": 4,
+      "speaker": "host_b",
+      "voice": "en-US-GuyNeural",
+      "provider": "edge",
+      "text": "That's wild. So what does that actually mean?",
+      "paid": false
+    },
+    {
+      "index": 5,
+      "speaker": "host_a",
+      "voice": "en-US-AriaNeural",
+      "provider": "edge",
+      "text": "The primary contractor was Northrop Grumman Aerospace Systems, responsible for developing and building the spacecraft element, which included the satellite bus, sunshield, Deployable Tower Assembly (DTA) which connects the Optical Telescope Element to the spacecraft bus, and the Mid Boom Assembly (MBA) which helps to deploy the large sunshields on orbit, while Ball Aerospace & Technologies was subcontracted to develop and build the OTE itself, and the Integrated Science Instrument Module (ISIM).",
+      "paid": false
+    },
+    {
+      "index": 6,
+      "speaker": "host_b",
+      "voice": "en-US-GuyNeural",
+      "provider": "edge",
+      "text": "Okay, but why does that matter?",
+      "paid": false
+    },
+    {
+      "index": 7,
+      "speaker": "host_a",
+      "voice": "en-US-AriaNeural",
+      "provider": "edge",
+      "text": "Other targets included:  Moving targets: Jupiter's rings and moons (particularly Europa, Thebe and Metis), asteroids 2516 Roman, 118 Peitho, 6481 Tenzing, 1773 Rumpelstilz, 216 Kleopatra, 2035 Stearns, 4015 Wilson-Harrington and 2004 JX20 NIRCam grism time-series, NIRISS SOSS and NIRSpec BOTS mode: the Jupiter-sized planet HAT-P-14b NIRISS aperture masking interferometry (AMI): A precise detection of the very low-mass companion star AB Doradus C, which had a separation of only 0.3 arcseconds to the primary.",
+      "paid": false
+    },
+    {
+      "index": 8,
+      "speaker": "host_b",
+      "voice": "en-US-GuyNeural",
+      "provider": "edge",
+      "text": "Give me the part most people get wrong.",
+      "paid": false
+    },
+    {
+      "index": 9,
+      "speaker": "host_a",
+      "voice": "en-US-AriaNeural",
+      "provider": "edge",
+      "text": "That is genuinely fascinating \u2014 and that's our story for today.",
+      "paid": false
+    }
+  ],
+  "tts_provider": "edge",
+  "paid_services_used": false,
+  "publish": false,
+  "privacy_if_published": "unlisted"
+}

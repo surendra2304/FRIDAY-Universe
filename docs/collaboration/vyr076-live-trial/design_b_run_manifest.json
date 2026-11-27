@@ -1,0 +1,68 @@
+{
+  "version": "ig2-vyr02-1",
+  "pipeline": "explainer_short",
+  "topic": "James Webb Space Telescope",
+  "lane": "space_science",
+  "format": "shorts",
+  "stages": [
+    {
+      "stage": "research",
+      "runs": "on_fleet",
+      "status": "done"
+    },
+    {
+      "stage": "script",
+      "runs": "on_fleet",
+      "status": "done"
+    },
+    {
+      "stage": "storyboard",
+      "runs": "on_fleet",
+      "status": "done"
+    },
+    {
+      "stage": "assets",
+      "runs": "on_fleet",
+      "status": "done"
+    },
+    {
+      "stage": "voice",
+      "runs": "off_fleet",
+      "status": "done"
+    },
+    {
+      "stage": "compose",
+      "runs": "off_fleet",
+      "status": "done"
+    },
+    {
+      "stage": "quality",
+      "runs": "on_fleet",
+      "status": "done",
+      "gate": {
+        "passed": true,
+        "checks": {
+          "duration_within_cap": true,
+          "captions_present": true,
+          "provenance_present": true
+        },
+        "pipeline": "explainer_short"
+      }
+    },
+    {
+      "stage": "approval",
+      "runs": "on_fleet",
+      "status": "done"
+    },
+    {
+      "stage": "publish_plan",
+      "runs": "on_fleet",
+      "status": "done"
+    }
+  ],
+  "current_stage": "complete",
+  "budget_usd": 0.0,
+  "paid_services_used": false,
+  "publish": false,
+  "privacy_if_published": "unlisted"
+}
