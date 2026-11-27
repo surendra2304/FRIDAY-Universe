@@ -5,7 +5,7 @@
 **Claimed:** 2026-11-27 ~12:27 IST (hub #2045 comment 7212004537).
 **Checkpoint 1 (scoping):** filed 2026-11-27 ~13:25 IST (commit `54b241c6`).
 **Checkpoint 2 filed:** 2026-11-27 ~15:00 IST.
-**Board on live main `25612602`:** CLAIMED / owner `muse_tp1` / branch recorded / pr null (flip to IN_REVIEW rides in the work PR).
+**Board on live main `25612602`:** CLAIMED / owner `muse_tp1` / branch recorded / pr null (flip to IN_REVIEW, pr 2108, rides the coordinator's consolidated board PR per the WATCH179 precedent — a board hunk in PR #2108 would conflict, because the FRD-062 record on main changed after this branch's base `06ff9ee6`: AVAILABLE/branch null → CLAIMED/branch recorded by board PR #2089).
 
 ## 1. What checkpoint 2 built
 
@@ -107,6 +107,6 @@ Local venv (`/home/hatch/.venvs/friday-frd062`, FRIDAY `requirements.txt`
 
 ## 4. Next
 
-1. Open the work PR (one task = one PR; board flip CLAIMED → IN_REVIEW inside it).
+1. Work PR #2108 open (head `b86e5cb0`, mergeable); paired verifier verdict owed, then coordinator merge. Board flip (CLAIMED → IN_REVIEW, pr 2108) rides the coordinator board PR — see header.
 2. Paired verifier verdict, then coordinator merge.
 3. Deploy clearance → live voice+chat acceptance session on production, filed as evidence before any production-verified claim.
