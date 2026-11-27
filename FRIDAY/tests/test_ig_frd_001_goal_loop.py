@@ -152,3 +152,145 @@ def test_tools_round_trip(tmp_path, monkeypatch):
     assert "Prepare the demo checklist" in status.content
     bad = StartGoalLoopTool().execute(goal="", criteria=[])
     assert bad.is_error
+
+
+# --- TASK-IG-FRD-001-FIX-01: brain-route executor + terminal reply ---
+
+
+def _stub_brain(monkeypatch, fn):
+    """Stand in ``friday.api.server._run_brain_sync`` with a fake brain.
+
+    The executor lazy-imports the server module, so stubbing it in
+    sys.modules is enough — the real (heavy) server module is never
+    imported by these tests.
+    """
+    import sys
+    import types
+
+    stub = types.ModuleType("friday.api.server")
+    stub._run_brain_sync = fn
+    monkeypatch.setitem(sys.modules, "friday.api.server", stub)
+
+
+def test_default_executor_routes_through_brain(monkeypatch):
+    from friday.autonomous.goal_loop import _default_executor
+
+    seen = []
+
+    def fake_brain(instruction):
+        seen.append(instruction)
+        return {
+            "reply": "Created notes/goal-90e54d3f66.md. note created.",
+            "metadata": {"success": True},
+        }
+
+    _stub_brain(monkeypatch, fake_brain)
+    ok, out = _default_executor("Work on this goal and report concrete progress: X")
+    assert ok is True
+    assert "note created" in out
+    assert seen == ["Work on this goal and report concrete progress: X"]
+
+
+def test_default_executor_refusal_is_honest_failure(monkeypatch):
+    from friday.autonomous.goal_loop import _default_executor
+
+    def refusing_brain(instruction):
+        return {"reply": "", "metadata": {"refused": True, "error": "blocked"}}
+
+    _stub_brain(monkeypatch, refusing_brain)
+    ok, out = _default_executor("Do the thing")
+    assert ok is False
+    assert "blocked" in out
+
+
+def test_default_executor_timeout_is_failure_not_success(monkeypatch):
+    # The chat endpoint reports a timed-out turn as metadata.success=False
+    # with NO top-level flag — the mission queue's top-level-only check
+    # would score that as a success. The executor must not.
+    from friday.autonomous.goal_loop import _default_executor
+
+    def timing_out_brain(instruction):
+        return {
+            "reply": "That request is still running after 300 seconds, Boss.",
+            "metadata": {"success": False, "timeout": True, "error": "chat_timeout"},
+        }
+
+    _stub_brain(monkeypatch, timing_out_brain)
+    ok, out = _default_executor("Do the thing")
+    assert ok is False
+    assert "chat_timeout" in out
+
+
+def test_default_executor_unavailable_brain_is_failure(monkeypatch):
+    import sys
+    import types
+
+    from friday.autonomous.goal_loop import _default_executor
+
+    stub = types.ModuleType("friday.api.server")  # no _run_brain_sync attr
+    monkeypatch.setitem(sys.modules, "friday.api.server", stub)
+    ok, out = _default_executor("Do the thing")
+    assert ok is False
+    assert "brain executor unavailable" in out
+
+
+def test_tool_loop_completes_leg1_repro(tmp_path, monkeypatch):
+    # FRD-051 leg-1 repro (goal-90e54d3f66 shape): a natural-language goal
+    # whose steps the OLD shell executor rejected ("Command 'work'/'for'
+    # is not allowed"). Through the brain the same steps complete and the
+    # tool returns the terminal report as a terminal reply.
+    import friday.autonomous.goal_loop as gl
+    from friday.tools.builtin.goal_loop_tools import StartGoalLoopTool
+
+    monkeypatch.setattr(
+        gl, "_default_store_path", lambda: str(tmp_path / "tool-loops.json")
+    )
+
+    def fake_brain(instruction):
+        return {
+            "reply": "Created notes/goal-90e54d3f66.md with the requested content. note created.",
+            "metadata": {"success": True},
+        }
+
+    _stub_brain(monkeypatch, fake_brain)
+    result = StartGoalLoopTool().execute(
+        goal="Create a note file about the goal loop",
+        criteria=[
+            {"description": "Note file created", "check": "contains", "needle": "note created"}
+        ],
+        run_now=True,
+    )
+    assert not result.is_error
+    assert result.metadata["status"] == "completed"
+    assert result.metadata["terminal_reply"] is True
+    assert "COMPLETED" in result.content
+
+
+def test_start_goal_loop_tool_timeout_fits_brain_loop():
+    from friday.tools.builtin.goal_loop_tools import StartGoalLoopTool
+
+    # Each step is a full chat-brain turn; the 30s default cannot hold a
+    # multi-step loop. 240s stays inside the 300s chat-turn budget.
+    assert StartGoalLoopTool.timeout == 240
+
+
+def test_terminal_reply_helper():
+    from friday.agent.agent import _terminal_reply
+    from friday.core.types import ToolResult
+
+    terminal = ToolResult(
+        name="start_goal_loop",
+        content="Goal loop goal-x — COMPLETED",
+        metadata={"terminal_reply": True},
+    )
+    assert _terminal_reply(terminal) == "Goal loop goal-x — COMPLETED"
+    unmarked = ToolResult(name="x", content="hi", metadata={})
+    assert _terminal_reply(unmarked) is None
+    errored = ToolResult(
+        name="start_goal_loop",
+        content="boom",
+        is_error=True,
+        metadata={"terminal_reply": True},
+    )
+    assert _terminal_reply(errored) is None
+    assert _terminal_reply(None) is None
