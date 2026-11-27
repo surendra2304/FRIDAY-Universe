@@ -10,8 +10,9 @@
   branch null / pr null — the CLAIMED flip is still owed in the coordinator's
   consolidated board PR (it was NOT in the WATCH201 §5 flips-owed list; flagged
   to the coordinator in the stall post this run).
-- Five states: implemented NO / tested NO / merged NO / deployed n/a /
-  production-verified NO. This is a checkpoint-1 analysis only, not a work PR.
+- Five states: implemented YES / tested NO (regression tests filed, CI pending) /
+  merged NO / deployed n/a / production-verified NO (failing-synthesis live case
+  owed — bridge run_shell down this run, see checkpoint 2).
 
 ## Stall record (this run, 10:05 IST self-check)
 
@@ -125,5 +126,52 @@
 - Code search: `SynthesizerAgent` callers = `synthesizer.py`, `__init__.py`,
   `orchestration/engine.py`, `deep_research_loop.py`; `ProviderError` in
   `intelx/models/gateway.py`, `providers.py`, `ai_universe_provider.py`.
+
+— Muse 3
+
+## Checkpoint 2: implementation + regression tests (this run, 12:05 IST self-check)
+
+- Implementation commit `c29502e2` (`IntelX/intelx/agents/synthesizer.py`, +66 lines):
+  `gateway.complete(...)` in `SynthesizerAgent.execute` is now wrapped in
+  try/except for `(ProviderError, StructuredOutputError)` — the two failure
+  types `ModelGateway.complete` raises (all providers failed; schema
+  validation failed after retry). Other exceptions still propagate.
+- On failure the fallback `DraftReport` is built from the priority-sorted
+  verified claims (`sorted_claims[:5]`): executive answer states synthesis
+  failed and the answer is the extractive excerpts; key findings are the
+  claim texts verbatim with claim IDs and claim confidences (clamped to
+  [0.05, 0.95] for the `DraftFinding` field bounds; dict-claim accessor
+  matches the `claim_priority` shape so dict claims keep their confidence);
+  gaps record the failure + provider error type; overall confidence forced
+  "Low"; execution mode `SYNTHESIS FAILED / EXTRACTIVE FALLBACK`; a
+  degradation entry is appended ("Synthesis provider failed (<error type>);
+  answer is extractive excerpts from verified claims").
+- Success path unchanged: same draft, grounding, rendering. The
+  insufficient-evidence path (no claims) is untouched — the gateway is never
+  called there. No change to `deep_research_loop.py`.
+- Callers checked: `IntelX/intelx/orchestration/engine.py` calls
+  `synthesizer.execute` in two places (resumption path + stage 8) with no
+  try/except of its own; no caller change is needed now that `execute` never
+  raises on gateway failure.
+- Regression tests commit `822a8e7b`
+  (`IntelX/tests/test_int056_synthesis_failure.py`, 4 tests, repo conventions:
+  `ModelGateway` subclass stubs, dict claims, `@pytest.mark.asyncio`):
+  ProviderError → excerpts returned, findings grounded to c1/c2, Low, mode +
+  degradation in the report; StructuredOutputError → same fallback;
+  failing gateway + no claims → insufficient-evidence path unchanged;
+  succeeding gateway → LLM draft returned, High, no failure markers.
+- Work PR: opened this run (number filed in the PR body / hub post once CI
+  reports). CI 9/9 green required before merge (team standard).
+- LIVE CASE OWED: the failing-synthesis live case (run the research path live
+  with a failing synthesis provider via bridge `run_shell`, clearance
+  7200564540) could NOT run this run — bridge `run_shell` is down fleet-wide
+  (5 failed attempts across servers 2 and 3 this run; `get_system_info` works,
+  both Oracle servers ONLINE). The same outage blocked the live re-derivation
+  of the paired verification for PR #2082 (verdict PARTIAL, review 6084491169).
+  Retry the live case once `run_shell` recovers; no restart, no server move,
+  no deploy (owner stop order 7130069033 still stands).
+- Board flip: INT-056 CLAIMED/owner muse_3 already landed on main `c1aa53b9`
+  via board PR #2077 (verified 11:05 IST run). The MERGED flip rides in the
+  coordinator's board PR after this work PR merges.
 
 — Muse 3
