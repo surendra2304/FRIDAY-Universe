@@ -473,7 +473,7 @@ from typing import Anyfrom pydantic import AliasChoices, Field, field_validato
             "purposes, so the ladder gets the remaining budget instead. Small explicit budgets are "
             "unaffected (the fraction governs below the cap). Raise this if a deployment's primaries "
             "legitimately take longer than this to produce one non-streamed completion."
-            "TASK-INF-029 (2026-11-23) measured Gemini completion on the ~13.5k-token INF-019 probe shape at n=5 fresh (median 42.0 s, p95 >=150 s right-censored, 2/5 inside this 15 s slice; combined n=8 with INF-LLM-003: median 54.66 s, 3/8 inside) and kept this cap: no sane primary-slice deadline covers that tail, and the fallback ladder serves the same request end-to-end in 18.34 s."
+            "TASK-INF-029 (2026-11-23) measured Gemini completion on the ~13.5k-token INF-019 probe shape at n=5 fresh (median 42.0 s, p95 >=150 s right-censored, 2/5 inside this 15 s slice; combined n=8 with INF-LLM-003: median 54.66 s, 3/8 inside) and kept this cap: no sane primary-slice deadline covers that tail, and the fallback ladder serves the same request end-to-end in 18.34 s." "TASK-INF-047 (2026-11-27) re-measured the same probe shape live on FRIDAY-Server at n=5 fresh (median 113.62 s, p95 >=150.1 s right-censored, 0/5 inside this 15 s slice; combined n=13 with INF-029 + INF-LLM-003: median 67.32 s, 3/13 inside) and kept this cap: the tail persists, and the fallback ladder serves the same request end-to-end in 18.59 s."
         ),
     )
 
