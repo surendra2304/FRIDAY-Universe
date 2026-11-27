@@ -18,8 +18,9 @@ What this module adds:
 - A deterministic default planner: one work step per success criterion,
   plus an opening "work the goal" step — no LLM needed to structure a loop.
 - A cycle runner: each cycle executes the pending steps through an
-  injected executor (production default: ``friday.tools.execute_command``,
-  the same brain entry the mission queue executes through), accumulates
+  injected executor (production default: the real chat brain via
+  ``_run_brain_sync`` in ``friday.api.server`` — the same brain entry
+  the mission queue executes through), accumulates
   the step outputs as evidence, and evaluates EVERY criterion against
   that evidence.
 - Criteria checks: ``contains`` / ``not_contains`` (evidence text),
@@ -233,23 +234,82 @@ def evaluate_criterion(
     return {"met": bool(met), "why": str(why or "")}
 
 
-def _default_executor(instruction: str) -> "tuple[bool, str]":
-    """Production executor: the same brain entry the mission queue uses.
+def _coerce_brain_result(result: Any) -> dict[str, Any]:
+    """Coerce a brain-call result to the dispatch dict shape.
 
-    Lazy import — constructing the brain is heavy and tests always inject
-    their own executor.
+    ``_run_brain_sync`` returns the ``/api/command`` endpoint's return
+    value, which is usually the ``{"reply", "metadata"}`` dict — but
+    the endpoint returns a ``JSONResponse`` (not a dict) on its error
+    paths (refusal 403, dispatch exception 500, failed turn 502). A
+    failed nested turn therefore arrives here as a response object;
+    reading ``.body`` recovers the same dict. Anything else is an
+    honest failure, never an exception: an executor that raises aborts
+    the whole loop run (live 2026-11-27: ``AttributeError`` on a
+    502 ``JSONResponse`` crashed ``start_goal_loop`` mid-cycle).
+    """
+    if isinstance(result, dict):
+        return result
+    body = getattr(result, "body", None)
+    if isinstance(body, (bytes, bytearray)):
+        try:
+            parsed = json.loads(bytes(body).decode("utf-8"))
+        except Exception:
+            parsed = None
+        if isinstance(parsed, dict):
+            return parsed
+    raise ValueError(f"brain returned an unreadable result: {type(result).__name__}")
+
+
+def _default_executor(instruction: str) -> "tuple[bool, str]":
+    """Production executor: the real chat brain.
+
+    Routes the step instruction through ``_run_brain_sync`` (the chat
+    dispatch in ``friday.api.server``) — the same brain entry the
+    mission queue, the Telegram gateway and the WhatsApp gateway
+    execute through. It is NOT ``friday.tools.execute_command``: that
+    name belongs to a read-only shell-command tool whose
+    Windows-flavoured allowlist rejects natural-language steps
+    ("Command 'work'/'for' is not allowed") — the exact FRD-051 leg-1
+    failure this task fixes (TASK-IG-FRD-001-FIX-01). The planner
+    writes brain instructions; the executor must run them through
+    the brain.
+
+    Result mapping mirrors the mission queue (``execute_pending``):
+    the brain's ``reply`` is the output; a refusal (``refused`` /
+    ``security_blocked`` in metadata) or a failed / timed-out turn is
+    an honest step failure, never a silent pass. Unlike the mission
+    queue's mapping, success is read from BOTH the top level and the
+    metadata: the chat endpoint reports it only inside ``metadata``
+    (a timed-out turn carries ``metadata.success=False`` with no
+    top-level flag), so checking the top level alone would score a
+    timeout as a success.
+
+    Lazy import — the server module is heavy and this module is also
+    imported by tests, which always inject their own executor.
     """
     try:
-        from friday.tools.execute_command import execute_command
-
-        result = execute_command(instruction)
+        from friday.api.server import _run_brain_sync
     except Exception as exc:
-        return False, f"executor unavailable: {type(exc).__name__}: {exc}"
-    if isinstance(result, dict):
-        output = str(result.get("output") or result.get("response") or result)
-        ok = not bool(result.get("is_error") or result.get("error"))
-        return ok, output
-    return True, str(result)
+        return False, f"brain executor unavailable: {type(exc).__name__}: {exc}"
+    try:
+        result = _run_brain_sync(instruction)
+        result = _coerce_brain_result(result)
+    except Exception as exc:
+        return False, f"brain executor error: {type(exc).__name__}: {exc}"
+    reply = str(result.get("reply") or "").strip()
+    metadata = result.get("metadata") or {}
+    refused = bool(metadata.get("refused") or metadata.get("security_blocked"))
+    timed_out = bool(metadata.get("timeout"))
+    success = result.get("success")
+    if success is None:
+        success = metadata.get("success")
+    ok = not refused and not timed_out and success is not False
+    if not ok:
+        reason = str(
+            metadata.get("error") or result.get("error") or "engine reported failure"
+        )
+        return False, (reply or reason)[:4000]
+    return True, reply[:4000]
 
 
 class GoalLoopStore:
@@ -419,7 +479,15 @@ class GoalLoopStore:
             if step.get("status") == "done":
                 continue
             step["attempts"] = int(step.get("attempts") or 0) + 1
-            ok, output = executor(step["instruction"])
+            try:
+                ok, output = executor(step["instruction"])
+            except Exception as exc:
+                # An executor must return (ok, output), never raise — but
+                # a raising executor must fail the STEP, not the loop run
+                # (TASK-IG-FRD-001-FIX-01: the brain executor raised
+                # AttributeError on a 502 JSONResponse and aborted the
+                # whole tool call mid-cycle).
+                ok, output = False, f"executor error: {type(exc).__name__}: {exc}"
             step["result"] = (output or "")[:4000]
             if ok:
                 step["status"] = "done"

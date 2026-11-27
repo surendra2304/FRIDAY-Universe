@@ -964,8 +964,19 @@ class WatchService:
                 continue
             candidates.append((item, score, reasons))
 
+        # TASK-INT-879: suppression order is score-first, recency second.
+        # The INT-876 soak's day-7 anomaly (a score-5 item suppressed by
+        # budget while a newer score-3 item alerted) showed newest-first
+        # lets a lower-value alert take the single per-poll slot. Score is
+        # the watch's judgement of importance, so the highest score takes
+        # the slot; ties still break newest-first (the v1 behaviour). An
+        # instant-class item (score >= instant_min_score) can therefore
+        # never lose its slot to a lower-score digest item in the same poll.
         candidates.sort(
-            key=lambda c: c[0].published_at or datetime.min.replace(tzinfo=UTC),
+            key=lambda c: (
+                c[1],
+                c[0].published_at or datetime.min.replace(tzinfo=UTC),
+            ),
             reverse=True,
         )
         budget_left = watch.max_alerts_per_day - self.store.alerts_today(watch.id, now)
