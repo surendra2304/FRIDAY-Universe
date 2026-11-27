@@ -10,13 +10,15 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import httpx
 import pytest
 from fastapi import HTTPException
 
 from intelx.api.v1 import osint_tools
 from intelx.connectors import telegram_topic_search as tts
 from intelx.connectors.named_sources import NAMED_SOURCES, seed_search_url
-from intelx.connectors.search import SearchResult
+from intelx.connectors.search import ProviderError, SearchResult, WebSearchConnector
+from intelx.core.settings import Settings
 
 PREVIEW_HTML = """<html><head>
 <meta property="og:title" content="Quantum Batteries Daily">
@@ -340,3 +342,106 @@ async def test_route_flag_on_returns_candidates(monkeypatch):
     assert payload["count"] == 1
     assert payload["candidates"][0]["handle"] == "quantumbatt"
     assert payload["candidates"][0]["proposal"]["inclusion"] == "manual"
+
+
+# ---------------------------------------------------------------------------
+# Live mode (TASK-INT-046-FIX-01): the discovery search path never falls
+# back to mock fixtures, even when the global MOCK_MODE default is on.
+# ---------------------------------------------------------------------------
+
+
+def _searxng_transport(results):
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"results": results})
+
+    return httpx.MockTransport(handler)
+
+
+class _FakeNewsEmpty:
+    async def fetch(self, target, **kwargs):
+        return []
+
+
+class _FakeWikiEmpty:
+    async def fetch(self, target, **kwargs):
+        return []
+
+
+class _FakeDdgDown:
+    async def fetch(self, target, **kwargs):
+        raise ProviderError(
+            "DuckDuckGo search request failed", details={"provider": "duckduckgo"}
+        )
+
+
+async def test_web_search_live_mode_bypasses_mock():
+    """live=True runs the real provider chain while MOCK_MODE is on.
+
+    The SearXNG transport is a fake that returns a t.me link; the same
+    query without live=True returns the mock fixtures (none for this
+    query) and never touches the live chain.
+    """
+    settings = Settings(
+        MOCK_MODE=True,
+        SEARXNG_URL="https://searx.example.invalid",
+        TAVILY_API_KEY=None,
+    )
+    live_results = [
+        {
+            "url": "https://t.me/coinmarketcapannouncements",
+            "title": "CoinMarketCap Announcements",
+            "content": "crypto news",
+        },
+    ]
+    connector = WebSearchConnector(
+        settings=settings, transport=_searxng_transport(live_results)
+    )
+    connector._google_news = _FakeNewsEmpty()  # hermetic: no real news call
+    live = await connector.fetch("site:t.me cryptocurrency", max_results=10, live=True)
+    assert [r.url for r in live] == ["https://t.me/coinmarketcapannouncements"]
+    assert live[0].title == "CoinMarketCap Announcements"
+    # Without live=True the same connector returns mock fixtures (none
+    # for this query) — the live SearXNG result is never consulted.
+    mocked = await connector.fetch("site:t.me cryptocurrency", max_results=10)
+    assert mocked == []
+
+
+async def test_web_search_live_mode_fail_closed_without_provider():
+    """live=True with no provider configured fail-closes, never mocks.
+
+    No Tavily key, no SearXNG URL, Google News + Wikipedia return
+    nothing and DuckDuckGo fails: the live chain raises ProviderError.
+    The same call without live=True returns the mock fixtures instead
+    of raising — that is the bug FIX-01 removes from the live path.
+    """
+    settings = Settings(MOCK_MODE=True, SEARXNG_URL=None, TAVILY_API_KEY=None)
+    connector = WebSearchConnector(settings=settings)
+    connector._google_news = _FakeNewsEmpty()
+    connector._wikipedia = _FakeWikiEmpty()
+    connector._ddg = _FakeDdgDown()
+    with pytest.raises(ProviderError):
+        await connector.fetch("site:t.me cryptocurrency", max_results=10, live=True)
+    mocked = await connector.fetch("site:t.me cryptocurrency", max_results=10)
+    assert mocked == []
+
+
+async def test_default_search_uses_live_mode(monkeypatch):
+    """TelegramTopicSearch's default search passes live=True."""
+    calls: list[dict] = []
+
+    class _RecordingSearch:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def fetch(self, query, max_results=10, **kwargs):
+            calls.append({"query": query, "max_results": max_results, **kwargs})
+            return []
+
+    monkeypatch.setattr(
+        "intelx.connectors.search.WebSearchConnector", _RecordingSearch
+    )
+    service = tts.TelegramTopicSearch()
+    await service._default_search("site:t.me cryptocurrency", 10)
+    assert calls == [
+        {"query": "site:t.me cryptocurrency", "max_results": 10, "live": True}
+    ]

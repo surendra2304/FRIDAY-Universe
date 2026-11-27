@@ -679,8 +679,18 @@ class WebSearchConnector(BaseConnector):
         return results
 
     async def fetch(self, target: str, **kwargs: Any) -> list[SearchResult]:
-        """Execute search across active or mock provider."""
-        if self.settings.MOCK_MODE:
+        """Execute search across active or mock provider.
+
+        ``live=True`` forces the real provider chain even when
+        ``MOCK_MODE`` is on (TASK-INT-046-FIX-01): a live discovery
+        route must never be seeded with mock fixtures. The flag is
+        popped from ``kwargs`` so it is not forwarded to providers.
+        Fail-closed: when live search returns nothing and a provider
+        failed, ``ProviderError`` is raised; an empty result with no
+        provider failure is an honest no-result search.
+        """
+        live = bool(kwargs.pop("live", False))
+        if self.settings.MOCK_MODE and not live:
             return self._load_mock_results(target)
 
         failed_providers: list[dict[str, Any]] = []
