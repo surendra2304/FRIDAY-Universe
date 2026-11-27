@@ -149,3 +149,66 @@ read-only probes only.
   coordinator deploy/clearance.
 
 — Muse 7
+
+## Live leg — DONE (2026-11-28 ~01:29–01:34 IST, Muse 7)
+
+Deploy clearance WATCH234 ruling B.1 (board evidence, watch235). Method:
+bridge `run_shell` on Oracle Server 1 (read-only probes; API key loaded
+server-side from the running process environment, never printed). No
+service restarted, no deploy performed by Muse 7, no Telegram prompt sent.
+
+### Deploy state observed (first-hand)
+
+- Live checkout `/opt/friday_universe` HEAD = `0f74b33d` — the PR #2169
+  merge commit itself. `Sentinel/app/services/cyber_skills_service.py` and
+  `Sentinel/tests/security/test_sen033_sentinel_repo_implement.py` present
+  in the live checkout.
+- `Sentinel.service` active, MainPID 2088416, boot 2026-11-27 23:16:42 IST
+  (merge landed 17:46:06Z = 23:16:06 IST) — the running service already
+  executes the SEN-033 code. Checkout is behind current main `c516895c`;
+  the SEN-033 change itself is deployed.
+- `/health` 200 (kill_switch false, audit_chain_valid true, 52 entries);
+  `/ready` ready:true, 7/7 checks true incl. telegram_channel.
+
+### End-to-end use on the live service (2026-11-27T20:02:55Z)
+
+- `GET /v1/cyber/capabilities` → 200, skills 57,
+  `defensive_skill_pack`: skill_count 10, tiers_present ["defensive"],
+  all_defensive true, excluded_tiers ["dual-use","offensive"] — the pack
+  audit SEN-033 wired is live.
+- `GET /v1/cyber/skills?query=ssh brute force T1110` → 200,
+  `detecting-ssh-brute-force` (defensive, score 2.25, covers T1110).
+- `POST /v1/cyber/triage` (T1110 SSH brute force, server-1) → 200,
+  crosswalk skills ["detecting-ssh-brute-force"], severity medium 0.5021.
+- `POST /v1/cyber/authorise` detecting-ssh-brute-force, engagement
+  `sen033-live-proof` → 200 `{"allowed":true,"reason":"within scope,
+  window and approved tier"}`.
+- Failure case: `POST /v1/cyber/authorise` wireless-security-assessment,
+  same engagement → 200 `{"allowed":false,"reason":"tier 'offensive' is
+  not approved for this engagement"}`.
+- Honest notes: first unauthenticated attempts returned 401 pre-handler
+  (no operation executed); first authenticated authorise pair without an
+  engagement returned fail-closed `no engagement on record` denies; the
+  pair above is the completed proof.
+
+### PentAGI guardrail (live checkout)
+
+Runtime grep for `pentagi|vxcontrol` under `Sentinel/app` +
+`Sentinel/sentinel` (*.py) matches only the two documented
+defensive-analogue mentions (`audit_baseline.py`,
+`fleet_audit_pipeline.py`); dependency files
+(`pyproject.toml`, `requirements.txt`, `requirements.lock`) clean. The
+CI-collected guardrail test asserts no pentagi/vxcontrol imports and
+passed on the merge head.
+
+### Five states (live leg)
+
+implemented YES / tested YES (repo CI + live end-to-end above) / merged
+YES (`0f74b33d`) / deployed YES (live checkout at the merge commit,
+service running it since 23:16:42 IST) / production-verified YES for the
+adapt + reference-only items on the evidence above. The approval-path
+Telegram leg was NOT run: per the work-leg note it needs a coordinator
+ruling that the skills `authorise` surface counts as the SEN-033 approval
+path; TASK-SEN-041 (approval-path live proof run 5) is queued behind this
+leg for that proof. Board flip rides the coordinator board PR.
+
