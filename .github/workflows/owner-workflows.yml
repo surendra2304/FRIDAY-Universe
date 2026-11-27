@@ -128,6 +128,7 @@ jobs:
             FRIDAY/tests/test_int016_instant_lane.py \
             FRIDAY/tests/test_frd029_activity_timestamps.py \
             FRIDAY/tests/test_frd030_live_activity_timestamp.py \
+            FRIDAY/tests/test_frd064_tracemalloc_watch.py \
             FRIDAY/tests/test_codex_invariants_and_mesh.py \
             FRIDAY/tests/test_friday_health_contract.py \
             FRIDAY/tests/test_fleet_probe_labelling.py \

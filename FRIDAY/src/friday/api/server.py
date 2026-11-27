@@ -51,6 +51,7 @@ from friday.core.config import get_settings
 # failing storage layer turns the probe 503.
 from friday.core.database import connect_sqlite
 from friday.core.logging import get_logger
+from friday.core.tracemalloc_watch import maybe_start_tracemalloc_watch, stop_tracemalloc_watch
 from friday.devices.android_controller import AndroidDeviceController
 from friday.devices.app_launcher import launch_desktop_app
 from friday.ecosystem.fleet_client import fleet_client, CANONICAL_INTERNAL_MESH_URLS
@@ -564,6 +565,9 @@ async def lifespan(_: FastAPI):
     # Pre-flight environment validation
     is_prod = os.getenv("FRIDAY_ENV", "").lower() == "production"
     validate_runtime_environment(fail_fast=is_prod)
+    # TASK-FRD-064: env-gated tracemalloc observation watch (WATCH230 §C.2).
+    # Inert unless FRIDAY_TRACEMALLOC=1; approved for one observation restart.
+    maybe_start_tracemalloc_watch()
     supervision_task = asyncio.create_task(_fleet_supervision_loop(), name="friday-fleet-supervision")
     memora_task = asyncio.create_task(_memora_event_loop(), name="friday-memora-event-consumer")
     # The unattended repair pass. Until this task existed the trigger had no
@@ -668,6 +672,8 @@ async def lifespan(_: FastAPI):
             await asyncio.wait_for(fleet_client.aclose(), timeout=3.0)
         except Exception:
             logger.exception("Failed to close the shared fleet HTTP client during shutdown")
+        # TASK-FRD-064: final tracemalloc snapshot (no-op unless the watch ran).
+        stop_tracemalloc_watch()
         logger.info("Graceful shutdown completed.")
 
 app = FastAPI(
