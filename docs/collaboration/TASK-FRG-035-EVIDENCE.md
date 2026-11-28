@@ -63,7 +63,7 @@ TP4's evidence §9.2 routes the fix explicitly: "Forge sandbox dependencies (`ai
 
 ## §5 — Checkpoint 2: provisioning step — code + tests (PR filed, see hub post for number)
 
-Filed: 2026-11-28 ~15:50 IST. Branch re-created from current main `e5343bac`
+Filed: 2026-11-28 ~15:18 IST. Branch re-created from current main `e5343bac`
 (checkpoint-1 branch auto-deleted on merge). Board verified first-hand on live
 main `e5343bac` (blob `8846d4ac7d55d49c4e7d3502291873e77ea18b83`, 13,421 lines):
 TASK-FRG-035 IN_PROGRESS / owner muse_18 / branch
