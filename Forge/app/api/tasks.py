@@ -35,10 +35,13 @@ from app.core.orchestrator import OrchestratorCore
 from app.core.progress_tracker import ProgressTracker
 from app.core.workspace import canonical_path, workspace_manager
 from app.execution.dependency_manager import DependencyManager
+from app.integrations.memora_client import get_memora_client
 from app.memory.db import db_manager
 from app.memory.models import TaskMode, TaskState
 from app.memory.state_store import StateStore
 from app.memory.task_lifecycle import InvalidStateTransitionError, TaskStateMachine
+from app.verification.engine import verification_engine
+from app.verification.security_scanner import OutputSecurityScanner
 
 
 def _as_utc(value: datetime) -> datetime:
@@ -113,18 +116,93 @@ MAX_CONCURRENT_TASKS = _parse_concurrency_limit(
 _execution_slots = asyncio.Semaphore(MAX_CONCURRENT_TASKS)
 
 
-async def _run_task_supervised(task_id: str, webhook_url: str | None) -> None:
+async def _run_task_supervised(
+    task_id: str,
+    webhook_url: str | None,
+    require_sentinel: bool = False,
+    memora_goal: str | None = None,
+) -> None:
     """Drive a task to a terminal state, reporting progress over the websocket."""
     async with _execution_slots:
-        await _run_task_body(task_id, webhook_url)
+        await _run_task_body(task_id, webhook_url, require_sentinel, memora_goal)
 
 
-async def _run_task_body(task_id: str, webhook_url: str | None) -> None:
+async def _run_task_body(
+    task_id: str,
+    webhook_url: str | None,
+    require_sentinel: bool = False,
+    memora_goal: str | None = None,
+) -> None:
     store = StateStore(db_manager)
     tracker = ProgressTracker.get_tracker(task_id)
     try:
         orchestrator = OrchestratorCore(store=store)
         final = await orchestrator.run_task(task_id)
+        # TASK-FRG-038: the delegate execute_now path used to do its
+        # verification re-run, Sentinel gate and Memora writeback inline
+        # on the request. They now run here, after run_task's own
+        # verify+settle, only when the submitter flagged them — the
+        # default background path is unchanged (no second battery run).
+        # The flags ride the runner, not the task record: a duplicate
+        # submission reuses the live runner and its flags (see
+        # _schedule_execution).
+        if require_sentinel or memora_goal is not None:
+            report = await verification_engine.verify_task(task_id)
+            manifest = verification_engine.generate_manifest(task_id, report)
+            # TASK-FRG-011: re-settle against THIS battery run, the same
+            # authoritative derivation the inline path used.
+            try:
+                settled = await orchestrator.apply_final_verdict(task_id, report)
+                if settled is not None:
+                    final = settled
+            except Exception as settle_exc:
+                logger.warning(f"Verdict settling failed for task {task_id}: {settle_exc}")
+            # The gate and the writeback run only on a settled SUCCESS
+            # (state COMPLETED after the re-settle): the inline path
+            # returned before both on any other verdict.
+            if require_sentinel and final.state == TaskState.COMPLETED:
+                paths = workspace_manager.get_workspace_paths(task_id)
+                if paths:
+                    scanner = OutputSecurityScanner(paths.project)
+                    scan_report = scanner.scan_all()
+                    if scan_report.blocks_delivery or scan_report.critical_count > 0:
+                        sentinel_error = (
+                            f"Sentinel Gate Failure: {scan_report.critical_count} "
+                            "critical findings detected."
+                        )
+                        # TASK-FRG-011: a delivery block is a named hard
+                        # failure — settle it into the task record too.
+                        try:
+                            await orchestrator.apply_final_verdict(
+                                task_id,
+                                report,
+                                extra_hard_failure_reasons=[sentinel_error],
+                            )
+                        except Exception as settle_exc:
+                            logger.warning(
+                                f"Verdict settling failed for task {task_id}: {settle_exc}"
+                            )
+                        refreshed = await store.get_task(task_id)
+                        if refreshed is not None:
+                            final = refreshed
+            if (
+                memora_goal is not None
+                and manifest.all_passed
+                and final.state == TaskState.COMPLETED
+            ):
+                try:
+                    memora = get_memora_client()
+                    await memora.a_record_interaction(
+                        user_input=f"Engineering build: {memora_goal}",
+                        agent_output=f"Successfully synthesized and verified goal in task {task_id}",
+                        agent_name="forge",
+                        event_type="swe_build_verified",
+                        tags=["forge", "verified", "production_pass"],
+                        metadata={"task_id": task_id, "stages": manifest.total_stages},
+                    )
+                    logger.info(f"Recorded verified build experience to Memora for task {task_id}")
+                except Exception as mem_err:
+                    logger.warning(f"Memora writeback non-fatal warning: {mem_err}")
         if tracker:
             await tracker.complete_task(success=final.state == TaskState.COMPLETED)
         if webhook_url:
@@ -189,8 +267,18 @@ async def execution_queue_status() -> dict[str, Any]:
     }
 
 
-def _schedule_execution(task_id: str, webhook_url: str | None = None) -> None:
-    """Start (or reuse) the background execution loop for a task."""
+def _schedule_execution(
+    task_id: str,
+    webhook_url: str | None = None,
+    require_sentinel: bool = False,
+    memora_goal: str | None = None,
+) -> None:
+    """Start (or reuse) the background execution loop for a task.
+
+    TASK-FRG-038: the post-completion flags (Sentinel gate, Memora
+    writeback) ride the runner. A duplicate submission reuses the live
+    runner and its flags; the second caller's flags are dropped.
+    """
     existing = _running_tasks.get(task_id)
     if existing is not None and not existing.done():
         logger.info(f"Task {task_id} is already executing; not starting a second loop")
@@ -200,7 +288,9 @@ def _schedule_execution(task_id: str, webhook_url: str | None = None) -> None:
     except RuntimeError:
         logger.warning(f"No running event loop; task {task_id} will not execute")
         return
-    _running_tasks[task_id] = loop.create_task(_run_task_supervised(task_id, webhook_url))
+    _running_tasks[task_id] = loop.create_task(
+        _run_task_supervised(task_id, webhook_url, require_sentinel, memora_goal)
+    )
 
 
 async def reconcile_stale_tasks(ttl_hours: float | None = None) -> int:
