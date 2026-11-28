@@ -13,6 +13,11 @@ build task with all four components in their stage:
   no verifiable success criteria) + ``guidance_block`` rendered into
   the run context; ECC ``scan_agent_config`` over the build config —
   a critical/high shield finding blocks the run before any code.
+  TASK-FRG-027 adds two plan-stage intakes: an M3E Canvas sketch
+  (``spec.sketch``) is parsed fail-closed into the run brief, and
+  the JCode lean-session layer fits the run context into its
+  declared budget and reserves the declared scope against parallel
+  sessions — either refusal blocks the run before any code.
 * understand — Graphify ``build_graph`` over the target subfolder and
   ``CodeGraph`` query/path over the produced graph (advisory: an
   unavailable CLI is recorded honestly, never faked).
@@ -48,9 +53,11 @@ from app.harness.ecc_patterns import (
     scan_agent_config,
     stage_gate,
 )
+from app.planning.sketch_prompt import parse_sketch
 
 from .coding_principles import guidance_block, preflight, scope_check
 from .code_graph import CodeGraph, build_graph
+from .jcode_harness import LeanSessionLedger, compact_context
 from .models import PlanGraph, PlanNode, TaskPhase
 from .ocr_review import run_ocr_review, supplement_review
 from .orchestrator import ForgeController
@@ -114,6 +121,15 @@ class BuildRunSpec:
     test_timeout: int = 600
     graph_runner: object = None  # subprocess.run-compatible, or None
     ocr_runner: object = None  # subprocess.run-compatible, or None
+    # TASK-FRG-027 intakes. ``sketch`` is an M3E Canvas sketch
+    # object (see app.planning.sketch_prompt); ``session_id`` /
+    # ``context_budget_chars`` / ``session_ledger`` drive the
+    # JCode lean-session layer. Defaults keep FRG-028 runs
+    # unchanged: no sketch, per-task session, generous budget.
+    sketch: dict | None = None
+    session_id: str = ""
+    context_budget_chars: int = 20000
+    session_ledger: LeanSessionLedger | None = None
 
 
 @dataclass(slots=True)
@@ -174,6 +190,13 @@ class ForgeBuildRun:
         self.harness = HarnessRun(task_id=spec.task_id)
         self.instincts = instincts if instincts is not None else InstinctStore()
         self.controller = ForgeController(build_plan_graph(spec))
+        self.session_id = spec.session_id or spec.task_id
+        self.session_ledger = (
+            spec.session_ledger
+            if spec.session_ledger is not None
+            else LeanSessionLedger()
+        )
+        self.sketch_prompt = ""
         self.changed_files: list[str] = []
         self.evidence: dict[str, str] = {}
         self.blockers: list[str] = []
@@ -213,6 +236,7 @@ class ForgeBuildRun:
                 f"build:{self.spec.target_agent}", "forge build run",
                 confirmed=False,
             )
+        self.session_ledger.release(self.session_id)
         return BuildRunReport(
             task_id=self.spec.task_id,
             status=status,
@@ -284,6 +308,60 @@ class ForgeBuildRun:
                 f"shield scan blocked the run: {worst.rule} "
                 f"({worst.severity}) at {worst.location}",
             )
+        # TASK-FRG-027: M3E Canvas sketch intake (adopt). A broken
+        # sketch fails closed here, before any code is written.
+        required_context = [
+            self.spec.task,
+            "\n".join(self.spec.assumptions),
+            "\n".join(self.spec.success_criteria),
+        ]
+        if self.spec.sketch is not None:
+            try:
+                brief = parse_sketch(self.spec.sketch)
+            except ValueError as exc:
+                self.evidence["m3e_sketch"] = f"refused: {exc}"
+                return False, True, f"sketch intake refused: {exc}"
+            self.sketch_prompt = brief.to_prompt()
+            self.evidence["m3e_sketch"] = (
+                f"adopted: {brief.app_name}, {len(brief.screens)} screens, "
+                f"{len(brief.flows())} flows, {len(brief.warnings)} warnings"
+            )
+            self.evidence["m3e_prompt"] = self.sketch_prompt.splitlines()[0]
+            required_context.append(self.sketch_prompt)
+        # TASK-FRG-027: JCode lean-session layer (adapt). The run
+        # context must fit its declared budget with required parts
+        # whole, and the declared scope must not overlap a live
+        # parallel session.
+        compaction = compact_context(
+            required_context,
+            [guidance_block()],
+            self.spec.context_budget_chars,
+        )
+        self.evidence["jcode_context"] = compaction.detail
+        if not compaction.ok:
+            return (
+                False,
+                True,
+                f"lean session context refused: {compaction.detail}",
+            )
+        if self.spec.scope_prefixes:
+            conflicts = self.session_ledger.reserve(
+                self.session_id, self.spec.scope_prefixes
+            )
+            if conflicts:
+                self.evidence["jcode_session"] = (
+                    f"session {self.session_id} refused: "
+                    + "; ".join(conflicts)
+                )
+                return (
+                    False,
+                    True,
+                    "lean session scope conflict: " + "; ".join(conflicts),
+                )
+            self.evidence["jcode_session"] = (
+                f"session {self.session_id} reserved scope "
+                + ", ".join(self.spec.scope_prefixes)
+            )
         ok, reason = self._advance_ecc("plan")
         if not ok:
             return False, True, reason
@@ -330,6 +408,20 @@ class ForgeBuildRun:
             f"{len(self.spec.steps)} steps, "
             f"{len(self.changed_files)} files changed"
         )
+        conflicts = self.session_ledger.check_files(
+            self.session_id, self.changed_files
+        )
+        self.evidence["jcode_files"] = (
+            "no cross-session file conflicts"
+            if not conflicts
+            else "; ".join(conflicts)
+        )
+        if conflicts:
+            return (
+                False,
+                True,
+                "lean session file conflict: " + "; ".join(conflicts),
+            )
         ok, reason = self._advance_ecc("implement")
         if not ok:
             return False, True, reason
