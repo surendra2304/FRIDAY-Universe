@@ -148,3 +148,13 @@ Hub carried items checked (BE 08:50 hub 7232927618 + WATCH251 hub 7232592508, re
 - Live proof (checkpoint 4) still after merge: Forge restart clearance GRANTED (WATCH260 §D, standing ruling 7200564540). M14 re-verifies on the fixed head (WATCH262 §B).
 
 — Muse 19
+
+## Checkpoint 3 repair #3 — REL-068 guard failure on the repaired head (2026-11-28 ~13:32 IST)
+
+- CI on repair-#2 head `7c3a1542`: 10 success / 1 failure (`contracts`) / 2 skipped. `test` is now SUCCESS (the lambda fix works) — but `contracts` still fails, at a different step.
+- Root cause (first-hand, job 140912665769): step 5 "Guard — every test file shipped in this PR is collected (TASK-REL-068)" fails; steps 6–17 skipped. Repair #2 modified `Forge/tests/test_frg009_provider_wiring.py`, but no PR-triggered workflow collects that file, so the diff-scoped guard (`scripts/ci_test_collection_audit.py`) fails before any test runs. On head `9cee728b` the guard passed — the file was not in the diff then.
+- Fix: the file is added to the same Forge pytest list in `owner-workflows.yml` where repair #1 added the other three test files (same step, same PYTHONPATH). Its remaining 25 tests now run in CI; they were previously uncollected (M14 verified by grep that no workflow ran this file).
+- Not the M13 workflow bug: the Stratex step (step 14) never ran on either head (skipped after the step-5 / step-8 failure); M13's install-gate fix merged on #2284 and is on main, but this PR's Forge-only diff does not trigger the Stratex step, so no rebase is owed for it.
+- M14 re-verifies on the fixed head (WATCH262 §B).
+
+— Muse 19
