@@ -40,7 +40,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from app.api import delegate
+from app.api import delegate, tasks as tasks_api
 from app.core.orchestrator import OrchestratorCore
 from app.memory.models import TaskGraph, TaskMode, TaskNode, TaskState
 from app.verification.evidence import (
@@ -490,18 +490,18 @@ async def test_status_endpoint_partial_manifest_stays_partial(tmp_path, monkeypa
 
 
 @pytest.mark.asyncio
-async def test_delegate_execute_now_reports_the_settled_verdict(tmp_path, monkeypatch):
-    """execute_now re-runs the battery; the response, the store and the
-    manifest stamp must be the one verdict. On main this R5 shape
-    answered FAILED (mirroring the gate-latched state) over an
-    all-passed re-run manifest."""
+async def test_background_finalize_reports_the_settled_verdict(tmp_path, monkeypatch):
+    """TASK-FRG-038: execute_now no longer re-runs the battery on the
+    request; the re-run + settle now happens in the supervised background
+    body (the flags ride _schedule_execution). The R5 shape must still
+    settle to the one verdict there: on main this shape answered FAILED
+    (mirroring the gate-latched state) over an all-passed re-run manifest."""
     task = _task("task_exec", TaskState.FAILED, error_message=GATE_ERROR)
     store = _Store(task, _r5_graph("task_exec"))
     wm = _WM(tmp_path)
     (tmp_path / "project" / "ledger.py").write_text("x = 1\n", encoding="utf-8")
     real_orch = _orchestrator(store, wm)
     fake_orch = SimpleNamespace(
-        intake_and_plan=AsyncMock(return_value=(task, SimpleNamespace(nodes={}))),
         run_task=AsyncMock(return_value=task),
         apply_final_verdict=real_orch.apply_final_verdict,
         store=store,
@@ -512,24 +512,43 @@ async def test_delegate_execute_now_reports_the_settled_verdict(tmp_path, monkey
         partial_failure=False, total_stages=11, passed_stages=11,
         failed_stages=0, stages={}, evidence=[],
     )
+    monkeypatch.setattr(tasks_api, "StateStore", lambda db: store)
+    monkeypatch.setattr(tasks_api, "OrchestratorCore", lambda store: fake_orch)
     monkeypatch.setattr(
-        delegate, "verification_engine",
+        tasks_api, "verification_engine",
         SimpleNamespace(
             verify_task=AsyncMock(return_value=report),
             generate_manifest=lambda tid, rep: manifest,
         ),
     )
     monkeypatch.setattr(
-        delegate.workspace_manager, "get_workspace_paths", wm.get_workspace_paths
+        tasks_api, "ProgressTracker", SimpleNamespace(get_tracker=lambda tid: None)
+    )
+    dispatched: list[tuple[str, str]] = []
+
+    async def _dispatch(webhook_url, task_id, event, data):
+        dispatched.append((task_id, event))
+
+    monkeypatch.setattr(
+        tasks_api, "webhook_dispatcher", SimpleNamespace(dispatch_event=_dispatch)
+    )
+    memora_calls: list[dict] = []
+
+    async def _record(**kwargs):
+        memora_calls.append(kwargs)
+
+    monkeypatch.setattr(
+        tasks_api, "get_memora_client",
+        lambda: SimpleNamespace(a_record_interaction=_record),
     )
 
-    envelope = delegate.TaskEnvelopeModel(
-        task_id="env_exec", action="build",
-        payload={"goal": "CSV expense CLI", "execute_now": True},
+    await tasks_api._run_task_body(
+        "task_exec", "https://example.invalid/hook",
+        require_sentinel=False, memora_goal="CSV expense CLI",
     )
-    result = await delegate.delegate_task(envelope, orchestrator=fake_orch, store=store)
 
-    assert result.status == "SUCCESS"
-    assert result.receipt is not None
     assert store._task.state == TaskState.COMPLETED
     assert store._task.metadata["build_verdict"] == "SUCCESS"
+    assert dispatched == [("task_exec", "task_completed")]
+    assert len(memora_calls) == 1
+    assert memora_calls[0]["event_type"] == "swe_build_verified"
