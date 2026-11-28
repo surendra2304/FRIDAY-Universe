@@ -234,10 +234,56 @@ quantity the target's series forecasts. Stored intervals unchanged.
 
 - implemented YES (fix + 11 tests + this evidence) / tested YES (new
   tests 11/11; regression suites identical before/after; live before/after
-  computed read-only from the production store) / merged NO (work PR open,
-  awaiting Muse) / deployed NO (scheduler redeploy owed by coordinator) /
-  production-verified PARTIAL (root cause proven on live data with the
-  rule-version stamp on all 136 rows; after-coverage recomputed on the
-  same live rows; live effect awaits redeploy).
+  computed read-only from the production store) / merged YES (PR #2233,
+  merge `25aacc52`, 2026-11-28 07:56 IST; M10 VERIFIED review 6095174408)
+  / deployed YES (this §9, 2026-11-28 ~08:38 IST) / production-verified
+  PARTIAL (fix live on the scheduler and smoke-proven on the deployed
+  tree; first live re-scored fleet outcomes still to be observed).
+
+## 9. LIVE PROOF — redeploy after merge (WATCH251 §D)
+
+- PR #2233 MERGED 2026-11-28 07:56 IST (merge `25aacc52`, M10 VERIFIED
+  review 6095174408, CI 10/10). Branch deleted post-merge (404 verified).
+  Board flip to MERGED rides coordinator board PR #2250 (WATCH251 §B).
+- Redeploy executed 2026-11-28 ~08:35–08:38 IST by TP14 under WATCH251 §D
+  (standing clearance 7200564540).
+- Deployment fact: `/opt/friday_universe` on IntelX-Server (bridge
+  server 6, 32.236.185.237) is a static file copy, NOT a git checkout (no
+  `.git` within maxdepth 3) — a bare restart could not have deployed the
+  fix. The 02:35 UTC service restart was an OOM kill (memory peak
+  512.2M vs the 512M cap; systemd auto-restarted under Restart=always),
+  not a deploy.
+- Pre-deploy check: on-disk `resolution.py` / `lifecycle.py` /
+  `scheduler.py` hashed exactly to the PR base blobs (`c69017b5…` /
+  `65e7455c…` / `81c12e8b…`) — zero local drift, safe to overwrite. The
+  running code had no `FleetForecastDemandResolutionRuleV1` (grep 0).
+- Installed the 4 files from merge commit `25aacc52`
+  (raw.githubusercontent.com), each hash-verified against the merge blob
+  SHAs (`resolution.py 08fed144…`, `lifecycle.py 865d1783…`,
+  `scheduler.py 3d66d6bf…`, test `1661ff7e…`). Backups of the 3 replaced
+  files in `/tmp/fut043-backup-20261128/`. `py_compile` clean on all
+  three.
+- Functional smoke test on the deployed tree (venv312 python; no pytest
+  on the server): both rules registered (`capacity_exceedance v1.0`,
+  `fleet_forecast_demand v1.0`); a fleet forecast against a telemetry
+  frame with max 2348.0 resolves to observed **259.0** with
+  `rule:fleet_forecast_demand:v1.0`; without a daily-counts frame it
+  defers (`ResolutionNotReadyError`); unknown target raises ValueError.
+  SMOKE_OK.
+- Restart: `sudo -n systemctl restart Futuris.service` exit 0, 03:07:33
+  UTC (08:37:33 IST). New MainPID 60746 (was 59466), NRestarts 0,
+  active. `/ready` 200 `{status ready, database connected, oracle,
+  2.0.0}`. `/health` 503 degraded — UNCHANGED known state
+  (NO_MODEL_PROBE; storage 13/13 ok), not a regression. Scheduler loop
+  alive under the new PID (`self_assessment ok` 03:08:48, 03:09:51 UTC);
+  memory ~202 MB fresh.
+- Limits: the fix affects future resolutions only. First fleet outcomes
+  stamped `rule:fleet_forecast_demand:v1.0` appear after the next
+  lifecycle sweep resolves a matured fleet forecast — check rides the
+  next self-check / FUT-044 (TP11) scoring. The 136 historical rows stay
+  poisoned (coordinator decision owed on re-resolution, §7). The 02:35
+  OOM kill flags a standing fragility: the service hits its 512M cap
+  during statsforecast fit storms — same class as FRD-064, no fix in
+  this run.
 
 — Muse TP14
