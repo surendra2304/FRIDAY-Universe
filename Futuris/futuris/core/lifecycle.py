@@ -8,7 +8,11 @@ from uuid import uuid4
 import pandas as pd
 
 from futuris.core.enums import ForecastEventType, ForecastStatus
-from futuris.core.resolution import OutcomeResolver, outcome_resolver
+from futuris.core.resolution import (
+    OutcomeResolver,
+    ResolutionNotReadyError,
+    outcome_resolver,
+)
 from futuris.core.schemas import Forecast, ForecastEvent, Outcome
 from futuris.infra.events import EventEmitter, event_emitter
 from futuris.storage.repositories import (
@@ -30,6 +34,11 @@ class LifecycleSweepReport:
     # Forecasts that expired because their resolution raised. Each one carries a
     # forecast_resolution_failed event with the reason (R12).
     resolution_failures: int = 0
+    # Forecasts left ACTIVE because their ground truth is not complete yet
+    # (TASK-FUT-043: the fleet target's expiry day is still in progress).
+    # A later sweep resolves them once the day closes; they are neither
+    # expired nor failed.
+    deferred_count: int = 0
 
 
 def _ensure_utc(dt: datetime) -> datetime:
@@ -117,14 +126,21 @@ class LifecycleManager:
         observations_df: pd.DataFrame,
         capacity_events: list[dict] | None = None,
         as_of: datetime | None = None,
+        daily_counts_df: pd.DataFrame | None = None,
     ) -> LifecycleSweepReport:
-        """Execute complete state transition sweep across all active forecasts."""
+        """Execute complete state transition sweep across all active forecasts.
+
+        ``daily_counts_df`` is the daily forecast-count frame the fleet
+        demand rule resolves against (TASK-FUT-043); without it a fleet
+        forecast defers instead of resolving against telemetry.
+        """
         now = _ensure_utc(as_of or datetime.now(UTC))
         active_forecasts = await self.forecast_repo.list_by_status(ForecastStatus.ACTIVE)
 
         expired_count = 0
         resolved_count = 0
         invalidated_count = 0
+        deferred_count = 0
         recorded_outcomes: list[Outcome] = []
         resolution_failures = 0
 
@@ -154,7 +170,9 @@ class LifecycleManager:
             # 2. Check Horizon Resolution or Expiry (now >= expires_at)
             if now >= f_expires:
                 try:
-                    outcome = self.resolver.resolve_forecast(forecast, observations_df)
+                    outcome = self.resolver.resolve_forecast(
+                        forecast, observations_df, daily_counts=daily_counts_df
+                    )
                     saved_outcome = await self.outcome_repo.record_outcome(outcome)
                     recorded_outcomes.append(saved_outcome)
 
@@ -169,6 +187,15 @@ class LifecycleManager:
                     await self.event_repo.append(event)
                     await self.emitter.emit(event)
                     resolved_count += 1
+                except ResolutionNotReadyError:
+                    # TASK-FUT-043: the forecast cannot be resolved yet
+                    # (e.g. the fleet target's expiry day is still in
+                    # progress, so its daily count is partial). Leave it
+                    # ACTIVE with no outcome so a later sweep resolves it
+                    # once the day closes; never record a partial count
+                    # as ground truth, and never mark it expired.
+                    deferred_count += 1
+                    continue
                 except Exception as exc:
                     # Usually: the ground-truth observations for the horizon are missing.
                     # The forecast still expires, but the reason is persisted as a domain
@@ -202,4 +229,5 @@ class LifecycleManager:
             reassessment_due_count=len(review_due),
             outcomes=recorded_outcomes,
             resolution_failures=resolution_failures,
+            deferred_count=deferred_count,
         )
