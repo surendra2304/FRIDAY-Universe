@@ -994,7 +994,7 @@ class OrchestratorCore:
         battery settles nothing by itself (the state execution left is
         kept; read surfaces derive DEGRADED for an unevidenced
         COMPLETED). Callers that run their own battery after run_task
-        (the delegate execute_now path) call this again with their
+        (the supervised background finalization for execute_now submissions, TASK-FRG-038) call this again with their
         report, so state and manifest are re-settled from the freshest
         run instead of drifting apart.
 
