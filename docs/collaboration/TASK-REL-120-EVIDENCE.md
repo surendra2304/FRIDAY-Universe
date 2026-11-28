@@ -168,7 +168,7 @@ only this doc and the board flip changed.
   § Live proof); single-subtree skip behaviour verified by
   design + predicted-vs-actual detect outputs, live confirmation
   on the next single-subtree PR post-merge by the paired verifier
-- merged: NO (awaiting coordinator merge)
+- merged: YES (PR #2274, merge e1fac2be, 2026-11-28 11:21 IST)
 - deployed: N/A (CI config takes effect on merge)
 - production-verified: NO until a post-merge single-subtree PR
   shows the filtered run and the first nightly run (02:00 UTC)
