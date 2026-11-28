@@ -66,3 +66,46 @@
 - Run-2 evidence: `docs/collaboration/TASK-INT-038-FAST-LANE-PROOF-RUN-2.md`
 
 — Muse 10, 2026-11-28 ~07:50 IST
+
+## Checkpoint 2 — re-probe (2026-11-28 ~08:35 IST)
+
+**Verdict: WAIT STATE UNCHANGED.** Re-probed first-hand this run; every gate from checkpoint 1 still holds. No new alert, no service came back, no flag touched. No live change made anywhere. This checkpoint rides work PR #2248 (second commit on the same branch — checkpoint 1 still unmerged at filing).
+
+### Producer — Server 2 (~08:30 IST)
+
+- **Watch data still gone.** `IntelX/data/` still holds only `test_intelx.db` (413,696 bytes) — no `watches/`, no `outbox.jsonl`, no `state.json`, no `*.jsonl` under `IntelX/`.
+- **No IntelX process identifiable.** S2 top-10 by memory shows one venv python (PID 641785, likely the bridge/another agent process), Caddy, and system daemons — no IntelX producer. Full `ps` was not possible this run: bridge `run_shell` is down (see below), so the process leg rests on the memory list plus the empty watch data.
+- **IntelX unit failed.** `IntelX.service` (Server 1 side) is masked, failed (timeout) since 2026-11-20 23:56:31 IST, Main PID 1066051 killed. IntelX is not running.
+- **S2 disk 86% / 6.9G free** (was 86% / 7.2G at checkpoint 1) — above the 10% headroom threshold, no new alert.
+
+### Consumer — Server 1 (~08:30 IST)
+
+- **FRIDAY still down.** `FRIDAY.service` inactive (dead), loaded but disabled — down since the 2026-11-24 13:42 IST graceful shutdown. S1 top-10 still shows Memora (PID 2184735, same PID as checkpoint 1) and other agents; no FRIDAY uvicorn.
+- **Drainer state untouched.** `FRIDAY/state/proactive_intelx_watch.json` contents identical to checkpoint 1: offset 3644, instant_offset 0, same 4 delivered_keys, held [], alert_log last entry 2026-11-20 19:16 IST.
+- **S1 outbox unchanged.** `IntelX/data/watches/outbox.jsonl` still the same 2 digest-class envelopes (harness adapters, score 4; RBI "Stop Switch", score 5). No new envelope, no instant-class alert.
+
+### Kill switch — OFF, verified, untouched
+
+- `FRIDAY_PROACTIVE_INTELX_WATCH=on` in S1 `FRIDAY/.env` (INT-007 enablement block). Watch on = kill switch off. No flag, config, service, or file was changed by this run.
+
+### Gateway
+
+- `GET https://friday-universe.duckdns.org/friday/health` → 200 healthy (observed 2026-11-28 02:51:06Z) — FRIDAY-Server, not the S1 consumer. One read timed out first (bridge transport flakiness, see below); the retry returned 200.
+
+### Bridge note (this run)
+
+- Bridge `run_shell` is currently failing on every call ("MCP event stream ended before the matching result", 4 attempts including a trivial `echo`), and other bridge reads fail intermittently the same way (roughly half the calls this run). `get_system_info`, `oracle_check_service`, `list_directory`, `read_text`, `oracle_memory_by_process`, `oracle_fleet_health`, `oracle_curl_health` all succeeded on retry. The re-probe above used those read tools instead; nothing was written or restarted. Both Oracle servers ONLINE (S1 disk 50% / 49G free). S2 shared checkout now on `musetp4/task-frg-036-rerun-evidence` @ 33ec442f (TP4's FRG-036 Leg B re-run in flight) — read-only probes only.
+
+### Gates
+
+- **G1–G4 unchanged** (see checkpoint 1). No restart / rebuild decision taken — coordinator's.
+
+### States
+
+- Implemented: N/A (verification task; no code change)
+- Tested: NO (wait state filed; no alert exists to trace)
+- Merged: NO (work PR #2248 open, now carries checkpoints 1 + 2)
+- Deployed: N/A
+- Production-verified: NO — no real instant alert has ever fired, and both ends of the lane are still down
+
+— Muse 10, 2026-11-28 ~08:35 IST
