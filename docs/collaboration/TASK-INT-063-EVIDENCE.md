@@ -95,3 +95,38 @@
 - Production-verified: NO
 
 — Muse 10, 2026-11-28 ~12:20 IST
+
+
+---
+
+## Checkpoint 3 — DEPLOYED to S6 (WATCH264 §C + BE 14:00 §B, 2026-11-28 ~14:22–14:27 IST)
+
+**Direction:** WATCH264 §C (hub #2045 comment 7236513660): "INT-063 deploy: M10, deploy to S6 now" under WATCH263 ruling D.3 (#2278 merged; target S6 per probe #1239). Adopted BE 14:00 §B (hub 7236649802): "M10 → deploy INT-063 to S6 NOW". Hub clearance granted; PR #2278 MERGED 13:42 IST (merge `38887ed5`, by Surendra). Main now `c339c31b` (#2184 merged after).
+**Branch for this checkpoint:** `muse10/task-int-063-deploy-checkpoint-3`, from main `c339c31b`.
+
+**Verdict: DEPLOYED — the INT-060 endpoint is live on IntelX-Server and on the gateway.** No gateway config change was needed: `/etc/caddy/Caddyfile:91 handle_path /intelx*` already proxies to S6:8005 (healthz 200 before and after).
+
+**Deploy steps (executed):**
+- Pre-deploy state re-verified: S6 on-disk code still pre-INT-060 (`router.py` Nov 15, no `watches/outbox`); running uvicorn PID 46018 (started Nov 27 05:13 UTC) served 404 on the route; OpenAPI had no outbox route. S6 is a deployed copy, not a git checkout.
+- Sync: `git clone --depth 1` of main (`c339c31b`) to `/tmp/friday_clone` on S6, then rsync `IntelX/` → `/opt/friday_universe/IntelX/` excluding `data/`, `intelx/.data/`, `.env`, `.env.pre-int021-20261122`, `__pycache__/`, `*.pyc`, `.git`, `.ruff_cache/` — with `--delete`. Backup first: pre-deploy code tree copied to `/opt/friday_universe/IntelX-backup-20261128-int063` (5.0M, data/ excluded; `data/` untouched in place). Post-sync `diff -rq` → TREES_MATCH (only the excluded local files differ). `.env` preserved (mode 600, mtime Nov 24, 2,316 bytes — not read, not changed). `requirements.txt` content-identical to main — no pip install needed. Note: two early rsync dry-runs returned 0 files (unreliable); the itemized dry-run listed 552 lines and the post-sync diff is the ground truth.
+- Import check before restart: `from intelx.app.main import app` IMPORT_OK; `root_api_router` carries `/v1/watches/outbox` GET. Note: FastAPI 0.165.0 defers sub-router inclusion (`_IncludedRouter` placeholders; `app.routes` shows 7 at import time) — the route is proven by `app.openapi()`: 186 paths including `/v1/watches/outbox` GET.
+- Restart: SIGTERM to PID 46018 (gone, port 8005 free), relaunch with the exact original command (`/opt/friday_universe/venv/bin/python -m uvicorn intelx.app.main:app --host 0.0.0.0 --port 8005 --workers 1`, cwd `/opt/friday_universe/IntelX`, `PYTHONPATH=/opt/friday_universe/IntelX:/opt/friday_universe`, `setsid nohup`, log `/opt/friday_universe/IntelX/uvicorn-8005.log`). New PID 74894, started Nov 28 08:52:39 UTC (14:22 IST). Startup log: production mode, DB engine initialised, schemas/indexes initialized, API keys seeded, "IntelX standing watches started: ai_model_releases, india_tech_regulatory", "Application startup complete".
+- Note: the bridge `run_shell` call that launched the restart hit its 180s timeout after all verification steps had printed; the new process survived (setsid, new session) — re-verified alive in a fresh call ~4 min later.
+
+**Live verification (fresh calls after restart):**
+- S6 localhost: `GET 127.0.0.1:8005/v1/watches/outbox` → **401** `{"detail":"Missing Friday API Key. Provide via 'Authorization: Bearer <key>' or 'X-API-Key: <key>' header."}` (was 404 — the route is mounted; 401 is the auth gate, not an error). `?lane=instant` → 401. `/openapi.json` contains `watches/outbox`. `/` → 307 (unchanged).
+- Gateway: `GET https://friday-universe.duckdns.org/intelx/v1/watches/outbox` → **401** (was 404); `?lane=instant` → 401; `/intelx/healthz` → 200; `/friday/health` → 200.
+- Watch loop resumed: `state.json` rewritten 08:52:52 UTC (seconds after restart); both watches ran (`ai_model_releases` fetched=2369 dup=2369, `india_tech_regulatory` fetched=64 dup=64, alerted=0 — all duplicates, no new alert). `outbox.jsonl` unchanged (sha256 `ee4b4c1c…`, 5,608 bytes, 6 envelopes) — nothing lost.
+- Futuris untouched: PID 63602 on :8004 still running.
+
+**Still owed (not in this deploy order):** authenticated live proof — `GET …/v1/watches/outbox` with the FRIDAY API key returning 200 + the 6 envelopes, both lanes — and the consumer leg (FRIDAY-Server `INTELX_WATCH_OUTBOX_URL`/`INTELX_WATCH_API_KEY` + FRIDAY restart, G4). The key value was never read, copied, or put in any command. The 401 proves the route is mounted and gated; the 200 + drainer receipt ride the consumer leg / coordinator direction.
+
+## States (updated)
+
+- Implemented: YES (INT-060 merged PR #2076)
+- Tested: YES (live endpoint probed on S6 localhost + gateway, both lanes; watch loop resumed)
+- Merged: YES (PR #2278 merged 13:42 IST, merge `38887ed5`; this checkpoint rides a new PR)
+- Deployed: YES — endpoint live on S6 :8005 and gateway, 401 without key (auth gate)
+- Production-verified: NO (authenticated 200 + consumer drainer receipt still owed)
+
+— Muse 10, 2026-11-28 ~14:27 IST
