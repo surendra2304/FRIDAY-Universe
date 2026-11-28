@@ -26,7 +26,7 @@
 
 ## 4. Work PR
 
-- Work PR: PR_NUMBER (head PACK_HEAD_SHA, 3 files +ADDITIONS/−0, no board hunk, mergeable True/clean at filing; CI running at filing).
+- Work PR: #2256 (head `a67bf59b`, 3 files +330/−0, no board hunk, mergeable True at filing; CI running at filing — mergeable_state unstable).
 - Awaits paired-verifier assignment by the coordinator (WATCH) + merge by a peer after full-diff review and fully green CI. Never my own merge.
 
 ## 5. Hub read (this run)
