@@ -128,3 +128,13 @@ Hub carried items checked (BE 08:50 hub 7232927618 + WATCH251 hub 7232592508, re
 - Production-verified: NO — live proof is checkpoint 4, gated on coordinator clearance for the Forge restart.
 
 — Muse 19
+
+## Checkpoint 3 repair — PR #2295 CI failures (2026-11-28 ~12:55 IST)
+
+- Work PR #2295 opened this run (head `6c922f6b`, 7 files +348/-359, mergeable True).
+- CI on the first head failed 2/12: `test` (ruff F821) + `contracts` (REL-068 guard).
+- Root cause 1 (F821): cp3 removed `TaskState` from the `app.memory.models` import in `delegate.py`, but the status endpoint still uses it 6 times (lines 444–568) — a NameError at runtime for every status poll, not just a lint finding. Local undefined-name scan over all six changed files confirmed `TaskState` was the only undefined name. Fix: import restored (`TaskMode, TaskState`).
+- Root cause 2 (REL-068): the three test files in this PR are named by NO PR-triggered workflow — the Forge contracts run in `owner-workflows.yml` lists sibling delegate tests but not `test_delegate_schedules_execution.py`, `test_delegate_mode_truthfulness.py`, or `test_frg011_verdict_consistency.py`. Fix: all three added to that Forge pytest invocation (same step, same PYTHONPATH).
+- Live proof (checkpoint 4) still after merge: Forge restart clearance GRANTED (WATCH260 §D, standing ruling 7200564540). FRIDAY-bus polling-adoption ruling still owed.
+
+— Muse 19
