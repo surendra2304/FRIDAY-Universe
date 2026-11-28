@@ -257,6 +257,11 @@ jobs:
           # test must run in PR CI); it runs in this venv (stdlib +
           # friday.workflows.job_hunt imports only, hermetic fake fetcher —
           # see docs/collaboration/TASK-IG-FRD-003-FIX-01-CHECKPOINT-2.md).
+          # TASK-VOI-046: tests/test_voi046_malloc_trim.py rides in this
+          # invocation so the REL-068 guard sees it collected (a PR test
+          # must run in PR CI); it runs in this venv (fabricated trim +
+          # mocked libc, no live server — see
+          # docs/collaboration/TASK-VOI-046-EVIDENCE.md).
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
             --check "test-job" \
@@ -278,6 +283,7 @@ jobs:
             tests/test_laptop_pc_care.py \
             tests/test_frd068_memory_reporting.py \
             tests/test_ig_frd_003_job_hunt.py \
+            tests/test_voi046_malloc_trim.py \
             --deselect tests/test_reliability.py::test_retry_on_network_failure \
             --deselect tests/test_reliability.py::test_retry_on_rate_limit \
             --deselect tests/test_reliability.py::test_no_retry_on_auth_error

@@ -15,13 +15,19 @@ Monitors:
     /sys/fs/cgroup memory.max/memory.current and warns at 75%, escalates
     at 90% with a direct Telegram send (the 2026-11-23 08:03 IST kill
     proved a queued-only warning dies with the process).
+  - Allocator trim (TASK-VOI-046): periodic malloc_trim(0) on the watch
+    tick — TP10's VOI-045 probe showed the growth is native glibc arena
+    retention (traced Python ~5% of RSS), so the watch returns free
+    arena pages to the OS every 60 s and logs RSS before/after.
 """
 
 from __future__ import annotations
 
+import ctypes
 import os
 import random
 import threading
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
@@ -45,6 +51,105 @@ MEMORY_RECOVERED_PERCENT = 60.0
 
 #: Cgroup base path; tests monkeypatch this to a fabricated tree.
 CGROUP_BASE = "/sys/fs/cgroup"
+
+
+# ---------------------------------------------------------------------------
+# TASK-VOI-046 — periodic malloc_trim(0) on the memory-watch tick.
+#
+# TP10's VOI-045 root-cause probe (hub #2045 comments #1195/#1196) proved
+# the FRIDAY.service growth is native glibc arena retention: [heap] 76 MB
+# + arenas 56/28/19/19 MB, traced Python only ~5% of RSS, a +11.5 MB
+# anonymous step in 30 s with file-backed PSS flat — and prescribed
+# periodic malloc_trim(0) on the 60 s watch tick, measuring the post-trim
+# plateau over 2 cycles before any cap talk. The tick named in the
+# prescription (TP1's FRD-064 tracemalloc watch) exists only as
+# uncommitted instrumentation on FRIDAY-Server, not in this repo, so the
+# trim rides this engine instead: the repo's committed in-process memory
+# watch, running in the same FRIDAY.service process on the same ~60 s
+# cadence (30 s poll, trim at most once per 60 s). The call itself
+# follows the pattern Inference's memory_guard.py already ships: ctypes
+# libc.malloc_trim(0), RSS before/after from /proc/self/status, fail-soft.
+# ---------------------------------------------------------------------------
+
+#: Env var to disable the trim (default on). Set to 0/false/no/off to stop.
+MALLOC_TRIM_ENV_VAR = "FRIDAY_MALLOC_TRIM_ENABLED"
+#: Env var overriding the trim cadence in seconds (default 60).
+MALLOC_TRIM_INTERVAL_ENV_VAR = "FRIDAY_MALLOC_TRIM_INTERVAL_S"
+#: Trim at most once per minute, on the engine's 30 s poll grid.
+MALLOC_TRIM_DEFAULT_INTERVAL_S = 60.0
+
+
+def _read_rss_mb() -> float:
+    """Resident set size in MB from /proc (Linux only); 0.0 elsewhere."""
+    try:
+        with open("/proc/self/status", encoding="utf-8") as handle:
+            for line in handle:
+                if line.startswith("VmRSS:"):
+                    return float(line.split()[1]) / 1024.0
+    except (OSError, ValueError, IndexError):
+        pass
+    return 0.0
+
+
+def _malloc_trim_enabled() -> bool:
+    """True unless FRIDAY_MALLOC_TRIM_ENABLED is an explicit off value."""
+    return os.getenv(MALLOC_TRIM_ENV_VAR, "1").strip().lower() not in (
+        "0", "false", "no", "off",
+    )
+
+
+def _malloc_trim_interval_s() -> float:
+    """Trim cadence in seconds; FRIDAY_MALLOC_TRIM_INTERVAL_S, default 60."""
+    try:
+        value = float(
+            os.getenv(MALLOC_TRIM_INTERVAL_ENV_VAR, "")
+            or MALLOC_TRIM_DEFAULT_INTERVAL_S
+        )
+    except ValueError:
+        logger.warning(
+            "VOI-046 malloc_trim: bad %s, using %.0fs",
+            MALLOC_TRIM_INTERVAL_ENV_VAR, MALLOC_TRIM_DEFAULT_INTERVAL_S,
+        )
+        return MALLOC_TRIM_DEFAULT_INTERVAL_S
+    return max(1.0, value)
+
+
+def trim_allocator() -> dict[str, Any]:
+    """Return free glibc arena pages to the OS; never raises.
+
+    Calls ``libc.malloc_trim(0)`` via ctypes and reports RSS before/after
+    so the post-trim plateau is measurable. On a platform without glibc
+    (or without ``malloc_trim``) it reports ``supported: False`` and does
+    nothing; any error is recorded, never raised, so the watch loop
+    cannot die on the trim.
+    """
+    result: dict[str, Any] = {
+        "supported": False,
+        "trimmed": False,
+        "rss_before_mb": 0.0,
+        "rss_after_mb": 0.0,
+        "reclaimed_mb": 0.0,
+    }
+    try:
+        libc = ctypes.CDLL("libc.so.6")
+        malloc_trim = libc.malloc_trim
+        malloc_trim.restype = ctypes.c_int
+        malloc_trim.argtypes = [ctypes.c_size_t]
+    except (OSError, AttributeError, TypeError):
+        return result
+    before = _read_rss_mb()
+    try:
+        released = malloc_trim(0)
+    except Exception:
+        return {**result, "rss_before_mb": before, "rss_after_mb": before}
+    after = _read_rss_mb()
+    return {
+        "supported": True,
+        "trimmed": bool(released),
+        "rss_before_mb": round(before, 1),
+        "rss_after_mb": round(after, 1),
+        "reclaimed_mb": round(max(0.0, before - after), 1),
+    }
 
 
 def _own_cgroup_relpath(path: str = "/proc/self/cgroup") -> str | None:
@@ -347,6 +452,9 @@ class ProactiveEngine:
         self._last_announcement_at: dict[str, datetime] = {}
         self._announcement_cooldown = timedelta(minutes=5)
         self._custom_checks: list[Callable[[SystemSnapshot, SystemSnapshot | None], str | None]] = []
+        # Allocator trim (TASK-VOI-046): monotonic seconds of the last
+        # malloc_trim(0); None until the first trim runs.
+        self._last_trim_at: float | None = None
 
     def start(self) -> None:
         """Start the background monitoring loop."""
@@ -386,9 +494,45 @@ class ProactiveEngine:
                 snapshot = capture_snapshot()
                 self._evaluate(snapshot, self._last_snapshot)
                 self._last_snapshot = snapshot
+                self._maybe_trim_allocator()
             except Exception as exc:
                 logger.error(f"ProactiveEngine poll error: {exc}")
             self._stop_event.wait(self.poll_interval)
+
+    def _maybe_trim_allocator(self) -> None:
+        """Periodic malloc_trim(0) on the watch tick (TASK-VOI-046).
+
+        At most once per FRIDAY_MALLOC_TRIM_INTERVAL_S (default 60 s),
+        on the engine's own poll cadence. Runs in this daemon thread, so
+        it never blocks a request. Logs RSS before/after + reclaimed MB
+        so the post-trim plateau is measurable from the service log.
+        Never raises.
+        """
+        if not _malloc_trim_enabled():
+            return
+        now = time.monotonic()
+        if (
+            self._last_trim_at is not None
+            and now - self._last_trim_at < _malloc_trim_interval_s()
+        ):
+            return
+        self._last_trim_at = now
+        try:
+            result = trim_allocator()
+        except Exception as exc:  # trim_allocator never raises; belt and braces
+            logger.warning(f"VOI-046 malloc_trim failed: {exc}")
+            return
+        if not result["supported"]:
+            logger.debug("VOI-046 malloc_trim unsupported on this platform")
+            return
+        logger.info(
+            "VOI-046 malloc_trim: rss_before=%.1fMB rss_after=%.1fMB "
+            "reclaimed=%.1fMB trimmed=%s",
+            result["rss_before_mb"],
+            result["rss_after_mb"],
+            result["reclaimed_mb"],
+            result["trimmed"],
+        )
 
     def _evaluate(self, current: SystemSnapshot, previous: SystemSnapshot | None) -> None:
         # Announcement-storm fix (2026-11-13, ZAI Agent 2, measured live):
