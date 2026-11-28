@@ -325,6 +325,9 @@ jobs:
       # TASK-STR-065: tests/test_str065_safety_nets.py is collected here
       # so the REL-068 collection guard passes — a PR test must run in
       # PR CI (contracts guard failed PR #2007 while it was uncollected).
+      # TASK-STR-107: tests/test_ig2_str09_tax_export.py is collected
+      # here so the REL-068 collection guard passes — a PR test must run
+      # in PR CI (contracts guard failed PR #2249 while it was uncollected).
       - name: Run Stratex tier-1 tests
         if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.stratex == 'true'
         working-directory: Stratex
@@ -352,6 +355,7 @@ jobs:
             research/test_staged_chart_checklist.py \
             tests/test_ig2_web04_fix01_routing.py \
             tests/test_str065_safety_nets.py \
+            tests/test_ig2_str09_tax_export.py \
             --deselect tests/test_tier1_resilience_and_contracts.py::TestStandardizedContracts::test_health_includes_service_metadata
 
       # TASK-REL-088: Forge tier-1 tests. Own venv from

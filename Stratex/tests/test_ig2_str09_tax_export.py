@@ -1,6 +1,8 @@
 """TASK-IG2-STR-09 — tax-ready trade-ledger export tests."""
 
+import calendar
 import json
+from datetime import datetime
 
 import pytest
 
@@ -86,6 +88,78 @@ def test_export_from_file_with_filters(tmp_path):
     rows, summary = export_tax_ledger(str(ledger), year=2026, venue="Binance")
     assert [r["instrument"] for r in rows] == ["SOLUSDT"]
     assert summary["trades"] == 1
+
+
+# TASK-STR-107 — live daemon ledger shape (Muse 3 checkpoint 3, hub
+# 7231107638): `qty` not `quantity`, epoch `entry_time`/`exit_time`,
+# explicit `venue`, `side`, and usually an empty `order_id`.
+def _epoch(iso: str) -> int:
+    return calendar.timegm(
+        datetime.strptime(iso, "%Y-%m-%dT%H:%M:%SZ").timetuple())
+
+
+DAEMON_RECORDS = [
+    {"symbol": "SOLUSDT", "order_id": "", "side": "SHORT", "qty": 1.84,
+     "entry_price": 103.4796, "exit_price": 103.17, "gross_pnl": 0.5696,
+     "net_pnl": 0.4937, "fees": 0.0759,
+     "entry_time": _epoch("2026-11-27T02:20:00Z"),
+     "exit_time": _epoch("2026-11-27T02:26:00Z"),
+     "recorded_at": "2026-11-27T02:26:00Z", "exit_reason": "WIN",
+     "strategy": "SUPERTREND", "venue": "binance_futures"},
+    {"symbol": "USDJPY", "order_id": "999", "side": "LONG", "qty": 15,
+     "entry_price": 159.691, "exit_price": 161.0, "gross_pnl": 20.0,
+     "net_pnl": 19.5, "fees": 0.5,
+     "entry_time": _epoch("2026-11-15T22:09:05Z"),
+     "exit_time": _epoch("2026-11-16T01:00:00Z"),
+     "recorded_at": "2026-11-16T01:00:00Z", "exit_reason": "TP",
+     "strategy": "SLEEVE", "venue": "binance_futures"},
+]
+
+
+def test_trade_id_prefers_entry_order_id():
+    rec = dict(DAEMON_RECORDS[0], entry_order_id="4245510187")
+    row = build_tax_rows([rec])[0]
+    assert row["trade_id"] == "4245510187"
+
+
+def test_build_tax_rows_daemon_shape():
+    rows = build_tax_rows(DAEMON_RECORDS)
+    assert len(rows) == 2
+    sol = next(r for r in rows if r["instrument"] == "SOLUSDT")
+    # The 6 columns that were empty/zero on live daemon records.
+    assert sol["quantity"] == 1.84
+    assert sol["proceeds"] == round(1.84 * 103.17, 8)
+    assert sol["cost_basis"] == round(1.84 * 103.4796, 8)
+    assert sol["date_open"] == "2026-11-27T02:20:00Z"
+    assert sol["date_close"] == "2026-11-27T02:26:00Z"
+    assert sol["venue"] == "Binance"
+    assert sol["side"] == "SHORT"
+    assert sol["trade_id"].startswith("LEDGER-") and len(sol["trade_id"]) > 7
+    # Derived id is stable across runs.
+    again = build_tax_rows(DAEMON_RECORDS)
+    sol2 = next(r for r in again if r["instrument"] == "SOLUSDT")
+    assert sol2["trade_id"] == sol["trade_id"]
+    fx = next(r for r in rows if r["instrument"] == "USDJPY")
+    assert fx["trade_id"] == "999"  # present order_id still wins
+    assert fx["date_close"] == "2026-11-16T01:00:00Z"
+    assert fx["venue"] == "Binance" and fx["side"] == "LONG"
+
+
+def test_export_daemon_shape_year_filter(tmp_path):
+    ledger = tmp_path / "ledger.jsonl"
+    ledger.write_text("\n".join(json.dumps(r) for r in DAEMON_RECORDS) + "\n")
+    rows, summary = export_tax_ledger(str(ledger), year=2026)
+    assert len(rows) == 2  # --year 2026 returned 0 trades before the fix
+    assert summary["by_year"]["2026"]["trades"] == 2
+    rows25, _ = export_tax_ledger(str(ledger), year=2025)
+    assert rows25 == []
+
+
+def test_daemon_and_testnet_shapes_mix():
+    rows = build_tax_rows(RECORDS + DAEMON_RECORDS)
+    assert len(rows) == 5
+    assert sum(1 for r in rows if r["venue"] == "Binance") == 4
+    assert all(r["date_close"] for r in rows)
 
 
 if __name__ == "__main__":
