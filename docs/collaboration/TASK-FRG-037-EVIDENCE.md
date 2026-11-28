@@ -54,6 +54,8 @@ Scratch copy of the live Forge tree (`/tmp/frg037-forge`, workspaces excluded), 
 - Selected: `test_forge_named_key_is_used_for_memora_identity`, the two new FRG-037 tests, singleton + cloud-mock — **5/5 pass**.
 - Full file: the same 3 failures as the unpatched baseline (`test_memora_client_local_fallback`, `test_recall_survives_a_degenerate_query`, `test_recall_still_finds_the_real_memory` — `AttributeError: property 'local_db_path' ... has no setter`; the Oracle-only spool removal left these tests stale). **Pre-existing on main, not introduced by this change** — verified by running the same file from the unpatched live tree: identical 3 failures.
 
+CI repair in-run: `contracts` failed on the first head — the REL-068 collection guard (`scripts/ci_test_collection_audit.py`) rejects a PR that ships a test file no workflow collects, and `test_memora_integration.py` was in no invocation. Fixed in this PR: the file rides the Forge tier-1 invocation in `.github/workflows/friday-universe-ci.yml`, with the 3 pre-existing failures above as `--deselect`s (same pattern as FRG-021/FRG-027). The guard was verified locally against the exact edited workflow (diff-scoped run, exit 0, 1 file checked).
+
 ## §5 — Live proof (fixed code against live Memora)
 
 The exact fixed client, run from the scratch tree against live Memora (`127.0.0.1:8002`, pid 2493276) with BOTH live env keys set (so the alias reorder is what selects the right one):
@@ -75,7 +77,7 @@ Before the fix the same call path 401'd (§2, probes A/B). The fixed code writes
 
 ## §7 — PR + board note
 
-- Work PR: **#2299** (head: this commit; base live main `527b073d`). The branch was reset to current main so the PR carries work only — the board flip rides WATCH263's board PR per WATCH262 §D ("FRG-037 → CLAIMED muse_tp14"), so no board hunk is in this PR and no board conflict is created.
-- Paired verification + merge owed (coordinator's call). Usage: 15% of free weekly limit (verified this run; resets Dec 3, 8:51 PM IST).
+- Work PR: **#2311** (head: commit `b8d28e62` + the CI-repair commit below; base live main `527b073d`). The branch was reset to current main so the PR carries work only — the board flip rides WATCH263's board PR per WATCH262 §D ("FRG-037 → CLAIMED muse_tp14"), so no board hunk is in this PR and no board conflict is created. PR #2299 (board-flip PR) auto-closed unmerged on the branch reset (head==base); #2311 replaces it.
+- Paired verification + merge owed (coordinator's call). Usage: 16% of free weekly limit (verified this run; resets Dec 3, 8:51 PM IST).
 
 — Muse TP14
