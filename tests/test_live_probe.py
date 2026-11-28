@@ -31,10 +31,15 @@ class StubGateway:
     """In-process fake Inference gateway. Knobs: fail_ping, fail_execute,
     gateway_down — each a set of agent ids (or 'gateway' for /v1/health)."""
 
-    def __init__(self, fail_ping=frozenset(), fail_execute=frozenset(), gateway_down=False):
+    def __init__(self, fail_ping=frozenset(), fail_execute=frozenset(), gateway_down=False,
+                 require_key_for_health=False):
         self.fail_ping = set(fail_ping)
         self.fail_execute = set(fail_execute)
         self.gateway_down = gateway_down
+        # TASK-REL-122: the live gateway 401s GET /v1/health without the
+        # Inference key (verified 2026-11-28). Opt-in knob so the new
+        # tests model that behaviour without changing the other tests.
+        self.require_key_for_health = require_key_for_health
         self.execute_calls = []
         self.ping_calls = []
         handler = self._make_handler()
@@ -69,6 +74,8 @@ class StubGateway:
                 if self.path == "/v1/health":
                     if stub.gateway_down:
                         self._send(503, {"status": "unhealthy", "service": "inference"})
+                    elif stub.require_key_for_health and not self.headers.get("X-Inference-API-Key"):
+                        self._send(401, {"status": "unauthorized", "service": "inference"})
                     else:
                         self._send(200, {
                             "status": "healthy",
@@ -265,6 +272,44 @@ def test_agent_subset(monkeypatch, stub):
     assert code == 0
     assert [r["agent"] for r in evidence["agents"]] == ["friday", "inference"]
     assert len(stub.ping_calls) == 1  # only friday is a peer; inference uses /v1/health
+
+
+# --- TASK-REL-122: GET /v1/health requires the key on the live gateway ---
+# Verified live 2026-11-28 on Server 1: no key -> 401 (correlation
+# 98f95228-c1a6-4845-8390-84624791ea34), with key -> 200 healthy. The
+# probe therefore sends the key on the gateway gate and on inference's
+# health leg whenever one is set; without a key the gate 401s and the
+# run exits 2 with no per-agent probes.
+
+
+def test_v1_health_with_key_passes_when_key_required(monkeypatch):
+    stub = StubGateway(require_key_for_health=True)
+    try:
+        code, evidence = run_probe(monkeypatch, stub.url)
+    finally:
+        stub.stop()
+    assert code == 0
+    assert evidence["ok"] is True
+    assert evidence["gateway_health"]["status_code"] == 200
+    assert evidence["passed"] == 10
+
+
+def test_v1_health_without_key_exits_2_when_key_required(monkeypatch):
+    stub = StubGateway(require_key_for_health=True)
+    try:
+        module = load_live_probe()
+        monkeypatch.delenv("INFERENCE_API_KEY", raising=False)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = module.main(["--gateway", stub.url])
+        evidence = json.loads(buf.getvalue())
+    finally:
+        stub.stop()
+    assert code == 2
+    assert evidence["ok"] is False
+    assert evidence["agents"] == []
+    assert evidence["gateway_health"]["status_code"] == 401
+    assert evidence["gateway_health"]["reachable"] is False
 
 
 # --- TASK-REL-119: public mode (no key, GET /{agent}/health + one real GET) ---

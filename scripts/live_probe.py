@@ -9,7 +9,10 @@ Two modes (TASK-REL-119 added --public; the keyed mode below is REL-104):
       — the gateway pings that peer's ``/health`` with a 2.0 s deadline and
       returns ``reachable`` / ``status_code`` / ``latency_ms``
       (``Inference/app/api/mesh_routes.py``, ``ping_mesh_peer``). Inference
-      itself is not a mesh peer, so its health leg is ``GET /v1/health``.
+      itself is not a mesh peer, so its health leg is ``GET /v1/health`` —
+      which, verified live 2026-11-28 (TASK-REL-122), 401s without the
+      Inference key, so the script sends the key on that call (and on the
+      gateway gate) whenever one is set.
   leg B (one real request per agent): ``POST /v1/task/execute`` with a small
       read-only ``TaskEnvelope`` per ``target_agent`` (action ``reason``,
       prompt "Reply with the single word OK."). The receipt is the content
@@ -48,7 +51,11 @@ Auth: mesh and task routes require the Inference API key
 (``require_inference_api_key``: ``X-Inference-API-Key`` / ``X-API-Key`` /
 ``X-Friday-API-Key`` / ``Authorization: Bearer``). The key comes from the
 environment (default ``INFERENCE_API_KEY``) — never a CLI argument, never
-pasted into output. ``GET /v1/health`` needs no key. Public mode needs no
+pasted into output. ``GET /v1/health`` also requires the key on the live
+gateway (verified 2026-11-28, TASK-REL-122: 401 without it, 200 with it —
+the REL-104 "needs no key" reading no longer holds); the script sends the
+key on the gateway gate and on inference's health leg whenever one is set,
+and sends no key at all when none is set. Public mode needs no
 key at all: ``GET /{agent}/health`` and the leg-B endpoints are unauthenticated
 behind the public ingress (verified live; ``/v1/health`` under /inference
 is NOT — it 401s without a key, which is why public mode does not use it).
@@ -195,8 +202,10 @@ def probe_agent(
 
     # --- Leg A: health -------------------------------------------------
     if agent == "inference":
+        # TASK-REL-122: the live gateway 401s GET /v1/health without the
+        # key (verified 2026-11-28), so the key is sent when one is set.
         status, body, latency_ms = _request(
-            "GET", f"{gateway}/v1/health", None, None, timeout
+            "GET", f"{gateway}/v1/health", api_key, None, timeout
         )
         healthy = (
             status == 200
@@ -480,8 +489,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     else:
         gateway_health = {"via": "GET /v1/health"}
+        # TASK-REL-122: the live gateway 401s GET /v1/health without the
+        # key (verified 2026-11-28), so the key is sent when one is set.
         status, body, latency_ms = _request(
-            "GET", f"{gateway}/v1/health", None, None, args.timeout
+            "GET", f"{gateway}/v1/health", api_key, None, args.timeout
         )
         gateway_health.update(
             {
