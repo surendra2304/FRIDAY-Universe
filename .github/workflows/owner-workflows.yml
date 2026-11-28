@@ -270,6 +270,8 @@ jobs:
             Forge/tests/unit/test_gate_blocked_rel026.py \
             Forge/tests/unit/test_tester_synthesis_note_rel023.py \
             Forge/tests/unit/test_delegate_verification_status.py \
+            Forge/tests/unit/test_delegate_mode_truthfulness.py \
+            Forge/tests/unit/test_delegate_schedules_execution.py \
             Forge/tests/unit/test_task_execute_contract.py \
             Forge/tests/unit/test_missing_test_truthfulness.py \
             Forge/tests/unit/test_verification.py \
@@ -298,7 +300,9 @@ jobs:
             Forge/tests/test_ig2_frg02_code_graph.py \
             Forge/tests/test_ig2_frg03_ocr_review.py \
             Forge/tests/test_frg028_build_run.py \
-            Forge/tests/test_frg030_gradio_layer.py
+            Forge/tests/test_frg030_gradio_layer.py \
+            Forge/tests/test_frg011_verdict_consistency.py \
+            Forge/tests/test_frg009_provider_wiring.py
       - name: Direct memory evidence outranks graph-only context
         if: needs.detect-changes.outputs.shared == 'true' || needs.detect-changes.outputs.memora == 'true'
         env:
