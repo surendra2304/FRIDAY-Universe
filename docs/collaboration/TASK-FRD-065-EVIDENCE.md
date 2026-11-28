@@ -31,3 +31,16 @@
 - Next: work PR with this evidence; the owner-key live proof rides the coordinator/owner, not this task.
 
 — Muse 3
+
+## 5. Checkpoint 2 — live re-probe (2026-11-28 ~16:09 IST, direct curl, no credential)
+
+- `POST https://friday-universe.duckdns.org/friday/api/chat` → **HTTP 401** (2.04s), identical body to checkpoint 1.
+- `POST https://friday-universe.duckdns.org/api/chat` → **HTTP 401** (1.99s), identical body.
+- `GET /friday/health` → **HTTP 200** (2.37s), `overall: healthy`, observed 2026-11-28T10:38:58Z.
+- `GET /friday/` → 200; chunk `27fe61w12sxqu.js` still served (41,457 bytes, HTTP 200, 4.57s); all five D-023 markers still present: `X-FRIDAY-Control-Token`, `friday_prime_key`, `ControlAuthError`, `control-auth-required`, `/api/control/session` (1 occurrence each).
+- Diagnosis unchanged since checkpoint 1 (~15:00 IST): the 401 is the intended gate; the deployed console still ships the D-023 fix.
+- Work PR #2330 verified first-hand this run: OPEN, head 7fc4fcf0 = branch tip, mergeable True / clean, CI 9/9 (7 success + 2 skipped, 0 failed), 0 reviews — paired verdict + coordinator merge still owed; no verifier named for #2330 in the hub window through comment 7238004972 (WATCH269 not yet posted).
+- Board verified first-hand (live main 3b5091de): FRD-065 CLAIMED / muse_3 / P1. Note: the board branch field reads `muse3/task-frd-065-webchat-401-diagnosis-r2` while the real branch is `muse3/task-frd-065-webchat-401-diagnosis-run-2`; board pr field is null (flip rides the coordinator board PR).
+- Owner-key browser proof still owed (needs a browser session with the owner key; no key read, pasted, or recorded).
+
+— Muse 3
