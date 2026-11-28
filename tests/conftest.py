@@ -68,6 +68,54 @@ def pytest_report_header(config):
 
 
 # ---------------------------------------------------------------------------
+# TASK-REL-121: flaky-test quarantine — skip in PR CI, run on nightly
+# ---------------------------------------------------------------------------
+def _load_flaky_quarantine():
+    """Load scripts/flaky_quarantine.py without requiring a package."""
+    import importlib.util
+
+    path = os.path.join(ROOT, "scripts", "flaky_quarantine.py")
+    spec = importlib.util.spec_from_file_location("flaky_quarantine", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip quarantined tests in PR CI; nightly/local runs execute them.
+
+    The list is docs/collaboration/FLAKY_TEST_QUARANTINE.yaml (readable
+    form: FLAKY_TEST_QUARANTINE.md). Mode comes from
+    FRIDAY_FLAKY_QUARANTINE_MODE or the GitHub event: pull_request skips,
+    schedule/workflow_dispatch (the nightly workflow) runs. An expired
+    quarantine fails CI collection — expiry forces the owner's
+    fix-or-remove decision instead of silently extending.
+    """
+    quarantine = _load_flaky_quarantine()
+    entries = quarantine.load_entries()
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        errors = quarantine.validate_entries(entries)
+        if errors:
+            raise pytest.UsageError(
+                "TASK-REL-121 flaky quarantine invalid: " + "; ".join(errors)
+            )
+    if quarantine.current_mode() != "pr":
+        return
+    for item in items:
+        entry = quarantine.matching_entry(item.nodeid, entries)
+        if entry is not None:
+            item.add_marker(
+                pytest.mark.skip(
+                    reason=(
+                        "TASK-REL-121 quarantine: %s (owner %s, expiry %s); "
+                        "runs on the nightly gate"
+                        % (entry.get("test"), entry.get("owner"), entry.get("expiry"))
+                    )
+                )
+            )
+
+
+# ---------------------------------------------------------------------------
 # TASK-REL-070: join Stratex supervision daemon threads at session end
 # ---------------------------------------------------------------------------
 def pytest_sessionfinish(session, exitstatus):
