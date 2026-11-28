@@ -55,15 +55,21 @@
 
 Per the WATCH264 addendum ruling, CI is the test leg for this task: the
 IntelX tier-1 job installs `IntelX/requirements.txt` (now including
-Pillow) and runs `tests/test_int052_image_ela.py`. The CI outcome on this
-PR's head is the test evidence; it is recorded on the hub completion post
-and in this file's PR thread once the run finishes. No local test run is
+Pillow) and runs `tests/test_int052_image_ela.py`. Outcome on head
+`7c5629539bf5f63921fb327a4e3c96c9be872585` (PR #2316): workflow run
+46126524872, job 140922290314 (`test`) completed **success**, including
+step 19 "Run IntelX tier-1 tests" success and the ruff lint steps
+success; all 11 check-runs on the head completed with 9 success /
+2 skipped (docker, voice-regressions), 0 failures — verified first-hand
+via the check-runs API. The spliced-image file test therefore recorded
+verdict `suspicious_regions` through the kit in CI, and the
+uniform-history control recorded `consistent`. No local test run is
 claimed.
 
 ## Five states
 
 - implemented: YES (this PR)
-- tested: CI tier-1 run on this PR (see test leg above)
+- tested: YES — CI tier-1 run on this PR (see test leg above)
 - merged: NO (coordinator merges)
 - deployed: NO
 - production-verified: NO — no live IntelX leg is claimed; the kit check
