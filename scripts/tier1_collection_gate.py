@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """Tier-1 collection gate (TASK-REL-088).
 
-Checks that the CI test job in .github/workflows/friday-universe-ci.yml
-collects the tier-1 test files of EVERY agent (10 agents, 21 files).
+Checks that the CI test jobs in .github/workflows/friday-universe-ci.yml
+(the cross-agent `test` job plus the per-agent `test-<agent>` jobs,
+TASK-REL-125) collect the tier-1 test files of EVERY agent
+(10 agents, 21 files).
 
 Unlike scripts/ci_test_collection_audit.py (REL-068), which is diff-scoped
 and only checks test files the PR itself touches, this gate checks a FIXED
 list: a PR that unwires a suite without touching a test file must fail.
 
-Exit 0: all 21 tier-1 files are collected by a pytest invocation in the
+Exit 0: all 21 tier-1 files are collected by a pytest invocation in a
 test job. Exit 1: prints each missing file and exits 1.
 
 Usage: python3 scripts/tier1_collection_gate.py [workflow.yml]
@@ -61,7 +63,7 @@ TIER1_FILES = [
     "VyralX/tests/test_obs003_health_labelling.py",
 ]
 
-JOB_RE = re.compile(r"^  test:\s*$")
+JOB_RE = re.compile(r"^  test(?:-[a-z0-9-]+)?:\s*$")
 NEXT_JOB_RE = re.compile(r"^  [A-Za-z0-9][A-Za-z0-9_-]*:\s*$")
 STEP_RE = re.compile(r"^      - ")
 WD_RE = re.compile(r"^\s+working-directory:\s*(\S+)\s*$")
@@ -69,20 +71,21 @@ PY_TOKEN_RE = re.compile(r"[^\s'\"\\]+\.py")
 
 
 def test_job_lines(text):
+    # TASK-REL-125: agent tier-1 suites live in per-agent test-<agent>
+    # jobs; scan the cross-agent test job and every test-<agent> job.
     lines = text.splitlines()
-    start = None
-    for i, line in enumerate(lines):
-        if JOB_RE.match(line):
-            start = i
-            break
-    if start is None:
+    out = []
+    in_test_job = False
+    found_test_job = False
+    for line in lines:
+        if NEXT_JOB_RE.match(line):
+            in_test_job = bool(JOB_RE.match(line))
+            found_test_job = found_test_job or in_test_job
+        if in_test_job:
+            out.append(line)
+    if not found_test_job:
         raise SystemExit("tier1_collection_gate: job 'test' not found")
-    end = len(lines)
-    for j in range(start + 1, len(lines)):
-        if NEXT_JOB_RE.match(lines[j]):
-            end = j
-            break
-    return lines[start:end]
+    return out
 
 
 def collected_files(job_lines):
@@ -113,7 +116,7 @@ def main(argv):
         for f in missing:
             print(f"MISSING: {f}")
         return 1
-    print("OK: all tier-1 suites collected in the test job")
+    print("OK: all tier-1 suites collected in the test jobs")
     return 0
 
 

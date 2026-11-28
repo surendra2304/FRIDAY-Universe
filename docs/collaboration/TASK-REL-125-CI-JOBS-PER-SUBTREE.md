@@ -15,7 +15,7 @@ gated at job level by the same `detect-voice-changes` outputs.
 
 ## What changed
 
-Only `.github/workflows/friday-universe-ci.yml` (plus this evidence doc).
+`.github/workflows/friday-universe-ci.yml`, `scripts/tier1_collection_gate.py` (scope fix below), and this evidence doc.
 
 1. **Ten per-agent jobs** — `test-friday`, `test-memora`,
    `test-cortex`, `test-stratex`, `test-forge`, `test-inference`,
@@ -47,6 +47,13 @@ Only `.github/workflows/friday-universe-ci.yml` (plus this evidence doc).
   a shipped test file is still collected whenever its subtree (or a
   shared path) changes.
 - **REL-088 tier-1 collection gate**: still unconditional in `test`.
+  The gate script scanned only the `test` job's lines, so the split
+  failed it on the first CI run (run 46132215217, `test` job failed
+  at the gate step in 10s while all ten per-agent jobs passed). The
+  gate now scans `test` plus every `test-<agent>` job — same fixed
+  21-file list, same fail-on-unwire semantics; verified locally:
+  21/21 collected on both the old and new workflow, and removing a
+  tier-1 file from the new workflow still fails the gate.
 - **Non-PR events**: `detect-voice-changes` forces every output true
   off-PR (REL-120 nightly), so push/schedule runs execute all jobs.
 - Skipped per-agent jobs report as skipped, never pending, so
