@@ -126,79 +126,68 @@ async def test_delegate_verify_only_still_schedules_execution(monkeypatch):
 # Delegate: execute_now terminal-state gate
 # --------------------------------------------------------------------------
 
-def _manifest(all_passed=True, partial_failure=False):
-    return SimpleNamespace(
-        all_passed=all_passed,
-        partial_failure=partial_failure,
-        failure_summary="" if all_passed else "stages failed",
-        total_stages=3,
-        model_dump=lambda mode=None: {"all_passed": all_passed, "stages": {}},
-    )
+def _capture_schedule(monkeypatch):
+    scheduled: list[tuple[str, str | None, bool, str | None]] = []
 
+    def _capture(task_id, url=None, require_sentinel=False, memora_goal=None):
+        scheduled.append((task_id, url, require_sentinel, memora_goal))
 
-def _patch_verification(monkeypatch, manifest):
-    engine = SimpleNamespace(
-        verify_task=AsyncMock(return_value=SimpleNamespace(all_passed=manifest.all_passed)),
-        generate_manifest=lambda task_id, report: manifest,
-    )
-    monkeypatch.setattr(delegate, "verification_engine", engine)
-    monkeypatch.setattr(delegate, "_task_artifact_paths", lambda task_id: [])
-    monkeypatch.setattr(
-        delegate,
-        "get_memora_client",
-        lambda: SimpleNamespace(a_record_interaction=AsyncMock()),
-    )
+    monkeypatch.setattr(delegate, "_schedule_execution", _capture)
+    return scheduled
 
 
 @pytest.mark.asyncio
-async def test_delegate_execute_now_failed_task_is_not_success(monkeypatch):
-    _patch_verification(monkeypatch, _manifest(all_passed=True))
+async def test_delegate_execute_now_schedules_and_reports_running(monkeypatch):
+    """TASK-FRG-038: execute_now no longer runs the DAG inline on the
+    request (it wedged Forge's single worker). It schedules the same
+    supervised background execution and reports RUNNING — no outcome can
+    be certified at intake, so the response never claims one."""
+    scheduled = _capture_schedule(monkeypatch)
     task, plan = _intake()
-    failed_task = SimpleNamespace(
-        id=task.id, goal=task.goal, state=TaskState.FAILED, error_message="node blew up"
-    )
     orchestrator = SimpleNamespace(
         intake_and_plan=AsyncMock(return_value=(task, plan)),
-        run_task=AsyncMock(return_value=failed_task),
+        run_task=AsyncMock(side_effect=AssertionError("execute_now must not run inline")),
     )
     envelope = TaskEnvelopeModel(
-        task_id="env-fail",
+        task_id="env-now",
         source_agent="friday",
         action="build",
         payload={"goal": "Build a palindrome checker", "execute_now": True},
     )
     result = await delegate.delegate_task(envelope, orchestrator=orchestrator, store=SimpleNamespace())
 
-    # The leftover artifacts happened to verify; the task still FAILED and
-    # must be reported as such — never SUCCESS, never with a receipt.
-    assert result.status == "FAILED"
-    assert result.result["state"] == "FAILED"
+    assert scheduled == [("task_mode_1", None, False, "Build a palindrome checker")]
+    assert result.status == "RUNNING"
+    assert result.result["state"] == "RUNNING"
     assert result.receipt is None
-    assert "node blew up" in (result.error or "")
+    orchestrator.run_task.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_delegate_execute_now_completed_task_still_success(monkeypatch):
-    _patch_verification(monkeypatch, _manifest(all_passed=True))
+async def test_delegate_execute_now_sentinel_flag_rides_scheduler(monkeypatch):
+    """TASK-FRG-038: an execute_now caller that asked for the Sentinel gate
+    keeps it — the flag rides the background runner, where the gate runs
+    after run_task (see _run_task_body)."""
+    scheduled = _capture_schedule(monkeypatch)
     task, plan = _intake()
-    done_task = SimpleNamespace(
-        id=task.id, goal=task.goal, state=TaskState.COMPLETED, error_message=None
-    )
     orchestrator = SimpleNamespace(
         intake_and_plan=AsyncMock(return_value=(task, plan)),
-        run_task=AsyncMock(return_value=done_task),
+        run_task=AsyncMock(side_effect=AssertionError("execute_now must not run inline")),
     )
     envelope = TaskEnvelopeModel(
-        task_id="env-ok",
+        task_id="env-now-gate",
         source_agent="friday",
         action="build",
-        payload={"goal": "Build a palindrome checker", "execute_now": True},
+        payload={"goal": "Build a palindrome checker", "execute_now": True,
+                 "require_sentinel_gate": True, "callback_url": "https://example.invalid/hook"},
     )
     result = await delegate.delegate_task(envelope, orchestrator=orchestrator, store=SimpleNamespace())
 
-    assert result.status == "SUCCESS"
-    assert result.result["state"] == "COMPLETED"
-    assert result.receipt is not None
+    assert scheduled == [("task_mode_1", "https://example.invalid/hook", True,
+                           "Build a palindrome checker")]
+    assert result.status == "RUNNING"
+    assert result.receipt is None
+    orchestrator.run_task.assert_not_called()
 
 
 # --------------------------------------------------------------------------
