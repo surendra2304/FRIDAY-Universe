@@ -1,0 +1,33 @@
+# TASK-FRD-065 — FRIDAY webchat 401 diagnosis run 2 (checkpoint 1)
+
+**Date:** 2026-11-28 ~15:00 IST (Muse 3)
+**Status:** 401 REPRODUCED for bare callers — intended gate, unchanged from run 1. Deployed console SHIPS the D-023 fix.
+**Branch:** `muse3/task-frd-065-webchat-401-diagnosis-run-2`
+
+## 1. Live re-probe (2026-11-28 14:59 IST, direct curl, no credential)
+
+- `POST https://friday-universe.duckdns.org/friday/api/chat` → **HTTP 401** (1.79s)
+  `{"error":"HTTP_401","message":"A valid FRIDAY control API key is required.","detail":"A valid FRIDAY control API key is required.","success":false}`
+- `POST https://friday-universe.duckdns.org/api/chat` → **HTTP 401**, same body (1.51s)
+- `GET /friday/health` → **HTTP 200** (2.06s), `overall: healthy`, `friday_core 2.0.0`, Oracle SELECT 1 OK, disk 40138.6 MB free, observed 2026-11-28T09:29:09Z.
+
+## 2. Server-side corroboration (FRIDAY-Server, bridge run_shell)
+
+- Journal `FRIDAY.service` (PID 140472): `09:29:06 UTC POST /api/chat 401`, `09:29:08 UTC POST /api/chat 401`, `09:29:10 UTC GET /health 200` — the exact probes above, Caddy having stripped the `/friday` prefix.
+- `FRIDAY.service` active/running, MainPID 140472, active since 09:04:05 UTC (14:34 IST), NRestarts=9.
+- Note: Oracle Server 1 `FRIDAY.service` is inactive (dead, disabled) and `caddy.service` failed — the gateway is served from FRIDAY-Server (AWS), not S1. S1 state flagged, not changed; no server move made.
+
+## 3. Deployed console carries the D-023 fix
+
+- `GET /friday/` → 200, Next.js Halo console; all 9 JS chunks fetched.
+- Chunk `27fe61w12sxqu.js` contains the fix, verbatim: `X-FRIDAY-Control-Token` header constant, `friday_prime_key` localStorage key, `ControlAuthError`, `GET /api/control/session` with `x-friday-api-key` + `cache: "no-store"`, and `control-auth-required` — "No owner key is stored in this browser, so no control session can be minted." / "FRIDAY needs the owner key in this browser before it can answer — paste it once and the chat re…".
+- Repo main also has `FRIDAY/ui/lib/controlSession.ts`, `FRIDAY/ui/lib/wire.ts`, `FRIDAY/ui/components/ControlGate.tsx` (all 200); FRD-042 deploy PR #1647 merged 2026-11-24.
+- A bare browser therefore gets the paste-once ControlGate by design; the 401 is the gate doing its job, not a regression.
+
+## 4. Verdict
+
+- **401 reproduced; root cause unchanged from FRD-038 run 1:** intended gate (VAL-007) + credential-less caller.
+- **Fix code is merged AND deployed.** What remains unproven is the owner-key browser path — one chat call answering 200 through the remote path after the key is pasted once. That needs a browser session with the owner key and cannot be proven from here; no key was read, pasted, or recorded.
+- Next: work PR with this evidence; the owner-key live proof rides the coordinator/owner, not this task.
+
+— Muse 3
