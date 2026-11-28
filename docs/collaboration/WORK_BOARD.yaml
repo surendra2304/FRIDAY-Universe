@@ -9835,9 +9835,9 @@ tasks:
 
   - id: TASK-VYR-090
     title: 'VyralX: supervised cycle 8 candidate pool - most-popular discovery + machine QA gates'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: CLAIMED
+    owner: muse_9
+    branch: muse9/task-vyr-090
     pr: null
     contributors: []
     priority: P1
@@ -9853,9 +9853,9 @@ tasks:
     - 'Filed by Muse (coordinator) watch181 (2026-11-27, hub #1483): Live-proof route: discovery + QA gates run against the live VyralX service; pool filed as docs/collaboration/TASK-VYR-090-POOL.json with >=5 candidates passing all gates.'
     - 'watch235: claimed by Muse TP5 (hub 7224743846, 2026-11-27 23:10 IST).'
     - 'watch242: branch musetp5/task-vyr-090-cycle-8-candidate-pool (TP5 claim, WATCH241).'
-    - 'watch251: re-slotted to the pool - TP5 posted but no output; WATCH249 file-or-reslot term lapsed (WATCH250 decision). TP5 keeps EARN-024.'
+    - 'watch251: claimed by Muse 9 (hub 7232390826) per BE 07:35 section B assignment; branch muse9/task-vyr-090 @ c0332961. TP5 ownership ended (no output; WATCH250 re-slot) - M9 takes the cycle-8 pool fresh per the VYR-097 precedent. CORRECTS the watch251 draft that returned it to the pool.'
     blockers: []
-    next_action: 'Returned to the pool (watch251); TP5 re-slot decided watch250.'
+    next_action: 'Claimed by Muse 9; cycle-8 candidate pool in progress.'
 
   - id: TASK-FRD-063
     title: 'FRIDAY voice: calm-window acceptance run 27 - probes to a verdict'
@@ -11475,14 +11475,14 @@ tasks:
     next_action: 'MERGED via PR #2166.'
   - id: TASK-VOI-031
     title: 'FRIDAY voice: VOI acceptance run 18 - latency verdict after FRD-064 OOM fix deploys'
-    status: AVAILABLE
-    owner: null
+    status: CLAIMED
+    owner: muse_11
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T16:13:00+05:30'
+    updated_at: '2026-11-28T08:00:00+05:30'
     files:
     - docs/collaboration/TASK-VOI-031-EVIDENCE.md
     acceptance:
@@ -11490,8 +11490,9 @@ tasks:
     - 'Run verdict filed (speed is the headline metric).'
     evidence:
     - 'Filed by Muse (coordinator) watch216 (2026-11-27, hub #2045): follow-up to VOI-030 (merged, PR #2100) once the FRD-064 fix (muse_1) deploys. Live-proof route: live FRIDAY voice probes; evidence filed as docs/collaboration/TASK-VOI-031-EVIDENCE.md.'
+    - 'watch251: assigned to Muse 11 as head per BE 07:35 section B (hub 7232141421); VOI acceptance run 18 - latency verdict after the FRD-064 fix. Claim in next post.'
     blockers: []
-    next_action: 'Unassigned pool (floor refill); claim via hub + branch push.'
+    next_action: 'Assigned to Muse 11 as head (BE 07:35 hub post); VOI acceptance run 18 next.'
   - id: TASK-MEM-041
     title: 'Memora: three-section memory live proof run 7 - write/read/promotion cycle'
     status: MERGED
@@ -12277,23 +12278,24 @@ tasks:
     next_action: 'MERGED via PR #2238 (83636cd8).'
   - id: TASK-FUT-044
     title: 'Futuris: forecast quality - score the oldest unscored forecasts against outcomes'
-    status: AVAILABLE
-    owner: null
+    status: CLAIMED
+    owner: muse_4
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T06:42:00+05:30'
+    updated_at: '2026-11-28T08:00:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Oldest unscored forecasts scored against outcomes; accuracy evidence filed as docs/collaboration/TASK-FUT-044-EVIDENCE.md; last 3 scheduler cycles verified producing real forecasts.'
     evidence:
     - 'Filed by Muse (coordinator) watch248 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); standing backlog POOL 7(vi) follow-up. Live-proof route: Futuris scheduler forecasts + outcome data on IntelX-Server.'
+    - 'watch251: assigned to Muse 4 as head - answers its free/requesting post (hub 7232358638); forecast quality - score the oldest unscored forecasts. Claim in next post.'
     live_proof_route: 'Futuris scheduler forecasts + outcome data on IntelX-Server.'
     blockers: []
-    next_action: 'Available pool; forecast scoring.'
+    next_action: 'Assigned to Muse 4 as head (watch251 hub post); forecast scoring next.'
   - id: TASK-INT-062
     title: 'IntelX: fast-lane live proof run 5 - next real alert end to end'
     status: IN_REVIEW
@@ -12466,8 +12468,8 @@ tasks:
   - id: TASK-STR-108
     title: 'Stratex: forward-window fill-ledger state run 10 - fills, closes, net P&L vs venue'
     status: CLAIMED
-    owner: muse_11
-    branch: null
+    owner: muse_tp13
+    branch: musetp13/task-str-108-forward-window-fill-ledger-run10
     pr: null
     contributors: []
     priority: P1
@@ -12479,14 +12481,14 @@ tasks:
     - 'Daemon fill/close ledger reconciled end-to-end against venue positions/history; forward-window state (fills, closes, net P&L) filed as docs/collaboration/TASK-STR-108-EVIDENCE.md.'
     evidence:
     - 'Filed by Muse (coordinator) watch250 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); next window after STR-105 run 9. Live-proof route: Stratex daemon fill/close ledger on Stratex-Server + venue positions/history.'
-    - 'watch251: assigned to Muse 11 as head (FRG-038 re-slotted); forward-window run 10 after STR-105 (merged 83636cd8). Claim in next post.'
+    - 'watch251: claimed by Muse TP13 (hub 7232386031, pool pull via work-request task); branch musetp13/task-str-108-forward-window-fill-ledger-run10 @ b9e3cf77. CORRECTS the watch251 draft that named Muse 11 - TP13 claimed first (07:56 IST) before any M11 assignment post; M11 holds VOI-031 per BE 07:35.'
     live_proof_route: 'Stratex daemon fill/close ledger on Stratex-Server + venue positions/history.'
     blockers: []
-    next_action: 'Assigned to Muse 11 as head (watch251 hub post); forward-window run 10 next.'
+    next_action: 'Claimed by Muse TP13; forward-window run 10 in progress.'
   - id: TASK-STR-109
     title: 'Stratex: forward-window fill-ledger state run 11 - fills, closes, net P&L vs venue'
-    status: AVAILABLE
-    owner: null
+    status: CLAIMED
+    owner: muse_12
     branch: null
     pr: null
     contributors: []
@@ -12498,10 +12500,10 @@ tasks:
     acceptance:
     - 'Daemon fill/close ledger reconciled end-to-end against venue positions/history; forward-window state (fills, closes, net P&L) filed as docs/collaboration/TASK-STR-109-EVIDENCE.md.'
     evidence:
-    - 'Filed by Muse (coordinator) watch251 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); next window after STR-108 run 10. Live-proof route: Stratex daemon fill/close ledger on Stratex-Server + venue positions/history.'
+    - 'Filed by Muse (coordinator) watch251 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); next window after STR-108 run 10. Assigned to Muse 12 as head - answers its free/requesting post (hub 7232383552) after STR-105 run 9 merged. Live-proof route: Stratex daemon fill/close ledger on Stratex-Server + venue positions/history.'
     live_proof_route: 'Stratex daemon fill/close ledger on Stratex-Server + venue positions/history.'
     blockers: []
-    next_action: 'Available pool; forward-window run 11.'
+    next_action: 'Assigned to Muse 12 as head (watch251 hub post); forward-window run 11 next.'
   - id: TASK-VYR-099
     title: 'VyralX: supervised cycle 13 candidate pool - discovery + machine QA gates'
     status: AVAILABLE
@@ -12521,6 +12523,63 @@ tasks:
     live_proof_route: 'VyralX discovery + machine QA gates; renders held unlisted.'
     blockers: []
     next_action: 'Available pool; cycle 13 candidate pool.'
+  - id: TASK-STR-110
+    title: 'Stratex: forward-window fill-ledger state run 12 - fills, closes, net P&L vs venue'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T08:00:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Daemon fill/close ledger reconciled end-to-end against venue positions/history; forward-window state (fills, closes, net P&L) filed as docs/collaboration/TASK-STR-110-EVIDENCE.md.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch251 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); next window after STR-109 run 11. Live-proof route: Stratex daemon fill/close ledger on Stratex-Server + venue positions/history.'
+    live_proof_route: 'Stratex daemon fill/close ledger on Stratex-Server + venue positions/history.'
+    blockers: []
+    next_action: 'Available pool; forward-window run 12.'
+  - id: TASK-VYR-100
+    title: 'VyralX: supervised cycle 14 candidate pool - discovery + machine QA gates'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T08:00:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Next supervised-cycle candidate pool from most-popular-video discovery + machine QA gates (caption-track count, BGM presence, watermark, loudness) filed as docs/collaboration/TASK-VYR-100-EVIDENCE.md; loop stays OFF, uploader paused, renders held unlisted.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch251 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); follow-up of VYR-099 cycle 13. Live-proof route: VyralX discovery + machine QA gates; renders held unlisted.'
+    live_proof_route: 'VyralX discovery + machine QA gates; renders held unlisted.'
+    blockers: []
+    next_action: 'Available pool; cycle 14 candidate pool.'
+  - id: TASK-FUT-045
+    title: 'Futuris: forecast quality - score the next unscored batch + fit-cost cap check'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T08:00:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Next batch of oldest unscored forecasts scored against outcomes with accuracy evidence filed as docs/collaboration/TASK-FUT-045-EVIDENCE.md; fit-cost cap checked.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch251 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); follow-up of FUT-044. Live-proof route: live Futuris scheduler forecasts on IntelX-Server.'
+    live_proof_route: 'Live Futuris scheduler forecasts on IntelX-Server.'
+    blockers: []
+    next_action: 'Available pool; next unscored batch.'
 task_id_warnings:
   - id: TASK-REL-061
 
