@@ -1,0 +1,23 @@
+{
+  "window_start": "2026-11-26T00:55:00Z",
+  "window_end": "2026-11-28T00:55:00Z",
+  "retained_since": "2026-11-26T00:55:26Z",
+  "ready_probes": 5370,
+  "keyword_counts": {
+    "escalat": 0,
+    "deliver": 0,
+    "Telegram": 0,
+    "notif": 0,
+    "repair": 0,
+    "SelfHealing": 0,
+    "supervisor": 1,
+    "streak": 0,
+    "did not restore health": 0,
+    "cycle": 0,
+    "ERROR": 0,
+    "CRITICAL": 0,
+    "WARN": 7
+  },
+  "total_lines": 6871,
+  "restarts": 0
+}

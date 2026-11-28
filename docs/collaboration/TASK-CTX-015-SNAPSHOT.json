@@ -1,0 +1,93 @@
+{
+  "observed_at": "2026-11-28T00:54:59.827240Z",
+  "background": {
+    "running": true,
+    "cycles": 9324,
+    "errors": 0,
+    "skipped_while_disabled": 0,
+    "last_error": null,
+    "last_checked_at": "2026-11-28T00:54:40.699290+00:00",
+    "last_unhealthy": [],
+    "last_unconfigured": [],
+    "last_repairs": [],
+    "escalation_channel": {
+      "channel": "telegram:api.telegram.org",
+      "channel_configured": true,
+      "attempts": 2,
+      "delivered": 2,
+      "suppressed_duplicates": 0,
+      "last_attempt": {
+        "subsystem": "ai_universe",
+        "reason": "3 repair attempts did not restore health",
+        "at": "2026-11-27T10:45:11.727398+00:00",
+        "channel": "telegram:api.telegram.org",
+        "delivered": true,
+        "status_code": 200,
+        "detail": "delivered"
+      }
+    },
+    "ratio_check": {
+      "threshold_cycles": 10,
+      "delivery_gap_threshold": 3,
+      "unconfigured_streaks": {},
+      "signal_rate": {
+        "database": {
+          "rate": 1.0,
+          "samples": 9324
+        },
+        "schema": {
+          "rate": 1.0,
+          "samples": 9324
+        },
+        "redis": {
+          "rate": 0.9996,
+          "samples": 9324
+        },
+        "ai_universe": {
+          "rate": 0.9996,
+          "samples": 9324
+        },
+        "agents": {
+          "rate": 1.0,
+          "samples": 9324
+        },
+        "ingestion": {
+          "rate": null,
+          "samples": 0
+        },
+        "tools": {
+          "rate": null,
+          "samples": 0
+        }
+      },
+      "consecutive_failed_deliveries": 0,
+      "channel_broken": false,
+      "last_alert": null
+    }
+  },
+  "escalation_delivery": {
+    "channel": "telegram:api.telegram.org",
+    "attempts": 2,
+    "delivered": 2,
+    "suppressed_duplicates": 0,
+    "consecutive_failed_deliveries": 0,
+    "channel_broken": false
+  },
+  "escalations": [
+    {
+      "subsystem": "redis",
+      "reason": "3 repair attempts did not restore health",
+      "at": "2026-11-24T14:06:06.911073Z"
+    },
+    {
+      "subsystem": "ai_universe",
+      "reason": "3 repair attempts did not restore health",
+      "at": "2026-11-27T10:45:11.723556Z"
+    }
+  ],
+  "ratio_check": {
+    "consecutive_failed_deliveries": 0,
+    "channel_broken": false,
+    "last_alert": null
+  }
+}
