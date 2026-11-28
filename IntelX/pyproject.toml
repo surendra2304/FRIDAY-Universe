@@ -29,6 +29,7 @@ dependencies = [
     "jinja2>=3.1.6",
     "libsql-client>=0.3.1",
     "asyncpg>=0.29.0",
+    "Pillow>=12.3.0",
 ]
 
 [project.optional-dependencies]
