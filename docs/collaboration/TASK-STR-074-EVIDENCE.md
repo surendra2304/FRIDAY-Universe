@@ -85,9 +85,30 @@
 - **IG2-STR-09 verdict stands:** NOT VERIFIED live (checkpoint 3); fix now owned by Muse 13 as STR-107.
 - No server moves (owner stop order 7130069033); no deploys/restarts without hub clearance; demo only.
 
-## Next (checkpoint 5)
+## Checkpoint 5 — IG2-STR-11 economic calendar live on Stratex-Server (bridge recovered)
 
-- IG2-STR-11 (calendar context in a live cycle) FIRST when the bridge recovers, then IG2-STR-12 (Bayesian uncertainty on live fills), IG2-STR-13 (live re-check; see checkpoint-1 flag).
+- **Filed:** 2026-11-28 ~08:45 IST, by Muse 3. Repairs the ~1h silence since checkpoint 4 (~07:15 IST): branch head was unchanged at `adeaed3d` for ~1h; this checkpoint is the repair. **Bridge recovered** this run: `get_system_info` succeeded first try (~08:06 IST, both Oracle servers ONLINE) after the 07:05–07:18 outage (4 failed calls, MCP layer not completing) — the deferred IG2-STR-11 leg runs now.
+- **Hub read (verified first-hand, through comment 7232443952, BE 08:00 IST hub 7232438956):** BE 08:00 read in full. **No new Muse 3 assignment.** #2243 verifier: BE 07:35 named M3, WATCH250 named M4, M4 filed VERIFIED (review 6095152399) — **M3 released, STR-074 continues** as head. BE 08:00 §D: hourly self-check posts superseded, event-only from here; M3 is among those still posting this window. STR-107 (Muse 13, the IG2-STR-09 CSV-shape fix proposed in checkpoint 3) filed checkpoint 1 ~08:00 IST (hub 7232347389): fix landed in PR #2249 (head `1da9f8bd`), live before/after on S4 — 84 rows, fees 13.04361348 / realised P&L +107.08898814 identical, all 6 columns fixed (dates, venue Binance 82 / OANDA 2, side LONG 47 / SHORT 35 / BUY 2, trade_id 0 empty, quantity/proceeds/cost_basis 0 zero, `--year 2026` returns 84). The checkpoint-3 fix proposal is now implemented and live-proven by M13; STR-074 will re-run the IG2-STR-09 leg against the fixed module once STR-107 merges.
+- **What ran:** the LIVE S4 copy of `Stratex/research/economic_calendar.py` (TASK-IG2-STR-11) via its own `EconomicCalendar` API, run with the S4 venv python from `/opt/friday_universe/Stratex`. Probe script `/tmp/str074/probe_ig11.py`, deleted after the run with all outputs. Store pointed at `/tmp/str074/calendar.jsonl` — no live state written. Read-only market data; no trading endpoint, no credentials, the live daemon was never touched and never restarted.
+- **Run:** 2026-11-28T02:40Z. **Result: 6/6 legs PASS.**
+
+| leg | what it proves | observed |
+|---|---|---|
+| A live refresh | real Nasdaq macro + earnings endpoints serve, parse, store | PASS — 479 events stored (330 macro, 149 earnings, 65 high-impact), `last_refresh_ok` true, 7 days ahead from 2026-11-28 |
+| B high-impact week | the week's do-not-trade-into list is queryable | PASS — 65 high-impact events: Nonfarm Payrolls + Private Nonfarm Payrolls 2026-12-05, ISM Manufacturing PMI 2026-12-02, ADP Nonfarm Employment Change 2026-12-03, Interest Rate Decision 2026-12-04, Core CPI 2026-11-28 + 2026-12-02 |
+| C event risk | the scan-pause advisory answers correctly | PASS — `event_risk(now, 2h)`: no high-impact event inside the window (02:40 UTC, events are daytime US/Eastern); `event_risk(now, 72h)`: in window, advisory fires |
+| D classify + parse | pure functions on fixtures | PASS — CPI / Nonfarm Payrolls / FOMC → high; AAPL earnings → high, small-cap earnings → medium; fixture CPI parses to 08:30/high, fixture AAPL earnings to 16:30/high |
+| E dead source | refresh failure degrades to stale last-good, never raises into the caller | PASS — injected dead fetch: refresh logs a warning per day/source, does NOT raise, `last_refresh_ok` false, stored 479 before = 479 after, stale store still serves queries |
+| F own suite | module's tests on S4 | PASS — `pytest tests/test_ig2_str11_economic_calendar.py`: **7 passed** in 0.31s (note: suite lives in `Stratex/tests/`, not `Stratex/research/tests/` — first attempt at the wrong path failed file-not-found, corrected first-hand) |
+
+- **Flag — high-impact set is broad:** 65 of 479 events (14%) classify high, including same-name repeats across countries (German/Bavarian/Saxony CPI, several "Unemployment Rate" / "Retail Sales" rows) and 10 high-impact rows dated a Saturday (2026-11-28). The keyword classifier works as designed, but the "do not trade into CPI/NFP" signal is diluted if a scan pauses on every regional CPI print. Coordinator's call whether the high-impact keyword set needs a US-only / tier-1 tightening before a live scan consumes it; the module itself behaves per spec on real data.
+- **IG2-STR-11 verdict for this wave: VERIFIED live.** The calendar feed refreshes from the real Nasdaq endpoints, stores and queries a 7-day window, answers the scan-pause advisory correctly, degrades to stale last-good on source failure, and its own suite passes on S4. One design observation rides to the coordinator (flag above); no live failure, no fix task named.
+- **Daemon untouched (verified before/after):** PID 74531 RUNNING throughout; `fill_ledger.jsonl` sha256 `5e657087099259764596059b989d66191cad0fc23d90795abdde0f5bcb910a21`, 84 lines, identical at 02:38Z/02:41Z/post-probe. Heartbeat scan_count 2070 → 2075 → 2077 (still cycling), last cycle scanned 2310 / signals 0 / executed 0 / errors 0 / 30 symbols. Same ledger hash as checkpoints 1–4 (no new fills since 2026-11-27T02:26Z).
+- **IG2-STR-09 verdict stands:** NOT VERIFIED live (checkpoint 3); fix implemented + live-proven by Muse 13 as STR-107 (PR #2249), re-run of the leg owed after merge.
+
+## Next (checkpoint 6)
+
+- IG2-STR-12 (Bayesian uncertainty on live fills), IG2-STR-13 (live re-check; see checkpoint-1 flag), then re-run IG2-STR-09 against the STR-107 fix once merged.
 - Full-allowlist load scan last, results from the live ledger. No server moves (owner stop order 7130069033); no deploys/restarts without hub clearance; demo only.
 
 ## Five states
