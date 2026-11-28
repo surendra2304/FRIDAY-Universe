@@ -48,7 +48,9 @@
   `docs/collaboration/TASK-REL-004-EVIDENCE.md`.
 - Live-proof route: public gateway health endpoints on the live fleet.
 
-## Status — CLAIMED, implementation not yet started
+## Status — CLAIMED (claim section; implementation-leg state below supersedes it)
+
+- SUPERSEDED 2026-11-28 ~08:00 IST — the 'no contract / no implementation' line in this section is stale: the contract was defined by Muse 9 on 2026-11-22 and the implementation merged on main via PR #1395 on 2026-11-23, both before this claim doc was filed. See 'Status — implementation leg' below for the verified state.
 
 - This commit is the claim only. No contract has been defined, no
   implementation has been made, no results are claimed here.
@@ -65,11 +67,26 @@
   the repo checkout; the live probe waits on the gateway route.
 - No secret was read, requested or pasted anywhere in this run.
 
+
+## Status — implementation leg: ground truth verified 2026-11-28 ~08:00 IST
+
+- The "repo leg not started" line carried by the 05:52/06:52 self-checks was WRONG. First-hand verification this run establishes the implementation leg's real state:
+- Contract DEFINED: `docs/collaboration/TASK-REL-004-HEALTH-CONTRACT.md` (Muse 9 design, surveyed from source at base `d51b82d`, 2026-11-22) is on main. Acceptance leg (1) "contract defined" is met.
+- Implementation MERGED on main: PR #1395 (`muse8/task-rel-067`, head `f1731c0f`) merged 2026-11-23 09:04 IST by surendra2304 (merge `ff84c7ff`), 35 files +2807/-308: Stratex reference + FRIDAY classifier + FRIDAY /health + Memora /health + Futuris /health + IntelX /health. CI on head `f1731c0f`: 11 check-runs, 9 success + 2 skipped (docker, voice-regressions), 0 fail (`contracts` + `test` green). 0 reviews / 0 comments — NO paired verification on the implementation PR (verified first-hand via both the reviews and issue-comments APIs). PR #1346 (2026-11-22) was only the REL-067 board flip AVAILABLE -> CLAIMED (1 file +4/-3).
+- Verified on live main `b9e3cf77` (board blob `b1657b5d`) this run: `_stratex_capability_report` in `Stratex/dashboard.py`; contract classifier + "capability unknown — pre-contract" labelling in `FRIDAY/src/friday/ecosystem/fleet_client.py` and `FRIDAY/src/friday/tools/builtin/fleet_status.py`; `Memora/apps/api/routers/health.py` capabilities block + derived status + 200/503 + `evidence_class: capability_report` (read first-hand, lines 96/135-144); `IntelX/intelx/api/v1/health.py` `_capability_report()` + separate `/health` route (lines 90/174/225/245); `Futuris/futuris/api/app.py` carries `capability_report` (code search). 5 agents >= 3 — acceptance leg (1) "implemented on at least three agents" is met in code on main.
+- Remaining: Forge, Sentinel, Cortex, VyralX, Inference — no `capability_report` in their health handlers on current main (code search, verified this run). These 5 are beyond REL-004's >=3 acceptance but are the contract's fleet-wide goal; who finishes them is the coordinator's call (REL-067's owner was Muse 8; branch `muse8/task-rel-067` untouched since 2026-11-23 05:51 IST; REL-067 is ABSENT from the current board — 0 mentions in blob `b1657b5d` — though board commit `8c61c1c7` recorded it AVAILABLE on 2026-11-22).
+- Five states now: implemented YES (5 agents + classifier, code on main) / tested YES (CI 9/9 on #1395 head; no paired verdict) / merged YES (PR #1395, `ff84c7ff`) / deployed NO / production-verified NO.
+- Live probe STILL GATED: public route `fridayuniverse.duckdns.org/health` = 000 first-hand this run (~07:55 IST, 10th hour); EC2 `13.211.78.20:8003/health` 503 (stopped-daemon baseline); `:10000` 000 (10 s timeout). Coordinator-gated per BE 05:05; WATCH250 §E re-probe-on-10000 note stands. New data point (does not unblock the gate): `friday-universe.duckdns.org/health` = 200 first-hand this run, returning a fresh capability report (`observed_at` 2026-11-28T02:26:20Z, overall healthy, `evidence_class: capability_report`, friday/friday_deep import checks); `/bridge/mcp` GET = 406 as expected. That host is the bridge host, not the coordinator-tracked public route — the route question rides the coordinator.
+- REL-105 flag still unruled — carried in BE 07:35 §F and WATCH250 §E ruling asks; board still MERGED/pr 2138. No M16 board action.
+- No secret was read, requested or pasted anywhere in this run.
+
 ## Next
 
-- Define the fleet-wide capability contract; implement it on at least
-  three agents; live-probe via the public gateway health endpoints;
-  file the evidence here as checkpoints.
+- Contract defined (M9) + implemented on 5 agents (M8, #1395) — both
+  verified on main this run. Remaining: coordinator call on the 5
+  unimplemented agents (Forge, Sentinel, Cortex, VyralX, Inference)
+  and on who finishes them; live-probe via the public gateway health
+  endpoints when the gate lifts; file the evidence here as checkpoints.
 - Paired verifier owed on this claim PR (coordinator names).
 
 — Muse 16
