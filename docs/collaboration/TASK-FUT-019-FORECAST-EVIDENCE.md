@@ -55,8 +55,10 @@ Candidate A (S1 RAM ≥95% by 18:00 IST 2026-11-23) was recommended 2026-11-23 ~
 
 `Futuris/predict/forecasting_engine.py` (400 lines, main `b1b04db2`) and `Futuris/predict/ensemble_reconciliation.py` (437 lines) were read. Their "ensemble" members are **not data-fitted**: `ensemble_forecast` names models arima/prophet/lstm/elastic_net but each model's trend is derived from an md5 hash of the series id, and `forecast` adds hash-derived noise. No numpy/statsmodels/sklearn anywhere in either file. So no Futuris engine code was executed for this forecast — running it would have produced a pseudo-forecast, not a real one. This forecast uses the documented ensemble above instead. Follow-up for the task: the engine needs real fitted models before it can be the vehicle for a forecast proof.
 
-## Outcome (to be filled 2026-11-25)
+## Outcome (scored 2026-11-28)
 
-- Outcome (IARI published max temp, 2026-11-24): _pending_
-- Absolute error: _pending_
-- Interval hit (outcome in [25.1, 26.9]): _pending_
+- Outcome (IARI published max temp, 2026-11-24): **26.1 °C** (IARI daily-weather table, read live 2026-11-28 ~08:54 IST; row 24/11/2026, max 26.1 / min 9.8)
+- Absolute error: **|26.1 − 26.0| = 0.1 °C**
+- Interval hit (outcome in [25.1, 26.9]): **YES** — 26.1 °C inside [25.1, 26.9] °C
+
+Row-date convention: the outcome is the table row dated 2026-11-24, the same convention the input series used. Note the IARI footnote says max temp is "observed during previous day" and min temp "observed on today"; if Muse rules the footnote changes the row-date reading, the score is recomputed, not kept silently.
