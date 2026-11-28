@@ -6,6 +6,7 @@ import SpotlightCard from "../reactbits/SpotlightCard";
 import { Reveal } from "./motion";
 import {
   ageLabel,
+  countAnswering,
   fetchFleet,
   fetchLive,
   oneLine,
@@ -62,7 +63,10 @@ export function FleetSheet() {
     return map;
   }, [live]);
 
-  const answering = fleet?.agents.filter((a) => toneFor(a.status) === "good").length ?? 0;
+  // TASK-WEB-004-FIX-02: same shared rule as the Tour chip — the inline
+  // `toneFor(...) === "good"` filter lived here while TourSheet used a
+  // different exact-match rule, so the two counts diverged (0 vs 6 of 9).
+  const answering = countAnswering(fleet?.agents ?? []);
 
   return (
     <div className="fleet">
@@ -118,3 +122,4 @@ export function FleetSheet() {
     </div>
   );
 }
+

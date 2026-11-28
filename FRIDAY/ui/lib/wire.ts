@@ -427,3 +427,15 @@ export function toneFor(status?: string | null): Tone {
   if (["OFFLINE", "UNREACHABLE", "FAILED", "ERROR", "ROUTING_FAILED"].includes(s)) return "bad";
   return "muted";
 }
+
+/** How many agents are answering: the one shared rule for the "N of M
+    answering" count. TASK-WEB-004-FIX-02: the Tour sheet counted
+    `status === "online"` (exact lowercase) while the Fleet sheet counted
+    `toneFor(status) === "good"` — on live data the backend ships
+    UPPERCASE statuses (ONLINE/REACHABLE/DEGRADED), so the Tour chip
+    read 0 of 9 while the Fleet sheet read 6 of 9 in the same session
+    (IG-WEB-06 FAIL). Both sheets now use this helper; a new status
+    string only needs one mapping update in toneFor. */
+export function countAnswering(agents: FleetAgent[]): number {
+  return agents.filter((a) => toneFor(a.status) === "good").length;
+}
