@@ -31,9 +31,11 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import io
 import json
 import os
+from datetime import datetime, timezone
 from typing import Any, Iterable, Optional
 
 try:
@@ -89,20 +91,97 @@ def _f(value: Any, default: float = 0.0) -> float:
         return default
 
 
+def _epoch_to_iso(value: Any) -> str:
+    """Convert an epoch timestamp (seconds, or ms when >= 1e12) to UTC ISO.
+
+    Accepts an int/float/str epoch, or an already-ISO string (passed
+    through). Returns "" for missing/unparseable values.
+    """
+    if value is None or value == "":
+        return ""
+    if isinstance(value, str):
+        text = value.strip()
+        # Already ISO (e.g. "2026-09-09T15:52:32Z" or with offset).
+        if "T" in text or "-" in text[4:5]:
+            return text
+        try:
+            value = float(text)
+        except ValueError:
+            return ""
+    try:
+        epoch = float(value)
+    except (TypeError, ValueError):
+        return ""
+    if abs(epoch) >= 1e12:  # epoch milliseconds
+        epoch /= 1000.0
+    if epoch <= 0:  # 0.0 means "unset" in the daemon ledger — not 1970
+        return ""
+    try:
+        return datetime.fromtimestamp(epoch, tz=timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%SZ")
+    except (OverflowError, OSError, ValueError):
+        return ""
+
+
+def _derived_trade_id(rec: dict[str, Any]) -> str:
+    """Stable export id for daemon records that carry no order id.
+
+    Deterministic hash of the record's identifying fields, so the same
+    ledger always exports the same id. Prefixed to make clear it is
+    export-derived, not a venue order id.
+    """
+    canonical = {
+        "symbol": rec.get("symbol"),
+        "entry_time": rec.get("entry_time"),
+        "exit_time": rec.get("exit_time"),
+        "recorded_at": rec.get("recorded_at"),
+        "side": rec.get("side") or rec.get("direction") or rec.get("action"),
+        "qty": rec.get("qty") if rec.get("qty") is not None else rec.get("quantity"),
+        "entry_price": rec.get("entry_price"),
+        "exit_price": rec.get("exit_price"),
+    }
+    digest = hashlib.sha256(
+        json.dumps(canonical, sort_keys=True, default=str).encode()).hexdigest()
+    return f"LEDGER-{digest[:12]}"
+
+
+def _venue(rec: dict[str, Any]) -> str:
+    """Venue for a record: explicit `venue` wins, else derive from `source`.
+
+    The live daemon ledger carries `venue: "binance_futures"`; the testnet
+    shape carries only `source` (e.g. "BINANCE_FUTURES_EXECUTION").
+    """
+    explicit = str(rec.get("venue") or "").strip()
+    if explicit:
+        return venue_from_source(explicit)
+    return venue_from_source(str(rec.get("source") or ""))
+
+
 def build_tax_rows(records: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     """Normalize raw ledger records into tax-export rows (pure function).
 
-    Ledger rows are closed trades (see testnet_trade_ledger.jsonl shape):
-    symbol, order_id/exit_order_id, action, direction, quantity,
-    entry_price, exit_price, gross_pnl, net_pnl, fees, timestamp,
-    exit_timestamp, exit_reason, strategy, source.
+    Ledger rows are closed trades. Two shapes are accepted:
+
+    - testnet shape: symbol, order_id/exit_order_id, action, direction,
+      quantity, entry_price, exit_price, gross_pnl, net_pnl, fees,
+      timestamp, exit_timestamp, exit_reason, strategy, source.
+    - live daemon shape (TASK-STR-107): symbol, order_id (often empty),
+      entry_order_id (sometimes set), qty, entry_price, exit_price,
+      gross_pnl, net_pnl, fees, epoch entry_time/exit_time
+      (+ ISO recorded_at), venue ("binance_futures"), side ("SHORT"/"LONG"),
+      exit_reason, strategy. Daemon records carry no trade_id/exit_order_id,
+      so trade_id falls back to order_id/entry_order_id, then to a
+      deterministic export-derived id (see _derived_trade_id).
     """
     rows: list[dict[str, Any]] = []
     for rec in records:
         symbol = str(rec.get("symbol") or "")
         if not symbol:
             continue  # not a trade record (e.g. balance/risk event rows)
-        quantity = abs(_f(rec.get("quantity")))
+        # Daemon ledger uses `qty`; testnet uses `quantity`.
+        qty_raw = rec.get("quantity") if rec.get("quantity") is not None \
+            else rec.get("qty")
+        quantity = abs(_f(qty_raw))
         entry_price = _f(rec.get("entry_price"))
         exit_price = _f(rec.get("exit_price"))
         fees = abs(_f(rec.get("fees")))
@@ -111,14 +190,26 @@ def build_tax_rows(records: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
         net = _f(rec.get("net_pnl"), default=gross - fees) \
             if rec.get("net_pnl") is not None else gross - fees
         _, currency = split_instrument(symbol)
+        # Dates: testnet ISO timestamps, else daemon epoch entry/exit time.
+        date_open = str(rec.get("timestamp") or "") \
+            or _epoch_to_iso(rec.get("entry_time"))
+        date_close = str(rec.get("exit_timestamp") or "") \
+            or _epoch_to_iso(rec.get("exit_time")) \
+            or str(rec.get("recorded_at") or "") \
+            or str(rec.get("timestamp") or "")
+        trade_id = str(rec.get("trade_id") or rec.get("exit_order_id")
+                       or rec.get("order_id") or rec.get("entry_order_id")
+                       or "")
+        if not trade_id:
+            trade_id = _derived_trade_id(rec)
         rows.append({
-            "trade_id": str(rec.get("trade_id") or rec.get("exit_order_id")
-                            or rec.get("order_id") or ""),
-            "date_open": str(rec.get("timestamp") or ""),
-            "date_close": str(rec.get("exit_timestamp") or rec.get("timestamp") or ""),
-            "venue": venue_from_source(str(rec.get("source") or "")),
+            "trade_id": trade_id,
+            "date_open": date_open,
+            "date_close": date_close,
+            "venue": _venue(rec),
             "instrument": symbol,
-            "side": str(rec.get("direction") or rec.get("action") or "").upper(),
+            "side": str(rec.get("side") or rec.get("direction")
+                        or rec.get("action") or "").upper(),
             "quantity": quantity,
             "entry_price": entry_price,
             "exit_price": exit_price,
