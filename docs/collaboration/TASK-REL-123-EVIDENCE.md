@@ -147,16 +147,45 @@ verified prediction:
   testmon-2328/merge-d0a6b38f4cb921f570d1b7ebcde2c3435ced5834,
   testmon-2328/merge-, testmon-main-`; engine step printed
   `testmon: no cached data - full run (cache miss)` and
-  `testmon: new DB, environment: default`, then `collected 45
-  items` / `45 passed in 21.42s` — the full engine suite, as a
-  cache miss requires. Cache post-step: `Cache saved with key:
+  `testmon: new DB, environment: default`, then `collected 221
+  items` / `221 passed in 79.85s` — the full engine suite, as a
+  cache miss requires. (The `45 passed in 21.42s` line in the same
+  job is the HTTP-tests step, which runs fully without testmon by
+  design.) Cache post-step: `Cache saved with key:
   testmon-2328/merge-d0a6b38f4cb921f570d1b7ebcde2c3435ced5834`.
-  The coverage-gate step did not run on this PR (skipped by the
-  new `event_name != 'pull_request'` condition — no step log).
+  Tier-1 collection gate: `21/21 collected`. The coverage-gate
+  step did not run on this PR (skipped by the new
+  `event_name != 'pull_request'` condition — no step log).
   Test job 140934480635, `Job duration: 588s`. Full logs:
   `~/workspace/rel123-work/run1-test.log` (533,989 B) and
   `run1-detect.log` (103,042 B).
-- Push 2 — PENDING (selection run; to be filled after the run).
+- Push 2 — SELECTION PROVEN (head `1a658bc2`, PR #2328, FRIDAY
+  Universe CI/CD run 46131633609, `pull_request`, 2026-11-28
+  ~15:11–15:20 IST). 9 checks: 7 success, 2 skipped (`docker`,
+  `voice-regressions`); `mergeable: True/clean`. Detect outputs
+  identical to run 1 (`shared=true`, `any_code=true`, all agent
+  outputs `false`). Cache step: `Cache restored successfully`
+  from run 1's key
+  (`testmon-2328/merge-d0a6b38f4cb921f570d1b7ebcde2c3435ced5834`);
+  engine step printed `testmon: cached data present - running
+  affected tests only` and `testmon: changed files: 0, unchanged
+  files: 51, environment: default`, then `collected 221 items /
+  221 deselected / 0 selected` / `221 deselected in 4.32s` —
+  all 221 engine tests deselected, zero run, step exit 0
+  (`REL-085: test-job step passed (exit 0)`). The push touched no
+  Python file, so zero selected is the correct selection, and the
+  run proves the cache round-trips branch to branch. The
+  deselected run's coverage report reads TOTAL 12% (vs the 16%
+  manifest floor) — the concrete reason the coverage gate is
+  skipped on PRs. HTTP-tests step still ran fully (`45 passed in
+  8.46s`), per-agent venv suites ran fully under REL-120 gating.
+  Cache post-step saved the refreshed data under
+  `testmon-2328/merge-f1ea2d693f99dfc9ffb96b96347ae2cb33bcad54`.
+  Tier-1 gate: `21/21 collected`. Test job 140937927017,
+  `Job duration: 414s` (vs 588s on run 1 — the 221-test engine
+  run collapsed to 4.32s). Full logs:
+  `~/workspace/rel123-work/run2-test.log` (506,471 B) and
+  `run2-detect.log` (103,408 B).
 
 ## Five states
 
@@ -164,13 +193,14 @@ verified prediction:
   `.testmondata` + full suite on merge/nightly in
   `friday-universe-ci.yml`; `.gitignore`; this doc)
 - tested: YES locally (testmon semantics + real repo file, § Design)
-  and for the full-run path via this PR's CI run 1 (cache miss →
-  45/45 engine tests, § Live proof); selection behaviour PENDING
-  run 2
+  and live on this PR's CI: run 1 cache miss → full engine suite
+  (221/221 passed); run 2 cache hit → 221/221 deselected, 0 run
+  (§ Live proof)
 - merged: NO (PR open, coordinator's call; never merge own PR)
 - deployed: N/A (CI config takes effect on merge)
-- production-verified: NO until a PR CI run shows the selection
-  working (§ Live proof push 2) and a post-merge full-suite run
+- production-verified: NO until a post-merge full-suite run
   (merge push or first nightly 02:00 UTC) refreshes main's cache
+  and confirms the reset path live; the PR-path selection itself
+  is proven (§ Live proof push 2)
 
 — Muse 2
