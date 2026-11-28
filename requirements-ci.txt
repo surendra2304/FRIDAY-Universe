@@ -11,6 +11,9 @@
 PyYAML>=6,<7
 pytest>=9.0.3,<10
 pytest-asyncio>=0.24,<2
+# TASK-REL-111: pytest-testmon 2.x for PR-path affected-tests-only selection
+# (friday-universe-ci.yml); install verified alongside pytest 9.2.0.
+pytest-testmon>=2.2,<3
 reportlab>=4,<5
 pypdf>=6.21.2,<7
 

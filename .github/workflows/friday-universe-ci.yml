@@ -5,6 +5,9 @@ on:
     branches: [ main, arena/* ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+    # TASK-REL-111: manual full-suite runs (broken-test probe) and ad-hoc
+    # re-runs; a dispatch is a non-PR event, so it runs the full suite.
   schedule:
     # TASK-REL-120: nightly full-suite run (02:00 UTC / 07:30 IST).
     # Non-PR events run the full suite: detect-voice-changes forces
@@ -15,8 +18,38 @@ jobs:
   test:
     runs-on: ubuntu-latest
     needs: detect-voice-changes
+    env:
+      # TASK-REL-111: pytest-testmon selection. On pull_request events the
+      # test invocations run with --testmon (affected-tests-only); on every
+      # other event (push = merge to main, schedule = nightly, dispatch)
+      # the flag is empty and the full suite runs.
+      TESTMON: ${{ github.event_name == 'pull_request' && '--testmon' || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      # TASK-REL-111: restore the pytest-testmon dependency database.
+      # One cache entry holds .testmondata for every pytest working
+      # directory (root + each agent subtree that runs pytest). A cold
+      # cache (no entry yet) means testmon has no data and runs the full
+      # suite — the safe default.
+      - name: Restore testmon data cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .testmondata
+            Memora/.testmondata
+            Cortex/.testmondata
+            FRIDAY/.testmondata
+            Stratex/.testmondata
+            Forge/.testmondata
+            Inference/.testmondata
+            Sentinel/.testmondata
+            IntelX/.testmondata
+            Futuris/.testmondata
+            VyralX/.testmondata
+          key: testmon-${{ runner.os }}-${{ github.ref }}
+          restore-keys: |
+            testmon-${{ runner.os }}-refs/heads/main
 
       - name: Record job start time
         run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
@@ -34,7 +67,7 @@ jobs:
       - name: Install dependencies
         if: needs.detect-voice-changes.outputs.any_code == 'true'
         run: |
-          pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas ruff
+          pip install fastapi uvicorn httpx pydantic pytest pytest-cov pytest-testmon requests numpy scipy matplotlib pandas ruff
 
       # Checklist I5: the seven engine suites run as ONE invocation so coverage
       # accumulates across them, then scripts/coverage_gate.py enforces the
@@ -71,7 +104,7 @@ jobs:
             --step "Run engine test suites with coverage" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
-            -- python3 -m pytest \
+            -- python3 -m pytest $TESTMON \
             tests/test_real_functional_engines.py \
             tests/test_real_cross_agent_integration.py \
             tests/test_real_advanced_engines.py \
@@ -86,8 +119,13 @@ jobs:
             --cov-report=term-missing \
             --cov-report=json:coverage_ci.json
 
+      # TASK-REL-111: the gate enforces coverage floors, so it runs only
+      # on full runs. A PR-path run selects a test subset, which lowers
+      # coverage by design; enforcing the floors there would fail every
+      # partial run. The gate still runs on push (merge to main),
+      # schedule (nightly) and dispatch full runs.
       - name: Coverage gate (regression classes — checklist I5)
-        if: needs.detect-voice-changes.outputs.any_code == 'true'
+        if: needs.detect-voice-changes.outputs.any_code == 'true' && github.event_name != 'pull_request'
         run: |
           python3 scripts/coverage_gate.py coverage_ci.json
 
@@ -101,7 +139,7 @@ jobs:
           DATABASE_URL: sqlite:///./data/memora_ci_test.db
         run: |
           python3 -m venv .venv-vector-ci
-          .venv-vector-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt
+          .venv-vector-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest-testmon
           # TASK-REL-086: on failure the wrapper prints the failing test
           # names + log tail into the check-run summary (wrapper path is
           # repo-root-relative from this step's working directory).
@@ -111,7 +149,7 @@ jobs:
             --step "Run Memora vector tenant and transaction regressions" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
-            -- .venv-vector-ci/bin/python -m pytest -q \
+            -- .venv-vector-ci/bin/python -m pytest -q $TESTMON \
             tests/test_oracle_vector_tenant_isolation.py \
             tests/test_oracle_23ai_vector.py \
             tests/test_memory_tenant_admin_maintenance_isolation.py \
@@ -137,7 +175,7 @@ jobs:
             --step "Run Memora vector tenant and transaction regressions" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
-            -- .venv-vector-ci/bin/python -m pytest -q \
+            -- .venv-vector-ci/bin/python -m pytest -q $TESTMON \
             tests/test_viking_context_durability.py
 
       # TASK-REL-080: Cortex tier-1 tests (CTX-003 G5 re-run). The test job
@@ -154,7 +192,7 @@ jobs:
         working-directory: Cortex
         run: |
           python3 -m venv .venv-cortex-ci
-          .venv-cortex-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio pyyaml aiosqlite
+          .venv-cortex-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio pyyaml aiosqlite pytest-testmon
           # TASK-REL-086: on failure the wrapper prints the failing test
           # names + log tail into the check-run summary — this is the step
           # that runs test_f3_peer_transport_exponential_backoff, the test
@@ -169,7 +207,7 @@ jobs:
             --step "Run Cortex tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
-            -- .venv-cortex-ci/bin/python -m pytest -q \
+            -- .venv-cortex-ci/bin/python -m pytest -q $TESTMON \
             tests/unit/test_e2e_tier1.py tests/e2e/test_e2e_tier1.py \
             tests/unit/test_ig2_cor_agent_budgets.py \
             tests/unit/test_conversational_agents_earn027.py \
@@ -223,7 +261,7 @@ jobs:
         working-directory: FRIDAY
         run: |
           python3 -m venv .venv-friday-ci
-          .venv-friday-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio
+          .venv-friday-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio pytest-testmon
           # TASK-REL-086: on failure the wrapper prints the failing test
           # names + log tail into the check-run summary.
           # TASK-IG-FRD-006-FIX-01: test_reliability.py is collected here so
@@ -268,7 +306,7 @@ jobs:
             --step "Run FRIDAY tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
-            -- .venv-friday-ci/bin/python -m pytest -q \
+            -- .venv-friday-ci/bin/python -m pytest -q $TESTMON \
             tests/test_tier1_resilience_and_contracts.py tests/e2e/test_tier1_features.py \
             tests/test_llm_escalation.py \
             tests/test_frd044_spotify_voice_control.py \
@@ -304,7 +342,7 @@ jobs:
           DATABASE_URL: sqlite:///./data/memora_ci_tier1.db
         run: |
           python3 -m venv .venv-memora-ci
-          .venv-memora-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio
+          .venv-memora-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio pytest-testmon
           # TASK-REL-086: on failure the wrapper prints the failing test
           # names + log tail into the check-run summary.
           python3 ../scripts/ci_failure_summary.py \
@@ -313,7 +351,7 @@ jobs:
             --step "Run Memora tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
-            -- .venv-memora-ci/bin/python -m pytest -q \
+            -- .venv-memora-ci/bin/python -m pytest -q $TESTMON \
             tests/test_tier1_resilience_contracts.py \
             tests/test_mem030_obsidian_vault.py \
             tests/test_mem031_memora_verify_wave3.py \
@@ -352,7 +390,7 @@ jobs:
         working-directory: Stratex
         run: |
           python3 -m venv .venv-stratex-ci
-          .venv-stratex-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio
+          .venv-stratex-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio pytest-testmon
           # TASK-REL-086: on failure the wrapper prints the failing test
           # names + log tail into the check-run summary.
           python3 ../scripts/ci_failure_summary.py \
@@ -361,7 +399,7 @@ jobs:
             --step "Run Stratex tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
-            -- .venv-stratex-ci/bin/python -m pytest -q \
+            -- .venv-stratex-ci/bin/python -m pytest -q $TESTMON \
             tests/test_tier1_resilience_and_contracts.py \
             tests/test_str078_lumibot_backtest.py \
             rigorous_backtest/ig/tests/test_mispricing_scan.py \
@@ -407,7 +445,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: |
           python3 -m venv .venv-forge-ci
-          .venv-forge-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio respx
+          .venv-forge-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio respx pytest-testmon
           # TASK-REL-086: on failure the wrapper prints the failing test
           # names + log tail into the check-run summary.
           python3 ../scripts/ci_failure_summary.py \
@@ -416,7 +454,7 @@ jobs:
             --step "Run Forge tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
-            -- .venv-forge-ci/bin/python -m pytest -q \
+            -- .venv-forge-ci/bin/python -m pytest -q $TESTMON \
             tests/unit/test_tier1_resilience.py tests/unit/test_deep_upgrade_tier1.py \
             tests/unit/test_mem031_forge_session_capture.py \
             tests/unit/test_task_frg031_preview.py \
@@ -444,7 +482,7 @@ jobs:
         working-directory: Inference
         run: |
           python3 -m venv .venv-inference-ci
-          .venv-inference-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio aiosqlite
+          .venv-inference-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio aiosqlite pytest-testmon
           # TASK-REL-086: on failure the wrapper prints the failing test
           # names + log tail into the check-run summary.
           # TASK-IG-INF-01-FIX-01: tests/test_ig_inf01_long_context_routing.py
@@ -463,7 +501,7 @@ jobs:
             --step "Run Inference tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
-            -- .venv-inference-ci/bin/python -m pytest -q \
+            -- .venv-inference-ci/bin/python -m pytest -q $TESTMON \
             tests/test_health_security.py tests/test_module_importability.py tests/test_monitoring_health_evidence.py tests/test_discovery_feed.py tests/test_ig_inf01_long_context_routing.py tests/test_inf022_routing_receipts.py tests/test_provider_gateway_deadlines.py
 
       # TASK-REL-088: Sentinel tier-1 set (health-contract + durability +
@@ -489,7 +527,7 @@ jobs:
         working-directory: Sentinel
         run: |
           python3 -m venv .venv-sentinel-ci
-          .venv-sentinel-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio
+          .venv-sentinel-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio pytest-testmon
           # TASK-REL-086: on failure the wrapper prints the failing test
           # names + log tail into the check-run summary.
           python3 ../scripts/ci_failure_summary.py \
@@ -498,7 +536,7 @@ jobs:
             --step "Run Sentinel tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
-            -- .venv-sentinel-ci/bin/python -m pytest -q \
+            -- .venv-sentinel-ci/bin/python -m pytest -q $TESTMON \
             tests/security/test_health_readiness.py tests/security/test_health_durability_truthfulness.py tests/unit/test_foundation.py tests/unit/test_ig_sen_device_posture.py tests/test_ig2_sen_extortion_mail_triage.py tests/security/test_sen033_sentinel_repo_implement.py
 
       # TASK-REL-088: IntelX tier-1 set (health-contract core files; no
@@ -536,7 +574,7 @@ jobs:
         working-directory: IntelX
         run: |
           python3 -m venv .venv-intelx-ci
-          .venv-intelx-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio aiosqlite
+          .venv-intelx-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio aiosqlite pytest-testmon
           # TASK-REL-086: on failure the wrapper prints the failing test
           # names + log tail into the check-run summary.
           python3 ../scripts/ci_failure_summary.py \
@@ -545,7 +583,7 @@ jobs:
             --step "Run IntelX tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
-            -- .venv-intelx-ci/bin/python -m pytest -q \
+            -- .venv-intelx-ci/bin/python -m pytest -q $TESTMON \
             tests/test_intelx_health_contract.py tests/test_health.py tests/test_healthz_liveness.py tests/test_ig_intelx_wiring_feeds.py tests/test_db002_watch_seen.py tests/test_db002_watch_envelopes.py tests/test_db002_migration.py tests/test_int051_intelx_repos_wave3.py tests/test_ig_intelx_telegram_topic_search.py tests/test_ig_intelx_tor_metrics.py tests/test_int056_synthesis_failure.py tests/test_standing_watches.py tests/test_int052_image_ela.py
 
       # TASK-REL-088: Futuris tier-1 set (health-contract core files; no
@@ -567,7 +605,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: |
           python3 -m venv .venv-futuris-ci
-          .venv-futuris-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio aiosqlite
+          .venv-futuris-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio aiosqlite pytest-testmon
           # TASK-REL-086: on failure the wrapper prints the failing test
           # names + log tail into the check-run summary.
           # TASK-INT-037: tests/integrations/test_memora_cloud_fallback_keys_futuris.py
@@ -583,7 +621,7 @@ jobs:
             --step "Run Futuris tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
-            -- .venv-futuris-ci/bin/python -m pytest -q \
+            -- .venv-futuris-ci/bin/python -m pytest -q $TESTMON \
             tests/test_futuris_health_contract.py tests/api/test_health.py tests/integrations/test_memora_cloud_fallback_keys_futuris.py
 
       # TASK-REL-088: VyralX tier-1 set (recovery + health-labelling core
@@ -615,7 +653,7 @@ jobs:
         working-directory: VyralX
         run: |
           python3 -m venv .venv-vyralx-ci
-          .venv-vyralx-ci/bin/python -m pip install --disable-pip-version-check -r requirements.lock pytest pytest-asyncio
+          .venv-vyralx-ci/bin/python -m pip install --disable-pip-version-check -r requirements.lock pytest pytest-asyncio pytest-testmon
           # TASK-REL-086: on failure the wrapper prints the failing test
           # names + log tail into the check-run summary.
           python3 ../scripts/ci_failure_summary.py \
@@ -624,7 +662,7 @@ jobs:
             --step "Run VyralX tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
-            -- .venv-vyralx-ci/bin/python -m pytest -q \
+            -- .venv-vyralx-ci/bin/python -m pytest -q $TESTMON \
             tests/test_recovery_and_readiness.py tests/test_obs003_health_labelling.py \
             tests/test_vyr075_claude_ads_e2e.py tests/test_vyr075_format_clone_e2e.py \
             tests/test_vyr075_hyperframes_render.py tests/test_vyr075_ltx2_reject.py \
@@ -648,7 +686,7 @@ jobs:
             --step "Start API server and run HTTP tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
-            -- python3 -m pytest tests/test_real_http_api.py tests/test_real_deep_http_api.py tests/test_real_deep_workflow_http.py tests/test_real_dashboard_http.py -v --tb=short
+            -- python3 -m pytest $TESTMON tests/test_real_http_api.py tests/test_real_deep_http_api.py tests/test_real_deep_workflow_http.py tests/test_real_dashboard_http.py -v --tb=short
           kill %1
 
       - name: Upload test results
@@ -807,6 +845,9 @@ jobs:
     needs: detect-voice-changes
     if: needs.detect-voice-changes.outputs.voice == 'true'
     timeout-minutes: 25
+    env:
+      # TASK-REL-111: same PR-only testmon selection as the test job.
+      TESTMON: ${{ github.event_name == 'pull_request' && '--testmon' || '' }}
     defaults:
       run:
         working-directory: FRIDAY
@@ -822,7 +863,7 @@ jobs:
       - name: Install FRIDAY production and test dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          python -m pip install -r requirements.txt pytest-testmon
           python -m pip install -e ".[dev]"
       - name: Lint changed voice surfaces
         run: |
@@ -847,7 +888,7 @@ jobs:
       # 404f5014 were appended here (voice-regressions is their home job).
       - name: Run voice, LiveKit, Gemini, and CLI regressions
         run: |
-          python -m pytest -q \
+          python -m pytest -q $TESTMON \
             tests/test_voice_gemini_only.py \
             tests/test_voice_confirmation_policy.py \
             tests/test_voice_language_profiles.py \
