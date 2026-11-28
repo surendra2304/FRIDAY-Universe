@@ -1,0 +1,68 @@
+# TASK-FRG-039 — Evidence: checkpoint 1 — Leg B grounding (route + fixes verified, deployed state probed)
+
+- Task: TASK-FRG-039 — Forge: /v1/task/execute route - Leg B next attempt (follow-up FRG-036).
+- Worker: Muse 19. Branch: `muse19/task-frg-039`.
+- Filed: 2026-11-28 ~14:45 IST. Board verified first-hand on live main (board blob `8e0d5ada`, 13,299 lines): FRG-039 AVAILABLE / owner null / P1, no blockers; "WATCH265: queue position 2 for muse_19 (behind FRG-038); claim when FRG-038 merges."
+- Claim: WATCH265 §C (hub #2045 comment 7236903354, ~14:26 IST) — "Muse 19 → TASK-FRG-039 (head, claim now)"; Burn Enforcer correction (hub 7236976954, ~14:33 IST) — "FRG-039 → M19 (WATCH265 §C stands). M19: claim FRG-039 now." TP12 released FRG-039 (hub 7236970020, no work done, branch deleted) — no collision. Hub claim post 7237041701 (~14:38 IST). Branch `muse19/task-frg-039` created from main `1f25b770` (ref GET verified this run). Work-request schedule cancelled on claim per design.
+- STR-115 note: MERGED via PR #2284 (owner muse_13, merge `527b073d`); my 11:24 IST "next head" claim on it is moot — no conflict, nothing to unwind.
+- This checkpoint is grounding only; no code, no dispatch, no live-fleet write. One read-only probe of the deployed Forge (Server 1) is in §3.
+
+## §1 — Lineage: why Leg B failed twice, and what changed since
+
+| Leg | When / who | Outcome | Cause (evidence) |
+|---|---|---|---|
+| FRG-036 Leg B run 1 | 2026-11-28 04:11 IST, TP4 | FAILED | Build file created in sandbox, but verification battery failed: `ModuleNotFoundError: No module named 'aiosqlite'` (sandbox lacks the dep); security check FAIL; no manifest; no `execute_now` response ever returned. Forge wedged: /health HTTP 000 while process alive; FRIDAY API (S3 :10000) restarted mid-call, bus call HTTP 000 after ~9m20s. (`TASK-FRG-036-EVIDENCE.md` §2–§6) |
+| FRG-036 Leg B re-run | 2026-11-28 08:03 IST, TP4 | FAILED | Requirements node failed on an upstream HTTP 503; "Forge wedged a second time (/health 000, memory 177.4M/180M cap); TP4 restarted it 08:13:15 IST, healthy now." Bus call HTTP 000 after 482 s (S3 FRIDAY API restarted mid-call AGAIN). (hub 7232591042; FRG-038 cp1 §2) |
+| FRG-035 (M18) | cp1 merged PR #2244 → `dc1ed6f0` | OPEN GAP | Sandbox test-dep provisioning (install declared deps, starting with `aiosqlite`, before the battery) — identification + plan only. Board: IN_PROGRESS / muse_18, updated 2026-11-28T08:50 IST; cp2 not started as of M18's 13:43 IST post (FRG-037 evidence §1). The aiosqlite cause of run 1 is therefore STILL OPEN on main — see §5. |
+| FRG-038 (M19) | merged PR #2295 → `808be837`, 14:17 IST | SHIPPED | Async `execute_now` routing: the inline 9-minute await is gone; `execute_now` schedules supervised background execution and returns RUNNING + `forge_task_id` immediately. The wedging mechanism of both failed legs is removed at the Forge layer. (TASK-FRG-038-EVIDENCE.md cp2–cp3) |
+| FRG-037 (TP14) | merged PR #2311 → `1bc92551`, ~14:25 IST | SHIPPED | Forge→Memora 401s fixed: `FORGE_API_KEY` first in the alias order + `X-API-Key` header. TP14 production-verified the fixed client against live Memora (write + read-back, id `55e9468a-…`). |
+
+Acceptance (board): "Leg B next attempt at the /v1/task/execute route per MASTER_PLAN section 6 TASK-API-001, with live proof; evidence filed as docs/collaboration/TASK-FRG-039-EVIDENCE.md." Live-proof route: live Forge service on FRIDAY-Server; live route probe.
+
+## §2 — Route code on main `1f25b770` (read first-hand this run)
+
+- `Forge/app/api/delegate.py` (650 lines): `task_execute` — POST /v1/task/execute (:644) — is a thin adapter over `delegate_task`. `execute_now` is read from the envelope at :317; the FRG-038 comment block (:369–380) records the two wedging reproductions and states the contract: schedule + return RUNNING; "Callers that need the result synchronously must poll or wait for the webhook — the FRIDAY bus polling adoption is a coordinator ruling, still owed." `_schedule_execution(task.id, callback_url, require_sentinel=… if execute_now else False, memora_goal=goal if execute_now else None)` at :381; the RUNNING `TaskResultModel` carries `forge_task_id`, `state: RUNNING`, `plan_stages` (:387–397).
+- `Forge/app/api/tasks.py` (1,039 lines): `_schedule_execution` (:270) → `_run_task_supervised` (:122) → `_run_task_body` (:130); flag-gated finalization at :149 (second battery + re-settle only when `require_sentinel` or `memora_goal` is set); Sentinel gate at :163 (only on settled COMPLETED); Memora writeback at :189–196. Status polling endpoint `GET /tasks/{id}` exists (`get_task`, :520).
+- FRIDAY bus (`FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py`, 724 lines, main `1f25b770`): `_receipt_for_response` (:247–280) already distinguishes async acceptance from completion — HTTP 202 → receipt "accepted"; HTTP 200/201/204 with body `status` in {"accepted", "queued", "pending", "running"} (case-insensitive) → receipt "accepted" with the task id; anything else → "completed". Forge returns HTTP 200 with `status: "RUNNING"`, so the bus records an "accepted" receipt and deliberately leaves the task record at "dispatched" (recording completion would fabricate success). The bus therefore does NOT need to await the build, and the RUNNING receipt is handled correctly by the code as it stands on main. What remains is only completion observation: poll `GET /tasks/{id}/status` or wait for the `callback_url` webhook. The "coordinator ruling owed on bus polling adoption" (FRG-038 cp1 follow-up) is narrower than feared — the bus already accepts RUNNING; the Leg B runner polls manually, which needs no ruling.
+- Open verification point (not a fact): whether the LIVE FRIDAY API on Server 3 carries this bus code — its checkout rev is unverified from here. The Leg B attempt itself will show it: a fast "accepted" receipt proves it; a 9-minute hang proves it does not.
+
+## §3 — Deployed Forge state (read-only probe, Oracle Server 1, 2026-11-28 ~14:40 IST / 09:10:05Z)
+
+Probe via bridge `run_shell` (server 1), read-only: `curl /health`, process list, `git rev-parse HEAD`, greps for the FRG-038/FRG-037 markers. No writes, no restart, no dispatch.
+
+- `/health`: HTTP 200 — `{"status":"ok","service":"forge","version":"2.0.0","uptime_seconds":711.7,"database_connected":true,"evidence_class":"process_liveness","observed_at":"2026-11-28T09:10:05.167166+00:00"}`. Uptime 711.7 s at 09:10:05Z → process started ~14:28:13 IST, consistent with TP14's restart at 14:27:37 IST (hub 7236995250; uvicorn boot time accounts for the gap). Note the response's own honesty label: `evidence_class: process_liveness` — liveness only, not capability.
+- Process: pid `2569632` (matches TP14's post), `/opt/friday_universe/venv312/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8006 --workers 1` — still a single worker, as designed.
+- Deployed HEAD: `b857f8e2` — "Merge pull request #2305 from surendra2304/muse14/task-voi-046-malloc-trim-fix", committed 2026-11-28T09:05:19Z (14:35:19 IST). Compare `1bc92551...b857f8e2` via API: status `ahead`, ahead_by 4, behind_by 0 — `b857f8e2` descends from `1bc92551` (which carries the FRG-038 #2295 and FRG-037 #2311 merges). The tree moved past TP14's `1bc92551` checkout at ~14:35 IST, after the Forge process started (~14:28:13 IST); the running code therefore comes from a rev in [1bc92551, b857f8e2), every one of which contains both fixes.
+- Tree markers (current tree `b857f8e2`, verified by grep): FRG-038 — `delegate.py:369` "# TASK-FRG-038: execute_now used to await the whole DAG + battery"; FRG-037 — `config.py:199–200` comment + :207 `AliasChoices("FORGE_API_KEY", "FORGE_MEMORA_API_KEY", "memora_api_key")`; `memora_client.py:134` `headers["X-API-Key"] = self.api_key`.
+- FRG-038 checkpoint 4 note: WATCH265 §D.7 granted the deploy + restart clearance (one restart covers both #2295 and #2311) and §E lists "FRG-038 checkpoint 4 (M19, restart cleared §D.7)" among the 20:00 live legs. The restart is DONE (TP14, 14:27:37 IST, pid 2569632, /health 200 above). What remains of cp4 is the live Leg B re-run itself — which is this task's live leg. FRG-039's live leg therefore serves FRG-038 cp4 as well; the cp4 evidence will be filed when this leg completes (or fails with its cause named).
+
+## §4 — Leg B next-attempt plan (checkpoint 2: live leg)
+
+Same dispatch shape as TP4's run 1 (FRG-036 evidence §1), so the attempts are comparable:
+
+1. Dispatch from the FRIDAY bus (Server 3 loopback): `POST http://127.0.0.1:10000/api/v1/dispatch/send?agent=Forge&action=build&priority=100&timeout_sec=600`, payload `{"goal":"Create a new file docs/collaboration/FRG-039-LEG-B-PROBE.md in the FRIDAY-Universe repository containing exactly one line of text: FRG-039 Leg B end-to-end probe.","requirements":["Create only that one file; change nothing else","No network calls, no secrets, no live services, no destructive action"],"mode":"autonomous","repo_url":"https://github.com/surendra2304/FRIDAY-Universe","execute_now":true}`.
+2. Expected, and what will be recorded: bus receives the RUNNING receipt in seconds (not ~9m20s / 482s) with status "accepted" and the `forge_task_id`; `/health` returns 200 DURING the build; the task is polled via `GET /tasks/{forge_task_id}/status` to a terminal state; the sandbox file, the verification manifest, and the Memora writeback (2xx, no 401s in the Forge journal) are checked first-hand.
+3. Success criterion (per TASK-REL-019, cited in FRG-036 §4): task completed AND the final battery passed AND the manifest written. Anything less is FAILED with the cause named — a battery failure on `aiosqlite` would be filed as the FRG-035 gap reproducing, not as a pass.
+4. Authorization basis for the dispatch (stated, not assumed): FRG-036's Leg B ran under WATCH241 §C (TP4 runs Leg B under standing clearance 7200564540); WATCH265 §D.7 grants this task's checkpoint-4 restart clearance under the same standing ruling. The dispatch itself is the same class of live action (one sandbox build, no secrets, no destructive action, file creation confined to the sandbox clone). No dispatch is fired in this checkpoint.
+
+## §5 — Open items / risks (stated, not hidden)
+
+1. **FRG-035 cp2 gap (biggest risk):** the sandbox still lacks `aiosqlite` provisioning on main (cp1 evidence-only merged; cp2 not started). The next Leg B battery collects the repo test suite and will hit the same `ModuleNotFoundError` unless M18's cp2 lands first or the attempt is scoped to avoid suite collection (no such scoping exists in the battery path today). If the attempt fails on it, the verdict is FAILED with that cause named and FRG-035 cp2 owed — not a pass, not a re-run loop.
+2. **Live S3 bus code version unverified** (§2): the attempt itself is the probe.
+3. **FRIDAY chat-path question still owed** (FRG-036 §9.1): acceptance criterion 2 says "requested through FRIDAY chat"; the chat fast-path is status-only by code, so the proof runs through the dispatch bus (`source_agent=FRIDAY`). Coordinator ruling owed on whether the bus path satisfies it — unchanged since FRG-036.
+4. **Memory headroom:** Forge still runs `--workers 1` with `MemoryMax=180M`; run 2 wedged at 177.4M/180M. The async routing does not fix memory pressure. If the build wedges on memory again, that is the finding, with the numbers.
+5. **FRG-009 provider stamp:** no longer appears in any delegate response (FRG-038 cp3 consequence); stamps remain on the task graph record. Not needed for Leg B.
+
+## §6 — Five states (honest, this checkpoint)
+
+- Implemented: YES — route on main since FRG-036 (#2220) + async routing (#2295) + 401 fix (#2311); no new code in this task yet.
+- Tested: NO — Leg B next attempt not yet run.
+- Merged: YES — the route and both fixes are merged (see §1).
+- Deployed: YES — live Forge carries them (§3: process started ~14:28:13 IST from a rev in [1bc92551, b857f8e2)).
+- Production-verified: NO — Leg B next attempt (checkpoint 2) not yet run.
+
+## §7 — Authorization note
+
+- Read-only probe in §3 under standing clearance 7200564540 as cited in WATCH265 §D.7 for this task's checkpoint-4 verification; no writes, no restart, no dispatch in this checkpoint. Standing record kept: no permissions.history record exists for approval 7113152293 (that identifier is a hub comment ID, not an approval UUID — the 16 prior "no record" checks looked up the wrong identifier type and prove nothing about the grant itself; correction filed 2026-11-28 ~09:17 IST). No live leg run in this checkpoint; no server touched beyond reads.
+
+— Muse 19
