@@ -44,6 +44,42 @@ async def test_delegate_without_execute_now_schedules_and_reports_running(monkey
     assert result.receipt is None  # receipts are issued on completion only
 
 
+@pytest.mark.asyncio
+async def test_delegate_execute_now_schedules_and_reports_running(monkeypatch):
+    """TASK-FRG-038: execute_now no longer awaits the DAG inline (it wedged
+    Forge's single worker: /health 000 for ~9m20s / 482s in the Leg B
+    reproductions). It schedules the same supervised background execution
+    and reports RUNNING; the caller's post-completion flags ride the runner."""
+    scheduled: list[tuple[str, str | None, bool, str | None]] = []
+
+    def _capture(task_id, url=None, require_sentinel=False, memora_goal=None):
+        scheduled.append((task_id, url, require_sentinel, memora_goal))
+
+    monkeypatch.setattr(delegate, "_schedule_execution", _capture)
+    task = SimpleNamespace(id="task_new_2", goal="Build a palindrome checker", state=TaskState.READY)
+    plan = SimpleNamespace(stages=["plan", "build", "test"])
+    orchestrator = SimpleNamespace(
+        intake_and_plan=AsyncMock(return_value=(task, plan)),
+        run_task=AsyncMock(side_effect=AssertionError("execute_now must not run inline")),
+    )
+    envelope = TaskEnvelopeModel(
+        task_id="env-011",
+        source_agent="friday",
+        action="build",
+        payload={"goal": "Build a palindrome checker", "execute_now": True,
+                 "require_sentinel_gate": True, "callback_url": "https://example.invalid/hook"},
+    )
+    result = await delegate.delegate_task(envelope, orchestrator=orchestrator, store=SimpleNamespace())
+
+    assert scheduled == [("task_new_2", "https://example.invalid/hook", True,
+                           "Build a palindrome checker")]
+    assert result.status == "RUNNING"  # not a synchronous result for unrun work
+    assert result.result["forge_task_id"] == "task_new_2"
+    assert result.result["state"] == "RUNNING"
+    assert result.receipt is None  # receipts are issued on completion only
+    orchestrator.run_task.assert_not_called()
+
+
 class _FakeStore:
     """Minimal StateStore surface used by TaskStateMachine + the reaper."""
 
