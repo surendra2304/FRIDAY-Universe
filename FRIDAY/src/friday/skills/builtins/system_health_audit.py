@@ -39,11 +39,18 @@ class SystemHealthAuditSkill(BaseSkill):
         info_tool = tool_registry.get("get_system_info") if tool_registry else None
 
         raw_stats = ""
+        mem_pressure: float | None = None
         if res_tool:
             try:
                 res = res_tool.execute()
                 raw_stats += f"Resources: {res.content}\n"
                 step_results.append({"tool": "get_system_resources", "output": res.content})
+                # TASK-FRD-068: the tools now report the service's own
+                # cgroup memory; the rating must follow the same figure
+                # instead of the canned OPTIMAL claim.
+                meta = res.metadata or {}
+                if meta.get("memory_scope") == "cgroup" and meta.get("ram_percent") is not None:
+                    mem_pressure = float(meta["ram_percent"])
             except Exception as e:
                 step_results.append({"tool": "get_system_resources", "error": str(e)})
 
@@ -59,15 +66,32 @@ class SystemHealthAuditSkill(BaseSkill):
         if not raw_stats:
             import psutil
             cpu = psutil.cpu_percent(interval=0.1)
-            mem = psutil.virtual_memory()
             disk = psutil.disk_usage("/")
-            raw_stats = f"CPU: {cpu}%, RAM: {mem.percent}%, Disk: {disk.percent}% used."
+            # TASK-FRD-068: same cgroup-first rule as the tools.
+            try:
+                from friday.observability.proactive_engine import service_memory
 
+                svc = service_memory()
+            except Exception:
+                svc = None
+            if svc is not None:
+                raw_stats = f"CPU: {cpu}%, RAM: {svc['percent']}% ({svc['used_mb']} MB / {svc['limit_mb']} MB service limit), Disk: {disk.percent}% used."
+                mem_pressure = svc["percent"]
+            else:
+                mem = psutil.virtual_memory()
+                raw_stats = f"CPU: {cpu}%, RAM: {mem.percent}%, Disk: {disk.percent}% used."
+
+        if mem_pressure is not None and mem_pressure >= 90.0:
+            rating = f"ATTENTION — service memory at {mem_pressure:.1f}% of its limit; OOM kill risk."
+        elif mem_pressure is not None and mem_pressure >= 75.0:
+            rating = f"CAUTION — service memory at {mem_pressure:.1f}% of its limit."
+        else:
+            rating = "OPTIMAL — No critical bottlenecks detected."
         summary = (
             "System Health Audit Report:\n"
             "• Core Diagnostics: All monitored system subsystems operating normally.\n"
             f"• Live Stats: {raw_stats.strip()[:200]}\n"
-            "• Performance Rating: OPTIMAL — No critical bottlenecks detected."
+            f"• Performance Rating: {rating}"
         )
 
         return SkillExecutionResult(

@@ -95,6 +95,7 @@ jobs:
             tests/test_safe_fleet_deploy.py \
             tests/test_fleet_cd_rel098_recovery_guard.py \
             tests/test_rel068_collection_canary.py \
+            tests/test_rel068_canary_base_proof.py \
             tests/test_rel081_gate_failure_summary.py \
             tests/test_rel086_test_failure_summary.py \
             tests/test_sen032_live_probes.py \

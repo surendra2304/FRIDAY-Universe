@@ -7898,14 +7898,14 @@ tasks:
 
   - id: TASK-MEM-027
     title: 'Memora: three-section live proof run 4 - one real write/read/promotion cycle across private / inter-agent / universal'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_tp13
     branch: null
     pr: 2206
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-28T03:39:03+05:30'
+    updated_at: '2026-11-28T04:54:40+05:30'
     files:
       - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -7918,8 +7918,9 @@ tasks:
       - 'watch203: assigned to muse_tp13 as queue position 3; adopts TP11 checkpoint-1 branch @ 48e4dd6a.'
       - 'watch243: claimed by Muse TP13 (hub 7228251671, BE 02:38 section B); adopts TP11 checkpoint-1 branch at 48e4dd6a.'
       - 'watch244: TP13 COMPLETE checkpoint 2 hub 7228639576; PR #2206 open head 22c9e2b2, CI 9/9 green per TP13; paired verifier M17 due about 04:40 IST.'
+      - 'watch246: PR #2206 merged bd102f2a (TP8 VERIFIED review 6094176550 with MERGE demand per BE 04:37 size bar, filed 04:40 IST, about 2 min early of 04:42 due; coordinator CI 9/9 green first-hand on head 22c9e2b232df; merged by coordinator this run).'
     blockers: []
-    next_action: 'PR #2206 in review; paired verdict (M17) due about 04:40 IST.'
+    next_action: 'Merged; Memora live cycle run 4 checkpoint 2 on main.'
 
   - id: TASK-REL-095
     title: 'Reliability: backup restore re-drill run 2 - prove JSON/CLOB fidelity on a fresh backup'
@@ -8586,13 +8587,13 @@ tasks:
   - id: TASK-FRG-027
     title: 'REPO-IMPLEMENT: Forge repos - MausBot / OpenMausBot (reference-only), JCode (adapt), Paperclip (reference-only... (wave 3)'
     status: AVAILABLE
-    owner: muse_18
+    owner: muse_7
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-24'
-    updated_at: '2026-11-25T14:26:00+05:30'
+    updated_at: '2026-11-28T06:42:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -8603,8 +8604,9 @@ tasks:
     evidence:
     - 'Filed-ready by Muse (coordinator) 2026-11-24 under the owner production-verification order (21:18 IST) and implement-all order (21:25 IST); source: PRODUCTION-VERIFICATION-PROGRAMME.md sections A/B/C. Prepared while PR #1678 (43-task filing) was open; to be filed as ONE board PR off the post-#1678 main.'
     - 'Assigned to Muse 18 as queue position 2 by coordinator watch088 (2026-11-25 ~14:26 IST, hub #1483); verified AVAILABLE / owner null on main a0a9f1ba.'
+    - 'watch248: re-slotted from muse_18 to Muse 7 (M18 checkpoint 1 overdue per BE 05:35 section C; no M18 post this window; M7 requested confirmation, hub 7231033076, and will claim on confirmation). M18 branch muse18/task-frg-027-forge-repos-wave3 @ 56ebae7d exists with no open PR; M7 to push its own branch.'
     blockers: []
-    next_action: 'Central pool (owner pull model, hub 7136890552): claim via hub #1483 the moment a slot frees - hub claim comment is the claim of record, first claim wins. Stratex and VyralX first.'
+    next_action: 'Re-slotted to Muse 7 as head task (WATCH248 hub post); M7 to claim on confirmation.'
 
   - id: TASK-SEN-033
     title: 'REPO-IMPLEMENT: Sentinel repos - PentAGI, Anthropic Cybersecurity Skills (wave 3)'
@@ -8893,14 +8895,14 @@ tasks:
     next_action: 'Muse TP5 continues to deliverable 3; owner accounts + live brief owed.'
   - id: TASK-FRD-059
     title: 'FRIDAY: job-hunt lane completion - curated per-step tool stack plus scheduled board searches matched to the owner''s CV'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_tp7
     branch: musetp9/task-frd-059
     pr: 1848
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T20:52:54+05:30'
+    updated_at: '2026-11-28T04:54:40+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - FRIDAY/
@@ -8912,8 +8914,9 @@ tasks:
     - 'Filed by Muse (coordinator) 2026-11-25 in the Instagram adoption re-audit, batch 3, under the owner''s correction of 02:26 IST: DEFAULT = IMPLEMENT - every adoptable idea in every video becomes a filed task; exclusion only for a named hard reason. Source package/watch records read first-hand in the re-audit.'
     - 'Coordinator watch109 (2026-11-25): board-owner flip - work PR #1848 open, head 022af9b5, branch musetp9/task-frd-059 verified via ls-remote; hub queue per watch108, owner field was null.'
     - 'Rebased by Muse TP9 2026-11-26 ~20:52 IST onto main 49cfd862 (board next_action + WATCH167/168): branch-tree diff vs main shows 0 files unique to the branch - the FRD-059 implementation is already on main byte-identical (job_hunt_tools.py c6bd9616a0, job_hunt.py be06414f57, test_ig_frd_003_job_hunt.py 07c72480e5); this PR now carries only the board flip. Owner kept muse_tp7 per the board; TP9 holds the branch for the rebase only.'
+    - 'watch246: PR #1848 CLOSED + MERGED (verified first-hand by Burn Enforcer 04:37 section A, hub 7229895961).'
     blockers: []
-    next_action: 'PR #1848 rebased 2026-11-26 onto main 49cfd862 (code already on main - identical blobs; only the board flip outstanding). Awaiting peer review/merge. Digest half still needs owner CV + target roles.'
+    next_action: 'Merged; FRD-059 job-hunt extractor fix on main.'
   - id: TASK-FRD-062
     title: 'FRIDAY: CRM workspace surface - contacts, deals and follow-ups managed by voice and chat'
     status: MERGED
@@ -9138,14 +9141,14 @@ tasks:
     next_action: 'BLOCKED on the live leg (no MySQL client on S1 or S2; owner freeze forbids install). File load-gate evidence plus post-freeze install proposal; the live leg waits, it does not sit silent.'
   - id: TASK-DB-004
     title: 'DB: Back up Stratex live state files on Stratex-Server (S4) - newest state backup 2026-11-14'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_10
     branch: null
     pr: 2209
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-28T03:39:03+05:30'
+    updated_at: '2026-11-28T04:54:40+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
@@ -9156,8 +9159,9 @@ tasks:
     - 'Assigned to Muse 6 (claim of record; checkpoint 1 hub 7158782364, branch muse6/task-db-004-stratex-state-backup @ c92dfa3c); verified AVAILABLE / owner null on main 64e97ece.'
     - 'watch210: queued pos 3 for muse_10.'
     - 'watch244: M10 checkpoint 1 filed hub 7228752463; PR #2209 open head f5c975cd; paired verifier M18 due about 04:40 IST.'
+    - 'watch246: PR #2209 merged 98f3e708 (WATCH245; M3 VERIFIED review 6094011749; coordinator CI 9/9 green first-hand on head f5c975cd).'
     blockers: []
-    next_action: 'PR #2209 in review; paired verdict (M18) due about 04:40 IST.'
+    next_action: 'Merged; dated backup + read-back of S4 Stratex state on main.'
   - id: TASK-DB-005
     title: 'DB: Back up IntelX local research files on IntelX-Server (S6) - watches + raw, no backup'
     status: MERGED
@@ -9181,14 +9185,14 @@ tasks:
     next_action: 'MERGED via PR #2029 (dated backup + verified restore).'
   - id: TASK-DB-006
     title: 'DB: Back up Futuris local forecast files on IntelX-Server (S6) - data/storage parquet, no backup'
-    status: CLAIMED
+    status: MERGED
     owner: muse_17
     branch: null
-    pr: null
+    pr: 2216
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-28T04:10:45+05:30'
+    updated_at: '2026-11-28T05:24:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
@@ -9199,18 +9203,20 @@ tasks:
     - 'Coordinator watch108 (2026-11-25): assigned to muse_8 as queue position 3 behind TASK-FRD-055 and TASK-EARN-026; Futuris forecast-files backup.'
     - 'watch244: assigned to Muse 14 as head (idle, work-request re-armed hub 7228672834; INT-046-FIX-01 MERGED).'
     - 'watch245: CORRECTION of watch244 board PR #2213 error - DB-006 was flipped to muse_14, but BE 03:42 section B (hub 7229120299) had already assigned DB-006 to Muse 17; the earlier assignment governs. M14 confirms (hub 7229367590) and takes MEM-044 instead.'
+    - 'watch246: M17 DB-006 COMPLETE repo leg (hub 7229544016); PR #2216 open head 199e3591, CI 9/9 green, 1,410/1,410 restore byte-identical; paired verifier TP3 due about 05:25 IST.'
+    - 'watch247: PR #2216 merged a8da9d0a (TP3 VERIFIED review 6094388343, filed ~05:15 IST; coordinator CI 9/9 green first-hand on head 199e3591; merged by coordinator this run).'
     blockers: []
-    next_action: 'Claimed by muse_17; back up Futuris local forecast files on IntelX-Server (S6) next.'
+    next_action: 'Merged; Futuris forecast backup + restore proof on main.'
   - id: TASK-DB-009
     title: 'DB: Back up Sentinel local audit ledger on Oracle Server 1 - audit.jsonl, 33 entries'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_tp3
-    branch: null
-    pr: null
+    branch: musetp3/task-db-009-sentinel-audit-ledger-backup
+    pr: 2227
     contributors: []
     priority: P2
     created_at: '2026-11-25'
-    updated_at: '2026-11-28T02:36:15+05:30'
+    updated_at: '2026-11-28T06:42:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-003-FLEET-STORAGE-AUDIT.md
@@ -9222,8 +9228,9 @@ tasks:
     - 'Re-slotted to pool by coordinator watch196 (burn section E; from muse_19); verified AVAILABLE / muse_19 on main 63538e60.'
     - 'Assigned to muse_tp3 as queue position 3 by coordinator watch197 (queue top-up; TP3 depth 2). Verified AVAILABLE / owner null on main 5fd32fdf.'
     - 'watch242 RULING (WATCH241 TP3 re-scope): TP3 works DB-009 now as working head; FRD-048 and MEM-017 stay queued BLOCKED on owner gates.'
+    - 'watch248: TP3 claimed + PR #2227 open head e10e4130; branch musetp3/task-db-009-sentinel-audit-ledger-backup verified via ls-remote; paired verdict owed (M17, due ~06:35 IST).'
     blockers: []
-    next_action: 'Working head for muse_tp3 (WATCH241 ruling); claim via hub plus branch push.'
+    next_action: 'PR #2227 in review; paired verdict owed (M17).'
   - id: TASK-VYR-056
     title: 'VyralX: unblock the media QA gates — yt-dlp download broken, n-challenge + SABR-only; evaluate fix options, implement, prove one real download + full machine-QA pass'
     status: CLOSED
@@ -9272,14 +9279,14 @@ tasks:
 
   - id: TASK-IG2-FRD-01-ACTIVATE-01
     title: 'FRIDAY: activate the IG2-FRD-01 mailbox and re-probe triage + drafts live'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_13
-    branch: null
+    branch: muse13/task-ig2-frd-01-activate-01
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-25'
-    updated_at: '2026-11-26T03:17:00+05:30'
+    updated_at: '2026-11-28T06:42:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -9290,8 +9297,9 @@ tasks:
     - 'Assigned to Muse 7 as queue position 2 by coordinator watch118 (2026-11-26, hub #1483); P1 FRIDAY mailbox activation, credentials-file flow only.'
     - 'Returned to the pool by coordinator watch119 (2026-11-26, hub #1483): assigned to Muse 7 as queue position 2 by watch118 (hub 7174335125, board PR #1895 merge 489a1b3b); no report or claim landed by this run - M7 silent since 2026-11-24. No new assignment to M7 until it reports.'
     - 'Assigned to Muse 13 as double-scope pair by coordinator watch120 (2026-11-26, hub #1483; reserved by watch119 once board PR #1899 merged). M13 at 42% < 50% (usage-truth directive order 2).'
+    - 'watch248: claimed by Muse 13 as head (hub 7230963708) after the FRD-068 deploy; branch muse13/task-ig2-frd-01-activate-01 @ fac8c0eb verified via ls-remote.'
     blockers: []
-    next_action: 'Muse 13 double-scope pair with TASK-LAP-002, behind INT-020 / IG2-FRD-02-ACTIVATE-01.'
+    next_action: 'Claimed by Muse 13; mailbox activation + live triage re-probe next.'
 
   - id: TASK-IG2-FRD-02-ACTIVATE-01
     title: 'FRIDAY: activate the IG2-FRD-02 WhatsApp gateway and re-probe live'
@@ -10014,13 +10022,13 @@ tasks:
   - id: TASK-IG-FRD-003-FIX-01
     title: 'FRIDAY: fix job-hunt extractor for current Greenhouse markup (IG-FRD-003 follow-up)'
     status: CLAIMED
-    owner: muse_11
-    branch: null
+    owner: muse_tp7
+    branch: musetp7/task-ig-frd-003-fix-01-greenhouse-extractor
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T03:39:03+05:30'
+    updated_at: '2026-11-28T05:24:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -10030,8 +10038,10 @@ tasks:
     - 'Filed by Muse (coordinator) watch194 (2026-11-27, hub #2045) from the TASK-FRD-051 record (PR #2044): IG-FRD-003 NOT VERIFIED live - extractor reads only application/ld+json JobPosting; the live GitLab posting page (116,902 B, real SRE posting) carries 0 LD-JSON blocks; scan returned 0/0 on real postings.'
     - 'Assigned to muse_11 as queue position 3 by coordinator watch197 (queue top-up; M11 depth 2). Verified AVAILABLE / owner null on main 5fd32fdf.'
     - 'watch244: own-queue claim by Muse 11 (burn enforcer hub 7228540362 section B; board flip rides this PR).'
+    - 'watch246: BE 04:05 re-slot stands (WATCH245 correction); BE 04:37 section B assigns IG-FRD-003-FIX-01 to TP7, but TP7 has not claimed yet, so the record stays AVAILABLE per BE 04:37 section E. Hub assignment to TP7 stands; claim owed.'
+    - 'watch247: claimed by Muse TP7 (hub 7230263308); branch musetp7/task-ig-frd-003-fix-01-greenhouse-extractor @ 02ed2f98 verified via ls-remote.'
     blockers: []
-    next_action: 'Claimed by muse_11; IG-FRD-003 fix next.'
+    next_action: 'Claimed by Muse TP7; extractor fix in progress.'
 
   - id: TASK-INT-060
     title: 'IntelX: INT-057 handoff fix run 2 - producer envelopes reach the consumer'
@@ -10296,14 +10306,14 @@ tasks:
 
   - id: TASK-INT-061
     title: 'IntelX: fast-lane live proof run 3 (follow-up INT-038)'
-    status: AVAILABLE
+    status: CLAIMED
     owner: muse_tp6
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T09:55:00+05:30'
+    updated_at: '2026-11-28T06:42:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INT-061-EVIDENCE.md
@@ -10312,8 +10322,9 @@ tasks:
     - 'Kill switch stays OFF.'
     evidence:
     - 'Filed by Muse (coordinator) watch201 (hub #2045): IntelX fast-lane live proof run 3. Live-proof route: live IntelX fast lane; one real alert end-to-end with evidence filed as docs/collaboration/TASK-INT-061-EVIDENCE.md.'
+    - 'watch248: claimed by Muse TP6 (hub claim; BE staged re-slot cancelled - TP6 claimed first).'
     blockers: []
-    next_action: 'Assigned to muse_tp6 as queue position 2 by coordinator watch201 (hub #2045); claim via hub + branch push when reached.'
+    next_action: 'Claimed by Muse TP6; fast-lane run 3 in progress.'
 
   - id: TASK-SEN-040
     title: 'Sentinel: approval-path live proof run 4 (follow-up SEN-024 run 3)'
@@ -10584,14 +10595,14 @@ tasks:
     next_action: 'MERGED via PR #2091 (INT-049 alert/burst live leg receipts filed).'
   - id: TASK-FRG-036
     title: 'Forge: implement /v1/task/execute route (MASTER_PLAN §6 TASK-API-001; that ID is taken by the Sentinel task)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_tp4
     branch: null
-    pr: null
+    pr: 2220
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T19:37:30+05:30'
+    updated_at: '2026-11-28T05:24:00+05:30'
     files:
     - Forge/forge/apps/api/main.py
     - docs/collaboration/WORK_BOARD.yaml
@@ -10602,8 +10613,9 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch210 (2026-11-27, hub #2045): MASTER_PLAN §6 standing backlog (TASK-API-001, open since 2026-11-14; Sentinel merged the route in PR #29, Forge still absent). Live-proof route: live Forge service on Oracle Server 1 via the public gateway; one real executed task filed as docs/collaboration/TASK-FRG-036-EVIDENCE.md.'
     - 'watch225: claimed by Muse TP4 (hub 7219637401, 19:03 IST); CTX-014 queues pos 2, REL-111 pos 3.'
+    - 'watch247: PR #2220 merged d4dcbf7a (M6 VERIFIED review 6094382627, filed ~05:14 IST; coordinator CI 9/9 green first-hand on head 19eb4e67; merged by coordinator this run). Task stays IN_REVIEW: Leg B executed but Forge verdict FAILED (sandbox missing aiosqlite, security FAIL, no manifest) - re-run owed after sandbox-deps fix + Forge restart (TP4 owns, WATCH246 section C). Branch deleted post-merge; branch field left null.'
     blockers: []
-    next_action: 'Claimed by Muse TP4; implementation in progress.'
+    next_action: 'Merged as evidence filing; FRG-036 re-run owed after TP4 sandbox-deps fix + Forge restart.'
 
   - id: TASK-REL-002
     title: 'Reliability: root-cause and fix the failing voice-regressions CI job (MASTER_PLAN M5)'
@@ -10631,14 +10643,14 @@ tasks:
 
   - id: TASK-REL-004
     title: 'Reliability: health-endpoint honesty - agents report capability state, not just process liveness (MASTER_PLAN M5)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_16
     branch: muse16/task-rel-004-health-endpoint-honesty
     pr: 2214
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T04:10:45+05:30'
+    updated_at: '2026-11-28T04:54:40+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-REL-004-EVIDENCE.md
@@ -10650,8 +10662,9 @@ tasks:
     - 'watch210: queued pos 3 for muse_16 (MEM-026 re-slot withdrawn; M16 holds MEM-028 live-leg retry + #2081 verdict).'
     - 'watch244: claimed by Muse 16 (hub 7228479791); branch verified via ls-remote.'
     - 'watch245: M16 filed claim PR #2214 (hub 7229381548); open head 9bfe40dd, CI 9/9 green first-hand (7 success + 2 skipped); paired verifier M2 due about 05:15 IST.'
+    - 'watch246: PR #2214 merged 3d2a82f0 (M7 VERIFIED review 6094068296, filed 04:20 IST; coordinator CI 9/9 green first-hand on head 9bfe40dd; merged by coordinator this run).'
     blockers: []
-    next_action: 'PR #2214 in review; paired verdict (M2) due about 05:15 IST.'
+    next_action: 'Merged; health-endpoint honesty claim on main.'
 
   - id: TASK-INF-LLM-002
     title: 'Inference: provider failover drill under simulated outage (MASTER_PLAN §6)'
@@ -11099,14 +11112,14 @@ tasks:
 
   - id: TASK-MEM-040
     title: 'Memora: three-section live proof run 7 - one real write/read/promotion cycle across private / inter-agent / universal'
-    status: CLAIMED
+    status: MERGED
     owner: muse_12
     branch: muse12/task-mem-040-three-section-live-proof-run-7
-    pr: null
+    pr: 2224
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T04:10:45+05:30'
+    updated_at: '2026-11-28T06:42:00+05:30'
     files:
     - Memora/
     - docs/collaboration/WORK_BOARD.yaml
@@ -11118,8 +11131,10 @@ tasks:
     - 'watch214: queued for muse_1 (VOI-030 -> MERGED drops M1 queue to depth 2 - IG-FRD-010-RETEST-01 + FRD-064 in flight - top-up to depth 3). Queue: FRD-064 -> IG-FRD-010-RETEST-01 -> MEM-040.'
     - 'watch243: assigned to Muse 12 as head (MEM-042 complete, hub 7228446095; free requesting work).'
     - 'watch245: Muse 12 claim (hub 7229359500) - board already CLAIMED/muse_12 (WATCH243 section C); branch muse12/task-mem-040-three-section-live-proof-run-7 verified via ls-remote.'
+    - 'watch247: checkpoint 1 PR #2224 open head 569d6b5f (branch muse12/task-mem-040-three-section-live-proof-run-7 verified via ls-remote); paired verification owed.'
+    - 'watch248: PR #2224 merged 658cb8c8 (M14 VERIFIED review 6094554145, filed ~05:46 IST; coordinator CI 9/9 green first-hand on head 569d6b5f; merged by coordinator this run).'
     blockers: []
-    next_action: 'Claimed by muse_12; Memora three-section live proof run 7 next.'
+    next_action: 'Merged; three-section live proof run 7 on main.'
 
   - id: TASK-INT-046
     title: 'IntelX: live leg - one real topic query through the merged code (candidate pipeline works live; search seam PARTIAL)'
@@ -11492,14 +11507,14 @@ tasks:
     next_action: 'MERGED via PR #2168.'
   - id: TASK-STR-101
     title: 'Stratex: forward-window fills audit run 8 - ledger reconciliation + net P&L'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_tp12
     branch: musetp12/task-str-101-forward-window-fills-audit-run-8
     pr: 2192
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T02:07:41+05:30'
+    updated_at: '2026-11-28T05:24:00+05:30'
     files:
     - docs/collaboration/TASK-STR-101-EVIDENCE.md
     acceptance:
@@ -11509,8 +11524,9 @@ tasks:
     - 'watch216-AMEND: assigned to muse_tp12 as queue top-up (depth 2 -> 3 after INF-046 closed as duplicate of INF-047). Forward-window fills audit run 8.'
     - 'watch235: claimed by Muse TP12 (hub 7225255548, 2026-11-27 23:43 IST); branch muse_tp12/task-str-101 @ 1a58bb15.'
     - 'watch241: PR #2192 open head 746edd54; paired verifier TP6, due ~02:45 IST.'
+    - 'watch247: PR #2192 merged (verified first-hand via /pulls/2192/merge HTTP 204 this run; TP12 MERGED report).'
     blockers: []
-    next_action: 'PR #2192 open; paired verdict (TP6) due ~02:45 IST.'
+    next_action: 'Merged; forward-window fills audit run 8 on main.'
 
   - id: TASK-VAL-002
     title: 'Fleet validation: per-agent real-request acceptance leg + S2 disk watch'
@@ -11666,14 +11682,14 @@ tasks:
 
   - id: TASK-SEN-041
     title: 'Sentinel: approval-path live proof run 5 (follow-up SEN-040 run 4)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_4
     branch: muse4/task-sen-041-approval-path-live-proof-run-5
     pr: 2211
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T04:10:45+05:30'
+    updated_at: '2026-11-28T04:54:40+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -11682,8 +11698,9 @@ tasks:
     - 'Filed by Muse (coordinator) watch235 (2026-11-27, hub #2045): fresh pool draft from MASTER_PLAN open items + board follow-ups; pool floor (10) was breached. Live-proof route: live Sentinel service on Oracle Server 1; Telegram prompt to the owner fires once for the high-risk leg.'
     - 'watch240: assigned to Muse 4 as head per BE 01:35 section B (adopted WATCH239 section D). Live-proof route: live Sentinel service on Oracle Server 1; Telegram prompt fires once for the high-risk leg.'
     - 'watch245: M4 filed PR #2211 (hub BE 03:42 section A); open head ebc55731; paired verifier M6 due about 04:42 IST.'
+    - 'watch246: PR #2211 merged 81af5b8f (WATCH245; M6 VERIFIED review 6094023606; coordinator CI 9/9 green first-hand on head ebc55731).'
     blockers: []
-    next_action: 'PR #2211 in review; paired verdict (M6) due about 04:42 IST.'
+    next_action: 'Merged; Sentinel approval-path live proof run 5 on main.'
 
   - id: TASK-FUT-042
     title: 'Futuris: forecast accuracy scoring run 10 - score the next unscored forecasts + verify scheduler cycles (follow-up FUT-038 run 9)'
@@ -11708,14 +11725,14 @@ tasks:
 
   - id: TASK-INT-039
     title: 'IntelX: fast-lane live proof run 4 - one real alert end to end (follow-up INT-061 run 3)'
-    status: CLAIMED
-    owner: muse_1
-    branch: null
-    pr: null
+    status: MERGED
+    owner: muse_10
+    branch: muse10/task-int-039-fast-lane-live-proof-run-4
+    pr: 2228
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T03:39:03+05:30'
+    updated_at: '2026-11-28T06:42:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -11723,8 +11740,10 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch235 (2026-11-27, hub #2045): fresh pool draft from MASTER_PLAN open items + board follow-ups; pool floor (10) was breached. Live-proof route: live IntelX service on IntelX-Server; alert delivery verified live.'
     - 'watch244: assigned to Muse 1 as head (burn enforcer hub 7228540362 section B; board flip rides this PR).'
+    - 'watch246: BE 04:05 re-slot stands (WATCH245 correction); BE 04:37 section B assigns INT-039 to M10, but M10 has not claimed yet, so the record stays AVAILABLE per BE 04:37 section E. Hub assignment to M10 stands; claim owed.'
+    - 'watch248: PR #2228 merged 885865ab (TP13 VERIFIED review 6094620736, filed ~06:03 IST; coordinator CI 9/9 green first-hand on head 8ceeb0d9; merged by coordinator this run). Acceptance branch 2 met (armed-state evidence + wait state; S2 producer down, S1 consumer down, kill switch on).'
     blockers: []
-    next_action: 'Claimed by muse_1; IntelX fast-lane live proof run 4 next.'
+    next_action: 'Merged; fast-lane run 4 wait-state proof on main.'
 
   - id: TASK-FRD-067
     title: 'FRIDAY: M5 workflow 1 live re-probe - real chat task end to end with trace (3-consecutive-runs evidence)'
@@ -11794,14 +11813,14 @@ tasks:
 
   - id: TASK-INF-048
     title: 'Inference: Gemini 9k-token routing-deadline live re-probe run 2 (follow-up INF-029/031/032)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: MERGED
+    owner: muse_14
+    branch: muse14/task-inf-048-gemini-9k-routing-deadline-reprobe-run2
+    pr: 2222
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T04:10:45+05:30'
+    updated_at: '2026-11-28T06:42:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -11811,19 +11830,22 @@ tasks:
     - 'watch240: assigned to Muse 12 per BE 01:35 section B (adopted WATCH239 section D). Live-proof route: live Inference on FRIDAY-Server, Gemini 9k-token timing.'
     - 'watch241: branch muse12/task-inf-048-gemini-9k-routing-deadline-reprobe-run2 @ f8e70596 (claim hub 7227539334).'
     - 'watch245: RELEASED to the pool by Muse 12 (hub 7229359500) - claimed 01:58 IST, live re-probe leg never run, no checkpoint in about 2h; MEM-040 is the assigned head.'
+    - 'watch246: M14 claimed (hub 7229804471, branch created @ 81af5b8f) per WATCH245 section B assignment; Gemini 9k-token routing-deadline live re-probe run 2.'
+    - 'watch247: M14 COMPLETE (hub 7230264772); PR #2222 open head 2ff7b895; paired verification owed.'
+    - 'watch248: PR #2222 merged 58181558 (M7 VERIFIED review 6094570519, filed ~05:55 IST; coordinator CI 9/9 green first-hand on head 2ff7b895; merged by coordinator this run).'
     blockers: []
-    next_action: 'Available pool (released by muse_12, WATCH245).'
+    next_action: 'Merged; Gemini 9k-token routing deadline confirmed (60.0/0.6/15.0) on main.'
 
   - id: TASK-CTX-015
     title: 'Cortex: escalation-ratio live check run 4 - fires vs messages actually sent, last 48h (follow-up CTX-004/005/006/007)'
-    status: CLAIMED
+    status: IN_PROGRESS
     owner: muse_19
     branch: muse19/task-ctx-015
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T04:10:45+05:30'
+    updated_at: '2026-11-28T04:54:40+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -11832,27 +11854,30 @@ tasks:
     - 'Filed by Muse (coordinator) watch235 (2026-11-27, hub #2045): fresh pool draft from MASTER_PLAN open items + board follow-ups; pool floor (10) was breached. Live-proof route: live Cortex logs on Oracle Server 1 (read-only).'
     - 'watch244: assigned to Muse 19 as head (burn enforcer hub 7228540362 section B; board flip rides this PR).'
     - 'watch245: Muse 19 claim confirmed (hub BE 03:42 section A); branch muse19/task-ctx-015 verified via ls-remote.'
+    - 'watch246: M19 checkpoint 1 filed (hub 7229758815, branch muse19/task-ctx-015 @ 8bbd9b82).'
     blockers: []
-    next_action: 'Claimed by muse_19; Cortex escalation-ratio live check run 4 next.'
+    next_action: 'In progress; Cortex escalation-ratio live check run 4 continues.'
 
   - id: TASK-FRG-037
     title: 'Forge: ship the tool the highest-priority stuck task is blocked on, or the next self-upgrade slice with live proof (follow-up FRG-036)'
     status: AVAILABLE
-    owner: null
+    owner: muse_1
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-27T23:59:00+05:30'
+    updated_at: '2026-11-28T06:42:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
     - 'Identify the blocker from the board/hub and ship the one tool another agent is currently blocked on, with live proof; else ship the next self-upgrade slice with live proof.'
     evidence:
     - 'Filed by Muse (coordinator) watch235 (2026-11-27, hub #2045): fresh pool draft from MASTER_PLAN open items + board follow-ups; pool floor (10) was breached. Live-proof route: live Forge service on Oracle Server 1; tool exercised by the blocked agent.'
+    - 'watch246: assigned to Muse 11 as next head (BE 04:37 section B, hub 7229895961; M11 returned and idle, IG-FRD-003-FIX-01 does not stand); claim owed.'
+    - 'watch248: re-slotted from muse_11 to Muse 1 (M11 claim deadline lapsed - WATCH247 section C deadline was this run, BE 06:05 section D; no M11 claim post this window; safety-check question stays DECIDED, WATCH246 section C / WATCH247 section C).'
     blockers: []
-    next_action: 'Available pool (WATCH235 draft).'
+    next_action: 'Re-slotted to Muse 1 as queue head on return (WATCH248 hub post); M11 claim window closed.'
 
   - id: TASK-REL-119
     title: 'Reliability: scripts/live_probe.py - one command per agent hitting the gateway health endpoint + one real request (SPEED ROUND 2 5b)'
@@ -11900,14 +11925,14 @@ tasks:
 
   - id: TASK-VYR-096
     title: 'VyralX: supervised cycle 10 candidate pool - most-popular discovery + machine QA gates (follow-up VYR-095 cycle 9)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_9
     branch: muse9/task-vyr-096
-    pr: null
+    pr: 2218
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T04:10:45+05:30'
+    updated_at: '2026-11-28T04:54:40+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -11916,20 +11941,21 @@ tasks:
     - 'Filed by Muse (coordinator) watch238 (2026-11-28, hub #2045): fresh pool draft from board follow-ups; pool floor (10) breached. Live-proof route: VyralX discovery on VyralX-Server; QA gates run against real candidate metadata; no publish.'
     - 'watch242: assigned to Muse 9 as head (follow-up of VYR-095 cycle 9; WATCH241 assignment).'
     - 'watch245: Muse 9 fresh claim (hub 7229350785) per BE 03:42 section C + WATCH244 section C; branch muse9/task-vyr-096 verified via ls-remote.'
+    - 'watch246: M9 VYR-096 COMPLETE (hub 7229597823); PR #2218 open head 7842e850, CI 9/9 green; paired verifier TP5 due about 05:25 IST.'
     live_proof_route: 'VyralX discovery on VyralX-Server; QA gates on real candidate metadata; no publish.'
     blockers: []
-    next_action: 'Claimed by muse_9; cycle-10 discovery + QA gates next.'
+    next_action: 'PR #2218 in review; paired verdict (TP5) due about 05:25 IST.'
 
   - id: TASK-MEM-043
     title: 'Memora: three-section live proof run 9 - one real write/read/promotion cycle (follow-up MEM-042 run 8)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_14
     branch: muse14/task-mem-043
     pr: 2212
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T04:10:45+05:30'
+    updated_at: '2026-11-28T04:54:40+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -11937,20 +11963,21 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch238 (2026-11-28, hub #2045): fresh pool draft from board follow-ups; pool floor (10) breached. Live-proof route: live Memora service on Oracle Server 1.'
     - 'watch245: M14 COMPLETE (Memora three-section live proof run 9) hub 7229367590; PR #2212 open head 88acc685; paired verifier M5 due about 05:30 IST.'
+    - 'watch246: PR #2212 merged 3c91241c (M5 VERIFIED review 6094085323, filed 04:20 IST, about 70 min early of 05:30 due; coordinator CI 9/9 green first-hand on head 88acc685; merged by coordinator this run).'
     live_proof_route: 'Live Memora service on Oracle Server 1.'
     blockers: []
-    next_action: 'PR #2212 in review; paired verdict (M5) due about 05:30 IST.'
+    next_action: 'Merged; Memora three-section live proof run 9 on main.'
 
   - id: TASK-FRD-068
     title: 'FRIDAY: memory reporting - host memory vs 200 MB cgroup memory + guard-notice mismatch (follow-up FRD-067)'
-    status: IN_REVIEW
+    status: DEPLOYED
     owner: muse_13
     branch: muse13/task-frd-068-memory-reporting-fix
     pr: 2207
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T03:39:03+05:30'
+    updated_at: '2026-11-28T06:42:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -11960,20 +11987,22 @@ tasks:
     - 'watch240: assigned to Muse 13 as head (M13 diagnosed the FRD-067 host-memory defect first-hand in review 6092948836: 0/3 correct, cgroup percentages recompute exactly). Live-proof route: live FRIDAY on FRIDAY-Server.'
     - 'watch241: branch muse13/task-frd-068-memory-reporting-fix @ f8e70596 (claim hub 7227539045).'
     - 'watch244: M13 COMPLETE (repo leg) hub 7228722047; PR #2207 open head 8acd8b4b; paired verifier M8 due about 04:40 IST; deploy ruling in WATCH244 hub post.'
+    - 'watch246: PR #2207 merged 08c3a966 (M8 VERIFIED review 6094124268, filed 04:30 IST, about 10 min early of 04:40 due; coordinator CI 10/10 green first-hand on head 8acd8b4b; merged by coordinator this run). Deploy owed: M13 deploys to FRIDAY-Server per WATCH244 section B.'
+    - 'watch248: DEPLOYED by Muse 13 to FRIDAY-Server (hub 7230961572, ~06:00 IST): 12 files at origin/main fdcccc3f, server.py 3-way merged with FRD-064 tracemalloc preserved, FRIDAY.service restarted MainPID 126402 -> 127040, /api/health healthy; after-probe PASS (memory_scope cgroup 97.0%, host 46.0% separate; loopback 100.0% of 200MB service limit - FRD-067 host-memory defect gone in live reply).'
     live_proof_route: 'Live FRIDAY service on FRIDAY-Server; before/after memory probes.'
     blockers: []
-    next_action: 'PR #2207 in review; paired verdict (M8) due about 04:40 IST.'
+    next_action: 'Deployed; FRD-068 memory-reporting fix live on FRIDAY-Server.'
 
   - id: TASK-REL-068
     title: 'CI: collect every shipped test file - canary proof (base task; REL-109 is run-3 follow-up)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: MERGED
+    owner: muse_7
+    branch: muse7/task-rel-068
+    pr: 2219
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T03:08:48+05:30'
+    updated_at: '2026-11-28T05:24:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-REL-068-EVIDENCE.md
@@ -11982,9 +12011,11 @@ tasks:
     - 'Base task for the REL-109 run-3 follow-up.'
     evidence:
     - 'Filed by Muse (coordinator) watch243 (2026-11-28, hub #2045): pool floor (10) maintenance - REL-068 had no board record. Live-proof route: live CI run on a canary test file; collection evidence filed as docs/collaboration/TASK-REL-068-EVIDENCE.md.'
+    - 'watch246: M7 claimed (hub 7229665846, branch pushed); work PR #2219 filed, head d57bf7a1, CI green per M7 04:46 post; paired verifier M2 due about 05:35 IST (BE 04:37 section B). IN_REVIEW flip rides the next board PR with the verdict.'
+    - 'watch247: PR #2219 merged 02ed2f98 (M2 VERIFIED review 6094235343, filed ~04:53 IST; merged by coordinator in WATCH246).'
     live_proof_route: 'Live CI run on a canary test file; collection evidence filed.'
     blockers: []
-    next_action: 'Available pool (WATCH243 draft).'
+    next_action: 'Merged; CI canary proof on main.'
   - id: TASK-STR-104
     title: 'Stratex: reconciler run 11 - carry aged-out missing closes in the identity (follow-up STR-103 ruling)'
     status: MERGED
@@ -12011,14 +12042,14 @@ tasks:
 
   - id: TASK-WEB-004-FIX-01
     title: 'WEB: showcase billboard must freeze while the tab is hidden (WEB-004 IG-WEB-05 FAIL)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_17
+    branch: muse17/task-web-004-fix-01
+    pr: 2226
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T04:10:45+05:30'
+    updated_at: '2026-11-28T06:42:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-WEB-004-FIX-01-EVIDENCE.md
@@ -12028,19 +12059,22 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch244 (2026-11-28, hub #2045): WEB-004 paired re-verdict PARTIAL (M17 review 6093585761) - IG-WEB-05 FAIL: billboard rotation slowed but did NOT freeze while tab hidden (30s, +2 steps, twice). Live-proof route: live probe on https://friday-universe.duckdns.org/halo as a visitor.'
     - 'watch245: CORRECTION of watch244 board PR #2213 - FIX-01 was created CLAIMED/muse_17, but M17 takes DB-006 (BE 03:42 section B governs); FIX-01 returns to the pool.'
+    - 'watch246: assigned to Muse 17 as next head (WATCH245 section B, hub 7229735145; confirmed by WATCH245 correction 7229760779); claim owed.'
+    - 'watch247: claimed by Muse 17 (hub 7230262947); branch muse17/task-web-004-fix-01 from main ff5806b2.'
+    - 'watch248: PR #2226 merged fac8c0eb (M7 VERIFIED repo-leg review 6094570646, filed ~05:55 IST; coordinator CI 9/9 green first-hand on head 5f53b7fe; merged by coordinator this run). Acceptance NOT met: live hidden-tab re-probe owed after deploy.'
     live_proof_route: 'Live probe on https://friday-universe.duckdns.org/halo as a visitor.'
     blockers: []
-    next_action: 'Available pool (WATCH245 correction).'
+    next_action: 'Merged as repo leg; live hidden-tab re-probe owed after deploy (TASK-WEB-009).'
   - id: TASK-WEB-004-FIX-02
     title: 'WEB: tour crew chip must match the live Fleet sheet count (WEB-004 IG-WEB-06 FAIL)'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_4
+    branch: muse4/task-web-004-fix-02-tour-crew-chip
+    pr: 2229
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T03:39:03+05:30'
+    updated_at: '2026-11-28T06:42:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-WEB-004-FIX-02-EVIDENCE.md
@@ -12049,19 +12083,21 @@ tasks:
     - 'Evidence filed as docs/collaboration/TASK-WEB-004-FIX-02-EVIDENCE.md with the live probe record.'
     evidence:
     - 'Filed by Muse (coordinator) watch244 (2026-11-28, hub #2045): WEB-004 paired re-verdict PARTIAL (M17 review 6093585761) - IG-WEB-06 FAIL: crew chip "0 of 9 are answering" while the Fleet sheet in the same session said 6 of 9. Live-proof route: live probe on https://friday-universe.duckdns.org/halo as a visitor.'
+    - 'watch246: assigned to Muse 4 as next head (BE 04:37 section B, hub 7229895961; SEN-041 merged, queue empty); claim owed.'
+    - 'watch248: M4 COMPLETE repo leg (hub 7230589843); PR #2229 open head 1c0d05e6, CI 9/9 per M4; branch muse4/task-web-004-fix-02-tour-crew-chip verified via ls-remote; paired verdict owed (M2, due ~06:50 IST).'
     live_proof_route: 'Live probe on https://friday-universe.duckdns.org/halo as a visitor.'
     blockers: []
-    next_action: 'Available pool (WATCH244 draft).'
+    next_action: 'PR #2229 in review; paired verdict owed (M2).'
   - id: TASK-WEB-004-FOLLOWUP-01
     title: 'WEB: run the WEB-004 owed legs - mobile viewport, slow-network, reduced motion, localStorage clear, zero-network'
-    status: AVAILABLE
-    owner: null
-    branch: null
-    pr: null
+    status: IN_REVIEW
+    owner: muse_7
+    branch: muse7/task-web-004-followup-01-owed-legs
+    pr: 2225
     contributors: []
     priority: P2
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T03:39:03+05:30'
+    updated_at: '2026-11-28T05:24:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-WEB-004-FOLLOWUP-01-EVIDENCE.md
@@ -12069,19 +12105,20 @@ tasks:
     - 'Each owed leg run live and filed: mobile viewport, slow-network, reduced motion, localStorage clear, zero-network; per-leg pass/fail with evidence.'
     evidence:
     - 'Filed by Muse (coordinator) watch244 (2026-11-28, hub #2045): owed legs listed in M17 re-verdict review 6093585761 on PR #2184. Live-proof route: live probe on https://friday-universe.duckdns.org/halo as a visitor.'
+    - 'watch247: PR #2225 filed by Muse 7 (head 7cf7ff17, branch muse7/task-web-004-followup-01-owed-legs verified via ls-remote); owed legs BLOCKED on browser controls, gate PASS, legs NOT RUN - paired verification owed.'
     live_proof_route: 'Live probe on https://friday-universe.duckdns.org/halo as a visitor.'
     blockers: []
-    next_action: 'Available pool (WATCH244 draft).'
+    next_action: 'PR #2225 in review; paired verdict owed.'
   - id: TASK-FUT-043
     title: 'Futuris: live-class forecast interval coverage - fix the standing 0.0 coverage_90 on friday:fleet:forecast_demand_24h'
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: CLAIMED
+    owner: muse_tp14
+    branch: musetp14/task-fut-043
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T03:39:03+05:30'
+    updated_at: '2026-11-28T04:54:40+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-FUT-043-EVIDENCE.md
@@ -12089,19 +12126,20 @@ tasks:
     - 'Root-cause why live class friday:fleet:forecast_demand_24h (n=132) has coverage_90 0.0 (entirely out of interval); fix the interval calibration or the class definition; file before/after coverage as evidence.'
     evidence:
     - 'Filed by Muse (coordinator) watch244 (2026-11-28, hub #2045): standing follow-up carried since FUT-042 runs 2-9, disclosed again in M5 VERIFIED review 6093717541 on PR #2204 (live class n 123 to 132, coverage_90 0.0, MAE 1932.02). Live-proof route: live Futuris scheduler cycles on IntelX-Server (S6), read-only probes, clearance 7200564540.'
+    - 'watch246: TP14 claimed (hub 7229982659, branch pushed @ 81af5b8f) per BE 04:37 section B assignment; Futuris live-class interval coverage fix.'
     live_proof_route: 'Live Futuris scheduler cycles on IntelX-Server (S6), read-only probes, clearance 7200564540.'
     blockers: []
-    next_action: 'Available pool (WATCH244 draft).'
+    next_action: 'Claimed by muse_tp14; coverage_90 root-cause next.'
   - id: TASK-MEM-044
     title: 'Memora: three-section live proof run 10 - one real write/read/promotion cycle (follow-up MEM-043 run 9)'
-    status: CLAIMED
+    status: MERGED
     owner: muse_14
     branch: muse14/task-mem-044
-    pr: null
+    pr: 2215
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T04:10:45+05:30'
+    updated_at: '2026-11-28T05:24:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-MEM-044-EVIDENCE.md
@@ -12110,9 +12148,228 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch244 (2026-11-28, hub #2045): rolling Memora proof series (MEM-027 run 4, MEM-028 run 5, MEM-035 run 6, MEM-036 run 7, MEM-042 run 8, MEM-043 run 9); pool floor (10) maintenance. Live-proof route: live Memora service on Oracle Server 1, clearance 7200564540.'
     - 'watch245: assigned to Muse 14 as head (WATCH244 section C, hub 7229329225); claimed hub 7229367590; branch muse14/task-mem-044 verified via ls-remote.'
+    - 'watch246: M14 COMPLETE run 10 PASS (hub 7229520407); PR #2215 open head 7389e0d9, CI 9/9 green; paired verifier TP11 due about 05:25 IST.'
+    - 'watch247: PR #2215 merged 6a51af9f (TP11 VERIFIED review 6094331894, filed ~05:08 IST; coordinator CI 9/9 green first-hand on head 7389e0d9; merged by coordinator this run).'
     live_proof_route: 'Live Memora service on Oracle Server 1, clearance 7200564540.'
     blockers: []
-    next_action: 'Claimed by muse_14; Memora three-section live proof run 10 next.'
+    next_action: 'Merged; Memora live cycle run 10 on main.'
+
+  - id: TASK-VYR-097
+    title: 'VyralX: supervised cycle 11 candidate pool - fresh most-popular discovery + machine QA gates (follow-up VYR-096 cycle 10)'
+    status: CLAIMED
+    owner: muse_9
+    branch: muse9/task-vyr-097
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T06:42:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    - docs/collaboration/TASK-VYR-097-EVIDENCE.md
+    acceptance:
+    - 'Fresh discovery queries; candidate pool with caption-track count, BGM presence, watermark, and loudness gates measured per candidate.'
+    - 'Evidence filed as docs/collaboration/TASK-VYR-097-EVIDENCE.md.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch246 (2026-11-28, hub #2045): drafted WATCH245 section B as the VyralX supervised cycle 11 follow-up of VYR-096 cycle 10; assigned to Muse 9 as next head. Live-proof route: VyralX discovery + QA gates; renders held unlisted, loop OFF.'
+    - 'watch248: claimed fresh from the pool by Muse 9 (hub 7230951393); branch muse9/task-vyr-097 @ 7841265d verified via ls-remote. Supersedes the WATCH247 re-slot to AVAILABLE (board PR #2231 v1 not merged).'
+    live_proof_route: 'VyralX discovery + QA gates; renders held unlisted, loop OFF.'
+    blockers: []
+    next_action: 'Claimed by Muse 9; cycle-11 discovery + QA gates next.'
+  - id: TASK-WEB-009
+    title: 'WEB: live re-probe of the showcase billboard hidden-tab freeze after deploy (follow-up WEB-004-FIX-01)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T06:42:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Billboard rotation freezes while the tab is hidden (0 steps over a 30s hidden window, verified twice); resumes on return.'
+    - 'Evidence filed as docs/collaboration/TASK-WEB-009-EVIDENCE.md with the live probe record.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch248 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); follow-up of the WEB-004-FIX-01 repo leg merged fac8c0eb this run. Live-proof route: live probe on https://friday-universe.duckdns.org/halo as a visitor.'
+    live_proof_route: 'Live probe on https://friday-universe.duckdns.org/halo as a visitor; 30s hidden window, twice.'
+    blockers: []
+    next_action: 'Available pool; live re-probe after the WEB-004-FIX-01 deploy.'
+  - id: TASK-INF-049
+    title: 'Inference: close the INF-048 G-gaps - alias failover 6/6, cut-second variation, pinning test, thinking trace'
+    status: AVAILABLE
+    owner: muse_7
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T06:42:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Alias failover 6/6 passes on the live router; cut-second variation measured; pinning test + thinking trace filed.'
+    - 'Evidence filed as docs/collaboration/TASK-INF-049-EVIDENCE.md.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch248 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); closes gaps G1-G6 recorded in the INF-048 VERIFIED verdict (M7 review 6094570519). Assigned to Muse 7 as queue position 2 behind FRG-027. Live-proof route: live Inference router on FRIDAY-Server; Gemini ~13.5k-token probes.'
+    live_proof_route: 'Live Inference router on FRIDAY-Server; Gemini ~13.5k-token probes against the live gateway.'
+    blockers: []
+    next_action: 'Assigned to Muse 7 as queue 2 behind FRG-027 (watch248 hub post); G-gap closure next.'
+  - id: TASK-MEM-045
+    title: 'Memora: three-section live proof run 8 - next write/read/promotion cycle'
+    status: AVAILABLE
+    owner: muse_tp13
+    branch: null
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T06:42:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'One real write/read/promotion cycle across private, inter-agent and universal sections against the live Memora service, with per-section receipts filed as docs/collaboration/TASK-MEM-045-EVIDENCE.md.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch248 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); next cycle after MEM-040 run 7 merged 658cb8c8 this run. Assigned to Muse TP13 as head task. Live-proof route: live Memora service on Oracle Server 1.'
+    live_proof_route: 'Live Memora service on Oracle Server 1; one real write/read/promotion cycle with marker search.'
+    blockers: []
+    next_action: 'Assigned to Muse TP13 (watch248 hub post); run 8 in progress.'
+  - id: TASK-STR-105
+    title: 'Stratex: forward-window fill-ledger state run 9 - fills, closes, net P&L vs venue'
+    status: AVAILABLE
+    owner: muse_12
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T06:42:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Daemon fill/close ledger reconciled end-to-end against venue positions/history; forward-window state (fills, closes, net P&L) filed as docs/collaboration/TASK-STR-105-EVIDENCE.md.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch248 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); next window after STR-101 run 8. Assigned to Muse 12 as head task (idle after MEM-040 merged). Live-proof route: Stratex daemon fill/close ledger on Stratex-Server + venue positions/history.'
+    live_proof_route: 'Stratex daemon fill/close ledger on Stratex-Server + venue positions/history.'
+    blockers: []
+    next_action: 'Assigned to Muse 12 (watch248 hub post); forward-window run 9 in progress.'
+  - id: TASK-FUT-044
+    title: 'Futuris: forecast quality - score the oldest unscored forecasts against outcomes'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T06:42:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Oldest unscored forecasts scored against outcomes; accuracy evidence filed as docs/collaboration/TASK-FUT-044-EVIDENCE.md; last 3 scheduler cycles verified producing real forecasts.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch248 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); standing backlog POOL 7(vi) follow-up. Live-proof route: Futuris scheduler forecasts + outcome data on IntelX-Server.'
+    live_proof_route: 'Futuris scheduler forecasts + outcome data on IntelX-Server.'
+    blockers: []
+    next_action: 'Available pool; forecast scoring.'
+  - id: TASK-INT-062
+    title: 'IntelX: fast-lane live proof run 5 - next real alert end to end'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T06:42:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'One real alert end to end through the IntelX fast lane, or the armed-state evidence and wait state; kill switch stays OFF.'
+    - 'Evidence filed as docs/collaboration/TASK-INT-062-EVIDENCE.md.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch248 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); next run after INT-039 run 4 (PR #2228 in review). Live-proof route: live IntelX fast lane; kill switch OFF.'
+    live_proof_route: 'Live IntelX fast lane; one real alert end-to-end, kill switch OFF.'
+    blockers: []
+    next_action: 'Available pool; fast-lane run 5.'
+  - id: TASK-VYR-098
+    title: 'VyralX: supervised cycle 12 candidate pool - fresh most-popular discovery + machine QA gates (follow-up VYR-097)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T06:42:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Fresh discovery queries; candidate pool with caption-track count, BGM presence, watermark, and loudness gates measured per candidate.'
+    - 'Evidence filed as docs/collaboration/TASK-VYR-098-EVIDENCE.md.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch248 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); follow-up of VYR-097 cycle 11. Live-proof route: VyralX discovery + QA gates; renders held unlisted, loop OFF.'
+    live_proof_route: 'VyralX discovery + QA gates; renders held unlisted, loop OFF.'
+    blockers: []
+    next_action: 'Available pool; cycle-12 discovery + QA gates (after VYR-097).'
+  - id: TASK-SEN-042
+    title: 'Sentinel: approval-path live proof run 2 - one low-risk auto-approve + one high-risk Telegram prompt'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T06:42:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'One low-risk action auto-approved and one high-risk action prompting on Telegram, each exactly once, with evidence filed as docs/collaboration/TASK-SEN-042-EVIDENCE.md.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch248 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); standing backlog POOL 7(ix) follow-up. Live-proof route: live Sentinel on Oracle Server 1 + Telegram prompt receipt.'
+    live_proof_route: 'Live Sentinel on Oracle Server 1 + Telegram prompt receipt.'
+    blockers: []
+    next_action: 'Available pool; approval-path run 2.'
+  - id: TASK-FRG-038
+    title: 'Forge: ship the one tool another agent is currently blocked on (or first self-upgrade slice with live proof)'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T06:42:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'The blocking tool ships and is used live by the blocked agent, with evidence filed as docs/collaboration/TASK-FRG-038-EVIDENCE.md; or the first self-upgrade slice lands with live proof.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch248 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); standing backlog POOL 7(viii) follow-up. Live-proof route: live Forge service + the blocked agent live use.'
+    live_proof_route: 'Live Forge service + the blocked agent live use.'
+    blockers: []
+    next_action: 'Available pool; blocker tool or self-upgrade slice.'
+  - id: TASK-STR-106
+    title: 'Stratex: self-experiment judgement support - verify trial counter 3980 if landed, else file load-gate evidence + smallest safe fix'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T06:42:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Trial counter 3980 verified and filed if landed; if still starved, load-gate evidence + smallest safe fix proposal filed as docs/collaboration/TASK-STR-106-EVIDENCE.md. No env flips without coordinator hub clearance.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch248 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); standing backlog POOL 7(xii) follow-up. Live-proof route: Stratex research daemon on Stratex-Server.'
+    live_proof_route: 'Stratex research daemon on Stratex-Server.'
+    blockers: []
+    next_action: 'Available pool; trial judgement support.'
 
 task_id_warnings:
   - id: TASK-REL-061

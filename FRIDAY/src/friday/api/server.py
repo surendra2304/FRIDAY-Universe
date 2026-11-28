@@ -1618,12 +1618,28 @@ def _sample_telemetry() -> dict[str, Any]:
     try:
         import psutil
         cpu = psutil.cpu_percent(interval=None)
-        mem = psutil.virtual_memory().percent
+        vm = psutil.virtual_memory()
+        mem = vm.percent
         batt = psutil.sensors_battery()
         battery_pct = batt.percent if batt is not None else None
         power_plugged = batt.power_plugged if batt is not None else None
     except Exception as exc:
         return {"status": "unavailable", "error": type(exc).__name__, "timestamp": datetime.now(timezone.utc).isoformat()}
+
+    # TASK-FRD-068: the RAM figure is the service's own memory (its cgroup
+    # cap), not host RAM (FRD-067, 0/3). Without a capped cgroup the host
+    # figures are used as before.
+    try:
+        from friday.observability.proactive_engine import service_memory
+
+        svc = service_memory()
+    except Exception:
+        svc = None
+    if svc is not None:
+        mem = svc["percent"]
+        memory_scope = "cgroup"
+    else:
+        memory_scope = "host"
 
     return {
         "status": "ok",
@@ -1632,6 +1648,8 @@ def _sample_telemetry() -> dict[str, Any]:
         "cpu_percent": cpu,
         "ram_usage": mem,
         "ram_percent": mem,
+        "memory_scope": memory_scope,
+        "host_ram_percent": round(vm.percent, 1),
         "battery_pct": battery_pct,
         "power_plugged": power_plugged,
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -1653,14 +1671,39 @@ def _sample_system_telemetry() -> dict[str, Any]:
         cpu_percent = psutil.cpu_percent(interval=None)
         cpu_cores = psutil.cpu_count(logical=True) or 8
         vm = psutil.virtual_memory()
+        # TASK-FRD-068: the RAM figures are the service's own memory (its
+        # cgroup cap), not host RAM (FRD-067, 0/3). Without a capped cgroup
+        # the host figures are used as before.
+        try:
+            from friday.observability.proactive_engine import service_memory
+
+            svc = service_memory()
+        except Exception:
+            svc = None
+        if svc is not None:
+            ram_percent = svc["percent"]
+            ram_total_gb = round(svc["limit_mb"] / 1024, 1)
+            ram_used_gb = round(svc["used_mb"] / 1024, 1)
+            ram_avail_gb = round((svc["limit_mb"] - svc["used_mb"]) / 1024, 1)
+            memory_scope = "cgroup"
+        else:
+            ram_percent = round(vm.percent, 1)
+            ram_total_gb = round(vm.total / (1024**3), 1)
+            ram_used_gb = round(vm.used / (1024**3), 1)
+            ram_avail_gb = round(vm.available / (1024**3), 1)
+            memory_scope = "host"
         return {
             "status": "ok",
             "cpu_percent": round(cpu_percent, 1),
             "cpu_cores": cpu_cores,
-            "ram_percent": round(vm.percent, 1),
-            "ram_total_gb": round(vm.total / (1024**3), 1),
-            "ram_used_gb": round(vm.used / (1024**3), 1),
-            "ram_avail_gb": round(vm.available / (1024**3), 1),
+            "ram_percent": ram_percent,
+            "ram_total_gb": ram_total_gb,
+            "ram_used_gb": ram_used_gb,
+            "ram_avail_gb": ram_avail_gb,
+            "memory_scope": memory_scope,
+            "host_ram_percent": round(vm.percent, 1),
+            "host_ram_total_gb": round(vm.total / (1024**3), 1),
+            "host_ram_used_gb": round(vm.used / (1024**3), 1),
             "os": f"{platform.system()} {platform.release()} ({platform.machine()})",
             "operator": "Surendra",
             "timestamp": datetime.now(timezone.utc).isoformat(),
