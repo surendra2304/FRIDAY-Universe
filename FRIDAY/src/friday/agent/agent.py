@@ -214,6 +214,22 @@ def user_facing_tool_failure(tool_name: str, raw_error: str) -> str:
     )
 
 
+def _terminal_reply(result: "ToolResult | None") -> str | None:
+    """Content of a tool result that is itself the turn's whole answer.
+
+    A tool marks its result terminal by setting
+    ``metadata["terminal_reply"] = True`` (today: ``start_goal_loop``
+    when the loop reached a terminal status and returned its completion
+    report). Returns the content, or None when the result is not a
+    terminal reply — errors and non-marked results never qualify.
+    """
+    if result is None or result.is_error:
+        return None
+    metadata = getattr(result, "metadata", None) or {}
+    if not metadata.get("terminal_reply"):
+        return None
+    content = (result.content or "").strip()
+    return content or None
 
 
 from friday.agent.mixins import MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
@@ -939,6 +955,31 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                     if non_retryable or retries_exhausted:
                         stop_after_failure = True
                         break
+            # TASK-IG-FRD-001-FIX-01: a tool result that IS the complete
+            # answer ends the turn here. The goal-loop tool returns a
+            # terminal completion report; sending it back through another
+            # unbounded LLM generate (Gemini 60s x retries + Groq
+            # failover, no overall bound) is what held the FRD-051 leg-1
+            # turn for the full 300s chat budget after the loop itself
+            # finished in <1s. Only a single-call batch qualifies, so no
+            # sibling result is ever dropped from the reply.
+            if len(calls) == 1 and not stop_after_failure:
+                _terminal = _terminal_reply(call_results[0])
+                if _terminal is not None:
+                    return AgentResponse(
+                        content=_terminal,
+                        tool_calls=tool_calls or None,
+                        tool_results=tool_results or None,
+                        is_done=True,
+                        metadata={
+                            "goal_orchestration": False,
+                            "duration_seconds": time.perf_counter() - start_time,
+                            "is_successful": True,
+                            "iterations": iterations,
+                            "terminal_tool_reply": calls[0].name,
+                            "latency": memora_latency,
+                        },
+                    )
             if stop_after_failure:
                 break
 
@@ -1375,11 +1416,30 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
     def get_system_diagnostics(self) -> dict[str, Any]:
         """Return live system telemetry for the HUD / UI."""
         snap = self.proactive.last_snapshot or capture_snapshot()
+        # TASK-FRD-068: the RAM figures are the service's own memory (its
+        # cgroup cap), not host RAM — the HUD must show what the kernel
+        # will enforce (FRD-067, 0/3). Host RAM stays available under
+        # explicit host_* keys. Without a cgroup the host figures are used
+        # as before.
+        if snap.cgroup_mem_percent is not None and snap.cgroup_mem_limit_mb:
+            ram_percent = snap.cgroup_mem_percent
+            ram_used_gb = round(snap.cgroup_mem_used_mb / 1024, 2) if snap.cgroup_mem_used_mb is not None else None
+            ram_total_gb = round(snap.cgroup_mem_limit_mb / 1024, 2)
+            memory_scope = "cgroup"
+        else:
+            ram_percent = snap.ram_percent
+            ram_used_gb = snap.ram_used_gb
+            ram_total_gb = snap.ram_total_gb
+            memory_scope = "host"
         return {
             "cpu_percent": snap.cpu_percent,
-            "ram_percent": snap.ram_percent,
-            "ram_used_gb": snap.ram_used_gb,
-            "ram_total_gb": snap.ram_total_gb,
+            "ram_percent": ram_percent,
+            "ram_used_gb": ram_used_gb,
+            "ram_total_gb": ram_total_gb,
+            "memory_scope": memory_scope,
+            "host_ram_percent": snap.ram_percent,
+            "host_ram_used_gb": snap.ram_used_gb,
+            "host_ram_total_gb": snap.ram_total_gb,
             # Memory guard (TASK-FRD-041): the service's own cgroup cap is
             # the real kill threshold — surface it so the HUD shows what
             # the kernel will enforce, not just system RAM.

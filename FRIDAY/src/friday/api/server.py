@@ -51,6 +51,7 @@ from friday.core.config import get_settings
 # failing storage layer turns the probe 503.
 from friday.core.database import connect_sqlite
 from friday.core.logging import get_logger
+from friday.core.tracemalloc_watch import maybe_start_tracemalloc_watch, stop_tracemalloc_watch
 from friday.devices.android_controller import AndroidDeviceController
 from friday.devices.app_launcher import launch_desktop_app
 from friday.ecosystem.fleet_client import fleet_client, CANONICAL_INTERNAL_MESH_URLS
@@ -564,6 +565,9 @@ async def lifespan(_: FastAPI):
     # Pre-flight environment validation
     is_prod = os.getenv("FRIDAY_ENV", "").lower() == "production"
     validate_runtime_environment(fail_fast=is_prod)
+    # TASK-FRD-064: env-gated tracemalloc observation watch (WATCH230 §C.2).
+    # Inert unless FRIDAY_TRACEMALLOC=1; approved for one observation restart.
+    maybe_start_tracemalloc_watch()
     supervision_task = asyncio.create_task(_fleet_supervision_loop(), name="friday-fleet-supervision")
     memora_task = asyncio.create_task(_memora_event_loop(), name="friday-memora-event-consumer")
     # The unattended repair pass. Until this task existed the trigger had no
@@ -668,6 +672,8 @@ async def lifespan(_: FastAPI):
             await asyncio.wait_for(fleet_client.aclose(), timeout=3.0)
         except Exception:
             logger.exception("Failed to close the shared fleet HTTP client during shutdown")
+        # TASK-FRD-064: final tracemalloc snapshot (no-op unless the watch ran).
+        stop_tracemalloc_watch()
         logger.info("Graceful shutdown completed.")
 
 app = FastAPI(
@@ -1618,12 +1624,28 @@ def _sample_telemetry() -> dict[str, Any]:
     try:
         import psutil
         cpu = psutil.cpu_percent(interval=None)
-        mem = psutil.virtual_memory().percent
+        vm = psutil.virtual_memory()
+        mem = vm.percent
         batt = psutil.sensors_battery()
         battery_pct = batt.percent if batt is not None else None
         power_plugged = batt.power_plugged if batt is not None else None
     except Exception as exc:
         return {"status": "unavailable", "error": type(exc).__name__, "timestamp": datetime.now(timezone.utc).isoformat()}
+
+    # TASK-FRD-068: the RAM figure is the service's own memory (its cgroup
+    # cap), not host RAM (FRD-067, 0/3). Without a capped cgroup the host
+    # figures are used as before.
+    try:
+        from friday.observability.proactive_engine import service_memory
+
+        svc = service_memory()
+    except Exception:
+        svc = None
+    if svc is not None:
+        mem = svc["percent"]
+        memory_scope = "cgroup"
+    else:
+        memory_scope = "host"
 
     return {
         "status": "ok",
@@ -1632,6 +1654,8 @@ def _sample_telemetry() -> dict[str, Any]:
         "cpu_percent": cpu,
         "ram_usage": mem,
         "ram_percent": mem,
+        "memory_scope": memory_scope,
+        "host_ram_percent": round(vm.percent, 1),
         "battery_pct": battery_pct,
         "power_plugged": power_plugged,
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -1653,14 +1677,39 @@ def _sample_system_telemetry() -> dict[str, Any]:
         cpu_percent = psutil.cpu_percent(interval=None)
         cpu_cores = psutil.cpu_count(logical=True) or 8
         vm = psutil.virtual_memory()
+        # TASK-FRD-068: the RAM figures are the service's own memory (its
+        # cgroup cap), not host RAM (FRD-067, 0/3). Without a capped cgroup
+        # the host figures are used as before.
+        try:
+            from friday.observability.proactive_engine import service_memory
+
+            svc = service_memory()
+        except Exception:
+            svc = None
+        if svc is not None:
+            ram_percent = svc["percent"]
+            ram_total_gb = round(svc["limit_mb"] / 1024, 1)
+            ram_used_gb = round(svc["used_mb"] / 1024, 1)
+            ram_avail_gb = round((svc["limit_mb"] - svc["used_mb"]) / 1024, 1)
+            memory_scope = "cgroup"
+        else:
+            ram_percent = round(vm.percent, 1)
+            ram_total_gb = round(vm.total / (1024**3), 1)
+            ram_used_gb = round(vm.used / (1024**3), 1)
+            ram_avail_gb = round(vm.available / (1024**3), 1)
+            memory_scope = "host"
         return {
             "status": "ok",
             "cpu_percent": round(cpu_percent, 1),
             "cpu_cores": cpu_cores,
-            "ram_percent": round(vm.percent, 1),
-            "ram_total_gb": round(vm.total / (1024**3), 1),
-            "ram_used_gb": round(vm.used / (1024**3), 1),
-            "ram_avail_gb": round(vm.available / (1024**3), 1),
+            "ram_percent": ram_percent,
+            "ram_total_gb": ram_total_gb,
+            "ram_used_gb": ram_used_gb,
+            "ram_avail_gb": ram_avail_gb,
+            "memory_scope": memory_scope,
+            "host_ram_percent": round(vm.percent, 1),
+            "host_ram_total_gb": round(vm.total / (1024**3), 1),
+            "host_ram_used_gb": round(vm.used / (1024**3), 1),
             "os": f"{platform.system()} {platform.release()} ({platform.machine()})",
             "operator": "Surendra",
             "timestamp": datetime.now(timezone.utc).isoformat(),
