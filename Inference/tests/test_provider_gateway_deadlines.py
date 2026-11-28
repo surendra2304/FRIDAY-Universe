@@ -7,7 +7,7 @@ import time
 import pytest
 
 import app.providers
-from app.core.config import settings
+from app.core.config import Settings, settings
 from app.providers.base import ProviderMessage, ProviderRequest
 from app.providers.gateway import KeyPool, ModelGateway, ProviderRateLimiter
 
@@ -168,3 +168,28 @@ async def test_local_fallback_deadline_bounds_limiter_wait(monkeypatch):
     assert provider_calls == 0
     assert elapsed < 0.5
     assert limiter._sem._value == 1
+
+
+def test_routing_deadline_defaults_are_pinned():
+    """TASK-INF-049 (INF-048 G5): pin the shipped routing-deadline defaults.
+
+    INF-029/INF-047/INF-048 measured the live Gemini tail repeatedly and
+    kept REQUEST_TIMEOUT=60.0, PRIMARY_ATTEMPT_FRACTION=0.6,
+    PRIMARY_ATTEMPT_MAX_SECONDS=15.0, giving a primary slice of
+    min(60.0 * 0.6, 15.0) = 15.0s. This test pins the *field defaults*
+    (not any environment override) so a silent default change fails CI
+    instead of quietly moving the deadline the measurements justify.
+    """
+    fields = Settings.model_fields
+    assert fields["REQUEST_TIMEOUT"].default == 60.0
+    assert fields["PRIMARY_ATTEMPT_FRACTION"].default == 0.6
+    assert fields["PRIMARY_ATTEMPT_MAX_SECONDS"].default == 15.0
+
+    # The gateway's primary slice (app/providers/gateway.py) is
+    # min(timeout_budget * fraction, cap); at the default budget the cap
+    # governs, so the slice the measurements were taken against is 15.0s.
+    slice_s = min(
+        fields["REQUEST_TIMEOUT"].default * fields["PRIMARY_ATTEMPT_FRACTION"].default,
+        fields["PRIMARY_ATTEMPT_MAX_SECONDS"].default,
+    )
+    assert slice_s == 15.0
