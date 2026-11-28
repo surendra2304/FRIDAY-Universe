@@ -603,32 +603,11 @@ async def test_architect_manifest_rescue_followup_call(temp_engine):
 # ----------------------------------------------------------------------
 
 
-@pytest.mark.asyncio
-async def test_delegate_provider_summary_aggregation():
-    from app.api.delegate import _degraded_suffix, _task_provider_summary
-
-    class FakeStore:
-        async def get_latest_task_graph_for_project(self, task_id):
-            return SimpleNamespace(
-                nodes={
-                    "n1": SimpleNamespace(
-                        result={
-                            "provider": "inference:forge-architect@http://x",
-                            "served_by_model": "gemini-3.8-flash",
-                        }
-                    ),
-                    "n2": SimpleNamespace(
-                        result={"provider": "mock/direct", "generation_degraded": True}
-                    ),
-                }
-            )
-
-    summary = await _task_provider_summary(SimpleNamespace(store=FakeStore()), "t1")
-    assert summary["generation_degraded"] is True
-    assert summary["served_by_model"] == ["gemini-3.8-flash"]
-    assert "mock/direct" in _degraded_suffix(summary)
-    assert _degraded_suffix({"generation_degraded": False}) == ""
-    assert _degraded_suffix({}) == ""
+# NOTE (TASK-FRG-038): test_delegate_provider_summary_aggregation lived here.
+# It tested _task_provider_summary / _degraded_suffix, which FRG-038 deleted
+# from app.api.delegate — the FRG-009 provider stamp no longer appears in any
+# delegate response (stamps remain on the task graph record). Test removed
+# per the M14 NOT VERIFIED verdict on PR #2295 (review 6096460517).
 
 
 def test_wiring_describe_reports_mock_state():
