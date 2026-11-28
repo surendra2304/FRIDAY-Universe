@@ -69,3 +69,32 @@ Hub carried items checked (BE 08:50 hub 7232927618 + WATCH251 hub 7232592508, re
 - BE 08:50 §D states the grant dispute SETTLED (owner approved full run_shell for all worker chats; main-chat approvals do not appear in permissions.history) and directs: stop checking. Standing record kept: no permissions.history record for approval 7113152293 (16 checks; last 20:17 IST 2026-11-27); Surendra's confirmation of the 18:25:56 IST tap still unanswered. No live leg run in this checkpoint; no server touched.
 
 — Muse 19
+
+## Checkpoint 2 — event-loop question SETTLED + fix design (2026-11-28 ~11:00 IST)
+
+- **Branch:** `muse19/task-frg-038` fast-forwarded to main `7ecab6ce` first (merge `95dad0cbb3de2e891cedc3584c74ad52cae54b01`); this section appended after. All file:line reads below are main `7ecab6ce`, first-hand this run.
+- **Question from cp1, answered:** does the battery's sync subprocess work block the event loop even as a background task? **No — there is no sync subprocess work in the battery path.**
+  - Checkers (`Forge/app/verification/checkers.py`, 1,413 lines): `TestChecker.run_check` (:389), `RuntimeChecker.run_check` (:538), `LintChecker.run_check` (:214) all run external tools through `engine.terminal.run_command(...)`.
+  - `Forge/app/execution/terminal.py:311`: `run_command` uses `await asyncio.create_subprocess_shell(...)` + `await asyncio.wait_for(process.communicate(), ...)` — fully async; the loop yields while a subprocess runs.
+  - The only sync `subprocess.run` in terminal.py is inside `kill_process_tree` (:86–94), Windows `taskkill` branch only; on POSIX it uses `os.killpg` — a cancel/timeout cleanup path, not the battery path.
+  - `Forge/app/core/orchestrator.py` (1,478 lines): no `subprocess` / `run_in_executor` / `to_thread` anywhere. `step_task` (:326) runs DAG waves via `asyncio.gather`; `run_task` (:791) loops `step_task`, then `_verify_and_repair` + `apply_final_verdict` (:917–927) — the battery + manifest + settle happen INSIDE `run_task`.
+  - Verification engine (`Forge/app/verification/engine.py:143–173`): Phase A checkers concurrent via `asyncio.gather`, Phase B (TestChecker, RuntimeChecker) serial — all awaited.
+  - **Conclusion:** routing `execute_now` through `_schedule_execution` (`Forge/app/api/tasks.py:192` — `loop.create_task(_run_task_supervised(...))`, semaphore-guarded at :116–120) frees the request AND leaves the loop servable: the background task awaits provider calls and async subprocesses, so `/health` stays responsive during a build. The Leg B wedging mechanism is therefore the inline await itself (request held ~9m20s; bus HTTP 000) compounded by memory pressure (177.4M/180M at wedge time) — not the battery blocking the loop. Memory headroom is a separate, still-open concern (Forge MemoryMax=180M; a background task does not fix memory).
+- **The fix (designed, code owed next run):** in `Forge/app/api/delegate.py`, replace the `execute_now` inline block (:422–~652 — `await orchestrator.run_task` + second battery + manifest + re-settle + verdict derivation + three return shapes) with the same schedule-and-return-RUNNING shape the non-`execute_now` path already uses (:653–670, `_schedule_execution(task.id, callback_url)` + RUNNING `TaskResultModel` with `forge_task_id`, no receipt). Polling endpoint already exists: `GET /tasks/{task_id}` (`tasks.py:428`, `get_task` — fine-grained status, DAG stage, ETA). Test: mirror `Forge/tests/unit/test_delegate_schedules_execution.py::test_delegate_without_execute_now_schedules_and_reports_running` with an `execute_now=True` envelope — assert scheduled + RUNNING + `forge_task_id` + no receipt.
+- **Why the second battery re-run can go:** `run_task` already runs `_verify_and_repair` + `apply_final_verdict` (orchestrator.py:917–927); the inline path's re-run is redundant defense-in-depth (FRG-011's "re-settle from THIS run"). Dropping it loses the fresher re-settle, not verification itself.
+- **Open design points for the code run (not decided here):**
+  1. `require_sentinel` pre-delivery gate (delegate.py:559–600 — scan + settle-as-hard-failure) has no home on the background path; the flag lives in the envelope, not on the task. Decide: carry it on task metadata and run the scan in `_run_task_body` at completion, or document that Sentinel-gated callers must poll the settled verdict.
+  2. Memora writeback on all-passed (:602–616) likewise has no background home — same decision.
+  3. Completion receipt (`_forge_receipt`, :640–650) is issued only on the synchronous SUCCESS return; background completion notifies via webhook with state+error only (`_run_task_body`, tasks.py:120–155) and the settled verdict via `GET /tasks/{id}`. Whether the bus's receipt verification accepts that is part of the coordinator ruling owed on FRIDAY-bus polling adoption (cp1 follow-up, still owed — no ruling in WATCH253–256 / BE 09:10–10:16).
+- **Supersedes cp1 §3 step 2:** "code lands in checkpoint 2" is corrected — code is designed here, lands next run. The `execute_now` branch is ~230 lines with three return shapes plus the Sentinel gate, and it is not rushed without a local test runner (pytest/fastapi absent in this VM — same constraint as the 01:17 run; the delegate tests run in CI on the work PR).
+- **Not done this checkpoint:** no code written, no tests run. No server touched; no live leg. Live proof (cp3) still gated on coordinator clearance for the Forge restart.
+
+## Five states at checkpoint 2
+
+- Implemented: NO — event-loop question settled + fix designed; code lands next run.
+- Tested: NO.
+- Merged: NO — no PR yet (work PR at completion with live evidence).
+- Deployed: NO.
+- Production-verified: NO — live proof is checkpoint 3, gated on coordinator clearance for the Forge restart.
+
+— Muse 19
