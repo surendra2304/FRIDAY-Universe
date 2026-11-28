@@ -67,3 +67,31 @@
 - INT-062 evidence: `docs/collaboration/TASK-INT-062-EVIDENCE.md`
 
 — Muse 10, 2026-11-28 ~10:50 IST
+
+---
+
+## Checkpoint 2 — IntelX-Server probe (WATCH260 §F, 2026-11-28 ~12:20 IST)
+
+**Direction:** WATCH260 §F (hub #2045 comment 7235389912, ~12:05 IST): "M10 INT-063 clearance: unchanged — M10's IntelX-Server probe first (M10 owner); #2278 verdict due ~13:00." Clearance still NOT granted; this probe is the named precondition. Both Oracle servers ONLINE (`get_system_info`, this run); usage 4% (resets Dec 5 02:03 IST).
+
+**Finding: IntelX-Server (S6, ip-172-26-4-138) IS the IntelX host — IntelX is LIVE there, but on pre-INT-060 code.**
+
+- **Process up.** Bare uvicorn PID 46018, `intelx.app.main:app --host 0.0.0.0 --port 8005 --workers 1`, cwd `/opt/friday_universe/IntelX`, started Fri Nov 27 05:13:15 UTC (10:43 IST). No `intelx.service` systemd unit — it is not a managed service. Port 8005 LISTEN; port 8004 is Futuris (PID 63602).
+- **Endpoint NOT served.** `GET http://127.0.0.1:8005/v1/watches/outbox` → 404 `{"detail":"Not Found"}`; `/` → 307. The running app's OpenAPI route list (~200 routes) has no `watches/outbox` anywhere.
+- **On-disk code predates INT-060.** `grep -rn 'watches/outbox'` over `IntelX/intelx/api/router.py` + `api/v1/` → no match. `router.py` mtime Nov 15, `app/main.py` Oct 23. INT-060 (PR #2076) merged Nov 27 06:27:46 UTC (11:57 IST) — 74 minutes AFTER this process started. `/opt/friday_universe` on S6 is a deployed copy, not a git checkout (no `.git`; holds only Futuris, IntelX, mesh, venvs).
+- **Watch loop LIVE and producing.** `IntelX/data/watches/outbox.jsonl` — 6 envelopes, 5,608 bytes, mtime Nov 27 21:44 UTC (Nov 28 03:14 IST); last envelope `india_tech_regulatory` digest ("RBI Clubs 25 Card Payment Circulars Into A Single Framework"). `state.json` (1,554,808 bytes) mtime Nov 28 06:45 UTC — rewritten minutes before this probe; `alerts_by_day` 2026-11-23: 1, 2026-11-24: 1, **2026-11-28: 1**. `data/raw/` has fresh fetches Nov 28 04:00 UTC. S6 disk 13% used / 51G free — healthy.
+- **Gateway unchanged.** `GET https://friday-universe.duckdns.org/intelx/v1/watches/outbox` → 404 (re-probed this run).
+
+**Deploy shape (for the coordinator's clearance):** sync current main code to S6 + restart the bare uvicorn (PID 46018; kill + relaunch, no systemd unit to restart) → the route should then answer on localhost:8005; gateway routing to S6:8005 + FRIDAY consumer env/restart (G4) still owed. No code, process, env, or file was changed by this run — read-only probes only.
+
+**Clearance still owed:** deploy + restart authority (S6 code sync + uvicorn restart; gateway route to S6; S1 FRIDAY restart G4; S2 shared-checkout switch still on TP4's branch @ `69ff042b` per `get_system_info` this run). No deploy performed.
+
+## States (updated)
+
+- Implemented: YES (INT-060 merged PR #2076)
+- Tested: NO (no live endpoint to probe yet — S6 serves IntelX, but not the new route)
+- Merged: NO (PR #2278 open — this checkpoint rides the same PR; head was `a62e6f4a`, CI 9/9 green before this commit)
+- Deployed: NO — endpoint 404 on gateway and on S6 localhost
+- Production-verified: NO
+
+— Muse 10, 2026-11-28 ~12:20 IST
