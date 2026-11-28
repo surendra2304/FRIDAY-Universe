@@ -18,6 +18,7 @@ from futuris.core.enums import (
     SignalClass,
     SourceTrust,
 )
+from futuris.core.hashing import content_hash_of
 from futuris.core.schemas import (
     Driver,
     EvidenceRef,
@@ -826,6 +827,15 @@ class EvaluationRepository:
         # Random, not clock-derived: two runs stamped in the same microsecond used to
         # collide on the primary key under concurrency (R9).
         run_id = uuid4()
+        # TASK-FUT-048: evaluation_runs.model_version is a foreign key into
+        # model_registry, but the calibration sweep records runs for
+        # live-telemetry models (e.g. seasonal_naive@v1) that never pass
+        # through ModelRepository.register. Without the parent row the INSERT
+        # dies with ORA-02291 (parent key not found) and aborts the sweep.
+        # Ensure the parent exists first; the row is inert (is_active False,
+        # no benchmark scores) so it can never promote until a real
+        # registration replaces it.
+        await self._ensure_model_registered(model_version)
         model = EvaluationRunModel(
             run_id=run_id,
             model_version=model_version,
@@ -836,6 +846,29 @@ class EvaluationRepository:
         self.session.add(model)
         await self.session.flush()
         return run_id
+
+    async def _ensure_model_registered(self, model_version: str) -> None:
+        """Insert a minimal registry row when the version was never registered.
+
+        Family is the adapter name: the part before "@" in the canonical
+        ``name@v1:hash`` form, or before ":" in ``family:v1.0`` form.
+        """
+        stmt = select(ModelRegistryModel).where(ModelRegistryModel.model_version == model_version)
+        existing = (await self.session.execute(stmt)).scalar_one_or_none()
+        if existing is not None:
+            return
+        family = model_version.split("@", 1)[0].split(":", 1)[0] or "unknown"
+        self.session.add(
+            ModelRegistryModel(
+                model_version=model_version,
+                family=family,
+                config_hash=content_hash_of({"version": model_version}),
+                is_active=False,
+                promoted_at=None,
+                benchmark_scores={},
+            )
+        )
+        await self.session.flush()
 
     async def list_runs(self, limit: int = 50) -> list[dict[str, Any]]:
         """Return the most recent persisted evaluation runs."""

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-import time
+from datetime import datetime, timezone
 
 import pytest
 
@@ -11,6 +11,8 @@ from friday.workflows.job_hunt import (
     build_prep_plan,
     draft_outreach,
     extract_listings,
+    extract_listings_from_greenhouse_json,
+    greenhouse_api_url,
     load_profile,
     rank_listings,
     run_scan,
@@ -51,16 +53,123 @@ PAGE = """
 
 EMPTY_PAGE = "<html><body>No structured postings here.</body></html>"
 
+# Shape of the live Greenhouse Job Board API single-job response, from the
+# checkpoint-1 probe (GitLab 8623389002, crawled 2026-11-28): content is
+# double-entity-encoded HTML.
+GREENHOUSE_JOB = {
+    "id": 8623389002,
+    "title": "Site Reliability Engineer, Infrastructure Platforms — AMER (Intermediate to Senior Staff)",
+    "company_name": "GitLab",
+    "absolute_url": "https://job-boards.greenhouse.io/gitlab/jobs/8623389002",
+    "location": {"name": "Remote, Canada; Remote, US"},
+    "content": "&amp;lt;p&amp;gt;We need python and fastapi experience. Docker a plus.&amp;lt;/p&amp;gt;",
+    "first_published": "2026-07-10T22:45:49-04:00",
+    "updated_at": "2026-11-06T15:25:07-05:00",
+}
+
+
+def test_greenhouse_api_url():
+    assert (
+        greenhouse_api_url("gitlab", "8623389002")
+        == "https://boards-api.greenhouse.io/v1/boards/gitlab/jobs/8623389002"
+    )
+
+
+def test_greenhouse_json_maps_to_listing():
+    now = datetime(2026, 7, 20, 12, 0, tzinfo=timezone.utc).timestamp()
+    listings = extract_listings_from_greenhouse_json(
+        GREENHOUSE_JOB, "https://job-boards.greenhouse.io/gitlab/jobs/8623389002", now_epoch=now
+    )
+    assert len(listings) == 1
+    first = listings[0]
+    assert first["id"] == "gh-8623389002"
+    assert first["title"].startswith("Site Reliability Engineer")
+    assert first["company"] == "GitLab"
+    assert first["url"] == "https://job-boards.greenhouse.io/gitlab/jobs/8623389002"
+    assert first["location"] == "Remote, Canada; Remote, US"
+    assert first["description"] == "We need python and fastapi experience. Docker a plus."
+    assert first["posted_days_ago"] == 9
+
+
+def test_greenhouse_double_encoded_content_decodes():
+    job = dict(GREENHOUSE_JOB, content="&amp;lt;div&amp;gt;Hello &amp;amp; goodbye&amp;lt;/div&amp;gt;")
+    (listing,) = extract_listings_from_greenhouse_json(job, "https://job-boards.greenhouse.io/gitlab/jobs/8623389002")
+    assert listing["description"] == "Hello & goodbye"
+    assert "<" not in listing["description"]
+
+
+def test_greenhouse_non_job_payload_is_honest_empty():
+    url = "https://job-boards.greenhouse.io/gitlab/jobs/1"
+    assert extract_listings_from_greenhouse_json({}, url) == []
+    assert extract_listings_from_greenhouse_json({"error": "not found"}, url) == []
+    assert extract_listings_from_greenhouse_json(None, url) == []
+
+
+def test_run_scan_greenhouse_url_uses_api(tmp_path):
+    fetched: list[str] = []
+
+    def fetcher(url: str) -> str:
+        fetched.append(url)
+        if "boards-api.greenhouse.io" in url:
+            if "9999999999" in url:
+                return json.dumps({"error": "not found"})
+            return json.dumps(GREENHOUSE_JOB)
+        if "down" in url:
+            raise ConnectionError("boom")
+        return PAGE
+
+    state = tmp_path / "scan.json"
+    scan = run_scan(
+        PROFILE,
+        [
+            "https://job-boards.greenhouse.io/gitlab/jobs/8623389002",
+            "https://job-boards.greenhouse.io/gitlab/jobs/9999999999",
+            "https://example.com/careers",
+        ],
+        fetcher=fetcher,
+        state_path=str(state),
+    )
+    # The API endpoint was fetched, never the HTML job page.
+    assert "https://boards-api.greenhouse.io/v1/boards/gitlab/jobs/8623389002" in fetched
+    assert "https://job-boards.greenhouse.io/gitlab/jobs/8623389002" not in fetched
+    statuses = {s["url"]: s["status"] for s in scan["sources"]}
+    assert statuses["https://job-boards.greenhouse.io/gitlab/jobs/8623389002"] == "ok"
+    assert statuses["https://job-boards.greenhouse.io/gitlab/jobs/9999999999"] == "no_postings_found"
+    assert statuses["https://example.com/careers"] == "ok"
+    gh = [l for l in scan["shortlist"] if l["company"] == "GitLab"]
+    assert len(gh) == 1
+    assert gh[0]["title"].startswith("Site Reliability Engineer")
+    assert json.loads(state.read_text())["total_listings"] == 3  # 1 Greenhouse + 2 LD-JSON
+
+
+def test_run_scan_greenhouse_api_failure_is_fetch_failed(tmp_path):
+    def fetcher(url: str) -> str:
+        if "boards-api.greenhouse.io" in url:
+            return "<html>not json</html>"
+        return PAGE
+
+    scan = run_scan(
+        PROFILE,
+        ["https://job-boards.greenhouse.io/gitlab/jobs/8623389002"],
+        fetcher=fetcher,
+        state_path=str(tmp_path / "scan.json"),
+    )
+    assert scan["sources"][0]["status"] == "fetch_failed"
+    assert scan["total_listings"] == 0
+
 
 def test_extract_listings_from_json_ld():
-    now = time.time()
+    # Pin "now" to the fixture's datePosted + 1 day: the recency assertion
+    # is about the formula, not the calendar — a wall-clock now would rot
+    # this test every 10 days (it failed on the stale 2026-11-10 fixture).
+    now = datetime(2026, 11, 11, tzinfo=timezone.utc).timestamp()
     listings = extract_listings(PAGE, "https://example.com/careers", now_epoch=now)
     assert len(listings) == 2
     first = listings[0]
     assert first["title"] == "Senior Software Engineer"
     assert first["company"] == "Acme"
     assert "remote" in first["location"].lower()
-    assert first["posted_days_ago"] is not None and 0 <= first["posted_days_ago"] <= 10
+    assert first["posted_days_ago"] == 1
 
 
 def test_extract_empty_page_is_honest_empty():

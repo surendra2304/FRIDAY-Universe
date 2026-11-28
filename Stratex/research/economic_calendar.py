@@ -21,6 +21,9 @@ Design:
   marks known market-moving releases HIGH (CPI, NFP, FOMC, GDP, ...);
   earnings are HIGH only for the configurable mega-cap watchlist,
   MEDIUM otherwise; everything else LOW/MEDIUM by table.
+  GDP is HIGH only for US releases (TASK-STR-113 scope decision):
+  non-US GDP rows and GDP-shaped non-releases (debt-to-GDP, % of GDP,
+  current account) never go HIGH on the GDP keyword alone.
 - ``event_risk(now, hours)`` is an ADVISORY for scan code: it reports
   whether a high-impact event is inside the window. It does not import
   or touch the execution engine — Stratex stays DEMO-ONLY and any pause
@@ -65,6 +68,22 @@ MEDIUM_IMPACT_KEYWORDS = (
     "factory orders", "trade balance", "consumer sentiment", "jolts",
     "existing home sales", "new home sales", "capacity utilization",
 )
+
+# GDP scope (TASK-STR-113): the scan-pause advisory is US-market scoped,
+# so GDP is HIGH only for US releases. The GDP keywords are handled
+# separately from HIGH_IMPACT_KEYWORDS in classify_macro_impact.
+GDP_KEYWORDS = ("gross domestic product", "gdp")
+_HIGH_IMPACT_KEYWORDS_NO_GDP = tuple(
+    kw for kw in HIGH_IMPACT_KEYWORDS if kw not in GDP_KEYWORDS)
+# Name shapes that are never a GDP release even when they contain "gdp"
+# (TASK-STR-113 Class C): debt statistics, %-of-GDP statistics, and the
+# current account. A word-boundary "gdp" match does NOT exclude
+# "Current Account % of GDP", so these are excluded semantically.
+GDP_NON_RELEASE_MARKERS = ("debt-to-gdp", "debt to gdp", "% of gdp",
+                           "current account")
+# Country values Nasdaq reports for US releases; blank is treated as US
+# (the classifier's historical default when no country is supplied).
+US_COUNTRY_VALUES = {"", "us", "usa", "united states"}
 
 # Earnings from these names are treated as market-moving by default.
 DEFAULT_MEGACAP_WATCHLIST = {
@@ -114,8 +133,37 @@ class CalendarEvent:
 # Pure classification + parsing
 # ---------------------------------------------------------------------------
 
-def classify_macro_impact(name: str) -> str:
+def _is_us_country(country: str) -> bool:
+    """True for US releases; blank country is treated as US (the
+    classifier's historical default when no country is supplied)."""
+    return (country or "").strip().lower() in US_COUNTRY_VALUES
+
+
+def _is_gdp_non_release(name: str) -> bool:
+    """True when the name contains a GDP keyword only as part of a
+    statistic that is not a GDP release (TASK-STR-113 Class C)."""
     text = (name or "").lower()
+    return any(marker in text for marker in GDP_NON_RELEASE_MARKERS)
+
+
+def classify_macro_impact(name: str, country: str = "") -> str:
+    """Classify a macro release name.
+
+    GDP (TASK-STR-113 scope decision) is HIGH only for a genuine US GDP
+    release: country US/blank and not a non-release shape. A non-US GDP
+    row, or a debt-to-GDP / %-of-GDP / current-account shape, never goes
+    HIGH on the GDP keyword alone — it falls through to the remaining
+    keyword table, so it can still be HIGH for another reason (e.g. CPI).
+    """
+    text = (name or "").lower()
+    if any(kw in text for kw in GDP_KEYWORDS):
+        if _is_us_country(country) and not _is_gdp_non_release(name):
+            return "high"
+        if any(kw in text for kw in _HIGH_IMPACT_KEYWORDS_NO_GDP):
+            return "high"
+        if any(kw in text for kw in MEDIUM_IMPACT_KEYWORDS):
+            return "medium"
+        return "low"
     if any(kw in text for kw in HIGH_IMPACT_KEYWORDS):
         return "high"
     if any(kw in text for kw in MEDIUM_IMPACT_KEYWORDS):
@@ -156,7 +204,8 @@ def parse_economic_events(payload: Any, day: str) -> list[CalendarEvent]:
             continue
         events.append(CalendarEvent(
             date=day, time=_hhmm(str(row.get("time") or "")),
-            name=name, kind="macro", impact=classify_macro_impact(name),
+            name=name, kind="macro",
+            impact=classify_macro_impact(name, str(row.get("country") or "")),
             country=str(row.get("country") or ""),
             previous=str(row.get("previous") or ""),
             forecast=str(row.get("consensus") or row.get("forecast") or ""),

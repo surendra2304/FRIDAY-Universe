@@ -328,6 +328,91 @@ async def test_registry_repository_then_evaluation_run(
         assert len(runs) == 1
 
 
+@pytest.mark.asyncio
+async def test_save_run_registers_unregistered_model_version(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """TASK-FUT-048: the live calibration sweep records runs for
+    ``seasonal_naive@v1``, a model that never passes through
+    ``ModelRepository.register``. Before the fix, the INSERT into
+    ``evaluation_runs`` died with ORA-02291 (parent key not found) because
+    no ``model_registry`` row existed; SQLite raises the same failure as an
+    IntegrityError with foreign_keys=ON.
+    """
+    version = "seasonal_naive@v1"
+    async with session_factory() as session:
+        run_id = await EvaluationRepository(session).save_run(
+            model_version=version,
+            dataset_name="live_telemetry_calibration",
+            metrics={"brier_score": 0.12, "ece": 0.03},
+        )
+        await session.commit()
+
+    async with session_factory() as session:
+        registry = (
+            await session.execute(
+                select(ModelRegistryModel).where(
+                    ModelRegistryModel.model_version == version
+                )
+            )
+        ).scalar_one_or_none()
+        assert registry is not None
+        assert registry.is_active is False
+        runs = (
+            await session.execute(
+                select(EvaluationRunModel.run_id).where(
+                    EvaluationRunModel.model_version == version
+                )
+            )
+        ).scalars().all()
+        assert runs == [run_id]
+
+
+@pytest.mark.asyncio
+async def test_save_run_does_not_duplicate_registered_model(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """TASK-FUT-048: the ensure-parent step is a no-op for a registered model."""
+    from futuris.core.schemas import ModelInfo
+
+    version = f"test:registered@v1-{uuid4().hex[:8]}"
+    async with session_factory() as session:
+        await ModelRepository(session).register(
+            ModelInfo(
+                model_version=version,
+                family="statsforecast",
+                config_hash=content_hash_of({"version": version}),
+                promoted_at=datetime.now(UTC),
+                benchmark_scores={},
+            )
+        )
+        await EvaluationRepository(session).save_run(
+            model_version=version, dataset_name="unit", metrics={"crps": 0.1}
+        )
+        await EvaluationRepository(session).save_run(
+            model_version=version, dataset_name="unit", metrics={"crps": 0.2}
+        )
+        await session.commit()
+
+    async with session_factory() as session:
+        stored = (
+            await session.execute(
+                select(ModelRegistryModel.model_version).where(
+                    ModelRegistryModel.model_version == version
+                )
+            )
+        ).scalars().all()
+        assert stored == [version]
+        runs = (
+            await session.execute(
+                select(EvaluationRunModel.run_id).where(
+                    EvaluationRunModel.model_version == version
+                )
+            )
+        ).scalars().all()
+        assert len(runs) == 2
+
+
 def test_every_foreign_key_has_deterministic_flush_order() -> None:
     """Guard: a foreign key without ordering guarantees is a latent 409.
 

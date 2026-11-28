@@ -196,7 +196,12 @@ jobs:
           GUARD_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: python3 scripts/ci_test_collection_audit.py
       - name: Install workflow contract dependencies
-        if: needs.detect-changes.outputs.shared == 'true' || needs.detect-changes.outputs.friday == 'true'
+        # TASK-STR-113 follow-up: gate on any_code, not shared/friday.
+        # Every agent contracts step needs these deps (e.g. httpx);
+        # on an agent-only PR shared/friday are false, so the install
+        # was skipped and the agent step failed at collection.
+        # any_code covers every path any step gate can match.
+        if: needs.detect-changes.outputs.any_code == 'true'
         run: >-
           python -m pip install pytest pytest-asyncio fastapi uvicorn httpx
           pydantic-settings 'sqlalchemy[asyncio]' rich python-dotenv psutil beautifulsoup4

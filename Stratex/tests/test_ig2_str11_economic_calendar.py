@@ -39,6 +39,46 @@ def test_classify_macro_impact():
     assert classify_macro_impact("Crude Oil Inventories") == "low"
 
 
+# TASK-STR-113 follow-up: the 16 non-US GDP rows from M4's classification
+# (docs/collaboration/TASK-STR-113-EVIDENCE.md) — 9 genuine headline +
+# 4 sub-component + 3 substring false-positives. All demote from high.
+NON_US_GDP_ROWS = [
+    ("French GDP", "France"),
+    ("GDP", "Canada"),
+    ("GDP Annualized", "Canada"),
+    ("GDP Quarterly (YoY)", "India"),
+    ("GDP", "Australia"),
+    ("GDP Annualized", "South Africa"),
+    ("Italian GDP", "Italy"),
+    ("GDP", "Brazil"),
+    ("GDP Monthly", "Russia"),
+    ("GDP Implicit Price", "Canada"),
+    ("GDP Capital Expenditure", "Australia"),
+    ("GDP Chain Price Index", "Australia"),
+    ("GDP Final Consumption", "Australia"),
+    ("Gross Debt-to-GDP ratio", "Brazil"),
+    ("Net Debt-to-GDP ratio", "Brazil"),
+    ("Current Account % of GDP", "South Africa"),
+]
+
+
+def test_classify_macro_impact_gdp_us_only():
+    for name, country in NON_US_GDP_ROWS:
+        assert classify_macro_impact(name, country) != "high", (name, country)
+    # US control: Atlanta Fed GDPNow stays high; plain US GDP prints too.
+    assert classify_macro_impact("Atlanta Fed GDPNow", "United States") == "high"
+    assert classify_macro_impact("GDP", "US") == "high"
+    assert classify_macro_impact("Gross Domestic Product", "United States") == "high"
+    # Blank country keeps the historical default (treated as US).
+    assert classify_macro_impact("GDP") == "high"
+    # Class C shapes are never GDP releases, even with a US country.
+    assert classify_macro_impact("Gross Debt-to-GDP ratio", "US") == "low"
+    assert classify_macro_impact("Current Account % of GDP", "US") == "low"
+    assert classify_macro_impact("Current Account % of GDP", "United States") == "low"
+    # A non-US GDP row is still high for another keyword, not for GDP.
+    assert classify_macro_impact("GDP and Consumer Price Index", "France") == "high"
+
+
 def test_classify_earnings_impact():
     assert classify_earnings_impact("NVDA") == "high"
     assert classify_earnings_impact("SMOL") == "medium"
@@ -52,6 +92,22 @@ def test_parse_economic_events():
     assert cpi.impact == "high" and cpi.time == "08:30" and cpi.kind == "macro"
     assert cpi.forecast == "0.2%"
     assert events[2].impact == "low"
+
+
+def test_parse_economic_events_gdp_country_wiring():
+    # The parser must hand the row's country to the classifier (STR-113).
+    payload = {"data": {"rows": [
+        {"eventName": "French GDP", "time": "8:30 AM", "country": "France"},
+        {"eventName": "Atlanta Fed GDPNow", "time": "8:30 AM",
+         "country": "United States"},
+        {"eventName": "Current Account % of GDP", "time": "8:30 AM",
+         "country": "South Africa"},
+    ]}}
+    events = parse_economic_events(payload, DAY)
+    by_name = {e.name: e for e in events}
+    assert by_name["French GDP"].impact == "low"
+    assert by_name["Atlanta Fed GDPNow"].impact == "high"
+    assert by_name["Current Account % of GDP"].impact == "low"
 
 
 def test_parse_earnings():
