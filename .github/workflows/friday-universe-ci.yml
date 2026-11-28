@@ -34,7 +34,43 @@ jobs:
       - name: Install dependencies
         if: needs.detect-voice-changes.outputs.any_code == 'true'
         run: |
-          pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas ruff
+          # TASK-REL-123: pytest-testmon for PR-path test selection.
+          pip install fastapi uvicorn httpx pydantic pytest pytest-cov pytest-testmon requests numpy scipy matplotlib pandas ruff
+
+      # TASK-REL-123: pytest-testmon selection on the PR path.
+      # The engine suites below run with --testmon, which selects only
+      # the tests whose dependencies changed since the last run recorded
+      # in .testmondata. The data file is restored from the Actions
+      # cache: same-branch first (so a second push on one PR reuses the
+      # first push's data), then main (populated by the full-suite runs
+      # on merge/nightly). Cache miss = full run: with no data file
+      # testmon treats every test as new, so the first run after merge
+      # and any PR with no usable cache still run everything.
+      # Only the engine-suites invocation uses --testmon. The other
+      # pytest invocations in this job (HTTP tests, per-agent venv
+      # suites) run without the flag, so testmon is inactive there and
+      # they neither read nor write .testmondata — a second invocation
+      # sharing one data file would otherwise see "nothing changed"
+      # and deselect everything. The per-agent suites keep their
+      # REL-120 subtree gating instead.
+      - name: Restore testmon data (TASK-REL-123)
+        if: needs.detect-voice-changes.outputs.any_code == 'true'
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .testmondata
+          key: testmon-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            testmon-${{ github.ref_name }}-
+            testmon-main-
+      # TASK-REL-123: full suite on merge to main and nightly. The
+      # reset deletes any restored data before the engine run, so
+      # --testmon selects every test AND writes a fresh .testmondata
+      # that the cache step above saves for later PRs. Without the
+      # reset, a merge run would inherit main's data and deselect
+      # tests — the full suite is the backstop for selection misses.
+      - name: Reset testmon data for full-suite run (TASK-REL-123)
+        if: needs.detect-voice-changes.outputs.any_code == 'true' && github.event_name != 'pull_request'
+        run: rm -f .testmondata
 
       # Checklist I5: the seven engine suites run as ONE invocation so coverage
       # accumulates across them, then scripts/coverage_gate.py enforces the
@@ -64,14 +100,25 @@ jobs:
         # TASK-REL-086: on failure the wrapper prints the failing test
         # names + log tail into the check-run summary, so the exact
         # failing test is recoverable without sign-in-gated logs.
+        # TASK-REL-123: this invocation runs with --testmon on every
+        # event. On pull_request the restored cache selects only
+        # affected tests; on push/schedule the reset step above deleted
+        # the data, so it runs the full suite and records fresh data.
+        # A run that selects zero tests still exits 0 (pytest reports
+        # "N deselected").
         run: |
+          if [ -f .testmondata ]; then
+            echo "testmon: cached data present - running affected tests only"
+          else
+            echo "testmon: no cached data - full run (cache miss)"
+          fi
           python3 scripts/ci_failure_summary.py \
             --pytest \
             --check "test-job" \
             --step "Run engine test suites with coverage" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
             --job "test" \
-            -- python3 -m pytest \
+            -- python3 -m pytest --testmon \
             tests/test_real_functional_engines.py \
             tests/test_real_cross_agent_integration.py \
             tests/test_real_advanced_engines.py \
@@ -86,8 +133,14 @@ jobs:
             --cov-report=term-missing \
             --cov-report=json:coverage_ci.json
 
+      # TASK-REL-123: the gate runs on the full suite only (merge to
+      # main / nightly). A testmon-selected PR run covers only the
+      # affected modules, so its partial coverage report cannot meet
+      # the manifest floors — that is selection working, not a
+      # regression disappearing. The tier-1 collection gate above
+      # still runs unconditionally on every PR.
       - name: Coverage gate (regression classes — checklist I5)
-        if: needs.detect-voice-changes.outputs.any_code == 'true'
+        if: needs.detect-voice-changes.outputs.any_code == 'true' && github.event_name != 'pull_request'
         run: |
           python3 scripts/coverage_gate.py coverage_ci.json
 

@@ -10,6 +10,9 @@ __pycache__/
 **/__pycache__/
 .pytest_cache/
 **/.pytest_cache/
+# TASK-REL-123: pytest-testmon dependency data (CI cache only, never committed).
+.testmondata
+**/.testmondata
 .mypy_cache/
 **/.mypy_cache/
 .ruff_cache/
