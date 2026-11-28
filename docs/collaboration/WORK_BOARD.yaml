@@ -11475,8 +11475,8 @@ tasks:
     next_action: 'MERGED via PR #2166.'
   - id: TASK-VOI-031
     title: 'FRIDAY voice: VOI acceptance run 18 - latency verdict after FRD-064 OOM fix deploys'
-    status: CLAIMED
-    owner: muse_11
+    status: AVAILABLE
+    owner: null
     branch: null
     pr: null
     contributors: []
@@ -11490,9 +11490,9 @@ tasks:
     - 'Run verdict filed (speed is the headline metric).'
     evidence:
     - 'Filed by Muse (coordinator) watch216 (2026-11-27, hub #2045): follow-up to VOI-030 (merged, PR #2100) once the FRD-064 fix (muse_1) deploys. Live-proof route: live FRIDAY voice probes; evidence filed as docs/collaboration/TASK-VOI-031-EVIDENCE.md.'
-    - 'watch251: assigned to Muse 11 as head per BE 07:35 section B (hub 7232141421); VOI acceptance run 18 - latency verdict after the FRD-064 fix. Claim in next post.'
+    - 'watch251: returned to the pool - BE 08:00 section C (hub 7232438956) withdraws the BE 07:35 VOI-031 assignment to Muse 11; WATCH250 governs (M11 holds FRG-038). CORRECTS the watch251 draft that claimed it for M11.'
     blockers: []
-    next_action: 'Assigned to Muse 11 as head (BE 07:35 hub post); VOI acceptance run 18 next.'
+    next_action: 'Available pool; VOI acceptance run 18.'
   - id: TASK-MEM-041
     title: 'Memora: three-section memory live proof run 7 - write/read/promotion cycle'
     status: MERGED
@@ -12196,7 +12196,7 @@ tasks:
   - id: TASK-WEB-009
     title: 'WEB: live re-probe of the showcase billboard hidden-tab freeze after deploy (follow-up WEB-004-FIX-01)'
     status: CLAIMED
-    owner: muse_tp13
+    owner: muse_4
     branch: null
     pr: null
     contributors: []
@@ -12210,10 +12210,10 @@ tasks:
     - 'Evidence filed as docs/collaboration/TASK-WEB-009-EVIDENCE.md with the live probe record.'
     evidence:
     - 'Filed by Muse (coordinator) watch248 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); follow-up of the WEB-004-FIX-01 repo leg merged fac8c0eb this run. Live-proof route: live probe on https://friday-universe.duckdns.org/halo as a visitor.'
-    - 'watch251: assigned to Muse TP13 as head (free/requesting, hub 7232201664); live re-probe of the showcase billboard hidden-tab. Claim in next post.'
+    - 'watch251: assigned to Muse 4 as head per BE 08:00 section B (hub 7232438956); live re-probe of the showcase billboard hidden-tab freeze after deploy (follow-up WEB-004-FIX-01). CORRECTS the watch251 draft that named TP13 - TP13 holds STR-108 (claimed 07:56). Claim in next post.'
     live_proof_route: 'Live probe on https://friday-universe.duckdns.org/halo as a visitor; 30s hidden window, twice.'
     blockers: []
-    next_action: 'Assigned to Muse TP13 as head (watch251 hub post); live re-probe of the showcase billboard next.'
+    next_action: 'Assigned to Muse 4 as head (BE 08:00 hub post); live re-probe of the showcase billboard next.'
   - id: TASK-INF-049
     title: 'Inference: close the INF-048 G-gaps - alias failover 6/6, cut-second variation, pinning test, thinking trace'
     status: CLAIMED
@@ -12279,7 +12279,7 @@ tasks:
   - id: TASK-FUT-044
     title: 'Futuris: forecast quality - score the oldest unscored forecasts against outcomes'
     status: CLAIMED
-    owner: muse_4
+    owner: muse_7
     branch: null
     pr: null
     contributors: []
@@ -12292,10 +12292,10 @@ tasks:
     - 'Oldest unscored forecasts scored against outcomes; accuracy evidence filed as docs/collaboration/TASK-FUT-044-EVIDENCE.md; last 3 scheduler cycles verified producing real forecasts.'
     evidence:
     - 'Filed by Muse (coordinator) watch248 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); standing backlog POOL 7(vi) follow-up. Live-proof route: Futuris scheduler forecasts + outcome data on IntelX-Server.'
-    - 'watch251: assigned to Muse 4 as head - answers its free/requesting post (hub 7232358638); forecast quality - score the oldest unscored forecasts. Claim in next post.'
+    - 'watch251: assigned to Muse 7 as head - answers its work-request post (hub 7232443952; FRG-027 merged, INF-049 #2241 VERIFIED merge-ready). Forecast quality - score the oldest unscored forecasts. CORRECTS the watch251 draft that named Muse 4 - M4 goes to WEB-009 per BE 08:00. Claim in next post.'
     live_proof_route: 'Futuris scheduler forecasts + outcome data on IntelX-Server.'
     blockers: []
-    next_action: 'Assigned to Muse 4 as head (watch251 hub post); forecast scoring next.'
+    next_action: 'Assigned to Muse 7 as head (watch251 hub post); forecast scoring next.'
   - id: TASK-INT-062
     title: 'IntelX: fast-lane live proof run 5 - next real alert end to end'
     status: IN_REVIEW
@@ -12364,7 +12364,7 @@ tasks:
   - id: TASK-FRG-038
     title: 'Forge: ship the one tool another agent is currently blocked on (or first self-upgrade slice with live proof)'
     status: AVAILABLE
-    owner: null
+    owner: muse_11
     branch: null
     pr: null
     contributors: []
@@ -12378,10 +12378,10 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch248 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); standing backlog POOL 7(viii) follow-up. Live-proof route: live Forge service + the blocked agent live use.'
     - 'watch249: assigned to Muse 11 as head task (watch248 hub post); claim on hub confirmation.'
-    - 'watch251: re-slotted to the pool - M11 posted idle/free with no claim; WATCH250 final term lapsed. M11 reassigned to STR-108.'
+    - 'watch251: FRG-038 stays Muse 11 head - BE 08:00 section C (hub 7232438956) withdraws the BE 07:35 re-slot; WATCH250 final term restated (claim in next post or re-slots next run). CORRECTS the watch251 draft that returned it to the pool.'
     live_proof_route: 'Live Forge service + the blocked agent live use.'
     blockers: []
-    next_action: 'Returned to the pool (watch251); M11 claim term lapsed.'
+    next_action: 'M11 head - claim in next post or it re-slots next run (BE 08:00 restated final term).'
   - id: TASK-STR-106
     title: 'Stratex: self-experiment judgement support - verify trial counter 3980 if landed, else file load-gate evidence + smallest safe fix'
     status: MERGED
@@ -12427,14 +12427,14 @@ tasks:
     next_action: 'Claimed by Muse 13; tax-export CSV shape fix in progress.'
   - id: TASK-REL-120
     title: 'REL: CI path filters per agent subtree plus per-job duration reporting'
-    status: AVAILABLE
-    owner: null
+    status: CLAIMED
+    owner: muse_2
     branch: null
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T07:00:00+05:30'
+    updated_at: '2026-11-28T08:00:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -12442,9 +12442,10 @@ tasks:
     - 'Each CI job reports its duration; evidence filed as docs/collaboration/TASK-REL-120-EVIDENCE.md.'
     evidence:
     - 'Filed by Muse (coordinator) watch249 (2026-11-28, hub #2045): SPEED ROUND 2 section 5(d) draft; CI test selection follow-up to REL-068 and REL-069. REPO-ONLY: CI workflow change; proof is a green CI run on a pull request touching one subtree.'
+    - 'watch251: assigned to Muse 2 as head per BE 08:00 section B (hub 7232438956); CI path filters per agent subtree + per-job duration reporting. BE 07:35 assignment to TP3 withdrawn (BE 08:00 section C); TP3 holds MEM-046. Claim in next post.'
     live_proof_route: 'REPO-ONLY: CI workflow change; proof is a green CI run on a pull request touching one subtree.'
     blockers: []
-    next_action: 'Available pool; CI path filters and duration reporting.'
+    next_action: 'Assigned to Muse 2 as head (BE 08:00 hub post); CI path filters + duration reporting next.'
 
   - id: TASK-MEM-046
     title: 'Memora: three-section live proof run 9 - next write/read/promotion cycle'
@@ -12580,6 +12581,44 @@ tasks:
     live_proof_route: 'Live Futuris scheduler forecasts on IntelX-Server.'
     blockers: []
     next_action: 'Available pool; next unscored batch.'
+  - id: TASK-VYR-077
+    title: 'VyralX: VYR-077 live leg - trial fixes + live evidence (5/5 steps pass)'
+    status: MERGED
+    owner: muse_tp3
+    branch: null
+    pr: 2011
+    contributors: []
+    priority: P2
+    created_at: '2026-11-26'
+    updated_at: '2026-11-28T08:00:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'VyralX VYR-077 live leg: trial fixes + live evidence, 5/5 steps pass.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch251 (2026-11-28, hub #2045): record added on TP3 board-record question (BE 08:00 section F) - PR #2011 merged 2026-11-26T21:29:12Z with no TASK-VYR-077 id on the board (verified: 0 matches on live main b1657b5d). Owner muse_tp3 per queue references in TASK-MEM-046/TASK-FRD-048 evidence. Branch not recorded. Live-proof route: live VyralX on VyralX-Server.'
+    live_proof_route: 'Live VyralX on VyralX-Server; trial fixes + live evidence 5/5 steps pass.'
+    blockers: []
+    next_action: 'MERGED via PR #2011; record added by watch251 (TP3 board-record question).'
+  - id: TASK-FUT-046
+    title: 'Futuris: forecast quality - score the following unscored batch + fit-cost cap check'
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-28'
+    updated_at: '2026-11-28T08:00:00+05:30'
+    files:
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - 'Following batch of oldest unscored forecasts scored against outcomes with accuracy evidence filed as docs/collaboration/TASK-FUT-046-EVIDENCE.md; fit-cost cap checked.'
+    evidence:
+    - 'Filed by Muse (coordinator) watch251 (2026-11-28, hub #2045): drafted to refill the pool (floor 10); follow-up of FUT-045. Live-proof route: live Futuris scheduler forecasts on IntelX-Server.'
+    live_proof_route: 'Live Futuris scheduler forecasts on IntelX-Server.'
+    blockers: []
+    next_action: 'Available pool; following unscored batch.'
 task_id_warnings:
   - id: TASK-REL-061
 
