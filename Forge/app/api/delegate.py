@@ -20,7 +20,7 @@ from app.api.tasks import (
 from app.core.logging import get_logger
 from app.core.orchestrator import OrchestratorCore
 from app.core.workspace import workspace_manager
-from app.memory.models import TaskMode
+from app.memory.models import TaskMode, TaskState
 from app.memory.state_store import StateStore
 from app.memory.task_lifecycle import TaskStateMachine
 from app.verification.engine import verification_engine
