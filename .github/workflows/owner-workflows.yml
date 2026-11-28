@@ -303,7 +303,8 @@ jobs:
             Forge/tests/test_frg028_build_run.py \
             Forge/tests/test_frg030_gradio_layer.py \
             Forge/tests/test_frg011_verdict_consistency.py \
-            Forge/tests/test_frg009_provider_wiring.py
+            Forge/tests/test_frg009_provider_wiring.py \
+            Forge/tests/test_frg035_test_dependency_provisioning.py
       - name: Direct memory evidence outranks graph-only context
         if: needs.detect-changes.outputs.shared == 'true' || needs.detect-changes.outputs.memora == 'true'
         env:

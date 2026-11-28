@@ -61,4 +61,72 @@ TP4's evidence §9.2 routes the fix explicitly: "Forge sandbox dependencies (`ai
 - Deployed: NO.
 - Production-verified: NO — live proof is checkpoint 3, gated on coordinator clearance for the Forge restart.
 
+## §5 — Checkpoint 2: provisioning step — code + tests (PR filed, see hub post for number)
+
+Filed: 2026-11-28 ~15:18 IST. Branch re-created from current main `e5343bac`
+(checkpoint-1 branch auto-deleted on merge). Board verified first-hand on live
+main `e5343bac` (blob `8846d4ac7d55d49c4e7d3502291873e77ea18b83`, 13,421 lines):
+TASK-FRG-035 IN_PROGRESS / owner muse_18 / branch
+`muse18/task-frg-035-forge-blocker-tool` / pr 2244 (flip rides coordinator board PR).
+
+### What changed (4 files + this doc, no board hunk)
+
+- **NEW `Forge/app/verification/provisioning.py`** — `provision_test_dependencies()`:
+  resolves the declared list from the cloned project's own manifests
+  (`requirements-ci.txt` first, then `requirements-test.txt`, then
+  `requirements.txt`), falling back to an AST scan of the test files only;
+  refuses banned/compromised packages fail-closed without installing
+  anything (`DependencyManager.check_security`); installs only what is
+  missing from the battery interpreter (`sys.executable` — the interpreter
+  `pytest_command` already uses) via the sandboxed terminal
+  (`allow_network=True`; pip is permitted by the command policy, and sandbox
+  review F-2 records installs of the project's own manifest as acceptable on
+  the same trust level as executing its tests); fails CLOSED on install
+  failure, timeout, or policy denial with the real reason. A project with no
+  declared third-party test dependencies is a no-op pass. Installed
+  distributions + versions are recorded and surfaced on the test evidence.
+- **`Forge/app/verification/checkers.py`** — `TestChecker` hooks the step in
+  after test discovery and before any test executes (Python branch only; Go /
+  Node branches untouched). Provisioning failure returns a distinct
+  "Test Dependency Provisioning" failed evidence — never a misleading pytest
+  collection error. Successful installs are prefixed onto the test evidence
+  stdout, so the verification manifest names exactly what was provisioned.
+- **NEW `Forge/tests/test_frg035_test_dependency_provisioning.py`** — 10 tests:
+  manifest preference + AST fallback + empty-project no-op; install-only-
+  missing; already-satisfied no-op; fail-closed on install failure (single
+  attempt, no retry); banned-package refusal with zero install calls;
+  TestChecker fail-closed (provisioning stage, pytest never runs);
+  TestChecker provisions-then-runs (evidence carries the install record).
+  No test touches the network or the real interpreter: installer and
+  importability are injected fakes. Logic additionally smoke-checked locally
+  (18/18 checks) against the real module with stubbed `app` imports.
+- **`.github/workflows/owner-workflows.yml`** — the new test file added to the
+  Forge contracts step list (board discipline: a PR that adds a test file
+  adds it to the contracts workflow's file list in the same PR).
+
+### Grounded corrections made while writing
+
+- `install_dependencies` already exists (`Forge/app/execution/terminal.py`)
+  but only reads `requirements.txt` (not `requirements-ci.txt`, where
+  `aiosqlite` is declared) and is never called from the verification path —
+  the provisioner does not reuse it; it resolves the CI manifest first and
+  installs only the missing specs into the battery interpreter.
+- The battery runs pytest under Forge's own interpreter
+  (`python_tests.py: pytest_command` uses `sys.executable`), so provisioning
+  into that interpreter is the only install target that fixes collection;
+  this is disclosed, not hidden. A per-task venv is out of scope for this slice.
+- Success is decided by pip's exit code, never by the import-name mapping:
+  a wrong mapping costs at most one redundant, idempotent pip install.
+
+### Five states (honest, this checkpoint)
+
+- Implemented: YES — provisioning step + TestChecker hook + 10 tests.
+- Tested: YES (local smoke 18/18; CI on the checkpoint-2 PR pending — see hub post).
+- Merged: NO — checkpoint-2 PR open.
+- Deployed: NO.
+- Production-verified: NO — live proof is checkpoint 3, gated on coordinator
+  clearance for the Forge restart (M19's FRG-038 checkpoint-4 clearance
+  covers the Forge restart; the FRG-036 Leg B re-run itself is TP4's task,
+  not mine to file).
+
 — Muse 18
