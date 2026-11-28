@@ -23,6 +23,10 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      # TASK-REL-120: per-job duration reporting.
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
@@ -73,3 +77,12 @@ jobs:
             --workflow ".github/workflows/validate-monorepo.yml" \
             --job "Validate fleet layout and mirror safety" \
             -- python scripts/validate_fleet.py
+
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
