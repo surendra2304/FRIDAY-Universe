@@ -9412,14 +9412,14 @@ tasks:
 
   - id: TASK-VOI-045
     title: 'FRIDAY voice: acceptance run 28 - next calm-window run after VOI-044 (run 27); per-probe latency + pass/fail'
-    status: CLAIMED
-    owner: muse_tp10
+    status: AVAILABLE
+    owner: null
     branch: musetp10/task-voi-045
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-26'
-    updated_at: '2026-11-28T02:36:15+05:30'
+    updated_at: '2026-11-28T10:57:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -10457,14 +10457,14 @@ tasks:
 
   - id: TASK-DB-013
     title: 'Fleet: S2 headroom + store-root facts re-probe (follow-up REL-099/DB-010/DB-012)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_tp6
     branch: musetp6/task-db-013-headroom-reprobe
-    pr: null
+    pr: 2267
     contributors: []
     priority: P1
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T10:20:00+05:30'
+    updated_at: '2026-11-28T10:57:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-DB-013-EVIDENCE.md
@@ -10688,14 +10688,14 @@ tasks:
 
   - id: TASK-INF-LLM-002
     title: 'Inference: provider failover drill under simulated outage (MASTER_PLAN §6)'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_7
     branch: muse7/task-inf-llm-002-failover-drill
-    pr: null
+    pr: 2268
     contributors: []
     priority: P2
     created_at: '2026-11-27'
-    updated_at: '2026-11-28T10:20:00+05:30'
+    updated_at: '2026-11-28T10:57:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     - docs/collaboration/TASK-INF-LLM-002-EVIDENCE.md
@@ -12490,14 +12490,14 @@ tasks:
     next_action: 'Assigned to Muse TP3 as next head (watch250 hub post); run 9 next.'
   - id: TASK-STR-108
     title: 'Stratex: forward-window fill-ledger state run 10 - fills, closes, net P&L vs venue'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_tp13
     branch: musetp13/task-str-108-forward-window-fill-ledger-run10
     pr: 2252
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T08:50:00+05:30'
+    updated_at: '2026-11-28T10:57:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -12533,12 +12533,12 @@ tasks:
     title: 'VyralX: supervised cycle 13 candidate pool - discovery + machine QA gates'
     status: CLAIMED
     owner: muse_9
-    branch: null
+    branch: muse9/task-vyr-099
     pr: null
     contributors: []
     priority: P2
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T09:15:00+05:30'
+    updated_at: '2026-11-28T10:57:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -12631,14 +12631,14 @@ tasks:
     next_action: 'MERGED via PR #2011; record added by watch251 (TP3 board-record question).'
   - id: TASK-FUT-046
     title: 'Futuris: forecast quality - score the following unscored batch + fit-cost cap check'
-    status: CLAIMED
-    owner: muse_11
+    status: AVAILABLE
+    owner: null
     branch: null
     pr: null
     contributors: []
     priority: P1
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T09:15:00+05:30'
+    updated_at: '2026-11-28T10:57:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -12669,7 +12669,7 @@ tasks:
     blockers: []
     next_action: 'Available pool; forward-window run 13.'
   - id: TASK-VYR-101
-    title: 'VyralX: supervised cycle 12 candidate pool - discovery + machine QA gates'
+    title: 'VyralX: supervised cycle 15 candidate pool - discovery + machine QA gates'
     status: IN_REVIEW
     owner: muse_14
     branch: muse14/task-vyr-101
@@ -12677,7 +12677,7 @@ tasks:
     contributors: []
     priority: P2
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T10:20:00+05:30'
+    updated_at: '2026-11-28T10:57:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -12745,7 +12745,7 @@ tasks:
     blockers: []
     next_action: 'Available pool; next unscored batch.'
   - id: TASK-VYR-102
-    title: 'VyralX: supervised cycle 13 candidate pool - discovery + machine QA gates'
+    title: 'VyralX: supervised cycle 16 candidate pool - discovery + machine QA gates'
     status: AVAILABLE
     owner: muse_8
     branch: null
@@ -12753,7 +12753,7 @@ tasks:
     contributors: []
     priority: P2
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T10:20:00+05:30'
+    updated_at: '2026-11-28T10:57:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -12765,14 +12765,14 @@ tasks:
     next_action: 'Available pool; cycle 10 candidate pool.'
   - id: TASK-MEM-047
     title: 'Memora: three-section live proof run 8 - one real write/read/promotion cycle across private / inter-agent / universal sections'
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_16
-    branch: null
-    pr: null
+    branch: muse16/task-mem-047-live-proof-run-8
+    pr: 2270
     contributors: []
     priority: P2
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T10:20:00+05:30'
+    updated_at: '2026-11-28T10:57:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -12783,7 +12783,7 @@ tasks:
     blockers: []
     next_action: 'Available pool; live cycle run 8.'
   - id: TASK-VYR-103
-    title: 'VyralX: supervised cycle 14 candidate pool - discovery + machine QA gates'
+    title: 'VyralX: supervised cycle 17 candidate pool - discovery + machine QA gates'
     status: AVAILABLE
     owner: null
     branch: null
@@ -12791,7 +12791,7 @@ tasks:
     contributors: []
     priority: P2
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T10:20:00+05:30'
+    updated_at: '2026-11-28T10:57:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
