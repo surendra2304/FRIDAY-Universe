@@ -202,9 +202,34 @@
 - **Cron verified:** muse3-hourly-self-check + muse3-weekly-reset (Sat 11:34) enabled; muse3-work-request absent (correct while mid-task). No usage exhaustion evidence; weekly reset due today 11:34 IST. No cancellations made.
 - No server moves (owner stop order 7130069033); no deploys/restarts without hub clearance; demo only.
 
-## Next (checkpoint 9 — wrap-up)
+## Checkpoint 9 — wrap-up: live daemon re-probe + #2278 VERIFIED
 
-- All five wave-1 items now have live legs on record: IG2-STR-09 VERIFIED (checkpoint 7 re-run on merged fix), IG2-STR-10 live legs PASS with 2 coordinator flags (checkpoint 2), IG2-STR-11 VERIFIED (checkpoint 5, NARROW applied checkpoint 6), IG2-STR-12 VERIFIED as run — record does not support promotion (checkpoint 6), IG2-STR-13 live re-check ×2, recorded FAIL/CLOSED stands (checkpoints 6 + 8), full-allowlist load scan (checkpoint 8). Remaining: open the work PR for this evidence branch and request paired verification; completion on merge + paired VERIFIED.
+- **Filed:** 2026-11-28 ~12:20 IST, by Muse 3. Repairs the ~1h silence since checkpoint 8 (~11:20 IST): branch head was unchanged at `0279bb40`; this checkpoint is the repair. Live legs ran this check, all read-only, daemon untouched.
+- **Hub read (verified first-hand, through WATCH260 comment 7235389912, ~12:05 IST):** WATCH260 read in full. **One Muse 3 item: paired verdict #2278 → Muse 3, due ~13:00 IST** — filed as review 6096334507 (see below); reassigned from TP11 (checkpoint 8 named TP11; WATCH260 §E governs). **No new Muse 3 head assignment** (WATCH260 §D names M9/M7/M2/M8/TP6/M13/M19/M15/M14/M1/M11 — no M3). Main moved `42ba9151` → `e8dfd88f` during the window (6 merges, §A). WATCH260 §C: the execution-risk check flagged the coordinator's own clone this run — standing handling is API-route verification, no flagged checkout processed; this run used the GitHub API + bridge only, no local clone. Board PR deferred to WATCH261 (§C); flips owed ride it (§G).
+- **Board (verified first-hand, live main blob `9b9b9301`, 1,607,401 bytes — the contents API returns empty content for files over 1 MB, so the board was read via the git blob API):** TASK-STR-074 still CLAIMED / owner muse_3 / branch `muse3/task-str-074-production-verify-wave1` / pr null / P1.
+
+### Paired verdict #2278 (INT-063 checkpoint 1, Muse 10) — VERIFIED, filed ~12:17 IST
+
+- **Review 6096334507**, ~43 min early of the ~13:00 due. Filed as a COMMENT review, not APPROVE: the shared `surendra2304` credential owns the PR, so GitHub rejects APPROVE — the review body states VERIFIED plainly; same constraint as prior verdicts.
+- **Diff read in full (1 file, +69/-0):** evidence-only add of `docs/collaboration/TASK-INT-063-EVIDENCE.md`. No code, no board hunk. **CI 9/9 green on head `a62e6f4a`** first-hand (7 success + 2 skipped). **Mergeable True / clean.** No other reviews — this is the paired verdict of record.
+- **Claim verified first-hand:** hub comment 7234554674 (~10:45 IST, BE 10:45 §C); board at claim-time main `7ecab6ce` (blob `f2504f88a358873d…`): INT-063 AVAILABLE / owner null / branch null / pr null / P1.
+- **Live re-probe first-hand (all read-only):** gateway `/intelx/v1/watches/outbox` → 404 `{"detail":"Not Found"}`; `/friday/health` → 200 healthy (FRIDAY-Server AWS, not S1). S1: FRIDAY.service inactive/disabled, IntelX.service masked + failed, outbox 1,823 bytes mtime Nov 23 22:03 sha256 `9cc7124d…f0` (unchanged), `FRIDAY/.env` 0 matches for the two `INTELX_WATCH_*` vars (names only), route present `router.py:105`. S2: no IntelX/uvicorn process, `IntelX/data/` only `test_intelx.db` (413,696 bytes, Nov 27 13:45), no `*.jsonl`/`state.json`, route present, checkout `musetp4/task-frg-036-rerun3-evidence` @ `69ff042b`. Both Oracle servers ONLINE. **INT-060 merged: PR #2076 merged True, merge commit `e4018092`.**
+- **Flags:** S2 disk tightened since M10's probe — 93% used / 3.8G free (was 89% / 5.5G at ~10:47 IST), free 7.8%, below the 10% headroom line; coordinator's call, not a verdict blocker. IntelX-Server probe NOT re-probed by me (WATCH260 §F: M10's, owner). Verdict scope is pre-deploy state only — tested/deployed/production-verified correctly NO; deploy + restart clearance still owed from the coordinator.
+- **Verdict: MERGE.** Merge is the coordinator's call.
+
+### Live daemon state re-probe — Stratex-Server (2026-11-28T06:43:59Z / 12:13:59 IST)
+
+- **What ran:** read-only read of the live daemon heartbeat, ledger hash, and scorecard reconciliation on S4. No injection, no signal, no restart.
+- **Daemon:** PID 74531 RUNNING (same PID since Nov 27); scan_count 2797 (2606 → 2797 since checkpoint 8, ~1 cycle per ~17 s at the 15 s interval — still cycling). Last cycle: scanned 2310 / signals 0 / executed 0 / errors 0 / symbols 30 / symbols_1d 30. Equity $10,494.25, balance $10,436.70, unrealized +$57.55, realized +$46.87, 30 open positions, daily breaker NOT hit, daily start equity $10,472.97. Venues `[binance_futures]` only.
+- **Ledger unchanged:** `fill_ledger.jsonl` sha256 `5e657087099259764596059b989d66191cad0fc23d90795abdde0f5bcb910a21`, 84 lines — identical since checkpoint 1. No new fills.
+- **Scorecard reconciliation re-read — binance_futures STILL DISCREPANCY:** unexplained 71.2531 (was 57.0731 at checkpoint 8 — grew ~14.18) vs tolerance 5.0; expected equity 4912.0769 vs current 4983.33; ledger_window_net −87.9231 over 73 fills; snapshot 2026-11-28T05:30:46Z. STR-112 run 14 merged (#2277 → `5a20c712`, WATCH260 §A) but the LIVE scorecard still shows DISCREPANCY — the merge did not change live daemon state (no deploy), and the gap moved. OANDA RECONCILED (0.0045), oanda_practice RECONCILED (0.0). `measurement_alerts` still `["fill_ledger_reconciliation_discrepancy"]`. Flag for the coordinator, not re-litigated here; no separate fix task named.
+- **Daemon untouched (verified before/after):** PID 74531 RUNNING throughout; ledger sha identical at every snapshot. No probe files left on S4 (inline reads only); local copies in `~/workspace/muse3/task-str-074/` (checkpoint9_notes.txt).
+- **Cron verified:** muse3-hourly-self-check + muse3-weekly-reset (Sat 11:44) enabled; muse3-work-request absent (correct while mid-task). No usage exhaustion evidence; weekly reset fired today 11:34 IST, next reset Dec 5 11:34 IST. No cancellations made.
+- No server moves (owner stop order 7130069033); no deploys/restarts without hub clearance; demo only.
+
+## Next (work PR)
+
+- All five wave-1 items now have live legs on record: IG2-STR-09 VERIFIED (checkpoint 7 re-run on merged fix), IG2-STR-10 live legs PASS with 2 coordinator flags (checkpoint 2), IG2-STR-11 VERIFIED (checkpoint 5, NARROW applied checkpoint 6), IG2-STR-12 VERIFIED as run — record does not support promotion (checkpoint 6), IG2-STR-13 live re-check ×2, recorded FAIL/CLOSED stands (checkpoints 6 + 8), full-allowlist load scan (checkpoint 8). Work PR for this evidence branch opens this run; completion on merge + paired VERIFIED. Board flip rides the coordinator board PR (WATCH261), not this work PR.
 - No server moves (owner stop order 7130069033); no deploys/restarts without hub clearance; demo only.
 
 ## Five states
