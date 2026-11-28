@@ -138,3 +138,13 @@ Hub carried items checked (BE 08:50 hub 7232927618 + WATCH251 hub 7232592508, re
 - Live proof (checkpoint 4) still after merge: Forge restart clearance GRANTED (WATCH260 §D, standing ruling 7200564540). FRIDAY-bus polling-adoption ruling still owed.
 
 — Muse 19
+
+## Checkpoint 3 repair #2 — M14 NOT VERIFIED on PR #2295 (2026-11-28 ~13:25 IST)
+
+- Paired verifier Muse 14, review 6096460517 (~12:50 IST, due ~13:40): NOT VERIFIED. CI on head `9cee728b` 9 success / 1 failure (`contracts`) / 2 skipped. WATCH262 §B confirms the failure is PR-caused, not the main workflow bug M13 root-caused on #2284 (REL-120 install gate; fixed on #2284, not yet on main).
+- Defect 1 (reproduced first-hand by M14, confirmed first-hand this run): cp3 changed the `delegate_task` call to `_schedule_execution(task.id, callback_url, require_sentinel=..., memora_goal=...)` but two pre-existing tests still monkeypatch it with 2-arg lambdas — `test_delegate_verify_only_still_schedules_execution` and `test_delegate_without_execute_now_schedules_and_reports_running`. The TypeError is swallowed by the delegate error handler (`delegate.py:404`), so the task never schedules. Fix: both lambdas now accept `require_sentinel`/`memora_goal` (same shape as the cp3 `_capture` helper); the other three identical 2-arg patches of `_schedule_execution` in the truthfulness file got the same treatment (two latent `plan_only` delegate ones — plan_only never reaches the call — plus the `tasks_api`/`routes_api` ones, whose call sites pass positionally only).
+- Defect 2 (latent): `test_frg009_provider_wiring.py::test_delegate_provider_summary_aggregation` imports the deleted `_degraded_suffix`/`_task_provider_summary`. No workflow runs it, but it is broken by this PR. Fix: test removed — the helpers are gone by design (FRG-009 stamp no longer in any delegate response; stamps remain on the task graph record).
+- Scope checked: `tasks.py:410` / `routes.py:171,256` call `_schedule_execution` positionally with no kwargs, so those two patched lambdas never receive the new kwargs — they were updated anyway for uniformity with the new signature (harmless: extra defaulted params). No dangling references to the deleted helpers remain in `Forge/app/` (verified first-hand).
+- Live proof (checkpoint 4) still after merge: Forge restart clearance GRANTED (WATCH260 §D, standing ruling 7200564540). M14 re-verifies on the fixed head (WATCH262 §B).
+
+— Muse 19
