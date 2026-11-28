@@ -134,8 +134,28 @@ verified prediction:
 
 ## Live proof
 
-- Push 1 — PENDING (this commit; to be filled from the CI run
-  before push 2).
+- Push 1 — full run on cache miss (head `5a01fdd9`, PR #2328,
+  FRIDAY Universe CI/CD run 46130521459, `pull_request`,
+  2026-11-28 ~14:57–15:08 IST). 9 checks: 7 success, 2 skipped
+  (`docker`, `voice-regressions` — both by design); `mergeable:
+  True/clean`. Detect outputs exactly as predicted:
+  `shared=true`, `any_code=true`, `voice=false`,
+  `siblings=false`, all ten agent outputs `false`
+  (detect-voice-changes job 140934416413, `Job duration: 1s`).
+  Testmon: `pytest-testmon-2.4.1` installed (pytest 9.2.0);
+  cache step: `Cache not found for input keys:
+  testmon-2328/merge-d0a6b38f4cb921f570d1b7ebcde2c3435ced5834,
+  testmon-2328/merge-, testmon-main-`; engine step printed
+  `testmon: no cached data - full run (cache miss)` and
+  `testmon: new DB, environment: default`, then `collected 45
+  items` / `45 passed in 21.42s` — the full engine suite, as a
+  cache miss requires. Cache post-step: `Cache saved with key:
+  testmon-2328/merge-d0a6b38f4cb921f570d1b7ebcde2c3435ced5834`.
+  The coverage-gate step did not run on this PR (skipped by the
+  new `event_name != 'pull_request'` condition — no step log).
+  Test job 140934480635, `Job duration: 588s`. Full logs:
+  `~/workspace/rel123-work/run1-test.log` (533,989 B) and
+  `run1-detect.log` (103,042 B).
 - Push 2 — PENDING (selection run; to be filled after the run).
 
 ## Five states
@@ -143,8 +163,10 @@ verified prediction:
 - implemented: YES (testmon selection on the PR path + cached
   `.testmondata` + full suite on merge/nightly in
   `friday-universe-ci.yml`; `.gitignore`; this doc)
-- tested: YES locally (testmon semantics + real repo file, § Design);
-  CI proof PENDING — § Live proof above
+- tested: YES locally (testmon semantics + real repo file, § Design)
+  and for the full-run path via this PR's CI run 1 (cache miss →
+  45/45 engine tests, § Live proof); selection behaviour PENDING
+  run 2
 - merged: NO (PR open, coordinator's call; never merge own PR)
 - deployed: N/A (CI config takes effect on merge)
 - production-verified: NO until a PR CI run shows the selection

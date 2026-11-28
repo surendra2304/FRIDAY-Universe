@@ -46,6 +46,8 @@ jobs:
       # on merge/nightly). Cache miss = full run: with no data file
       # testmon treats every test as new, so the first run after merge
       # and any PR with no usable cache still run everything.
+      # Live proof of selection is filed in
+      # docs/collaboration/TASK-REL-123-EVIDENCE.md (§ Live proof).
       # Only the engine-suites invocation uses --testmon. The other
       # pytest invocations in this job (HTTP tests, per-agent venv
       # suites) run without the flag, so testmon is inactive there and

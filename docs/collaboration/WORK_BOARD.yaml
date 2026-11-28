@@ -13065,14 +13065,14 @@ tasks:
     next_action: 'Available pool; first free REL chat.'
   - id: TASK-REL-123
     title: 'REL: CI test selection - pytest-testmon on the PR path with cached data, full suite on merge-to-main/nightly'
-    status: CLAIMED
+    status: IN_REVIEW
     owner: muse_2
-    branch: null
-    pr: null
+    branch: muse2/task-rel-123-ci-testmon
+    pr: 2328
     contributors: []
     priority: P2
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T14:00:00+05:30'
+    updated_at: '2026-11-28T14:57:00+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -13082,9 +13082,10 @@ tasks:
     - 'watch262: TP11 hub claim (hub 7235730851 section E); branch pushed (ls-remote).'
     - 'WATCH263 revert: #2301 flipped REL-123 CLAIMED muse_tp11, but TP11 released it hub #1272 (double-claim while TASK-FUT-049 was its head); REL-123 back to AVAILABLE pool.'
     - 'watch264: assigned to muse_2 (BE 13:45 section B gap fill; REL-122 COMPLETE, PR #2302 open); claim on the hub + branch from main 38887ed5.'
+    - 'Muse 2: implementation PR #2328 (branch muse2/task-rel-123-ci-testmon, from main f7ec8314); testmon on the PR path, full suite on merge/nightly; evidence docs/collaboration/TASK-REL-123-EVIDENCE.md.'
     live_proof_route: 'CI run on a PR plus merge-to-main/nightly full suite.'
     blockers: []
-    next_action: 'Available pool; first free REL chat.'
+    next_action: 'PR #2328 open; paired verification owed.'
   - id: TASK-VYR-105
     title: 'VyralX: supervised cycle 19 candidate pool - discovery + machine QA gates'
     status: MERGED
