@@ -75,9 +75,19 @@
 - **IG2-STR-09 verdict for this wave: NOT VERIFIED live.** The module is correct for its designed testnet ledger shape (its 6 tests pass on fixture records), but its export is not tax-ready for the live daemon ledger as-is: proceeds/cost basis are zero, dates are blank, venue is Unknown. Per board acceptance, this gets a named fix task, never a verified mark. **Proposed fix (coordinator to name):** adapt `build_tax_rows` to accept the daemon ledger fields (`qty`, epoch `entry_time`/`exit_time`, `venue`, `side`, `order_id`) while keeping the testnet shape working; re-run this live leg after the fix.
 - **Daemon untouched (verified before/after):** PID 74531 RUNNING throughout; `fill_ledger.jsonl` sha256 `5e657087099259764596059b989d66191cad0fc23d90795abdde0f5bcb910a21`, 84 lines, identical pre/post; heartbeat scan_count 1707, last cycle scanned 2310 / signals 0 / executed 0 / errors 0 / 30 symbols. Same ledger hash as checkpoints 1–2 (no new fills since 2026-11-27T02:26Z).
 
-## Next (checkpoint 4)
+## Checkpoint 4 — bridge outage; hub read + stall repair (no live leg this run)
 
-- IG2-STR-11 (calendar context in a live cycle), IG2-STR-12 (Bayesian uncertainty on live fills), IG2-STR-13 (live re-check; see checkpoint-1 flag).
+- **Filed:** 2026-11-28 ~07:15 IST, by Muse 3. Repairs the ~1h silence since checkpoint 3 (06:15 IST): branch head was unchanged at `0bb3aab9` for ~1h; this checkpoint is the repair. No live leg ran this check — the bridge was down (see below); nothing here claims a live result.
+- **Hub read (verified first-hand, through comment 7231818604, 07:08:57 IST):** BE 06:45 (hub 7231544120), WATCH249 (hub 7231716845), BE 07:05 (hub 7231776459) read in full. **No new Muse 3 assignment.** STR-107 — the fix task for the IG2-STR-09 live tax-export CSV shape proposed in checkpoint 3 — is assigned to Muse 13 as head task (WATCH249 §B; BE 07:05 §B: "STR-107: fix the IG2-STR-09 live tax-export CSV shape (Muse 3 checkpoint 3). Claim in your next post."); assignment call closed. M13's IG2-FRD-01-ACTIVATE-01 is BLOCKED owner-gated (mailbox creds absent from the FRIDAY `.env`); IG2 returns to the pool.
+- **Board (verified first-hand, live main blob `46dd5277` via blob API):** TASK-STR-074 still CLAIMED / owner muse_3 / branch `muse3/task-str-074-production-verify-wave1` / pr null / P1, updated 2026-11-28T03:08:48+05:30. No reassignment, no competing claim.
+- **Bridge outage (blocks the IG2-STR-11 live leg):** `get_system_info` via the bridge connector client failed 4× this run (~07:10–07:18 IST): 2× 45 s timeout ("MCP request did not complete"), 2× "MCP event stream ended before the matching result". Endpoint itself is HTTP-reachable (curl ~07:12 IST: `/bridge/mcp` 406, root 200) — the MCP layer is not completing calls. No run_shell probe was attempted (no point while the session handshake fails); no live leg, no daemon contact. IG2-STR-11 (calendar context in a live cycle) is DEFERRED to the next check pending bridge recovery.
+- **Daemon state — last-known only, NOT re-verified this run:** checkpoint 3 (00:35Z): PID 74531 RUNNING, `fill_ledger.jsonl` sha256 `5e657087099259764596059b989d66191cad0fc23d90795abdde0f5bcb910a21`, 84 lines, scan_count 1707, equity $10,471.47. No current probe exists — the bridge outage means no fresh daemon state this run.
+- **IG2-STR-09 verdict stands:** NOT VERIFIED live (checkpoint 3); fix now owned by Muse 13 as STR-107.
+- No server moves (owner stop order 7130069033); no deploys/restarts without hub clearance; demo only.
+
+## Next (checkpoint 5)
+
+- IG2-STR-11 (calendar context in a live cycle) FIRST when the bridge recovers, then IG2-STR-12 (Bayesian uncertainty on live fills), IG2-STR-13 (live re-check; see checkpoint-1 flag).
 - Full-allowlist load scan last, results from the live ledger. No server moves (owner stop order 7130069033); no deploys/restarts without hub clearance; demo only.
 
 ## Five states
