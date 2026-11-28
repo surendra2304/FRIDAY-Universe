@@ -122,11 +122,43 @@ discriminates. `voice-regressions` is skipped (`voice=false`) and
 
 ## Live proof
 
-PENDING — filled after the first CI run on this PR (commit 2
-amends this section with the run IDs, the detect-job outputs as
-observed, and the `Job duration:` lines from each job log; code
-and workflow content on the final head are byte-identical to the
-proof head except for this doc and the board flip).
+PR #2274 CI run on head `cf71632b` (base `7ecab6ce`), 2026-11-28
+~10:16 IST. 10 workflow runs, all completed/success; 14 check-runs:
+12 success, 2 skipped (`docker`, `voice-regressions` — both by
+design: PR, not main; `voice=false`).
+
+- FRIDAY Universe CI/CD — run 46109068112. `detect-voice-changes`:
+  12 changed files detected; `shared=true`, `any_code=true`,
+  `voice=false`, `siblings=false`, `friday=false`, `memora=false`,
+  `cortex=false`, `stratex=false`, `forge=false`,
+  `inference=false`, `sentinel=false`, `intelx=false`,
+  `futuris=false`, `vyralx=false` — exactly the predicted outputs.
+  `test` ran FULL (per-agent venvs, tier-1 collection gate,
+  coverage gate) and passed. `Job duration: 0s`
+  (detect-voice-changes), `Job duration: 411s` (`test`).
+- Owner Workflow Contracts — run 46109068065. `detect-changes`:
+  `shared=true`, `any_code=true`, `friday=false`, `forge=false`,
+  `memora=false`, `inference=false`, `futuris=false`,
+  `intelx=false`, `stratex=false`, `vyralx=false` — exactly the
+  predicted outputs. `contracts` ran FULL and passed.
+  `Job duration: 1s` (detect-changes),
+  `Job duration: 378s` (`contracts`).
+- Other runs, all success: Heavy-Task Runtime Image Build
+  46109068097 (`Job duration: 303s`); Secret Scanning 46109068088
+  (`2s`); Lighthouse CI 46109068072 (`14s`); Voice startup
+  regressions 46109068143 (`32s`); Collaboration Registry
+  Validation 46109068204 (`56s`); Python 3.11+ Import Gate
+  46109068106 (`63s`); Monorepo Structure and Safety CI
+  46109068108 (`143s`) and 46109068212 (`162s`).
+
+Predicted-vs-actual detect outputs match exactly on both detect
+jobs: the filter discriminates (per-agent outputs `false` while
+`shared` is `true`), and the shared-path PR correctly ran the full
+suite. PR #2274 MERGED 2026-11-28 11:21:40 IST (merge `e1fac2be`);
+paired VERIFIED by Muse 12 (review 6096031871) and Muse 19
+(review 6096155788). Transcribed in the close-out PR — code and
+workflow content are byte-identical to the proof head (`cf71632b`);
+only this doc and the board flip changed.
 
 ## Five states
 
@@ -136,7 +168,7 @@ proof head except for this doc and the board flip).
   § Live proof); single-subtree skip behaviour verified by
   design + predicted-vs-actual detect outputs, live confirmation
   on the next single-subtree PR post-merge by the paired verifier
-- merged: NO (awaiting coordinator merge)
+- merged: YES (PR #2274, merge e1fac2be, 2026-11-28 11:21 IST)
 - deployed: N/A (CI config takes effect on merge)
 - production-verified: NO until a post-merge single-subtree PR
   shows the filtered run and the first nightly run (02:00 UTC)
