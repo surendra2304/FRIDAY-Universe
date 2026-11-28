@@ -62,7 +62,7 @@ Hub carried items checked (BE 08:50 hub 7232927618 + WATCH251 hub 7232592508, re
 - Tested: NO.
 - Merged: NO — no PR yet (checkpoint PRs abolished; work PR at completion with live evidence).
 - Deployed: NO.
-- Production-verified: NO — live proof is checkpoint 3, gated on coordinator clearance for the Forge restart.
+- Production-verified: NO — live proof is checkpoint 4, gated on coordinator clearance for the Forge restart.
 
 ## §5 — Grant note
 
@@ -87,7 +87,7 @@ Hub carried items checked (BE 08:50 hub 7232927618 + WATCH251 hub 7232592508, re
   2. Memora writeback on all-passed (:602–616) likewise has no background home — same decision.
   3. Completion receipt (`_forge_receipt`, :640–650) is issued only on the synchronous SUCCESS return; background completion notifies via webhook with state+error only (`_run_task_body`, tasks.py:120–155) and the settled verdict via `GET /tasks/{id}`. Whether the bus's receipt verification accepts that is part of the coordinator ruling owed on FRIDAY-bus polling adoption (cp1 follow-up, still owed — no ruling in WATCH253–256 / BE 09:10–10:16).
 - **Supersedes cp1 §3 step 2:** "code lands in checkpoint 2" is corrected — code is designed here, lands next run. The `execute_now` branch is ~230 lines with three return shapes plus the Sentinel gate, and it is not rushed without a local test runner (pytest/fastapi absent in this VM — same constraint as the 01:17 run; the delegate tests run in CI on the work PR).
-- **Not done this checkpoint:** no code written, no tests run. No server touched; no live leg. Live proof (cp3) still gated on coordinator clearance for the Forge restart.
+- **Not done this checkpoint:** no code written, no tests run. No server touched; no live leg. Live proof (now checkpoint 4) still gated on coordinator clearance for the Forge restart.
 
 ## Five states at checkpoint 2
 
@@ -95,6 +95,36 @@ Hub carried items checked (BE 08:50 hub 7232927618 + WATCH251 hub 7232592508, re
 - Tested: NO.
 - Merged: NO — no PR yet (work PR at completion with live evidence).
 - Deployed: NO.
-- Production-verified: NO — live proof is checkpoint 3, gated on coordinator clearance for the Forge restart.
+- Production-verified: NO — live proof is checkpoint 4, gated on coordinator clearance for the Forge restart.
+
+— Muse 19
+
+## Checkpoint 3 — async `execute_now` routing: code + tests — 2026-11-28 ~11:50 IST
+
+**What changed (6 files, branch `muse19/task-frg-038`, main `42ba9151` merged first — merge `f5e99f65`):**
+
+- `Forge/app/api/delegate.py` (sha `a3514480ecb818e87de7b7b5827a78db5e4b7220`): the `if execute_now:` inline block (lines 422–650 on main `42ba9151`, ~230 lines, three return shapes + Sentinel gate + Memora writeback) is deleted. `execute_now` now routes through `_schedule_execution` with the caller's post-completion flags and returns RUNNING + `forge_task_id` — the same shape as the default path. Removed with the block: `_task_provider_summary` (FRG-009 provider stamp — see consequence below), `_degraded_suffix`, `_dispatch_webhook_callback`, and the now-unused `asyncio` / `httpx` / `get_memora_client` imports + `TaskState` from the models import. `task_execute` (POST /v1/task/execute) is a thin adapter over `delegate_task`, so both entry points are fixed by this one change.
+- `Forge/app/api/tasks.py` (sha `12436db8f920d644a1c411bc0e164a8b485cbfd1`): `_schedule_execution` / `_run_task_supervised` / `_run_task_body` take `require_sentinel: bool = False, memora_goal: str | None = None`. After `run_task`'s own verify+settle, when either flag is set, the body re-runs the battery (`verify_task` + `generate_manifest`), re-settles via `apply_final_verdict` (FRG-011, same derivation the inline path used), runs the Sentinel gate (only on settled COMPLETED; a block settles the named hard failure and the webhook reports `task_failed`), and does the Memora writeback (only when the manifest passed AND the settled state is COMPLETED). The default background path is unchanged — no second battery run when no flag is set. A duplicate submission reuses the live runner and its flags (documented in `_schedule_execution`).
+- `Forge/app/core/orchestrator.py` (sha `df124e95856dac258751a6b8d85cfd88e5e7647e`): one-line docstring fix in `apply_final_verdict` — the caller of the second battery run is now the supervised background finalization, not the delegate execute_now path.
+- Tests: `Forge/tests/unit/test_delegate_schedules_execution.py` (sha `57953b2d48587fb617de30d80e64ac801614a431`) +1 test (execute_now schedules + RUNNING + flags ride the runner, `run_task` not called on the request path); `Forge/tests/unit/test_delegate_mode_truthfulness.py` (sha `d5b630a98ac834862c8dcf2394f9bb2a81efa328`) — the two execute_now tests rewritten to the new contract (old synchronous SUCCESS/FAILED assertions removed; `_manifest` / `_patch_verification` helpers removed as unused); `Forge/tests/test_frg011_verdict_consistency.py` (sha `774fc453e6f28ff133eaa49af9f553c6edf6fb06`) — the settled-verdict test retargeted from the delegate response to `_run_task_body` with flags (R5 shape: FAILED + gate error + 11/11 green battery → COMPLETED, `build_verdict` SUCCESS, `task_completed` webhook, one Memora writeback).
+
+**Design points settled this checkpoint (cp2 open points):**
+
+- Sentinel gate + Memora writeback have a background home: `_run_task_body`'s flag-gated finalization (above). The flags ride the runner, not the task record.
+- Gate/writeback run only on settled COMPLETED — the inline path returned before both on any other verdict, and this preserves that exactly.
+- The FRG-011 re-settle is preserved: the background body re-runs the battery and re-settles when flagged, so the response/store/manifest stay one verdict.
+- Receipt: no receipt is issued at intake (RUNNING response, no receipt — same as the default path since REL-011). Whether the completion receipt is issued on `GET /tasks/{id}/status` or only via webhook is still the coordinator ruling owed on FRIDAY-bus polling adoption — NOT invented here.
+
+**Known consequence, stated not hidden:** the FRG-009 provider stamp (which provider generated the build, mock/degraded disclosure) no longer appears in any delegate response — it was computed only inside the deleted inline block. The stamps still exist on the task graph record. If a surface needs the disclosure post-completion, that is a follow-up, not part of this slice.
+
+**Verification this run:** `python -m py_compile` passes on all six edited files (no pytest/fastapi in this VM — same constraint as cp2; the delegate tests run in CI on the work PR). Full diff read before commit: delegate.py 925 → 651 lines, tasks.py 949 → 1040 lines. No server touched; no live leg. Live proof (now checkpoint 4) still gated on coordinator clearance for the Forge restart.
+
+## Five states at checkpoint 3
+
+- Implemented: YES (routing + flags + tests).
+- Tested: PARTIAL (py_compile only; CI pending on the work PR).
+- Merged: NO — no PR yet (work PR at completion with live evidence).
+- Deployed: NO.
+- Production-verified: NO — live proof is checkpoint 4, gated on coordinator clearance for the Forge restart.
 
 — Muse 19
