@@ -384,6 +384,12 @@ jobs:
       # (uncollected it failed the contracts job on PR #2134).
       # TASK-FRG-027: tests/test_frg027_forge_repos_wave3.py rides in
       # this invocation for the same REL-068 reason (this PR ships it).
+      # TASK-FRG-037: tests/unit/test_memora_integration.py rides in
+      # this invocation for the same REL-068 reason (this PR ships it).
+      # Its three deselects are pre-existing failures proven on
+      # unmodified main (Server 1 run, same file content since Nov 25):
+      # the local-DB tests assign client.local_db_path, which has no
+      # setter since the Oracle-only spool removal.
       - name: Run Forge tier-1 tests
         if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.forge == 'true'
         working-directory: Forge
@@ -410,6 +416,10 @@ jobs:
             tests/unit/test_task_frg031_preview.py \
             tests/test_frg021_interface_binding.py \
             tests/test_frg027_forge_repos_wave3.py \
+            tests/unit/test_memora_integration.py \
+            --deselect tests/unit/test_memora_integration.py::test_memora_client_local_fallback \
+            --deselect tests/unit/test_memora_integration.py::test_recall_survives_a_degenerate_query \
+            --deselect tests/unit/test_memora_integration.py::test_recall_still_finds_the_real_memory \
             --deselect tests/unit/test_tier1_resilience.py::test_ready_probe_contract \
             --deselect tests/unit/test_tier1_resilience.py::test_status_diagnostics_endpoint \
             --deselect tests/unit/test_tier1_resilience.py::test_sqlite_pragmas_and_wal_mode \
