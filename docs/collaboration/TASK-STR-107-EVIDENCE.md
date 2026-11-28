@@ -72,6 +72,11 @@ entry_order_id preference, `--year` filter on daemon rows, mixed shapes):
 - `Stratex/reporting/tax_ledger_export.py` (+helpers `_epoch_to_iso`,
   `_derived_trade_id`, `_venue`; daemon-field fallbacks in `build_tax_rows`).
 - `Stratex/tests/test_ig2_str09_tax_export.py` (+4 tests).
+- `.github/workflows/friday-universe-ci.yml` — `tests/test_ig2_str09_tax_export.py`
+  added to the Stratex tier-1 run so the REL-068 collection guard passes
+  (contracts job failed PR #2249 while the file was uncollected; same
+  precedent as STR-065/STR-078/STR-082/STR-083/STR-086). Workflow file is a
+  shared contract — coordinator review owed at merge.
 - This evidence file.
 
 ## Repro (Stratex-Server, read-only)
