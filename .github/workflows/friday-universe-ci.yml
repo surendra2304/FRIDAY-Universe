@@ -91,8 +91,204 @@ jobs:
         run: |
           python3 scripts/coverage_gate.py coverage_ci.json
 
+      # TASK-REL-125: agent tier-1 suites run as path-filtered per-agent
+      # jobs below (test-<agent>), gated at job level by the same
+      # detect-voice-changes outputs REL-106 used at step level. This
+      # test job keeps the REL-088 collection gate, lint, engine suites,
+      # coverage gate and HTTP tests.
+
+      - name: Start API server and run HTTP tests
+        if: needs.detect-voice-changes.outputs.any_code == 'true'
+        run: |
+          PYTHONPATH=FRIDAY/apps/core/src:Inference/app:Inference:Memora:Stratex:Forge/app/services:Sentinel/app/services:IntelX/intelx/services:Futuris/futuris/core:VyralX/app/services \
+          python3 -m uvicorn friday_core.real_api_server:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+          # TASK-REL-086: on failure the wrapper prints the failing test
+          # names + log tail into the check-run summary.
+          python3 scripts/ci_failure_summary.py \
+            --pytest \
+            --check "test-job" \
+            --step "Start API server and run HTTP tests" \
+            --workflow ".github/workflows/friday-universe-ci.yml" \
+            --job "test" \
+            -- python3 -m pytest tests/test_real_http_api.py tests/test_real_deep_http_api.py tests/test_real_deep_workflow_http.py tests/test_real_dashboard_http.py -v --tb=short
+          kill %1
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: test-results
+          path: |
+            **/*.json
+            .pytest_cache/
+          retention-days: 7
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
+  test-friday:
+    runs-on: ubuntu-latest
+    needs: detect-voice-changes
+    if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.friday == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas ruff
+
+      # TASK-REL-088: FRIDAY tier-1 tests. Own venv from
+      # TASK-INF-032: tests/test_llm_escalation.py rides in this
+      # invocation so the REL-068 test-collection guard sees it
+      # collected by a PR-triggered workflow (it was uncollected
+      # before; the file needs the same venv — requirements.txt
+      # carries the provider SDKs its import chain needs).
+      # TASK-FRD-044: tests/test_frd044_spotify_voice_control.py and
+      # tests/test_laptop_bridge_lap001.py ride in this invocation so the
+      # REL-068 guard sees them collected. The lap001 file was uncollected
+      # pre-existing debt, surfaced by this PR's 1-line parity change; both
+      # files run in this venv (stdlib-only client + FRIDAY tools, async
+      # tests need the pytest-asyncio this venv installs).
+      # TASK-FRD-045: tests/test_ig_frd_001_goal_loop.py (uncollected since
+      # it landed) and tests/test_frd_045_woop.py ride in this invocation
+      # for the same REL-068 reason; both run in this venv.
+      # TASK-IG2-FRD-03-FIX-01: tests/test_capability_routing.py (uncollected
+      # since it landed; this PR's router change surfaced it) and
+      # tests/test_ig2_frd03_lead_generation.py (new in this PR) ride in this
+      # invocation for the same REL-068 reason; both run in this venv
+      # (stdlib + friday.core imports only).
+      # TASK-FRD-057: tests/test_ig_frd_057_book_translation.py rides in
+      # this invocation for the same REL-068 reason; it runs in this venv.
+      # TASK-FRD-058: tests/test_ig_frd_058_rsvp.py rides in this
+      # invocation for the same REL-068 reason; it runs in this venv
+      # (stdlib + friday.* imports only). Its workflow module defines
+      # the SESSION_DIR / extract_article_text API the superseded PR
+      # #1850 test file expected but never got — see
+      # docs/collaboration/TASK-FRD-058-CHECKPOINT-2.md.
+      # TASK-FRD-062: tests/test_frd062_crm.py rides in this invocation
+      # for the same REL-068 reason; it runs in this venv (stdlib +
+      # friday.* imports only; in-memory SQLite engine, no Oracle DSN).
+      # The same PR also touches tests/test_ig_tool_registry_wiring.py
+      # (CRM tools added to EXPECTED), so that file rides here too —
+      # it was uncollected pre-existing debt, surfaced by this PR's
+      # change; it runs in this venv (registry build with stub memory).
+      # FRIDAY/requirements.txt + pytest + pytest-asyncio (the suite uses
+      # @pytest.mark.asyncio; requirements.txt lacks the plugin). Proven
+      # locally on current main: 86 passed, 0 failed, 0 deselects - see
+      # docs/collaboration/TASK-REL-088-TIER1-ALL-AGENTS.md.
+      - name: Run FRIDAY tier-1 tests
+        working-directory: FRIDAY
+        run: |
+          python3 -m venv .venv-friday-ci
+          .venv-friday-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio
+          # TASK-REL-086: on failure the wrapper prints the failing test
+          # names + log tail into the check-run summary.
+          # TASK-IG-FRD-006-FIX-01: test_reliability.py is collected here so
+          # the REL-068 guard passes (a PR test must run in PR CI). The three
+          # deselects are pre-existing failures proven on unmodified main
+          # 70ce108 in this same venv: the httpx-mocked provider tests fail
+          # with httpx.InvalidURL on the mocked post, unrelated to this PR.
+          # TASK-LAP-004: tests/test_ig2_lap01_escrcpy.py rides in this
+          # invocation so the REL-068 guard sees it collected (uncollected
+          # since IG2-LAP-01 landed; stdlib + friday.* imports only, runs in
+          # this venv). Escrcpy upstream pinned to v3.3.1 — see
+          # docs/collaboration/TASK-LAP-004-CHECKPOINT-1.md.
+          # TASK-LAP-003: tests/test_phone_ui_automation.py,
+          # tests/test_browser_use_integration.py and
+          # tests/test_laptop_browser_agent.py ride in this invocation so
+          # the REL-068 guard sees them collected (uncollected since
+          # IG-LAP-01 / IG-LAP-04 landed; stdlib + friday.* imports only,
+          # run in this venv). Upstream pins scrcpy v5.0.1 / browser-use
+          # 1.0.8 — see docs/collaboration/TASK-LAP-003-CHECKPOINT-1.md.
+          # TASK-FRD-046: tests/test_laptop_pc_care.py rides in this
+          # invocation so the REL-068 guard sees it collected (uncollected
+          # since IG-LAP-03 landed; the four storage-repair sequences run
+          # in this venv — see docs/collaboration/TASK-FRD-046-CHECKPOINT-2.md).
+          # TASK-FRD-068: tests/test_frd068_memory_reporting.py rides in
+          # this invocation so the REL-068 guard sees it collected (a PR
+          # test must run in PR CI); it runs in this venv (fabricated
+          # cgroup trees + mocked psutil, no live server — see
+          # docs/collaboration/TASK-FRD-068-EVIDENCE.md).
+          # TASK-IG-FRD-003-FIX-01: tests/test_ig_frd_003_job_hunt.py rides
+          # in this invocation so the REL-068 guard sees it collected (a PR
+          # test must run in PR CI); it runs in this venv (stdlib +
+          # friday.workflows.job_hunt imports only, hermetic fake fetcher —
+          # see docs/collaboration/TASK-IG-FRD-003-FIX-01-CHECKPOINT-2.md).
+          # TASK-VOI-046: tests/test_voi046_malloc_trim.py rides in this
+          # invocation so the REL-068 guard sees it collected (a PR test
+          # must run in PR CI); it runs in this venv (fabricated trim +
+          # mocked libc, no live server — see
+          # docs/collaboration/TASK-VOI-046-EVIDENCE.md).
+          python3 ../scripts/ci_failure_summary.py \
+            --pytest \
+            --check "test-friday" \
+            --step "Run FRIDAY tier-1 tests" \
+            --workflow ".github/workflows/friday-universe-ci.yml" \
+            --job "test-friday" \
+            -- .venv-friday-ci/bin/python -m pytest -q \
+            tests/test_tier1_resilience_and_contracts.py tests/e2e/test_tier1_features.py \
+            tests/test_llm_escalation.py \
+            tests/test_frd044_spotify_voice_control.py \
+            tests/test_laptop_bridge_lap001.py \
+            tests/test_mem029_production_callers.py \
+            tests/test_ig_frd_001_goal_loop.py tests/test_frd_045_woop.py \
+            tests/test_capability_routing.py tests/test_ig2_frd03_lead_generation.py tests/test_ig_frd_061_lead_verification.py tests/test_ig_frd_057_book_translation.py \
+            tests/test_ig_frd_058_rsvp.py tests/test_ig_frd_060_signal_brief.py tests/test_frd062_crm.py tests/test_ig_tool_registry_wiring.py \
+            tests/test_reliability.py tests/test_ig2_lap01_escrcpy.py \
+            tests/test_phone_ui_automation.py tests/test_browser_use_integration.py \
+            tests/test_laptop_browser_agent.py \
+            tests/test_laptop_pc_care.py \
+            tests/test_frd068_memory_reporting.py \
+            tests/test_ig_frd_003_job_hunt.py \
+            tests/test_voi046_malloc_trim.py \
+            --deselect tests/test_reliability.py::test_retry_on_network_failure \
+            --deselect tests/test_reliability.py::test_retry_on_rate_limit \
+            --deselect tests/test_reliability.py::test_no_retry_on_auth_error
+
+      # TASK-REL-088: Memora tier-1 tests. Same venv pattern as the vector
+      # step above, plus pytest + pytest-asyncio; same env, but a separate
+      # sqlite file (memora_ci_tier1.db) so the tier-1 run starts from a
+      # fresh DB exactly like the local proof runs. Two deselects are
+      # pre-existing failures proven on current main - see the evidence
+      # doc: /health returns 503 and /ready omits the "wal" key.
+
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
+  test-memora:
+    runs-on: ubuntu-latest
+    needs: detect-voice-changes
+    if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.memora == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas ruff
+
       - name: Run Memora vector tenant and transaction regressions
-        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.memora == 'true'
         working-directory: Memora
         env:
           MEMORA_ENV: testing
@@ -107,10 +303,10 @@ jobs:
           # repo-root-relative from this step's working directory).
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
-            --check "test-job" \
+            --check "test-memora" \
             --step "Run Memora vector tenant and transaction regressions" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
-            --job "test" \
+            --job "test-memora" \
             -- .venv-vector-ci/bin/python -m pytest -q \
             tests/test_oracle_vector_tenant_isolation.py \
             tests/test_oracle_23ai_vector.py \
@@ -133,10 +329,10 @@ jobs:
           # TASK-REL-086: same failure-summary wrapper as above.
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
-            --check "test-job" \
+            --check "test-memora" \
             --step "Run Memora vector tenant and transaction regressions" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
-            --job "test" \
+            --job "test-memora" \
             -- .venv-vector-ci/bin/python -m pytest -q \
             tests/test_viking_context_durability.py
 
@@ -149,8 +345,101 @@ jobs:
       # current main — see docs/collaboration/TASK-REL-080-CORTEX-TIER1-CI.md:
       # F16.3/F16.4 in both files (README/.env.example lack POSTGRES_DSN)
       # and F8.3 in tests/e2e (stale pre-COR-005 assertion).
+
+      # TASK-REL-088: Memora tier-1 tests. Same venv pattern as the vector
+      # step above, plus pytest + pytest-asyncio; same env, but a separate
+      # sqlite file (memora_ci_tier1.db) so the tier-1 run starts from a
+      # fresh DB exactly like the local proof runs. Two deselects are
+      # pre-existing failures proven on current main - see the evidence
+      # doc: /health returns 503 and /ready omits the "wal" key.
+      - name: Run Memora tier-1 tests
+        working-directory: Memora
+        env:
+          MEMORA_ENV: testing
+          ENVIRONMENT: testing
+          MEMORA_EMBEDDING_MODE: hashing
+          DATABASE_URL: sqlite:///./data/memora_ci_tier1.db
+        run: |
+          python3 -m venv .venv-memora-ci
+          .venv-memora-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio
+          # TASK-REL-086: on failure the wrapper prints the failing test
+          # names + log tail into the check-run summary.
+          python3 ../scripts/ci_failure_summary.py \
+            --pytest \
+            --check "test-memora" \
+            --step "Run Memora tier-1 tests" \
+            --workflow ".github/workflows/friday-universe-ci.yml" \
+            --job "test-memora" \
+            -- .venv-memora-ci/bin/python -m pytest -q \
+            tests/test_tier1_resilience_contracts.py \
+            tests/test_mem030_obsidian_vault.py \
+            tests/test_mem031_memora_verify_wave3.py \
+            tests/test_mem032_nomad_offline_pack.py \
+            --deselect tests/test_tier1_resilience_contracts.py::test_health_probe_contract \
+            --deselect tests/test_tier1_resilience_contracts.py::test_ready_probe_contract
+
+      # TASK-REL-088: Stratex tier-1 tests. Own venv from
+      # Stratex/requirements.txt + pytest + pytest-asyncio. One deselect is
+      # a pre-existing failure proven on current main - see the evidence
+      # doc: /health returns 503, expects 200 (same signature as Memora).
+      # TASK-STR-082: tests/test_str082_scale_up_gate.py and
+      # tests/test_str082_creator_rules.py are collected here so the
+      # REL-068 collection guard passes — a PR test must run in PR CI.
+      # TASK-STR-078: tests/test_str078_lumibot_backtest.py is collected
+      # here for the same reason (PR #1815 contracts-guard fix).
+      # TASK-STR-083: test_breach_kill_drill.py and
+      # test_saturday_cadence.py are collected here so the
+      # REL-068 collection guard passes.
+      # TASK-STR-086: research/test_staged_chart_checklist.py is collected
+      # here so the REL-068 collection guard passes — a PR test must run
+      # in PR CI (WATCH101 HELD: contracts job failed on this file).
+      # TASK-IG2-WEB-04-FIX-01: tests/test_ig2_web04_fix01_routing.py is
+      # collected here so the REL-068 collection guard passes — a PR test
+      # must run in PR CI.
+      # TASK-STR-065: tests/test_str065_safety_nets.py is collected here
+      # so the REL-068 collection guard passes — a PR test must run in
+      # PR CI (contracts guard failed PR #2007 while it was uncollected).
+      # TASK-STR-107: tests/test_ig2_str09_tax_export.py is collected
+      # here so the REL-068 collection guard passes — a PR test must run
+      # in PR CI (contracts guard failed PR #2249 while it was uncollected).
+      # TASK-STR-113 follow-up: tests/test_ig2_str11_economic_calendar.py
+      # is collected here for the same reason (PR test must run in PR CI).
+
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
+  test-cortex:
+    runs-on: ubuntu-latest
+    needs: detect-voice-changes
+    if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.cortex == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas ruff
+
+      # TASK-REL-080: Cortex tier-1 tests (CTX-003 G5 re-run). The test job
+      # ran repo-root suites only, so Cortex tests never ran in CI. The two
+      # tier-1 files run in their own venv from Cortex/requirements.txt
+      # (same pattern as the Memora vector step above); Cortex conftest.py
+      # sets the test JWT secret and workspace paths, so no fleet secrets
+      # are needed. Five deselects are pre-existing failures proven on
+      # current main — see docs/collaboration/TASK-REL-080-CORTEX-TIER1-CI.md:
+      # F16.3/F16.4 in both files (README/.env.example lack POSTGRES_DSN)
+      # and F8.3 in tests/e2e (stale pre-COR-005 assertion).
       - name: Run Cortex tier-1 tests
-        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.cortex == 'true'
         working-directory: Cortex
         run: |
           python3 -m venv .venv-cortex-ci
@@ -165,10 +454,10 @@ jobs:
           # Proven locally in the same venv: 14 passed.
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
-            --check "test-job" \
+            --check "test-cortex" \
             --step "Run Cortex tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
-            --job "test" \
+            --job "test-cortex" \
             -- .venv-cortex-ci/bin/python -m pytest -q \
             tests/unit/test_e2e_tier1.py tests/e2e/test_e2e_tier1.py \
             tests/unit/test_ig2_cor_agent_budgets.py \
@@ -218,108 +507,31 @@ jobs:
       # @pytest.mark.asyncio; requirements.txt lacks the plugin). Proven
       # locally on current main: 86 passed, 0 failed, 0 deselects - see
       # docs/collaboration/TASK-REL-088-TIER1-ALL-AGENTS.md.
-      - name: Run FRIDAY tier-1 tests
-        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.friday == 'true'
-        working-directory: FRIDAY
-        run: |
-          python3 -m venv .venv-friday-ci
-          .venv-friday-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio
-          # TASK-REL-086: on failure the wrapper prints the failing test
-          # names + log tail into the check-run summary.
-          # TASK-IG-FRD-006-FIX-01: test_reliability.py is collected here so
-          # the REL-068 guard passes (a PR test must run in PR CI). The three
-          # deselects are pre-existing failures proven on unmodified main
-          # 70ce108 in this same venv: the httpx-mocked provider tests fail
-          # with httpx.InvalidURL on the mocked post, unrelated to this PR.
-          # TASK-LAP-004: tests/test_ig2_lap01_escrcpy.py rides in this
-          # invocation so the REL-068 guard sees it collected (uncollected
-          # since IG2-LAP-01 landed; stdlib + friday.* imports only, runs in
-          # this venv). Escrcpy upstream pinned to v3.3.1 — see
-          # docs/collaboration/TASK-LAP-004-CHECKPOINT-1.md.
-          # TASK-LAP-003: tests/test_phone_ui_automation.py,
-          # tests/test_browser_use_integration.py and
-          # tests/test_laptop_browser_agent.py ride in this invocation so
-          # the REL-068 guard sees them collected (uncollected since
-          # IG-LAP-01 / IG-LAP-04 landed; stdlib + friday.* imports only,
-          # run in this venv). Upstream pins scrcpy v5.0.1 / browser-use
-          # 1.0.8 — see docs/collaboration/TASK-LAP-003-CHECKPOINT-1.md.
-          # TASK-FRD-046: tests/test_laptop_pc_care.py rides in this
-          # invocation so the REL-068 guard sees it collected (uncollected
-          # since IG-LAP-03 landed; the four storage-repair sequences run
-          # in this venv — see docs/collaboration/TASK-FRD-046-CHECKPOINT-2.md).
-          # TASK-FRD-068: tests/test_frd068_memory_reporting.py rides in
-          # this invocation so the REL-068 guard sees it collected (a PR
-          # test must run in PR CI); it runs in this venv (fabricated
-          # cgroup trees + mocked psutil, no live server — see
-          # docs/collaboration/TASK-FRD-068-EVIDENCE.md).
-          # TASK-IG-FRD-003-FIX-01: tests/test_ig_frd_003_job_hunt.py rides
-          # in this invocation so the REL-068 guard sees it collected (a PR
-          # test must run in PR CI); it runs in this venv (stdlib +
-          # friday.workflows.job_hunt imports only, hermetic fake fetcher —
-          # see docs/collaboration/TASK-IG-FRD-003-FIX-01-CHECKPOINT-2.md).
-          # TASK-VOI-046: tests/test_voi046_malloc_trim.py rides in this
-          # invocation so the REL-068 guard sees it collected (a PR test
-          # must run in PR CI); it runs in this venv (fabricated trim +
-          # mocked libc, no live server — see
-          # docs/collaboration/TASK-VOI-046-EVIDENCE.md).
-          python3 ../scripts/ci_failure_summary.py \
-            --pytest \
-            --check "test-job" \
-            --step "Run FRIDAY tier-1 tests" \
-            --workflow ".github/workflows/friday-universe-ci.yml" \
-            --job "test" \
-            -- .venv-friday-ci/bin/python -m pytest -q \
-            tests/test_tier1_resilience_and_contracts.py tests/e2e/test_tier1_features.py \
-            tests/test_llm_escalation.py \
-            tests/test_frd044_spotify_voice_control.py \
-            tests/test_laptop_bridge_lap001.py \
-            tests/test_mem029_production_callers.py \
-            tests/test_ig_frd_001_goal_loop.py tests/test_frd_045_woop.py \
-            tests/test_capability_routing.py tests/test_ig2_frd03_lead_generation.py tests/test_ig_frd_061_lead_verification.py tests/test_ig_frd_057_book_translation.py \
-            tests/test_ig_frd_058_rsvp.py tests/test_ig_frd_060_signal_brief.py tests/test_frd062_crm.py tests/test_ig_tool_registry_wiring.py \
-            tests/test_reliability.py tests/test_ig2_lap01_escrcpy.py \
-            tests/test_phone_ui_automation.py tests/test_browser_use_integration.py \
-            tests/test_laptop_browser_agent.py \
-            tests/test_laptop_pc_care.py \
-            tests/test_frd068_memory_reporting.py \
-            tests/test_ig_frd_003_job_hunt.py \
-            tests/test_voi046_malloc_trim.py \
-            --deselect tests/test_reliability.py::test_retry_on_network_failure \
-            --deselect tests/test_reliability.py::test_retry_on_rate_limit \
-            --deselect tests/test_reliability.py::test_no_retry_on_auth_error
 
-      # TASK-REL-088: Memora tier-1 tests. Same venv pattern as the vector
-      # step above, plus pytest + pytest-asyncio; same env, but a separate
-      # sqlite file (memora_ci_tier1.db) so the tier-1 run starts from a
-      # fresh DB exactly like the local proof runs. Two deselects are
-      # pre-existing failures proven on current main - see the evidence
-      # doc: /health returns 503 and /ready omits the "wal" key.
-      - name: Run Memora tier-1 tests
-        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.memora == 'true'
-        working-directory: Memora
-        env:
-          MEMORA_ENV: testing
-          ENVIRONMENT: testing
-          MEMORA_EMBEDDING_MODE: hashing
-          DATABASE_URL: sqlite:///./data/memora_ci_tier1.db
+      - name: Report job duration
+        if: always()
         run: |
-          python3 -m venv .venv-memora-ci
-          .venv-memora-ci/bin/python -m pip install --disable-pip-version-check -r requirements.txt pytest pytest-asyncio
-          # TASK-REL-086: on failure the wrapper prints the failing test
-          # names + log tail into the check-run summary.
-          python3 ../scripts/ci_failure_summary.py \
-            --pytest \
-            --check "test-job" \
-            --step "Run Memora tier-1 tests" \
-            --workflow ".github/workflows/friday-universe-ci.yml" \
-            --job "test" \
-            -- .venv-memora-ci/bin/python -m pytest -q \
-            tests/test_tier1_resilience_contracts.py \
-            tests/test_mem030_obsidian_vault.py \
-            tests/test_mem031_memora_verify_wave3.py \
-            tests/test_mem032_nomad_offline_pack.py \
-            --deselect tests/test_tier1_resilience_contracts.py::test_health_probe_contract \
-            --deselect tests/test_tier1_resilience_contracts.py::test_ready_probe_contract
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
+  test-stratex:
+    runs-on: ubuntu-latest
+    needs: detect-voice-changes
+    if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.stratex == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas ruff
 
       # TASK-REL-088: Stratex tier-1 tests. Own venv from
       # Stratex/requirements.txt + pytest + pytest-asyncio. One deselect is
@@ -348,7 +560,6 @@ jobs:
       # TASK-STR-113 follow-up: tests/test_ig2_str11_economic_calendar.py
       # is collected here for the same reason (PR test must run in PR CI).
       - name: Run Stratex tier-1 tests
-        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.stratex == 'true'
         working-directory: Stratex
         run: |
           python3 -m venv .venv-stratex-ci
@@ -357,10 +568,10 @@ jobs:
           # names + log tail into the check-run summary.
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
-            --check "test-job" \
+            --check "test-stratex" \
             --step "Run Stratex tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
-            --job "test" \
+            --job "test-stratex" \
             -- .venv-stratex-ci/bin/python -m pytest -q \
             tests/test_tier1_resilience_and_contracts.py \
             tests/test_str078_lumibot_backtest.py \
@@ -396,8 +607,51 @@ jobs:
       # unmodified main (Server 1 run, same file content since Nov 25):
       # the local-DB tests assign client.local_db_path, which has no
       # setter since the Oracle-only spool removal.
+
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
+  test-forge:
+    runs-on: ubuntu-latest
+    needs: detect-voice-changes
+    if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.forge == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas ruff
+
+      # TASK-REL-088: Forge tier-1 tests. Own venv from
+      # Forge/requirements.txt + pytest + pytest-asyncio + respx (one test
+      # needs respx; it fails on collection without it). Six deselects are
+      # pre-existing failures proven on current main - see the evidence
+      # doc: ready probe 503, diagnostics status "unhealthy" (no live
+      # Oracle ADB in the test env), db_path TypeError x2, postgres URL
+      # translation RuntimeError, PRAGMA no-op expectation.
+      # TASK-FRG-021: tests/test_frg021_interface_binding.py rides in
+      # this invocation so the REL-068 guard sees it collected
+      # (uncollected it failed the contracts job on PR #2134).
+      # TASK-FRG-027: tests/test_frg027_forge_repos_wave3.py rides in
+      # this invocation for the same REL-068 reason (this PR ships it).
+      # TASK-FRG-037: tests/unit/test_memora_integration.py rides in
+      # this invocation for the same REL-068 reason (this PR ships it).
+      # Its three deselects are pre-existing failures proven on
+      # unmodified main (Server 1 run, same file content since Nov 25):
+      # the local-DB tests assign client.local_db_path, which has no
+      # setter since the Oracle-only spool removal.
       - name: Run Forge tier-1 tests
-        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.forge == 'true'
         working-directory: Forge
         env:
           # Forge/app imports the repo-root `mesh` package
@@ -412,10 +666,10 @@ jobs:
           # names + log tail into the check-run summary.
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
-            --check "test-job" \
+            --check "test-forge" \
             --step "Run Forge tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
-            --job "test" \
+            --job "test-forge" \
             -- .venv-forge-ci/bin/python -m pytest -q \
             tests/unit/test_tier1_resilience.py tests/unit/test_deep_upgrade_tier1.py \
             tests/unit/test_mem031_forge_session_capture.py \
@@ -439,8 +693,39 @@ jobs:
       # + aiosqlite (requirements.txt lacks aiosqlite; the async-sqlite
       # import fails without it). Proven locally on current main: 12
       # passed, 0 failed, 0 deselects - see the evidence doc.
+
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
+  test-inference:
+    runs-on: ubuntu-latest
+    needs: detect-voice-changes
+    if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.inference == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas ruff
+
+      # TASK-REL-088: Inference tier-1 set (no tier-1-named suite exists,
+      # so tier-1 = the health-contract + importability core files).
+      # Own venv from Inference/requirements.txt + pytest + pytest-asyncio
+      # + aiosqlite (requirements.txt lacks aiosqlite; the async-sqlite
+      # import fails without it). Proven locally on current main: 12
+      # passed, 0 failed, 0 deselects - see the evidence doc.
       - name: Run Inference tier-1 tests
-        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.inference == 'true'
         working-directory: Inference
         run: |
           python3 -m venv .venv-inference-ci
@@ -459,10 +744,10 @@ jobs:
           # defaults-pinning test added there would have run nowhere).
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
-            --check "test-job" \
+            --check "test-inference" \
             --step "Run Inference tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
-            --job "test" \
+            --job "test-inference" \
             -- .venv-inference-ci/bin/python -m pytest -q \
             tests/test_health_security.py tests/test_module_importability.py tests/test_monitoring_health_evidence.py tests/test_discovery_feed.py tests/test_ig_inf01_long_context_routing.py tests/test_inf022_routing_receipts.py tests/test_provider_gateway_deadlines.py
 
@@ -484,8 +769,51 @@ jobs:
       # test added to this tier-1 set. The repo-root pack tests run in
       # the monorepo validation root suites; running them from this
       # Sentinel working directory would load the root conftest.
+
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
+  test-sentinel:
+    runs-on: ubuntu-latest
+    needs: detect-voice-changes
+    if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.sentinel == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas ruff
+
+      # TASK-REL-088: Sentinel tier-1 set (health-contract + durability +
+      # foundation core files; no tier-1-named suite exists). Own venv
+      # from Sentinel/requirements.txt + pytest + pytest-asyncio. Proven
+      # locally on current main: 13 passed, 0 failed, 0 deselects - see
+      # the evidence doc.
+      # TASK-SEN-030: tests/unit/test_ig_sen_device_posture.py added — it
+      # was collected by no CI job (same uncollected-test failure mode as
+      # FUT-030 / PR-936 / INT-045), so the DP-012/DP-013 tests had never
+      # run anywhere. Posture file proven locally: 13 passed, 0 failed;
+      # tier-1 total re-proven by CI.
+      # TASK-SEN-026: tests/test_ig2_sen_extortion_mail_triage.py added —
+      # it was collected by no CI job (REL-068 --full: UNCOLLECTED), so
+      # the SE-01 pixel tests had never run in PR CI. Triage file proven
+      # locally: 11 passed, 0 failed; tier-1 total with it: 37 passed.
+      # TASK-SEN-033: Sentinel-local defensive-skills wiring/guardrail
+      # test added to this tier-1 set. The repo-root pack tests run in
+      # the monorepo validation root suites; running them from this
+      # Sentinel working directory would load the root conftest.
       - name: Run Sentinel tier-1 tests
-        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.sentinel == 'true'
         working-directory: Sentinel
         run: |
           python3 -m venv .venv-sentinel-ci
@@ -494,10 +822,10 @@ jobs:
           # names + log tail into the check-run summary.
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
-            --check "test-job" \
+            --check "test-sentinel" \
             --step "Run Sentinel tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
-            --job "test" \
+            --job "test-sentinel" \
             -- .venv-sentinel-ci/bin/python -m pytest -q \
             tests/security/test_health_readiness.py tests/security/test_health_durability_truthfulness.py tests/unit/test_foundation.py tests/unit/test_ig_sen_device_posture.py tests/test_ig2_sen_extortion_mail_triage.py tests/security/test_sen033_sentinel_repo_implement.py
 
@@ -531,8 +859,63 @@ jobs:
       # TASK-INT-052: tests/test_int052_image_ela.py added — the
       # FotoForensics ELA image check (intelx/osint/image_ela.py).
       # CI is the test leg for this file (WATCH264 ruling).
+
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
+  test-intelx:
+    runs-on: ubuntu-latest
+    needs: detect-voice-changes
+    if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.intelx == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas ruff
+
+      # TASK-REL-088: IntelX tier-1 set (health-contract core files; no
+      # tier-1-named suite exists). Own venv from IntelX/requirements.txt
+      # + pytest + pytest-asyncio + aiosqlite (requirements.txt has
+      # sqlalchemy[asyncio] but no aiosqlite; collection errors without
+      # it). Proven locally on current main: 22 passed, 0 failed,
+      # 0 deselects - see the evidence doc.
+      # TASK-INT-045: tests/test_ig_intelx_wiring_feeds.py added — it was
+      # collected by no CI job (same uncollected-test failure mode as
+      # FUT-030 / PR-936). Proven locally with the tier-1 list: 31 passed.
+      # TASK-DB-002: tests/test_db002_watch_seen.py,
+      # test_db002_watch_envelopes.py, test_db002_migration.py added —
+      # new files are collected by no CI job otherwise (same
+      # uncollected-test failure mode as FUT-030 / PR-936).
+      # TASK-INT-051: tests/test_int051_intelx_repos_wave3.py added —
+      # 32 tests for the wave-3 adaptations (Agent Reach, Camofox macros,
+      # multi-engine research routing, Helix watch, Robin store,
+      # OpenDirectory reject guardrail). Proven locally: 32 passed.
+      # TASK-INT-046: tests/test_ig_intelx_telegram_topic_search.py added —
+      # new files are collected by no CI job otherwise (same
+      # uncollected-test failure mode as FUT-030 / PR-936).
+      # TASK-INT-047: tests/test_ig_intelx_tor_metrics.py added —
+      # 18 tests for the Tor Metrics (Onionoo) source. Proven locally:
+      # 18 passed.
+      # TASK-INT-879: tests/test_standing_watches.py added — the
+      # standing-watch poll semantics (incl. the suppression-ordering
+      # tests) were collected by no CI job (same uncollected-test failure
+      # mode as FUT-030 / PR-936). CI is the proof run for this file.
+      # TASK-INT-052: tests/test_int052_image_ela.py added — the
+      # FotoForensics ELA image check (intelx/osint/image_ela.py).
+      # CI is the test leg for this file (WATCH264 ruling).
       - name: Run IntelX tier-1 tests
-        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.intelx == 'true'
         working-directory: IntelX
         run: |
           python3 -m venv .venv-intelx-ci
@@ -541,10 +924,10 @@ jobs:
           # names + log tail into the check-run summary.
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
-            --check "test-job" \
+            --check "test-intelx" \
             --step "Run IntelX tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
-            --job "test" \
+            --job "test-intelx" \
             -- .venv-intelx-ci/bin/python -m pytest -q \
             tests/test_intelx_health_contract.py tests/test_health.py tests/test_healthz_liveness.py tests/test_ig_intelx_wiring_feeds.py tests/test_db002_watch_seen.py tests/test_db002_watch_envelopes.py tests/test_db002_migration.py tests/test_int051_intelx_repos_wave3.py tests/test_ig_intelx_telegram_topic_search.py tests/test_ig_intelx_tor_metrics.py tests/test_int056_synthesis_failure.py tests/test_standing_watches.py tests/test_int052_image_ela.py
 
@@ -555,8 +938,40 @@ jobs:
       # only, and the tests themselves use local SQLite fixtures, so no
       # live Oracle is needed. Proven locally on current main: 8 passed
       # (2 health files), 0 failed, 0 deselects - see the evidence doc.
+
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
+  test-futuris:
+    runs-on: ubuntu-latest
+    needs: detect-voice-changes
+    if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.futuris == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas ruff
+
+      # TASK-REL-088: Futuris tier-1 set (health-contract core files; no
+      # tier-1-named suite exists). Own venv from Futuris/requirements.txt
+      # + pytest + pytest-asyncio + aiosqlite. DATABASE_URL is a dummy
+      # oracle+oracledb URL: the import-time check validates the scheme
+      # only, and the tests themselves use local SQLite fixtures, so no
+      # live Oracle is needed. Proven locally on current main: 8 passed
+      # (2 health files), 0 failed, 0 deselects - see the evidence doc.
       - name: Run Futuris tier-1 tests
-        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.futuris == 'true'
         working-directory: Futuris
         env:
           DATABASE_URL: oracle+oracledb://dummy:dummy@localhost:1521/dummy
@@ -579,10 +994,10 @@ jobs:
           # is the proof of the run.
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
-            --check "test-job" \
+            --check "test-futuris" \
             --step "Run Futuris tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
-            --job "test" \
+            --job "test-futuris" \
             -- .venv-futuris-ci/bin/python -m pytest -q \
             tests/test_futuris_health_contract.py tests/api/test_health.py tests/integrations/test_memora_cloud_fallback_keys_futuris.py
 
@@ -607,11 +1022,57 @@ jobs:
       # contracts job) — the hyperframes render and format-clone tests
       # encode/probe real media and must not depend on whatever the
       # runner image happens to ship.
+
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
+  test-vyralx:
+    runs-on: ubuntu-latest
+    needs: detect-voice-changes
+    if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.vyralx == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas ruff
+
+      # TASK-REL-088: VyralX tier-1 set (recovery + health-labelling core
+      # files; no tier-1-named suite exists). VyralX has no
+      # requirements.txt; install from requirements.lock (SEN-012 pinned
+      # snapshot) + pytest + pytest-asyncio. Proven locally on current
+      # main: 5 passed, 0 failed, 0 deselects - see the evidence doc.
+      # NOTE: a fresh lock install is unproven locally; the work PR's CI
+      # run is the proof of that path.
+      # TASK-VYR-075: the six test_vyr075_* files are collected here so
+      # the REL-068 collection guard passes — a PR test must run in PR
+      # CI. They run in the same lock venv as the tier-1 set.
+      # TASK-VYR-058: test_vyr058_reddit_discovery.py is collected here
+      # for the same reason (REL-068 guard).
+      # TASK-VYR-059: test_ig2_vyr10_creative_audit.py is collected here
+      # for the same reason (REL-068 guard).
+      # TASK-VYR-084: test_ig3_vyr01_named_lists.py is collected here
+      # for the same reason (REL-068 guard; WATCH109 HELD: contracts
+      # job failed on this file).
+      # TASK-VYR-075: install ffmpeg explicitly (same step as the
+      # contracts job) — the hyperframes render and format-clone tests
+      # encode/probe real media and must not depend on whatever the
+      # runner image happens to ship.
       - name: Install ffmpeg for VyralX real-render tests
-        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.vyralx == 'true'
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
       - name: Run VyralX tier-1 tests
-        if: needs.detect-voice-changes.outputs.shared == 'true' || needs.detect-voice-changes.outputs.vyralx == 'true'
         working-directory: VyralX
         run: |
           python3 -m venv .venv-vyralx-ci
@@ -620,10 +1081,10 @@ jobs:
           # names + log tail into the check-run summary.
           python3 ../scripts/ci_failure_summary.py \
             --pytest \
-            --check "test-job" \
+            --check "test-vyralx" \
             --step "Run VyralX tier-1 tests" \
             --workflow ".github/workflows/friday-universe-ci.yml" \
-            --job "test" \
+            --job "test-vyralx" \
             -- .venv-vyralx-ci/bin/python -m pytest -q \
             tests/test_recovery_and_readiness.py tests/test_obs003_health_labelling.py \
             tests/test_vyr075_claude_ads_e2e.py tests/test_vyr075_format_clone_e2e.py \
@@ -634,32 +1095,6 @@ jobs:
             tests/test_vyr082_layered_marketing.py tests/test_vyr072_fix01_doubled_caption.py \
             tests/test_vyr032_doubled_caption.py tests/test_viral_framing.py  # TASK-VYR-072-FIX-01: collected here for the same reason (REL-068 guard)
 
-      - name: Start API server and run HTTP tests
-        if: needs.detect-voice-changes.outputs.any_code == 'true'
-        run: |
-          PYTHONPATH=FRIDAY/apps/core/src:Inference/app:Inference:Memora:Stratex:Forge/app/services:Sentinel/app/services:IntelX/intelx/services:Futuris/futuris/core:VyralX/app/services \
-          python3 -m uvicorn friday_core.real_api_server:app --host 0.0.0.0 --port 8000 &
-          sleep 5
-          # TASK-REL-086: on failure the wrapper prints the failing test
-          # names + log tail into the check-run summary.
-          python3 scripts/ci_failure_summary.py \
-            --pytest \
-            --check "test-job" \
-            --step "Start API server and run HTTP tests" \
-            --workflow ".github/workflows/friday-universe-ci.yml" \
-            --job "test" \
-            -- python3 -m pytest tests/test_real_http_api.py tests/test_real_deep_http_api.py tests/test_real_deep_workflow_http.py tests/test_real_dashboard_http.py -v --tb=short
-          kill %1
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: test-results
-          path: |
-            **/*.json
-            .pytest_cache/
-          retention-days: 7
       - name: Report job duration
         if: always()
         run: |
