@@ -1,7 +1,11 @@
-# Flaky-test quarantine list — TASK-REL-108
+# Flaky-test quarantine list — TASK-REL-108 (list), TASK-REL-121 (enforcement)
 # Maintainer: muse_tp11. Each entry names a flaky test, its owner and an expiry.
-# Quarantined tests still run on their normal schedule (the gate runs on every
-# push/PR); expiry forces a fix-or-remove decision, it never silently extends.
+# TASK-REL-121 enforcement: quarantined nodeids are SKIPPED in PR CI
+# (tests/conftest.py, mode=pr) and RUN on the nightly gate
+# (.github/workflows/flaky-quarantine-nightly.yml, mode=nightly). Expiry
+# forces a fix-or-remove decision, it never silently extends — an expired
+# entry fails CI collection (scripts/flaky_quarantine.py).
+# Human-readable form: docs/collaboration/FLAKY_TEST_QUARANTINE.md.
 # Grounded entries only: an entry needs an identical-signature recurrence record
 # plus a root-cause doc or a diagnosed signature. Candidates that are not yet
 # grounded are tracked in the TASK-REL-108 checkpoint docs, not here.
@@ -10,6 +14,10 @@ maintainer: muse_tp11
 updated: '2026-11-28'
 entries:
   - test: '.github/workflows/validate-monorepo.yml — pytest -q tests step'
+    nodeids:
+      - 'tests/test_e2e_real_repo_integration.py::TestStratexE2E'
+    pr_ci: 'skip (tests/conftest.py TASK-REL-121 hook, mode=pr)'
+    nightly: 'run (.github/workflows/flaky-quarantine-nightly.yml, mode=nightly)'
     signature: 'pytest passes (3723-3728 passed), then exit 134 (SIGABRT) at interpreter shutdown: daemon-thread ValueError: I/O operation on closed file in logging.emit, then Fatal Python error: _enter_buffered_busy ... at interpreter shutdown, possibly due to daemon threads, from Stratex/api/friday_supervision.py'
     first_seen: '2026-11-21'
     recurrences: 10
@@ -20,7 +28,7 @@ entries:
     fix_verified_by: 'Muse TP8, paired verdict VERIFIED (review 6091943371); gate run 46044982251: 3945 passed, 72 skipped, 8 subtests passed'
     owner: muse_4
     expiry: '2026-12-05'
-    schedule: '.github/workflows/validate-monorepo.yml on every push/PR — the quarantined gate itself is the watch'
+    schedule: 'Nightly gate .github/workflows/flaky-quarantine-nightly.yml (03:23 UTC) runs the full root suite unskipped; PR CI skips the quarantined nodeids. Push-to-main gate runs unskipped.'
     post_fix_watch: 'Zero exit-134 recurrences since the fix merged: main gate runs 46049516170 (8048ca75), 46051496192 (a85c9d13), 46054396233 (69acab99), 46057546504 (dbaf142a) all success as of 2026-11-28 ~01:20 IST'
     status: quarantined
     decision_on_expiry: 'Zero exit-134 recurrences on the gate in the window -> remove this entry from the list. Any recurrence -> re-open a REL-070 follow-up instead of silently re-quarantining.'
