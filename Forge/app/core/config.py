@@ -196,9 +196,15 @@ class Settings(BaseSettings):
     )
     memora_api_key: str | None = Field(
         default=None,
+        # TASK-FRG-037: FORGE_API_KEY first. Memora verifies Forge against
+        # its per-agent key (forge -> FORGE_API_KEY on the Memora side); the
+        # fleet env also carries a stale FORGE_MEMORA_API_KEY value, which
+        # shadowed the per-agent key here and made every Forge->Memora call
+        # 401 "Invalid agent credentials" (live 2026-11-28). The dedicated
+        # alias stays only as a fallback for deploys that set nothing else.
         # TASK-MEM-005-R1: MEMORA_API_KEY dropped — Forge's Memora credential
         # is its own dedicated/per-agent key only.
-        validation_alias=AliasChoices("FORGE_MEMORA_API_KEY", "FORGE_API_KEY", "memora_api_key"),
+        validation_alias=AliasChoices("FORGE_API_KEY", "FORGE_MEMORA_API_KEY", "memora_api_key"),
         description="Forge's named agent credential for Memora Cloud",
     )
     sentinel_url: str = Field(

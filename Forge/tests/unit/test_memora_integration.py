@@ -19,6 +19,37 @@ def test_forge_named_key_is_used_for_memora_identity():
     assert settings.memora_api_key == "forge-agent-key"
 
 
+def test_memora_api_key_prefers_per_agent_key_over_dedicated_alias(monkeypatch):
+    """TASK-FRG-037: when both keys are set, the per-agent key wins.
+
+    Live 2026-11-28: Forge's env carried a stale FORGE_MEMORA_API_KEY that
+    shadowed the correct FORGE_API_KEY, so every Forge->Memora call 401'd
+    with "Invalid agent credentials" (Memora verifies forge against
+    FORGE_API_KEY). The alias order must prefer the per-agent key.
+    """
+    from app.core.config import Settings
+
+    monkeypatch.setenv("FORGE_API_KEY", "forge-agent-key")
+    monkeypatch.setenv("FORGE_MEMORA_API_KEY", "stale-dedicated-key")
+    settings = Settings(_env_file=None)
+    assert settings.memora_api_key == "forge-agent-key"
+
+
+def test_memora_client_headers_carry_memora_auth_contract():
+    """TASK-FRG-037: headers must match Memora's get_actor_header contract.
+
+    Memora reads identity from X-Agent-Name and the credential from
+    X-API-Key (or Bearer); X-Agent-Key alone is ignored.
+    """
+    client = MemoraClient(
+        base_url="http://memora.example.invalid", api_key="forge-agent-key"
+    )
+    headers = client._get_headers()
+    assert headers["X-Agent-Name"] == "forge"
+    assert headers["X-API-Key"] == "forge-agent-key"
+    assert headers["Authorization"] == "Bearer forge-agent-key"
+
+
 @pytest.mark.asyncio
 async def test_memora_client_local_fallback(tmp_path: Path):
     """Verify MemoraClient seamlessly falls back to local SQLite when cloud is unreachable."""

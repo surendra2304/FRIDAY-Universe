@@ -120,6 +120,10 @@ class MemoraClient:
         return ""
 
     def _get_headers(self) -> dict[str, str]:
+        # Memora's get_actor_header contract (Memora/apps/api/dependencies.py):
+        # identity comes from X-Agent-Name; the credential from X-API-Key (or
+        # Bearer). X-Agent-Key is not read by Memora and is kept only for
+        # backwards compatibility with older readers.
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
@@ -127,6 +131,7 @@ class MemoraClient:
         }
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
+            headers["X-API-Key"] = self.api_key
             headers["X-Agent-Key"] = self.api_key
         return headers
 
