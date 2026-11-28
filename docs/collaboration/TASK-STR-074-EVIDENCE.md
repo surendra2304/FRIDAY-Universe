@@ -55,9 +55,29 @@
 - **Daemon untouched (verified before/after):** PID 74531 RUNNING throughout; `fill_ledger.jsonl` sha256 `5e657087099259764596059b989d66191cad0fc23d90795abdde0f5bcb910a21`, 84 lines, identical at 23:38Z, 23:41Z and after the probe. Heartbeat 23:42:01Z: scan_count 1533 (1343 at checkpoint 1 — still cycling), last cycle scanned 2310 / signals 0 / executed 0 / errors 0 / 30 symbols; equity $10,471.47, balance $10,436.84, unrealized +$34.63, realized +$46.87, 30 open positions, daily breaker NOT hit, daily start equity $10,485.85. Scorecard + heartbeat mtimes fresh at probe time.
 - **IG2-STR-10 verdict for this wave:** the fallback chain degrades live exactly as its contract states — venue disconnect, two-venue outage, total outage with last-good, total outage with empty cache, and stale-feed age all behave per spec on real market data on S4. Two observations ride to the coordinator (flags 1–2 above); neither is a live failure of the chain.
 
-## Next (checkpoint 3)
+## Checkpoint 3 — IG2-STR-09 tax export from the live ledger (live on Stratex-Server)
 
-- IG2-STR-09 (tax ledger export from the live ledger), IG2-STR-11 (calendar context in a live cycle), IG2-STR-12 (Bayesian uncertainty on live fills), IG2-STR-13 (live re-check; see checkpoint-1 flag).
+- **Filed:** 2026-11-28 ~06:15 IST, by Muse 3. Repairs the ~1h silence since checkpoint 2 (05:13 IST): branch head was unchanged at `9513ffc6` for ~1h; this checkpoint is the repair. No new Muse 3 assignment in BE 06:00 (hub 7230999560) or WATCH247 (hub 7230716540); hub read through comment 7231033076.
+- **What ran:** the LIVE S4 copy of `Stratex/reporting/tax_ledger_export.py` (9,202 bytes, Nov 16) via its own CLI, run with the S4 venv python from `/opt/friday_universe/Stratex`. Probe script `/tmp/str074/probe_ig09.py`, deleted after the run with all outputs. The live ledger was copied to `/tmp` first and the module ran ONLY on the copy — the live file was never opened for write. Read-only; no trading endpoint, no credentials, the live daemon was never touched and never restarted.
+- **Run:** 2026-11-28T00:35Z. **Result: export runs, money columns reconcile EXACTLY — but 6 CSV columns are empty/zero on live daemon records (shape mismatch, see findings).**
+- **Reconciliation (verified first-hand):** CLI exported 84 trades; CSV rows 84 = ledger trade rows 84. CSV total fees 13.04361348 = ledger fees sum 13.04361348; CSV total realised P&L +107.08898814 = ledger `net_pnl` sum +107.08898814; ledger gross sum 120.13260162. Summary buckets by instrument reconcile (32 instruments incl. USDJPY). Module's own suite on S4: **6 passed** (`pytest tests/test_ig2_str09_tax_export.py`, 0.44s).
+- **Findings — live daemon ledger shape vs the module's expected (testnet) shape:**
+
+| CSV column | live result | cause (live record field) |
+|---|---|---|
+| quantity / proceeds / cost_basis | 0.0 for all 84 rows (sums 0.0) | live ledger uses `qty`, module reads `quantity` |
+| date_open / date_close | empty for all 84 rows; `--year 2026` export returns 0 trades | live ledger uses epoch `entry_time`/`exit_time` (+ ISO `recorded_at`), module reads `timestamp`/`exit_timestamp` |
+| venue | `Unknown` for all 84 rows | live ledger has `venue: "binance_futures"`, module derives venue from `source` (absent live) |
+| side | empty for all 84 rows | live ledger has `side: "SHORT"/"LONG"`, module reads `direction`/`action` |
+| trade_id | empty for 73/84 rows | live ledger has no `trade_id`/`exit_order_id`; `order_id` is empty on 73 rows |
+| entry_price / exit_price / fees / gross / realised | correct, reconcile exactly | field names match (`entry_price`, `exit_price`, `fees`, `gross_pnl`, `net_pnl`) |
+
+- **IG2-STR-09 verdict for this wave: NOT VERIFIED live.** The module is correct for its designed testnet ledger shape (its 6 tests pass on fixture records), but its export is not tax-ready for the live daemon ledger as-is: proceeds/cost basis are zero, dates are blank, venue is Unknown. Per board acceptance, this gets a named fix task, never a verified mark. **Proposed fix (coordinator to name):** adapt `build_tax_rows` to accept the daemon ledger fields (`qty`, epoch `entry_time`/`exit_time`, `venue`, `side`, `order_id`) while keeping the testnet shape working; re-run this live leg after the fix.
+- **Daemon untouched (verified before/after):** PID 74531 RUNNING throughout; `fill_ledger.jsonl` sha256 `5e657087099259764596059b989d66191cad0fc23d90795abdde0f5bcb910a21`, 84 lines, identical pre/post; heartbeat scan_count 1707, last cycle scanned 2310 / signals 0 / executed 0 / errors 0 / 30 symbols. Same ledger hash as checkpoints 1–2 (no new fills since 2026-11-27T02:26Z).
+
+## Next (checkpoint 4)
+
+- IG2-STR-11 (calendar context in a live cycle), IG2-STR-12 (Bayesian uncertainty on live fills), IG2-STR-13 (live re-check; see checkpoint-1 flag).
 - Full-allowlist load scan last, results from the live ledger. No server moves (owner stop order 7130069033); no deploys/restarts without hub clearance; demo only.
 
 ## Five states
