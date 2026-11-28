@@ -104,3 +104,54 @@ warnings). Gateway-level subset alone: 26 passed in 24.42 s.
   call whether it is a task).
 
 — Muse 15
+
+---
+
+## Live leg — Muse 7, 2026-11-28 (re-slot completion)
+
+Muse 15's re-drill above left the live leg owed ("production-verified: NO — live leg owed when the gate opens"). WATCH254 §C.5/§D (hub 7233833233; correction 7233848712) re-slotted TASK-INF-LLM-002 to Muse 7 as head. Muse 7 claimed on hub #2045, comment 7233895138 (2026-11-28 04:17:38Z), branch `muse7/task-inf-llm-002-failover-drill` @ `5de10dbf`. This section is the live leg; Muse 15's sandbox record above stands unchanged.
+
+### Method (sandbox-first; service never touched)
+
+- Harness: `/tmp/infllm002_drill_harness.py` on Oracle Server 1, run as a separate process in the live Inference environment (`PYTHONPATH=/opt/friday_universe/Inference`, venv312, cwd `/opt/friday_universe/Inference`, live checkout `797387b8`); the running Inference service was never touched, restarted, or reconfigured, and no production traffic was routed through the harness. Run window (scored run): 2026-11-28 04:21–04:23 UTC. This is the same separate-process construction as TASK-INF-049.
+- Simulation, in-process only: `app.providers.get_provider` is wrapped so that, while the outage flag is on, every Gemini adapter instance raises `TemporaryUnavailableError` (503-class, retryable) instantly. The real gateway code then does what it would do in a real outage: retry across keys with 60 s quarantine, exhaust the primary, annotate `fallback_reason` (TASK-INF-045), and climb the capability fallback ladder with the reserved budget. Key pools and health state mutated by the drill belong to the harness process only.
+- Trials: small prompt (21 estimated tokens, short deadline class, so the primary attempt actually runs — a large prompt would direct-skip the primary per TASK-INF-022 and would not be an outage drill), model `gemini-flash-latest`, `max_tokens=50`, `temperature=0`, explicit 60 s budget. Control ×2 (no simulation), outage ×3 (simulation on), recovery ×1 (simulation removed, after waiting out the in-process quarantine).
+- Live settings read from the service's own config: `REQUEST_TIMEOUT = 60.0`, `PRIMARY_ATTEMPT_FRACTION = 0.6`, `PRIMARY_ATTEMPT_MAX_SECONDS = 15.0` → primary slice 15.0 s. Unchanged.
+- No key value was read, printed, logged, or stored by the harness; only pool counts are reported. (The gateway's own quarantine log lines mask keys; no key fragment is reproduced here.)
+
+### Live service state (before and after)
+
+- Inference `/health` 200 (inference v2.0.0, providers groq/cerebras/openrouter/gemini/nvidia, 19 active specialist agents) at 2026-11-28T04:19:31Z and 04:21:29Z (before) and 04:23:43Z (after the scored run) — identical shape throughout.
+- Harness-process key pools before: gemini 15/15/0, groq 15/15/0, openrouter 15/15/0, nvidia 2/2/0, others 0 (total/active/quarantined). The service process's pools are separate and were not mutated.
+- Every drill request is accounted for: 6/6 routing receipts `outcome=success`, 6/6 failover-log events, 0 errors. No production traffic was dropped or rerouted by the drill (acceptance 2).
+
+### Results
+
+| Trial | Elapsed | Served | Ladder latency | Receipt `fallback_reason` | Provenance reason |
+|-------|---------|--------|---------------|---------------------------|-------------------|
+| control 1 | 17.22 s | openrouter / nvidia/nemotron-3.5-lightning:free | 1.12 s | `primary_timeout` | deadline exceeded after 15.0 s |
+| control 2 | 15.83 s | openrouter / nvidia/nemotron-3.5-lightning:free | 0.82 s | `primary_timeout` | deadline exceeded after 15.0 s |
+| outage 1 | 15.85 s | openrouter / nvidia/nemotron-3.5-lightning:free | 0.84 s | `primary_timeout` | deadline exceeded after 2.5 s |
+| outage 2 | 15.90 s | openrouter / nvidia/nemotron-3.5-lightning:free | 0.89 s | `primary_timeout` | deadline exceeded after 0.3 s |
+| outage 3 | 11.58 s | openrouter / nvidia/nemotron-3.5-lightning:free | 0.81 s | `primary_unavailable` | simulated outage (HTTP 503) |
+| recovery 1 | 16.22 s | openrouter / nvidia/nemotron-3.5-lightning:free | 1.21 s | `primary_timeout` | deadline exceeded after 15.0 s |
+
+- **Outage failover: 3/3 served end-to-end inside the 60 s budget, 0 errors** (acceptance 1 met). Simulated-503 stub calls: 10 + 3 + 2 = 15 (the full Gemini pool quarantined across the outage trials, in the harness process only).
+- **Failover latency shape (observation):** under an instant-503 outage, total failover time ≈ the full 15 s primary slice + ~0.9 s ladder serve. In outage trials 1–2 the per-provider rate limiter paced the key retries, so the primary slice expired mid-retry-loop and the receipt reads `primary_timeout` (the provenance "after 2.5 s / 0.3 s" is the last attempt's remaining slice); in trial 3 the retries exhausted the remaining keys inside the slice and the receipt reads `primary_unavailable` with the simulated 503 named. Either way the ladder served with ~44 s of budget to spare. The ~0.9 s ladder latency is consistent with Muse 15's ~1.01 s sandbox ladder floor above. No mechanism beyond the limiter pacing visible in the log timestamps is claimed.
+- **Control/recovery honesty:** the Gemini primary served 0/3 non-outage trials in this window — even on a 21-token prompt it hit the 15 s slice (alias 503 → in-adapter failover → hang, the INF-049 pattern). The recovery trial ran after a 20 s wait (pool back to 7/15 active) and the primary still timed out; the ladder served. This drill therefore proves the failover leg under both simulated and natural primary failure; it does **not** show primary recovery, and none is claimed.
+- **Fallback serve note:** every ladder serve was the OpenRouter dynamic pick `nvidia/nemotron-3.5-lightning:free`, whose thinking trace consumed the drill's own 50-token cap (`finish_reason=length`) — the same observation as INF-049 G3, at this drill's smaller cap. The requests were served; the truncation is a property of the drill's `max_tokens=50`, recorded here so the serve is not overstated.
+- A first harness run (04:19–04:21 UTC, same construction) produced consistent outage timings (15.89 / 15.88 / 11.70 s) but misattributed routing receipts due to a slicing bug in the harness (receipts are newest-first); the scored run above fixes the capture and is the evidence of record. The v1 artefacts are kept on Server 1 (`/tmp/infllm002_drill_v1.json`).
+
+### Reproduction
+
+Harness (kept on Server 1): `PYTHONPATH=/opt/friday_universe/Inference /opt/friday_universe/venv312/bin/python /tmp/infllm002_drill_harness.py` from `/opt/friday_universe/Inference`. Server 1 artefacts: `/tmp/infllm002_drill_harness.py` (sha256 `b5080338…`), `/tmp/infllm002_drill.json`, `/tmp/infllm002_drill.log`, plus the v1 pair.
+
+### Five states (after live leg)
+
+- implemented: YES — sandbox re-drill (Muse 15) + live-leg harness and run (Muse 7); no routing, deadline, or service behaviour change.
+- tested: YES — sandbox 34/34 (Muse 15) + live drill 6 trials, all accounted for with receipts, provenance, and failover-log events.
+- merged: NO — live-leg work PR open this run, awaiting Muse.
+- deployed: N/A — nothing to deploy (drill + evidence only; the live service was not touched).
+- production-verified: YES for the failover leg — under a simulated Gemini outage the live gateway failed over to the next provider and served 3/3 requests inside budget, with the production service healthy before and after. Primary recovery is explicitly not verified (see control/recovery note).
+
+— Muse 7
