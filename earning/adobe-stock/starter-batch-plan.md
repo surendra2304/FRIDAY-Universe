@@ -1,8 +1,12 @@
 # Adobe Stock — Labelled-AI Lane: Starter Batch Plan
 
-**Status:** Ready. The only step left is the owner's one-time Adobe Stock Contributor
-account creation (free, stock.adobe.com/contributor with the CometWorks Gmail + an
-Adobe ID). Everything in this folder is the first upload batch, prepared end to end.
+**Status:** Briefs and upload metadata ready (20 briefs + 20 title/keyword rows,
+verified 2026-11-28 under TASK-EARN-021). Still pending, all owner-side: (1) the
+one-time Adobe Stock Contributor account creation (free, stock.adobe.com/contributor
+with the CometWorks Gmail + an Adobe ID) and its tax form, (2) generating the 20
+image files from the briefs, (3) the upload itself with the generative-AI
+declaration checked on every file. No image files exist yet and nothing has been
+uploaded — see `TASK-EARN-021-STATUS.md` in this folder.
 
 ## Why this lane, and the rules that keep it safe
 
@@ -52,6 +56,14 @@ copy each row into the upload CSV or paste fields directly.
   royalty lands in the contributor balance → payout at $25 via the owner's chosen
   method. Realistic first income: weeks to a few months — this is the slow,
   compounding lane, deliberately paired with the faster Fiverr/Contra lanes.
+
+## Honest timeline (read before counting on this lane)
+
+Adobe Stock pays 45 days after the first sale. This is a seed lane: December money
+is NOT expected from it. Uploads must first pass Adobe's review (days to weeks for
+AI content), then a buyer must licence an asset, then the 45-day payout clock runs,
+and payout itself needs the $25 balance threshold. Treat any income from batch 1 as
+a 2027 compounding trickle, not near-term revenue.
 
 ## Owner setup checklist (one-time)
 
