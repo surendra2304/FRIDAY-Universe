@@ -22,6 +22,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      # TASK-REL-120: per-job duration reporting.
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
@@ -46,3 +51,12 @@ jobs:
         run: |
           python -m pip install pytest
           python -m pytest -q tests/test_runtime_audit_contract.py
+
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"

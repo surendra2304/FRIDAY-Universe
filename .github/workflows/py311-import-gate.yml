@@ -30,6 +30,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # TASK-REL-120: per-job duration reporting.
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
@@ -39,3 +43,12 @@ jobs:
 
       - name: Run the 3.11+ import gate
         run: python scripts/check_py311_imports.py
+
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"

@@ -68,27 +68,142 @@ permissions:
   contents: read
 
 jobs:
+  detect-changes:
+    # TASK-REL-120: per-agent-subtree path filters for the contracts
+    # job (REL-106 did friday-universe-ci.yml only). Same dorny
+    # filter, same `shared` semantics: any shared hit runs the full
+    # contracts suite. Non-PR events (push = merge to main) force
+    # every output true via the force-full step, so the merge run is
+    # always the full suite.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      shared: ${{ steps.filter.outputs.shared || steps.force-full.outputs.shared }}
+      any_code: ${{ steps.filter.outputs.any_code || steps.force-full.outputs.any_code }}
+      friday: ${{ steps.filter.outputs.friday || steps.force-full.outputs.friday }}
+      forge: ${{ steps.filter.outputs.forge || steps.force-full.outputs.forge }}
+      memora: ${{ steps.filter.outputs.memora || steps.force-full.outputs.memora }}
+      inference: ${{ steps.filter.outputs.inference || steps.force-full.outputs.inference }}
+      futuris: ${{ steps.filter.outputs.futuris || steps.force-full.outputs.futuris }}
+      intelx: ${{ steps.filter.outputs.intelx || steps.force-full.outputs.intelx }}
+      stratex: ${{ steps.filter.outputs.stratex || steps.force-full.outputs.stratex }}
+      vyralx: ${{ steps.filter.outputs.vyralx || steps.force-full.outputs.vyralx }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
+        id: filter
+        # TASK-REL-120: the filter only evaluates on pull_request.
+        # Every other event takes the force-full step below instead.
+        if: github.event_name == 'pull_request'
+        with:
+          base: ${{ github.event_name == 'push' && github.event.before || github.event.pull_request.base.ref }}
+          filters: |
+            # `shared` mirrors REL-106: CI config, shared scripts/tests
+            # and root config — any hit runs the full contracts suite.
+            shared:
+              - '.github/workflows/owner-workflows.yml'
+              - '.github/workflows/deploy-monorepo.yml'
+              - 'scripts/**'
+              - 'tests/**'
+              - 'pyproject.toml'
+              - 'setup.cfg'
+              - 'requirements*.txt'
+              - 'Dockerfile'
+              - 'docker-compose*.yml'
+              - 'docker-compose*.yaml'
+            any_code:
+              - '.github/workflows/owner-workflows.yml'
+              - '.github/workflows/deploy-monorepo.yml'
+              - 'scripts/**'
+              - 'tests/**'
+              - 'pyproject.toml'
+              - 'setup.cfg'
+              - 'requirements*.txt'
+              - 'Dockerfile'
+              - 'docker-compose*.yml'
+              - 'docker-compose*.yaml'
+              - 'FRIDAY/**'
+              - 'Forge/**'
+              - 'Memora/**'
+              - 'Inference/**'
+              - 'Futuris/**'
+              - 'IntelX/**'
+              - 'Stratex/**'
+              - 'VyralX/**'
+            friday:
+              - 'FRIDAY/**'
+            forge:
+              - 'Forge/**'
+            memora:
+              - 'Memora/**'
+            inference:
+              - 'Inference/**'
+            futuris:
+              - 'Futuris/**'
+            intelx:
+              - 'IntelX/**'
+            stratex:
+              - 'Stratex/**'
+            vyralx:
+              - 'VyralX/**'
+      # TASK-REL-120: full suite on merge to main. The dorny filter
+      # only runs on pull_request; every other event forces all
+      # outputs true so no contracts step is skipped. The `||`
+      # fallback in the job outputs above picks the force-full value
+      # only when the filter step was skipped (its outputs are then
+      # empty); 'false' is a non-empty string, so a real filter
+      # result is never overridden.
+      - name: Force full suite on non-PR events
+        id: force-full
+        if: github.event_name != 'pull_request'
+        run: |
+          for output in shared any_code friday forge memora inference futuris intelx stratex vyralx; do
+            echo "$output=true" >> "$GITHUB_OUTPUT"
+          done
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
   contracts:
     runs-on: ubuntu-latest
+    needs: detect-changes
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: '3.12'
       - name: Guard — every test file shipped in this PR is collected (TASK-REL-068)
+        # TASK-REL-120: unconditional — the guard validates the PR
+        # diff itself, so it must run even when every agent step is
+        # path-skipped (same rule as the REL-088 tier-1 gate in
+        # friday-universe-ci.yml).
         env:
           GUARD_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: python3 scripts/ci_test_collection_audit.py
       - name: Install workflow contract dependencies
+        if: needs.detect-changes.outputs.shared == 'true' || needs.detect-changes.outputs.friday == 'true'
         run: >-
           python -m pip install pytest pytest-asyncio fastapi uvicorn httpx
           pydantic-settings 'sqlalchemy[asyncio]' rich python-dotenv psutil beautifulsoup4
           google-genai 'livekit-agents>=1,<2' mcp icalendar recurring-ical-events
           pillow pyperclip openai numpy PyYAML google-api-python-client anthropic aiosqlite
       - name: Exercise four workflow and authority contracts (no external calls)
+        if: needs.detect-changes.outputs.shared == 'true' || needs.detect-changes.outputs.friday == 'true'
         run: |
           python -m pytest -q \
             tests/test_live_research_task_contract.py \
@@ -139,6 +254,7 @@ jobs:
             FRIDAY/tests/test_frd041_memory_guard.py \
             FRIDAY/tests/e2e/test_tier1_features.py
       - name: Generated-code ingestion and saved verification status
+        if: needs.detect-changes.outputs.shared == 'true' || needs.detect-changes.outputs.forge == 'true'
         env:
           PYTHONPATH: Forge
         run: |
@@ -179,6 +295,7 @@ jobs:
             Forge/tests/test_frg028_build_run.py \
             Forge/tests/test_frg030_gradio_layer.py
       - name: Direct memory evidence outranks graph-only context
+        if: needs.detect-changes.outputs.shared == 'true' || needs.detect-changes.outputs.memora == 'true'
         env:
           PYTHONPATH: Memora
           MEMORA_ENV: testing
@@ -194,6 +311,7 @@ jobs:
             Memora/tests/test_health_observation_metadata.py \
             Memora/tests/test_health_readiness_truth.py
       - name: Goal-specific code and honest generated-test contracts
+        if: needs.detect-changes.outputs.shared == 'true' || needs.detect-changes.outputs.inference == 'true'
         env:
           PYTHONPATH: Inference
         run: |
@@ -216,6 +334,7 @@ jobs:
             Inference/tests/test_inf038_needle_router.py \
             Inference/tests/test_inf039_bytez_guard.py
       - name: Futuris health-capability contracts (TASK-REL-067)
+        if: needs.detect-changes.outputs.shared == 'true' || needs.detect-changes.outputs.futuris == 'true'
         env:
           PYTHONPATH: Futuris
           # Mock Oracle DSN: futuris.infra.config validates DATABASE_URL at
@@ -239,6 +358,7 @@ jobs:
             Futuris/tests/features/test_event_context.py \
             Futuris/tests/api/test_market_event_context.py
       - name: IntelX health-capability contracts (TASK-REL-067)
+        if: needs.detect-changes.outputs.shared == 'true' || needs.detect-changes.outputs.intelx == 'true'
         env:
           PYTHONPATH: IntelX
         run: |
@@ -249,12 +369,14 @@ jobs:
             IntelX/tests/test_healthz_liveness.py \
             IntelX/tests/test_int040_outbox_shipper.py
       - name: IntelX synthesis verification contracts
+        if: needs.detect-changes.outputs.shared == 'true' || needs.detect-changes.outputs.intelx == 'true'
         env:
           PYTHONPATH: IntelX
         run: |
           python -m pip install -r IntelX/requirements.txt
           python -m pytest -q IntelX/tests/test_int005_verification_pass.py
       - name: Stratex forward-test and self-experiment contracts
+        if: needs.detect-changes.outputs.shared == 'true' || needs.detect-changes.outputs.stratex == 'true'
         run: |
           python -m pip install 'pandas>=2.2,<4' requests flask flask-cors python-binance
           python -m pytest -q \
@@ -294,8 +416,10 @@ jobs:
             Stratex/tests/test_pairs_trading_str068.py \
             Stratex/tests/test_g1_reconcile.py
       - name: Install ffmpeg for VyralX real-render contracts
+        if: needs.detect-changes.outputs.shared == 'true' || needs.detect-changes.outputs.vyralx == 'true'
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Review-required project persistence and worker boundaries
+        if: needs.detect-changes.outputs.shared == 'true' || needs.detect-changes.outputs.vyralx == 'true'
         env:
           APP_ENV: development
           DATA_DIR: /tmp/vyralx-contract-data
@@ -333,7 +457,19 @@ jobs:
             VyralX/tests/test_vyr079_openfilm_adapter.py \
             VyralX/tests/test_vyr079_nextwork_style.py
       - name: Compile fresh research and deployed voice wiring
+        # TASK-REL-120: compileall over the IntelX router and the
+        # FRIDAY voice tree — runs when either subtree (or shared)
+        # changed.
+        if: needs.detect-changes.outputs.shared == 'true' || needs.detect-changes.outputs.friday == 'true' || needs.detect-changes.outputs.intelx == 'true'
         run: >-
           python -m compileall -q IntelX/intelx/api/router.py
           IntelX/intelx/api/live_research_task.py FRIDAY/src/friday/voice
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
 
