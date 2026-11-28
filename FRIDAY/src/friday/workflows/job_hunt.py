@@ -14,6 +14,9 @@ Hard rules of this module, by design:
   ``JobPosting`` blocks (the structured data career sites publish for
   Google for Jobs). A page that yields no postings produces an honest
   empty result with the reason recorded — never invented listings.
+  Greenhouse job boards are the exception: their pages carry no
+  JobPosting blocks, so for those URLs the official public Job Board API
+  single-job endpoint is fetched instead (read-only, no auth).
 - Fit scoring is a declared formula (see ``score_listing``): title,
   skills, location, recency, with hard exclusions. Every score ships
   with its matched/missing skills and reasons, so a rank is explainable.
@@ -25,6 +28,7 @@ State is file-backed under ``FRIDAY/.data/job_hunt/``: ``profile.json``
 
 from __future__ import annotations
 
+import html
 import json
 import logging
 import os
@@ -182,6 +186,55 @@ def extract_listings(page_text: str, source_url: str, *, now_epoch: Optional[flo
     return [l for l in listings if l["title"]]
 
 
+#: Greenhouse job-board hosts whose pages are JS-rendered shells with no
+#: JobPosting structured data (IG-FRD-003 follow-up: live GitLab/Canonical
+#: postings carry 0 LD-JSON blocks). For these URLs the official public
+#: Job Board API single-job endpoint is the source instead.
+_GREENHOUSE_RE = re.compile(
+    r"https?://(?:job-boards|boards)\.greenhouse\.io/([^/?#]+)/jobs/(\d+)",
+    re.IGNORECASE,
+)
+
+
+def greenhouse_api_url(board: str, job_id: str) -> str:
+    """Public Job Board API single-job endpoint (no auth for reads)."""
+    return f"https://boards-api.greenhouse.io/v1/boards/{board}/jobs/{job_id}"
+
+
+def _strip_tags(text: str) -> str:
+    return re.sub(r"<[^>]+>", " ", text or "")
+
+
+def extract_listings_from_greenhouse_json(
+    job: Any, source_url: str, *, now_epoch: Optional[float] = None
+) -> list[dict[str, Any]]:
+    """Map one Greenhouse Job Board API job object onto the listing schema.
+
+    Returns [] when the payload is not a usable job object — an honest
+    empty, same as a page with no JobPosting blocks. ``content`` arrives
+    double-entity-encoded; unescape twice, then strip tags.
+    """
+    if not isinstance(job, dict) or not str(job.get("title") or "").strip():
+        return []
+    now = now_epoch if now_epoch is not None else time.time()
+    location = job.get("location") or {}
+    content = str(job.get("content") or "")
+    description = _strip_tags(html.unescape(html.unescape(content))).strip()[:6000]
+    job_id = job.get("id")
+    return [
+        {
+            "id": f"gh-{job_id}" if job_id is not None else f"job-{uuid.uuid4().hex[:10]}",
+            "title": str(job.get("title") or "").strip(),
+            "company": str(job.get("company_name") or "").strip(),
+            "url": str(job.get("absolute_url") or source_url),
+            "location": str(location.get("name") or "").strip() if isinstance(location, dict) else "",
+            "description": description,
+            "posted_days_ago": _days_ago(str(job.get("first_published") or ""), now),
+            "source_url": source_url,
+        }
+    ]
+
+
 # ----------------------------------------------------------------------
 # Scoring — declared formula, explainable output
 # ----------------------------------------------------------------------
@@ -295,13 +348,24 @@ def run_scan(
 
     Per-source failures are recorded with their error — a failed source
     is reported, never silently dropped or papered over with old data.
+    Greenhouse job-board URLs are fetched from the Job Board API instead
+    of the HTML page (see ``extract_listings_from_greenhouse_json``).
     """
     all_listings: list[dict[str, Any]] = []
     sources: list[dict[str, Any]] = []
     for url in urls:
         try:
-            text = fetcher(url)
-            found = extract_listings(text, url)
+            gh = _GREENHOUSE_RE.search(url)
+            if gh:
+                text = fetcher(greenhouse_api_url(gh.group(1), gh.group(2)))
+                try:
+                    payload = json.loads(text)
+                except Exception as exc:
+                    raise ValueError(f"Greenhouse API returned non-JSON: {exc}") from exc
+                found = extract_listings_from_greenhouse_json(payload, url)
+            else:
+                text = fetcher(url)
+                found = extract_listings(text, url)
             sources.append(
                 {"url": url, "status": "ok" if found else "no_postings_found", "count": len(found)}
             )
