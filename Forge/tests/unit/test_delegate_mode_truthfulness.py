@@ -54,7 +54,7 @@ def _intake(task_id="task_mode_1", goal="Build a palindrome checker"):
 @pytest.mark.asyncio
 async def test_delegate_plan_only_returns_planned_and_schedules_nothing(monkeypatch):
     scheduled: list[str] = []
-    monkeypatch.setattr(delegate, "_schedule_execution", lambda tid, url=None: scheduled.append(tid))
+    monkeypatch.setattr(delegate, "_schedule_execution", lambda tid, url=None, require_sentinel=False, memora_goal=None: scheduled.append(tid))
     task, plan = _intake()
     orchestrator = SimpleNamespace(
         intake_and_plan=AsyncMock(return_value=(task, plan)),
@@ -81,7 +81,7 @@ async def test_delegate_plan_only_returns_planned_and_schedules_nothing(monkeypa
 @pytest.mark.asyncio
 async def test_delegate_plan_only_ignores_execute_now(monkeypatch):
     scheduled: list[str] = []
-    monkeypatch.setattr(delegate, "_schedule_execution", lambda tid, url=None: scheduled.append(tid))
+    monkeypatch.setattr(delegate, "_schedule_execution", lambda tid, url=None, require_sentinel=False, memora_goal=None: scheduled.append(tid))
     task, plan = _intake()
     orchestrator = SimpleNamespace(
         intake_and_plan=AsyncMock(return_value=(task, plan)),
@@ -104,7 +104,7 @@ async def test_delegate_plan_only_ignores_execute_now(monkeypatch):
 @pytest.mark.asyncio
 async def test_delegate_verify_only_still_schedules_execution(monkeypatch):
     scheduled: list[str] = []
-    monkeypatch.setattr(delegate, "_schedule_execution", lambda tid, url=None: scheduled.append(tid))
+    monkeypatch.setattr(delegate, "_schedule_execution", lambda tid, url=None, require_sentinel=False, memora_goal=None: scheduled.append(tid))
     task, plan = _intake()
     orchestrator = SimpleNamespace(intake_and_plan=AsyncMock(return_value=(task, plan)))
     envelope = TaskEnvelopeModel(
@@ -462,7 +462,7 @@ def _created_task(mode):
 )
 async def test_tasks_api_create_schedules_unless_plan_only(monkeypatch, mode, should_schedule):
     scheduled: list[str] = []
-    monkeypatch.setattr(tasks_api, "_schedule_execution", lambda tid, url=None: scheduled.append(tid))
+    monkeypatch.setattr(tasks_api, "_schedule_execution", lambda tid, url=None, require_sentinel=False, memora_goal=None: scheduled.append(tid))
     task = _created_task(mode)
     orchestrator = SimpleNamespace(intake_and_plan=AsyncMock(return_value=(task, SimpleNamespace())))
     store = SimpleNamespace(save_task=AsyncMock())
@@ -479,7 +479,7 @@ async def test_tasks_api_create_schedules_unless_plan_only(monkeypatch, mode, sh
 )
 async def test_routes_api_create_schedules_unless_plan_only(monkeypatch, mode, should_schedule):
     scheduled: list[str] = []
-    monkeypatch.setattr(routes_api, "_schedule_execution", lambda tid, url=None: scheduled.append(tid))
+    monkeypatch.setattr(routes_api, "_schedule_execution", lambda tid, url=None, require_sentinel=False, memora_goal=None: scheduled.append(tid))
     task = _created_task(mode)
     orchestrator = SimpleNamespace(intake_and_plan=AsyncMock(return_value=(task, SimpleNamespace())))
 
