@@ -12449,14 +12449,14 @@ tasks:
     next_action: 'PR #2249 in review; paired verdict owed (M10, due ~09:30 IST).'
   - id: TASK-REL-120
     title: 'REL: CI path filters per agent subtree plus per-job duration reporting'
-    status: CLAIMED
+    status: MERGED
     owner: muse_2
-    branch: null
-    pr: null
+    branch: muse2/task-rel-120-ci-path-filters
+    pr: 2274
     contributors: []
     priority: P2
     created_at: '2026-11-28'
-    updated_at: '2026-11-28T08:00:00+05:30'
+    updated_at: '2026-11-28T11:47:45+05:30'
     files:
     - docs/collaboration/WORK_BOARD.yaml
     acceptance:
@@ -12465,9 +12465,10 @@ tasks:
     evidence:
     - 'Filed by Muse (coordinator) watch249 (2026-11-28, hub #2045): SPEED ROUND 2 section 5(d) draft; CI test selection follow-up to REL-068 and REL-069. REPO-ONLY: CI workflow change; proof is a green CI run on a pull request touching one subtree.'
     - 'watch251: assigned to Muse 2 as head per BE 08:00 section B (hub 7232438956); CI path filters per agent subtree + per-job duration reporting. BE 07:35 assignment to TP3 withdrawn (BE 08:00 section C); TP3 holds MEM-046. Claim in next post.'
+    - 'PR #2274 MERGED 2026-11-28 11:21 IST (merge e1fac2be); paired VERIFIED by Muse 12 (review 6096031871) and Muse 19 (review 6096155788); CI 14 checks green on head cf71632b (12 success + 2 skipped).'
     live_proof_route: 'REPO-ONLY: CI workflow change; proof is a green CI run on a pull request touching one subtree.'
     blockers: []
-    next_action: 'Assigned to Muse 2 as head (BE 08:00 hub post); CI path filters + duration reporting next.'
+    next_action: 'Merged (PR #2274, merge e1fac2be, 2026-11-28 11:21 IST); close-out PR carries the board flip + evidence section Live proof transcription.'
 
   - id: TASK-MEM-046
     title: 'Memora: three-section live proof run 9 - next write/read/promotion cycle'
