@@ -110,6 +110,38 @@ class _JobScope:
             await safe_rollback(self.session)
 
 
+async def _daily_forecast_counts_frame(
+    scope: _JobScope, *, now: datetime, days: int = 30
+) -> pd.DataFrame | None:
+    """Daily forecast-count frame for the fleet-demand resolution rule.
+
+    TASK-FUT-043: the fleet target (``friday:fleet:forecast_demand_24h``)
+    resolves against the count of forecasts produced per UTC day -- the
+    same ``forecast_requests`` series its forecasts are fitted on -- not
+    against the telemetry frame. Built from the job scope's session (or
+    its forecast repo's session on the legacy path). Returns None when no
+    session is available: the resolver then defers fleet forecasts
+    instead of resolving them against telemetry.
+    """
+    session = scope.session
+    if session is None and scope.forecast_repo is not None:
+        session = getattr(scope.forecast_repo, "session", None)
+    if session is None:
+        return None
+    from futuris.core.series_providers import forecast_request_series
+
+    series = await forecast_request_series(session, days=days, now=now)
+    return pd.DataFrame(
+        [
+            {
+                "timestamp": datetime(d.year, d.month, d.day, tzinfo=UTC),
+                "value": float(v),
+            }
+            for d, v in series
+        ]
+    )
+
+
 class ForecastScheduler:
     """Orchestrates unattended ingestion, forecast refreshes, lifecycle sweeps, and agent runs."""
 
@@ -487,8 +519,9 @@ class ForecastScheduler:
             connector = build_scheduler_connector()
             obs = await connector.fetch(now - timedelta(days=2), now)
             df = pd.DataFrame([{"timestamp": o.observed_at, "value": o.value} for o in obs])
+            counts_df = await _daily_forecast_counts_frame(scope, now=now)
             report = await scope.lifecycle_manager.run_lifecycle_sweep(
-                observations_df=df, as_of=now
+                observations_df=df, as_of=now, daily_counts_df=counts_df
             )
             await scope.commit()
             # TASK-FUT-017: the sweep just matured forecasts (their
@@ -560,7 +593,7 @@ class ForecastScheduler:
         by conformally widening uncertainty intervals.
         """
         logger.info("calibration_sweep_job_started")
-        from futuris.core.resolution import outcome_resolver
+        from futuris.core.resolution import ResolutionNotReadyError, outcome_resolver
         from futuris.evaluation.calibration import CalibrationAnalyzer
 
         now = datetime.now(UTC)
@@ -580,10 +613,15 @@ class ForecastScheduler:
                     earliest = min(f.as_of for f in unresolved)
                     obs = await connector.fetch(earliest, now)
                     df = pd.DataFrame([{"timestamp": o.observed_at, "value": o.value} for o in obs])
+                    # TASK-FUT-043: the fleet target resolves against daily
+                    # forecast counts, not the telemetry frame.
+                    counts_df = await _daily_forecast_counts_frame(scope, now=now)
 
                     for f in unresolved:
                         try:
-                            outcome = outcome_resolver.resolve_forecast(f, df)
+                            outcome = outcome_resolver.resolve_forecast(
+                                f, df, daily_counts=counts_df
+                            )
                             await scope.outcome_repo.record_outcome(outcome)
                             # Commit each resolution as it lands: a later
                             # failure in this loop must not roll back the
@@ -593,6 +631,13 @@ class ForecastScheduler:
                             # pending-rollback state).
                             await scope.commit()
                             resolved_count += 1
+                        except ResolutionNotReadyError:
+                            # TASK-FUT-043: the forecast's ground truth is
+                            # not complete yet (e.g. the fleet target's
+                            # expiry day is still in progress). Nothing was
+                            # written, so there is nothing to roll back;
+                            # leave it unresolved for a later sweep.
+                            continue
                         except Exception as exc:
                             await scope.rollback()
                             logger.warning(
