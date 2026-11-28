@@ -23,7 +23,7 @@ from app.memory.models import TaskState
 async def test_delegate_without_execute_now_schedules_and_reports_running(monkeypatch):
     scheduled: list[tuple[str, str | None]] = []
     monkeypatch.setattr(
-        delegate, "_schedule_execution", lambda task_id, url=None: scheduled.append((task_id, url))
+        delegate, "_schedule_execution", lambda task_id, url=None, require_sentinel=False, memora_goal=None: scheduled.append((task_id, url))
     )
     task = SimpleNamespace(id="task_new_1", goal="Build a palindrome checker", state=TaskState.READY)
     plan = SimpleNamespace(stages=["plan", "build", "test"])
