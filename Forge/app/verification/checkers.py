@@ -16,6 +16,7 @@ from typing import Any
 from app.core.logging import get_logger
 from app.execution.engine import ExecutionEngine
 from app.verification.evidence import CheckCategory, VerificationEvidence
+from app.verification.provisioning import provision_test_dependencies
 from app.verification.python_tests import discover_unittest_targets, pytest_command, unittest_command, unittest_executed
 
 logger = get_logger("verification.checkers")
@@ -383,8 +384,11 @@ class TestChecker(BaseChecker):
 
     __test__ = False
 
-    def __init__(self):
+    def __init__(self, provision_fn=None):
         super().__init__(name="Test Suite Runner", category=CheckCategory.TEST)
+        # TASK-FRG-035 checkpoint 2: injectable so tests can fake the
+        # provisioning step without touching the network or the interpreter.
+        self._provision_fn = provision_fn
 
     async def run_check(self, task_id: str, engine: ExecutionEngine) -> VerificationEvidence:
         start_time = time.perf_counter()
@@ -466,6 +470,36 @@ class TestChecker(BaseChecker):
         )
 
         unittest_targets = discover_unittest_targets(paths.project)
+
+        # TASK-FRG-035 checkpoint 2: provision the cloned project's declared
+        # test dependencies BEFORE any test executes. Without this, a suite
+        # whose conftest imports a declared-but-uninstalled module fails
+        # collection with a misleading test-stage error (FRG-036 Leg B:
+        # ModuleNotFoundError: No module named 'aiosqlite'). A provisioning
+        # failure fails the test stage CLOSED with the real reason instead.
+        # Only runs when tests exist: a test-less project never provisions.
+        provision_note = ""
+        if py_test_files or has_tests_dir or unittest_targets:
+            provision_fn = self._provision_fn or provision_test_dependencies
+            provision = await provision_fn(task_id, engine, paths.project)
+            if not provision.ok:
+                return VerificationEvidence(
+                    check_name="Test Dependency Provisioning",
+                    category=self.category,
+                    command="provision_test_dependencies",
+                    exit_code=1,
+                    passed=False,
+                    duration_ms=round((time.perf_counter() - start_time) * 1000, 2),
+                    stdout=provision.summary,
+                    stderr=provision.reason,
+                )
+            if provision.installed:
+                provision_note = (
+                    f"Provisioned test dependencies: "
+                    f"{', '.join(provision.installed)} "
+                    f"(source: {provision.source}). "
+                )
+
         if not py_test_files and not has_tests_dir and unittest_targets:
             result = await engine.terminal.run_command(
                 task_id, unittest_command(unittest_targets),
@@ -477,7 +511,7 @@ class TestChecker(BaseChecker):
                 command=result.command, exit_code=result.exit_code if executed else (result.exit_code or 1),
                 passed=result.exit_code == 0 and executed,
                 duration_ms=round((time.perf_counter() - start_time) * 1000, 2),
-                stdout=result.stdout,
+                stdout=provision_note + result.stdout,
                 stderr=result.stderr if executed else result.stderr + "\nNo unittest tests were executed.",
                 artifacts_inspected=sorted({target.rsplit(".", 1)[0].replace(".", "/") + ".py"
                                            for target in unittest_targets}),
@@ -522,7 +556,7 @@ class TestChecker(BaseChecker):
             exit_code=cmd_res.exit_code,
             passed=(cmd_res.exit_code == 0),
             duration_ms=round(duration_ms, 2),
-            stdout=cmd_res.stdout,
+            stdout=provision_note + cmd_res.stdout,
             stderr=cmd_res.stderr,
             artifacts_inspected=selected_files,
         )
