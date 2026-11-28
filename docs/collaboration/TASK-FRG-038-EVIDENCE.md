@@ -1,0 +1,71 @@
+# TASK-FRG-038 — Evidence: checkpoint 1 — blocker sweep + tool identified
+
+- Task: TASK-FRG-038 — Forge: ship the one tool another agent is currently blocked on (or first self-upgrade slice with live proof).
+- Worker: Muse 19. Branch: `muse19/task-frg-038`.
+- Filed: 2026-11-28 ~09:05 IST. Board verified first-hand on live main `dc1ed6f0` (board blob `b1657b5d`, 12,517 lines).
+- Claim: BE 08:50 §B/§D (hub #2045 comment 7232927618, ~08:50 IST) — re-slot from Muse 11, final term expired (WATCH250 §C, BE 08:00 §C, WATCH251 §E). Hub claim post 7233066707 (~08:56 IST). This checkpoint is identification + plan only; no code yet.
+
+## §1 — Blocker sweep (board + hub, first-hand)
+
+Board BLOCKED tasks on live main `dc1ed6f0` (10) — same set Muse 18 swept for FRG-035 (~07:09 IST); each record read in full. None is blocked on a shippable Forge tool:
+
+| Blocked task | Blocker | Why not a Forge tool |
+|---|---|---|
+| FRD-048 (TP3) | Owner gate: Fish Audio route decision before Nov 30 | Owner decision, not a tool |
+| MEM-017 (TP3) | Owner gate: Halo key paste (7200182638) | Owner step, not a tool |
+| INT-023 (null) | INT-032 soak timer never installed; IntelX has no running home | Fleet ops install, not a Forge tool |
+| VYR-052 (TP5) | Machine-QA gate unachievable (VYR-056 CLOSED: yt-dlp n-challenge) | Closed as unachievable; no tool fixes it |
+| VYR-081 (M9) | No permitted GTA 6 footage; no live EARN-024 brief | Footage/brief, not a tool |
+| DB-001 (M6) | MySQL HeatWave production-usage verification | Owned by M6; database work, not Forge |
+| EARN-005 | Owner answer owed: $19 product identity | Owner answer; inventing a product is not the work |
+| WF-007/008/009 | CSV converter acceptance (old lane) | Owner-gated, not a Forge tool |
+
+Hub carried items checked (BE 08:50 hub 7232927618 + WATCH251 hub 7232592508, read in full; hub read through 7233012870):
+- TP4 FRG-036 Leg B re-run owed after the sandbox-deps fix + Forge restart — see §2 (the wedge is the blocker).
+- VOI-031 gated on FRD-064 deploy — not a Forge tool.
+- TP7 (b)/(d)/(e) + live Forge host naming — ruling asks, not a tool-block.
+- M15 INF-LLM-002 / TP2 REL-095 — ruling asks, not a tool-block.
+- M18 FRG-035 cp1 MERGED (PR #2244, head `324c804b`); no cp2 PR open from Muse 18 at claim time — the sandbox test-dep provisioning slice is taken, mine must differ.
+
+**Sweep verdict: no agent is blocked on an unowned Forge tool — except one, §2: the Forge HTTP wedging blocks TP4's FRG-036 Leg B re-run (and every live Forge caller).**
+
+## §2 — The tool: Forge HTTP wedging — async `execute_now`
+
+**Blocked agent:** Muse TP4 (TASK-FRG-036). Its Leg B re-run "needs routing (async + polling, or a stable API process) before another re-run" (hub 7232591042, ~08:20 IST). Two consecutive Leg B dispatches were lost the same way, and Forge wedged twice.
+
+**The defect, first-hand from code on main `dc1ed6f0`:**
+- `POST /v1/task/execute` (`Forge/app/api/delegate.py:918-926`, `task_execute`) delegates straight to `delegate_task` (`delegate.py:245`).
+- With `execute_now: true` (`delegate.py:379`), the handler awaits the whole build inline (`delegate.py:421-424`): `completed_task = await orchestrator.run_task(task.id)` (the 8-stage DAG — Requirements 45 s, Integration, Verification 170 s in Leg B run 1) + `verify_task` + `generate_manifest` — 9+ minutes inside one HTTP request.
+- The non-`execute_now` path already does it right (`delegate.py:656-672`): `_schedule_execution(task.id, callback_url)` — "the same supervised background execution POST /tasks uses" — and returns the honest RUNNING state; completion is observable via the status endpoint (`GET /tasks/{task_id}/status`, `delegate.py:690`) and the completion webhook.
+- `_schedule_execution` (`Forge/app/api/tasks.py:192-203`) is `loop.create_task(_run_task_supervised(...))` under a semaphore (`_execution_slots`, `tasks.py:110-118`) — the background machinery exists; `execute_now` bypasses it.
+- Live Forge is a single worker: `Forge/app/deployment/forge.service` — `ExecStart=... uvicorn app.main:app --host 0.0.0.0 --port 8006 --workers 1`, `MemoryMax=180M`.
+
+**Two live reproductions (TP4 evidence, hub #2045):**
+- Run 1, 04:11–04:20 IST (TASK-FRG-036-EVIDENCE.md §5–§6): bus call never returned (HTTP 000 after ~9m20s; S3 FRIDAY API restarted mid-call). `/health` on S1 Forge (:8006) HTTP 000 (10 s timeouts) at 04:22, 04:23, ~04:36 IST while the port is LISTENING and the process is alive (pid 2184784, NRestarts=0, 7 threads, journal silent since 04:20:19). "The single worker (--workers 1) appears blocked by the long sync `execute_now` call / wedged in the battery."
+- Re-run, 08:03 IST (hub 7232591042): Requirements node failed on an upstream HTTP 503; "Forge wedged a second time (/health 000, memory 177.4M/180M cap); TP4 restarted it 08:13:15 IST, healthy now (pid 2370661, /health 200)." Bus call HTTP 000 after 482 s (S3 FRIDAY API restarted mid-call AGAIN).
+
+**The tool:** route `execute_now` through the existing supervised background execution and return the honest RUNNING receipt with `forge_task_id` immediately — the same shape the non-`execute_now` path already returns. `/health` stays answerable while builds run; the FRIDAY bus no longer holds a 9-minute call that dies when FRIDAY restarts; completion is polled via `GET /tasks/{task_id}/status` or delivered by the `callback_url` webhook. The FRIDAY bus adopting polling (instead of awaiting the response) is a named follow-up — coordinator ruling owed on whether the bus changes, or whether a bounded-wait variant is wanted.
+
+**Open question for checkpoint 2 (stated, not assumed):** whether `run_task`'s sync subprocess work (the battery "spawns subprocesses" per `tasks.py` queue-endpoint docs; `Forge/app/verification/checkers.py`, `security_scanner.py`) blocks the event loop even as a background task. If it does, background runs wedge `/health` too and the slice must also move the blocking steps off the loop (`asyncio.to_thread` / `run_in_executor`). To be settled by reading `step_task` (`Forge/app/core/orchestrator.py:326`) + the checkers in checkpoint 2.
+
+**Not my slice (stated so the two Forge tasks stay distinct):** M18's FRG-035 sandbox test-dep provisioning (PR #2244 MERGED); the Forge→Memora 401s (TP4 evidence §7: Memora key missing/wrong on the Forge side — a server-side key/config action, non-fatal per code, not shippable code; coordinator/owner to route).
+
+## §3 — Plan (checkpoint 2: code + tests; checkpoint 3: live proof)
+
+1. Implement: in `delegate_task`, the `execute_now` branch schedules via `_schedule_execution` and returns RUNNING + `forge_task_id` (same receipt shape as the background path); `plan_only` / `verify_only` / `cancel` / `status` / `test` paths untouched; `callback_url` webhook dispatch kept. Settle the §2 open question first — if the battery blocks the loop, move the blocking steps off it in the same change.
+2. Tests: a test proving a delegate call with `execute_now: true` returns RUNNING immediately (handler returns without awaiting the DAG) and the task reaches a terminal state via background execution with status pollable; a test that a status/health action answers while a build runs. CI green (contracts workflow file list updated if a test file is added, per board discipline). Local verification first (stub runner; pytest absent locally — the 2 tests needing real runs go through CI).
+3. Live proof (coordinator clearance owed — a Forge restart is a service change; no live-fleet deploy without Muse's clearance on the hub first): after merge, Forge restart on Server 1, then a Leg-B-style dispatch with `execute_now` through the FRIDAY bus; `/health` 200 DURING the build + the bus receives the RUNNING receipt + the task completes and is pollable. TP4's Leg B re-run is the blocked agent's live use. If clearance is refused, the live leg stays owed and is stated as such — no claim without it.
+
+## §4 — Five states (honest, this checkpoint)
+
+- Implemented: NO — identification + plan only; code lands in checkpoint 2.
+- Tested: NO.
+- Merged: NO — no PR yet (checkpoint PRs abolished; work PR at completion with live evidence).
+- Deployed: NO.
+- Production-verified: NO — live proof is checkpoint 3, gated on coordinator clearance for the Forge restart.
+
+## §5 — Grant note
+
+- BE 08:50 §D states the grant dispute SETTLED (owner approved full run_shell for all worker chats; main-chat approvals do not appear in permissions.history) and directs: stop checking. Standing record kept: no permissions.history record for approval 7113152293 (16 checks; last 20:17 IST 2026-11-27); Surendra's confirmation of the 18:25:56 IST tap still unanswered. No live leg run in this checkpoint; no server touched.
+
+— Muse 19
