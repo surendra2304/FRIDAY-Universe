@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import asyncio
 import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
@@ -22,8 +20,7 @@ from app.api.tasks import (
 from app.core.logging import get_logger
 from app.core.orchestrator import OrchestratorCore
 from app.core.workspace import workspace_manager
-from app.integrations.memora_client import get_memora_client
-from app.memory.models import TaskMode, TaskState
+from app.memory.models import TaskMode
 from app.memory.state_store import StateStore
 from app.memory.task_lifecycle import TaskStateMachine
 from app.verification.engine import verification_engine
@@ -76,55 +73,6 @@ def _forge_receipt(
         "verification_evidence": verification_evidence,
         "failure_reason": None,
     }
-
-
-async def _task_provider_summary(orchestrator: Any, task_id: str) -> dict[str, Any]:
-    """Aggregate the provider stamps the orchestrator recorded on node
-    results (TASK-FRG-009): which provider(s) generated this build, whether
-    any role ran on the deterministic mock (generation degraded), and which
-    model actually served. Empty dict when no stamps are available."""
-    try:
-        graph = await orchestrator.store.get_latest_task_graph_for_project(task_id)
-        if graph is None:
-            return {}
-        providers: list[str] = []
-        served_models: list[str] = []
-        degraded = False
-        for node in graph.nodes.values():
-            result = getattr(node, "result", None)
-            if not isinstance(result, dict):
-                continue
-            label = result.get("provider")
-            if label and label not in providers:
-                providers.append(label)
-            served = result.get("served_by_model")
-            if served and served not in served_models:
-                served_models.append(served)
-            if result.get("generation_degraded"):
-                degraded = True
-        if not providers and not degraded:
-            return {}
-        summary: dict[str, Any] = {
-            "provider": providers[0] if len(providers) == 1 else (providers or "unknown"),
-            "generation_degraded": degraded,
-        }
-        if len(providers) > 1:
-            summary["providers"] = providers
-        if served_models:
-            summary["served_by_model"] = served_models
-        return summary
-    except Exception:
-        return {}
-
-
-def _degraded_suffix(provider_summary: dict[str, Any]) -> str:
-    """Disclosure appended to delegate summaries for mock-generated builds."""
-    if provider_summary.get("generation_degraded"):
-        return (
-            " Provider: mock/direct — generation quality degraded "
-            "(deterministic mock output, not model-generated)."
-        )
-    return ""
 
 
 def _plan_stage_count(plan: Any) -> int:
@@ -229,16 +177,6 @@ def _task_primary_source(task_id: str) -> dict[str, Any] | None:
         "content": content[:8000],
         "truncated": truncated,
     }
-
-
-async def _dispatch_webhook_callback(callback_url: str, result: TaskResultModel) -> None:
-    """Send asynchronous webhook callback notification upon task outcome."""
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            await client.post(callback_url, json=result.model_dump(mode="json"))
-            logger.info(f"Successfully dispatched callback webhook to {callback_url}")
-    except Exception as exc:
-        logger.warning(f"Failed to dispatch callback webhook to {callback_url}: {exc}")
 
 
 @delegate_router.post("/delegate", response_model=TaskResultModel, status_code=status.HTTP_200_OK)
@@ -418,236 +356,6 @@ async def delegate_task(
                 execution_time_ms=lat,
             )
 
-        # Execute synchronously if requested
-        if execute_now:
-            completed_task = await orchestrator.run_task(task.id)
-            report = await verification_engine.verify_task(task.id)
-            manifest = verification_engine.generate_manifest(task.id, report)
-            manifest_dict = manifest.model_dump(mode="json")
-            # TASK-FRG-009: which provider generated this build (and whether
-            # any of it was deterministic mock output) is part of the result,
-            # not an implementation detail.
-            provider_summary = await _task_provider_summary(orchestrator, task.id)
-
-            # TASK-FRG-011: run_task settled the task against ITS battery
-            # run; this re-run just overwrote the manifest, so re-settle
-            # the stored state against THIS run through the same
-            # authoritative derivation (app/verification/verdict.py), then
-            # report the settled verdict. The hand-rolled mirroring this
-            # replaces (TASK-REL-019) still let the surfaces disagree: a
-            # COMPLETED store row under a FAILED response when the re-run
-            # battery flipped, and a FAILED response embedding an
-            # all-passed manifest for TASK-FRG-003's R5. Settling first
-            # makes the store, the manifest stamp and this response one
-            # verdict; SUCCESS below genuinely means the task completed
-            # AND the final battery passed (TASK-REL-019's guarantee).
-            settled_ok = False
-            try:
-                settled_task = await orchestrator.apply_final_verdict(task.id, report)
-                if settled_task is not None:
-                    completed_task = settled_task
-                    settled_ok = True
-            except Exception as settle_exc:
-                logger.warning(
-                    f"Verdict settling failed for task {task.id}: {settle_exc}"
-                )
-
-            from app.verification.verdict import derive_build_verdict, stamped_verdict_of
-
-            state_name = (
-                completed_task.state.value
-                if hasattr(completed_task.state, "value")
-                else str(completed_task.state)
-            )
-            decision = derive_build_verdict(
-                task_state=completed_task.state,
-                battery_all_passed=manifest.all_passed,
-                battery_partial_failure=manifest.partial_failure,
-                battery_failure_reasons=(
-                    [manifest.failure_summary] if manifest.failure_summary else []
-                ),
-                # The stamp is trusted only when apply_final_verdict just
-                # re-derived it from THIS battery run; a stale stamp must
-                # not outrank the fresher battery.
-                stamped_verdict=stamped_verdict_of(completed_task) if settled_ok else None,
-                stamped_reasons=(
-                    (completed_task.metadata or {}).get("verdict_reasons") or []
-                    if settled_ok else []
-                ),
-                stamped_superseded=(
-                    (completed_task.metadata or {}).get("verdict_superseded") or []
-                    if settled_ok else []
-                ),
-                recorded_error=completed_task.error_message,
-            )
-            verdict_str = decision.verdict.value if decision is not None else "DEGRADED"
-
-            if verdict_str in ("FAILED", "PARTIAL_FAILURE"):
-                lat = int((time.time() - t0) * 1000)
-                res = TaskResultModel(
-                    task_id=task.id,
-                    target_agent="forge",
-                    status=verdict_str,
-                    result={
-                        "forge_task_id": task.id,
-                        "goal": task.goal,
-                        "state": state_name,
-                        "manifest": manifest_dict,
-                        "artifacts": _task_artifact_paths(task.id),
-                        "primary_source": _task_primary_source(task.id),
-                        "provider": provider_summary,
-                    },
-                    summary=(
-                        f"Code generation finished, but verification failed: {manifest.failure_summary}"
-                        if manifest.failure_summary
-                        else f"Forge task '{task.id}' ended in state {state_name}; "
-                        "it is not reported as a successful build."
-                    )
-                    + _degraded_suffix(provider_summary),
-                    error=manifest.failure_summary or completed_task.error_message,
-                    verification_manifest=manifest_dict,
-                    execution_time_ms=lat,
-                )
-                if callback_url:
-                    asyncio.create_task(_dispatch_webhook_callback(callback_url, res))
-                return res
-
-            if verdict_str != "SUCCESS":
-                # CANCELLED / BLOCKED / DEGRADED (incl. a non-terminal
-                # state run_task returned without settling): the task's
-                # own state gates this report -- never SUCCESS.
-                lat = int((time.time() - t0) * 1000)
-                mirror_error = completed_task.error_message
-                if verdict_str == "DEGRADED" and not mirror_error:
-                    mirror_error = (
-                        "; ".join(decision.reasons)
-                        if decision is not None and decision.reasons
-                        else f"Execution ended in non-terminal state {state_name}; "
-                        "completion is not certified."
-                    )
-                res = TaskResultModel(
-                    task_id=task.id,
-                    target_agent="forge",
-                    status=verdict_str,
-                    result={
-                        "forge_task_id": task.id,
-                        "goal": task.goal,
-                        "state": state_name,
-                        "manifest": manifest_dict,
-                        "artifacts": _task_artifact_paths(task.id),
-                        "primary_source": _task_primary_source(task.id),
-                        "provider": provider_summary,
-                    },
-                    summary=(
-                        f"Forge task '{task.id}' ended in state {state_name}; "
-                        "it is not reported as a successful build."
-                        + _degraded_suffix(provider_summary)
-                    ),
-                    error=mirror_error,
-                    verification_manifest=manifest_dict,
-                    execution_time_ms=lat,
-                )
-                if callback_url:
-                    asyncio.create_task(_dispatch_webhook_callback(callback_url, res))
-                return res
-
-            # Check pre-delivery Sentinel gate if required
-            if require_sentinel:
-                from app.verification.security_scanner import OutputSecurityScanner
-
-                paths = workspace_manager.get_workspace_paths(task.id)
-                if paths:
-                    scanner = OutputSecurityScanner(paths.project)
-                    scan_report = scanner.scan_all()
-                    if scan_report.blocks_delivery or scan_report.critical_count > 0:
-                        sentinel_error = (
-                            f"Sentinel Gate Failure: {scan_report.critical_count} "
-                            "critical findings detected."
-                        )
-                        # TASK-FRG-011: a delivery block is a named hard
-                        # failure -- settle it into the task record too,
-                        # so the store and this response agree the build
-                        # failed instead of the response alone saying so.
-                        try:
-                            await orchestrator.apply_final_verdict(
-                                task.id,
-                                report,
-                                extra_hard_failure_reasons=[sentinel_error],
-                            )
-                        except Exception as settle_exc:
-                            logger.warning(
-                                f"Verdict settling failed for task {task.id}: {settle_exc}"
-                            )
-                        lat = int((time.time() - t0) * 1000)
-                        res = TaskResultModel(
-                            task_id=task.id,
-                            target_agent="forge",
-                            status="FAILED",
-                            error=sentinel_error,
-                            summary="Blocked by Sentinel security review gate.",
-                            verification_manifest=manifest_dict,
-                            execution_time_ms=lat,
-                        )
-                        if callback_url:
-                            asyncio.create_task(_dispatch_webhook_callback(callback_url, res))
-                        return res
-
-            # Memora writeback ONLY if verification completely passed
-            if manifest.all_passed:
-                try:
-                    memora = get_memora_client()
-                    await memora.a_record_interaction(
-                        user_input=f"Engineering build: {goal}",
-                        agent_output=f"Successfully synthesized and verified goal in task {task.id}",
-                        agent_name="forge",
-                        event_type="swe_build_verified",
-                        tags=["forge", "verified", "production_pass"],
-                        metadata={"task_id": task.id, "stages": manifest.total_stages},
-                    )
-                    logger.info(f"Recorded verified build experience to Memora for task {task.id}")
-                except Exception as mem_err:
-                    logger.warning(f"Memora writeback non-fatal warning: {mem_err}")
-
-            lat = int((time.time() - t0) * 1000)
-
-            # TASK-FRG-011: the partial/failure shapes are settled above --
-            # reaching here means the derived verdict is SUCCESS (state
-            # COMPLETED and the final battery passed), so there is no
-            # second, competing verdict left to compute in this block.
-            # TASK-FRG-009 (ported onto the FRG-011 shapes): the provider
-            # stamp below is disclosure only -- it never feeds the verdict.
-            res = TaskResultModel(
-                task_id=task.id,
-                target_agent="forge",
-                status="SUCCESS",
-                result={
-                    "forge_task_id": task.id,
-                    "goal": task.goal,
-                    "state": completed_task.state.value if hasattr(completed_task.state, "value") else str(completed_task.state),
-                    "manifest": manifest_dict,
-                    "artifacts": _task_artifact_paths(task.id),
-                    "primary_source": _task_primary_source(task.id),
-                    "provider": provider_summary,
-                },
-                summary=f"Forge successfully synthesized and verified goal (Task ID: {task.id})"
-                + _degraded_suffix(provider_summary),
-                verification_manifest=manifest_dict,
-                execution_time_ms=lat,
-                receipt=_forge_receipt(
-                    requested_action=action,
-                    result={"forge_task_id": task.id, "verified": True},
-                    verification_evidence={
-                        "source": "forge.api.v1.forge.delegate",
-                        "task_id": task.id,
-                        "verification_stages": manifest.total_stages,
-                        "all_passed": manifest.all_passed,
-                        "provider": provider_summary,
-                    },
-                ),
-            )
-            if callback_url:
-                asyncio.create_task(_dispatch_webhook_callback(callback_url, res))
-            return res
 
         # TASK-REL-011: accepting a task must mean executing it. This path
         # used to return SUCCESS at intake and park the task in READY
@@ -658,7 +366,24 @@ async def delegate_task(
         # report the honest RUNNING state; completion is observable via the
         # status endpoint and the completion webhook when a callback_url
         # was supplied.
-        _schedule_execution(task.id, callback_url)
+        # TASK-FRG-038: execute_now used to await the whole DAG + battery
+        # inline on this request while live Forge runs a single worker
+        # (--workers 1): two live reproductions wedged /health for ~9m20s
+        # and 482s (Leg B run 1 + re-run). Route execute_now through the
+        # same supervised background execution; the caller's
+        # post-completion flags (Sentinel gate, Memora writeback) ride
+        # the runner, not the request — see _run_task_body. Completion is
+        # observable via GET /tasks/{id}/status and the completion
+        # webhook; no receipt is issued at intake (receipts certify
+        # executed work only, TASK-REL-019). Callers that need the result
+        # synchronously must poll or wait for the webhook — the FRIDAY
+        # bus polling adoption is a coordinator ruling, still owed.
+        _schedule_execution(
+            task.id,
+            callback_url,
+            require_sentinel=require_sentinel if execute_now else False,
+            memora_goal=goal if execute_now else None,
+        )
         lat = int((time.time() - t0) * 1000)
         return TaskResultModel(
             task_id=envelope.task_id,
