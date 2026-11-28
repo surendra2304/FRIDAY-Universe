@@ -5,6 +5,11 @@ on:
     branches: [ main, arena/* ]
   pull_request:
     branches: [ main ]
+  schedule:
+    # TASK-REL-120: nightly full-suite run (02:00 UTC / 07:30 IST).
+    # Non-PR events run the full suite: detect-voice-changes forces
+    # every filter output true when the event is not a pull_request.
+    - cron: '0 2 * * *'
 
 jobs:
   test:
@@ -641,20 +646,20 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      voice: ${{ steps.filter.outputs.voice }}
-      shared: ${{ steps.filter.outputs.shared }}
-      any_code: ${{ steps.filter.outputs.any_code }}
-      siblings: ${{ steps.filter.outputs.siblings }}
-      friday: ${{ steps.filter.outputs.friday }}
-      memora: ${{ steps.filter.outputs.memora }}
-      cortex: ${{ steps.filter.outputs.cortex }}
-      stratex: ${{ steps.filter.outputs.stratex }}
-      forge: ${{ steps.filter.outputs.forge }}
-      inference: ${{ steps.filter.outputs.inference }}
-      sentinel: ${{ steps.filter.outputs.sentinel }}
-      intelx: ${{ steps.filter.outputs.intelx }}
-      futuris: ${{ steps.filter.outputs.futuris }}
-      vyralx: ${{ steps.filter.outputs.vyralx }}
+      voice: ${{ steps.filter.outputs.voice || steps.force-full.outputs.voice }}
+      shared: ${{ steps.filter.outputs.shared || steps.force-full.outputs.shared }}
+      any_code: ${{ steps.filter.outputs.any_code || steps.force-full.outputs.any_code }}
+      siblings: ${{ steps.filter.outputs.siblings || steps.force-full.outputs.siblings }}
+      friday: ${{ steps.filter.outputs.friday || steps.force-full.outputs.friday }}
+      memora: ${{ steps.filter.outputs.memora || steps.force-full.outputs.memora }}
+      cortex: ${{ steps.filter.outputs.cortex || steps.force-full.outputs.cortex }}
+      stratex: ${{ steps.filter.outputs.stratex || steps.force-full.outputs.stratex }}
+      forge: ${{ steps.filter.outputs.forge || steps.force-full.outputs.forge }}
+      inference: ${{ steps.filter.outputs.inference || steps.force-full.outputs.inference }}
+      sentinel: ${{ steps.filter.outputs.sentinel || steps.force-full.outputs.sentinel }}
+      intelx: ${{ steps.filter.outputs.intelx || steps.force-full.outputs.intelx }}
+      futuris: ${{ steps.filter.outputs.futuris || steps.force-full.outputs.futuris }}
+      vyralx: ${{ steps.filter.outputs.vyralx || steps.force-full.outputs.vyralx }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -663,6 +668,10 @@ jobs:
         run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
         id: filter
+        # TASK-REL-120: the filter only evaluates on pull_request.
+        # Every other event (push = merge to main, schedule = nightly,
+        # dispatch) takes the force-full step below instead.
+        if: github.event_name == 'pull_request'
         with:
           base: ${{ github.event_name == 'push' && github.event.before || github.event.pull_request.base.ref }}
           filters: |
@@ -743,6 +752,20 @@ jobs:
               - 'Futuris/**'
             vyralx:
               - 'VyralX/**'
+      # TASK-REL-120: full suite on merge to main and nightly. The
+      # dorny filter only runs on pull_request; every other event
+      # forces all outputs true so no step is skipped. The `||`
+      # fallback in the job outputs above picks the force-full value
+      # only when the filter step was skipped (its outputs are then
+      # empty); 'false' is a non-empty string, so a real filter
+      # result is never overridden.
+      - name: Force full suite on non-PR events
+        id: force-full
+        if: github.event_name != 'pull_request'
+        run: |
+          for output in voice shared any_code siblings friday memora cortex stratex forge inference sentinel intelx futuris vyralx; do
+            echo "$output=true" >> "$GITHUB_OUTPUT"
+          done
       - name: Report job duration
         if: always()
         run: |

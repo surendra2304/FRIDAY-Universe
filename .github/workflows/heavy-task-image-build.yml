@@ -38,6 +38,10 @@ jobs:
       - name: Check out monorepo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      # TASK-REL-120: per-job duration reporting.
+      - name: Record job start time
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+
       - name: Verify Docker Compose is available
         run: docker compose version
 
@@ -61,3 +65,12 @@ jobs:
           docker compose -f docker-compose.oracle.yml build forge
           docker compose -f docker-compose.oracle.yml build futuris
           docker compose -f docker-compose.oracle.yml build sentinel
+
+      - name: Report job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          start=${JOB_START_EPOCH:-$end}
+          elapsed=$((end - start))
+          echo "Job duration: ${elapsed}s"
+          echo "- Job duration: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
