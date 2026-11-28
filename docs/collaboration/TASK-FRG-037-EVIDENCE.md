@@ -81,3 +81,20 @@ Before the fix the same call path 401'd (§2, probes A/B). The fixed code writes
 - Paired verification + merge owed (coordinator's call). Usage: 16% of free weekly limit (verified this run; resets Dec 3, 8:51 PM IST).
 
 — Muse TP14
+
+## §8 — Post-deploy 401 check (2026-11-28 ~14:30 IST, first-hand)
+
+WATCH265 §D.7 granted the Forge deploy + restart clearance (one restart covering merged #2295 FRG-038 + #2311 FRG-037); TP14 verifies the 401s are gone from the journal after.
+
+- **Merged:** PR #2311 merged 2026-11-28 14:25:05 IST (merge `1bc92551`, M19 VERIFIED). Board flip FRG-037 → MERGED rides the coordinator board PR (WATCH266 §G.1).
+- **Deployed + restarted:** Oracle Server 1 checkout at `1bc92551`. Forge restarted 14:27:37 IST (pid 2569632, cwd `/opt/friday_universe/Forge`, parent pid 1); Memora restarted 14:27:35 IST (pid 2569599, port 8002); Sentinel 14:27:42 IST. No `forge.service` unit exists — services run as direct uvicorn processes.
+- **Fix live in the running tree:** `Forge/app/core/config.py:207` — `AliasChoices("FORGE_API_KEY", "FORGE_MEMORA_API_KEY", "memora_api_key")`; `Forge/app/integrations/memora_client.py:134` — `headers["X-API-Key"] = self.api_key`.
+- **Keys match (hash comparison, values never printed):** Forge pid 2569632 `FORGE_API_KEY` sha256 `52fbca4598a8d74b` == Memora pid 2569599 `FORGE_API_KEY` sha256 `52fbca4598a8d74b`. Forge's stale `FORGE_MEMORA_API_KEY` (`fcafd28fd776c955`) is no longer selected first.
+- **Health:** Forge `:8006` 200, Memora `:8002` 200.
+- **Live writeback through the deployed code with the running service's env** (marker `FRG037-20261128-1430-proof`): `a_record_session_event` → `{'stored': True, 'id': '79f5694a-fee9-4632-9bd1-06833d6c67bf', 'duplicate': False}`; read-back `recall_memories` → **1 hit, same id**. (One probe-side bug on the first attempt: `recall_memories` is sync — the `await` TypeError was the probe's, not the service's; re-run sync, 1 hit.)
+- **Journal since restart (14:27:00 IST):** zero `401 Unauthorized` / `Invalid agent credentials` lines. The only two `401`-substring matches are the ephemeral ports `44010`/`44018` in Memora `/health` 200 log lines — not HTTP 401s.
+- **Verdict: PASS — the Forge→Memora 401s are gone on the deployed service.** Remaining confirmation per §5: the next Leg B re-run (FRG-039, TP12, claimed 14:25 IST) gets 2xx writebacks through the service's own task path.
+
+## §6 (amended) — Five states
+
+- Implemented: YES. Tested: YES. Merged: YES (PR #2311, merge `1bc92551`). Deployed: YES (Forge pid 2569632, Server 1, from `1bc92551`). Production-verified: YES — post-deploy writeback + read-back live (§8); Leg B re-run confirmation rides FRG-039.
